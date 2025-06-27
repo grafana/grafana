@@ -218,15 +218,15 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 	return meta, err
 }
 
-// GetLatestKey retrieves the metadata key for the latest version of a resource.
+// GetLatestResourceKey retrieves the metadata key for the latest version of a resource.
 // Returns the key with the highest resource version that is not deleted.
-func (d *metadataStore) GetLatestKey(ctx context.Context, key MetaGetRequestKey) (MetaDataKey, error) {
-	return d.GetKeyAtRevision(ctx, key, 0)
+func (d *metadataStore) GetLatestResourceKey(ctx context.Context, key MetaGetRequestKey) (MetaDataKey, error) {
+	return d.GetResourceKeyAtRevision(ctx, key, 0)
 }
 
-// GetKeyAtRevision retrieves the metadata key for a resource at a specific revision.
+// GetResourceKeyAtRevision retrieves the metadata key for a resource at a specific revision.
 // If rv is 0, it returns the latest version. Returns the highest version <= rv that is not deleted.
-func (d *metadataStore) GetKeyAtRevision(ctx context.Context, key MetaGetRequestKey, rv int64) (MetaDataKey, error) {
+func (d *metadataStore) GetResourceKeyAtRevision(ctx context.Context, key MetaGetRequestKey, rv int64) (MetaDataKey, error) {
 	if err := key.Validate(); err != nil {
 		return MetaDataKey{}, fmt.Errorf("invalid get request key: %w", err)
 	}
@@ -237,7 +237,7 @@ func (d *metadataStore) GetKeyAtRevision(ctx context.Context, key MetaGetRequest
 
 	listKey := MetaListRequestKey(key)
 
-	iter := d.ResourceKeysAtRevision(ctx, listKey, rv)
+	iter := d.ListResourceKeysAtRevision(ctx, listKey, rv)
 	for metaKey, err := range iter {
 		if err != nil {
 			return MetaDataKey{}, err
@@ -247,15 +247,15 @@ func (d *metadataStore) GetKeyAtRevision(ctx context.Context, key MetaGetRequest
 	return MetaDataKey{}, ErrNotFound
 }
 
-// LatestResourceKeys returns an iterator over the metadata keys for the latest versions of resources.
+// ListLatestResourceKeys returns an iterator over the metadata keys for the latest versions of resources.
 // Only returns keys for resources that are not deleted.
-func (d *metadataStore) LatestResourceKeys(ctx context.Context, key MetaListRequestKey) iter.Seq2[MetaDataKey, error] {
-	return d.ResourceKeysAtRevision(ctx, key, 0)
+func (d *metadataStore) ListLatestResourceKeys(ctx context.Context, key MetaListRequestKey) iter.Seq2[MetaDataKey, error] {
+	return d.ListResourceKeysAtRevision(ctx, key, 0)
 }
 
-// ResourceKeysAtRevision returns an iterator over metadata keys for resources at a specific revision.
+// ListResourceKeysAtRevision returns an iterator over metadata keys for resources at a specific revision.
 // If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
-func (d *metadataStore) ResourceKeysAtRevision(ctx context.Context, key MetaListRequestKey, rv int64) iter.Seq2[MetaDataKey, error] {
+func (d *metadataStore) ListResourceKeysAtRevision(ctx context.Context, key MetaListRequestKey, rv int64) iter.Seq2[MetaDataKey, error] {
 	if err := key.Validate(); err != nil {
 		return func(yield func(MetaDataKey, error) bool) {
 			yield(MetaDataKey{}, fmt.Errorf("invalid list request key: %w", err))

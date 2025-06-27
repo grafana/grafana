@@ -155,7 +155,7 @@ func TestMetadataStore_Get_NotFound(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 }
 
-func TestMetadataStore_GetLatestKey(t *testing.T) {
+func TestMetadataStore_GetLatestResourceKey(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -213,7 +213,7 @@ func TestMetadataStore_GetLatestKey(t *testing.T) {
 	require.NoError(t, err)
 
 	// GetLatestKey should return rv3
-	latestKey, err := store.GetLatestKey(ctx, MetaGetRequestKey{
+	latestKey, err := store.GetLatestResourceKey(ctx, MetaGetRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -246,7 +246,7 @@ func TestMetadataStore_GetLatestKey_Deleted(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = store.GetLatestKey(ctx, MetaGetRequestKey{
+	_, err = store.GetLatestResourceKey(ctx, MetaGetRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -255,7 +255,7 @@ func TestMetadataStore_GetLatestKey_Deleted(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 }
 
-func TestMetadataStore_GetKeyAtRevision(t *testing.T) {
+func TestMetadataStore_GetResourceKeyAtRevision(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -291,7 +291,7 @@ func TestMetadataStore_GetKeyAtRevision(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get key at rv2 should return rv2
-	metaKey, err := store.GetKeyAtRevision(ctx, MetaGetRequestKey{
+	metaKey, err := store.GetResourceKeyAtRevision(ctx, MetaGetRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -303,7 +303,7 @@ func TestMetadataStore_GetKeyAtRevision(t *testing.T) {
 	assert.Equal(t, DataActionUpdated, metaKey.Action)
 
 	// Get key at rv1 should return rv1
-	metaKey, err = store.GetKeyAtRevision(ctx, MetaGetRequestKey{
+	metaKey, err = store.GetResourceKeyAtRevision(ctx, MetaGetRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -315,7 +315,7 @@ func TestMetadataStore_GetKeyAtRevision(t *testing.T) {
 	assert.Equal(t, DataActionCreated, metaKey.Action)
 }
 
-func TestMetadataStore_LatestResourceKeys(t *testing.T) {
+func TestMetadataStore_ListLatestResourceKeys(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -351,7 +351,7 @@ func TestMetadataStore_LatestResourceKeys(t *testing.T) {
 
 	// List latest metadata keys
 	var resultKeys []MetaDataKey
-	for metaKey, err := range store.LatestResourceKeys(ctx, MetaListRequestKey{
+	for metaKey, err := range store.ListLatestResourceKeys(ctx, MetaListRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Namespace: key.Namespace,
@@ -371,7 +371,7 @@ func TestMetadataStore_LatestResourceKeys(t *testing.T) {
 	assert.Equal(t, metadata2, metadata)
 }
 
-func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
+func TestMetadataStore_ListResourceKeysAtRevision(t *testing.T) {
 	store := newMetadataStore(setupTestKV(t))
 	ctx := context.Background()
 
@@ -449,7 +449,7 @@ func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv1 - should return only resource1 initial version", func(t *testing.T) {
 		var resultKeys []MetaDataKey
-		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -466,7 +466,7 @@ func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv2 - should return resource1, resource2 and resource4", func(t *testing.T) {
 		var resultKeys []MetaDataKey
-		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -488,7 +488,7 @@ func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv3 - should return resource1, resource2 and resource4", func(t *testing.T) {
 		var resultKeys []MetaDataKey
-		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -513,7 +513,7 @@ func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv4 - should return", func(t *testing.T) {
 		var resultKeys []MetaDataKey
-		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -536,7 +536,7 @@ func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision rv5 - should exclude deleted resource4", func(t *testing.T) {
 		var resultKeys []MetaDataKey
-		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -559,7 +559,7 @@ func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list with specific resource name", func(t *testing.T) {
 		var resultKeys []MetaDataKey
-		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -577,7 +577,7 @@ func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 
 	t.Run("list at revision 0 should use MaxInt64", func(t *testing.T) {
 		var resultKeys []MetaDataKey
-		for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
 			Namespace: "default",
@@ -600,7 +600,7 @@ func TestMetadataStore_ResourceKeysAtRevision(t *testing.T) {
 	})
 }
 
-func TestMetadataStore_ResourceKeysAtRevision_ValidationErrors(t *testing.T) {
+func TestMetadataStore_ListResourceKeysAtRevision_ValidationErrors(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -634,7 +634,7 @@ func TestMetadataStore_ResourceKeysAtRevision_ValidationErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var resultKeys []MetaDataKey
-			for metaKey, err := range store.ResourceKeysAtRevision(ctx, tt.key, 0) {
+			for metaKey, err := range store.ListResourceKeysAtRevision(ctx, tt.key, 0) {
 				if err != nil {
 					assert.Error(t, err)
 					return
@@ -645,12 +645,12 @@ func TestMetadataStore_ResourceKeysAtRevision_ValidationErrors(t *testing.T) {
 	}
 }
 
-func TestMetadataStore_ResourceKeysAtRevision_EmptyResults(t *testing.T) {
+func TestMetadataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
 	var resultKeys []MetaDataKey
-	for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+	for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
 		Namespace: "default",
@@ -662,7 +662,7 @@ func TestMetadataStore_ResourceKeysAtRevision_EmptyResults(t *testing.T) {
 	assert.Len(t, resultKeys, 0)
 }
 
-func TestMetadataStore_ResourceKeysAtRevision_ResourcesNewerThanRevision(t *testing.T) {
+func TestMetadataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
@@ -682,7 +682,7 @@ func TestMetadataStore_ResourceKeysAtRevision_ResourcesNewerThanRevision(t *test
 
 	// List at a revision before the resource was created
 	var resultKeys []MetaDataKey
-	for metaKey, err := range store.ResourceKeysAtRevision(ctx, MetaListRequestKey{
+	for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
 		Namespace: "default",
