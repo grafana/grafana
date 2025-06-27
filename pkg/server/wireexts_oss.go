@@ -114,6 +114,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
+	manager.ProvideVerifier,
 	search2.ProvideDashboardStats,
 	wire.Bind(new(search2.DashboardStats), new(*search2.OssDashboardStats)),
 	search2.ProvideDocumentBuilders,

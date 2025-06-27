@@ -440,6 +440,7 @@ func (hs *HTTPServer) registerRoutes() {
 			pluginRoute.Get("/:pluginId/dashboards/", reqOrgAdmin, checkAppEnabled(hs.pluginStore, hs.PluginSettings), routing.Wrap(hs.GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", authorize(ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginIDScope)), routing.Wrap(hs.UpdatePluginSetting))
 			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
+			pluginRoute.Get("/:pluginId/used-by-panels", reqOrgAdmin, routing.Wrap(hs.PluginDashboardPanels))
 		})
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)

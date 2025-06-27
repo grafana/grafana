@@ -145,6 +145,7 @@ type HTTPServer struct {
 	pluginClient                 plugins.Client
 	pluginStore                  pluginstore.Store
 	pluginInstaller              plugins.Installer
+	pluginVerifier               plugins.Verifier
 	pluginFileStore              plugins.FileStore
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
@@ -240,7 +241,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore db.DB,
 	dataSourceRequestValidator validations.DataSourceRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
-	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
+	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, pluginVerifier plugins.Verifier, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
 	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -287,6 +288,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                     sqlStore,
 		DataSourceRequestValidator:   dataSourceRequestValidator,
 		pluginInstaller:              pluginInstaller,
+		pluginVerifier:               pluginVerifier,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,

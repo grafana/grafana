@@ -17,6 +17,10 @@ type Installer interface {
 	Remove(ctx context.Context, pluginID, version string) error
 }
 
+type Verifier interface {
+	DashboardPanelsUsingPlugin(ctx context.Context, pluginID string) (map[string]map[string]string, error)
+}
+
 type PluginSource interface {
 	// PluginClass is the associated Class of plugin for this source
 	PluginClass(ctx context.Context) Class

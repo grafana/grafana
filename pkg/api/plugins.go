@@ -458,6 +458,29 @@ func (hs *HTTPServer) GetPluginErrorsList(c *contextmodel.ReqContext) response.R
 	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors(c.Req.Context()))
 }
 
+func (hs *HTTPServer) PluginDashboardPanels(c *contextmodel.ReqContext) response.Response {
+	pluginID := web.Params(c.Req)[":pluginId"]
+	ctx := repo.WithRequestOrigin(c.Req.Context(), "api")
+
+	dashboardPanels, err := hs.pluginVerifier.DashboardPanelsUsingPlugin(ctx, pluginID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to verify plugin upgrade", err)
+	}
+
+	fmt.Printf("\n\n\n\nChecked dashboard panels using plugin %v.\n", pluginID)
+	if len(dashboardPanels) > 0 {
+		fmt.Printf("\n\n\n\nPlugin %s has been installed, and it is used in the following dashboards:\n", pluginID)
+		for dashboardUID, panels := range dashboardPanels {
+			fmt.Printf("\tDashboard UID: %s\n", dashboardUID)
+			for panelID, panelTitle := range panels {
+				fmt.Printf("\t\tPanel: %s %s\n", panelID, panelTitle)
+			}
+		}
+	}
+
+	return response.JSON(http.StatusOK, dashboardPanels)
+}
+
 func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Response {
 	dto := dtos.InstallPluginCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
