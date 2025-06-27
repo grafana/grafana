@@ -151,10 +151,12 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 	if err != nil {
 		return Event{}, err
 	}
-	defer obj.Value.Close()
-
 	var event Event
 	err = json.NewDecoder(obj.Value).Decode(&event)
+
+	if err = obj.Value.Close(); err != nil {
+		return Event{}, err
+	}
 	return event, err
 }
 
