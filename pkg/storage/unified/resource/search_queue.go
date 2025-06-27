@@ -138,7 +138,16 @@ func (b *indexQueueProcessor) process(batch []*WrittenEvent) {
 	if b.resChan != nil {
 		for _, r := range resp {
 			r.Timestamp = ts
-			r.Latency = time.Duration(ts.UnixMicro()-r.WrittenEvent.ResourceVersion) * time.Microsecond
+			// ResourceVersion can be in Unix milliseconds or nanoseconds
+			rv := r.WrittenEvent.ResourceVersion
+
+			if rv < 1e12 {
+				// ResourceVersion is in milliseconds
+				r.Latency = time.Duration(ts.UnixMilli()-rv) * time.Millisecond
+			} else {
+				// ResourceVersion is in nanoseconds
+				r.Latency = time.Duration(ts.UnixNano() - rv)
+			}
 			b.resChan <- r
 		}
 	}

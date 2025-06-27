@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/dgraph-io/badger/v4"
 	otgrpc "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -151,6 +152,28 @@ func newClient(opts options.StorageOptions,
 		return client, nil
 
 	// Use the local SQL
+	case options.StorageTypeEtcd:
+		//
+		return nil, fmt.Errorf("etcd is not supported")
+	case options.StorageTypeUnifiedKV:
+		kv, err := badger.Open(badger.DefaultOptions("./data/badger"))
+		if err != nil {
+			return nil, err
+		}
+		backend := resource.NewkvStorageBackend(resource.NewBadgerKV(kv))
+		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
+		if err != nil {
+			return nil, err
+		}
+
+		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend: backend,
+			Search:  searchOptions,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return resource.NewLocalResourceClient(server), nil
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
 		if err != nil {
