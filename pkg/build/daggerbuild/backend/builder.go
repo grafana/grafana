@@ -81,7 +81,7 @@ func ViceroyContainer(
 
 func WithGoCachePlugin(c *dagger.Container, platform dagger.Platform) *dagger.Container {
 	return c.
-		WithExec([]string{"wget", "-q", fmt.Sprintf("https://github.com/grafana/go-cache-plugin/releases/download/v0.1.1/go-cache-plugin-%s", strings.ReplaceAll(string(platform), "/", "-")), "-O", "/bin/go-cache-plugin"}).
+		WithExec([]string{"wget", "-q", fmt.Sprintf("https://github.com/grafana/go-cache-plugin/releases/download/v0.1.3/go-cache-plugin-%s", strings.ReplaceAll(string(platform), "/", "-")), "-O", "/bin/go-cache-plugin"}).
 		WithExec([]string{"chmod", "+x", "/bin/go-cache-plugin"})
 }
 

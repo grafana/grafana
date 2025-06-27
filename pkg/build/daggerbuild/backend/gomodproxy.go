@@ -35,13 +35,13 @@ func WithGoModProxy(
 	svc = containers.WithEnv(svc, []containers.Env{
 		{
 			Name:  "GOCACHE_HTTP",
-			Value: "localhost:12345",
+			Value: "0.0.0.0:12345",
 		}, {
 			Name:  "GOCACHE_MODPROXY",
 			Value: "true",
 		}, {
 			Name:  "GOCACHE_PLUGIN",
-			Value: "1234",
+			Value: "0.0.0.0:1234",
 		}, {
 			Name:  "GOCACHE_METRICS",
 			Value: "true",
@@ -53,11 +53,13 @@ func WithGoModProxy(
 
 	svc = svc.WithMountedCache("/tmp/gocache", goCacheVolume)
 	svc = withInheritedEnv(svc, []string{"GOCACHE_S3_BUCKET", "GOCACHE_S3_REGION"})
-
-	s := svc.WithExposedPort(1234).AsService(dagger.ContainerAsServiceOpts{
-		Args: []string{"go-cache-plugin", "serve"},
+	s := svc.WithExposedPort(1234).WithExposedPort(12345).AsService(dagger.ContainerAsServiceOpts{
+		Args: []string{"go-cache-plugin", "serve", "-v"},
 	})
+
 	return c.WithFile("/bin/go-cache-plugin", svc.File("/bin/go-cache-plugin")).
-		WithServiceBinding("gocache", s).
-		WithEnvVariable("GOCACHEPROG", `go-cache-plugin connect gocache:1234`)
+		WithEnvVariable("GOPROXY", "http://localhost:12345/mod").
+		WithEnvVariable("GOSUMDB", "sum.golang.org http://localhost:12345/mod/sumdb/sum.golang.org").
+		WithEnvVariable("GOCACHEPROG", `go-cache-plugin connect gocache:1234`).
+		WithServiceBinding("gocache", s)
 }
