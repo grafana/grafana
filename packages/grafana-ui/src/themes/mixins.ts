@@ -74,8 +74,8 @@ export function getFocusStyles(theme: GrafanaTheme2) {
 
 export function getButtonFocusStyles(theme: GrafanaTheme2) {
   return {
-    outline: '2px dotted transparent',
-    outlineOffset: '2px',
+    ...getFocusStyles(theme),
+    transitionProperty: undefined,
   };
 }
 

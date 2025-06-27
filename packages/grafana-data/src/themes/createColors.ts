@@ -297,6 +297,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     }
     if (!color.contrastColor) {
       if (base.mode === 'light') {
+        //'primary' | 'secondary' | 'info' | 'error' | 'success' | 'warning'
         switch (name) {
           case 'primary':
             color.contrastColor = palette.orangeDarkMain;
@@ -304,11 +305,20 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
           case 'secondary':
             color.contrastColor = palette.blueDarkMain;
             break;
+          case 'info':
+            color.contrastColor = palette.blueDarkMain;
+            break;
+          case 'error':
+            color.contrastColor = palette.orangeDarkMain;
+            break;
           case 'success':
+            color.contrastColor = palette.orangeDarkMain;
+            break;
+          case 'warning':
             color.contrastColor = palette.greenDarkMain;
             break;
           default:
-            color.contrastColor = palette.orangeLightMain;
+            color.contrastColor = palette.orangeDarkMain;
             break;
         }
       } else {
@@ -319,11 +329,17 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
           case 'secondary':
             color.contrastColor = palette.blueLightMain;
             break;
-          case 'success':
+          case 'info':
             color.contrastColor = palette.blueLightMain;
             break;
           case 'error':
             color.contrastColor = palette.orangeLightMain;
+            break;
+          case 'success':
+            color.contrastColor = palette.orangeLightMain;
+            break;
+          case 'warning':
+            color.contrastColor = palette.greenLightMain;
             break;
           default:
             color.contrastColor = palette.orangeLightMain;
