@@ -279,12 +279,12 @@ func (d *metadataStore) ListResourceKeysAtRevision(ctx context.Context, key Meta
 
 		// yieldCandidate is a helper function to yield results.
 		// Won't yield if the resource was last deleted.
-		yieldCandidate := func(key MetaDataKey) bool {
-			if key.Action == DataActionDeleted {
+		yieldCandidate := func() bool {
+			if candidateKey.Action == DataActionDeleted {
 				// Skip because the resource was last deleted.
 				return true
 			}
-			return yield(key, nil)
+			return yield(*candidateKey, nil)
 		}
 
 		for key, err := range iter {
@@ -311,7 +311,7 @@ func (d *metadataStore) ListResourceKeysAtRevision(ctx context.Context, key Meta
 			// - We reached the next resource.
 			// - We reached a resource version greater than the target resource version.
 			if !metaKey.SameResource(*candidateKey) || metaKey.ResourceVersion > rv {
-				if !yieldCandidate(*candidateKey) {
+				if !yieldCandidate() {
 					return
 				}
 				// If we moved to a different resource and the resource version matches, make it the new candidate
@@ -328,7 +328,7 @@ func (d *metadataStore) ListResourceKeysAtRevision(ctx context.Context, key Meta
 		}
 		if candidateKey != nil {
 			// Yield the last selected object
-			if !yieldCandidate(*candidateKey) {
+			if !yieldCandidate() {
 				return
 			}
 		}
