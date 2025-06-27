@@ -220,6 +220,8 @@ export function SaveProvisionedDashboardForm({
       }, 100);
       return () => clearTimeout(timer);
     }
+    // Return undefined when condition is not met
+    return undefined;
   }, [lastUsedSaveMode, autofillDisabledThisSession, isNew, readOnly, defaultValues, instantAutoFill]);
 
   const onRequestError = (error: unknown) => {
@@ -383,11 +385,6 @@ export function SaveProvisionedDashboardForm({
     }
   };
 
-  // Always use serial mode for the regular autofill button
-  const handleAIFillAll = async () => {
-    await handleAIFillAllInternal(false);
-  };
-
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
     // Validate required fields
@@ -420,13 +417,15 @@ export function SaveProvisionedDashboardForm({
   const handleTraditionalSave = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Mark traditional mode as used and disable autofill for this session
+    // Mark traditional mode as used
     saveLastUsedMode('traditional');
-    setAutofillDisabledThisSession(true);
     
     // Execute the normal form submit
     const formData = methods.getValues();
     await handleFormSubmit(formData);
+    
+    // Only disable autofill after successful save
+    setAutofillDisabledThisSession(true);
   };
 
   // Magic save handler that combines AI autofill and save
@@ -595,57 +594,81 @@ export function SaveProvisionedDashboardForm({
             autofillDisabledThisSession={autofillDisabledThisSession}
           />
 
-          {/* Comprehensive AI autofill button for all fields */}
-          {isNew && !fieldsAutoFilled && !autofillDisabledThisSession && (
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={aiLoading.all ? "spinner" : "ai-sparkle"}
-              onClick={handleAIFillAll}
-              fill="outline"
-              disabled={Object.values(aiLoading).some(loading => loading)}
-              tooltip={t(
-                'dashboard-scene.save-provisioned-dashboard-form.ai-fill-all-tooltip',
-                'AI autofill all fields sequentially'
-              )}
-            >
-              {aiLoading.all 
-                ? t('dashboard-scene.save-provisioned-dashboard-form.ai-generating', 'Generating all fields...')
-                : t('dashboard-scene.save-provisioned-dashboard-form.ai-fill-all-comprehensive', 'AI autofill all fields')
-              }
-            </Button>
-          )}
-
           <Stack gap={2}>
             <Stack direction="row" gap={2}>
-              {/* Traditional Save Button */}
-              <Button 
-                variant={lastUsedSaveMode === 'traditional' ? 'primary' : 'secondary'} 
-                onClick={handleTraditionalSave}
-                disabled={request.isLoading || !isDirty || readOnly}
-              >
-                {request.isLoading && lastUsedSaveMode === 'traditional'
-                  ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-                  : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
-              </Button>
-              
-              {/* Magic Save Button */}
-              {!autofillDisabledThisSession && (
-                <Button 
-                  variant={lastUsedSaveMode === 'magic' ? 'primary' : 'secondary'}
-                  icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
-                  onClick={handleMagicSave}
-                  disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
-                  tooltip={t(
-                    'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
-                    'AI autofill all fields in parallel and save instantly'
+              {/* Primary button (always on left) */}
+              {lastUsedSaveMode === 'traditional' ? (
+                <>
+                  {/* Traditional Save Button (Primary) */}
+                  <Button 
+                    variant="primary"
+                    onClick={handleTraditionalSave}
+                    disabled={request.isLoading || !isDirty || readOnly}
+                    tooltip={t(
+                      'dashboard-scene.save-provisioned-dashboard-form.traditional-save-tooltip',
+                      'Save dashboard without AI assistance'
+                    )}
+                  >
+                    {request.isLoading && !aiLoading.magicSave
+                      ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+                      : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+                  </Button>
+                  
+                  {/* Magic Save Button (Secondary) */}
+                  {!autofillDisabledThisSession && (
+                    <Button 
+                      variant="secondary"
+                      icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
+                      onClick={handleMagicSave}
+                      disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
+                      tooltip={t(
+                        'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
+                        'AI autofill all fields and save automatically'
+                      )}
+                    >
+                      {aiLoading.magicSave 
+                        ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
+                        : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Quick Save')
+                      }
+                    </Button>
                   )}
-                >
-                  {aiLoading.magicSave 
-                    ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
-                    : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Save')
-                  }
-                </Button>
+                </>
+              ) : (
+                <>
+                  {/* Magic Save Button (Primary) */}
+                  {!autofillDisabledThisSession && (
+                    <Button 
+                      variant="primary"
+                      icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
+                      onClick={handleMagicSave}
+                      disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
+                      tooltip={t(
+                        'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
+                        'AI autofill all fields and save automatically'
+                      )}
+                    >
+                      {aiLoading.magicSave 
+                        ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
+                        : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Quick Save')
+                      }
+                    </Button>
+                  )}
+                  
+                  {/* Traditional Save Button (Secondary) */}
+                  <Button 
+                    variant="secondary"
+                    onClick={handleTraditionalSave}
+                    disabled={request.isLoading || !isDirty || readOnly}
+                    tooltip={t(
+                      'dashboard-scene.save-provisioned-dashboard-form.traditional-save-tooltip',
+                      'Save dashboard without AI assistance'
+                    )}
+                  >
+                    {request.isLoading && !aiLoading.magicSave
+                      ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+                      : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+                  </Button>
+                </>
               )}
             </Stack>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
