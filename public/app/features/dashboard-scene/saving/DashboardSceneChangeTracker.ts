@@ -173,6 +173,7 @@ export class DashboardSceneChangeTracker {
         if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
           const eventPayload = (event as any)?.payload?.partialUpdate;
           if (eventPayload?.from && eventPayload?.to) {
+            console.log({ eventPayload });
             const { from, to } = eventPayload;
             window.parent.postMessage(
               {
