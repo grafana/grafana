@@ -67,7 +67,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                       | Yes                |
 | `pinNavItems`                          | Enables pinning of nav items                                                                                                       | Yes                |
 | `ssoSettingsLDAP`                      | Use the new SSO Settings API to configure LDAP                                                                                     | Yes                |
-| `failWrongDSUID`                       | Throws an error if a data source has an invalid UIDs                                                                               | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                      | Yes                |
 | `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                               | Yes                |
 | `alertingQueryAndExpressionsStepMode`  | Enables step mode for alerting queries and expressions                                                                             | Yes                |
