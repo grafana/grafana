@@ -87,7 +87,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return <Carousel images={carouselImages} />;
   }
 
-  if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {
+  if (pageId === PluginTabIds.PLUGINDETAILS && showDetails) {
     return (
       <div>
         <PluginDetailsPanel pluginExtentionsInfo={info} plugin={plugin} width={'auto'} />
