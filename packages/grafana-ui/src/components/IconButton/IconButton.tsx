@@ -4,7 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2, colorManipulator, deprecationWarning } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
 import { IconRenderer } from '../Button/Button';
@@ -109,12 +109,18 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
 
   let iconColor = theme.colors.text.primary;
+  let activeColor = theme.colors.primary.contrastColor;
 
   if (variant === 'primary') {
     iconColor = theme.colors.primary.text;
   } else if (variant === 'destructive') {
     iconColor = theme.colors.error.text;
+    activeColor = theme.colors.error.contrastColor;
+  } else if (variant === 'secondary') {
+    activeColor = theme.colors.secondary.contrastColor;
   }
+
+  console.log('IconButton styles', { activeColor, iconColor, variant });
 
   return {
     button: css({
@@ -129,6 +135,17 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       alignItems: 'center',
       padding: 0,
       color: iconColor,
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transitionDuration: '0.2s',
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        transitionProperty: 'color',
+      },
+      [theme.transitions.handleMotion('no-preference')]: {
+        transitionDuration: '0.2s',
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        transitionProperty: 'transform, color',
+      },
 
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
@@ -151,7 +168,7 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         },
       },
 
-      '&:focus, &:focus-visible': getFocusStyles(theme),
+      '&:focus, &:focus-visible': getButtonFocusStyles(theme),
 
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
@@ -161,6 +178,11 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
             variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, 0.12),
           opacity: 1,
         },
+      },
+
+      '&:active': {
+        transform: 'scale(0.95)',
+        color: activeColor,
       },
     }),
     icon: css({
