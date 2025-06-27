@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -440,32 +439,4 @@ func (s *EncryptionManager) ReEncryptDataKeys(ctx context.Context, namespace str
 	s.log.Info("Data keys re-encryption finished successfully")
 
 	return nil
-}
-
-func (s *EncryptionManager) Run(ctx context.Context) error {
-	gc := time.NewTicker(s.cfg.SecretsManagement.Encryption.DataKeysCleanupInterval)
-
-	grp, gCtx := errgroup.WithContext(ctx)
-
-	for _, p := range s.providers {
-		if svc, ok := p.(encryption.BackgroundProvider); ok {
-			grp.Go(func() error {
-				return svc.Run(gCtx)
-			})
-		}
-	}
-
-	for {
-		select {
-		case <-gCtx.Done():
-			s.log.Debug("Grafana is shutting down; stopping...")
-			gc.Stop()
-
-			if err := grp.Wait(); err != nil && !errors.Is(err, context.Canceled) {
-				return err
-			}
-
-			return nil
-		}
-	}
 }

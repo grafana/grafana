@@ -247,45 +247,6 @@ func (p *fakeProvider) Decrypt(_ context.Context, _ []byte) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func TestEncryptionService_Run(t *testing.T) {
-	svc := setupTestService(t)
-	ctx := context.Background()
-	namespace := "test-namespace"
-
-	t.Run("should stop with no error once the context is finished", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
-		defer cancel()
-
-		err := svc.Run(ctx)
-		assert.NoError(t, err)
-	})
-
-	t.Run("should trigger cache clean up", func(t *testing.T) {
-		restoreTimeNowAfterTestExec(t)
-
-		// Encrypt to force data encryption key generation
-		encrypted, err := svc.Encrypt(ctx, namespace, []byte("grafana"))
-		require.NoError(t, err)
-
-		// Ten minutes later (after caution period)
-		// Look SecretsService.cacheDataKey for more details.
-		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
-
-		// Decrypt to ensure data encryption key is cached
-		_, err = svc.Decrypt(ctx, namespace, encrypted)
-		require.NoError(t, err)
-
-		// Twenty minutes later (after caution period + cache ttl)
-		now = func() time.Time { return time.Now().Add(20 * time.Minute) }
-
-		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-		defer cancel()
-
-		err = svc.Run(ctx)
-		require.NoError(t, err)
-	})
-}
-
 func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 	t.Skip() // TODO: skipped since reencrypt is not fully working, unskip when fixed
 
