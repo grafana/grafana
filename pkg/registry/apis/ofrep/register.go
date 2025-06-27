@@ -10,20 +10,22 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/gorilla/mux"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ builder.APIGroupBuilder = (*APIBuilder)(nil)
@@ -31,6 +33,11 @@ var _ builder.APIGroupRouteProvider = (*APIBuilder)(nil)
 var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
+
+var groupVersion = schema.GroupVersion{
+	Group:   "features.grafana.app",
+	Version: "v0alpha1",
+}
 
 type APIBuilder struct {
 	providerType    string
@@ -66,18 +73,19 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
-	return schema.GroupVersion{
-		Group:   "features.grafana.app",
-		Version: "v0alpha1",
-	}
+	return groupVersion
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	metav1.AddToGroupVersion(scheme, b.GetGroupVersion())
-	return scheme.SetVersionPriority(b.GetGroupVersion())
+	metav1.AddToGroupVersion(scheme, groupVersion)
+	scheme.AddKnownTypes(groupVersion, &metav1.Status{}) // for noop
+	return scheme.SetVersionPriority(groupVersion)
 }
 
 func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	storage := map[string]rest.Storage{}
+	storage["noop"] = &NoopConnector{}
+	apiGroupInfo.VersionedResourcesStorageMap[groupVersion.Version] = storage
 	return nil
 }
 
@@ -91,20 +99,124 @@ func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
 }
 
+func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	oas.Info.Description = "Proxy access to open feature flags"
+
+	// Remove the NOOP connector
+	delete(oas.Paths.Paths, "/apis/features.grafana.app/v0alpha1/namespaces/{namespace}/noop/{name}")
+	return oas, nil
+}
+
 func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+	evaluationContext := &spec3.RequestBody{
+		RequestBodyProps: spec3.RequestBodyProps{
+			Description: "EvaluationContext provides ambient information for the purposes of flag evaluation",
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema: spec.MapProperty(nil),
+						Example: map[string]any{
+							"example": "aaa",
+							"yyy":     true,
+						},
+					},
+				},
+			},
+		}}
+
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "ofrep/v1/evaluate/flags/",
 				Spec: &spec3.PathProps{
-					Post: &spec3.Operation{},
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Tags:        []string{"Evaluate"},
+							Description: "Evaluate all flags",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
+							RequestBody: evaluationContext,
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: spec.MapProperty(nil), // TODO... real type?
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				Handler: b.allFlagsHandler,
 			},
 			{
 				Path: "ofrep/v1/evaluate/flags/{flagKey}",
 				Spec: &spec3.PathProps{
-					Post: &spec3.Operation{},
+					Post: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Tags:        []string{"Evaluate"},
+							Description: "Evaluate a single flag",
+							Parameters: []*spec3.Parameter{
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "namespace",
+										In:          "path",
+										Required:    true,
+										Example:     "default",
+										Description: "workspace",
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "flagKey",
+										In:          "path",
+										Required:    true,
+										Example:     "unifiedStorageSearch", // ???
+										Description: "flag key",
+										Schema:      spec.StringProperty(),
+									},
+								},
+							},
+							RequestBody: evaluationContext,
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: spec.MapProperty(nil), // anything
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				Handler: b.oneFlagHandler,
 			},
