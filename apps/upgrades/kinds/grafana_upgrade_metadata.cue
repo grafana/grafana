@@ -20,6 +20,22 @@ grafana_upgrade_metadata: {
 					state: *"new" | "dismissed" | "failed" | "succeeded"
 				}
 			}
+			customRoutes: {
+				"/checkForUpgrades": {
+					GET: {
+						request: {
+							body: {
+								limit: int
+							}
+						}
+						response: {
+							target_version: string
+							starting_version: string
+							state: *"new" | "dismissed" | "failed" | "succeeded"
+						}
+					}
+				}
+			}
 		}
 	}
 }

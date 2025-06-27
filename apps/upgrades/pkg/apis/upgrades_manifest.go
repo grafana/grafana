@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v0alpha1 "github.com/grafana/grafana/apps/upgrades/pkg/apis/upgrades/v0alpha1"
 )
@@ -25,6 +27,84 @@ var appManifestData = app.ManifestData{
 			Versions: []app.ManifestKindVersion{
 				{
 					Name: "v0alpha1",
+					CustomRoutes: map[string]spec3.PathProps{
+						"/checkForUpgrades": {
+							Get: &spec3.Operation{
+								OperationProps: spec3.OperationProps{
+
+									RequestBody: &spec3.RequestBody{
+										RequestBodyProps: spec3.RequestBodyProps{
+
+											Required: true,
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"object"},
+																Properties: map[string]spec.Schema{
+																	"limit": {
+																		SchemaProps: spec.SchemaProps{
+																			Type: []string{"integer"},
+																		},
+																	},
+																},
+																Required: []string{
+																	"limit",
+																},
+															}},
+													}},
+											},
+										}},
+									Responses: &spec3.Responses{
+										ResponsesProps: spec3.ResponsesProps{
+											Default: &spec3.Response{
+												ResponseProps: spec3.ResponseProps{
+													Description: "Default OK response",
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{
+																	SchemaProps: spec.SchemaProps{
+																		Type: []string{"object"},
+																		Properties: map[string]spec.Schema{
+																			"starting_version": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																			"state": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																					Enum: []interface{}{
+																						"new",
+																						"dismissed",
+																						"failed",
+																						"succeeded",
+																					},
+																				},
+																			},
+																			"target_version": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"string"},
+																				},
+																			},
+																		},
+																		Required: []string{
+																			"target_version",
+																			"starting_version",
+																			"state",
+																		},
+																	}},
+															}},
+													},
+												},
+											},
+										}},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
