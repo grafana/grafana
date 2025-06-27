@@ -432,6 +432,18 @@ SVG icon display with theming and stroke support.
 - **File**: [icon.tsx](./icon.tsx)
 - **Features**: Resource binding, SVG sanitization, stroke styling
 
+### Server Infrastructure Elements
+
+Comprehensive server visualization elements with multiple variants and status indicators.
+
+- **Main Server Element**: [server/server.tsx](./server/server.tsx) - Factory element with multiple server types
+- **Server Types**:
+  - **Single Server**: [server/types/single.tsx](./server/types/single.tsx)
+  - **Server Stack**: [server/types/stack.tsx](./server/types/stack.tsx)
+  - **Database Server**: [server/types/database.tsx](./server/types/database.tsx)
+  - **Terminal Server**: [server/types/terminal.tsx](./server/types/terminal.tsx)
+- **Features**: Multiple variants, status colors, blinking animations, motion-safe animations, SVG composition, type selection dropdown
+
 ### Basic Shape Elements
 
 Simple rectangular elements for basic layouts.
