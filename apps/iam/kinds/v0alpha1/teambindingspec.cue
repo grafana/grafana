@@ -7,14 +7,14 @@ TeamBindingSpec: {
 		// permission of the identity in the team
 		permission: TeamPermission
 	}
-	
-	#TeamRef: {
-		// uid of the Team
-		name: string
-	}
 
 	subjects: [...#Subject]
-	teamRef: #TeamRef
+	teamRef: TeamRef
+}
+
+TeamRef:{
+	// Name is the unique identifier for a team.
+	name: string
 }
 
 TeamPermission: "admin" | "member"

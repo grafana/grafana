@@ -47,10 +47,11 @@ var UserResourceInfo = utils.NewResourceInfo(userKind.Group(), userKind.Version(
 	},
 )
 
-var TeamResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"teams", "team", "Team",
-	func() runtime.Object { return &Team{} },
-	func() runtime.Object { return &TeamList{} },
+var teamKind = iamv0alpha1.TeamKind()
+var TeamResourceInfo = utils.NewResourceInfo(teamKind.Group(), teamKind.Version(),
+	teamKind.GroupVersionResource().Resource, strings.ToLower(teamKind.Kind()), teamKind.Kind(),
+	func() runtime.Object { return teamKind.ZeroValue() },
+	func() runtime.Object { return teamKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -59,7 +60,7 @@ var TeamResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*Team)
+			m, ok := obj.(*iamv0alpha1.Team)
 			if !ok {
 				return nil, fmt.Errorf("expected team")
 			}
@@ -126,10 +127,13 @@ var SSOSettingResourceInfo = utils.NewResourceInfo(
 	},
 )
 
+var teamBindingKind = iamv0alpha1.TeamBindingKind()
 var TeamBindingResourceInfo = utils.NewResourceInfo(
-	GROUP, VERSION, "teambindings", "teambinding", "TeamBinding",
-	func() runtime.Object { return &TeamBinding{} },
-	func() runtime.Object { return &TeamBindingList{} },
+	teamBindingKind.Group(), teamBindingKind.Version(),
+	teamBindingKind.GroupVersionResource().Resource,
+	strings.ToLower(teamBindingKind.Kind()), teamBindingKind.Kind(),
+	func() runtime.Object { return teamBindingKind.ZeroValue() },
+	func() runtime.Object { return teamBindingKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -137,13 +141,13 @@ var TeamBindingResourceInfo = utils.NewResourceInfo(
 			{Name: "Created At", Type: "string", Format: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*TeamBinding)
+			m, ok := obj.(*iamv0alpha1.TeamBinding)
 			if !ok {
 				return nil, fmt.Errorf("expected team binding")
 			}
 			return []interface{}{
 				m.Name,
-				m.Spec.Team.Name,
+				m.Spec.TeamRef.Name,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
@@ -166,17 +170,17 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		schema.GroupVersion{Group: GROUP, Version: version},
 		&iamv0alpha1.User{},
 		&iamv0alpha1.UserList{},
-		&UserTeamList{},
+		&iamv0alpha1.UserTeamList{},
 		&iamv0alpha1.ServiceAccount{},
 		&iamv0alpha1.ServiceAccountList{},
-		&ServiceAccountTokenList{},
-		&Team{},
-		&TeamList{},
+		&iamv0alpha1.ServiceAccountTokenList{},
+		&iamv0alpha1.Team{},
+		&iamv0alpha1.TeamList{},
 		&DisplayList{},
 		&SSOSetting{},
 		&SSOSettingList{},
-		&TeamBinding{},
-		&TeamBindingList{},
+		&iamv0alpha1.TeamBinding{},
+		&iamv0alpha1.TeamBindingList{},
 		&TeamMemberList{},
 	)
 }

@@ -3,13 +3,15 @@ package serviceaccount
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	claims "github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -32,7 +34,7 @@ type LegacyTokenRest struct {
 
 // New implements rest.Storage.
 func (s *LegacyTokenRest) New() runtime.Object {
-	return &iamv0.UserTeamList{}
+	return &iamv0alpha1.ServiceAccountTokenList{}
 }
 
 // Destroy implements rest.Storage.
@@ -70,10 +72,10 @@ func (s *LegacyTokenRest) Connect(ctx context.Context, name string, options runt
 			return
 		}
 
-		list := &iamv0.ServiceAccountTokenList{Items: make([]iamv0.ServiceAccountToken, 0, len(res.Items))}
+		list := &iamv0alpha1.ServiceAccountTokenList{Items: make([]iamv0alpha1.ServiceAccountToken, 0, len(res.Items))}
 
 		for _, t := range res.Items {
-			list.Items = append(list.Items, mapToToken(t))
+			list.Items = append(list.Items, mapToToken(t, ns))
 		}
 
 		list.Continue = common.OptionalFormatInt(res.Continue)
@@ -92,7 +94,7 @@ func (s *LegacyTokenRest) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
-func mapToToken(t legacy.ServiceAccountToken) iamv0.ServiceAccountToken {
+func mapToToken(t legacy.ServiceAccountToken, ns claims.NamespaceInfo) iamv0alpha1.ServiceAccountToken {
 	var expires, lastUsed *metav1.Time
 
 	if t.Expires != nil {
@@ -105,11 +107,19 @@ func mapToToken(t legacy.ServiceAccountToken) iamv0.ServiceAccountToken {
 		lastUsed = &ts
 	}
 
-	return iamv0.ServiceAccountToken{
-		Name:     t.Name,
-		Expires:  expires,
-		LastUsed: lastUsed,
-		Revoked:  t.Revoked,
-		Created:  metav1.NewTime(t.Created),
+	return iamv0alpha1.ServiceAccountToken{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              strconv.FormatInt(t.ID, 10),
+			Namespace:         ns.Value,
+			CreationTimestamp: metav1.NewTime(t.Created),
+			ResourceVersion:   strconv.FormatInt(t.Updated.UnixMilli(), 10),
+		},
+		Spec: iamv0alpha1.ServiceAccountTokenSpec{
+			Name:     t.Name,
+			Expires:  expires.Time,
+			LastUsed: lastUsed.Time,
+			Revoked:  t.Revoked,
+			Created:  t.Created,
+		},
 	}
 }

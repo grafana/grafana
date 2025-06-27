@@ -14,5 +14,7 @@ manifest: {
 		team,
 		teambinding,
 		serviceaccount,
+		serviceaccounttoken,
+		userteam,
 	]
 }

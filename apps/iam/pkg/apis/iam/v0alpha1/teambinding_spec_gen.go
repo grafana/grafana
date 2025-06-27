@@ -24,26 +24,26 @@ const (
 )
 
 // +k8s:openapi-gen=true
-type TeamBindingspecTeamRef struct {
-	// uid of the Team
+type TeamBindingTeamRef struct {
+	// Name is the unique identifier for a team.
 	Name string `json:"name"`
 }
 
-// NewTeamBindingspecTeamRef creates a new TeamBindingspecTeamRef object.
-func NewTeamBindingspecTeamRef() *TeamBindingspecTeamRef {
-	return &TeamBindingspecTeamRef{}
+// NewTeamBindingTeamRef creates a new TeamBindingTeamRef object.
+func NewTeamBindingTeamRef() *TeamBindingTeamRef {
+	return &TeamBindingTeamRef{}
 }
 
 // +k8s:openapi-gen=true
 type TeamBindingSpec struct {
 	Subjects []TeamBindingspecSubject `json:"subjects"`
-	TeamRef  TeamBindingspecTeamRef   `json:"teamRef"`
+	TeamRef  TeamBindingTeamRef       `json:"teamRef"`
 }
 
 // NewTeamBindingSpec creates a new TeamBindingSpec object.
 func NewTeamBindingSpec() *TeamBindingSpec {
 	return &TeamBindingSpec{
 		Subjects: []TeamBindingspecSubject{},
-		TeamRef:  *NewTeamBindingspecTeamRef(),
+		TeamRef:  *NewTeamBindingTeamRef(),
 	}
 }
