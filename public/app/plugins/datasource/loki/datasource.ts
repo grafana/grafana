@@ -147,7 +147,6 @@ export class LokiDatasource
   private logContextProvider: LogContextProvider;
   languageProvider: LanguageProvider;
   maxLines: number;
-  predefinedOperations: string;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -158,7 +157,6 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
-    this.predefinedOperations = settingsData.predefinedOperations ?? '';
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
@@ -343,9 +341,7 @@ export class LokiDatasource
 
     const startTime = new Date();
     return this.runQuery(fixedRequest).pipe(
-      tap((response) =>
-        trackQuery(response, fixedRequest, startTime, { predefinedOperations: this.predefinedOperations })
-      )
+      tap((response) => trackQuery(response, fixedRequest, startTime))
     );
   }
 

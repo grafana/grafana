@@ -1837,7 +1837,8 @@
       "metadata": {
         "name": "lokiPredefinedOperations",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-06-02T10:52:36Z"
+        "creationTimestamp": "2023-06-02T10:52:36Z",
+        "deletionTimestamp": "2025-06-27T08:08:44Z"
       },
       "spec": {
         "description": "Adds predefined query operations to Loki query editor",

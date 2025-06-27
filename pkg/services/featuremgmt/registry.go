@@ -263,13 +263,6 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:         "lokiPredefinedOperations",
-			Description:  "Adds predefined query operations to Loki query editor",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "pluginsFrontendSandbox",
 			Description: "Enables the plugins frontend sandbox",
 			Stage:       FeatureStagePrivatePreview,

@@ -307,7 +307,6 @@ describe('runSplitQuery()', () => {
           ],
           request,
           new Date(),
-          { predefinedOperations: '' }
         );
       });
     });
@@ -337,7 +336,6 @@ describe('runSplitQuery()', () => {
           ],
           request,
           new Date(),
-          { predefinedOperations: '' }
         );
       });
     });
