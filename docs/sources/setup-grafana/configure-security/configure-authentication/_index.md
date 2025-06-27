@@ -19,22 +19,22 @@ Grafana provides many ways to authenticate users. Some authentication integratio
 
 The following table shows all supported authentication methods and the features available for them. [Team sync](../configure-team-sync/) and [active sync](enhanced-ldap/#active-ldap-synchronization) are only available in Grafana Enterprise.
 
-| Authentication method               | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
-| :---------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
-| [Anonymous access](anonymous-auth/) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
-| [Auth Proxy](auth-proxy/)           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
-| [Azure AD OAuth](azuread/)          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Basic auth](grafana/)              | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
-| [Passwordless auth](passwordless/)  | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
-| [Generic OAuth](generic-oauth/)     | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
-| [GitHub OAuth](github/)             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [GitLab OAuth](gitlab/)             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Google OAuth](google/)             | yes               | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           |
-| [Grafana.com OAuth](grafana-cloud/) | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           |
-| [Okta OAuth](okta/)                 | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [SAML](saml/) (Enterprise only)     | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [LDAP](ldap/)                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
-| [JWT Proxy](jwt/)                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
+| Authentication method               | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout | SCIM support |
+| :---------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ | :----------- |
+| [Anonymous access](anonymous-auth/) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
+| [Auth Proxy](auth-proxy/)           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           | N/A          |
+| [Azure AD OAuth](azuread/)          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [Basic auth](grafana/)              | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
+| [Passwordless auth](passwordless/)  | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
+| [Generic OAuth](generic-oauth/)     | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           | N/A          |
+| [GitHub OAuth](github/)             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [GitLab OAuth](gitlab/)             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [Google OAuth](google/)             | yes               | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           | N/A          |
+| [Grafana.com OAuth](grafana-cloud/) | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           | N/A          |
+| [Okta OAuth](okta/)                 | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
+| [SAML](saml/) (Enterprise only)     | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | yes          |
+| [LDAP](ldap/)                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           | N/A          |
+| [JWT Proxy](jwt/)                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           | N/A          |
 
 Fields explanation:
 
@@ -57,6 +57,8 @@ Fields explanation:
 **Auto Login:** Automatically redirects to provider login page if user is not logged in \* for OAuth; Only works if it's the only configured provider
 
 **Single Logout:** Logging out from Grafana also logs you out of provider session
+
+**SCIM support:** Support for SCIM provisioning. Supported Identity Providers are Azure AD and Okta.
 
 ## Configuring multiple identity providers
 
