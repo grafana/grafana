@@ -91,7 +91,7 @@ const config = {
     },
     {
       url: '${HOST}/org/teams',
-      threshold: 0,
+      threshold: 1,
     },
     {
       url: '${HOST}/plugins',
@@ -107,10 +107,6 @@ const config = {
     },
     {
       url: '${HOST}/dashboards',
-      threshold: 2,
-    },
-    {
-      url: '${HOST}/org/teams',
       threshold: 2,
     },
   ],
