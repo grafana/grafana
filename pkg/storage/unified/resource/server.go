@@ -156,6 +156,10 @@ type SearchOptions struct {
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
+	// Build empty index on startup for large indexes so that
+	// we don't re-attempt to build the index later.
+	InitMaxCount int
+
 	// Channel to watch for index events (for testing)
 	IndexEventsChan chan *IndexEvent
 

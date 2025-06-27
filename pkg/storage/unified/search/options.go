@@ -38,6 +38,7 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			Resources:       docs,
 			WorkerThreads:   cfg.IndexWorkers,
 			InitMinCount:    cfg.IndexMinCount,
+			InitMaxCount:    cfg.IndexMaxCount,
 			RebuildInterval: cfg.IndexRebuildInterval,
 		}, nil
 	}

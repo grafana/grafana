@@ -28,6 +28,16 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		_, err = s.NewKey("dataSyncerInterval", "10m")
 		assert.NoError(t, err)
 
+		// Add unified_storage section for index settings
+		unifiedStorageSection, err := cfg.Raw.NewSection("unified_storage")
+		assert.NoError(t, err)
+
+		_, err = unifiedStorageSection.NewKey("index_min_count", "5")
+		assert.NoError(t, err)
+
+		_, err = unifiedStorageSection.NewKey("index_max_count", "1000")
+		assert.NoError(t, err)
+
 		cfg.setUnifiedStorageConfig()
 
 		value, exists := cfg.UnifiedStorage["playlists.playlist.grafana.app"]
@@ -39,5 +49,22 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			DataSyncerRecordsLimit:               1001,
 			DataSyncerInterval:                   time.Minute * 10,
 		})
+
+		// Test that index settings are correctly parsed
+		assert.Equal(t, 5, cfg.IndexMinCount)
+		assert.Equal(t, 1000, cfg.IndexMaxCount)
+	})
+
+	t.Run("read unified_storage configs with defaults", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		// Don't add any custom index settings, test defaults
+		cfg.setUnifiedStorageConfig()
+
+		// Test that default index settings are applied
+		assert.Equal(t, 1, cfg.IndexMinCount)
+		assert.Equal(t, 0, cfg.IndexMaxCount)
 	})
 }

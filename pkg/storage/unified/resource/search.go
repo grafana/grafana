@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
@@ -117,6 +118,7 @@ type searchSupport struct {
 	builders     *builderCache
 	initWorkers  int
 	initMinSize  int
+	initMaxSize  int
 
 	// Index queue processors
 	indexQueueProcessorsMutex sync.Mutex
@@ -156,6 +158,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		log:                   slog.Default().With("logger", "resource-search"),
 		initWorkers:           opts.WorkerThreads,
 		initMinSize:           opts.InitMinCount,
+		initMaxSize:           opts.InitMaxCount,
 		indexMetrics:          indexMetrics,
 		clientIndexEventsChan: opts.IndexEventsChan,
 		indexEventsChan:       make(chan *IndexEvent),
@@ -406,8 +409,17 @@ func (s *searchSupport) buildIndexes(ctx context.Context, rebuild bool) (int, er
 				// we need to clear the cache to make sure we get the latest usage insights data
 				s.builders.clearNamespacedCache(info.NamespacedResource)
 			}
-			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			totalBatchesIndexed++
+
+			// If the count is too large, we need to set the index to empty.
+			// Only do this if the max size is set to a non-zero (default) value.
+			if s.initMaxSize > 0 && (info.Count > int64(s.initMaxSize)) {
+				s.log.Info("setting empty index for resource with count greater than max size", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource, "count", info.Count, "maxSize", s.initMaxSize)
+				_, err := s.buildEmptyIndex(ctx, info.NamespacedResource, info.ResourceVersion)
+				return err
+			}
+
+			s.log.Debug("building index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			_, _, err := s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
 			return err
 		})
@@ -715,6 +727,21 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	return index, rv, err
 }
 
+// buildEmptyIndex creates an empty index without adding any documents
+func (s *searchSupport) buildEmptyIndex(ctx context.Context, nsr NamespacedResource, rv int64) (ResourceIndex, error) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildEmptyIndex")
+	defer span.End()
+
+	fields := s.builders.GetFields(nsr)
+	s.log.Debug("Building empty index", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "rv", rv)
+
+	// Build an empty index by passing a builder function that doesn't add any documents
+	return s.search.BuildIndex(ctx, nsr, 0, rv, fields, func(index ResourceIndex) (int64, error) {
+		// Return the resource version without adding any documents to the index
+		return rv, nil
+	})
+}
+
 type builderCache struct {
 	// The default builder
 	defaultBuilder DocumentBuilder
@@ -855,4 +882,76 @@ func (s *builderCache) clearNamespacedCache(key NamespacedResource) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.ns.Remove(key)
+}
+
+// Test utilities for document building
+
+// testDocumentBuilder implements DocumentBuilder for testing
+type testDocumentBuilder struct{}
+
+func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+	// convert value to unstructured.Unstructured
+	var u unstructured.Unstructured
+	if err := u.UnmarshalJSON(value); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
+	}
+
+	title := ""
+	tags := []string{}
+	val := ""
+
+	spec, ok, _ := unstructured.NestedMap(u.Object, "spec")
+	if ok {
+		if v, ok := spec["title"]; ok {
+			title = v.(string)
+		}
+		if v, ok := spec["tags"]; ok {
+			if tagSlice, ok := v.([]interface{}); ok {
+				tags = make([]string, len(tagSlice))
+				for i, tag := range tagSlice {
+					if strTag, ok := tag.(string); ok {
+						tags[i] = strTag
+					}
+				}
+			}
+		}
+		if v, ok := spec["value"]; ok {
+			val = v.(string)
+		}
+	}
+	return &IndexableDocument{
+		Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Name:      u.GetName(),
+		},
+		Title: title,
+		Tags:  tags,
+		Fields: map[string]interface{}{
+			"value": val,
+		},
+	}, nil
+}
+
+// TestDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
+type TestDocumentBuilderSupplier struct {
+	GroupsResources map[string]string
+}
+
+func (s *TestDocumentBuilderSupplier) GetDocumentBuilders() ([]DocumentBuilderInfo, error) {
+	builders := make([]DocumentBuilderInfo, 0, len(s.GroupsResources))
+
+	// Add builders for all possible group/resource combinations
+	for group, resourceType := range s.GroupsResources {
+		builders = append(builders, DocumentBuilderInfo{
+			GroupResource: schema.GroupResource{
+				Group:    group,
+				Resource: resourceType,
+			},
+			Builder: &testDocumentBuilder{},
+		})
+	}
+
+	return builders, nil
 }

@@ -300,6 +300,8 @@ func (b *backend) GetResourceStats(ctx context.Context, namespace string, minCou
 			}
 			if row.Count > int64(minCount) {
 				res = append(res, row)
+			} else {
+				b.log.Debug("skipping stats for resource with count less than min count", "namespace", row.Namespace, "group", row.Group, "resource", row.Resource, "count", row.Count, "minCount", minCount)
 			}
 		}
 		return err
