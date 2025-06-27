@@ -34,10 +34,15 @@ test.describe(
     test('Should receive streaming data', async ({ gotoDashboardPage, dashboardPage, selectors }) => {
       await gotoDashboardPage({ uid: dashboardUID });
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Live'))).toBeVisible();
-      const tableRows = dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Visualization.Table.body)
-        .getByRole('row');
-      await expect(tableRows).toHaveCount(5);
+      await expect
+        .poll(
+          async () =>
+            await dashboardPage
+              .getByGrafanaSelector(selectors.components.Panels.Visualization.Table.body)
+              .getByRole('row')
+              .count()
+        )
+        .toBeGreaterThan(5);
     });
   }
 );
