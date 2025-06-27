@@ -99,7 +99,7 @@ require (
 	github.com/grafana/grafana-aws-sdk v0.38.7 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana-google-sdk-go v0.2.1 // @grafana/partner-datasources
+	github.com/grafana/grafana-google-sdk-go v0.4.1 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
@@ -193,7 +193,7 @@ require (
 	golang.org/x/time v0.11.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.34.0 // indirect; @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.16.0 // @grafana/oss-big-tent
-	google.golang.org/api v0.229.0 // @grafana/grafana-backend-group
+	google.golang.org/api v0.233.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.73.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.6 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
@@ -237,7 +237,7 @@ require (
 require (
 	cel.dev/expr v0.23.1 // indirect
 	cloud.google.com/go v0.120.0 // indirect
-	cloud.google.com/go/auth v0.16.0 // indirect
+	cloud.google.com/go/auth v0.16.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.5.0 // indirect
