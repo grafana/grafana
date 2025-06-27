@@ -11,7 +11,6 @@ import {
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -61,7 +60,7 @@ export function RowItemRepeater({
   return (
     <>
       <row.Component model={row} key={row.state.key!} />
-      {repeatedRows?.map((rowClone) => <rowClone.Component model={rowClone} key={rowClone.state.key!} />)}
+      {repeatedRows?.map((rowClone, index) => <rowClone.Component model={rowClone} key={index} />)}
     </>
   );
 }
@@ -98,12 +97,12 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   // Loop through variable values and create repeats
   for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
     const isSourceRow = rowIndex === 0;
-    const rowCloneKey = getCloneKey(row.state.key!, rowIndex);
+    //const rowCloneKey = getCloneKey(row.state.key!, rowIndex);
     const rowClone = isSourceRow
       ? row
-      : row.clone({ key: rowCloneKey, repeatByVariable: undefined, repeatedRows: undefined, layout: undefined });
+      : row.clone({ repeatByVariable: undefined, repeatedRows: undefined, layout: undefined });
 
-    const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);
+    const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout('sad', false);
 
     rowClone.setState({
       $variables: new SceneVariableSet({
