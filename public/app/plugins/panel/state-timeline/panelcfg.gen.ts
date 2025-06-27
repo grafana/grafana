@@ -10,11 +10,26 @@
 
 import * as ui from '@grafana/schema';
 
-export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {
+export enum StateTimelineLegendValues {
+  Duration = 'duration',
+  Occurrences = 'occurrences',
+  Percentage = 'percentage',
+}
+
+export interface StateTimelineLegendOptions extends ui.VizLegendOptions {
+  values: Array<StateTimelineLegendValues>;
+}
+
+export const defaultStateTimelineLegendOptions: Partial<StateTimelineLegendOptions> = {
+  values: [],
+};
+
+export interface Options extends ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {
   /**
    * Controls value alignment on the timelines
    */
   alignValue?: ui.TimelineValueAlignment;
+  legend: StateTimelineLegendOptions;
   /**
    * Merge equal consecutive values
    */

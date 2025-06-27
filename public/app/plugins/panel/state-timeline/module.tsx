@@ -16,7 +16,8 @@ import { NullEditorSettings } from '../timeseries/config';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { defaultFieldConfig, defaultOptions, FieldConfig, Options } from './panelcfg.gen';
+import { defaultFieldConfig, defaultOptions, FieldConfig, Options, StateTimelineLegendValues } from './panelcfg.gen';
+import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
@@ -157,18 +158,18 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
     commonOptionsBuilder.addLegendOptions(builder, false);
 
     builder.addMultiSelect({
-      path: 'legend.valueOptions',
+      path: 'legend.values',
       name: 'Legend values',
       description: 'Select values to show in the legend',
       category: ['Legend'],
+      defaultValue: StateTimelineLegendValues.Percentage,
       settings: {
         options: [
-          { value: ['duration'], label: 'Duration' },
-          { value: ['percentage'], label: 'Percentage' },
-          { value: ['occurrences'], label: 'Occurrences' },
+          { value: StateTimelineLegendValues.Duration, label: 'Duration' },
+          { value: StateTimelineLegendValues.Percentage, label: 'Percentage' },
+          { value: StateTimelineLegendValues.Occurrences, label: 'Occurrences' },
         ],
       },
-      defaultValue: ['duration', 'percentage', 'occurrences'],
       showIf: (c) => c.legend.showLegend !== false,
     });
 

@@ -605,12 +605,25 @@ interface StateDurationInfo {
   occurrences: number;
 }
 
-function calculateStateDurations(
-  fields: Field[],
-  timeRange: TimeRange,
-  frame: DataFrame,
-  frames: DataFrame[]
-): Map<string, StateDurationInfo> {
+interface TimelineLegendOptions extends VizLegendOptions {
+  values?: string[];
+}
+
+interface LegendDisplayValue {
+  numeric: number;
+  text: string;
+  title?: string;
+}
+
+interface DurationCalculationConfig {
+  fields: Field[];
+  timeRange: TimeRange;
+  frame: DataFrame;
+  frames: DataFrame[];
+}
+
+function calculateStateDurations(config: DurationCalculationConfig): Map<string, StateDurationInfo> {
+  const { fields, timeRange, frame, frames } = config;
   const durations = new Map<string, StateDurationInfo>();
 
   if (fields.length < 2) {
@@ -635,31 +648,27 @@ function calculateStateDurations(
         continue;
       }
 
-      const state = field.display!(value).text;
+      const displayProcessor = field.display;
+      const state = displayProcessor ? displayProcessor(value).text : String(value);
       const startTime = timeValues[j];
-      const endTime = timeValues[j + 1] || rangeEnd;
+      const endTime = timeValues[j + 1] ?? rangeEnd;
 
       if (startTime != null && endTime != null) {
-        const currentInfo = seriesDurations.get(state) || { duration: 0, percentage: 0, occurrences: 0 };
+        const currentInfo = seriesDurations.get(state) ?? { duration: 0, percentage: 0, occurrences: 0 };
 
         const duration = endTime - startTime;
-        currentInfo.duration += duration;
-        currentInfo.percentage = (currentInfo.duration / totalTimeRange) * 100;
+        const updatedInfo: StateDurationInfo = {
+          duration: currentInfo.duration + duration,
+          percentage: ((currentInfo.duration + duration) / totalTimeRange) * 100,
+          occurrences: lastState !== state ? currentInfo.occurrences + 1 : currentInfo.occurrences,
+        };
 
-        if (lastState !== state) {
-          currentInfo.occurrences++;
-        }
-
-        seriesDurations.set(state, currentInfo);
+        seriesDurations.set(state, updatedInfo);
         lastState = state;
       }
     }
 
-    // Use the same series name logic as in the main function
-    const seriesName =
-      frames.length > 1
-        ? frame.name || frame.refId || getFieldDisplayName(field, frame)
-        : getFieldDisplayName(field, frame);
+    const seriesName = getSeriesName(field, frame, frames);
     seriesDurations.forEach((info, state) => {
       durations.set(`${seriesName}:${state}`, info);
     });
@@ -668,219 +677,187 @@ function calculateStateDurations(
   return durations;
 }
 
-export function prepareTimelineLegendItems(
-  frames: DataFrame[] | undefined,
-  options: VizLegendOptions,
+function getSeriesName(field: Field, frame: DataFrame, frames: DataFrame[]): string {
+  return frames.length > 1
+    ? frame.name || frame.refId || getFieldDisplayName(field, frame)
+    : getFieldDisplayName(field, frame);
+}
+
+function createListLegendValues(info: StateDurationInfo, values: string[]): string[] {
+  const listValues: string[] = [];
+
+  if (values.includes('duration')) {
+    listValues.push(fmtDuration(info.duration));
+  }
+
+  if (values.includes('percentage')) {
+    listValues.push(`${info.percentage.toFixed(2)}%`);
+  }
+
+  if (values.includes('occurrences')) {
+    const occurrenceText = `${info.occurrences} ${info.occurrences === 1 ? 'time' : 'times'}`;
+    listValues.push(occurrenceText);
+  }
+
+  return listValues;
+}
+
+function createTableLegendValues(info: StateDurationInfo, values: string[]): LegendDisplayValue[] {
+  const tableValues: LegendDisplayValue[] = [];
+
+  if (values.includes('duration')) {
+    tableValues.push({
+      numeric: info.duration,
+      text: fmtDuration(info.duration),
+      title: 'Duration',
+    });
+  }
+
+  if (values.includes('percentage')) {
+    tableValues.push({
+      numeric: info.percentage,
+      text: `${info.percentage.toFixed(2)}%`,
+      title: 'Percentage',
+    });
+  }
+
+  if (values.includes('occurrences')) {
+    tableValues.push({
+      numeric: info.occurrences,
+      text: info.occurrences.toString(),
+      title: 'Occurrences',
+    });
+  }
+
+  return tableValues;
+}
+
+function createLegendLabel(
+  stateLabel: string,
+  seriesName: string,
+  multipleSeries: boolean,
+  listValues: string[],
+  displayMode?: string
+): string {
+  let label = multipleSeries ? `${seriesName}: ${stateLabel}` : stateLabel;
+
+  if (displayMode !== 'table' && listValues.length > 0) {
+    const valuesStr = `(${listValues.join(', ')})`;
+    label = multipleSeries ? `${label} ${valuesStr}` : `${stateLabel} ${valuesStr}`;
+  }
+
+  return label;
+}
+
+function processSeriesGroups(
+  seriesGroups: Map<string, Field[]>,
+  durations: Map<string, StateDurationInfo> | undefined,
+  options: TimelineLegendOptions,
   theme: GrafanaTheme2,
-  timeRange?: TimeRange
-): VizLegendItem[] | undefined {
-  if (!frames?.length || options.showLegend === false) {
-    return undefined;
-  }
-
-  const seriesGroups = new Map<string, Field[]>();
-  const allFrameFields: Field[] = [];
-  let totalNonTimeFieldCount = 0;
-
-  // Process all frames, not just the first one
-  frames.forEach((frame) => {
-    frame.fields.forEach((field) => {
-      if (field.type === FieldType.time) {
-        return;
-      }
-      if (field.config.custom?.hideFrom?.legend) {
-        return;
-      }
-
-      allFrameFields.push(field);
-      totalNonTimeFieldCount++;
-
-      // For multiple frames, use frame name; for single frame, use field name
-      const seriesName =
-        frames.length > 1
-          ? frame.name || frame.refId || getFieldDisplayName(field, frame)
-          : getFieldDisplayName(field, frame);
-      if (!seriesGroups.has(seriesName)) {
-        seriesGroups.set(seriesName, []);
-      }
-      seriesGroups.get(seriesName)!.push(field);
-    });
-  });
-
+  multipleSeries: boolean
+): VizLegendItem[] {
   const allLegendItems: VizLegendItem[] = [];
-  // For duration calculation, we need to process each frame separately
-  const allDurations = new Map<string, StateDurationInfo>();
-  if (timeRange) {
-    frames.forEach((frame) => {
-      const frameDurations = calculateStateDurations(frame.fields, timeRange, frame, frames);
-      frameDurations.forEach((info, key) => {
-        allDurations.set(key, info);
-      });
-    });
-  }
-  const durations = allDurations.size > 0 ? allDurations : undefined;
-  // Multiple series if we have multiple frames OR multiple distinct series names
-  const multipleSeries = frames.length > 1 || seriesGroups.size > 1;
 
   seriesGroups.forEach((fields, seriesName) => {
     const stateColors = new Map<string, string>();
+
     fields.forEach((field) => {
       field.values.forEach((v) => {
-        const state = field.display!(v);
-        if (state.color) {
-          stateColors.set(state.text, state.color);
+        const displayProcessor = field.display;
+        if (displayProcessor) {
+          const state = displayProcessor(v);
+          if (state.color) {
+            stateColors.set(state.text, state.color);
+          }
         }
       });
     });
 
     stateColors.forEach((color, stateLabel) => {
       if (stateLabel.length > 0) {
-        let label = multipleSeries ? `${seriesName}: ${stateLabel}` : stateLabel;
+        const info = durations ? durations.get(`${seriesName}:${stateLabel}`) : undefined;
+        const hasDurationData = info && info.duration > 0;
 
-        if (durations) {
-          const info = durations.get(`${seriesName}:${stateLabel}`);
-          if (info && info.duration > 0) {
-            const valueOptions = options.valueOptions || ['duration', 'percentage', 'occurrences'];
-            let formattedValues: string[] = [];
+        let label: string = createLegendLabel(stateLabel, seriesName, multipleSeries, [], options.displayMode);
 
-            if (valueOptions.includes('duration')) {
-              formattedValues.push(fmtDuration(info.duration));
-            }
+        let getDisplayValues: (() => LegendDisplayValue[]) | undefined;
 
-            if (valueOptions.includes('percentage')) {
-              formattedValues.push(`${info.percentage.toFixed(2)}%`);
-            }
+        if (hasDurationData) {
+          const values = options.values || ['percentage'];
 
-            if (valueOptions.includes('occurrences')) {
-              formattedValues.push(
-                options.displayMode === 'table'
-                  ? info.occurrences.toString()
-                  : `${info.occurrences} ${info.occurrences === 1 ? 'time' : 'times'}`
-              );
-            }
-
-            if (options.displayMode !== 'table' && formattedValues.length > 0) {
-              const valuesStr = `(${formattedValues.join(', ')})`;
-              label = multipleSeries ? `${label} ${valuesStr}` : `${stateLabel} ${valuesStr}`;
-            }
-
-            const displayValues: Array<{ numeric: number; text: string; title?: string }> = [];
-
-            if (options.displayMode === 'table') {
-              if (valueOptions.includes('duration')) {
-                displayValues.push({
-                  numeric: info.duration,
-                  text: fmtDuration(info.duration),
-                  title: 'Duration',
-                });
-              }
-
-              if (valueOptions.includes('percentage')) {
-                displayValues.push({
-                  numeric: info.percentage,
-                  text: `${info.percentage.toFixed(2)}%`,
-                  title: 'Percentage',
-                });
-              }
-
-              if (valueOptions.includes('occurrences')) {
-                displayValues.push({
-                  numeric: info.occurrences,
-                  text:
-                    options.displayMode === 'table'
-                      ? info.occurrences.toString()
-                      : `${info.occurrences} ${info.occurrences === 1 ? 'time' : 'times'}`,
-                  title: 'Occurrences',
-                });
-              }
-            }
-
-            allLegendItems.push({
-              label: label,
-              color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
-              yAxis: 1,
-              getDisplayValues:
-                options.displayMode === 'table'
-                  ? () => displayValues
-                  : displayValues.length
-                    ? () => displayValues
-                    : undefined,
-            });
+          if (options.displayMode === 'table') {
+            getDisplayValues = () => createTableLegendValues(info, values);
           } else {
-            return; // Skip states with no duration in the current time range
+            const listValues = createListLegendValues(info, values);
+            label = createLegendLabel(stateLabel, seriesName, multipleSeries, listValues, options.displayMode);
           }
-        } else {
-          allLegendItems.push({
-            label: label,
-            color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
-            yAxis: 1,
-          });
         }
+
+        allLegendItems.push({
+          label,
+          color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+          yAxis: 1,
+          ...(getDisplayValues && { getDisplayValues }),
+        });
       }
     });
   });
 
-  return allLegendItems.length > 0 ? allLegendItems : undefined;
+  return allLegendItems;
 }
 
-export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLegendItem[] | undefined {
-  if (!fields.length) {
+export function prepareTimelineLegendItems(
+  frames: DataFrame[] | undefined,
+  options: TimelineLegendOptions,
+  theme: GrafanaTheme2,
+  timeRange?: TimeRange
+): VizLegendItem[] | undefined {
+  if (!frames || options.showLegend === false) {
     return undefined;
   }
 
-  const items: VizLegendItem[] = [];
-  const fieldConfig = fields[0].config;
-  const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
-  const thresholds = fieldConfig.thresholds;
+  const seriesGroups = new Map<string, Field[]>();
 
-  // If thresholds are enabled show each step in the legend
-  // This ignores the hide from legend since the range is valid
-  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
-    return getThresholdItems(fieldConfig, theme);
-  }
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      if (field.type === FieldType.time || field.config.custom?.hideFrom?.legend) {
+        return;
+      }
 
-  // If thresholds are enabled show each step in the legend
-  if (colorMode.startsWith('continuous')) {
-    return undefined; // eventually a color bar
-  }
-
-  const stateColors: Map<string, string | undefined> = new Map();
-
-  fields.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.legend) {
-      field.values.forEach((v) => {
-        let state = field.display!(v);
-        if (state.color) {
-          stateColors.set(state.text, state.color!);
-        }
-      });
-    }
+      const seriesName = getSeriesName(field, frame, frames);
+      if (!seriesGroups.has(seriesName)) {
+        seriesGroups.set(seriesName, []);
+      }
+      const seriesFields = seriesGroups.get(seriesName);
+      if (seriesFields) {
+        seriesFields.push(field);
+      }
+    });
   });
 
-  stateColors.forEach((color, label) => {
-    if (label.length > 0) {
-      items.push({
-        label: label!,
-        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
-        yAxis: 1,
+  let durations: Map<string, StateDurationInfo> | undefined;
+  if (timeRange) {
+    const allDurations = new Map<string, StateDurationInfo>();
+    frames.forEach((frame) => {
+      const frameDurations = calculateStateDurations({
+        fields: frame.fields,
+        timeRange,
+        frame,
+        frames,
       });
-    }
-  });
+      frameDurations.forEach((info, key) => {
+        allDurations.set(key, info);
+      });
+    });
+    durations = allDurations.size > 0 ? allDurations : undefined;
+  }
 
-  return items;
+  const multipleSeries = frames.length > 1 || seriesGroups.size > 1;
+
+  const allLegendItems = processSeriesGroups(seriesGroups, durations, options, theme, multipleSeries);
+
+  return allLegendItems.length > 0 ? allLegendItems : undefined;
 }
-
-// function allNonTimeFields(frames: DataFrame[]): Field[] {
-//   const fields: Field[] = [];
-//   for (const frame of frames) {
-//     for (const field of frame.fields) {
-//       if (field.type !== FieldType.time) {
-//         fields.push(field);
-//       }
-//     }
-//   }
-//   return fields;
-// }
 
 export function findNextStateIndex(field: Field, datapointIdx: number) {
   let end;

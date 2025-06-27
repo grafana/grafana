@@ -487,7 +487,7 @@ describe('prepareTimelineLegendItems', () => {
     expect(result).toHaveLength(1);
   });
 
-  it('should format legend items correctly with only no legend values in list mode', () => {
+  it('should format legend items correctly with no legend values in list mode', () => {
     const timeRange: TimeRange = {
       from: dateTime(1749614400000),
       to: dateTime(1749625200000),
@@ -545,11 +545,11 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.List,
-        valueOptions: [],
+        values: [],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
-      } satisfies VizLegendOptions,
+      } as VizLegendOptions,
       theme,
       timeRange
     );
@@ -622,7 +622,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.List,
-        valueOptions: ['duration', 'percentage', 'occurrences'],
+        values: ['duration', 'percentage', 'occurrences'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -699,7 +699,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.List,
-        valueOptions: ['duration'],
+        values: ['duration'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -775,7 +775,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.List,
-        valueOptions: ['percentage'],
+        values: ['percentage'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -852,7 +852,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.List,
-        valueOptions: ['occurrences'],
+        values: ['occurrences'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -930,7 +930,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.Table,
-        valueOptions: [],
+        values: [],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -1010,7 +1010,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.Table,
-        valueOptions: ['duration', 'percentage', 'occurrences'],
+        values: ['duration', 'percentage', 'occurrences'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -1103,7 +1103,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.Table,
-        valueOptions: ['duration'],
+        values: ['duration'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -1184,7 +1184,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.Table,
-        valueOptions: ['percentage'],
+        values: ['percentage'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -1269,7 +1269,7 @@ describe('prepareTimelineLegendItems', () => {
       frames,
       {
         displayMode: LegendDisplayMode.Table,
-        valueOptions: ['occurrences'],
+        values: ['occurrences'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
@@ -1378,7 +1378,7 @@ describe('prepareTimelineLegendItems', () => {
       multipleSeriesFrames,
       {
         displayMode: LegendDisplayMode.Table,
-        valueOptions: ['duration', 'percentage', 'occurrences'],
+        values: ['duration', 'percentage', 'occurrences'],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
