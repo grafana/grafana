@@ -199,7 +199,7 @@ func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
 	if !ok {
 		return false
 	}
-	return user.GetIdentityType() != "" && user.GetIdentityType() != types.TypeAnonymous
+	return user.GetIdentityType() != ""
 }
 
 // validateNamespace checks if the stackId in the evaluation context matches the namespace in the request
