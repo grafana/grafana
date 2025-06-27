@@ -373,7 +373,7 @@ func TestMetadataStore_ListLatestResourceKeys(t *testing.T) {
 	require.NoError(t, err)
 
 	// List latest metadata keys
-	var resultKeys []MetaDataKey
+	resultKeys := make([]MetaDataKey, 0, 1)
 	for metaKey, err := range store.ListLatestResourceKeys(ctx, MetaListRequestKey{
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -471,7 +471,7 @@ func TestMetadataStore_ListResourceKeysAtRevision(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("list at revision rv1 - should return only resource1 initial version", func(t *testing.T) {
-		var resultKeys []MetaDataKey
+		resultKeys := make([]MetaDataKey, 0, 1)
 		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
@@ -488,7 +488,7 @@ func TestMetadataStore_ListResourceKeysAtRevision(t *testing.T) {
 	})
 
 	t.Run("list at revision rv2 - should return resource1, resource2 and resource4", func(t *testing.T) {
-		var resultKeys []MetaDataKey
+		resultKeys := make([]MetaDataKey, 0, 3)
 		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
@@ -510,7 +510,7 @@ func TestMetadataStore_ListResourceKeysAtRevision(t *testing.T) {
 	})
 
 	t.Run("list at revision rv3 - should return resource1, resource2 and resource4", func(t *testing.T) {
-		var resultKeys []MetaDataKey
+		resultKeys := make([]MetaDataKey, 0, 3)
 		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
@@ -535,7 +535,7 @@ func TestMetadataStore_ListResourceKeysAtRevision(t *testing.T) {
 	})
 
 	t.Run("list at revision rv4 - should return", func(t *testing.T) {
-		var resultKeys []MetaDataKey
+		resultKeys := make([]MetaDataKey, 0, 4)
 		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
@@ -558,7 +558,7 @@ func TestMetadataStore_ListResourceKeysAtRevision(t *testing.T) {
 	})
 
 	t.Run("list at revision rv5 - should exclude deleted resource4", func(t *testing.T) {
-		var resultKeys []MetaDataKey
+		resultKeys := make([]MetaDataKey, 0, 3)
 		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
@@ -581,7 +581,7 @@ func TestMetadataStore_ListResourceKeysAtRevision(t *testing.T) {
 	})
 
 	t.Run("list with specific resource name", func(t *testing.T) {
-		var resultKeys []MetaDataKey
+		resultKeys := make([]MetaDataKey, 0, 1)
 		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
@@ -599,7 +599,7 @@ func TestMetadataStore_ListResourceKeysAtRevision(t *testing.T) {
 	})
 
 	t.Run("list at revision 0 should use MaxInt64", func(t *testing.T) {
-		var resultKeys []MetaDataKey
+		resultKeys := make([]MetaDataKey, 0, 3)
 		for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 			Group:     "apps",
 			Resource:  "resource",
@@ -672,7 +672,7 @@ func TestMetadataStore_ListResourceKeysAtRevision_EmptyResults(t *testing.T) {
 	store := setupTestMetadataStore(t)
 	ctx := context.Background()
 
-	var resultKeys []MetaDataKey
+	resultKeys := make([]MetaDataKey, 0, 1)
 	for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
@@ -704,7 +704,7 @@ func TestMetadataStore_ListResourceKeysAtRevision_ResourcesNewerThanRevision(t *
 	require.NoError(t, err)
 
 	// List at a revision before the resource was created
-	var resultKeys []MetaDataKey
+	resultKeys := make([]MetaDataKey, 0, 1)
 	for metaKey, err := range store.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Group:     "apps",
 		Resource:  "resource",
