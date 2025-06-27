@@ -201,13 +201,12 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				LegacyStorage:     ls,
 				Storage:           us,
 				Kind:              "test.kind",
-				Reg:               p,
 				ServerLockService: &fakeServerLock{},
 				RequestInfo:       &request.RequestInfo{},
 
 				DataSyncerRecordsLimit: 1000,
 				DataSyncerInterval:     time.Hour,
-			})
+			}, NewDualWriterMetrics(nil))
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -241,13 +240,12 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				LegacyStorage:     ls,
 				Storage:           us,
 				Kind:              "test.kind",
-				Reg:               p,
 				ServerLockService: &fakeServerLock{},
 				RequestInfo:       &request.RequestInfo{},
 
 				DataSyncerRecordsLimit: 1000,
 				DataSyncerInterval:     time.Hour,
-			})
+			}, NewDualWriterMetrics(nil))
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
