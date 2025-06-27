@@ -368,7 +368,7 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.MemberlistAdvertisePort = 17946 + instanceId
 	cfg.InstanceID = "instance-" + strconv.Itoa(instanceId)
-	cfg.IndexPath = "/tmp/grafana-test-index-path/" + cfg.InstanceID
+	cfg.IndexPath = t.TempDir() + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	cfg.Target = []string{modules.StorageServer}
 
@@ -403,7 +403,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	_, err = section.NewKey("connection_string", dbConnStr)
 	require.NoError(t, err)
-	cfg.IndexPath = "/tmp/grafana-test-index-path/baseline-server"
+	cfg.IndexPath = t.TempDir()
 	cfg.IndexFileThreshold = testIndexFileThreshold
 	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch)
 	docBuilders, err := InitializeDocumentBuilders(cfg)
