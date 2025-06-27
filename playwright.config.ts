@@ -213,5 +213,14 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
+    {
+      name: 'dashboards',
+      testDir: path.join(testDirRoot, '/dashboards-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
   ],
 });
