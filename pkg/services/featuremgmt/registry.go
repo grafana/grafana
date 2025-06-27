@@ -435,15 +435,6 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:            "libraryPanelRBAC",
-			Description:     "Enables RBAC support for library panels",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: true,
-			Expression:      "true",
-		},
-		{
 			Name:         "lokiRunQueriesInParallel",
 			Description:  "Enables running Loki queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -1315,7 +1306,7 @@ var (
 		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
 		{

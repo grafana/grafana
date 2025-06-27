@@ -3228,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "Single sign-on (SSO) with SAML.",
+      "scim-learn-more": " Sync users and teams with SCIM.",
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
@@ -3486,7 +3488,13 @@
     "restore": {
       "success": "Dashboard {{name}} restored"
     },
-    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
+    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {

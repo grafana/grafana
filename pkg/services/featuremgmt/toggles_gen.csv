@@ -56,7 +56,6 @@ dashgpt,GA,@grafana/dashboards-squad,false,false,true
 aiGeneratedDashboardChanges,experimental,@grafana/dashboards-squad,false,false,true
 reportingRetries,preview,@grafana/grafana-operator-experience-squad,false,true,false
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false
-libraryPanelRBAC,GA,@grafana/dashboards-squad,false,true,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false
 externalCorePlugins,GA,@grafana/plugins-platform-backend,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
@@ -171,7 +170,7 @@ passwordlessMagicLinkAuthentication,experimental,@grafana/identity-access-team,f
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
 prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
-enableSCIM,experimental,@grafana/identity-access-team,false,false,false
+enableSCIM,preview,@grafana/identity-access-team,false,false,false
 crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 jaegerBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true

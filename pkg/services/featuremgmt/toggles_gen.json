@@ -985,12 +985,15 @@
     {
       "metadata": {
         "name": "enableSCIM",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2024-11-07T14:38:46Z"
+        "resourceVersion": "1750952338509",
+        "creationTimestamp": "2024-11-07T14:38:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-26 15:38:58.509301321 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SCIM support for user and group management",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
     },
@@ -1645,20 +1648,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "libraryPanelRBAC",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-10-11T23:30:50Z"
-      },
-      "spec": {
-        "description": "Enables RBAC support for library panels",
-        "stage": "GA",
-        "codeowner": "@grafana/dashboards-squad",
-        "requiresRestart": true,
-        "expression": "true"
       }
     },
     {
