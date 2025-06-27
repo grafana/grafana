@@ -1,8 +1,6 @@
 import { SceneTimeRangeCompare, SceneComponentProps, VizPanel, sceneGraph } from '@grafana/scenes';
 import { TimeCompareOptions } from '@grafana/schema';
 
-import { getQueryRunnerFor } from '../utils/utils';
-
 function hasTimeCompare(options: unknown): options is TimeCompareOptions {
   return options != null && typeof options === 'object' && 'timeCompare' in options;
 }
@@ -30,23 +28,18 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
 
         // Only act when transitioning from enabled to disabled
         if (prevTimeCompareEnabled && !newTimeCompareEnabled) {
-          this._handleDisable(vizPanel);
+          this._handleDisable();
         }
       })
     );
   }
 
-  private _handleDisable(vizPanel: VizPanel) {
+  private _handleDisable() {
     // Only clear state if there's actually a comparison active
     if (this.state.compareWith) {
       this.setState({
         compareWith: undefined,
       });
-      // Refresh queries to remove comparison data
-      const queryRunner = getQueryRunnerFor(vizPanel);
-      if (queryRunner) {
-        queryRunner.runQueries();
-      }
     }
   }
 
