@@ -794,7 +794,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key: folderkey,
 				Fields: []*resourcepb.Requirement{
-					&resourcepb.Requirement{
+					{
 						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
 						Operator: string(selection.Equals),
 						Values:   []string{"foo title"},
