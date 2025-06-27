@@ -218,11 +218,16 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 }
 
 func logEmptyRefids(queries []v0alpha1.DataQuery, logger log.Logger) {
+	emptyCount := 0
+
 	for _, q := range queries {
 		if q.RefID == "" {
-			logger.Info("empty refid found", "query_count", len(queries))
-			break
+			emptyCount += 1
 		}
+	}
+
+	if emptyCount > 0 {
+		logger.Info("empty refid found", "empty_count", emptyCount, "query_count", len(queries))
 	}
 }
 
