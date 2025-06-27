@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -6,7 +7,7 @@ import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, TextArea, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
@@ -32,6 +33,41 @@ export interface Props extends SaveProvisionedDashboardProps {
   readOnly: boolean;
 }
 
+// Custom TextArea with suffix support
+interface TextAreaWithSuffixProps extends React.ComponentProps<typeof TextArea> {
+  suffix?: React.ReactNode;
+}
+
+const TextAreaWithSuffix = ({ suffix, ...textAreaProps }: TextAreaWithSuffixProps) => {
+  const theme = useTheme2();
+  const styles = useStyles2(() => ({
+    wrapper: css({
+      position: 'relative',
+      display: 'flex',
+    }),
+    textArea: css({
+      paddingRight: suffix ? theme.spacing(5) : undefined,
+    }),
+    suffix: css({
+      position: 'absolute',
+      top: theme.spacing(1),
+      right: theme.spacing(1),
+      zIndex: 1,
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      pointerEvents: 'auto',
+    }),
+  }));
+
+  return (
+    <div className={styles.wrapper}>
+      <TextArea {...textAreaProps} className={styles.textArea} />
+      {suffix && <div className={styles.suffix}>{suffix}</div>}
+    </div>
+  );
+};
+
 export function SaveProvisionedDashboardForm({
   defaultValues,
   dashboard,
@@ -50,13 +86,38 @@ export function SaveProvisionedDashboardForm({
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { handleSubmit, watch, control, reset, register } = methods;
+  const { handleSubmit, watch, control, reset, register, setValue } = methods;
   const [workflow] = watch(['workflow']);
+
+  // AI loading states
+  const [aiLoading, setAiLoading] = useState({
+    title: false,
+    description: false,
+    path: false,
+    comment: false,
+    branch: false,
+    all: false,
+  });
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  // Typing effect function
+  const typeText = async (text: string, setValue: (value: string) => void, delay = 50) => {
+    setValue(''); // Clear the field first
+    for (let i = 0; i <= text.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      setValue(text.slice(0, i));
+    }
+  };
+
+  // Sample AI generated content
+  const generateSampleContent = () => ({
+    title: `${dashboard.state.title || 'Dashboard'} - Enhanced Analytics`,
+    description: `This dashboard provides comprehensive monitoring and analytics for ${dashboard.state.title || 'your system'}. It includes real-time metrics, performance indicators, and actionable insights to help you monitor system health, track key performance metrics, and identify potential issues before they impact your operations.`,
+  });
 
   const onRequestError = (error: unknown) => {
     appEvents.publish({
@@ -106,6 +167,90 @@ export function SaveProvisionedDashboardForm({
     },
     isNew,
   });
+
+  // AI handler functions with loading and typing effects
+  const handleAIFillTitle = async () => {
+    setAiLoading(prev => ({ ...prev, title: true }));
+    
+    try {
+      // Simulate AI processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const content = generateSampleContent();
+      await typeText(content.title, (value) => setValue('title', value));
+    } catch (error) {
+      console.error('AI autofill title error:', error);
+    } finally {
+      setAiLoading(prev => ({ ...prev, title: false }));
+    }
+  };
+
+  const handleAIFillDescription = async () => {
+    setAiLoading(prev => ({ ...prev, description: true }));
+    
+    try {
+      // Simulate AI processing delay
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      const content = generateSampleContent();
+      await typeText(content.description, (value) => setValue('description', value), 30);
+    } catch (error) {
+      console.error('AI autofill description error:', error);
+    } finally {
+      setAiLoading(prev => ({ ...prev, description: false }));
+    }
+  };
+
+  const handleAIFillAll = async () => {
+    setAiLoading(prev => ({ ...prev, all: true }));
+    
+    try {
+      // Simulate AI processing delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const content = generateSampleContent();
+      
+      // Fill title first
+      await typeText(content.title, (value) => setValue('title', value));
+      
+      // Small delay between fields
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Then fill description
+      await typeText(content.description, (value) => setValue('description', value), 30);
+      
+      // Small delay before shared fields
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Generate shared fields content
+      const sharedContent = {
+        path: `dashboards/${new Date().getFullYear()}/optimized-dashboard-${Date.now()}.json`,
+        comment: `Add enhanced dashboard with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
+        branch: `feature/enhanced-dashboard-${new Date().toISOString().slice(0, 7)}`,
+      };
+      
+      // Fill path if it's a new dashboard
+      if (isNew) {
+        await typeText(sharedContent.path, (value) => setValue('path', value));
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Fill comment if not read-only
+      if (!readOnly) {
+        await typeText(sharedContent.comment, (value) => setValue('comment', value), 40);
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Fill branch if workflow is set to branch
+      if (workflow === 'branch') {
+        await typeText(sharedContent.branch, (value) => setValue('ref', value));
+      }
+    } catch (error) {
+      console.error('AI autofill all error:', error);
+    } finally {
+      setAiLoading(prev => ({ ...prev, all: false }));
+    }
+  };
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
@@ -162,6 +307,19 @@ export function SaveProvisionedDashboardForm({
               >
                 <Input
                   id="dashboard-title"
+                  suffix={
+                    <IconButton
+                      name={aiLoading.title ? "spinner" : "ai-sparkle"}
+                      tooltip={t(
+                        'dashboard-scene.save-provisioned-dashboard-form.ai-fill-title',
+                        'AI autofill title'
+                      )}
+                      onClick={handleAIFillTitle}
+                      variant="secondary"
+                      size="sm"
+                      disabled={aiLoading.title || aiLoading.all}
+                    />
+                  }
                   {...register('title', {
                     required: t(
                       'dashboard-scene.save-provisioned-dashboard-form.title-required',
@@ -177,7 +335,23 @@ export function SaveProvisionedDashboardForm({
                 invalid={!!methods.formState.errors.description}
                 error={methods.formState.errors.description?.message}
               >
-                <TextArea id="dashboard-description" {...register('description')} />
+                <TextAreaWithSuffix
+                  id="dashboard-description"
+                  {...register('description')}
+                  suffix={
+                    <IconButton
+                      name={aiLoading.description ? "spinner" : "ai-sparkle"}
+                      tooltip={t(
+                        'dashboard-scene.save-provisioned-dashboard-form.ai-fill-description',
+                        'AI autofill description'
+                      )}
+                      onClick={handleAIFillDescription}
+                      variant="secondary"
+                      size="sm"
+                      disabled={aiLoading.description || aiLoading.all}
+                    />
+                  }
+                />
               </Field>
 
               <Field
@@ -221,7 +395,26 @@ export function SaveProvisionedDashboardForm({
             workflowOptions={workflowOptions}
             isGitHub={isGitHub}
             isNew={isNew}
+            aiLoading={aiLoading}
+            setAiLoading={setAiLoading}
           />
+
+          {/* Comprehensive AI autofill button for all fields */}
+          {isNew && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={aiLoading.all ? "spinner" : "ai-sparkle"}
+              onClick={handleAIFillAll}
+              fill="outline"
+              disabled={Object.values(aiLoading).some(loading => loading)}
+            >
+              {aiLoading.all 
+                ? t('dashboard-scene.save-provisioned-dashboard-form.ai-generating', 'Generating all fields...')
+                : t('dashboard-scene.save-provisioned-dashboard-form.ai-fill-all-comprehensive', 'AI autofill all fields')
+              }
+            </Button>
+          )}
 
           <Stack gap={2}>
             <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
