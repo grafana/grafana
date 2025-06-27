@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -89,13 +91,34 @@ func TestMetadataStore_Save(t *testing.T) {
 		Action:          DataActionCreated,
 	}
 
-	metadata := MetaData{}
+	metadata := MetaData{
+		IndexableDocument: IndexableDocument{
+			Title:       "This is a test resource",
+			Description: "This is a test resource description",
+			Tags:        []string{"tag1", "tag2"},
+			Labels: map[string]string{
+				"label1": "label1",
+				"label2": "label2",
+			},
+			Folder: "test-folder",
+		},
+	}
 
 	err := store.Save(ctx, MetaDataObj{
 		Key:   key,
 		Value: metadata,
 	})
 	require.NoError(t, err)
+	// Verify in the kv store that the metadata is saved
+	retrievedObj, err := store.kv.Get(ctx, metaSection, key.String())
+	require.NoError(t, err)
+	assert.Equal(t, key.String(), retrievedObj.Key)
+	var retrivedMeta MetaData
+	actualData, err := io.ReadAll(retrievedObj.Value)
+	require.NoError(t, err)
+	err = json.Unmarshal(actualData, &retrivedMeta)
+	require.NoError(t, err)
+	assert.Equal(t, metadata, retrivedMeta)
 }
 
 func TestMetadataStore_Get(t *testing.T) {
