@@ -1,11 +1,5 @@
 {
-  "panels": [],
-  "refresh": "",
   "schemaVersion": 41,
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
   "timepicker": {
     "refresh_intervals": [
       "5s",
@@ -20,5 +14,5 @@
       "1d"
     ]
   },
-  "title": "Time Picker Time Options Test Dashboard"
+  "title": "Time Picker No Time Options Test Dashboard"
 }
