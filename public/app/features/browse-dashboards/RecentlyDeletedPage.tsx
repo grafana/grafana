@@ -59,7 +59,7 @@ const RecentlyDeletedPage = memo(() => {
             <ActionRow
               state={searchState}
               getTagOptions={stateManager.getTagOptions}
-              getSortOptions={getGrafanaSearcher().getSortOptions}
+              getSortOptions={stateManager.getSortOptions}
               sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
               onLayoutChange={stateManager.onLayoutChange}
               onSortChange={stateManager.onSortChange}
