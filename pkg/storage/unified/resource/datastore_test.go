@@ -605,7 +605,8 @@ func TestDataStore_Delete(t *testing.T) {
 		}
 
 		err := ds.Delete(ctx, nonExistentKey)
-		require.NoError(t, err) // BadgerDB doesn't return error for non-existent keys
+		require.Error(t, err)
+		require.Equal(t, ErrNotFound, err)
 	})
 }
 

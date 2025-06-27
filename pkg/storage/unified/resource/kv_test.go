@@ -127,7 +127,8 @@ func TestBadgerKV_Delete(t *testing.T) {
 
 	t.Run("Delete non-existent key", func(t *testing.T) {
 		err := kv.Delete(ctx, "section", "nonexistent")
-		require.NoError(t, err) // Badger doesn't return error for non-existent keys
+		assert.Error(t, err)
+		assert.Equal(t, ErrNotFound, err)
 	})
 }
 
