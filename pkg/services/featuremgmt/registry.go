@@ -1043,13 +1043,6 @@ var (
 			Expression:      "true", // enabled by default
 		},
 		{
-			Name:        "failWrongDSUID",
-			Description: "Throws an error if a data source has an invalid UIDs",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:              "zanzana",
 			Description:       "Use openFGA as authorization engine.",
 			Stage:             FeatureStageExperimental,
