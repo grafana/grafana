@@ -678,6 +678,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       panelId,
       panelName: panel?.state?.title,
       panelPluginId: panel?.state.pluginId,
+      dashboardTitle: this.state.title,
     };
   }
 

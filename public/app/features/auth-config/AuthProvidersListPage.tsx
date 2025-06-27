@@ -11,7 +11,7 @@ import { StoreState } from 'app/types';
 
 import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
-import { ProviderCard } from './components/ProviderCard';
+import { ProviderCard, ProviderSAMLCard, ProviderSCIMCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
 
 import { getRegisteredAuthProviders } from './index';
@@ -120,6 +120,12 @@ export const AuthConfigPageUnconnected = ({
                   configPath={settings.configPath}
                 />
               ))}
+            {config.buildInfo.edition === GrafanaEdition.OpenSource && (
+              <>
+                <ProviderSAMLCard />
+                <ProviderSCIMCard />
+              </>
+            )}
             {showDrawer && <AuthDrawer onClose={() => setShowDrawer(false)}></AuthDrawer>}
           </Grid>
         )}

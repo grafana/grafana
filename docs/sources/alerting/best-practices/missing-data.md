@@ -33,19 +33,19 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state-history/
   configure-nodata-and-error-handling:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#modify-the-no-data-or-error-state
   stale-alert-instances:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#stale-alert-instances-missingseries
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#stale-alert-instances-missingseries
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/
   no-data-and-error-alerts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#no-data-and-error-alerts
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-and-error-alerts
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#no-data-and-error-alerts
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#no-data-and-error-alerts
 ---
 
 # Handle missing data in Grafana Alerting
@@ -201,6 +201,9 @@ Grafana Alerting handles distinct scenarios automatically. Here’s how to think
 - Use Grafana’s _No Data_ handling options to define what happens when a query returns nothing.
 - When _NoData_ is not an issue, consider rewriting the query to always return data — for example, in Prometheus, use `your_metric_query OR on() vector(0)` to return `0` when `your_metric_query` returns nothing.
 - Use `absent()` or `absent_over_time()` in Prometheus for fine-grained detection when a metric or label disappears entirely.
+- If data is frequently missing due to scrape delays, use techniques to account for data delays:
+  - Adjust the **Time Range** query option in Grafana to evaluate slightly behind real time (e.g., set **To** to `now-1m`) to account for late data points.
+  - In Prometheus, you can use `last_over_time(metric_name[10m])` to pick the most recent sample within a given window.
 - Don’t alert on every instance by default. In dynamic environments, it’s better to aggregate and alert on symptoms — unless a missing individual instance directly impacts users.
 - If you’re getting too much noise from disappearing data, consider adjusting alerts, using `Keep Last State`, or routing those alerts differently.
 - For connectivity issues involving alert query failures, see the sibling guide: [Handling connectivity errors in Grafana Alerting](ref:connectivity-errors-guide).
