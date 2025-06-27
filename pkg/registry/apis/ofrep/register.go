@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -114,7 +115,13 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := contexthandler.FromContext(r.Context())
-	isAuthedUser := ctx.IsSignedIn
+
+	user, ok := types.AuthInfoFrom(r.Context())
+	// todo: fix this later
+	if !ok {
+		http.Error(w, "failed to get requester", http.StatusBadRequest)
+	}
+	isAuthedUser := user.GetIdentityType() != ""
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
