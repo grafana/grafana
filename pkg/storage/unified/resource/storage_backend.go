@@ -172,7 +172,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		offset = token.StartOffset
 		resourceVersion = token.ResourceVersion
 	}
-	// For now we return the current time as the resource version
+	// We set the listRV to the current time.
 	listRV := k.snowflake.Generate().Int64()
 	if resourceVersion > 0 {
 		listRV = resourceVersion

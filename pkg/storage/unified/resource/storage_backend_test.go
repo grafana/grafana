@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"testing"
 
@@ -349,6 +350,600 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
 }
 
+func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create multiple test resources
+	resources := []struct {
+		name  string
+		group string
+		value string
+	}{
+		{"resource-1", "apps", "data-1"},
+		{"resource-2", "apps", "data-2"},
+		{"resource-3", "core", "data-3"},
+	}
+
+	for _, res := range resources {
+		testObj, err := createTestObjectWithName(res.name, res.group, res.value)
+		require.NoError(t, err)
+
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     res.group,
+				Resource:  "deployments",
+				Name:      res.name,
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+
+		_, err = backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+	}
+
+	// Test listing all resources in "apps" group
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "deployments",
+			},
+		},
+		Limit: 10,
+	}
+
+	var collectedItems []struct {
+		name            string
+		namespace       string
+		resourceVersion int64
+		value           []byte
+	}
+
+	rv, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			collectedItems = append(collectedItems, struct {
+				name            string
+				namespace       string
+				resourceVersion int64
+				value           []byte
+			}{
+				name:            iter.Name(),
+				namespace:       iter.Namespace(),
+				resourceVersion: iter.ResourceVersion(),
+				value:           iter.Value(),
+			})
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+	require.Len(t, collectedItems, 2) // Only resources in "apps" group
+
+	// Verify the items contain expected data
+	names := make([]string, len(collectedItems))
+	for i, item := range collectedItems {
+		names[i] = item.name
+		require.Equal(t, "default", item.namespace)
+		require.Greater(t, item.resourceVersion, int64(0))
+		require.NotEmpty(t, item.value)
+	}
+	require.Contains(t, names, "resource-1")
+	require.Contains(t, names, "resource-2")
+}
+
+func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create multiple test resources
+	for i := 1; i <= 5; i++ {
+		testObj, err := createTestObjectWithName(fmt.Sprintf("resource-%d", i), "apps", fmt.Sprintf("data-%d", i))
+		require.NoError(t, err)
+
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "deployments",
+				Name:      fmt.Sprintf("resource-%d", i),
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+
+		_, err = backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+	}
+
+	// First page with limit 2
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "deployments",
+			},
+		},
+		Limit: 2,
+	}
+
+	var firstPageItems []string
+	var continueToken string
+
+	rv, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		count := 0
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			firstPageItems = append(firstPageItems, iter.Name())
+			count++
+			// Simulate pagination by getting continue token after limit items
+			if count >= int(listReq.Limit) {
+				continueToken = iter.ContinueToken()
+				break
+			}
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+	require.Len(t, firstPageItems, 2)
+	require.NotEmpty(t, continueToken)
+
+	// Second page using continue token
+	listReq.NextPageToken = continueToken
+	var secondPageItems []string
+
+	_, err = backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			secondPageItems = append(secondPageItems, iter.Name())
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.Greater(t, len(secondPageItems), 0)
+
+	// Verify no duplicates between pages
+	for _, item := range secondPageItems {
+		require.NotContains(t, firstPageItems, item)
+	}
+}
+
+func TestKvStorageBackend_ListIterator_EmptyResult(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "nonexistent",
+				Group:     "apps",
+				Resource:  "deployments",
+			},
+		},
+		Limit: 10,
+	}
+
+	var collectedItems []string
+	rv, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			collectedItems = append(collectedItems, iter.Name())
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+	require.Empty(t, collectedItems)
+}
+
+func TestKvStorageBackend_ListIterator_MissingOptions(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		request *resourcepb.ListRequest
+	}{
+		{
+			name: "nil options",
+			request: &resourcepb.ListRequest{
+				Options: nil,
+				Limit:   10,
+			},
+		},
+		{
+			name: "nil key",
+			request: &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{
+					Key: nil,
+				},
+				Limit: 10,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, tt.request, func(iter ListIterator) error {
+				return nil
+			})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "missing options or key")
+		})
+	}
+}
+
+func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "deployments",
+			},
+		},
+		Limit:         10,
+		NextPageToken: "invalid-token",
+	}
+
+	_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		return nil
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "invalid continue token")
+}
+
+func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create a resource
+	testObj, err := createTestObjectWithName("test-resource", "apps", "initial-data")
+	require.NoError(t, err)
+
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	writeEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "deployments",
+			Name:      "test-resource",
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		PreviousRV: 0,
+	}
+
+	rv1, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+
+	// Update the resource
+	testObj.Object["spec"].(map[string]any)["value"] = "updated-data"
+	writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+	writeEvent.Value = objectToJSONBytes(t, testObj)
+	writeEvent.PreviousRV = rv1
+
+	_, err = backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+
+	// List at specific resource version
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "deployments",
+			},
+		},
+		ResourceVersion: rv1,
+		Limit:           10,
+	}
+
+	var collectedItems [][]byte
+	rv, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			collectedItems = append(collectedItems, iter.Value())
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, rv1, rv)
+	require.Len(t, collectedItems, 1)
+
+	// Verify we got the original data, not the updated data
+	originalObj, err := createTestObjectWithName("test-resource", "apps", "initial-data")
+	require.NoError(t, err)
+	require.Equal(t, objectToJSONBytes(t, originalObj), collectedItems[0])
+}
+
+func TestKvStorageBackend_ListHistory_Success(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create initial resource
+	testObj, err := createTestObjectWithName("test-resource", "apps", "initial-data")
+	require.NoError(t, err)
+
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	writeEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "deployments",
+			Name:      "test-resource",
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		PreviousRV: 0,
+	}
+
+	rv1, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+
+	// Update the resource
+	testObj.Object["spec"].(map[string]any)["value"] = "updated-data"
+	writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+	writeEvent.Value = objectToJSONBytes(t, testObj)
+	writeEvent.PreviousRV = rv1
+
+	rv2, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+
+	// Update again
+	testObj.Object["spec"].(map[string]any)["value"] = "final-data"
+	writeEvent.Value = objectToJSONBytes(t, testObj)
+	writeEvent.PreviousRV = rv2
+
+	rv3, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+
+	// List the history
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "deployments",
+				Name:      "test-resource",
+			},
+		},
+		Source: resourcepb.ListRequest_HISTORY,
+		Limit:  10,
+	}
+
+	var historyItems []struct {
+		resourceVersion int64
+		value           []byte
+	}
+
+	rv, err := backend.ListHistory(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			historyItems = append(historyItems, struct {
+				resourceVersion int64
+				value           []byte
+			}{
+				resourceVersion: iter.ResourceVersion(),
+				value:           iter.Value(),
+			})
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+	require.Len(t, historyItems, 3) // Should have all 3 versions
+
+	// Verify the history is sorted (newest first by default)
+	require.Equal(t, rv3, historyItems[0].resourceVersion)
+	require.Equal(t, rv2, historyItems[1].resourceVersion)
+	require.Equal(t, rv1, historyItems[2].resourceVersion)
+
+	// Verify the content matches expectations
+	finalObj, err := createTestObjectWithName("test-resource", "apps", "final-data")
+	require.NoError(t, err)
+	require.Equal(t, objectToJSONBytes(t, finalObj), historyItems[0].value)
+}
+
+func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create a resource
+	testObj, err := createTestObjectWithName("test-resource", "apps", "test-data")
+	require.NoError(t, err)
+
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	writeEvent := WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "deployments",
+			Name:      "test-resource",
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		PreviousRV: 0,
+	}
+
+	rv1, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+
+	// Delete the resource
+	writeEvent.Type = resourcepb.WatchEvent_DELETED
+	writeEvent.PreviousRV = rv1
+
+	rv2, err := backend.WriteEvent(ctx, writeEvent)
+	require.NoError(t, err)
+
+	// List the trash (deleted items)
+	listReq := &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "deployments",
+				Name:      "test-resource",
+			},
+		},
+		Source: resourcepb.ListRequest_TRASH,
+		Limit:  10,
+	}
+
+	var trashItems []struct {
+		name            string
+		resourceVersion int64
+		value           []byte
+	}
+
+	rv, err := backend.ListHistory(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+			trashItems = append(trashItems, struct {
+				name            string
+				resourceVersion int64
+				value           []byte
+			}{
+				name:            iter.Name(),
+				resourceVersion: iter.ResourceVersion(),
+				value:           iter.Value(),
+			})
+		}
+		return iter.Error()
+	})
+
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+	require.Len(t, trashItems, 1) // Should have the deleted item
+
+	// Verify the trash item
+	require.Equal(t, "test-resource", trashItems[0].name)
+	require.Equal(t, rv2, trashItems[0].resourceVersion)
+	require.Equal(t, objectToJSONBytes(t, testObj), trashItems[0].value)
+}
+
+func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// Create resources in different groups and namespaces
+	resources := []struct {
+		namespace string
+		group     string
+		resource  string
+		name      string
+	}{
+		{"default", "apps", "deployments", "app1"},
+		{"default", "apps", "deployments", "app2"},
+		{"default", "core", "services", "svc1"},
+		{"kube-system", "apps", "deployments", "system-app"},
+		{"kube-system", "core", "configmaps", "config1"},
+	}
+
+	for _, res := range resources {
+		testObj, err := createTestObjectWithName(res.name, res.group, "test-data")
+		require.NoError(t, err)
+
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: res.namespace,
+				Group:     res.group,
+				Resource:  res.resource,
+				Name:      res.name,
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+
+		_, err = backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+	}
+
+	// Get stats for default namespace
+	stats, err := backend.GetResourceStats(ctx, "default", 0)
+	require.NoError(t, err)
+	require.Len(t, stats, 2) // Should have stats for 2 resource types in default namespace
+
+	// Verify the stats contain expected resource types
+	resourceTypes := make(map[string]int64)
+	for _, stat := range stats {
+		key := fmt.Sprintf("%s/%s/%s", stat.Namespace, stat.Group, stat.Resource)
+		resourceTypes[key] = stat.Count
+		require.Greater(t, stat.ResourceVersion, int64(0))
+	}
+
+	require.Equal(t, int64(2), resourceTypes["default/apps/deployments"])
+	require.Equal(t, int64(1), resourceTypes["default/core/services"])
+
+	// Get stats for all namespaces (empty string)
+	allStats, err := backend.GetResourceStats(ctx, "", 0)
+	require.NoError(t, err)
+	require.Len(t, allStats, 4) // Should have stats for all 4 resource types across namespaces
+
+	// Get stats with minCount filter
+	filteredStats, err := backend.GetResourceStats(ctx, "", 1)
+	require.NoError(t, err)
+	require.Len(t, filteredStats, 1) // Only deployments in default namespace has count > 1
+
+	require.Equal(t, "default", filteredStats[0].Namespace)
+	require.Equal(t, "apps", filteredStats[0].Group)
+	require.Equal(t, "deployments", filteredStats[0].Resource)
+	require.Equal(t, int64(2), filteredStats[0].Count)
+}
+
 // createTestObject creates a test unstructured object
 func createTestObject() (*unstructured.Unstructured, error) {
 	u := &unstructured.Unstructured{
@@ -372,4 +967,22 @@ func objectToJSONBytes(t *testing.T, obj *unstructured.Unstructured) []byte {
 	jsonBytes, err := obj.MarshalJSON()
 	require.NoError(t, err)
 	return jsonBytes
+}
+
+// createTestObjectWithName creates a test unstructured object with specific name, group and value
+func createTestObjectWithName(name, group, value string) (*unstructured.Unstructured, error) {
+	u := &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": group + "/v1",
+			"kind":       "resource",
+			"metadata": map[string]any{
+				"name":      name,
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"value": value,
+			},
+		},
+	}
+	return u, nil
 }
