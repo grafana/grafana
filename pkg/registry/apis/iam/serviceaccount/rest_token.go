@@ -3,7 +3,6 @@ package serviceaccount
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -108,18 +107,10 @@ func mapToToken(t legacy.ServiceAccountToken, ns claims.NamespaceInfo) iamv0alph
 	}
 
 	return iamv0alpha1.ServiceAccountToken{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              strconv.FormatInt(t.ID, 10),
-			Namespace:         ns.Value,
-			CreationTimestamp: metav1.NewTime(t.Created),
-			ResourceVersion:   strconv.FormatInt(t.Updated.UnixMilli(), 10),
-		},
-		Spec: iamv0alpha1.ServiceAccountTokenSpec{
-			Name:     t.Name,
-			Expires:  expires.Time,
-			LastUsed: lastUsed.Time,
-			Revoked:  t.Revoked,
-			Created:  t.Created,
-		},
+		Name:     t.Name,
+		Expires:  expires,
+		LastUsed: lastUsed,
+		Revoked:  t.Revoked,
+		Created:  metav1.NewTime(t.Created),
 	}
 }
