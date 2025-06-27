@@ -64,6 +64,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.0 // indirect; @grafana/identity-access-team
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
+	github.com/go-logfmt/logfmt v0.6.0 // @grafana/oss-big-tent
 	github.com/go-openapi/loads v0.22.0 // @grafana/alerting-backend
 	github.com/go-openapi/runtime v0.28.0 // @grafana/alerting-backend
 	github.com/go-openapi/strfmt v0.23.0 // @grafana/alerting-backend
@@ -177,6 +178,7 @@ require (
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // @grafana/grafana-operator-experience-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
+	go.opencensus.io v0.24.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/collector/pdata v1.30.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0 // @grafana/plugins-platform-backend
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.61.0 // @grafana/grafana-operator-experience-squad
@@ -371,7 +373,6 @@ require (
 	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
-	github.com/go-logfmt/logfmt v0.6.0 // @grafana/oss-big-tent
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
@@ -550,7 +551,6 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.21 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.21 // indirect
 	go.mongodb.org/mongo-driver v1.16.1 // indirect
-	go.opencensus.io v0.24.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.61.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.35.0 // indirect
