@@ -141,6 +141,28 @@ For the load testing run [k6](https://grafana.com/docs/k6/latest/set-up/install-
 GRAFANA_PASSWORD=<password> k6 run loadtest/tests/dashboard_by_uid.js
 ```
 
+## Running Zanzana standalone server
+
+When running as a standalone server, Grafana communicates with Zanzana via GRPC. It also requires some additional GRPC authentication configuration. So you need to add auth-signer service to your docker compose file:
+
+```yaml
+  auth-signer:
+    build: ./docker/blocks/auth/signer/.
+    ports:
+      - "6481:8080"
+    volumes:
+      - ./docker/blocks/auth/signer/config.yaml:/app/config.yaml
+    restart: unless-stopped
+```
+
+This service is located in the grafana-enterprise repo, so make sure you have linked enterprise repo:
+
+```sh
+# From OSS repo
+ make enterprise-to-oss
+ docker compose up -d
+ ```
+
 ## Zanzana cli
 Zanzana can be run as a standalone OpenFGA HTTP server that allows you to use the OpenFGA CLI to debug and manage fine-grained authorization relationships within Grafana.
 
