@@ -342,6 +342,7 @@ func makeHTTPRequest(t *testing.T, method, url string, body interface{}, expecte
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	require.NoError(t, err)
+	// nolint:errcheck
 	defer resp.Body.Close()
 	require.Equal(t, expectedStatus, resp.StatusCode)
 
