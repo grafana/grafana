@@ -528,11 +528,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
       const scene = transformSaveModelToScene(rsp);
 
-      // we need to call and restore dashboard state on every reload that pulls a new dashboard version
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
-        restoreDashboardStateFromLocalStorage(scene);
-      }
-
       this.setSceneCache(uid, scene);
       this.setState({ dashboard: scene, isLoading: false });
     } catch (err) {
@@ -695,11 +690,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       }
 
       const scene = transformSaveModelSchemaV2ToScene(rsp);
-
-      // we need to call and restore dashboard state on every reload that pulls a new dashboard version
-      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(uid)) {
-        restoreDashboardStateFromLocalStorage(scene);
-      }
 
       this.setSceneCache(uid, scene);
 
