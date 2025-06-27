@@ -1868,7 +1868,8 @@
       "metadata": {
         "name": "lokiQuerySplittingConfig",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-03-20T15:51:36Z"
+        "creationTimestamp": "2023-03-20T15:51:36Z",
+        "deletionTimestamp": "2025-06-27T09:32:43Z"
       },
       "spec": {
         "description": "Give users the option to configure split durations for Loki queries",

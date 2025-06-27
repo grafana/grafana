@@ -36,7 +36,6 @@ export interface Props {
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, queryStats, datasource }) => {
-    const [splitDurationValid, setSplitDurationValid] = useState(true);
     const maxLines = datasource.maxLines;
 
     useEffect(() => {
@@ -70,17 +69,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       },
       [onChange, onRunQuery, query]
     );
-
-    const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
-      const value = evt.currentTarget.value;
-      if (!isValidDuration(value)) {
-        setSplitDurationValid(false);
-        return;
-      }
-      setSplitDurationValid(true);
-      onChange({ ...query, splitDuration: value });
-      onRunQuery();
-    };
 
     const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
       onChange({ ...query, legendFormat: evt.currentTarget.value });
@@ -213,21 +201,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                 />
               </EditorField>
             </>
-          )}
-          {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
-            <EditorField
-              label="Split Duration"
-              tooltip="Defines the duration of a single query when query splitting is enabled."
-            >
-              <AutoSizeInput
-                minWidth={14}
-                type="string"
-                min={0}
-                defaultValue={query.splitDuration ?? '1d'}
-                onCommitChange={onChunkRangeChange}
-                invalid={!splitDurationValid}
-              />
-            </EditorField>
           )}
         </QueryOptionGroup>
       </EditorRow>
