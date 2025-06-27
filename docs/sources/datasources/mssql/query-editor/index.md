@@ -48,38 +48,29 @@ refs:
 
 # Microsoft SQL Server query editor
 
-Grafana provides a query editor for the  Microsoft SQL Server data source. This topic explains querying specific to the MSSQL data source.
-
-The Microsoft SQL Server query editor is located on the [Explore page](ref:explore). You can also access the MSSQL query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
-
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data). For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
+Grafana provides a query editor for the  Microsoft SQL Server data source, which is located on the [Explore page](ref:explore). You can also access the MSSQL query editor from a dashboard panel. Click the menu in the upper right of the panel and select **Edit**.
 
 This topic explains querying specific to the MSSQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data). For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
 
-For more information on writing Transact-SQL statements, refer to [Write Transact-SQL statements](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements?view=sql-server-ver17) and [Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17).
+For more information on writing Transact-SQL statements, refer to [Write Transact-SQL statements](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements?view=sql-server-ver17) and [Transact-SQL reference](https://learn.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver17) in the Microsoft SQL Server documentation.
 
 The Microsoft SQL Server query editor has two modes:
 
 - [Builder mode](#builder-mode)
 - [Code mode](#code-mode)
 
+To switch between the editor modes, select the corresponding **Builder** and **Code** tabs in the upper right.
+
 ![MSSQL query builder](/media/mssql/mssql-query-editor-v12.png)
 
-<!-- 
-You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MSSQL data source.
+{{< admonition type="warning" >}}
+When switching from **Code** mode to **Builder** mode, any changes made to your SQL query aren't saved and will not be shown in the builder interface. You can choose to copy your code to the clipboard or discard the changes.
+{{< /admonition >}}
 
-For details, refer to the [query editor documentation](query-editor/). -->
+To run a query, select **Run query** in the upper right of the editor.
 
-For more information about Transact-SQL (T-SQL), the query language used by Microsoft SQL Server, refer to the [Transact-SQL tutorial](https://learn.microsoft.com/en-us/sql/t-sql/tutorial-writing-transact-sql-statements).
-
-## Choose a query editing mode
-
-To switch between the editor modes, select the corresponding **Builder** and **Code** tabs above the editor.
-
-To run a query, select **Run query** located at the top right corner of the editor.
-
-The query editor allows you to create and use:
+In addition to writing queries, the query editor also allows you to create and use:
 
 - [Macros](#macros)
 - [Annotations](#apply-annotations)
@@ -89,15 +80,17 @@ The query editor allows you to create and use:
 
 **Builder mode** allows you to build queries using a visual interface. This mode is great for users who prefer a guided query experience or are just getting started with SQL.
 
-{{< figure src="/static/img/docs/v92/mssql_query_builder.png" class="docs-image--no-shadow" >}}
+{{< figure alt="MSSQL builder mode>"  src="/media/docs/mssql/mssql-builder-mode-v12.png" class="docs-image--no-shadow" >}}
 
 The following components will help you build a T-SQL query:
 
-- **Format** - Select a format response from the drop-down for the MSSQL query. The default is **Table**. Refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries) for more information and examples. If you select the **Time series** format option,you must include a `time` column. 
+- **Format** - Select a format response from the drop-down for the MSSQL query. The default is **Table**. Refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries) for more information and examples. If you select the **Time series** format option, you must include a `time` column. 
 
-- **Dataset** - Select a database to query from the drop-down.
+- **Dataset** - Select a database to query from the drop-down. Grafana automatically populates the drop-down with all databases the user has access to. If a default database is configured in the Data Source Configuration page or via a provisioning file, users will be limited to querying only that predefined database.
 
-- **Table** - Select a table from the drop-down. Tables correspond to the chosen database.
+  Note that `tempdb`, `model`, `msdb`, and `master` system databases are intentionally excluded from the query editor drop-down.
+
+- **Table** - Select a table from the drop-down. After selecting a database, the next drop-down displays all available tables in that database.
 
 - **Data operations** - _Optional_. Select an aggregation or a macro from the drop-down. You can add multiple data operations by clicking the **+ sign**. Click the **garbage can icon** to remove data operations.
   - **Column** - Select a column on which to run the aggregation.
@@ -108,92 +101,25 @@ The following components will help you build a T-SQL query:
 - **Filter** - Toggle to add filters.
   - **Filter by column value** - _Optional_. If you toggle **Filter** you can add a column to filter by from the drop-down. To filter by additional columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added, use the `AND` or `OR` operators to define how conditions are evaluated. `AND` requires all conditions to be true, while `OR` requires any condition to be true.  Use the second drop-down to select the filter value. To remove a filter, click the **X icon** next to it. If you select a `date-type` column, you can use macros from the operator list and choose `timeFilter` to insert the `$\_\_timeFilter` macro into your query with the selected date column. 
 
-  After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the `$\_\_timeFilter` macro to the query with the selected date column. Refer to [Macros](#macros) for more information.
-   
-  <!-- you can add an `AND` operator to display all true conditions or an `OR` operator to display any true conditions. Use the second drop-down to choose a filter. To remove a filter, click the `X` button next to that filter's drop-down. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column. -->
-  
-- **Group** - Toggle to add a `GROUP BY` column**.
-- **Group by column** - Select a column to filter by from the drop-down. Click the **+sign** to filter by multiple columns. Click the **X** to remove a filter.
-- **Order** - Toggle to add an `ORDER BY` statement.
-- **Order by** - Select a column to order by from the drop-down. Select ascending (`ASC`) or descending (`DESC`) order.
+    After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the `$\_\_timeFilter` macro to the query with the selected date column. Refer to [Macros](#macros) for more information.
 
-- **Limit** - You can add an optional limit on the number of retrieved results. Default is 50.
+- **Group** - Toggle to add a `GROUP BY` column.
+  - **Group by column** - Select a column to filter by from the drop-down. Click the **+sign** to filter by multiple columns. Click the **X** to remove a filter.
+- **Order** - Toggle to add an `ORDER BY` statement.
+  - **Order by** - Select a column to order by from the drop-down. Select ascending (`ASC`) or descending (`DESC`) order.
+  - **Limit** - You can add an optional limit on the number of retrieved results. Default is 50.
 - **Preview** - Toggle for a preview of the SQL query generated by the query builder. Preview is toggled on by default.
 
-**Time series options**:
-
-
-
-
-
-
-<!-- 
-## Configure common options
-
-You can configure a MSSQL-specific response format in the query editor regardless of its mode.
-
-### Choose a response format
-
-Grafana can format the response from MSSQL as either a table or as a time series.
-
-To choose a response format, select either the **Table** or **Time series** formats from the **Format** dropdown.
-
-To use the time series format, you must name one of the MSSQL columns `time`.
-You can use time series queries, but not table queries, in alerting conditions. -->
-
-For details about using these formats, refer to [Use table queries](#use-table-queries) and [Use time series queries](#use-time-series-queries).
+For additional detail about using formats, refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries).
 
 ### Dataset and table selection
 
-In the **Dataset** dropdown, select the MSSQL database to query. Grafana populates the dropdown with all databases that the user can access.
-Once you select a database, Grafana populates the dropdown with all available tables.
+In the **Dataset** drop-down, select the MSSQL database to query. Grafana populates the drop-down with all databases that the user can access.
+Once you select a database, Grafana populates the drop-down with all available tables.
 
 If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single pre-configured database for querying.
 
-Grafana doesn't include the `tempdb`,`model`,`msdb`, and `master` databases in the query editor dropdown.
-
-<!-- ### Select columns and aggregation functions 
-
-Select a column from the **Column** dropdown to include it in the data.
-You can select an optional aggregation function for the column in the **Aggregation** dropdown.
-
-To add more value columns, click the plus (`+`) button to the right of the column's row. -->
-
-<!-- ### Macros 1
-
-You can enable macros support in the select clause to create time-series queries.
-
-Use the Data operations drop-down to select a macro like $__timeGroup or $__timeGroupAlias. Select a time column from the Column drop-down and a time interval from the Interval drop-down to create a time-series query. -->
-
-
-
-
-<!-- ### Filter data (WHERE)
-
-To add a filter, toggle the **Filter** switch at the top of the editor.
-This reveals a **Filter by column value** section with two dropdown selectors.
-
-Use the first dropdown to choose whether all of the filters need to match (`AND`), or if only one of the filters needs to match (`OR`).
-Use the second dropdown to choose a filter.
-
-To filter on more columns, click the plus (`+`) button to the right of the condition dropdown.
-
-To remove a filter, click the `x` button next to that filter's dropdown.
-
-After selecting a date type column, you can choose Macros from the operators list and select timeFilter which will add the $\_\_timeFilter macro to the query with the selected date column. -->
-
-<!-- ### Group results
-
-To group results by column, toggle the **Group** switch at the top of the editor.
-This reveals a **Group by column** dropdown where you can select which column to group the results by.
-
-To remove the group-by clause, click the `x` button. -->
-
-<!-- ### Preview the query
-
-To preview the SQL query generated by Builder mode, toggle the **Preview** switch at the top of the editor.
-This reveals a preview pane containing the query, and an copy icon at the top right that copies the query to your clipboard. -->
-
+Grafana doesn't include the `tempdb`,`model`,`msdb`, and `master` databases in the query editor drop-down.
 
 ## Code mode
 
@@ -211,7 +137,7 @@ To reformat the query, click the brackets button (`{}`).
 
 To expand the code editor, click the chevron button pointing downward.
 
-To run the query, click the **Run query** button or use the keyboard shortcut <key>Ctrl</key>/<key>Cmd</key> + <key>Enter</key>/<key>Return</key>.
+To run the query, click the **Run query** button or use the keyboard shortcut **<key>Ctrl</key>/<key>Cmd</key> + <key>Enter</key>/<key>Return</key>**.
 
 ### Use autocompletion
 
@@ -253,15 +179,9 @@ From the **Data operations** drop-down, choose a macro such as `$\_\_timeGroup` 
 | `$__unixEpochGroup(dateColumn, '5m', [fillMode])`      | Same as `$__timeGroup`, but for Unix timestamps. Optional `fillMode` controls how to handle missing points.                                                                                                                                           |
 | `$__unixEpochGroupAlias(dateColumn, '5m', [fillMode])` | Same as above, but adds an alias to the grouped column.                                                                                                                                                                                               |
 
-
-
-<!-- {{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}} -->
-
-
 ### View the interpolated query
 
 The query editor includes a **Generated SQL** link that appears after you run a query while editing a panel. Click this link to view the raw interpolated SQL that Grafana executed, including any macros that were expanded during query processing.
-
 
 ## Table queries
 
@@ -332,6 +252,8 @@ A time series query returns results[wide data frame format](https://grafana.com/
 - Any string column transforms into field labels in the data frame query result.
 
 You can enable macro support in the `SELECT` clause to create time series queries more easily. Use the **Data operations** drop-down to choose a macro such as `$\_\_timeGroup` or `$\_\_timeGroupAlias`, then select a time column from the Column drop-down and a time interval from the Interval drop-down. This generates a time-series query based on your selected time grouping.
+
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
 
 ### Create a metric query
 
