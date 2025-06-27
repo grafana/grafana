@@ -16,6 +16,7 @@ import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import { RegisterAssistantDashboardFunctions } from './features/dashboard-scene/assistant/RegisterAssistantDashboardFunctions';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
@@ -123,6 +124,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
                         <MaybeExtensionSidebarProvider>
                           <GlobalStylesWrapper />
+                          <RegisterAssistantDashboardFunctions />
                           <div className="grafana-app">
                             <RouterWrapper {...routerWrapperProps} />
                             <LiveConnectionWarning />
