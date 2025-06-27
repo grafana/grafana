@@ -9,9 +9,9 @@ import (
 func TestV38(t *testing.T) {
 	tests := []migrationTestCase{
 		{
-			name: "comprehensive table migration with nested panels",
+			name: "table migration with nested panels",
 			input: map[string]interface{}{
-				"title":         "V38 Table Migration Comprehensive Test Dashboard",
+				"title":         "V38 Table Migration Test Dashboard",
 				"schemaVersion": 37,
 				"panels": []interface{}{
 					// Basic gauge table
@@ -208,7 +208,7 @@ func TestV38(t *testing.T) {
 				},
 			},
 			expected: map[string]interface{}{
-				"title":         "V38 Table Migration Comprehensive Test Dashboard",
+				"title":         "V38 Table Migration Test Dashboard",
 				"schemaVersion": 38,
 				"panels": []interface{}{
 					// Basic gauge table (migrated)
