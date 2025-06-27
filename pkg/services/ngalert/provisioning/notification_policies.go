@@ -277,7 +277,6 @@ func writeToHash(sum hash.Hash, r *definitions.Route) {
 	writeDuration(r.GroupWait)
 	writeDuration(r.GroupInterval)
 	writeDuration(r.RepeatInterval)
-	writeString(string(r.Provenance))
 	for _, route := range r.Routes {
 		writeToHash(sum, route)
 	}
