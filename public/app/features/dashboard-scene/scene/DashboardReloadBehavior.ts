@@ -1,6 +1,7 @@
 import { debounce, isEqual } from 'lodash';
 
 import { UrlQueryMap } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneObjectBase,
@@ -12,6 +13,7 @@ import {
 import { createLogger } from '@grafana/ui';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -102,6 +104,10 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
     // This is wrapped in setTimeout in order to allow variables and scopes to be set in the URL before actually reloading the dashboard
     setTimeout(() => {
+      const dashboard = this.parent;
+      if (dashboard instanceof DashboardScene) {
+        preserveDashboardSceneStateInLocalStorage(locationService.getSearch(), dashboard.state.uid);
+      }
       getDashboardScenePageStateManager().reloadDashboard(newState);
     });
   }
