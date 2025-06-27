@@ -132,6 +132,8 @@ export function SaveProvisionedDashboardForm({
     magicSave: false,
   });
 
+
+
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
@@ -234,7 +236,7 @@ export function SaveProvisionedDashboardForm({
     }
   };
 
-  const handleAIFillAll = async () => {
+  const handleAIFillAllInternal = async (isParallel = false) => {
     setAiLoading(prev => ({ ...prev, all: true }));
     
     try {
@@ -243,46 +245,79 @@ export function SaveProvisionedDashboardForm({
       
       const content = generateSampleContent();
       
-      // Fill title first
-      await typeText(content.title, (value) => setValue('title', value));
-      
-      // Small delay between fields
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Then fill description
-      await typeText(content.description, (value) => setValue('description', value), 30);
-      
-      // Small delay before shared fields
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
       // Generate shared fields content
       const sharedContent = {
         path: `dashboards/${new Date().getFullYear()}/optimized-dashboard-${Date.now()}.json`,
         comment: `Add enhanced dashboard with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
         branch: `feature/enhanced-dashboard-${new Date().toISOString().slice(0, 7)}`,
       };
-      
-      // Fill path if it's a new dashboard
-      if (isNew) {
-        await typeText(sharedContent.path, (value) => setValue('path', value));
+
+      if (isParallel) {
+        // Parallel mode - fill all fields simultaneously with faster typing
+        const fillPromises = [];
+        
+        // Always fill title and description for new dashboards (faster delays)
+        fillPromises.push(typeText(content.title, (value) => setValue('title', value), 10));
+        fillPromises.push(typeText(content.description, (value) => setValue('description', value), 15));
+        
+        // Fill path if it's a new dashboard
+        if (isNew) {
+          fillPromises.push(typeText(sharedContent.path, (value) => setValue('path', value), 10));
+        }
+        
+        // Fill comment if not read-only
+        if (!readOnly) {
+          fillPromises.push(typeText(sharedContent.comment, (value) => setValue('comment', value), 20));
+        }
+        
+        // Fill branch if workflow is set to branch
+        if (workflow === 'branch') {
+          fillPromises.push(typeText(sharedContent.branch, (value) => setValue('ref', value), 10));
+        }
+        
+        // Wait for all fields to complete simultaneously
+        await Promise.all(fillPromises);
+      } else {
+        // Serial mode - fill fields one by one (original behavior)
+        // Fill title first
+        await typeText(content.title, (value) => setValue('title', value));
+        
+        // Small delay between fields
         await new Promise(resolve => setTimeout(resolve, 300));
-      }
-      
-      // Fill comment if not read-only
-      if (!readOnly) {
-        await typeText(sharedContent.comment, (value) => setValue('comment', value), 40);
+        
+        // Then fill description
+        await typeText(content.description, (value) => setValue('description', value), 30);
+        
+        // Small delay before shared fields
         await new Promise(resolve => setTimeout(resolve, 300));
-      }
-      
-      // Fill branch if workflow is set to branch
-      if (workflow === 'branch') {
-        await typeText(sharedContent.branch, (value) => setValue('ref', value));
+        
+        // Fill path if it's a new dashboard
+        if (isNew) {
+          await typeText(sharedContent.path, (value) => setValue('path', value));
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
+        // Fill comment if not read-only
+        if (!readOnly) {
+          await typeText(sharedContent.comment, (value) => setValue('comment', value), 40);
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
+        // Fill branch if workflow is set to branch
+        if (workflow === 'branch') {
+          await typeText(sharedContent.branch, (value) => setValue('ref', value));
+        }
       }
     } catch (error) {
       console.error('AI autofill all error:', error);
     } finally {
       setAiLoading(prev => ({ ...prev, all: false }));
     }
+  };
+
+  // Always use serial mode for the regular autofill button
+  const handleAIFillAll = async () => {
+    await handleAIFillAllInternal(false);
   };
 
   // Submit handler for saving the form data
@@ -320,11 +355,11 @@ export function SaveProvisionedDashboardForm({
     setAiLoading(prev => ({ ...prev, magicSave: true }));
     
     try {
-      // First fill all fields with AI (this already handles its own loading states)
-      await handleAIFillAll();
+      // First fill all fields with AI in parallel mode for faster execution
+      await handleAIFillAllInternal(true);
       
-      // Wait a bit for the form to update
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Shorter wait for form to update since parallel is faster
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Then trigger the save using the form's submit handler
       const formData = methods.getValues();
@@ -479,6 +514,10 @@ export function SaveProvisionedDashboardForm({
               onClick={handleAIFillAll}
               fill="outline"
               disabled={Object.values(aiLoading).some(loading => loading)}
+              tooltip={t(
+                'dashboard-scene.save-provisioned-dashboard-form.ai-fill-all-tooltip',
+                'AI autofill all fields sequentially'
+              )}
             >
               {aiLoading.all 
                 ? t('dashboard-scene.save-provisioned-dashboard-form.ai-generating', 'Generating all fields...')
@@ -498,17 +537,17 @@ export function SaveProvisionedDashboardForm({
                 variant="secondary" 
                 icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
                 onClick={handleMagicSave}
-                disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
-                tooltip={t(
-                  'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
-                  'AI autofill all fields and save'
-                )}
-              >
-                {aiLoading.magicSave 
-                  ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
-                  : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Save')
-                }
-              </Button>
+                                  disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
+                  tooltip={t(
+                    'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
+                    'AI autofill all fields in parallel and save instantly'
+                  )}
+                              >
+                  {aiLoading.magicSave 
+                    ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
+                    : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Save')
+                  }
+                </Button>
             </Stack>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>

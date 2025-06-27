@@ -3,7 +3,7 @@ import { memo, useState, useEffect, useRef, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { Field, TextArea, Input, RadioButtonGroup, IconButton, Stack, Button, useStyles2, useTheme2 } from '@grafana/ui';
+import { Field, TextArea, Input, RadioButtonGroup, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
