@@ -1,4 +1,4 @@
-name: Verify Storybook
+name: Deploy Storybook preview
 
 on:
   # pull_request:
@@ -15,8 +15,10 @@ permissions: {}
 
 jobs:
   verify-storybook:
-    name: Verify Storybook
+    name: Deploy Storybook preview
     runs-on: ubuntu-latest
+    # Only run on push, or on PRs NOT from forks
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     permissions:
       contents: read
 
