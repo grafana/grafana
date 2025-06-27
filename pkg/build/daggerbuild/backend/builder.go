@@ -155,6 +155,8 @@ func Builder(
 		WithMountedCache("/root/.cache/go", goBuildCache).
 		WithEnvVariable("GOCACHE", "/root/.cache/go")
 
+	builder = builder.WithExec([]string{"go", "install", "github.com/tailscale/go-cache-plugin/cmd/go-cache-plugin@latest"})
+
 	if prog := opts.GoCacheProg; prog != "" {
 		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
 	}
