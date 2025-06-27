@@ -584,6 +584,8 @@ require github.com/dgraph-io/badger/v4 v4.7.0 // @grafana/grafana-search-and-sto
 
 require github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-backend-group
 
+require github.com/grafana/grafana/pkg/build v0.0.0-20250626151444-918c93ee4ea3
+
 require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
