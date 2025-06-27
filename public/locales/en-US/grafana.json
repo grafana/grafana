@@ -3222,6 +3222,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "Single sign-on (SSO) with SAML.",
+      "scim-learn-more": " Sync users and teams with SCIM.",
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
@@ -3886,6 +3888,7 @@
   "close-button": {
     "tooltip": "Close"
   },
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
