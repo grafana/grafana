@@ -29,7 +29,7 @@ func (b *APIBuilder) evalAllFlagsStatic(isAuthedUser bool, w http.ResponseWriter
 	writeResponse(http.StatusOK, result, b.logger, w)
 }
 
-func (b *APIBuilder) evalFlagStatic(flagKey string, isAuthedUser bool, w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) evalFlagStatic(flagKey string, w http.ResponseWriter, r *http.Request) {
 	result, err := b.staticEvaluator.EvalFlag(r.Context(), flagKey)
 	if err != nil {
 		b.logger.Error("Failed to evaluate static flag", "key", flagKey, "error", err)

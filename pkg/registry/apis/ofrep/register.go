@@ -113,95 +113,50 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 }
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	var isAuthedUser bool
-	var namespace string
-	user, ok := types.AuthInfoFrom(r.Context())
-	if ok {
-		namespace = user.GetNamespace()
-		isAuthedUser = user.GetIdentityType() != ""
-	}
-
-	// if namespace is empty, use namespace from URL path
-	if namespace == "" {
-		namespace = vars["namespace"]
-	}
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		b.logger.Error("Error reading evaluation request body", "error", err)
-		http.Error(w, "failed to read request body", http.StatusBadRequest)
-		return
-	}
-	r.Body = io.NopCloser(bytes.NewBuffer(body))
-
-	stackID := b.stackIdFromEvalCtx(body)
-	// "default" namespace case can only occur in on-prem grafana
-	if removeStackPrefix(namespace) != stackID && namespace != "default" {
-		b.logger.Error("stackId in evaluation context does not match requested namespace", "error", err)
-		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
+	if !b.validateNamespace(r) {
+		b.logger.Error("stackId in evaluation context does not match requested namespace")
+		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
 		return
 	}
 
-	flagKey := vars["flagKey"]
+	flagKey := mux.Vars(r)["flagKey"]
 	if flagKey == "" {
 		http.Error(w, "flagKey parameter is required", http.StatusBadRequest)
 		return
 	}
 
-	publicFlag := isPublicFlag(flagKey)
+	isAuthedReq := b.isAuthenticatedRequest(r)
 
-	if !isAuthedUser && !publicFlag {
+	// Unless the request is authenticated, we only allow public flags evaluations
+	if !isAuthedReq && !isPublicFlag(flagKey) {
 		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
 		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
 		return
 	}
 
 	if b.providerType == setting.GOFFProviderType {
-		b.proxyFlagReq(flagKey, isAuthedUser, w, r)
+		b.proxyFlagReq(flagKey, isAuthedReq, w, r)
 		return
 	}
 
-	b.evalFlagStatic(flagKey, isAuthedUser, w, r)
+	b.evalFlagStatic(flagKey, w, r)
 }
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
-	var isAuthedUser bool
-	var namespace string
-	user, ok := types.AuthInfoFrom(r.Context())
-	if ok {
-		namespace = user.GetNamespace()
-		isAuthedUser = user.GetIdentityType() != ""
-	}
-
-	// if namespace is empty, use namespace from URL path
-	if namespace == "" {
-		namespace = mux.Vars(r)["namespace"]
-	}
-
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		b.logger.Error("Error reading evaluation request body", "error", err)
-		http.Error(w, "failed to read request body", http.StatusBadRequest)
+	if !b.validateNamespace(r) {
+		b.logger.Error("stackId in evaluation context does not match requested namespace")
+		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusUnauthorized)
 		return
 	}
-	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	stackID := b.stackIdFromEvalCtx(body)
-	// "default" namespace case can only occur in on-prem grafana
-	if removeStackPrefix(namespace) != stackID && namespace != "default" {
-		b.logger.Error("stackId in evaluation context does not match requested namespace", "error", err)
-		http.Error(w, "stackId in evaluation context does not match requested namespace", http.StatusBadRequest) // Or maybe StatusUnauthorized?
-		return
-	}
+	isAuthedReq := b.isAuthenticatedRequest(r)
 
 	if b.providerType == setting.GOFFProviderType {
-		b.proxyAllFlagReq(isAuthedUser, w, r)
+		b.proxyAllFlagReq(isAuthedReq, w, r)
 		return
 	}
 
-	b.evalAllFlagsStatic(isAuthedUser, w, r)
+	b.evalAllFlagsStatic(isAuthedReq, w, r)
 }
 
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {
@@ -236,4 +191,44 @@ func (b *APIBuilder) stackIdFromEvalCtx(body []byte) string {
 
 func removeStackPrefix(tenant string) string {
 	return strings.TrimPrefix(tenant, "stacks-")
+}
+
+// isAuthenticatedRequest returns true if the request is authenticated
+func (b *APIBuilder) isAuthenticatedRequest(r *http.Request) bool {
+	user, ok := types.AuthInfoFrom(r.Context())
+	if !ok {
+		return false
+	}
+	return user.GetIdentityType() != "" && user.GetIdentityType() != types.TypeAnonymous
+}
+
+// validateNamespace checks if the stackId in the evaluation context matches the namespace in the request
+func (b *APIBuilder) validateNamespace(r *http.Request) bool {
+	// Extract namespace from request context or URL path
+	var namespace string
+	user, ok := types.AuthInfoFrom(r.Context())
+	if !ok {
+		return false
+	}
+
+	if user.GetNamespace() != "" {
+		namespace = user.GetNamespace()
+	} else {
+		namespace = mux.Vars(r)["namespace"]
+	}
+
+	// Extract stackId from feature flag evaluation context
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		b.logger.Error("Error reading evaluation request body", "error", err)
+		return false
+	}
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	// "default" namespace case can only occur in on-prem grafana
+	if b.stackIdFromEvalCtx(body) == removeStackPrefix(namespace) || namespace == "default" {
+		return true
+	}
+
+	return false
 }
