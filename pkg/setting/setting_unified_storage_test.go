@@ -64,7 +64,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		cfg.setUnifiedStorageConfig()
 
 		// Test that default index settings are applied
-		assert.Equal(t, 1, cfg.IndexMinCount) // default from setting_unified_storage.go:58
-		assert.Equal(t, 0, cfg.IndexMaxCount) // default from setting_unified_storage.go:59
+		assert.Equal(t, 1, cfg.IndexMinCount)
+		assert.Equal(t, 0, cfg.IndexMaxCount)
 	})
 }

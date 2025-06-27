@@ -271,7 +271,7 @@ func TestBuildIndexes_MaxCountThreshold(t *testing.T) {
 				Backend:       search,
 				Resources:     supplier,
 				WorkerThreads: 1,
-				InitMinCount:  0, // disable min count for this test
+				InitMinCount:  1, // set min count to default for this test
 				InitMaxCount:  tt.initMaxSize,
 			}
 
