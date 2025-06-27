@@ -26,6 +26,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMemberList":          schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef":                 schema_pkg_apis_iam_v0alpha1_TeamRef(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSubject":             schema_pkg_apis_iam_v0alpha1_TeamSubject(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam":                schema_pkg_apis_iam_v0alpha1_UserTeam(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeamList":            schema_pkg_apis_iam_v0alpha1_UserTeamList(ref),
 	}
 }
 
@@ -556,5 +558,87 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserTeam(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"teamRef": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef"),
+						},
+					},
+					"permission": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"admin\"`\n - `\"member\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"admin", "member"},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserTeamList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }

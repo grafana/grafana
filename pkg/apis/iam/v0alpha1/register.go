@@ -170,7 +170,7 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		schema.GroupVersion{Group: GROUP, Version: version},
 		&iamv0alpha1.User{},
 		&iamv0alpha1.UserList{},
-		&iamv0alpha1.UserTeamList{},
+		&UserTeamList{},
 		&iamv0alpha1.ServiceAccount{},
 		&iamv0alpha1.ServiceAccountList{},
 		&ServiceAccountTokenList{},

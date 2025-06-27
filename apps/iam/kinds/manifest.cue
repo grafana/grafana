@@ -14,7 +14,7 @@ manifest: {
 		team,
 		teambinding,
 		serviceaccount,
-		// serviceaccounttoken, // TODO: in the previous implementation it was not a kind, but a custom response type
-		userteam,
+		// serviceaccounttoken, // TODO: this is a subresource, how to define it in CUE?
+		// userteam, // TODO: this is a subresource, how to define it in CUE?
 	]
 }
