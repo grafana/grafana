@@ -90,7 +90,6 @@ interface DashboardEditFormSharedFieldsProps {
     path: boolean;
     comment: boolean;
     branch: boolean;
-    all: boolean;
     magicSave: boolean;
   };
   setAiLoading?: React.Dispatch<React.SetStateAction<{
@@ -99,7 +98,6 @@ interface DashboardEditFormSharedFieldsProps {
     path: boolean;
     comment: boolean;
     branch: boolean;
-    all: boolean;
     magicSave: boolean;
   }>>;
 }
@@ -128,7 +126,6 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
       path: false,
       comment: false,
       branch: false,
-      all: false,
       magicSave: false,
     });
 
@@ -221,7 +218,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
                   onClick={handleAIFillPath}
                   variant="secondary"
                   size="sm"
-                  disabled={currentAiLoading.path || currentAiLoading.all}
+                  disabled={currentAiLoading.path}
                 />
               ) : undefined
             }
@@ -253,7 +250,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
                   onClick={handleAIFillComment}
                   variant="secondary"
                   size="sm"
-                  disabled={currentAiLoading.comment || currentAiLoading.all}
+                  disabled={currentAiLoading.comment}
                 />
               ) : undefined
             }
@@ -300,7 +297,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
                         onClick={handleAIFillBranch}
                         variant="secondary"
                         size="sm"
-                        disabled={currentAiLoading.branch || currentAiLoading.all}
+                        disabled={currentAiLoading.branch}
                       />
                     ) : undefined
                   }

@@ -128,7 +128,6 @@ export function SaveProvisionedDashboardForm({
     path: false,
     comment: false,
     branch: false,
-    all: false,
     magicSave: false,
   });
 
@@ -511,7 +510,7 @@ export function SaveProvisionedDashboardForm({
                         onClick={handleAIFillTitle}
                         variant="secondary"
                         size="sm"
-                        disabled={aiLoading.title || aiLoading.all}
+                        disabled={aiLoading.title}
                       />
                     ) : undefined
                   }
@@ -545,7 +544,7 @@ export function SaveProvisionedDashboardForm({
                         onClick={handleAIFillDescription}
                         variant="secondary"
                         size="sm"
-                        disabled={aiLoading.description || aiLoading.all}
+                        disabled={aiLoading.description}
                       />
                     ) : undefined
                   }
