@@ -54,6 +54,6 @@ func (r *NoopConnector) ProducesObject(verb string) interface{} {
 
 func (r *NoopConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.Write([]byte("NOOP"))
+		_, _ = w.Write([]byte("NOOP"))
 	}), nil
 }
