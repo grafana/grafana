@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -272,7 +271,6 @@ func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 
 		assert.NotEqual(t, prevDataKeys[0].EncryptedData, reEncryptedDataKeys[0].EncryptedData)
 	})
-
 }
 
 func TestEncryptionService_Decrypt(t *testing.T) {
@@ -484,12 +482,4 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	encMgr := svc.(*EncryptionManager)
 	require.Len(t, encMgr.providers, 2)
 	require.Contains(t, encMgr.providers, encryption.ProviderID("fakeProvider.v1"))
-}
-
-// Use this function at the beginning of those tests
-// that manipulates 'now', so it'll leave it in a
-// correct state once test execution finishes.
-func restoreTimeNowAfterTestExec(t *testing.T) {
-	t.Helper()
-	t.Cleanup(func() { now = time.Now })
 }

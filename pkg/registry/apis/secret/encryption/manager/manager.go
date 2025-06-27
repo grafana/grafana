@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -29,12 +28,6 @@ import (
 
 const (
 	keyIdDelimiter = '#'
-)
-
-var (
-	// now is used for testing purposes,
-	// as a way to fake time.Now function.
-	now = time.Now
 )
 
 type EncryptionManager struct {
@@ -232,7 +225,6 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace string
 // dataKeyByLabel looks up for data key in cache by label.
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string) (string, []byte, error) {
-
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
 	if err != nil {
