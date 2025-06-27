@@ -9,6 +9,8 @@ import { hashRulerRule } from '../../utils/rule-id';
 import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, rulerRuleType } from '../../utils/rules';
 
 // rule-scoped actions
+// TOOD The interval field only make sense when adding a rule to a new rule group.
+// We need to find a better way to handle this.
 export const addRuleAction = createAction<{ rule: PostableRuleDTO; groupName?: string; interval?: string }>(
   'ruleGroup/rules/add'
 );
