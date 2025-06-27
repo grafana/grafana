@@ -37,7 +37,7 @@ var (
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaSharingSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
@@ -46,7 +46,7 @@ var (
 			Description:  "Enables public dashboard rendering using scenes",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
-			Owner:        grafanaSharingSquad,
+			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "true", // enabled by default
 		},
 		{
@@ -231,7 +231,7 @@ var (
 			Name:              "renderAuthJWT",
 			Description:       "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaSharingSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -398,14 +398,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:         "angularDeprecationUI",
-			Description:  "Display Angular warnings in dashboards and panels",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
 			Stage:        FeatureStageGeneralAvailability,
@@ -425,7 +417,7 @@ var (
 			Description:     "Enables rendering retries for the reporting feature",
 			Stage:           FeatureStagePublicPreview,
 			FrontendOnly:    false,
-			Owner:           grafanaSharingSquad,
+			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
 		},
 		{
@@ -433,15 +425,6 @@ var (
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:            "libraryPanelRBAC",
-			Description:     "Enables RBAC support for library panels",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: true,
-			Expression:      "true",
 		},
 		{
 			Name:         "lokiRunQueriesInParallel",
@@ -503,6 +486,13 @@ var (
 		{
 			Name:            "kubernetesSnapshots",
 			Description:     "Routes snapshot requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
+			Name:            "kubernetesLibraryPanels",
+			Description:     "Routes library panel requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
@@ -681,7 +671,7 @@ var (
 			Description:  "Enables generating table data as PDF in reporting",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
-			Owner:        grafanaSharingSquad,
+			Owner:        grafanaOperatorExperienceSquad,
 		},
 		{
 			Name:           "ssoSettingsApi",
@@ -857,7 +847,7 @@ var (
 			Name:        "newPDFRendering",
 			Description: "New implementation for the dashboard-to-PDF rendering",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
+			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true", // enabled by default,
 		},
 		{
@@ -963,8 +953,8 @@ var (
 		{
 			Name:           "queryLibrary",
 			Description:    "Enables Query Library feature in Explore",
-			Stage:          FeatureStageExperimental,
-			Owner:          grafanaFrontendPlatformSquad,
+			Stage:          FeatureStagePrivatePreview,
+			Owner:          grafanaSharingSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
@@ -1051,13 +1041,6 @@ var (
 			AllowSelfServe:  true,
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
-		},
-		{
-			Name:        "failWrongDSUID",
-			Description: "Throws an error if a data source has an invalid UIDs",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:              "zanzana",
@@ -1308,7 +1291,7 @@ var (
 		{
 			Name:        "enableSCIM",
 			Description: "Enables SCIM support for user and group management",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       identityAccessTeam,
 		},
 		{
@@ -1523,7 +1506,7 @@ var (
 			Name:              "newShareReportDrawer",
 			Description:       "Enables the report creation drawer in a dashboard",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaSharingSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 		},
@@ -1531,7 +1514,7 @@ var (
 			Name:              "rendererDisableAppPluginsPreload",
 			Description:       "Disable pre-loading app plugins when the request is coming from the renderer",
 			Stage:             FeatureStageExperimental,
-			Owner:             grafanaSharingSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
@@ -1779,6 +1762,14 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "true",
+		},
+		{
+			Name:         "newInfluxDSConfigPageDesign",
+			Description:  "Enables new design for the InfluxDB data source configuration page",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaPartnerPluginsSquad,
+			Expression:   "false",
 		},
 	}
 )

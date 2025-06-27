@@ -215,10 +215,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagAngularDeprecationUI
-	// Display Angular warnings in dashboards and panels
-	FlagAngularDeprecationUI = "angularDeprecationUI"
-
 	// FlagDashgpt
 	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"
@@ -234,10 +230,6 @@ const (
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
-
-	// FlagLibraryPanelRBAC
-	// Enables RBAC support for library panels
-	FlagLibraryPanelRBAC = "libraryPanelRBAC"
 
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
@@ -270,6 +262,10 @@ const (
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
+
+	// FlagKubernetesLibraryPanels
+	// Routes library panel requests from /api to the /apis endpoint
+	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
@@ -554,10 +550,6 @@ const (
 	// FlagSsoSettingsLDAP
 	// Use the new SSO Settings API to configure LDAP
 	FlagSsoSettingsLDAP = "ssoSettingsLDAP"
-
-	// FlagFailWrongDSUID
-	// Throws an error if a data source has an invalid UIDs
-	FlagFailWrongDSUID = "failWrongDSUID"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -938,4 +930,8 @@ const (
 	// FlagTabularNumbers
 	// Use fixed-width numbers globally in the UI
 	FlagTabularNumbers = "tabularNumbers"
+
+	// FlagNewInfluxDSConfigPageDesign
+	// Enables new design for the InfluxDB data source configuration page
+	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
 )

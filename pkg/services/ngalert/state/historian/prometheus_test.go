@@ -263,6 +263,24 @@ func TestPrometheusBackend_Record(t *testing.T) {
 			ruleMeta: ruleMeta,
 			states:   []state.StateTransition{createTransition(eval.Normal, eval.Normal, orgID, now)},
 		},
+		{
+			name:     "labels with invalid characters are sanitized",
+			ruleMeta: ruleMeta,
+			states: []state.StateTransition{
+				{
+					State: &state.State{
+						AlertRuleUID:       "rule-uid-sanitize",
+						OrgID:              orgID,
+						Labels:             data.Labels{"valid-label": "value1", "invalid.label": "value2", "label-with-dash": "value3", "123starts-with-number": "value4", "has spaces": "value5"},
+						State:              eval.Alerting,
+						LastEvaluationTime: now,
+					},
+				},
+			},
+			expectedFrames: data.Frames{
+				createExpectedFrame(t, "rule-uid-sanitize", "test rule", "firing", "alerting", data.Labels{"valid_label": "value1", "invalid_label": "value2", "label_with_dash": "value3", "_23starts_with_number": "value4", "has_spaces": "value5"}, 1.0),
+			},
+		},
 	}
 
 	for _, tc := range testCases {

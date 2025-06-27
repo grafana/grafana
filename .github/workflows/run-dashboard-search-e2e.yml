@@ -36,7 +36,7 @@ jobs:
       - run: go version
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: '.nvmrc'
           cache: 'yarn'
       - name: Cache Node Modules
         id: cache-node-modules
