@@ -201,7 +201,7 @@ In a high availability Grafana setup involving several Grafana server instances 
 - Streaming from Telegraf will deliver data only to clients connected to the same instance which received Telegraf data, active stream cache is not shared between different Grafana instances.
 - A separate unidirectional stream between Grafana and backend data source may be opened on different Grafana servers for the same channel.
 
-To bypass these limitations, Grafana v8.1 has an experimental Live HA engine that requires Redis to work.
+To bypass these limitations, Grafana has a Live HA engine that requires Redis to work.
 
 ### Configure Redis Live engine
 
