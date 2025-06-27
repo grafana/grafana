@@ -43,6 +43,7 @@ type StorageOptions struct {
 
 	// For unified-grpc
 	Address                                  string
+	IndexServerAddress                       string
 	GrpcClientAuthenticationToken            string
 	GrpcClientAuthenticationTokenExchangeURL string
 	GrpcClientAuthenticationTokenNamespace   string
@@ -136,10 +137,22 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
+	var indexConn *grpc.ClientConn
+	if o.IndexServerAddress != "" {
+		indexConn, err = grpc.NewClient(o.IndexServerAddress,
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		)
+		if err != nil {
+			return err
+		}
+	} else {
+		indexConn = conn
+	}
 
 	const resourceStoreAudience = "resourceStore"
 
-	unified, err := resource.NewRemoteResourceClient(tracer, conn, resource.RemoteResourceClientConfig{
+	unified, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resource.RemoteResourceClientConfig{
 		Token:            o.GrpcClientAuthenticationToken,
 		TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
 		Namespace:        o.GrpcClientAuthenticationTokenNamespace,
