@@ -102,9 +102,7 @@ func (c *GRPCServerSettings) processAddress() error {
 func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	server := iniFile.Section("grpc_server")
 
-	// This setting can be used to replace the `FlagGrpcServer` feature flag
 	cfg.GRPCServer.Enabled = server.Key("enabled").MustBool(false)
-
 	cfg.GRPCServer.useTLS = server.Key("use_tls").MustBool(false)
 	cfg.GRPCServer.certFile = server.Key("cert_file").String()
 	cfg.GRPCServer.keyFile = server.Key("cert_key").String()

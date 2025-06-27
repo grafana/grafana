@@ -63,10 +63,6 @@ export interface FeatureToggles {
   */
   logRequestsInstrumentedAsUnknown?: boolean;
   /**
-  * Run the GRPC server
-  */
-  grpcServer?: boolean;
-  /**
   * Enables cross-account querying in CloudWatch datasources
   * @default true
   */

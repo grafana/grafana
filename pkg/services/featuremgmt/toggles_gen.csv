@@ -9,7 +9,6 @@ storage,experimental,@grafana/search-and-storage,false,false,false
 correlations,GA,@grafana/dataviz-squad,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 logRequestsInstrumentedAsUnknown,experimental,@grafana/grafana-backend-group,false,false,false
-grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
