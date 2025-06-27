@@ -668,7 +668,9 @@ const getGridStyles = (
 
     // note: this cannot have any transparency since default cells that
     // overlay/overflow on hover inherit this background and need to occlude cells below
-    '--rdg-row-hover-background-color': theme.isDark ? '#212428' : '#f4f5f5',
+    '--rdg-row-hover-background-color': transparent
+      ? theme.colors.background.primary
+      : theme.colors.background.secondary,
 
     // TODO: magic 32px number is unfortunate. it would be better to have the content
     // flow using flexbox rather than hard-coding this size via a calc
