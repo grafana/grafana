@@ -215,10 +215,6 @@ const (
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 
-	// FlagAngularDeprecationUI
-	// Display Angular warnings in dashboards and panels
-	FlagAngularDeprecationUI = "angularDeprecationUI"
-
 	// FlagDashgpt
 	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"

@@ -40,7 +40,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                          | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                               | Yes                |
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled | Yes                |
-| `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                  | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                           | Yes                |
 | `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                        | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                             | Yes                |
@@ -108,6 +107,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingSaveStateCompressed`         | Enables the compressed protobuf-based alert state storage                                                                                                     |
 | `tableNextGen`                        | Allows access to the new react-data-grid based table component.                                                                                               |
 | `improvedExternalSessionHandling`     | Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.                            |
+| `enableSCIM`                          | Enables SCIM support for user and group management                                                                                                            |
 | `elasticsearchCrossClusterSearch`     | Enables cross cluster search in the Elasticsearch datasource                                                                                                  |
 | `improvedExternalSessionHandlingSAML` | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. |
 | `alertRuleRestore`                    | Enables the alert rule restore feature                                                                                                                        |
