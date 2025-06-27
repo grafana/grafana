@@ -391,7 +391,8 @@
       "metadata": {
         "name": "angularDeprecationUI",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-08-29T14:05:47Z"
+        "creationTimestamp": "2023-08-29T14:05:47Z",
+        "deletionTimestamp": "2025-06-27T09:59:58Z"
       },
       "spec": {
         "description": "Display Angular warnings in dashboards and panels",
