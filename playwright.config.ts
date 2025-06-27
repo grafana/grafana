@@ -20,6 +20,7 @@ export default defineConfig<PluginOptions>({
       username: 'admin',
       password: 'admin',
     },
+    screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
   },

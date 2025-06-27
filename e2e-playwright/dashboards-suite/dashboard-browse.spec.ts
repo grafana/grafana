@@ -31,6 +31,7 @@ test.describe(
       }
     });
 
+    // TODO this test fails because the `dashboard-browse-nested` test interferes with it
     test('Manage Dashboards tests', async ({ page, selectors }) => {
       // Navigate to dashboards page
       await page.goto('/dashboards');
