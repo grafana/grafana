@@ -235,10 +235,6 @@ const (
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
 
-	// FlagLibraryPanelRBAC
-	// Enables RBAC support for library panels
-	FlagLibraryPanelRBAC = "libraryPanelRBAC"
-
 	// FlagLokiRunQueriesInParallel
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
@@ -270,6 +266,10 @@ const (
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
+
+	// FlagKubernetesLibraryPanels
+	// Routes library panel requests from /api to the /apis endpoint
+	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
@@ -938,4 +938,8 @@ const (
 	// FlagTabularNumbers
 	// Use fixed-width numbers globally in the UI
 	FlagTabularNumbers = "tabularNumbers"
+
+	// FlagNewInfluxDSConfigPageDesign
+	// Enables new design for the InfluxDB data source configuration page
+	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
 )
