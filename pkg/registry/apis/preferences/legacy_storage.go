@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1"
@@ -61,11 +60,11 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) Fetch(ctx context.Context, ns string, user identity.Requester) (*preferences.PreferencesList, error) {
+func (s *legacyStorage) fetchRelevantValues(ctx context.Context, user identity.Requester) (*preferences.PreferencesList, error) {
 	if user == nil {
 		return nil, fmt.Errorf("expected requester")
 	}
-
+	ns := user.GetNamespace()
 	list := &preferences.PreferencesList{}
 
 	// Namespace
@@ -106,21 +105,19 @@ func (s *legacyStorage) Fetch(ctx context.Context, ns string, user identity.Requ
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	ns := request.NamespaceValue(ctx)
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return s.Fetch(ctx, ns, user)
+	return s.fetchRelevantValues(ctx, user)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	ns := request.NamespaceValue(ctx)
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
-	list, err := s.Fetch(ctx, ns, user)
+	list, err := s.fetchRelevantValues(ctx, user)
 	if err != nil {
 		return nil, err
 	}

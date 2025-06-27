@@ -6,7 +6,6 @@ import (
 
 	"dario.cat/mergo"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -95,25 +94,27 @@ func (s *calculator) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *bui
 
 func (s *calculator) Current(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	ns := request.NamespaceValue(ctx)
-	p := preferences.Preferences{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: "preferences.grafana.app/v0alpha1",
-			Kind:       "Preferences",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			CreationTimestamp: v1.Now(),
-			Namespace:         ns,
-		},
-		Spec: s.defaults,
-	}
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
 
-	list, err := s.store.Fetch(ctx, ns, user)
+	ns := user.GetNamespace()
+	p := preferences.Preferences{
+		TypeMeta: preferences.PreferencesResourceInfo.TypeMeta(),
+		ObjectMeta: v1.ObjectMeta{
+			CreationTimestamp: v1.Now(),
+			Namespace:         ns,
+		},
+		Spec: s.defaults,
+	}
+
+	list, err := s.store.fetchRelevantValues(ctx, user)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
 
 	// Iterate in reverse order (least relevant to most relevant)
 	for i := len(list.Items) - 1; i >= 0; i-- {
