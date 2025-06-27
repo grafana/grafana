@@ -89,6 +89,7 @@ interface DashboardEditFormSharedFieldsProps {
     comment: boolean;
     branch: boolean;
     all: boolean;
+    magicSave: boolean;
   };
   setAiLoading?: React.Dispatch<React.SetStateAction<{
     title: boolean;
@@ -97,6 +98,7 @@ interface DashboardEditFormSharedFieldsProps {
     comment: boolean;
     branch: boolean;
     all: boolean;
+    magicSave: boolean;
   }>>;
 }
 
@@ -119,10 +121,13 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
 
     // Use external loading states if provided, otherwise create local ones
     const [localAiLoading, setLocalAiLoading] = useState({
+      title: false,
+      description: false,
       path: false,
       comment: false,
       branch: false,
       all: false,
+      magicSave: false,
     });
 
     const currentAiLoading = aiLoading || localAiLoading;

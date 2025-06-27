@@ -129,6 +129,7 @@ export function SaveProvisionedDashboardForm({
     comment: false,
     branch: false,
     all: false,
+    magicSave: false,
   });
 
   // Update the form if default values change
@@ -312,6 +313,43 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
+  // Magic save handler that combines AI autofill and save
+  const handleMagicSave = async () => {
+    if (readOnly) {return;}
+    
+    setAiLoading(prev => ({ ...prev, magicSave: true }));
+    
+    try {
+      // First fill all fields with AI (this already handles its own loading states)
+      await handleAIFillAll();
+      
+      // Wait a bit for the form to update
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Then trigger the save using the form's submit handler
+      const formData = methods.getValues();
+      
+      // Validate that we have the required fields
+      if (!formData.title || !formData.path) {
+        throw new Error('Required fields are missing after AI autofill');
+      }
+      
+      await handleFormSubmit(formData);
+    } catch (error) {
+      console.error('Magic save error:', error);
+      // Show error to user
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t('dashboard-scene.save-provisioned-dashboard-form.magic-save-error', 'Magic save failed'), 
+          error
+        ],
+      });
+    } finally {
+      setAiLoading(prev => ({ ...prev, magicSave: false }));
+    }
+  };
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
@@ -450,11 +488,28 @@ export function SaveProvisionedDashboardForm({
           )}
 
           <Stack gap={2}>
-            <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
-              {request.isLoading
-                ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-                : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
-            </Button>
+            <Stack direction="row" gap={2}>
+              <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
+                {request.isLoading
+                  ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+                  : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+              </Button>
+              <Button 
+                variant="secondary" 
+                icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
+                onClick={handleMagicSave}
+                disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
+                tooltip={t(
+                  'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
+                  'AI autofill all fields and save'
+                )}
+              >
+                {aiLoading.magicSave 
+                  ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
+                  : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Save')
+                }
+              </Button>
+            </Stack>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
