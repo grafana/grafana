@@ -13,6 +13,7 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
       ...state,
       compareWith: undefined,
       compareOptions: [],
+      hideCheckbox: true,
     });
 
     this.addActivationHandler(() => this._activationHandler());
