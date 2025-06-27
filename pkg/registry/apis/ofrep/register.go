@@ -7,8 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
-	"strings"
 
 	"github.com/gorilla/mux"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,7 +101,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	oas.Info.Description = "Proxy access to open feature flags"
 
 	// Remove the NOOP connector
-	delete(oas.Paths.Paths, "/apis/features.grafana.app/v0alpha1/namespaces/{namespace}/noop/{name}")
+	delete(oas.Paths.Paths, "/apis/"+groupVersion.String()+"/namespaces/{namespace}/noop/{name}")
 	return oas, nil
 }
 
@@ -206,7 +204,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // anything
+															Schema: spec.MapProperty(nil), // TODO, real type
 														},
 													},
 												},
@@ -280,29 +278,25 @@ func writeResponse(statusCode int, result any, logger log.Logger, w http.Respons
 	}
 }
 
-func (b *APIBuilder) stackIdFromEvalCtx(body []byte) string {
+func (b *APIBuilder) stackIdFromEvalCtx(body []byte) int64 {
 	// Extract stackID from request body without consuming it
 	var evalCtx struct {
 		Context struct {
-			StackID int32 `json:"stackId"`
+			StackID int64 `json:"stackId"` // TODO -- replace with namespace "stackId" ONLY makes sense in cloud
 		} `json:"context"`
 	}
 
 	if err := json.Unmarshal(body, &evalCtx); err != nil {
 		b.logger.Debug("Failed to unmarshal evaluation context", "error", err, "body", string(body))
-		return ""
+		return 0
 	}
 
 	if evalCtx.Context.StackID <= 0 {
 		b.logger.Debug("Invalid or missing stackId in evaluation context", "stackId", evalCtx.Context.StackID)
-		return ""
+		return 0
 	}
 
-	return strconv.Itoa(int(evalCtx.Context.StackID))
-}
-
-func removeStackPrefix(tenant string) string {
-	return strings.TrimPrefix(tenant, "stacks-")
+	return evalCtx.Context.StackID
 }
 
 // isAuthenticatedRequest returns true if the request is authenticated
@@ -329,6 +323,12 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 		namespace = mux.Vars(r)["namespace"]
 	}
 
+	info, err := types.ParseNamespace(namespace)
+	if err != nil {
+		b.logger.Error("Error parsing namespace", "error", err)
+		return false
+	}
+
 	// Extract stackId from feature flag evaluation context
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -338,7 +338,7 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	// "default" namespace case can only occur in on-prem grafana
-	if b.stackIdFromEvalCtx(body) == removeStackPrefix(namespace) || namespace == "default" {
+	if b.stackIdFromEvalCtx(body) == info.StackID {
 		return true
 	}
 
