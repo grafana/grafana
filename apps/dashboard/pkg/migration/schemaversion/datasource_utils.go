@@ -76,7 +76,7 @@ func GetInstanceSettings(nameOrRef interface{}, datasources []DataSourceInfo) *D
 			}
 		}
 	}
-	return GetDefaultDSInstanceSettings(datasources)
+	return nil
 }
 
 // MigrateDatasourceNameToRef converts a datasource name/uid string to a reference object

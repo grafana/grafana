@@ -32,7 +32,7 @@ import { DashboardModel } from './DashboardModel';
  *    - Avoids test brittleness from comparing raw JSON with different default value representations
  */
 
-// Set up the same datasources as DashboardMigrator.test.ts to ensure consistency
+// Set up the same datasources as backend test provider to ensure consistency
 const dataSources = {
   default: mockDataSource({
     name: 'Default Test Datasource Name',
@@ -107,7 +107,7 @@ describe('Backend / Frontend result comparison', () => {
   const jsonInputs = readdirSync(inputDir);
 
   // Set the minimum version to test (set to 0 to test all versions)
-  const MIN_VERSION_TO_TEST = [41, 40, 39, 38, 37];
+  const MIN_VERSION_TO_TEST = [41, 40, 39, 38, 37, 36];
 
   jsonInputs.forEach((inputFile) => {
     // Skip test if version is below minimum

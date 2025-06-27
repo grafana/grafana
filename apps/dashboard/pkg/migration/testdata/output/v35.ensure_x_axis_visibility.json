@@ -1,6 +1,11 @@
 {
   "panels": [
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -22,10 +27,25 @@
           }
         ]
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Timeseries with Hidden Axis",
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -59,10 +79,25 @@
           }
         ]
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Timeseries with Hidden Axis and Existing Overrides",
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -71,10 +106,25 @@
         },
         "overrides": []
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Timeseries with Auto Axis (No Change Expected)",
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -83,32 +133,92 @@
         },
         "overrides": []
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Stat Panel with Hidden Axis (No Change Expected)",
       "type": "stat"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 5,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Timeseries with Missing FieldConfig",
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "fieldConfig": {
         "overrides": []
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Timeseries with Missing Defaults",
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes"
         },
         "overrides": []
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Timeseries with Missing Custom Config",
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -130,6 +240,16 @@
           }
         ]
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Timeseries with Missing Overrides Array",
       "type": "timeseries"
     }

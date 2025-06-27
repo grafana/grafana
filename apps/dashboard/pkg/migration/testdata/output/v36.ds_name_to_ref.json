@@ -3,25 +3,19 @@
     "list": [
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "Default"
         },
         "name": "Default Annotation"
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "Elasticsearch"
         },
         "name": "Named Datasource Annotation"
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "other-ds"
         },
         "name": "UID Datasource Annotation"
       },
@@ -56,14 +50,41 @@
       "title": "Panel with Null Datasource and Targets"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 2,
-      "targets": [],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Panel with Null Datasource and Empty Targets"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Panel with No Targets Array"
     },
     {
@@ -159,18 +180,14 @@
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "Elasticsearch"
         },
         "name": "query_var_named",
         "type": "query"
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "other-ds"
         },
         "name": "query_var_uid",
         "type": "query"

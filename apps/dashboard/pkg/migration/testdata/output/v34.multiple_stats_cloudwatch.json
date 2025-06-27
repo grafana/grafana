@@ -70,9 +70,7 @@
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "prometheus"
         },
         "enable": true,
         "iconColor": "purple",
@@ -265,9 +263,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "uid": "prometheus"
       },
       "id": 4,
       "targets": [
@@ -288,18 +284,14 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "prometheus"
           },
           "expr": "up",
           "refId": "B"
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "prometheus"
           },
           "dimensions": {
             "TopicName": "my-topic"
@@ -312,9 +304,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "prometheus"
           },
           "dimensions": {
             "QueueName": "my-queue"
@@ -429,6 +419,11 @@
     },
     {
       "collapsed": true,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "id": 7,
       "panels": [
         {
@@ -489,22 +484,28 @@
           "type": "timeseries"
         }
       ],
-      "title": "Collapsed Row with CloudWatch",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "id": 9,
       "targets": [
         {
           "datasource": {
             "apiVersion": "v1",
             "type": "prometheus",
             "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Collapsed Row with CloudWatch",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "id": 9,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "prometheus"
           },
           "expr": "cpu_usage",
           "refId": "A"

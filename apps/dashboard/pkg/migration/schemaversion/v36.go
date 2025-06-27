@@ -175,34 +175,37 @@ func migratePanelDatasources(panelMap map[string]interface{}, datasources []Data
 	defaultDS := GetDefaultDSInstanceSettings(datasources)
 	panelDataSourceWasDefault := false
 
-	// Handle panel datasource - process even if no targets exist
+	// Handle targets - treat empty arrays same as missing targets (matches frontend behavior)
+	targets, hasTargets := panelMap["targets"].([]interface{})
+	if !hasTargets || len(targets) == 0 {
+		targets = []interface{}{
+			map[string]interface{}{
+				"refId": "A",
+			},
+		}
+		panelMap["targets"] = targets
+		hasTargets = true
+	}
+
+	// Handle panel datasource
 	ds, exists := panelMap["datasource"]
 	if !exists || ds == nil {
-		// Check if panel has targets before setting to default
-		targets, hasTargets := panelMap["targets"].([]interface{})
-		if hasTargets && len(targets) > 0 {
-			panelMap["datasource"] = GetDataSourceRef(defaultDS)
-			panelDataSourceWasDefault = true
-		}
+		// Set to default if panel has targets (matches frontend logic)
+		panelMap["datasource"] = GetDataSourceRef(defaultDS)
+		panelDataSourceWasDefault = true
 	} else {
 		// Migrate existing non-null datasource (should be null after V33)
 		migrated := MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": true}, datasources)
 		if migrated == nil {
-			// If migration returned nil, check if we have targets and set to default
-			targets, hasTargets := panelMap["targets"].([]interface{})
-			if hasTargets && len(targets) > 0 {
-				panelMap["datasource"] = GetDataSourceRef(defaultDS)
-				panelDataSourceWasDefault = true
-			} else {
-				panelMap["datasource"] = nil
-			}
+			// If migration returned nil, set to default
+			panelMap["datasource"] = GetDataSourceRef(defaultDS)
+			panelDataSourceWasDefault = true
 		} else {
 			panelMap["datasource"] = migrated
 		}
 	}
 
 	// Handle target datasources
-	targets, hasTargets := panelMap["targets"].([]interface{})
 	if !hasTargets {
 		return
 	}

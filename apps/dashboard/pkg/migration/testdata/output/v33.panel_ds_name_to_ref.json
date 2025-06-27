@@ -15,9 +15,7 @@
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "Non Default Test Datasource"
         },
         "enable": true,
         "name": "Test Annotation by Name",
@@ -45,9 +43,7 @@
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "non-existing-ds"
         },
         "enable": true,
         "name": "Test Non-existing Annotation",
@@ -88,20 +84,14 @@
         "statistic": "Maximum"
       },
       {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
+        "datasource": null,
         "enable": true,
         "name": "Test Empty String Annotation",
         "type": "dashboard"
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "another-missing-ds"
         },
         "enable": true,
         "name": "Test Another Non-existing Annotation",
@@ -149,7 +139,11 @@
   "links": [],
   "panels": [
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -158,11 +152,25 @@
       },
       "id": 1,
       "options": {},
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "No Legend Config",
       "type": "graph"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -176,10 +184,24 @@
           "showLegend": true
         }
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Boolean Legend True"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -193,10 +215,24 @@
           "showLegend": false
         }
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Boolean Legend False"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -210,10 +246,24 @@
           "showLegend": false
         }
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Hidden DisplayMode"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -227,10 +277,24 @@
           "showLegend": false
         }
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "ShowLegend False"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -244,13 +308,21 @@
           "showLegend": true
         }
       },
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Visible Legend"
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "uid": "Non Default Test Datasource"
       },
       "gridPos": {
         "h": 8,
@@ -269,9 +341,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "Non Default Test Datasource"
           }
         }
       ],
@@ -298,9 +368,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "Non Default Test Datasource"
           }
         }
       ],
@@ -308,9 +376,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "uid": "non-existing-ds"
       },
       "gridPos": {
         "h": 8,
@@ -322,16 +388,18 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "non-existing-ds"
           }
         }
       ],
       "title": "Non-existing Datasource Panel"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -360,6 +428,16 @@
         "y": 40
       },
       "id": 10,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Timeseries Panel with Hidden Axes",
       "type": "timeseries"
     },
@@ -434,9 +512,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "uid": "prometheus"
       },
       "gridPos": {
         "h": 8,
@@ -463,18 +539,14 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "prometheus"
           },
           "expr": "up",
           "refId": "B"
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "prometheus"
           },
           "dimensions": {
             "DBInstanceIdentifier": "my-db"
@@ -487,9 +559,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "prometheus"
           },
           "dimensions": {
             "LoadBalancer": "my-load-balancer"
@@ -506,7 +576,11 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -579,6 +653,16 @@
           "type": "timeseries"
         }
       ],
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Collapsed Row with CloudWatch",
       "type": "row"
     },
@@ -634,9 +718,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "uid": "Non Default Test Datasource"
       },
       "gridPos": {
         "h": 4,
@@ -645,11 +727,23 @@
         "y": 64
       },
       "id": 17,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "Non Default Test Datasource"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "V33: Panel without Targets",
       "type": "table"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -657,7 +751,16 @@
         "y": 64
       },
       "id": 18,
-      "targets": null,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "V33: Panel with Empty Targets Array",
       "type": "table"
     },
@@ -693,9 +796,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "non-existing-ds"
           },
           "refId": "C"
         },
@@ -734,9 +835,7 @@
         },
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "Non Default Test Datasource"
           },
           "refId": "B"
         },
@@ -767,11 +866,7 @@
       "id": 21,
       "targets": [
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
+          "datasource": null,
           "refId": "A"
         }
       ],
@@ -780,9 +875,7 @@
     },
     {
       "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "uid": "completely-missing-ds"
       },
       "gridPos": {
         "h": 4,
@@ -794,18 +887,12 @@
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "also-missing-ds"
           },
           "refId": "A"
         },
         {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
+          "datasource": null,
           "refId": "B"
         }
       ],
@@ -830,9 +917,7 @@
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "Non Default Test Datasource"
         },
         "name": "es_var_by_name",
         "type": "query"
@@ -857,27 +942,19 @@
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "non-existing-ds"
         },
         "name": "non_existing_var",
         "type": "query"
       },
       {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
+        "datasource": null,
         "name": "empty_string_var",
         "type": "query"
       },
       {
         "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "another-non-existing-ds"
         },
         "name": "another_non_existing_var",
         "type": "query"
