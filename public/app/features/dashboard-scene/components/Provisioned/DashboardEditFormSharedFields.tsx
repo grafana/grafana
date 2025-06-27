@@ -82,6 +82,8 @@ interface DashboardEditFormSharedFieldsProps {
   readOnly?: boolean;
   workflow?: WorkflowOption;
   isGitHub?: boolean;
+  fieldsAutoFilled?: boolean;
+  autofillDisabledThisSession?: boolean;
   aiLoading?: {
     title: boolean;
     description: boolean;
@@ -103,7 +105,7 @@ interface DashboardEditFormSharedFieldsProps {
 }
 
 export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType, aiLoading, setAiLoading }) => {
+  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType, fieldsAutoFilled = false, autofillDisabledThisSession = false, aiLoading, setAiLoading }) => {
     const {
       control,
       register,
@@ -209,7 +211,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
             {...register('path')} 
             readOnly={!isNew}
             suffix={
-              isNew ? (
+              isNew && !fieldsAutoFilled && !autofillDisabledThisSession ? (
                 <IconButton
                   name={currentAiLoading.path ? "spinner" : "ai-sparkle"}
                   tooltip={t(
@@ -241,7 +243,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
               'Add a note to describe your changes (optional)'
             )}
             suffix={
-              !readOnly ? (
+              !readOnly && !fieldsAutoFilled && !autofillDisabledThisSession ? (
                 <IconButton
                   name={currentAiLoading.comment ? "spinner" : "ai-sparkle"}
                   tooltip={t(
@@ -288,17 +290,19 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
                   id="provisioned-resource-form-branch" 
                   {...register('ref', { validate: validateBranchName })}
                   suffix={
-                    <IconButton
-                      name={currentAiLoading.branch ? "spinner" : "ai-sparkle"}
-                      tooltip={t(
-                        'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-branch',
-                        'AI autofill branch name'
-                      )}
-                      onClick={handleAIFillBranch}
-                      variant="secondary"
-                      size="sm"
-                      disabled={currentAiLoading.branch || currentAiLoading.all}
-                    />
+                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
+                      <IconButton
+                        name={currentAiLoading.branch ? "spinner" : "ai-sparkle"}
+                        tooltip={t(
+                          'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-branch',
+                          'AI autofill branch name'
+                        )}
+                        onClick={handleAIFillBranch}
+                        variant="secondary"
+                        size="sm"
+                        disabled={currentAiLoading.branch || currentAiLoading.all}
+                      />
+                    ) : undefined
                   }
                 />
               </Field>

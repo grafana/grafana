@@ -132,12 +132,37 @@ export function SaveProvisionedDashboardForm({
     magicSave: false,
   });
 
+  // Track which save mode was last used and current session preferences
+  const [lastUsedSaveMode, setLastUsedSaveMode] = useState<'traditional' | 'magic'>(() => {
+    try {
+      return (localStorage.getItem('grafana-dashboard-last-save-mode') as 'traditional' | 'magic') || 'magic';
+    } catch {
+      return 'magic';
+    }
+  });
+
+  // Track if autofill is disabled for this session (when traditional save is used)
+  const [autofillDisabledThisSession, setAutofillDisabledThisSession] = useState(false);
+
+  // Track if fields were auto-filled to hide AI buttons
+  const [fieldsAutoFilled, setFieldsAutoFilled] = useState(false);
+
 
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  // Save the last used save mode to localStorage
+  const saveLastUsedMode = (mode: 'traditional' | 'magic') => {
+    setLastUsedSaveMode(mode);
+    try {
+      localStorage.setItem('grafana-dashboard-last-save-mode', mode);
+    } catch (error) {
+      console.warn('Failed to save last used save mode:', error);
+    }
+  };
 
   // Typing effect function
   const typeText = async (text: string, setValue: (value: string) => void, delay = 20) => {
@@ -149,10 +174,53 @@ export function SaveProvisionedDashboardForm({
   };
 
   // Sample AI generated content
-  const generateSampleContent = () => ({
+  const generateSampleContent = useCallback(() => ({
     title: `${dashboard.state.title || 'Dashboard'} - Enhanced Analytics`,
     description: `This dashboard provides comprehensive monitoring and analytics for ${dashboard.state.title || 'your system'}. It includes real-time metrics, performance indicators, and actionable insights to help you monitor system health, track key performance metrics, and identify potential issues before they impact your operations.`,
-  });
+  }), [dashboard.state.title]);
+
+  // Instant auto-fill function (no typing effect)
+  const instantAutoFill = useCallback(() => {
+    const content = generateSampleContent();
+    
+    // Generate shared fields content
+    const sharedContent = {
+      path: `dashboards/${new Date().getFullYear()}/optimized-dashboard-${Date.now()}.json`,
+      comment: `Add enhanced dashboard with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
+      branch: `feature/enhanced-dashboard-${new Date().toISOString().slice(0, 7)}`,
+    };
+
+    // Fill all fields instantly
+    setValue('title', content.title);
+    setValue('description', content.description);
+    
+    // Fill path if it's a new dashboard
+    if (isNew) {
+      setValue('path', sharedContent.path);
+    }
+    
+    // Fill comment if not read-only
+    if (!readOnly) {
+      setValue('comment', sharedContent.comment);
+    }
+    
+    // Fill branch if workflow is set to branch
+    if (workflow === 'branch') {
+      setValue('ref', sharedContent.branch);
+    }
+  }, [setValue, generateSampleContent, isNew, readOnly, workflow]);
+
+  // Auto-fill on mount if last used mode was magic and autofill not disabled this session
+  useEffect(() => {
+    if (lastUsedSaveMode === 'magic' && !autofillDisabledThisSession && isNew && !readOnly) {
+      // Small delay to ensure form is ready after reset
+      const timer = setTimeout(() => {
+        instantAutoFill();
+        setFieldsAutoFilled(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [lastUsedSaveMode, autofillDisabledThisSession, isNew, readOnly, defaultValues, instantAutoFill]);
 
   const onRequestError = (error: unknown) => {
     appEvents.publish({
@@ -348,6 +416,19 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
+  // Traditional save handler (disables autofill for this session)
+  const handleTraditionalSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Mark traditional mode as used and disable autofill for this session
+    saveLastUsedMode('traditional');
+    setAutofillDisabledThisSession(true);
+    
+    // Execute the normal form submit
+    const formData = methods.getValues();
+    await handleFormSubmit(formData);
+  };
+
   // Magic save handler that combines AI autofill and save
   const handleMagicSave = async () => {
     if (readOnly) {return;}
@@ -355,6 +436,9 @@ export function SaveProvisionedDashboardForm({
     setAiLoading(prev => ({ ...prev, magicSave: true }));
     
     try {
+      // Mark magic mode as used
+      saveLastUsedMode('magic');
+      
       // First fill all fields with AI in parallel mode for faster execution
       await handleAIFillAllInternal(true);
       
@@ -413,17 +497,19 @@ export function SaveProvisionedDashboardForm({
                 <Input
                   id="dashboard-title"
                   suffix={
-                    <IconButton
-                      name={aiLoading.title ? "spinner" : "ai-sparkle"}
-                      tooltip={t(
-                        'dashboard-scene.save-provisioned-dashboard-form.ai-fill-title',
-                        'AI autofill title'
-                      )}
-                      onClick={handleAIFillTitle}
-                      variant="secondary"
-                      size="sm"
-                      disabled={aiLoading.title || aiLoading.all}
-                    />
+                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
+                      <IconButton
+                        name={aiLoading.title ? "spinner" : "ai-sparkle"}
+                        tooltip={t(
+                          'dashboard-scene.save-provisioned-dashboard-form.ai-fill-title',
+                          'AI autofill title'
+                        )}
+                        onClick={handleAIFillTitle}
+                        variant="secondary"
+                        size="sm"
+                        disabled={aiLoading.title || aiLoading.all}
+                      />
+                    ) : undefined
                   }
                   {...register('title', {
                     required: t(
@@ -445,17 +531,19 @@ export function SaveProvisionedDashboardForm({
                   value={description || ''}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue('description', e.target.value)}
                   suffix={
-                    <IconButton
-                      name={aiLoading.description ? "spinner" : "ai-sparkle"}
-                      tooltip={t(
-                        'dashboard-scene.save-provisioned-dashboard-form.ai-fill-description',
-                        'AI autofill description'
-                      )}
-                      onClick={handleAIFillDescription}
-                      variant="secondary"
-                      size="sm"
-                      disabled={aiLoading.description || aiLoading.all}
-                    />
+                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
+                      <IconButton
+                        name={aiLoading.description ? "spinner" : "ai-sparkle"}
+                        tooltip={t(
+                          'dashboard-scene.save-provisioned-dashboard-form.ai-fill-description',
+                          'AI autofill description'
+                        )}
+                        onClick={handleAIFillDescription}
+                        variant="secondary"
+                        size="sm"
+                        disabled={aiLoading.description || aiLoading.all}
+                      />
+                    ) : undefined
                   }
                 />
               </Field>
@@ -503,10 +591,12 @@ export function SaveProvisionedDashboardForm({
             isNew={isNew}
             aiLoading={aiLoading}
             setAiLoading={setAiLoading}
+            fieldsAutoFilled={fieldsAutoFilled}
+            autofillDisabledThisSession={autofillDisabledThisSession}
           />
 
           {/* Comprehensive AI autofill button for all fields */}
-          {isNew && (
+          {isNew && !fieldsAutoFilled && !autofillDisabledThisSession && (
             <Button
               variant="secondary"
               size="sm"
@@ -528,26 +618,35 @@ export function SaveProvisionedDashboardForm({
 
           <Stack gap={2}>
             <Stack direction="row" gap={2}>
-              <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
-                {request.isLoading
+              {/* Traditional Save Button */}
+              <Button 
+                variant={lastUsedSaveMode === 'traditional' ? 'primary' : 'secondary'} 
+                onClick={handleTraditionalSave}
+                disabled={request.isLoading || !isDirty || readOnly}
+              >
+                {request.isLoading && lastUsedSaveMode === 'traditional'
                   ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
                   : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
               </Button>
-              <Button 
-                variant="secondary" 
-                icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
-                onClick={handleMagicSave}
-                                  disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
+              
+              {/* Magic Save Button */}
+              {!autofillDisabledThisSession && (
+                <Button 
+                  variant={lastUsedSaveMode === 'magic' ? 'primary' : 'secondary'}
+                  icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
+                  onClick={handleMagicSave}
+                  disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
                   tooltip={t(
                     'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
                     'AI autofill all fields in parallel and save instantly'
                   )}
-                              >
+                >
                   {aiLoading.magicSave 
                     ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
                     : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Save')
                   }
                 </Button>
+              )}
             </Stack>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
