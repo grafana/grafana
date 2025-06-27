@@ -1374,13 +1374,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "lokiLabelNamesQueryApi",
-			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "investigationsBackend",
 			Description: "Enable the investigations backend API",
 			Stage:       FeatureStageExperimental,

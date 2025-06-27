@@ -79,7 +79,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                           | Yes                |
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                          | Yes                |
-| `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                      | Yes                |
 | `teamHttpHeadersMimir`                 | Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams                | Yes                |
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                   | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                           | Yes                |
