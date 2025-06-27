@@ -65,9 +65,10 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	runErrs := make(map[string]error)
 	testServers := make([]testModuleServer, 0, 2)
-	distributorServer := initDistributorServerForTest(t)
-	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr))
-	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr))
+	memberlistPort := getRandomPort()
+	distributorServer := initDistributorServerForTest(t, memberlistPort)
+	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr, memberlistPort))
+	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr, memberlistPort))
 
 	startAndWaitHealthy(t, distributorServer, runErrs)
 
@@ -77,7 +78,7 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	t.Run("should expose ring endpoint", func(t *testing.T) {
 		client := http.Client{}
-		res, err := client.Get("http://localhost:13000/ring")
+		res, err := client.Get(fmt.Sprintf("http://localhost:%s/ring", distributorServer.httpPort))
 		require.NoError(t, err)
 
 		require.Equal(t, res.StatusCode, http.StatusOK)
@@ -86,7 +87,7 @@ func TestIntegrationDistributor(t *testing.T) {
 
 	t.Run("should expose memberlist endpoint", func(t *testing.T) {
 		client := http.Client{}
-		res, err := client.Get("http://localhost:13000/memberlist")
+		res, err := client.Get(fmt.Sprintf("http://localhost:%s/memberlist", distributorServer.httpPort))
 		require.NoError(t, err)
 
 		require.Equal(t, res.StatusCode, http.StatusOK)
@@ -321,18 +322,25 @@ type testModuleServer struct {
 	resourceClient resource.ResourceClient
 	id             string
 	grpcAddress    string
+	httpPort       string
 }
 
-func initDistributorServerForTest(t *testing.T) testModuleServer {
+func getRandomPort() int {
+	ln, _ := net.Listen("tcp", ":0")
+	defer ln.Close()
+	return ln.Addr().(*net.TCPAddr).Port
+}
+
+func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleServer {
 	cfg := setting.NewCfg()
-	cfg.HTTPPort = "13000"
+	cfg.HTTPPort = strconv.Itoa(getRandomPort())
 	cfg.GRPCServer.Network = "tcp"
-	cfg.GRPCServer.Address = "127.0.0.1:20000"
+	cfg.GRPCServer.Address = "127.0.0.1:" + strconv.Itoa(getRandomPort())
 	cfg.EnableSharding = true
 	cfg.MemberlistBindAddr = "127.0.0.1"
-	cfg.MemberlistJoinMember = "127.0.0.1:17946"
+	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
-	cfg.MemberlistAdvertisePort = 17946
+	cfg.MemberlistAdvertisePort = memberlistPort
 	cfg.Target = []string{modules.Distributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
 
@@ -349,7 +357,7 @@ func initDistributorServerForTest(t *testing.T) testModuleServer {
 	return server
 }
 
-func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr string) testModuleServer {
+func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr string, memberlistPort int) testModuleServer {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
@@ -359,14 +367,14 @@ func createStorageServerApi(t *testing.T, instanceId int, dbType, dbConnStr stri
 	_, err = section.NewKey("connection_string", dbConnStr)
 	require.NoError(t, err)
 
-	cfg.HTTPPort = "1300" + strconv.Itoa(instanceId) // 13001 for instance-1, 13002 for instance-2 etc
+	cfg.HTTPPort = strconv.Itoa(getRandomPort())
 	cfg.GRPCServer.Network = "tcp"
-	cfg.GRPCServer.Address = "127.0.0.1:2000" + strconv.Itoa(instanceId) // 20001 for instance-1, so on
+	cfg.GRPCServer.Address = "127.0.0.1:" + strconv.Itoa(getRandomPort())
 	cfg.EnableSharding = true
 	cfg.MemberlistBindAddr = "127.0.0.1"
-	cfg.MemberlistJoinMember = "127.0.0.1:17946"
+	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
-	cfg.MemberlistAdvertisePort = 17946 + instanceId
+	cfg.MemberlistAdvertisePort = getRandomPort()
 	cfg.InstanceID = "instance-" + strconv.Itoa(instanceId)
 	cfg.IndexPath = t.TempDir() + cfg.InstanceID
 	cfg.IndexFileThreshold = testIndexFileThreshold
@@ -391,7 +399,7 @@ func initModuleServerForTest(
 
 	healthClient := grpc_health_v1.NewHealthClient(conn)
 
-	return testModuleServer{server: ms, grpcAddress: cfg.GRPCServer.Address, healthClient: healthClient, id: cfg.InstanceID}
+	return testModuleServer{server: ms, grpcAddress: cfg.GRPCServer.Address, httpPort: cfg.HTTPPort, healthClient: healthClient, id: cfg.InstanceID}
 }
 
 func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.ResourceServer {
