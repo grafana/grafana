@@ -13,7 +13,7 @@ import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { PopoverContent } from '../Tooltip/types';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey';
+export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey' | 'brand';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   text?: React.ReactNode;
@@ -69,6 +69,12 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
     borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
     textColor = tinycolor(sourceColor).darken(20).toString();
+  }
+
+  if (color === 'brand') {
+    bgColor = theme.colors.gradients.brandHorizontal;
+    borderColor = 'transparent';
+    textColor = theme.colors.primary.contrastText;
   }
 
   return {
