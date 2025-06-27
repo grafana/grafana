@@ -176,7 +176,7 @@ func Builder(
 		WithDirectory("/src/pkg", src.WithoutDirectory("pkg/build").Directory("pkg")).
 		WithDirectory("/src/apps", src.Directory("apps")).
 		WithDirectory("/src/emails", src.Directory("emails")).
-		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag)).
+		WithFile("/src/pkg/server/wire_gen.go", Wire(d, src, platform, goVersion, opts.WireTag, goBuildCache)).
 		WithFile("/src/.buildinfo.commit", commitInfo.Commit).
 		WithWorkdir("/src")
 
@@ -192,9 +192,9 @@ func Builder(
 	return builder, nil
 }
 
-func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {
+func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string, cache *dagger.CacheVolume) *dagger.File {
 	// withCue is only required during `make gen-go` in 9.5.x or older.
-	return withCue(golang.Container(d, platform, goVersion), src).
+	c := golang.Container(d, platform, goVersion).
 		WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},
@@ -204,7 +204,13 @@ func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goV
 		WithDirectory("/src/.bingo", src.Directory(".bingo")).
 		WithDirectory("/src/.citools", src.Directory(".citools")).
 		WithFile("/src/Makefile", src.File("Makefile")).
-		WithWorkdir("/src").
+		WithWorkdir("/src")
+
+	if _, ok := os.LookupEnv("GOCACHE_S3_BUCKET"); ok {
+		c = WithGoModProxy(d, platform, c, goVersion, cache)
+	}
+
+	return c.
 		WithExec([]string{"make", "gen-go", fmt.Sprintf("WIRE_TAGS=%s", wireTag)}).
 		File("/src/pkg/server/wire_gen.go")
 }
