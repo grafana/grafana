@@ -3,6 +3,8 @@ package service
 import (
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -35,7 +37,7 @@ func newPublicDashboardServiceImpl(
 	}
 	tagService := tagimpl.ProvideService(store)
 	if annotationsRepo == nil {
-		annotationsRepo = annotationsimpl.ProvideService(store, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest(), nil, dashboardService)
+		annotationsRepo = annotationsimpl.ProvideService(store, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest(), nil, dashboardService, prometheus.NewPedanticRegistry())
 	}
 
 	if publicDashboardStore == nil {

@@ -56,7 +56,7 @@ type LokiHistorianStore struct {
 	ruleStore RuleStore
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *LokiHistorianStore {
 	if !useStore(cfg) {
 		return nil
 	}
@@ -67,7 +67,7 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db d
 	}
 
 	return &LokiHistorianStore{
-		client:    historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log, tracer),
+		client:    historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(reg, subsystem), log, tracer),
 		db:        db,
 		log:       log,
 		ruleStore: ruleStore,

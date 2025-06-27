@@ -3,6 +3,8 @@ package annotationsimpl
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -33,6 +35,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	ruleStore *alertingStore.DBstore,
 	dashSvc dashboards.DashboardService,
+	reg prometheus.Registerer,
 ) *RepositoryImpl {
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
@@ -41,7 +44,7 @@ func ProvideService(
 	write := xormStore
 
 	var read readStore
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, ruleStore, log.New("annotations.loki"), tracer)
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, ruleStore, log.New("annotations.loki"), tracer, reg)
 	if historianStore != nil {
 		l.Debug("Using composite read store")
 		read = NewCompositeStore(log.New("annotations.composite"), xormStore, historianStore)
