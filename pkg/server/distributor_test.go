@@ -97,27 +97,12 @@ func TestIntegrationDistributor(t *testing.T) {
 		instanceResponseCount := make(map[string]int)
 
 		for _, ns := range testNamespaces {
-			ctx := context.Background()
-			baselineRes, err := baselineServer.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+			req := &resourcepb.ResourceStatsRequest{
 				Namespace: ns,
-			})
-			require.NoError(t, err)
-
-			ctx = identity.WithServiceIdentityContext(context.Background(), 1)
-			var header metadata.MD
-			res, err := distributorServer.resourceClient.GetStats(ctx, &resourcepb.ResourceStatsRequest{
-				Namespace: ns,
-			}, grpc.Header(&header))
-			require.NoError(t, err)
-
-			require.Equal(t, baselineRes.String(), res.String())
-
-			instance := header.Get("proxied-instance-id")
-			if len(instance) != 1 {
-				t.Fatal("received invalid proxied-instance-id header", instance)
 			}
-
-			instanceResponseCount[instance[0]] += 1
+			baselineRes := getBaselineResponse(t, req, baselineServer.GetStats)
+			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.GetStats, instanceResponseCount)
+			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
 		for instance, count := range instanceResponseCount {
@@ -129,27 +114,12 @@ func TestIntegrationDistributor(t *testing.T) {
 		instanceResponseCount := make(map[string]int)
 
 		for _, ns := range testNamespaces {
-			ctx := context.Background()
-			baselineRes, err := baselineServer.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
+			req := &resourcepb.CountManagedObjectsRequest{
 				Namespace: ns,
-			})
-			require.NoError(t, err)
-
-			ctx = identity.WithServiceIdentityContext(context.Background(), 1)
-			var header metadata.MD
-			res, err := distributorServer.resourceClient.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
-				Namespace: ns,
-			}, grpc.Header(&header))
-			require.NoError(t, err)
-
-			require.Equal(t, baselineRes.String(), res.String())
-
-			instance := header.Get("proxied-instance-id")
-			if len(instance) != 1 {
-				t.Fatal("received invalid proxied-instance-id header", instance)
 			}
-
-			instanceResponseCount[instance[0]] += 1
+			baselineRes := getBaselineResponse(t, req, baselineServer.CountManagedObjects)
+			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.CountManagedObjects, instanceResponseCount)
+			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
 		for instance, count := range instanceResponseCount {
@@ -161,27 +131,12 @@ func TestIntegrationDistributor(t *testing.T) {
 		instanceResponseCount := make(map[string]int)
 
 		for _, ns := range testNamespaces {
-			ctx := context.Background()
-			baselineRes, err := baselineServer.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
+			req := &resourcepb.ListManagedObjectsRequest{
 				Namespace: ns,
-			})
-			require.NoError(t, err)
-
-			ctx = identity.WithServiceIdentityContext(context.Background(), 1)
-			var header metadata.MD
-			res, err := distributorServer.resourceClient.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
-				Namespace: ns,
-			}, grpc.Header(&header))
-			require.NoError(t, err)
-
-			require.Equal(t, baselineRes.String(), res.String())
-
-			instance := header.Get("proxied-instance-id")
-			if len(instance) != 1 {
-				t.Fatal("received invalid proxied-instance-id header", instance)
 			}
-
-			instanceResponseCount[instance[0]] += 1
+			baselineRes := getBaselineResponse(t, req, baselineServer.ListManagedObjects)
+			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.ListManagedObjects, instanceResponseCount)
+			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
 		for instance, count := range instanceResponseCount {
@@ -193,8 +148,7 @@ func TestIntegrationDistributor(t *testing.T) {
 		instanceResponseCount := make(map[string]int)
 
 		for _, ns := range testNamespaces {
-			ctx := context.Background()
-			baselineRes, err := baselineServer.Search(ctx, &resourcepb.ResourceSearchRequest{
+			req := &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{
 						Group:     "playlist.grafana.app",
@@ -202,36 +156,15 @@ func TestIntegrationDistributor(t *testing.T) {
 						Namespace: ns,
 					},
 				},
-			})
-			require.NoError(t, err)
-
-			ctx = identity.WithServiceIdentityContext(context.Background(), 1)
-			var header metadata.MD
-			res, err := distributorServer.resourceClient.Search(ctx, &resourcepb.ResourceSearchRequest{
-				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{
-						Group:     "playlist.grafana.app",
-						Resource:  "aoeuaeou",
-						Namespace: ns,
-					},
-				},
-			}, grpc.Header(&header))
-			require.NoError(t, err)
-
+			}
+			baselineRes := getBaselineResponse(t, req, baselineServer.Search)
+			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.Search, instanceResponseCount)
 			// sometimes the querycost is different between the two. Happens randomly and we don't have control over it
 			// as it comes from bleve. Since we are not testing search functionality we hard-set this to 0 to avoid
 			// flaky tests
-			res.QueryCost = 0
+			distributorRes.QueryCost = 0
 			baselineRes.QueryCost = 0
-
-			require.Equal(t, baselineRes.String(), res.String())
-
-			instance := header.Get("proxied-instance-id")
-			if len(instance) != 1 {
-				t.Fatal("received invalid proxied-instance-id header", instance)
-			}
-
-			instanceResponseCount[instance[0]] += 1
+			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
 
 		for instance, count := range instanceResponseCount {
@@ -269,6 +202,28 @@ func TestIntegrationDistributor(t *testing.T) {
 	case <-time.After(30 * time.Second):
 		t.Fatal("timeout waiting for servers to shutdown")
 	}
+}
+
+func getBaselineResponse[Req any, Resp any](t *testing.T, req *Req, fn func(ctx context.Context, req *Req) (*Resp, error)) *Resp {
+	ctx := context.Background()
+	baselineRes, err := fn(ctx, req)
+	require.NoError(t, err)
+	return baselineRes
+}
+
+func getDistributorResponse[Req any, Resp any](t *testing.T, req *Req, fn func(ctx context.Context, req *Req, opts ...grpc.CallOption) (*Resp, error), instanceResponseCount map[string]int) *Resp {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	var header metadata.MD
+	res, err := fn(ctx, req, grpc.Header(&header))
+	require.NoError(t, err)
+
+	instance := header.Get("proxied-instance-id")
+	if len(instance) != 1 {
+		t.Fatal("received invalid proxied-instance-id header", instance)
+	}
+
+	instanceResponseCount[instance[0]] += 1
+	return res
 }
 
 func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
