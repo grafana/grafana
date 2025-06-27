@@ -7,6 +7,8 @@ test.describe(
   },
   () => {
     test('Login, create dashboard and panel scenario', async ({ dashboardPage, selectors, page }) => {
+      // TODO need to add a datasource here
+
       // Create new dashboard
       await dashboardPage.goto();
 
