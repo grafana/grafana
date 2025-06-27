@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	upgradesv0alpha1 "github.com/grafana/grafana/apps/upgrades/pkg/apis/upgrades/v0alpha1"
@@ -12,6 +14,7 @@ import (
 )
 
 func New(cfg app.Config) (app.App, error) {
+	log := logging.DefaultLogger.With("app", "upgrades.app")
 	simpleConfig := simple.AppConfig{
 		Name:       "upgrades",
 		KubeConfig: cfg.KubeConfig,
@@ -37,6 +40,13 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
+	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
+	client, err := clientGenerator.ClientFor(upgradesv0alpha1.UpgradeMetadataKind())
+	if err != nil {
+		return nil, err
+	}
+
+	a.AddRunnable(NewVersionChecker(log, client))
 	return a, nil
 }
 
