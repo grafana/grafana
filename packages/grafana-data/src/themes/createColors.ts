@@ -345,8 +345,6 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
             break;
         }
       }
-
-      console.log('color.contrastColor', color.contrastColor);
     }
     if (!color.transparent) {
       color.transparent = alpha(color.main, 0.15);

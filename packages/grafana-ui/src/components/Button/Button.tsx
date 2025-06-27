@@ -5,7 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { addTransformTransition, getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
@@ -274,15 +274,6 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function addTransformTransition(transitions: string[]) {
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!prefersReducedMotion) {
-    transitions.push('transform');
-  }
-
-  return transitions;
-}
-
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
@@ -311,7 +302,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         color: color.text,
       },
 
-      '&:active': {
+      '&:active, &:hover:active': {
         borderColor: color.contrastColor,
         transform: 'scale(0.95)',
       },
@@ -337,7 +328,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         textDecoration: 'none',
       },
 
-      '&:active': {
+      '&:active, &:hover:active': {
         borderColor: outlineBorderColor,
         transform: 'scale(0.95)',
       },
@@ -362,7 +353,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       borderColor: hoverBorderColor,
     },
 
-    '&:active': {
+    '&:active, &:hover:active': {
       backgroundColor: color.contrastColor,
       borderColor: theme.colors.emphasize(color.contrastColor, 0.33),
       transform: 'scale(0.95)',
@@ -404,7 +395,7 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
 export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
   switch (variant) {
     case 'secondary':
-      // The seconday button has some special handling as it's outline border is it's default color border
+      // The secondary button has some special handling as it's outline border is it's default color border
       return getButtonVariantStyles(theme, theme.colors.secondary, fill);
 
     case 'destructive':
