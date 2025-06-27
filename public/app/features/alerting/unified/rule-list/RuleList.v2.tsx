@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
@@ -7,9 +8,10 @@ import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
+import { GenAIAlertRuleButton } from '../components/rules/GenAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
-import { isAdmin } from '../utils/misc';
+import { isAdmin, isLocalDevEnv } from '../utils/misc';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
@@ -40,6 +42,8 @@ export function RuleListActions() {
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
   const canImportRulesToGMA = isAdmin() && config.featureToggles.alertingMigrationUI;
+  const isCloudEdition = config.buildInfo.edition !== GrafanaEdition.OpenSource;
+  const isAIEnabled = isLocalDevEnv() || isCloudEdition;
 
   const moreActionsMenu = useMemo(
     () => (
@@ -86,6 +90,7 @@ export function RuleListActions() {
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
+      {canCreateGrafanaRules && isAIEnabled && <GenAIAlertRuleButton />}
       <Dropdown overlay={moreActionsMenu}>
         <Button variant="secondary">
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />
