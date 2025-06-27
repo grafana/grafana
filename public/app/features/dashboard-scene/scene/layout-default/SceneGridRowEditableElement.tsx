@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { sceneGraph, SceneGridRow, VizPanel } from '@grafana/scenes';
 import { Alert, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -29,8 +28,11 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this._row, this._row.state.title, undefined, 'text'),
       icon: 'list-ul',
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren() {
+    return this._row.state.children;
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {

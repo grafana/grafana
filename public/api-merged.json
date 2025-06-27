@@ -5529,8 +5529,7 @@
           },
           {
             "enum": [
-              1,
-              2
+              1
             ],
             "type": "integer",
             "format": "int64",
@@ -8878,6 +8877,9 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -10149,7 +10151,7 @@
         }
       },
       "put": {
-        "description": "Omitting a key (`theme`, `homeDashboardId`, `timezone`) will cause the current value to be replaced with the system default value.",
+        "description": "Omitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
         "tags": [
           "user_preferences"
         ],
@@ -12942,6 +12944,9 @@
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
         "queriedDatasourceUIDs": {
           "type": "array",
           "items": {
@@ -12998,7 +13003,14 @@
       "type": "object",
       "properties": {
         "alertmanager_config": {
-          "$ref": "#/definitions/Config"
+          "description": "Configuration for Alertmanager in YAML format.\nin: body",
+          "type": "string"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -13020,6 +13032,7 @@
           "format": "int64"
         },
         "dashboardId": {
+          "description": "Deprecated: Use DashboardUID and OrgID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -13100,6 +13113,9 @@
         "dashboardId": {
           "type": "integer",
           "format": "int64"
+        },
+        "dashboardUID": {
+          "type": "string"
         },
         "id": {
           "type": "integer",
@@ -14203,12 +14219,11 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
-            1,
-            2
+            1
           ]
         },
         "model": {
@@ -15347,6 +15362,26 @@
         }
       }
     },
+    "ExtraConfiguration": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "type": "string"
+        },
+        "identifier": {
+          "type": "string"
+        },
+        "merge_matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "FailedUser": {
       "description": "FailedUser holds the information of an user that failed",
       "type": "object",
@@ -16282,6 +16317,12 @@
         "alertmanager_config": {
           "$ref": "#/definitions/GettableApiAlertingConfig"
         },
+        "extra_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtraConfiguration"
+          }
+        },
         "template_file_provenances": {
           "type": "object",
           "additionalProperties": {
@@ -16709,7 +16750,11 @@
       "type": "object",
       "properties": {
         "equal": {
-          "$ref": "#/definitions/LabelNames"
+          "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "source_match": {
           "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
@@ -16884,17 +16929,6 @@
         }
       }
     },
-    "LabelName": {
-      "description": "A LabelName is a key for a LabelSet or Metric.  It has a value associated\ntherewith.",
-      "type": "string"
-    },
-    "LabelNames": {
-      "type": "array",
-      "title": "LabelNames is a sortable LabelName slice. In implements sort.Interface.",
-      "items": {
-        "$ref": "#/definitions/LabelName"
-      }
-    },
     "LabelSet": {
       "description": "A LabelSet is a collection of LabelName and LabelValue pairs.  The LabelSet\nmay be fully-qualified down to the point where it may resolve to a single\nMetric in the data store or not.  All operations that occur within the realm\nof a LabelSet can emit a vector of Metric entities to which the LabelSet may\nmatch.",
       "type": "object",
@@ -16948,6 +16982,7 @@
           "format": "int64"
         },
         "id": {
+          "description": "Deprecated: this field will be removed in the future",
           "type": "integer",
           "format": "int64"
         },
@@ -17991,12 +18026,11 @@
           "type": "string"
         },
         "kind": {
-          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
+          "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
           "type": "integer",
           "format": "int64",
           "enum": [
-            1,
-            2
+            1
           ]
         },
         "model": {
@@ -18038,14 +18072,14 @@
         "language": {
           "type": "string"
         },
-        "locale": {
-          "type": "string"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "regionalFormat": {
+          "type": "string"
         },
         "theme": {
           "type": "string",
@@ -18643,6 +18677,12 @@
         "alertmanager_config": {
           "$ref": "#/definitions/PostableApiAlertingConfig"
         },
+        "extra_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtraConfiguration"
+          }
+        },
         "template_files": {
           "type": "object",
           "additionalProperties": {
@@ -18666,15 +18706,15 @@
           "description": "Selected language (beta)",
           "type": "string"
         },
-        "locale": {
-          "description": "Selected locale (beta)",
-          "type": "string"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "regionalFormat": {
+          "description": "Selected locale (beta)",
+          "type": "string"
         },
         "theme": {
           "description": "light, dark, empty is default",
@@ -20027,8 +20067,8 @@
       }
     },
     "Route": {
+      "description": "A Route is a node that contains definitions of how to handle alerts. This is modified\nfrom the upstream alertmanager in that it adds the ObjectMatchers property.",
       "type": "object",
-      "title": "A Route is a node that contains definitions of how to handle alerts.",
       "properties": {
         "active_time_intervals": {
           "type": "array",
@@ -20069,6 +20109,12 @@
           "items": {
             "type": "string"
           }
+        },
+        "object_matchers": {
+          "$ref": "#/definitions/ObjectMatchers"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "receiver": {
           "type": "string"
@@ -20183,6 +20229,9 @@
         },
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "query": {
           "type": "string"
@@ -22276,14 +22325,14 @@
         "language": {
           "type": "string"
         },
-        "locale": {
-          "type": "string"
-        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
+        },
+        "regionalFormat": {
+          "type": "string"
         },
         "theme": {
           "type": "string",
@@ -22409,6 +22458,9 @@
       "type": "object",
       "properties": {
         "Email": {
+          "type": "string"
+        },
+        "ExternalUID": {
           "type": "string"
         },
         "ID": {

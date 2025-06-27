@@ -3,6 +3,7 @@ import { css, cx } from '@emotion/css';
 import Prism, { Grammar } from 'prismjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -22,7 +23,7 @@ export function RawQuery({ query, lang, className }: Props) {
   return (
     <div
       className={cx(styles.editorField, 'prism-syntax-highlight', className)}
-      aria-label="selector"
+      aria-label={t('grafana-prometheus.querybuilder.raw-query.aria-label-selector', 'selector')}
       dangerouslySetInnerHTML={{ __html: highlighted }}
     />
   );

@@ -3,7 +3,7 @@ import { Controller, FormProvider, SubmitHandler, useForm, useFormContext } from
 import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Box,
@@ -25,7 +25,11 @@ import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/Neste
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { Folder } from '../../types/rule-form';
-import { DataSourceType } from '../../utils/datasource';
+import {
+  DataSourceType,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isValidRecordingRulesTarget,
+} from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
@@ -82,7 +86,6 @@ const ImportToGMARules = () => {
   const [formImportPayload, setFormImportPayload] = useState<ImportFormValues | null>(null);
   const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI;
 
-  const { t } = useTranslate();
   const onSubmit: SubmitHandler<ImportFormValues> = async (formData) => {
     setFormImportPayload(formData);
   };
@@ -240,7 +243,6 @@ const ImportToGMARules = () => {
 };
 
 function YamlFileUpload() {
-  const { t } = useTranslate();
   const {
     formState: { errors },
   } = useFormContext<ImportFormValues>();
@@ -294,7 +296,6 @@ function YamlFileUpload() {
 }
 
 function YamlTargetDataSourceField() {
-  const { t } = useTranslate();
   const {
     formState: { errors },
     setValue,
@@ -322,11 +323,11 @@ function YamlTargetDataSourceField() {
             noDefault
             inputId="yaml-target-data-source"
             alerting
-            filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+            filter={(ds: DataSourceInstanceSettings) => isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type)}
             onChange={(ds: DataSourceInstanceSettings) => {
               setValue('yamlImportTargetDatasourceUID', ds.uid);
               const recordingRulesTargetDs = getValues('targetDatasourceUID');
-              if (!recordingRulesTargetDs) {
+              if (!recordingRulesTargetDs && isValidRecordingRulesTarget(ds)) {
                 setValue('targetDatasourceUID', ds.uid);
               }
             }}
@@ -344,7 +345,6 @@ function YamlTargetDataSourceField() {
 }
 
 function TargetDataSourceForRecordingRulesField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },
@@ -371,7 +371,7 @@ function TargetDataSourceForRecordingRulesField() {
             current={field.value}
             inputId="recording-rules-target-data-source"
             noDefault
-            filter={(ds: DataSourceInstanceSettings) => ds.type === 'prometheus'}
+            filter={isValidRecordingRulesTarget}
             onChange={(ds: DataSourceInstanceSettings) => {
               setValue('targetDatasourceUID', ds.uid);
             }}
@@ -391,7 +391,6 @@ function TargetDataSourceForRecordingRulesField() {
 }
 
 function TargetFolderField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },
@@ -440,7 +439,6 @@ function TargetFolderField() {
 }
 
 function DataSourceField() {
-  const { t } = useTranslate();
   const {
     control,
     formState: { errors },
@@ -485,7 +483,7 @@ function DataSourceField() {
               // If we've chosen a Prometheus data source, we can set the recording rules target data source to the same as the source
               const recordingRulesTargetDs = getValues('targetDatasourceUID');
               if (!recordingRulesTargetDs) {
-                const targetDataSourceUID = ds.type === DataSourceType.Prometheus ? ds.uid : undefined;
+                const targetDataSourceUID = isValidRecordingRulesTarget(ds) ? ds.uid : undefined;
                 setValue('targetDatasourceUID', targetDataSourceUID);
               }
             }}

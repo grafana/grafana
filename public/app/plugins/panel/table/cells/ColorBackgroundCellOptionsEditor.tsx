@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
 import { Field, RadioButtonGroup, Switch, Label, Badge } from '@grafana/ui';
 
@@ -15,7 +15,7 @@ export const ColorBackgroundCellOptionsEditor = ({
   onChange,
 }: TableCellEditorProps<TableColoredBackgroundCellOptions>) => {
   // Set the display mode on change
-  const { t } = useTranslate();
+
   const onCellOptionsChange = (v: TableCellBackgroundDisplayMode) => {
     cellOptions.mode = v;
     onChange(cellOptions);

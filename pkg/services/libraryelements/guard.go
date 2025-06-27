@@ -24,8 +24,6 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 	switch kind {
 	case model.PanelElement:
 		return nil
-	case model.VariableElement:
-		return nil
 	default:
 		return model.ErrLibraryElementUnSupportedElementKind
 	}
@@ -83,6 +81,19 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 	if isGeneralFolder(folderID) {
 		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID))
 	}
+	canView, err := l.AccessControl.Evaluate(ctx, user, evaluator)
+	if err != nil {
+		return err
+	}
+	if !canView {
+		return dashboards.ErrFolderAccessDenied
+	}
+
+	return nil
+}
+
+func (l *LibraryElementService) requireViewPermissionsOnFolderUID(ctx context.Context, user identity.Requester, folderUID string) error {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 	canView, err := l.AccessControl.Evaluate(ctx, user, evaluator)
 	if err != nil {
 		return err

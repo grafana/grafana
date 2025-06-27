@@ -2,17 +2,21 @@ package libraryelements
 
 import (
 	"errors"
+	"fmt"
+	"hash/fnv"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -274,9 +278,66 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext) response.Response {
-	connections, err := l.getConnections(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	libraryPanelUID := web.Params(c.Req)[":uid"]
+
+	// make sure the library element exists
+	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, model.GetLibraryElementCommand{
+		UID: libraryPanelUID,
+	})
 	if err != nil {
-		return l.toLibraryElementError(err, "Failed to get connections")
+		return l.toLibraryElementError(err, "Failed to get library element")
+	}
+
+	// now get all dashboards connected to this library element
+	dashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(c.Req.Context(), libraryPanelUID, c.GetOrgID())
+	if err != nil {
+		return l.toLibraryElementError(err, "Failed to get dashboards")
+	}
+
+	ids, err := l.getConnectionIDs(c.Req.Context(), c.SignedInUser, libraryPanelUID)
+	if err != nil {
+		return l.toLibraryElementError(err, "Failed to get connection ids")
+	}
+
+	connections := make([]model.LibraryElementConnectionDTO, 0)
+	for _, dashboard := range dashboards {
+		// skip checks if the user is an admin, or if the dashboard is in the general folder
+		if !c.HasRole(org.RoleAdmin) && dashboard.FolderUID != "" && dashboard.FolderUID != "general" {
+			if err := l.requireViewPermissionsOnFolderUID(c.Req.Context(), c.SignedInUser, dashboard.FolderUID); err != nil {
+				continue
+			}
+		}
+
+		// best effort to get a connection id, once in unified storage, connections are not an individual resource and therefore do not have an id
+		connectionID, ok := ids[getConnectionKey(element.ID, dashboard.ID)] // nolint:staticcheck
+		if !ok {
+			// if we cannot get an ID from the db, instead do a best effort to return something that will be consistent and somewhat unique for the connection.
+			// note: the connection ID cannot be used to get, update, or delete a connection, so this is solely to keep the api returning the same fields for now,
+			// while we deprecate the endpoint.
+			hash := fnv.New64a()
+			_, err := fmt.Fprintf(hash, "%d:%s:%d:%d", element.ID, dashboard.UID, c.GetOrgID(), element.Meta.Created.Unix())
+			if err != nil {
+				return l.toLibraryElementError(err, "Failed to generate connection id")
+			}
+			// ensure it is positive and smaller than 9007199254740991, otherwise we will lose prescision
+			// in javascript, which has the safest number as 9007199254740991, compared to 9223372036854775807 in go
+			connectionID = int64(hash.Sum64() & ((1 << 52) - 1))
+		}
+
+		connections = append(connections, model.LibraryElementConnectionDTO{
+			ID:            connectionID,
+			Kind:          int64(model.PanelElement),
+			ElementID:     element.ID,
+			ConnectionID:  dashboard.ID, // nolint:staticcheck
+			ConnectionUID: dashboard.UID,
+			// returns the creation information of the library element, not the connection
+			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				Id:        element.Meta.CreatedBy.Id,
+				Name:      element.Meta.CreatedBy.Name,
+				AvatarUrl: element.Meta.CreatedBy.AvatarUrl,
+			},
+			Created: element.Meta.Created,
+		})
 	}
 
 	return response.JSON(http.StatusOK, model.LibraryElementConnectionsResponse{Result: connections})
@@ -405,8 +466,7 @@ type GetLibraryElementsParams struct {
 	// required:false
 	// Description:
 	// * 1 - library panels
-	// * 2 - library variables
-	// enum: 1,2
+	// enum: 1
 	Kind int `json:"kind"`
 	// Sort order of elements.
 	// in:query

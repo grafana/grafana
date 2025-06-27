@@ -3,7 +3,7 @@ import { memo, useCallback, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useStyles2, VerticalGroup, FilterInput } from '@grafana/ui';
 import { FolderInfo } from 'app/types';
 
@@ -51,8 +51,6 @@ export const LibraryPanelsSearch = ({
   const [sortDirection, setSortDirection] = useState<SelectableValue<string>>({});
   const [folderFilter, setFolderFilter] = useState<string[]>(currentFolderUID ? [currentFolderUID] : []);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
-
-  const { t } = useTranslate();
 
   const sortOrFiltersVisible = showSort || showPanelFilter || showFolderFilter;
   const verticalGroupSpacing = variant === LibraryPanelsSearchVariant.Tight ? 'lg' : 'xs';

@@ -14,6 +14,7 @@ import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
   DashboardEditActionEventPayload,
+  DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
@@ -114,12 +115,17 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
 
     action.undo();
+    action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     /**
      * Some edit actions also require clearing selection or selecting new objects
      */
     if (action.addedObject) {
       this.clearSelection();
+    }
+
+    if (action.movedObject) {
+      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
     if (action.removedObject) {
@@ -134,9 +140,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
    */
   private performAction(action: DashboardEditActionEventPayload) {
     action.perform();
+    action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     if (action.addedObject) {
       this.newObjectAddedToCanvas(action.addedObject);
+    }
+
+    if (action.movedObject) {
+      this.selectObject(action.movedObject, action.movedObject.state.key!, { force: true });
     }
 
     if (action.removedObject) {
@@ -255,6 +266,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
-    this.state.selection!.markAsNewElement();
+    this.state.selection?.markAsNewElement();
   }
 }

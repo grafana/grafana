@@ -580,16 +580,15 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
 
-	if preference.HomeDashboardID == 0 && len(homePage) > 0 {
+	if preference.HomeDashboardUID == "" && len(homePage) > 0 {
 		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
 		return response.JSON(http.StatusOK, &homePageRedirect)
 	}
 
-	if preference.HomeDashboardID != 0 {
-		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: preference.HomeDashboardID}
-		slugQueryResult, err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
+	if preference.HomeDashboardUID != "" {
+		slugQueryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dashboards.GetDashboardQuery{UID: preference.HomeDashboardUID, OrgID: c.GetOrgID()})
 		if err == nil {
-			url := dashboards.GetDashboardURL(slugQueryResult.UID, slugQueryResult.Slug)
+			url := dashboards.GetDashboardURL(preference.HomeDashboardUID, slugQueryResult.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return response.JSON(http.StatusOK, &dashRedirect)
 		}

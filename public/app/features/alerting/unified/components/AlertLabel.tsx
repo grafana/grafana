@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 
 export const AlertLabel = ({ labelKey, value, operator = '=', onRemoveLabel }: Props) => {
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   return (
     <div className={styles.wrapper}>
       {labelKey}
