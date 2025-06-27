@@ -58,29 +58,6 @@ func (m *MockDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 	return args.Get(0).(*IndexableDocument), nil
 }
 
-// mockResourceIndex implements ResourceIndex for testing
-type mockResourceIndex struct{}
-
-func (m *mockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
-	return nil
-}
-
-func (m *mockResourceIndex) Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex) (*resourcepb.ResourceSearchResponse, error) {
-	return &resourcepb.ResourceSearchResponse{}, nil
-}
-
-func (m *mockResourceIndex) CountManagedObjects(ctx context.Context) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
-	return nil, nil
-}
-
-func (m *mockResourceIndex) DocCount(ctx context.Context, folder string) (int64, error) {
-	return 0, nil
-}
-
-func (m *mockResourceIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
-	return &resourcepb.ListManagedObjectsResponse{}, nil
-}
-
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
 	resourceStats []ResourceStats
@@ -142,8 +119,9 @@ func (m *mockSearchBackend) GetIndex(ctx context.Context, key NamespacedResource
 }
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, fields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error) {
-	// Create a simple index
-	index := &mockResourceIndex{}
+	index := &MockResourceIndex{}
+	index.On("BulkIndex", mock.Anything).Return(nil).Maybe()
+	index.On("DocCount", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
 
 	// Call the builder function (required by the contract)
 	_, err := builder(index)
