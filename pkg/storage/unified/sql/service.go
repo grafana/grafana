@@ -297,12 +297,13 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback func(context.Context) (context.Context, error)) func(context.Context) (context.Context, error) {
 	authCfg := ReadGrpcServerConfig(cfg)
 	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
+	metrics := newMetrics(reg)
 	return func(ctx context.Context) (context.Context, error) {
 		a := &authenticatorWithFallback{
 			authenticator: authenticator,
 			fallback:      fallback,
 			tracer:        tracer,
-			metrics:       newMetrics(reg),
+			metrics:       metrics,
 		}
 		return a.Authenticate(ctx)
 	}
