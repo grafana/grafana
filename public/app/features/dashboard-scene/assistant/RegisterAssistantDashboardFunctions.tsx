@@ -1,3 +1,5 @@
+import { useMemo, useEffect } from 'react';
+
 import { type AddCallbackFunction, type DashboardOperations } from '@grafana/assistant';
 import { usePluginFunctions } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
@@ -13,32 +15,40 @@ export const RegisterAssistantDashboardFunctions = () => {
     extensionPointId: 'grafana/grafana-assistant-app/add-callback-function/v0-alpha',
   });
 
-  const dashboardActions: DashboardOperations = {
-    addPanel: (vizPanel: VizPanel) => getDashboardScene()?.addPanel(vizPanel),
-    duplicatePanel: (vizPanel: VizPanel) => getDashboardScene()?.duplicatePanel(vizPanel),
-    copyPanel: (vizPanel: VizPanel) => getDashboardScene()?.copyPanel(vizPanel),
-    pastePanel: () => getDashboardScene()?.pastePanel(),
-    removePanel: (panel: VizPanel) => getDashboardScene()?.removePanel(panel),
-    createNewPanel: () => getDashboardScene()?.onCreateNewPanel(),
-    createNewRow: () => getDashboardScene()?.onCreateNewRow(),
-    onEnterEditMode: () => getDashboardScene()?.onEnterEditMode(),
-    openSaveDrawer: (options?: { saveAsCopy?: boolean; onSaveSuccess?: () => void }) =>
-      getDashboardScene()?.openSaveDrawer(options || {}),
-    onStarDashboard: () => getDashboardScene()?.onStarDashboard(),
-    canEditDashboard: (): boolean => getDashboardScene()?.canEditDashboard() ?? false,
-    exitEditMode: (options: { skipConfirm: boolean; restoreInitialState?: boolean }) =>
-      getDashboardScene()?.exitEditMode(options),
-  };
+  const dashboardActions: DashboardOperations = useMemo(
+    () => ({
+      addPanel: (vizPanel: VizPanel) => getDashboardScene()?.addPanel(vizPanel),
+      duplicatePanel: (vizPanel: VizPanel) => getDashboardScene()?.duplicatePanel(vizPanel),
+      copyPanel: (vizPanel: VizPanel) => getDashboardScene()?.copyPanel(vizPanel),
+      pastePanel: () => getDashboardScene()?.pastePanel(),
+      removePanel: (panel: VizPanel) => getDashboardScene()?.removePanel(panel),
+      createNewPanel: () => getDashboardScene()?.onCreateNewPanel(),
+      createNewRow: () => getDashboardScene()?.onCreateNewRow(),
+      onEnterEditMode: () => getDashboardScene()?.onEnterEditMode(),
+      openSaveDrawer: (options?: { saveAsCopy?: boolean; onSaveSuccess?: () => void }) =>
+        getDashboardScene()?.openSaveDrawer(options || {}),
+      onStarDashboard: () => getDashboardScene()?.onStarDashboard(),
+      canEditDashboard: (): boolean => getDashboardScene()?.canEditDashboard() ?? false,
+      exitEditMode: (options: { skipConfirm: boolean; restoreInitialState?: boolean }) =>
+        getDashboardScene()?.exitEditMode(options),
+    }),
+    []
+  );
 
-  const addCallbackFunction = assistantFunctions.find((func) => func.title === 'addCallbackFunction');
+  const addCallbackFunction = useMemo(
+    () => assistantFunctions.find((func) => func.title === 'addCallbackFunction'),
+    [assistantFunctions]
+  );
 
-  if (addCallbackFunction) {
-    // register all dashboard actions as callback functions in the `dashboarding` namespace
-    Object.keys(dashboardActions).forEach((actionName) => {
-      const action = dashboardActions[actionName as keyof typeof dashboardActions];
-      addCallbackFunction.fn('dashboarding', actionName, action);
-    });
-  }
+  useEffect(() => {
+    if (addCallbackFunction) {
+      // register all dashboard actions as callback functions in the `dashboarding` namespace
+      Object.keys(dashboardActions).forEach((actionName) => {
+        const action = dashboardActions[actionName as keyof typeof dashboardActions];
+        addCallbackFunction.fn('dashboarding', actionName, action);
+      });
+    }
+  }, [addCallbackFunction, dashboardActions]);
 
   return null;
 };
