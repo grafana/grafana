@@ -63,7 +63,7 @@ func TestIntegrationBadgerKVStorageBackend(t *testing.T) {
 		t.Cleanup(func() {
 			_ = db.Close()
 		})
-		return resource.NewKVStorageBackend(resource.NewBadgerKV(db))
+		return resource.NewkvStorageBackend(resource.NewBadgerKV(db))
 	}, &unitest.TestOptions{
 		NSPrefix: "kvstorage-test",
 		SkipTests: map[string]bool{

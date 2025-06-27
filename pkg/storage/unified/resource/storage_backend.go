@@ -122,7 +122,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if req.Key == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 400, Message: "missing key"}}
 	}
-	meta, err := k.metaStore.GetAtRevision(ctx, MetaGetRequestKey{
+	meta, err := k.metaStore.GetResourceKeyAtRevision(ctx, MetaGetRequestKey{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
@@ -138,8 +138,8 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Group:           req.Key.Group,
 		Resource:        req.Key.Resource,
 		Name:            req.Key.Name,
-		ResourceVersion: meta.Key.ResourceVersion,
-		Action:          meta.Key.Action,
+		ResourceVersion: meta.ResourceVersion,
+		Action:          meta.Action,
 	})
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
@@ -150,9 +150,9 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 	return &BackendReadResponse{
 		Key:             req.Key,
-		ResourceVersion: meta.Key.ResourceVersion,
+		ResourceVersion: meta.ResourceVersion,
 		Value:           value,
-		Folder:          meta.Key.Folder,
+		Folder:          meta.Folder,
 	}
 }
 
@@ -179,9 +179,9 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	}
 
 	// Fetch the latest objects
-	keys := make([]MetaDataObj, 0)
+	keys := make([]MetaDataKey, 0)
 	idx := 0
-	for metaObj, err := range k.metaStore.ListAtRevision(ctx, MetaListRequestKey{
+	for metaKey, err := range k.metaStore.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
@@ -195,10 +195,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			idx++
 			continue
 		}
-		keys = append(keys, MetaDataObj{ // TODO: do we need a copy here?
-			Key:   metaObj.Key,
-			Value: metaObj.Value,
-		})
+		keys = append(keys, metaKey)
 		// Only fetch the first limit items + 1 to get the next token.
 		if len(keys) >= int(req.Limit+1) {
 			break
@@ -223,7 +220,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 // kvListIterator implements ListIterator for KV storage
 type kvListIterator struct {
 	ctx          context.Context
-	keys         []MetaDataObj
+	keys         []MetaDataKey
 	currentIndex int
 	dataStore    *dataStore
 	listRV       int64
@@ -242,15 +239,15 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 
-	i.rv, i.err = i.keys[i.currentIndex].Key.ResourceVersion, nil
+	i.rv, i.err = i.keys[i.currentIndex].ResourceVersion, nil
 
 	data, err := i.dataStore.Get(i.ctx, DataKey{
-		Namespace:       i.keys[i.currentIndex].Key.Namespace,
-		Group:           i.keys[i.currentIndex].Key.Group,
-		Resource:        i.keys[i.currentIndex].Key.Resource,
-		Name:            i.keys[i.currentIndex].Key.Name,
-		ResourceVersion: i.keys[i.currentIndex].Key.ResourceVersion,
-		Action:          i.keys[i.currentIndex].Key.Action,
+		Namespace:       i.keys[i.currentIndex].Namespace,
+		Group:           i.keys[i.currentIndex].Group,
+		Resource:        i.keys[i.currentIndex].Resource,
+		Name:            i.keys[i.currentIndex].Name,
+		ResourceVersion: i.keys[i.currentIndex].ResourceVersion,
+		Action:          i.keys[i.currentIndex].Action,
 	})
 	if err != nil {
 		i.err = err
@@ -284,15 +281,15 @@ func (i *kvListIterator) ResourceVersion() int64 {
 }
 
 func (i *kvListIterator) Namespace() string {
-	return i.keys[i.currentIndex].Key.Namespace
+	return i.keys[i.currentIndex].Namespace
 }
 
 func (i *kvListIterator) Name() string {
-	return i.keys[i.currentIndex].Key.Name
+	return i.keys[i.currentIndex].Name
 }
 
 func (i *kvListIterator) Folder() string {
-	return i.keys[i.currentIndex].Key.Folder
+	return i.keys[i.currentIndex].Folder
 }
 
 func (i *kvListIterator) Value() []byte {
@@ -479,7 +476,7 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 
 	// Check if the resource currently exists (is live)
 	// If it exists, don't return any trash entries
-	_, err := k.metaStore.GetLatest(ctx, MetaGetRequestKey{
+	_, err := k.metaStore.GetLatestResourceKey(ctx, MetaGetRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
