@@ -222,6 +222,9 @@
       "text-no-resources": "리소스를 찾을 수 없음",
       "title-error-occurred": "Azure Monitor에서 리소스를 요청하는 동안 오류가 발생했습니다."
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "리소스 검색",
       "placeholder-resource-search": "리소스 검색"

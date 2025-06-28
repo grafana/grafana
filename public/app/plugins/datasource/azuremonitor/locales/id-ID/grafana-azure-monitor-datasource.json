@@ -222,6 +222,9 @@
       "text-no-resources": "Tidak ada sumber daya yang ditemukan",
       "title-error-occurred": "Terjadi kesalahan saat meminta sumber daya dari Azure Monitor"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Pencarian sumber daya",
       "placeholder-resource-search": "Cari sumber daya"

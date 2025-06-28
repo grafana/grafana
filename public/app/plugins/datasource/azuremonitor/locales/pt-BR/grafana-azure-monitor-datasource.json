@@ -222,6 +222,9 @@
       "text-no-resources": "Nenhum recurso encontrado",
       "title-error-occurred": "Ocorreu um erro ao solicitar recursos do Azure Monitor"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Pesquisa de recursos",
       "placeholder-resource-search": "Pesquisar um recurso"

@@ -222,6 +222,9 @@
       "text-no-resources": "Geen bronnen gevonden",
       "title-error-occurred": "Er is een fout opgetreden bij het aanvragen van metagegevens van Azure Monitor"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Bron zoeken",
       "placeholder-resource-search": "Zoek naar een bron"
