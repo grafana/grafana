@@ -3248,6 +3248,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Włączone",
       "text-badge-not-enabled": "Niewłączone"
     },
@@ -3280,6 +3282,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Zarządzaj ustawieniami uwierzytelniania i skonfiguruj logowanie jednokrotne. Więcej informacji znajdziesz w <2>dokumentacji</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3516,7 +3524,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam."
+    "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3916,6 +3930,7 @@
   "close-button": {
     "tooltip": "Zamknij"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Podczas ładowania opcji wystąpił błąd."
@@ -9552,6 +9567,15 @@
       "view": "Widok"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Otwórz sugestie dotyczące wizualizacji",
       "switch-to-table": "Przełącz na tabelę"
     },
@@ -11662,6 +11686,12 @@
     "zone": {
       "select-aria-label": "Selektor strefy czasowej",
       "select-search-input": "Wpisz, aby wyszukać (kraj, miasto, skrót)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
