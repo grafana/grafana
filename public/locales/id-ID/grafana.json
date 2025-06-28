@@ -3209,6 +3209,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Aktif",
       "text-badge-not-enabled": "Tidak diaktifkan"
     },
@@ -3241,6 +3243,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Kelola pengaturan autentikasi Anda dan konfigurasikan single sign-on. Cari tahu selengkapnya di <2>dokumentasi</2> kami."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3462,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana."
+    "text-this-repository-is-read-only": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3876,7 @@
   "close-button": {
     "tooltip": "Tutup"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Terjadi kesalahan saat memuat opsi."
@@ -9465,6 +9480,15 @@
       "view": "Lihat"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Buka saran visualisasi",
       "switch-to-table": "Alihkan ke tabel"
     },
@@ -11557,6 +11581,12 @@
     "zone": {
       "select-aria-label": "Pemilih zona waktu",
       "select-search-input": "Ketik untuk mencari (negara, kota, singkatan)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

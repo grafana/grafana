@@ -3222,6 +3222,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Etkin",
       "text-badge-not-enabled": "Devre dışı"
     },
@@ -3254,6 +3256,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Kimlik doğrulama ayarlarınızı yönetin ve çoklu oturum açmayı yapılandırın. Daha fazla bilgi için <2>belgelerimize</2> bakın."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın."
+    "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Kapat"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Seçenekler yüklenirken bir hata oluştu."
@@ -9494,6 +9509,15 @@
       "view": "Görüntüle"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Görselleştirme önerilerini aç",
       "switch-to-table": "Tabloya geç"
     },
@@ -11592,6 +11616,12 @@
     "zone": {
       "select-aria-label": "Zaman dilimi seçici",
       "select-search-input": "Aramak için yazmaya başlayın (ülke, şehir, kısaltma)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

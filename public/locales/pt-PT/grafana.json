@@ -3222,6 +3222,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Ativado",
       "text-badge-not-enabled": "Não ativado"
     },
@@ -3254,6 +3256,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Faça a gestão das suas definições de autenticação e configure o início de sessão único. Saiba mais na nossa <2>documentação</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá."
+    "text-this-repository-is-read-only": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Fechar"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Ocorreu um erro ao carregar as opções."
@@ -9494,6 +9509,15 @@
       "view": "Ver"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Abrir sugestões de visualização",
       "switch-to-table": "Mudar para tabela"
     },
@@ -11592,6 +11616,12 @@
     "zone": {
       "select-aria-label": "Seletor de fuso horário",
       "select-search-input": "Digite para pesquisar (país, cidade, abreviatura)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

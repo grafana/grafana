@@ -3209,6 +3209,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "활성화됨",
       "text-badge-not-enabled": "활성화되지 않음"
     },
@@ -3241,6 +3243,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "인증 설정을 관리하고 싱글 사인온을 구성하세요. 자세한 내용은 Grafana의 <2>문서</2>를 확인하세요."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3462,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요."
+    "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3876,7 @@
   "close-button": {
     "tooltip": "닫기"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "옵션을 불러오는 중에 오류가 발생했습니다."
@@ -9465,6 +9480,15 @@
       "view": "보기"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "시각화 제안 열기",
       "switch-to-table": "표로 전환"
     },
@@ -11557,6 +11581,12 @@
     "zone": {
       "select-aria-label": "시간대 선택기",
       "select-search-input": "입력하여 검색(국가, 도시, 약어)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

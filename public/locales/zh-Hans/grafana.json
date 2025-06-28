@@ -3209,6 +3209,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "已启用",
       "text-badge-not-enabled": "未启用"
     },
@@ -3241,6 +3243,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "管理身份验证设置并配置单点登录。不妨在我们的<2>文档</2>中了解更多信息。"
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3462,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。"
+    "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3876,7 @@
   "close-button": {
     "tooltip": "关闭"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "加载选项时发生错误。"
@@ -9465,6 +9480,15 @@
       "view": "查看"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "打开可视化建议",
       "switch-to-table": "切换至表格"
     },
@@ -11557,6 +11581,12 @@
     "zone": {
       "select-aria-label": "时区选择器",
       "select-search-input": "输入以搜索(国家、城市、缩写)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
