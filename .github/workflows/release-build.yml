@@ -39,8 +39,10 @@ jobs:
   setup:
     name: setup
     runs-on: github-hosted-ubuntu-x64-small
+    if: github.repository == 'grafana/grafana'
     outputs:
       version: ${{ steps.output.outputs.version }}
+      grafana-commit: ${{ steps.output.outputs.grafana_commit }}
     permissions:
       contents: read
     steps:
@@ -59,7 +61,9 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           BUILD_ID: ${{ github.run_number }}
       - id: output
-        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
     runs-on: github-hosted-ubuntu-x64-small
@@ -69,11 +73,6 @@ jobs:
       id-token: write
     name: Dispatch grafana-enterprise build
     steps:
-      - name: Log in to GCS
-        id: login-to-gcs
-        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
-        with:
-          environment: prod
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
@@ -92,10 +91,12 @@ jobs:
           REF: ${{ github.ref_name }}
           VERSION: ${{ needs.setup.outputs.version }}
           BUILD_ID: ${{ github.run_number }}
-          BUCKET: ${{ steps.login-to-gcs.outputs.bucket }}
+          BUCKET: grafana-prerelease
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
         with:
+          github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
@@ -104,8 +105,9 @@ jobs:
                 ref:  REF,
                 inputs: {
                   "version": VERSION,
-                  "build-id": BUILD_ID,
+                  "build-id": String(BUILD_ID),
                   "bucket": BUCKET,
+                  "grafana-commit": GRAFANA_COMMIT,
                 }
             })
 
