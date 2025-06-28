@@ -5,7 +5,7 @@ import { useAsyncFn, useInterval } from 'react-use';
 import { urlUtil } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
-import { logInfo } from '@grafana/runtime';
+import { config, logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
