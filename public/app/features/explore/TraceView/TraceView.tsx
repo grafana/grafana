@@ -14,6 +14,7 @@ import {
   mapInternalLinkToExplore,
   SplitOpen,
   TimeRange,
+  SearchProps,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
@@ -42,7 +43,7 @@ import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { SearchProps, useSearch } from './useSearch';
+import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({

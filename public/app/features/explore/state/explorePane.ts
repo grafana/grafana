@@ -10,6 +10,7 @@ import {
   RawTimeRange,
   ExploreCorrelationHelperData,
   EventBusExtended,
+  SearchProps,
 } from '@grafana/data';
 import { CorrelationData } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';

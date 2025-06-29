@@ -15,8 +15,7 @@
 import { getByText, render } from '@testing-library/react';
 
 import { MutableDataFrame } from '@grafana/data';
-
-import { defaultFilters } from '../../useSearch';
+import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { TracePageHeader } from './TracePageHeader';
 import { trace } from './mocks';
@@ -25,7 +24,7 @@ const setup = () => {
   const defaultProps = {
     trace,
     timeZone: '',
-    search: defaultFilters,
+    search: DEFAULT_SPAN_FILTERS,
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),
