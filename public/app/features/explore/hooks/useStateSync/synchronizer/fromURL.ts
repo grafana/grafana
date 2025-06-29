@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { EventBusSrv } from '@grafana/data';
 import { changeDatasource } from 'app/features/explore/state/datasource';
 import { changePanelsStateAction, initializeExplore } from 'app/features/explore/state/explorePane';
-import { splitClose, syncTimesAction } from 'app/features/explore/state/main';
+import { setSpanFilters, splitClose, syncTimesAction } from 'app/features/explore/state/main';
 import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explore/state/query';
 import { updateTime } from 'app/features/explore/state/time';
 import { fromURLRange } from 'app/features/explore/state/utils';
@@ -30,7 +30,7 @@ export function syncFromURL(
   }
 
   Object.entries(urlState.panes).forEach(async ([exploreId, urlPane], i) => {
-    const { datasource, queries, range, panelsState } = urlPane;
+    const { datasource, queries, range, panelsState, spanFilters } = urlPane;
 
     const paneState = panesState[exploreId];
 
@@ -60,6 +60,10 @@ export function syncFromURL(
 
           if (update.panelsState && panelsState) {
             dispatch(changePanelsStateAction({ exploreId, panelsState }));
+          }
+
+          if (update.spanFilters && spanFilters) {
+            dispatch(setSpanFilters({ exploreId, spanFilters }));
           }
         });
     } else {

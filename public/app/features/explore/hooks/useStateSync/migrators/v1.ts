@@ -119,5 +119,24 @@ function applyDefaults(input: unknown): ExploreUrlState {
       hasKey('to', input.range) &&
       typeof input.range.from === 'string' &&
       typeof input.range.to === 'string' && { range: { from: input.range.from, to: input.range.to } }),
+    // spanFilters
+    ...(hasKey('spanFilters', input) &&
+      !!input.spanFilters &&
+      typeof input.spanFilters === 'object' &&
+      isValidSpanFilters(input.spanFilters) && { spanFilters: input.spanFilters }),
   };
+}
+
+function isValidSpanFilters(input: unknown): input is SearchProps {
+  if (!input || typeof input !== 'object') {
+    return false;
+  }
+
+  // Basic validation - check if it has the required operator fields
+  return (
+    hasKey('serviceNameOperator', input) &&
+    hasKey('spanNameOperator', input) &&
+    hasKey('fromOperator', input) &&
+    hasKey('toOperator', input)
+  );
 }

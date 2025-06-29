@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { useState, useEffect, memo, useCallback } from 'react';
+import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
 
 import { GrafanaTheme2, SearchProps, SelectableValue, toOption } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -57,6 +57,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
+  const prevTraceIdRef = useRef<string>();
 
   const durationRegex = /^\d+(?:\.\d)?\d*(?:ns|us|µs|ms|s|m|h)$/;
 
@@ -69,7 +70,16 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   }, [setSearch]);
 
   useEffect(() => {
-    clear();
+    // Only clear filters when trace ID actually changes (not on initial mount)
+    const currentTraceId = trace?.traceID;
+
+    const traceHasChanged = prevTraceIdRef.current && prevTraceIdRef.current !== currentTraceId;
+
+    if (traceHasChanged) {
+      clear();
+    }
+
+    prevTraceIdRef.current = currentTraceId;
   }, [clear, trace]);
 
   const setShowSpanFilterMatchesOnly = useCallback(
