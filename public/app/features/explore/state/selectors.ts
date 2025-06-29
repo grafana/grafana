@@ -27,6 +27,9 @@ export const isLeftPaneSelector = (exploreId: string) =>
 
 export const getExploreItemSelector = (exploreId: string) => createSelector(selectPanes, (panes) => panes[exploreId]);
 
+export const getSpanFiltersSelector = (exploreId: string) =>
+  createSelector(selectPanes, (panes) => panes[exploreId]?.spanFilters);
+
 export const selectCorrelationDetails = createSelector(selectExploreRoot, (state) => state.correlationEditorDetails);
 
 export const selectExploreDSMaps = createSelector(selectPanesEntries, (panes) => {
