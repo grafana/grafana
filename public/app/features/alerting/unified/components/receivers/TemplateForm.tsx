@@ -31,7 +31,6 @@ import {
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
-import { DEFAULT_LLM_MODEL, Message, sanitizeReply } from 'app/features/dashboard/components/GenAI/utils';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -258,23 +257,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
           groupLabels: 'Labels used for grouping alerts',
           status: 'firing or resolved',
         },
-        templateFunctions: [
-          'range',
-          'if',
-          'else',
-          'with',
-          'printf',
-          'title',
-          'toUpper',
-          'toLower',
-          'len',
-          'index',
-          'slice',
-          'html',
-          'js',
-          'urlquery',
-          'humanize',
-        ],
+        templateFunctions: ['range', 'if', 'else', 'end', 'with', 'printf', 'len'],
       };
     } catch (error) {
       return {
@@ -288,28 +271,66 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   }, []);
 
   // Sets up the AI's behavior and context
-  const createSystemPrompt = (): Message => ({
+  const createSystemPrompt = (): llm.Message => ({
     role: 'system',
     content: SYSTEM_PROMPT_CONTENT,
   });
 
   // Contains the actual user request/query
-  const createUserPrompt = (userInput: string): Message => ({
+  const createUserPrompt = (userInput: string): llm.Message => ({
     role: 'user',
     content: `Generate a notification template that produces this kind of output: ${userInput}
 
 Please create a Go template that would generate a notification with the described format, using appropriate alert data fields and template functions.`,
   });
 
+  // Parse and handle the LLM response
+  const handleParsedResponse = useCallback(
+    (reply: string) => {
+      try {
+        // Extract template content from the response - handle code blocks and other formatting
+        const cleanedReply = extractTemplateFromLLMResponse(reply);
+        // Set the generated template content directly
+        setValue('content', cleanedReply);
+        setShowGenAIModal(false);
+      } catch (error) {
+        console.error('Failed to parse generated template:', error);
+        setGenAIError('Failed to parse the generated template. Please try again.');
+      }
+    },
+    [setValue]
+  );
+
+  // Extract template content from LLM response, handling markdown code blocks and other formatting
+  const extractTemplateFromLLMResponse = (response: string): string => {
+    // Remove leading/trailing quotes (original sanitizeReply behavior)
+    let cleaned = response.replace(/^"|"$/g, '');
+
+    // Try to extract from markdown code blocks first
+    const codeBlockMatch = cleaned.match(/```(?:go|text|template)?\s*([\s\S]*?)\s*```/);
+    if (codeBlockMatch) {
+      cleaned = codeBlockMatch[1];
+    }
+
+    // Trim whitespace and return
+    return cleaned.trim();
+  };
+
   // Handle LLM call with tools
   const handleGenerateWithTools = useCallback(
-    async (messages: Message[]) => {
+    async (messages: llm.Message[]) => {
       setIsGenerating(true);
       setGenAIError(null);
 
       try {
+        // Check if LLM service is available
+        const enabled = await llm.enabled();
+        if (!enabled) {
+          throw new Error('LLM service is not configured or enabled');
+        }
+
         const response = await llm.chatCompletions({
-          model: DEFAULT_LLM_MODEL,
+          model: llm.Model.LARGE, // Use LARGE model for better results
           messages,
           tools: [GET_TEMPLATE_EXAMPLES_TOOL],
           temperature: 0.3,
@@ -332,7 +353,7 @@ Please create a Go template that would generate a notification with the describe
               const args = JSON.parse(toolCall.function.arguments);
               const result = await handleGetTemplateExamples(args);
 
-              // Add the tool result
+              // Add the tool result to the messages
               finalMessages.push({
                 role: 'tool',
                 content: JSON.stringify(result),
@@ -343,7 +364,7 @@ Please create a Go template that would generate a notification with the describe
 
           // Call LLM again with the tool results
           const finalResponse = await llm.chatCompletions({
-            model: DEFAULT_LLM_MODEL,
+            model: llm.Model.LARGE, // Use LARGE model for better results
             messages: finalMessages,
             tools: [GET_TEMPLATE_EXAMPLES_TOOL],
             temperature: 0.3,
@@ -363,36 +384,19 @@ Please create a Go template that would generate a notification with the describe
         }
       } catch (error) {
         console.error('Failed to generate template with LLM:', error);
-        setGenAIError('Failed to generate template. Please try again.');
+        setGenAIError(`LLM request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setIsGenerating(false);
       }
     },
-    [handleGetTemplateExamples]
-  );
-
-  // Parse and handle the LLM response
-  const handleParsedResponse = useCallback(
-    (reply: string) => {
-      try {
-        const sanitizedReply = sanitizeReply(reply);
-
-        // Set the generated template content
-        setValue('content', sanitizedReply);
-        setShowGenAIModal(false);
-      } catch (error) {
-        console.error('Failed to parse generated template:', error);
-        setGenAIError('Failed to parse the generated template. Please try again.');
-      }
-    },
-    [setValue]
+    [handleGetTemplateExamples, handleParsedResponse]
   );
 
   const handleGenerate = () => {
     if (!genAIPrompt.trim()) {
       return;
     }
-    const messages: Message[] = [createSystemPrompt(), createUserPrompt(genAIPrompt)];
+    const messages: llm.Message[] = [createSystemPrompt(), createUserPrompt(genAIPrompt)];
     handleGenerateWithTools(messages);
   };
 

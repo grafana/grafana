@@ -9,7 +9,6 @@ import { locationService } from '@grafana/runtime';
 import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 
 import { useListContactPointsv0alpha1 } from '../../../../../../../packages/grafana-alerting/src/grafana/contactPoints/hooks/useContactPoints';
-import { DEFAULT_LLM_MODEL, Message, sanitizeReply } from '../../../../dashboard/components/GenAI/utils';
 import { LogMessages, logInfo } from '../../Analytics';
 import { getDefaultFormValues } from '../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -217,13 +216,13 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
   );
 
   // Sets up the AI's behavior and context
-  const createSystemPrompt = (): Message => ({
+  const createSystemPrompt = (): llm.Message => ({
     role: 'system',
     content: SYSTEM_PROMPT_CONTENT,
   });
 
   //  Contains the actual user request/query
-  const createUserPrompt = (userInput: string): Message => ({
+  const createUserPrompt = (userInput: string): llm.Message => ({
     role: 'user',
     content: `Create an alert rule for: ${userInput}
 
@@ -233,8 +232,9 @@ Please generate a complete alert rule configuration that monitors for this condi
   // Parse and handle the LLM response
   const handleParsedResponse = useCallback((reply: string) => {
     try {
-      const sanitizedReply = sanitizeReply(reply);
-      const parsedRule = JSON.parse(sanitizedReply);
+      // Extract JSON from the response - handle code blocks and other formatting
+      const cleanedReply = extractJsonFromLLMResponse(reply);
+      const parsedRule = JSON.parse(cleanedReply);
 
       // Merge with default values to ensure all required fields are present
       const defaultValues = getDefaultFormValues();
@@ -251,15 +251,42 @@ Please generate a complete alert rule configuration that monitors for this condi
     }
   }, []);
 
+  // Extract JSON from LLM response, handling markdown code blocks and other formatting
+  const extractJsonFromLLMResponse = (response: string): string => {
+    // Remove leading/trailing quotes (original sanitizeReply behavior)
+    let cleaned = response.replace(/^"|"$/g, '');
+
+    // Try to extract JSON from markdown code blocks
+    const codeBlockMatch = cleaned.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+    if (codeBlockMatch) {
+      cleaned = codeBlockMatch[1];
+    }
+
+    // If no code block, try to find JSON object boundaries
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleaned = jsonMatch[0];
+    }
+
+    // Trim whitespace
+    return cleaned.trim();
+  };
+
   // Handle LLM call with tools
   const handleGenerateWithTools = useCallback(
-    async (messages: Message[]) => {
+    async (messages: llm.Message[]) => {
       setIsGenerating(true);
       setError(null);
 
       try {
+        // Check if LLM service is available
+        const enabled = await llm.enabled();
+        if (!enabled) {
+          throw new Error('LLM service is not configured or enabled');
+        }
+
         const response = await llm.chatCompletions({
-          model: DEFAULT_LLM_MODEL,
+          model: llm.Model.LARGE, // Use LARGE model for better results
           messages,
           tools: [GET_CONTACT_POINTS_TOOL],
           temperature: 0.3,
@@ -296,7 +323,7 @@ Please generate a complete alert rule configuration that monitors for this condi
           // Call LLM again with the tool results
           // Make Second LLM Call with Tool Results to generate the final alert rule
           const finalResponse = await llm.chatCompletions({
-            model: DEFAULT_LLM_MODEL,
+            model: llm.Model.LARGE, // Use LARGE model for better results
             messages: finalMessages,
             tools: [GET_CONTACT_POINTS_TOOL],
             temperature: 0.3,
@@ -316,7 +343,7 @@ Please generate a complete alert rule configuration that monitors for this condi
         }
       } catch (error) {
         console.error('Failed to generate alert rule with LLM:', error);
-        setError('Failed to generate alert rule. Please try again.');
+        setError(`LLM request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setIsGenerating(false);
       }
@@ -328,7 +355,7 @@ Please generate a complete alert rule configuration that monitors for this condi
     if (!prompt.trim()) {
       return;
     }
-    const messages: Message[] = [createSystemPrompt(), createUserPrompt(prompt)];
+    const messages: llm.Message[] = [createSystemPrompt(), createUserPrompt(prompt)];
 
     handleGenerateWithTools(messages);
     logInfo(LogMessages.alertRuleFromScratch);
