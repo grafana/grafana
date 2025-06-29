@@ -1,23 +1,38 @@
 package libraryelements
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
 	"net/http"
 	"strings"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
@@ -25,13 +40,13 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		uidScope := ScopeLibraryPanelsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
-		entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))
-		entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
-		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))
+		entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))                 // TODO: add wrapper for k8s
+		entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler)) // TODO: add wrapper for k8s
+		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))                    // TODO: add wrapper for k8s - requires search
 		entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
-		entities.Get("/name/:name", routing.Wrap(l.getByNameHandler))
-		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
+		entities.Get("/name/:name", routing.Wrap(l.getByNameHandler))                                                           // TODO: add wrapper for k8s - requires search
+		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler)) // TODO: add wrapper for k8s
 	})
 }
 
@@ -133,6 +148,11 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
+	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagKubernetesLibraryPanels) {
+		l.k8sHandler.getK8sLibraryElement(c)
+		return nil // already handled in the k8s handler
+	}
+
 	ctx := c.Req.Context()
 	element, err := l.getLibraryElementByUid(ctx, c.SignedInUser,
 		model.GetLibraryElementCommand{
@@ -528,4 +548,206 @@ type GetLibraryElementArrayResponse struct {
 type GetLibraryElementConnectionsResponse struct {
 	// in: body
 	Body model.LibraryElementConnectionsResponse `json:"body"`
+}
+
+//-----------------------------------------------------------------------------------------
+// Library Elements k8s wrapper functions
+//-----------------------------------------------------------------------------------------
+
+type libraryElementsK8sHandler struct {
+	cfg                  *setting.Cfg
+	namespacer           request.NamespaceMapper
+	gvr                  schema.GroupVersionResource
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+	folderService        folder.Service
+	dashboardsService    dashboards.DashboardService
+	userService          user.Service
+}
+
+func newLibraryElementsK8sHandler(cfg *setting.Cfg, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, folderService folder.Service, userService user.Service, dashboardsService dashboards.DashboardService) *libraryElementsK8sHandler {
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV0.APIGroup,
+		Version:  dashboardV0.APIVersion,
+		Resource: dashboardV0.LIBRARY_PANEL_RESOURCE,
+	}
+	return &libraryElementsK8sHandler{
+		cfg:                  cfg,
+		gvr:                  gvr,
+		namespacer:           request.GetNamespaceMapper(cfg),
+		clientConfigProvider: clientConfigProvider,
+		folderService:        folderService,
+		dashboardsService:    dashboardsService,
+		userService:          userService,
+	}
+}
+
+func (lk8s *libraryElementsK8sHandler) getK8sLibraryElement(c *contextmodel.ReqContext) {
+	client, ok := lk8s.getClient(c)
+	if !ok {
+		return
+	}
+	uid := web.Params(c.Req)[":uid"]
+	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, *out)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
+		return
+	}
+	c.JSON(http.StatusOK, model.LibraryElementResponse{Result: *dto})
+}
+
+func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *contextmodel.ReqContext, item unstructured.Unstructured) (*model.LibraryElementDTO, error) {
+	spec, exists := item.Object["spec"].(map[string]interface{})
+	if !exists {
+		return nil, fmt.Errorf("spec not found in unstructured object")
+	}
+
+	id := int64(0)
+	folderUID := ""
+	meta, err := utils.MetaAccessor(&item)
+	if err == nil {
+		id = meta.GetDeprecatedInternalID() // nolint:staticcheck
+		folderUID = meta.GetFolder()
+	}
+
+	var libraryPanelSpec dashboardV0.LibraryPanelSpec
+	specJSON, err := json.Marshal(spec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal spec: %w", err)
+	}
+
+	err = json.Unmarshal(specJSON, &libraryPanelSpec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal spec into LibraryPanelSpec: %w", err)
+	}
+
+	// need to reconstruct this section from what we have in the k8s object
+	legacyModel := map[string]any{}
+	legacyModel["datasource"] = libraryPanelSpec.Datasource
+	legacyModel["description"] = libraryPanelSpec.Description
+	legacyModel["fieldConfig"] = libraryPanelSpec.FieldConfig.Object
+	legacyModel["gridPos"] = libraryPanelSpec.GridPos
+	legacyModel["id"] = id
+	legacyModel["options"] = libraryPanelSpec.Options.Object
+	legacyModel["pluginVersion"] = libraryPanelSpec.PluginVersion
+	legacyModel["type"] = libraryPanelSpec.Type
+	legacyModel["title"] = libraryPanelSpec.PanelTitle // this is the title of the panel when displayed in the dashboard
+	legacyModel["libraryPanel"] = map[string]string{
+		"name": libraryPanelSpec.Title, // this is the title of the actual library panel, when displayed in the library panel list
+		"uid":  item.GetName(),
+	}
+	if len(libraryPanelSpec.Links) > 0 {
+		legacyModel["links"] = libraryPanelSpec.Links
+	}
+	if len(libraryPanelSpec.Targets) > 0 {
+		legacyModel["targets"] = libraryPanelSpec.Targets
+	}
+	if libraryPanelSpec.Transparent {
+		legacyModel["transparent"] = libraryPanelSpec.Transparent
+	}
+	finalModel, err := json.Marshal(legacyModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal model: %w", err)
+	}
+
+	dto := &model.LibraryElementDTO{
+		ID:          id,
+		OrgID:       c.OrgID,
+		FolderUID:   folderUID,
+		UID:         item.GetName(),
+		Name:        libraryPanelSpec.Title,
+		Kind:        int64(model.PanelElement),
+		Type:        libraryPanelSpec.Type,
+		Description: libraryPanelSpec.Description,
+		Model:       finalModel,
+		Version:     item.GetGeneration(),
+		Meta: model.LibraryElementDTOMeta{
+			FolderUID: folderUID,
+			Created:   meta.GetCreationTimestamp().Time,
+		},
+	}
+
+	if folderUID != "" {
+		folder, err := lk8s.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{
+			OrgID:        c.OrgID,
+			UID:          &folderUID,
+			SignedInUser: c.SignedInUser,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		dto.Meta.FolderName = folder.Title
+		dto.FolderID = folder.ID
+	}
+
+	dashboards, err := lk8s.dashboardsService.GetDashboardsByLibraryPanelUID(c.Req.Context(), item.GetName(), c.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	dto.Meta.ConnectedDashboards = int64(len(dashboards))
+
+	createdBy := meta.GetCreatedBy()
+	updatedBy := createdBy // the old /api returns the same user for updated if it was never updated
+	userUIDs := []string{meta.GetCreatedBy()}
+	if timestamp, err := meta.GetUpdatedTimestamp(); err == nil && timestamp != nil {
+		dto.Meta.Updated = *timestamp
+		updatedBy = meta.GetUpdatedBy()
+		userUIDs = append(userUIDs, updatedBy)
+	} else {
+		// if never updated, the old /api returns the same timestamp for updated as for created
+		dto.Meta.Updated = dto.Meta.Created
+	}
+
+	users, err := lk8s.userService.ListByIdOrUID(c.Req.Context(), userUIDs, []int64{c.OrgID})
+	if err != nil {
+		return nil, err
+	}
+	for _, user := range users {
+		if user.UID == createdBy {
+			dto.Meta.CreatedBy = librarypanel.LibraryElementDTOMetaUser{
+				Id:        user.ID,
+				Name:      user.Login,
+				AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
+			}
+		}
+		// not else because /api returns the same user for updated if it was never updated
+		if user.UID == updatedBy {
+			dto.Meta.UpdatedBy = librarypanel.LibraryElementDTOMetaUser{
+				Id:        user.ID,
+				Name:      user.Login,
+				AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
+			}
+		}
+	}
+
+	return dto, nil
+}
+
+//-----------------------------------------------------------------------------------------
+// Utility functions
+//-----------------------------------------------------------------------------------------
+
+func (lk8s *libraryElementsK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	dyn, err := dynamic.NewForConfig(lk8s.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		c.JsonApiErr(500, "client", err)
+		return nil, false
+	}
+	return dyn.Resource(lk8s.gvr).Namespace(lk8s.namespacer(c.OrgID)), true
+}
+
+func (lk8s *libraryElementsK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
+	//nolint:errorlint
+	statusError, ok := err.(*k8serrors.StatusError)
+	if ok {
+		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
+		return
+	}
+	errhttp.Write(c.Req.Context(), err, c.Resp)
 }
