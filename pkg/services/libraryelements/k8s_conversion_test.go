@@ -145,7 +145,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	require.Equal(t, testFolder.UID, result.Meta.FolderUID)
 	require.Equal(t, testFolder.Title, result.Meta.FolderName)
 	require.Equal(t, int64(1), result.Meta.ConnectedDashboards)
-	require.Equal(t, int64(1), result.FolderID)
+	require.Equal(t, int64(1), result.FolderID) // nolint:staticcheck
 	require.Equal(t, creationTimestamp.Format(time.RFC3339), result.Meta.Created.Format(time.RFC3339))
 	require.Equal(t, testUser.ID, result.Meta.CreatedBy.Id)
 	require.Equal(t, testUser.Login, result.Meta.CreatedBy.Name)

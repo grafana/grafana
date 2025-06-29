@@ -683,7 +683,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 		}
 
 		dto.Meta.FolderName = folder.Title
-		dto.FolderID = folder.ID
+		dto.FolderID = folder.ID // nolint:staticcheck
 	}
 
 	dashboards, err := lk8s.dashboardsService.GetDashboardsByLibraryPanelUID(c.Req.Context(), item.GetName(), c.OrgID)
