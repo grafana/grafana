@@ -13,6 +13,11 @@ import { LogMessages, logInfo } from '../../Analytics';
 import { getDefaultFormValues } from '../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 
+// TODO:
+// - Create tool for getting datasources
+// - Create tool for getting folders
+// - Create tool for getting groups
+
 // Tool definition for getting contact points
 const GET_CONTACT_POINTS_TOOL = {
   type: 'function' as const,
