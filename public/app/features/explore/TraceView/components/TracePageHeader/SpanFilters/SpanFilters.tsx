@@ -32,7 +32,7 @@ import { SpanFiltersTags } from './SpanFiltersTags';
 export type SpanFilterProps = {
   trace: Trace;
   search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
+  setSearch: (newSearch: SearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;

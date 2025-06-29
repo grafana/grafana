@@ -38,7 +38,7 @@ export type TracePageHeaderProps = {
   app?: CoreApp;
   timeZone: TimeZone;
   search: SearchProps;
-  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
+  setSearch: (newSearch: SearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
