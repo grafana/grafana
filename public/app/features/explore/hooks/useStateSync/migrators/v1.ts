@@ -1,6 +1,6 @@
-import { ExploreUrlState } from '@grafana/data';
+import { ExploreUrlState, SearchProps } from '@grafana/data';
 import { ID_ALPHABET, generateExploreId } from 'app/core/utils/explore';
-import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
+import { DEFAULT_RANGE, DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
 import { hasKey } from '../../utils';
 
@@ -93,6 +93,7 @@ const DEFAULT_STATE: ExploreUrlState = {
   datasource: null,
   queries: [],
   range: DEFAULT_RANGE,
+  spanFilters: DEFAULT_SPAN_FILTERS,
 };
 
 function applyDefaults(input: unknown): ExploreUrlState {

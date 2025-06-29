@@ -14,9 +14,8 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
-import { TraceKeyValuePair } from '@grafana/data';
+import { TraceKeyValuePair, SearchProps, Tag } from '@grafana/data';
 
-import { SearchProps, Tag } from '../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
 import TNil from '../types/TNil';
 import { TraceSpan } from '../types/trace';

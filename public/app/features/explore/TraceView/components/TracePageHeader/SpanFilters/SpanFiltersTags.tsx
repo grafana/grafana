@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useMount } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toOption, SearchProps, Tag } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
-import { randomId, SearchProps, Tag } from '../../../useSearch';
+import { randomId } from '../../../../state/constants';
 import { getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';
 import { Trace } from '../../types/trace';
 

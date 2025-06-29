@@ -15,12 +15,12 @@
 import { css } from '@emotion/css';
 import React, { useState, useEffect, memo, useCallback } from 'react';
 
-import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { GrafanaTheme2, SearchProps, SelectableValue, toOption } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { defaultFilters, SearchProps } from '../../../useSearch';
+import { DEFAULT_SPAN_FILTERS } from '../../../../state/constants';
 import { getTraceServiceNames, getTraceSpanNames } from '../../../utils/tags';
 import SearchBarInput from '../../common/SearchBarInput';
 import { Trace } from '../../types/trace';
@@ -65,7 +65,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     setSpanNames(undefined);
     setTagKeys(undefined);
     setTagValues({});
-    setSearch(defaultFilters);
+    setSearch(DEFAULT_SPAN_FILTERS);
   }, [setSearch]);
 
   useEffect(() => {
