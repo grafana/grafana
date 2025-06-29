@@ -1493,10 +1493,6 @@ exports[`better eslint`] = {
     "public/app/features/auth-config/utils/data.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/browse-dashboards/api/useRecentlyDeletedStateManager.ts:5381": [
-      [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "0"],
-      [0, 0, 0, "Direct usage of localStorage is not allowed. import store from @grafana/data instead", "1"]
-    ],
     "public/app/features/browse-dashboards/components/BrowseActions/MoveModal.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],

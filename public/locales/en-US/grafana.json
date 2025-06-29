@@ -3222,6 +3222,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "Single sign-on (SSO) with SAML.",
+      "scim-learn-more": " Sync users and teams with SCIM.",
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
@@ -3254,6 +3256,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "No numeric fields found",
+      "missing-series": "Bar charts require a string or time field"
+    }
   },
   "barchart": {
     "config": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": "Dashboard {{name}} restored"
     },
-    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
+    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Close"
   },
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
@@ -9501,6 +9516,15 @@
       "view": "View"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "Data is missing a number field",
+        "string": "Data is missing a string field",
+        "time": "Data is missing a time field",
+        "unknown": "Cannot visualize data"
+      },
+      "no-value": {
+        "default": "No data"
+      },
       "open-visualization-suggestions": "Open visualization suggestions",
       "switch-to-table": "Switch to table"
     },
@@ -11619,6 +11643,12 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "No graphable fields",
+      "time": "Data does not have a time field"
     }
   },
   "timeseries": {
