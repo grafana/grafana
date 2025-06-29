@@ -107,7 +107,7 @@ type LibraryPanelSpec struct {
 	Transparent bool `json:"transparent,omitempty"`
 
 	// The links for the panel
-	Links []interface{} `json:"links,omitempty"`
+	Links []common.Unstructured `json:"links,omitempty"`
 
 	// The datasource queries
 	// +listType=set
