@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestDirectSQLStats(t *testing.T) {
+func TestIntegrationDirectSQLStats(t *testing.T) {
 	db, cfg := db.InitTestDBWithCfg(t)
 	ctx := context.Background()
 

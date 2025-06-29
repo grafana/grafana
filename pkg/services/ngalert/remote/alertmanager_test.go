@@ -128,7 +128,7 @@ func TestNewAlertmanager(t *testing.T) {
 	}
 }
 
-func TestApplyConfig(t *testing.T) {
+func TestIntegrationApplyConfig(t *testing.T) {
 	const tenantID = "test"
 	// errorHandler returns an error response for the readiness check and state sync.
 	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

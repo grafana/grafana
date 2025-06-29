@@ -847,7 +847,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	})
 }
 
-func TestDeleteFoldersFromApiServer(t *testing.T) {
+func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)
