@@ -156,7 +156,7 @@ func TestCheckHealth(t *testing.T) {
 	})
 }
 
-func TestCallResource(t *testing.T) {
+func TestIntegrationCallResource(t *testing.T) {
 	registry := fakes.NewFakePluginRegistry()
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{

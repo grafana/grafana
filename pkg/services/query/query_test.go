@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestParseMetricRequest(t *testing.T) {
+func TestIntegrationParseMetricRequest(t *testing.T) {
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
 		tc := setup(t)
 		mr := metricRequestWithQueries(t, `{
@@ -268,7 +268,7 @@ func TestParseMetricRequest(t *testing.T) {
 	})
 }
 
-func TestQueryDataMultipleSources(t *testing.T) {
+func TestIntegrationQueryDataMultipleSources(t *testing.T) {
 	t.Run("can query multiple datasources", func(t *testing.T) {
 		tc := setup(t)
 		query1, err := simplejson.NewJson([]byte(`

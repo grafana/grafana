@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestBuilder_EqualResults_Basic(t *testing.T) {
+func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -75,7 +75,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	}, res)
 }
 
-func TestBuilder_Pagination(t *testing.T) {
+func TestIntegrationBuilder_Pagination(t *testing.T) {
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -122,7 +122,7 @@ func TestBuilder_Pagination(t *testing.T) {
 	assert.Equal(t, "P", resPg2[0].Title, "page 2 should start with the 16th dashboard")
 }
 
-func TestBuilder_RBAC(t *testing.T) {
+func TestIntegrationBuilder_RBAC(t *testing.T) {
 	testsCases := []struct {
 		desc            string
 		userPermissions []accesscontrol.Permission

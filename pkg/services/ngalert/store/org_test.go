@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestFetchOrgIds(t *testing.T) {
+func TestIntegrationFetchOrgIds(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns empty result when no orgs exist", func(t *testing.T) {

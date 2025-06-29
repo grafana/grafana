@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestWarmStateCache(t *testing.T) {
+func TestIntegrationWarmStateCache(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	require.NoError(t, err)
 	ctx := context.Background()
@@ -271,7 +271,7 @@ func TestWarmStateCache(t *testing.T) {
 	})
 }
 
-func TestDashboardAnnotations(t *testing.T) {
+func TestIntegrationDashboardAnnotations(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2022-01-01")
 	require.NoError(t, err)
 
@@ -1450,7 +1450,7 @@ func printAllAnnotations(annos map[int64]annotations.Item) string {
 	return b.String()
 }
 
-func TestStaleResultsHandler(t *testing.T) {
+func TestIntegrationStaleResultsHandler(t *testing.T) {
 	evaluationTime := time.Now().Truncate(time.Second).UTC() // Truncate to the second since we don't store sub-second precision.
 	interval := time.Minute
 
@@ -1737,7 +1737,7 @@ func TestStaleResults(t *testing.T) {
 	})
 }
 
-func TestDeleteStateByRuleUID(t *testing.T) {
+func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 	interval := time.Minute
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)
@@ -1883,7 +1883,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 	}
 }
 
-func TestResetStateByRuleUID(t *testing.T) {
+func TestIntegrationResetStateByRuleUID(t *testing.T) {
 	interval := time.Minute
 	ctx := context.Background()
 	ng, dbstore := tests.SetupTestEnv(t, 1)

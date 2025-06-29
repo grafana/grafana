@@ -1447,7 +1447,7 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	})
 }
 
-func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
+func TestIntegrationIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -1496,7 +1496,7 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	})
 }
 
-func TestGetRuleVersions(t *testing.T) {
+func TestIntegrationGetRuleVersions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

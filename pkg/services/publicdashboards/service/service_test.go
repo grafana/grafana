@@ -60,7 +60,7 @@ func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.service")
 }
 
-func TestGetPublicDashboardForView(t *testing.T) {
+func TestIntegrationGetPublicDashboardForView(t *testing.T) {
 	type storeResp struct {
 		pd  *PublicDashboard
 		d   *dashboards.Dashboard
@@ -452,7 +452,7 @@ func TestGetPublicDashboardForView(t *testing.T) {
 	}
 }
 
-func TestGetPublicDashboard(t *testing.T) {
+func TestIntegrationGetPublicDashboard(t *testing.T) {
 	type storeResp struct {
 		pd  *PublicDashboard
 		d   *dashboards.Dashboard
@@ -529,7 +529,7 @@ func TestGetPublicDashboard(t *testing.T) {
 	}
 }
 
-func TestGetEnabledPublicDashboard(t *testing.T) {
+func TestIntegrationGetEnabledPublicDashboard(t *testing.T) {
 	type storeResp struct {
 		pd  *PublicDashboard
 		d   *dashboards.Dashboard
@@ -594,7 +594,7 @@ func TestGetEnabledPublicDashboard(t *testing.T) {
 
 // We're using sqlite here because testing all of the behaviors with mocks in
 // the correct order is convoluted.
-func TestCreatePublicDashboard(t *testing.T) {
+func TestIntegrationCreatePublicDashboard(t *testing.T) {
 	t.Run("Create public dashboard", func(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
@@ -975,7 +975,7 @@ func assertFalseIfNull(t *testing.T, expectedValue bool, nullableValue *bool) {
 	}
 }
 
-func TestUpdatePublicDashboard(t *testing.T) {
+func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	fakeDashboardService := &dashboards.FakeDashboardService{}
 	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
 
@@ -1219,7 +1219,7 @@ func assertOldValueIfNull(t *testing.T, expectedValue bool, oldValue bool, nulla
 	}
 }
 
-func TestDeletePublicDashboard(t *testing.T) {
+func TestIntegrationDeletePublicDashboard(t *testing.T) {
 	pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "uid"}
 
 	type mockFindResponse struct {
@@ -1389,7 +1389,7 @@ func TestDashboardEnabledChanged(t *testing.T) {
 	})
 }
 
-func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
+func TestIntegrationPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 	testDB, cfg := db.InitTestDBWithCfg(t)
 	dashStore, err := dashboardsDB.ProvideDashboardStore(testDB, cfg, features, tagimpl.ProvideService(testDB))

@@ -358,7 +358,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	})
 }
 
-func TestIntegrationNestedFolderService(t *testing.T) {
+func TestIntegrationNestedFolderServiceBasicOperations(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -726,7 +726,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	})
 }
 
-func TestNestedFolderServiceFeatureToggle(t *testing.T) {
+func TestIntegrationNestedFolderServiceFeatureToggle(t *testing.T) {
 	nestedFolderStore := folder.NewFakeStore()
 
 	dashStore := dashboards.FakeDashboardStore{}
@@ -757,7 +757,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 	})
 }
 
-func TestFolderServiceDualWrite(t *testing.T) {
+func TestIntegrationFolderServiceDualWrite(t *testing.T) {
 	db, _ := sqlstore.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
@@ -816,7 +816,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 	})
 }
 
-func TestNestedFolderService(t *testing.T) {
+func TestIntegrationNestedFolderService(t *testing.T) {
 	t.Run("with feature flag unset", func(t *testing.T) {
 		t.Run("Should create a folder in both dashboard and folders tables", func(t *testing.T) {
 			// dash is needed here because folderSvc.Create expects SaveDashboard to return it
@@ -1690,7 +1690,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	})
 }
 
-func TestFolderServiceGetFolder(t *testing.T) {
+func TestIntegrationFolderServiceGetFolder(t *testing.T) {
 	db, _ := sqlstore.InitTestDB(t)
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -1801,7 +1801,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 	}
 }
 
-func TestFolderServiceGetFolders(t *testing.T) {
+func TestIntegrationFolderServiceGetFolders(t *testing.T) {
 	db, cfg := sqlstore.InitTestDB(t)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -1872,7 +1872,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 
 // TODO replace it with an API test under /pkg/tests/api/folders
 // whenever the golang client with get updated to allow filtering child folders by permission
-func TestGetChildrenFilterByPermission(t *testing.T) {
+func TestIntegrationGetChildrenFilterByPermission(t *testing.T) {
 	db, cfg := sqlstore.InitTestDB(t)
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{

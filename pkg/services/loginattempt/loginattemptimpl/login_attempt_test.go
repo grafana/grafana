@@ -86,7 +86,7 @@ func TestService_Validate(t *testing.T) {
 	}
 }
 
-func TestUserLoginAttempts(t *testing.T) {
+func TestIntegrationUserLoginAttempts(t *testing.T) {
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = false
@@ -184,7 +184,7 @@ func TestService_ValidateIPAddress(t *testing.T) {
 	}
 }
 
-func TestIPLoginAttempts(t *testing.T) {
+func TestIntegrationIPLoginAttempts(t *testing.T) {
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	cfg.DisableIPAddressLoginProtection = false

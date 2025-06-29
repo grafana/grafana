@@ -248,7 +248,7 @@ func TestIntegrationKVStore(t *testing.T) {
 	})
 }
 
-func TestGetItems(t *testing.T) {
+func TestIntegrationGetItems(t *testing.T) {
 	kv := createTestableKVStore(t)
 
 	ctx := context.Background()

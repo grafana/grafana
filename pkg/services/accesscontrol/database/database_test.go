@@ -44,7 +44,7 @@ type getUserPermissionsTestCase struct {
 	policyCount        int
 }
 
-func TestAccessControlStore_GetUserPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_GetUserPermissions(t *testing.T) {
 	tests := []getUserPermissionsTestCase{
 		{
 			desc:               "should successfully get user, team and builtin permissions",
@@ -158,7 +158,7 @@ type getTeamsPermissionsTestCase struct {
 	expected         int
 }
 
-func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_GetTeamsPermissions(t *testing.T) {
 	tests := []getTeamsPermissionsTestCase{
 		{
 			desc:  "should successfully get team permissions",
@@ -230,7 +230,7 @@ func TestAccessControlStore_GetTeamsPermissions(t *testing.T) {
 	}
 }
 
-func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
 		user, _ := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
@@ -312,7 +312,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 }
 
-func TestAccessControlStore_DeleteTeamPermissions(t *testing.T) {
+func TestIntegrationAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 	t.Run("expect permissions related to team to be deleted", func(t *testing.T) {
 		store, permissionsStore, usrSvc, teamSvc, _, sql := setupTestEnv(t)
 		user, team := createUserAndTeam(t, sql, usrSvc, teamSvc, 1)
@@ -767,7 +767,7 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 	}
 }
 
-func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
+func TestIntegrationAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
 		name       string

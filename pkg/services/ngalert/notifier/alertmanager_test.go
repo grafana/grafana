@@ -63,7 +63,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	return am
 }
 
-func TestAlertmanager_newAlertmanager(t *testing.T) {
+func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
 	am := setupAMTest(t)
 	require.False(t, am.Ready())
 }
