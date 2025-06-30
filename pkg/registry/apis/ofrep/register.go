@@ -112,15 +112,16 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 			Content: map[string]*spec3.MediaType{
 				"application/json": {
 					MediaTypeProps: spec3.MediaTypeProps{
-						Schema: spec.MapProperty(nil),
-						Example: map[string]any{
-							"example": "aaa",
-							"yyy":     true,
+						Schema: spec.MapProperty(spec.MapProperty(nil)),
+						Example: map[string]map[string]any{
+							"context": {
+								"targetingKey":    "1234",
+								"grafana_version": "12.0.0",
+							},
 						},
 					},
 				},
-			},
-		}}
+			}}}
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -189,7 +190,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 										Name:        "flagKey",
 										In:          "path",
 										Required:    true,
-										Example:     "unifiedStorageSearch", // ???
+										Example:     "testflag",
 										Description: "flag key",
 										Schema:      spec.StringProperty(),
 									},
