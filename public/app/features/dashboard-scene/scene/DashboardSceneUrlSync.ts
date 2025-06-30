@@ -1,5 +1,3 @@
-import { Unsubscribable } from 'rxjs';
-
 import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
@@ -18,11 +16,8 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardRepeatsProcessedEvent } from './types/DashboardRepeatsProcessedEvent';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
-  private _viewEventSub?: Unsubscribable;
-
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
@@ -94,14 +89,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
 
       if (!panel) {
-        // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
-        // Here we check if the key contains the clone key so we force the repeat processing
-        // It doesn't matter if the element or the ancestors are clones or not, just that the key contains the clone key
-        if (containsCloneKey(values.viewPanel)) {
-          this._handleViewRepeatClone(values.viewPanel);
-          return;
-        }
-
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ viewPanel: null });
         return;
@@ -173,18 +160,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
-    }
-  }
-
-  private _handleViewRepeatClone(viewPanel: string) {
-    if (!this._viewEventSub) {
-      this._viewEventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
-        const panel = findVizPanelByKey(this._scene, viewPanel);
-        if (panel) {
-          this._viewEventSub?.unsubscribe();
-          this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: panel.getRef() }) });
-        }
-      });
     }
   }
 

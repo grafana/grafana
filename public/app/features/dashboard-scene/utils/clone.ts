@@ -89,7 +89,7 @@ export function useIsClone(scene: SceneObject): boolean {
  * Useful hook for checking if a scene is in a clone chain
  * @param scene
  */
-export function useHasClonedParents(scene: SceneObject): boolean {
+export function isReadOnlyClone(scene: SceneObject): boolean {
   if (isClonedKey(scene.state.key!)) {
     return true;
   }
@@ -98,5 +98,14 @@ export function useHasClonedParents(scene: SceneObject): boolean {
     return false;
   }
 
-  return useHasClonedParents(scene.parent);
+  return isReadOnlyClone(scene.parent);
+}
+
+export interface SceneObjectRepeatContainer extends SceneObject {
+  isRepeatContainer: true;
+  isReadOnlyClone(sceneObject: SceneObject): boolean;
+}
+
+export function isSceneObjectRepeatContainer(sceneObject: SceneObject): sceneObject is SceneObjectRepeatContainer {
+  return 'isRepeatContainer' in sceneObject;
 }
