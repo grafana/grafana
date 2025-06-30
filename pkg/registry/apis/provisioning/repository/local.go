@@ -360,5 +360,12 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 		return err
 	}
 
-	return os.Remove(safepath.Join(r.path, path))
+	fullPath := safepath.Join(r.path, path)
+
+	if safepath.IsDir(path) {
+		// if it is a folder, delete all of its contents
+		return os.RemoveAll(fullPath)
+	}
+
+	return os.Remove(fullPath)
 }
