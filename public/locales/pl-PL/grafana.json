@@ -3248,6 +3248,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Włączone",
       "text-badge-not-enabled": "Niewłączone"
     },
@@ -3280,6 +3282,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Zarządzaj ustawieniami uwierzytelniania i skonfiguruj logowanie jednokrotne. Więcej informacji znajdziesz w <2>dokumentacji</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3392,6 +3400,7 @@
       "delete-modal-restore-dashboards-text": "To działanie spowoduje natychmiastowe usunięcie wybranych folderów, ale wybrane pulpity zostaną oznaczone do usunięcia za 30 dni. Administrator organizacji może przywrócić pulpity w dowolnym momencie przed upływem 30 dni. Nie można przywrócić folderów.",
       "delete-modal-text": "To działanie spowoduje usunięcie następującej zawartości:",
       "delete-modal-title": "Usuń",
+      "delete-provisioned-folder": "",
       "deleting": "Usuwanie…",
       "manage-permissions-button": "Zarządzaj uprawnieniami",
       "move-button": "Przenieś",
@@ -3441,6 +3450,14 @@
       "select-all-header-checkbox": "Wybierz wszystko",
       "select-checkbox": "Wybierz",
       "tags-column": "Znaczniki"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Nie można pobrać informacji o elemencie potomnym"
@@ -3507,7 +3524,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam."
+    "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3559,11 +3582,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "Wyśrodkuj",
         "left": "Po lewej",
         "right": "Po prawej"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "Automatycznie"
       }
@@ -3590,7 +3620,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "Na dole",
         "center": "Wyśrodkuj",
@@ -3599,11 +3642,48 @@
         "right": "Po prawej",
         "top": "U góry"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatycznie"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "Na dole",
         "center": "Wyśrodkuj",
@@ -3612,20 +3692,50 @@
         "right": "Po prawej",
         "top": "U góry"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatycznie"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "Wbudowany edytor kanwy",
       "tooltip-close-inline-editor": "Zamknij wbudowany edytor"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "Dodaj element",
       "please-select-an-element": "Wybierz element"
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "Animacja"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3640,6 +3750,15 @@
         "auto": "Automatycznie"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>Nie znaleziono: </0><config />"
     },
@@ -3652,6 +3771,7 @@
       "zoom-scroll-wheel": "Powiększenie: kółko myszy"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "Na dole",
         "center": "Wyśrodkuj",
@@ -3660,6 +3780,11 @@
         "right": "Po prawej",
         "top": "U góry"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatycznie"
       }
@@ -3671,9 +3796,23 @@
       "placeholder-value": "Wartość"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "Ograniczenia",
       "label-position": "Pozycja",
-      "loading": "Ładowanie…"
+      "loading": "Ładowanie…",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Wyrównaj do dołu",
@@ -3684,6 +3823,7 @@
       "tooltip-align-vertical-centers": "Wyrównaj do środka w pionie"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "Na dole",
         "center": "Wyśrodkuj",
@@ -3692,14 +3832,33 @@
         "right": "Po prawej",
         "top": "U góry"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatycznie"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "Kliknij dwukrotnie, aby ustawić tekst"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "Na dole",
         "center": "Wyśrodkuj",
@@ -3708,6 +3867,11 @@
         "right": "Po prawej",
         "top": "U góry"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatycznie"
       }
@@ -3729,6 +3893,7 @@
       "tooltip-remove": "Usuń"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "Na dole",
         "center": "Wyśrodkuj",
@@ -3737,9 +3902,18 @@
         "right": "Po prawej",
         "top": "U góry"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Automatycznie"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -3756,6 +3930,7 @@
   "close-button": {
     "tooltip": "Zamknij"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Podczas ładowania opcji wystąpił błąd."
@@ -4631,6 +4806,7 @@
       "title-matched_other": "Dopasowano {{count}}/{{totalCount}} opcji"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "(puste)",
         "no-title": "<bez tytułu>"
@@ -5492,12 +5668,6 @@
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>.",
       "title-cannot-delete-provisioned-dashboard": "Nie można usunąć skonfigurowanego pulpitu"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "Ścieżka pliku:",
-      "managed-by-version-control": "Ten zasób jest zarządzany z poziomu systemu kontroli wersji i nie można go usunąć. Aby usunąć zasób, usuń go z repozytorium i zsynchronizuj je w celu zastosowania zmian.",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "Nie można usunąć skonfigurowanego zasobu"
-    },
     "query-editor": {
       "query": "Zapytanie"
     },
@@ -5587,15 +5757,6 @@
       "affected-dashboards_few": "Ta aktualizacja wpłynie na <1>{{count}} pulpity.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:",
       "affected-dashboards_many": "Ta aktualizacja wpłynie na <1>{{count}} pulpitów.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:",
       "affected-dashboards_other": "Ta aktualizacja wpłynie na <1>{{count}} pulpitu.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "Dodaj notatkę, aby opisać zmiany (opcjonalnie)",
-      "description-branch-name-in-git-hub": "Nazwa gałęzi w GitHub",
-      "description-inside-repository": "Ścieżka pliku wewnątrz repozytorium (.json lub .yaml)",
-      "label-branch": "Gałąź",
-      "label-comment": "Uwagi",
-      "label-path": "Ścieżka",
-      "label-workflow": "Przepływ pracy"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Błąd podczas zapisywania pulpitu",
@@ -6120,6 +6281,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Prześlij"
     },
@@ -6132,7 +6305,10 @@
       "placeholder-search": "Szukaj"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Pole",
+      "label-fixed": "",
       "label-mappings": "Mapowania",
       "label-source": "Źródło"
     },
@@ -6148,8 +6324,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "Limit",
-      "label-value": "Wartość"
+      "label-value": "Wartość",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Maks.",
@@ -6157,7 +6342,10 @@
       "label-value": "Wartość"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Pole",
+      "label-fixed": "",
       "label-source": "Źródło",
       "label-template": "Szablon",
       "label-value": "Wartość"
@@ -9379,6 +9567,15 @@
       "view": "Widok"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Otwórz sugestie dotyczące wizualizacji",
       "switch-to-table": "Przełącz na tabelę"
     },
@@ -9665,6 +9862,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "Ta wtyczka nie została opublikowana na stronie <2>grafana.com/plugins</2> i nie można nią zarządzać za pośrednictwem katalogu.",
+      "enterprise-plugin-info": "",
       "learn-more": "Dowiedz się więcej",
       "no-valid-grafana-enterprise-license-detected": "Nie wykryto ważnej licencji Grafana Enterprise.",
       "title-dev-alert": "Jest to wersja rozwojowa wtyczki i nie można jej odinstalować.",
@@ -9818,6 +10016,17 @@
       "name": "Imię",
       "teams": "Zespoły",
       "text-loading-teams": "Wczytywanie zespołów…"
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {
@@ -11477,6 +11686,12 @@
     "zone": {
       "select-aria-label": "Selektor strefy czasowej",
       "select-search-input": "Wpisz, aby wyszukać (kraj, miasto, skrót)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

@@ -2,7 +2,6 @@ package secretkeeper
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,9 +30,7 @@ func Test_OSSKeeperService(t *testing.T) {
 			SecretKey:          "sdDkslslld",
 			EncryptionProvider: "secretKey.v1",
 			Encryption: setting.EncryptionSettings{
-				DataKeysCacheTTL:        5 * time.Minute,
-				DataKeysCleanupInterval: 1 * time.Nanosecond,
-				Algorithm:               cipher.AesGcm,
+				Algorithm: cipher.AesGcm,
 			},
 		},
 	}
@@ -56,7 +53,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error)
 	database := database.ProvideDatabase(testDB, tracer)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
@@ -66,7 +63,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error)
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := ProvideService(tracer, encValueStore, encryptionManager)
+	keeperService, err := ProvideService(tracer, encValueStore, encryptionManager, nil)
 
 	return keeperService, err
 }

@@ -3209,6 +3209,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "활성화됨",
       "text-badge-not-enabled": "활성화되지 않음"
     },
@@ -3241,6 +3243,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "인증 설정을 관리하고 싱글 사인온을 구성하세요. 자세한 내용은 Grafana의 <2>문서</2>를 확인하세요."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3353,6 +3361,7 @@
       "delete-modal-restore-dashboards-text": "이 작업을 수행하면 선택한 폴더가 즉시 삭제되지만 선택한 대시보드는 30일 후에 삭제 대상으로 표시됩니다. 조직 관리자는 30일이 만료되기 전에 언제든지 대시보드를 복구할 수 있습니다. 폴더를 복구할 수 없습니다.",
       "delete-modal-text": "이 작업을 수행하면 다음 콘텐츠가 삭제됩니다.",
       "delete-modal-title": "삭제",
+      "delete-provisioned-folder": "",
       "deleting": "삭제 중…",
       "manage-permissions-button": "권한 관리",
       "move-button": "이동",
@@ -3387,6 +3396,14 @@
       "select-all-header-checkbox": "전체 선택",
       "select-checkbox": "선택",
       "tags-column": "태그"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "하위 정보를 검색할 수 없습니다"
@@ -3453,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요."
+    "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3505,11 +3528,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "중앙",
         "left": "왼쪽",
         "right": "오른쪽"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "자동"
       }
@@ -3536,7 +3566,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "하단",
         "center": "중앙",
@@ -3545,11 +3588,48 @@
         "right": "오른쪽",
         "top": "상단"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "자동"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "하단",
         "center": "중앙",
@@ -3558,20 +3638,50 @@
         "right": "오른쪽",
         "top": "상단"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "자동"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "캔버스 인라인 편집기",
       "tooltip-close-inline-editor": "인라인 편집기 닫기"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "항목 추가",
       "please-select-an-element": "요인을 선택해 주세요."
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "애니메이션"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3586,6 +3696,15 @@
         "auto": "자동"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>찾을 수 없음: </0><config />"
     },
@@ -3598,6 +3717,7 @@
       "zoom-scroll-wheel": "확대/축소: 스크롤 휠"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "하단",
         "center": "중앙",
@@ -3606,6 +3726,11 @@
         "right": "오른쪽",
         "top": "상단"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "자동"
       }
@@ -3617,9 +3742,23 @@
       "placeholder-value": "값"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "제약 사항",
       "label-position": "위치",
-      "loading": "로딩 중..."
+      "loading": "로딩 중...",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "아래쪽 정렬",
@@ -3630,6 +3769,7 @@
       "tooltip-align-vertical-centers": "수직 중앙 정렬"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "하단",
         "center": "중앙",
@@ -3638,14 +3778,33 @@
         "right": "오른쪽",
         "top": "상단"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "자동"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "두 번 클릭하여 텍스트 설정"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "하단",
         "center": "중앙",
@@ -3654,6 +3813,11 @@
         "right": "오른쪽",
         "top": "상단"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "자동"
       }
@@ -3675,6 +3839,7 @@
       "tooltip-remove": "제거"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "하단",
         "center": "중앙",
@@ -3683,9 +3848,18 @@
         "right": "오른쪽",
         "top": "상단"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "자동"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -3702,6 +3876,7 @@
   "close-button": {
     "tooltip": "닫기"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "옵션을 불러오는 중에 오류가 발생했습니다."
@@ -4574,6 +4749,7 @@
       "title-matched_other": "{{totalCount}}개 옵션 중 {{count}}개 일치함"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "(비어 있음)",
         "no-title": "<제목 없음>"
@@ -5432,12 +5608,6 @@
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요.",
       "title-cannot-delete-provisioned-dashboard": "프로비저닝된 대시보드는 삭제할 수 없습니다."
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "파일 경로:",
-      "managed-by-version-control": "이 리소스는 버전 제어에 의해 관리되며 삭제할 수 없습니다. 제거하려면 리포지토리에서 삭제하고 동기화하여 변경 사항을 적용하세요.",
-      "ok": "확인",
-      "title-cannot-delete-provisioned-resource": "프로비저닝된 리소스는 삭제할 수 없습니다."
-    },
     "query-editor": {
       "query": "쿼리"
     },
@@ -5524,15 +5694,6 @@
       "placeholder-search-affected-dashboards": "영향을 받는 대시보드 검색",
       "update-all": "모두 업데이트",
       "affected-dashboards_other": "이 업데이트는 <1>{{count}}개의 대시보드에 영향을 미칩니다.</1> 패널을 사용하는 다음 대시보드가 영향을 받습니다."
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "변경 사항을 설명하는 메모 추가(선택 사항)",
-      "description-branch-name-in-git-hub": "GitHub의 브랜치 이름",
-      "description-inside-repository": "리포지토리 내부의 파일 경로(.json 또는 .yaml)",
-      "label-branch": "브랜치",
-      "label-comment": "코멘트",
-      "label-path": "경로",
-      "label-workflow": "워크플로"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "대시보드 저장 중 오류 발생",
@@ -6057,6 +6218,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "업로드"
     },
@@ -6069,7 +6242,10 @@
       "placeholder-search": "검색"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "필드",
+      "label-fixed": "",
       "label-mappings": "매핑",
       "label-source": "소스"
     },
@@ -6085,8 +6261,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "제한",
-      "label-value": "값"
+      "label-value": "값",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "최대",
@@ -6094,7 +6279,10 @@
       "label-value": "값"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "필드",
+      "label-fixed": "",
       "label-source": "소스",
       "label-template": "템플릿",
       "label-value": "값"
@@ -9292,6 +9480,15 @@
       "view": "보기"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "시각화 제안 열기",
       "switch-to-table": "표로 전환"
     },
@@ -9578,6 +9775,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "이 플러그인은 <2>grafana.com/plugins</2>에 게시되어 있지 않으며 카탈로그를 통해 관리할 수 없습니다.",
+      "enterprise-plugin-info": "",
       "learn-more": "자세히 알아보기",
       "no-valid-grafana-enterprise-license-detected": "유효한 Grafana Enterprise 라이선스가 감지되지 않았습니다.",
       "title-dev-alert": "이것은 플러그인의 개발용 빌드이며 제거할 수 없습니다.",
@@ -9731,6 +9929,17 @@
       "name": "이름",
       "teams": "팀",
       "text-loading-teams": "팀 로딩 중..."
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {
@@ -11372,6 +11581,12 @@
     "zone": {
       "select-aria-label": "시간대 선택기",
       "select-search-input": "입력하여 검색(국가, 도시, 약어)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

@@ -3248,6 +3248,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Включено",
       "text-badge-not-enabled": "Не включена"
     },
@@ -3280,6 +3282,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Управление параметрами аутентификации и настройка единого входа Подробнее см. в нашей <2>документации</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3392,6 +3400,7 @@
       "delete-modal-restore-dashboards-text": "Это действие приведет к немедленному удалению выбранных папок, а выбранные дашборды будут помечены для удаления через 30 дней. Администратор вашей организации может восстановить дашборды в любое время в течение указанных 30 дней. Папки нельзя восстановить.",
       "delete-modal-text": "Это действие приведет к удалению следующего контента:",
       "delete-modal-title": "Удаление",
+      "delete-provisioned-folder": "",
       "deleting": "Удаление...",
       "manage-permissions-button": "Управление разрешениями",
       "move-button": "Переместить",
@@ -3441,6 +3450,14 @@
       "select-all-header-checkbox": "Выбрать все",
       "select-checkbox": "Выбрать",
       "tags-column": "Теги"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Невозможно получить информацию о потомках"
@@ -3507,7 +3524,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда."
+    "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3559,11 +3582,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "По центру",
         "left": "Слева",
         "right": "Справа"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "Авто"
       }
@@ -3590,7 +3620,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "Снизу",
         "center": "По центру",
@@ -3599,11 +3642,48 @@
         "right": "Справа",
         "top": "Сверху"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Авто"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "Снизу",
         "center": "По центру",
@@ -3612,20 +3692,50 @@
         "right": "Справа",
         "top": "Сверху"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Авто"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "Встроенный редактор холста",
       "tooltip-close-inline-editor": "Закрыть встроенный редактор"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "Добавить элемент",
       "please-select-an-element": "Выберите элемент"
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "Анимировать"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3640,6 +3750,15 @@
         "auto": "Авто"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>Не найдено: </0><config />"
     },
@@ -3652,6 +3771,7 @@
       "zoom-scroll-wheel": "Масштаб: колесико прокрутки"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "Снизу",
         "center": "По центру",
@@ -3660,6 +3780,11 @@
         "right": "Справа",
         "top": "Сверху"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Авто"
       }
@@ -3671,9 +3796,23 @@
       "placeholder-value": "Значение"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "Ограничения",
       "label-position": "Положение",
-      "loading": "Загрузка…"
+      "loading": "Загрузка…",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Выровнять по нижнему краю",
@@ -3684,6 +3823,7 @@
       "tooltip-align-vertical-centers": "Выровнять по вертикали"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "Снизу",
         "center": "По центру",
@@ -3692,14 +3832,33 @@
         "right": "Справа",
         "top": "Сверху"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Авто"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "Дважды нажмите, чтобы установить текст"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "Снизу",
         "center": "По центру",
@@ -3708,6 +3867,11 @@
         "right": "Справа",
         "top": "Сверху"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Авто"
       }
@@ -3729,6 +3893,7 @@
       "tooltip-remove": "Удалить"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "Снизу",
         "center": "По центру",
@@ -3737,9 +3902,18 @@
         "right": "Справа",
         "top": "Сверху"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "Авто"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -3756,6 +3930,7 @@
   "close-button": {
     "tooltip": "Закрыть"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Ошибка при загрузке параметров."
@@ -4631,6 +4806,7 @@
       "title-matched_other": "Совпадение: {{count}}/{{totalCount}} параметра"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "(пусто)",
         "no-title": "<нет заголовка>"
@@ -5492,12 +5668,6 @@
       "see-docs": "Подробнее о подготовке см. в <2>документации</2>.",
       "title-cannot-delete-provisioned-dashboard": "Невозможно удалить подготовленный дашборд"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "Путь к файлу:",
-      "managed-by-version-control": "Этот ресурс управляется системой контроля версий и его невозможно удалить. Чтобы удалить ресурс, сначала удалите его из репозитория и выполните синхронизацию, чтобы применить изменения.",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "Невозможно удалить подготовленный ресурс"
-    },
     "query-editor": {
       "query": "Запрос"
     },
@@ -5587,15 +5757,6 @@
       "affected-dashboards_few": "Обновление затронет <1>{{count}} дашборда.</1> Будут затронуты следующие дашборды, использующие панель:",
       "affected-dashboards_many": "Обновление затронет <1>{{count}} дашбордов.</1> Будут затронуты следующие дашборды, использующие панель:",
       "affected-dashboards_other": "Обновление затронет <1>{{count}} дашбордов.</1> Будут затронуты следующие дашборды, использующие панель:"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "Добавьте примечание с описанием изменений (необязательно)",
-      "description-branch-name-in-git-hub": "Имя ветви в GitHub",
-      "description-inside-repository": "Путь к файлу внутри репозитория (.json или .yaml)",
-      "label-branch": "Ветвь",
-      "label-comment": "Комментарий",
-      "label-path": "Путь",
-      "label-workflow": "Рабочий процесс"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Ошибка при сохранении дашборда",
@@ -6120,6 +6281,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "Передать"
     },
@@ -6132,7 +6305,10 @@
       "placeholder-search": "Поиск"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Поле",
+      "label-fixed": "",
       "label-mappings": "Сопоставления",
       "label-source": "Источник"
     },
@@ -6148,8 +6324,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "Предельное значение",
-      "label-value": "Значение"
+      "label-value": "Значение",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Макс.",
@@ -6157,7 +6342,10 @@
       "label-value": "Значение"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "Поле",
+      "label-fixed": "",
       "label-source": "Источник",
       "label-template": "Шаблон",
       "label-value": "Значение"
@@ -9379,6 +9567,15 @@
       "view": "Просмотр"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Открыть варианты визуализации",
       "switch-to-table": "Переключиться на таблицу"
     },
@@ -9665,6 +9862,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "Этот плагин не опубликован на странице <2>grafana.com/plugins</2> и им невозможно управлять через каталог.",
+      "enterprise-plugin-info": "",
       "learn-more": "Подробнее",
       "no-valid-grafana-enterprise-license-detected": "Не обнаружена действующая лицензия Grafana Enterprise",
       "title-dev-alert": "Это тестовая сборка плагина, которую невозможно удалить.",
@@ -9818,6 +10016,17 @@
       "name": "Имя",
       "teams": "Команды",
       "text-loading-teams": "Загрузка команд..."
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {
@@ -11477,6 +11686,12 @@
     "zone": {
       "select-aria-label": "Указатель часового пояса",
       "select-search-input": "Введите объект для поиска (страну, город, аббревиатуру)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

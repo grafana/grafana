@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -90,6 +91,7 @@ func RegisterAPIService(
 	accessControlService accesscontrol.Service,
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
+	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
 	// Don't register the API.
 	if cfg.StackID != "" {
@@ -127,6 +129,7 @@ func RegisterAPIService(
 		accessClient,
 		encryptionManager,
 		nil, // OSS does not need an allow list.
+		registerer,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
@@ -675,9 +678,11 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 		switch typedObj := obj.(type) {
 		case *secretv0alpha1.SecureValue:
 			typedObj.SetName(cmp.Or(typedObj.GetGenerateName(), "sv-") + util.GenerateShortUID())
+			logging.FromContext(ctx).Debug("generated name for secure value", "name", typedObj.Name)
 
 		case *secretv0alpha1.Keeper:
 			typedObj.SetName(cmp.Or(typedObj.GetGenerateName(), "kp-") + util.GenerateShortUID())
+			logging.FromContext(ctx).Debug("generated name for keeper", "name", typedObj.Name)
 		}
 	}
 

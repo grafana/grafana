@@ -794,7 +794,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key: folderkey,
 				Fields: []*resourcepb.Requirement{
-					&resourcepb.Requirement{
+					{
 						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
 						Operator: string(selection.Equals),
 						Values:   []string{"foo title"},
@@ -847,7 +847,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	})
 }
 
-func TestDeleteFoldersFromApiServer(t *testing.T) {
+func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)

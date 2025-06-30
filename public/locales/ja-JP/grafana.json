@@ -3209,6 +3209,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "有効化",
       "text-badge-not-enabled": "有効になっていません"
     },
@@ -3241,6 +3243,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "認証設定を管理し、シングルサインオンを設定します。詳細については、<2>ドキュメント</2>をご覧ください。"
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3353,6 +3361,7 @@
       "delete-modal-restore-dashboards-text": "このアクションにより、選択したフォルダはすぐに削除されますが、選択したダッシュボードは30日後に削除されます。組織の管理者は、30日が経過する前であればいつでもダッシュボードを復元できます。フォルダは復元できません。",
       "delete-modal-text": "この操作により、次のコンテンツが削除されます：",
       "delete-modal-title": "削除",
+      "delete-provisioned-folder": "",
       "deleting": "削除中…",
       "manage-permissions-button": "権限を管理する",
       "move-button": "移動",
@@ -3387,6 +3396,14 @@
       "select-all-header-checkbox": "すべて選択",
       "select-checkbox": "選択",
       "tags-column": "タグ"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "",
+      "api-error": "",
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "delete-warning": ""
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "下位情報を取得できません"
@@ -3453,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "ターゲットに直接アクセスできる場合は、JSONをコピーしてそこに貼り付けます。"
+    "text-this-repository-is-read-only": "ターゲットに直接アクセスできる場合は、JSONをコピーしてそこに貼り付けます。",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3505,11 +3528,18 @@
       }
     },
     "button-item": {
+      "category-button": "",
       "label": {
         "center": "中央",
         "left": "左",
         "right": "右"
       },
+      "name-align-text": "",
+      "name-api": "",
+      "name-style": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
       "placeholder": {
         "auto": "自動"
       }
@@ -3536,7 +3566,20 @@
         }
       }
     },
+    "category-arrow-direction": "",
+    "category-background": "",
+    "category-border": "",
+    "category-canvas": "",
+    "category-color": "",
+    "category-data-links": "",
+    "category-line-style": "",
+    "category-metric-value": "",
+    "category-radius": "",
+    "category-selected-connection": "",
+    "category-selected-element": "",
+    "category-size": "",
     "cloud-item": {
+      "category-cloud": "",
       "label": {
         "bottom": "下",
         "center": "中央",
@@ -3545,11 +3588,48 @@
         "right": "右",
         "top": "上"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "自動"
       }
     },
+    "description-experimental-types": "",
+    "description-infinite-panning": "",
+    "description-inline-editing": "",
+    "description-pan-zoom": "",
+    "direction-options": {
+      "label-both": "",
+      "label-forward": "",
+      "label-none": "",
+      "label-reverse": ""
+    },
+    "drone-front-item": {
+      "category-drone-front": "",
+      "name-roll-angle": ""
+    },
+    "drone-side-item": {
+      "category-drone-side": "",
+      "name-pitch-angle": ""
+    },
+    "drone-top-item": {
+      "category-drone-top": "",
+      "name-back-left-rotor-rpm": "",
+      "name-back-right-rotor-rpm": "",
+      "name-front-left-rotor-rpm": "",
+      "name-front-right-rotor-rpm": "",
+      "name-yaw-angle": ""
+    },
+    "element-editor": {
+      "category-layout": "",
+      "description-unsupported": "",
+      "name-quick-placement": ""
+    },
     "ellipse-item": {
+      "category-ellipse": "",
       "label": {
         "bottom": "下",
         "center": "中央",
@@ -3558,20 +3638,50 @@
         "right": "右",
         "top": "上"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "自動"
       }
+    },
+    "icon-item": {
+      "category-icon": "",
+      "name-fill-color": "",
+      "name-svg-path": ""
     },
     "inline-edit": {
       "canvas-inline-editor": "キャンバスインラインエディター",
       "tooltip-close-inline-editor": "インラインエディターを閉じる"
     },
     "inline-edit-body": {
+      "category-selected-element": "",
       "label-add-item": "アイテムを追加",
       "please-select-an-element": "要素を選択してください"
     },
+    "label-actions": "",
+    "label-color": "",
+    "label-direction": "",
+    "label-image": "",
+    "label-image-size": "",
+    "label-line-style": "",
+    "label-links": "",
+    "label-radius": "",
+    "label-size": "",
+    "label-width": "",
+    "layer-editor": {
+      "category-layer": "",
+      "category-layout": "",
+      "name-constraints": "",
+      "name-elements": ""
+    },
     "line-style-editor": {
       "label-animate": "アニメーション"
+    },
+    "line-style-options": {
+      "label-solid": ""
     },
     "metric-value-item": {
       "label": {
@@ -3586,6 +3696,15 @@
         "auto": "自動"
       }
     },
+    "name-align-text": "",
+    "name-color": "",
+    "name-experimental-types": "",
+    "name-infinite-panning": "",
+    "name-inline-editing": "",
+    "name-pan-zoom": "",
+    "name-text": "",
+    "name-text-size": "",
+    "name-vertical-align": "",
     "not-found-display": {
       "not-found": "<0>見つかりません：</0><config />"
     },
@@ -3598,6 +3717,7 @@
       "zoom-scroll-wheel": "ズーム: スクロールホイール"
     },
     "parallelogram-item": {
+      "category-parallelogram": "",
       "label": {
         "bottom": "下",
         "center": "中央",
@@ -3606,6 +3726,11 @@
         "right": "右",
         "top": "上"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "自動"
       }
@@ -3617,9 +3742,23 @@
       "placeholder-value": "値"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-left-and-right": "",
+        "label-right": "",
+        "label-scale": ""
+      },
       "label-constraints": "制約",
       "label-position": "位置",
-      "loading": "読み込み中..."
+      "loading": "読み込み中...",
+      "vertical-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-scale": "",
+        "label-top": "",
+        "label-top-and-bottom": ""
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "下揃え",
@@ -3630,6 +3769,7 @@
       "tooltip-align-vertical-centers": "垂直中央揃え"
     },
     "rectangle-item": {
+      "category-rectangle": "",
       "label": {
         "bottom": "下",
         "center": "中央",
@@ -3638,14 +3778,33 @@
         "right": "右",
         "top": "上"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "自動"
+      }
+    },
+    "server-item": {
+      "category-server": "",
+      "name-blink-rate": "",
+      "name-bulb-color": "",
+      "name-status-color": "",
+      "name-type": "",
+      "type-options": {
+        "label-database": "",
+        "label-single": "",
+        "label-stack": "",
+        "label-terminal": ""
       }
     },
     "text-display": {
       "double-click-to-set": "ダブルクリックしてテキストを設定"
     },
     "text-item": {
+      "category-text": "",
       "label": {
         "bottom": "下",
         "center": "中央",
@@ -3654,6 +3813,11 @@
         "right": "右",
         "top": "上"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "自動"
       }
@@ -3675,6 +3839,7 @@
       "tooltip-remove": "削除"
     },
     "triangle-item": {
+      "category-triangle": "",
       "label": {
         "bottom": "下",
         "center": "中央",
@@ -3683,9 +3848,18 @@
         "right": "右",
         "top": "上"
       },
+      "name-align-text": "",
+      "name-text": "",
+      "name-text-color": "",
+      "name-text-size": "",
+      "name-vertical-align": "",
       "placeholder": {
         "auto": "自動"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "",
+      "name-rpm": ""
     }
   },
   "carousel": {
@@ -3702,6 +3876,7 @@
   "close-button": {
     "tooltip": "閉じる"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "オプションの読み込み中にエラーが発生しました。"
@@ -4574,6 +4749,7 @@
       "title-matched_other": "{{count}}/{{totalCount}}件のオプションが一致"
     },
     "outline": {
+      "repeated-item": "",
       "tree-item": {
         "empty": "（空白）",
         "no-title": "<タイトルなし>"
@@ -5432,12 +5608,6 @@
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。",
       "title-cannot-delete-provisioned-dashboard": "プロビジョニングされたダッシュボードを削除できません"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "ファイルパス：",
-      "managed-by-version-control": "このリソースはバージョン管理されているため、削除できません。リソースを削除するには、リポジトリから削除してから同期し、変更を適用してください。",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "プロビジョニングされたリソースを削除できません"
-    },
     "query-editor": {
       "query": "クエリ"
     },
@@ -5524,15 +5694,6 @@
       "placeholder-search-affected-dashboards": "影響を受けるダッシュボードを検索",
       "update-all": "すべて更新",
       "affected-dashboards_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。このパネルを使用している次のダッシュボードが影響を受けます。"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "変更内容を説明するメモを追加します（オプション）",
-      "description-branch-name-in-git-hub": "GitHubのブランチ名",
-      "description-inside-repository": "リポジトリ内のファイルパス（.json または .yaml）",
-      "label-branch": "ブランチ",
-      "label-comment": "コメント",
-      "label-path": "パス",
-      "label-workflow": "ワークフロー"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "ダッシュボードの保存中にエラーが発生しました",
@@ -6057,6 +6218,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "",
+        "label-cover": "",
+        "label-fill": "",
+        "label-original": "",
+        "label-tile": ""
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": ""
+    },
     "file-dropzone-custom-children": {
       "upload": "アップロード"
     },
@@ -6069,7 +6242,10 @@
       "placeholder-search": "検索"
     },
     "resource-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "フィールド",
+      "label-fixed": "",
       "label-mappings": "マッピング",
       "label-source": "送信元"
     },
@@ -6085,8 +6261,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": ""
+      },
       "label-limit": "制限",
-      "label-value": "値"
+      "label-value": "値",
+      "scalar-options": {
+        "description-clamped": "",
+        "description-mod": "",
+        "label-clamped": "",
+        "label-mod": ""
+      }
     },
     "scale-dimension-editor": {
       "label-max": "最大",
@@ -6094,7 +6279,10 @@
       "label-value": "値"
     },
     "text-dimension-editor": {
+      "description-field": "",
+      "description-fixed": "",
       "label-field": "フィールド",
+      "label-fixed": "",
       "label-source": "送信元",
       "label-template": "テンプレート",
       "label-value": "値"
@@ -9292,6 +9480,15 @@
       "view": "表示"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "可視化に関する提案を開く",
       "switch-to-table": "テーブルに切り替え"
     },
@@ -9578,6 +9775,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "このプラグインは<2>grafana.com/plugins</2>に公開されておらず、カタログから管理できません。",
+      "enterprise-plugin-info": "",
       "learn-more": "もっと詳しく",
       "no-valid-grafana-enterprise-license-detected": "有効なGrafana Enterpriseライセンスが検出されませんでした。",
       "title-dev-alert": "こちらはプラグインの開発ビルドであるため、アンインストールできません。",
@@ -9731,6 +9929,17 @@
       "name": "名前",
       "teams": "チーム",
       "text-loading-teams": "チームを読み込み中..."
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "",
+      "description-branch-name-in-git-hub": "",
+      "description-inside-repository": "",
+      "label-branch": "",
+      "label-comment": "",
+      "label-path": "",
+      "label-workflow": ""
     }
   },
   "provisioning": {
@@ -11372,6 +11581,12 @@
     "zone": {
       "select-aria-label": "タイムゾーンピッカー",
       "select-search-input": "検索するために入力してください（国、都市、略語）"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,7 +78,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 	tracer := noop.NewTracerProvider().Tracer("test")
-	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -188,7 +187,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		tracer := noop.NewTracerProvider().Tracer("test")
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
 		require.NoError(t, err)
 
 		encMgr, err := ProvideEncryptionManager(
@@ -247,55 +246,6 @@ func (p *fakeProvider) Decrypt(_ context.Context, _ []byte) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func TestEncryptionService_Run(t *testing.T) {
-	svc := setupTestService(t)
-	ctx := context.Background()
-	namespace := "test-namespace"
-
-	t.Run("should stop with no error once the context is finished", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(ctx, time.Millisecond)
-		defer cancel()
-
-		err := svc.Run(ctx)
-		assert.NoError(t, err)
-	})
-
-	t.Run("should trigger cache clean up", func(t *testing.T) {
-		restoreTimeNowAfterTestExec(t)
-
-		// Encrypt to force data encryption key generation
-		encrypted, err := svc.Encrypt(ctx, namespace, []byte("grafana"))
-		require.NoError(t, err)
-
-		// Ten minutes later (after caution period)
-		// Look SecretsService.cacheDataKey for more details.
-		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
-
-		// Decrypt to ensure data encryption key is cached
-		_, err = svc.Decrypt(ctx, namespace, encrypted)
-		require.NoError(t, err)
-
-		// Data encryption key cache should contain one element
-		require.Len(t, svc.dataKeyCache.namespacedCaches[namespace].byId, 1)
-		require.Len(t, svc.dataKeyCache.namespacedCaches[namespace].byLabel, 1)
-
-		// Twenty minutes later (after caution period + cache ttl)
-		now = func() time.Time { return time.Now().Add(20 * time.Minute) }
-
-		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-		defer cancel()
-
-		err = svc.Run(ctx)
-		require.NoError(t, err)
-
-		// Then, once the ticker has been triggered,
-		// the cleanup process should have happened,
-		// therefore the cache should be empty.
-		require.Len(t, svc.dataKeyCache.namespacedCaches[namespace].byId, 0)
-		require.Len(t, svc.dataKeyCache.namespacedCaches[namespace].byLabel, 0)
-	})
-}
-
 func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 	t.Skip() // TODO: skipped since reencrypt is not fully working, unskip when fixed
 
@@ -304,7 +254,7 @@ func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 	namespace := "test-namespace"
 
 	// Encrypt to generate data encryption key
-	ciphertext, err := svc.Encrypt(ctx, namespace, []byte("grafana"))
+	_, err := svc.Encrypt(ctx, namespace, []byte("grafana"))
 	require.NoError(t, err)
 
 	t.Run("existing key should be re-encrypted", func(t *testing.T) {
@@ -320,26 +270,6 @@ func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
 		require.Len(t, reEncryptedDataKeys, 1)
 
 		assert.NotEqual(t, prevDataKeys[0].EncryptedData, reEncryptedDataKeys[0].EncryptedData)
-	})
-
-	t.Run("data keys cache should be invalidated", func(t *testing.T) {
-		restoreTimeNowAfterTestExec(t)
-
-		// Ten minutes later (after caution period)
-		// Look SecretsService.cacheDataKey for more details.
-		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
-
-		// Decrypt to ensure data key is cached
-		_, err := svc.Decrypt(ctx, namespace, ciphertext)
-		require.NoError(t, err)
-		require.NotEmpty(t, svc.dataKeyCache.namespacedCaches[namespace].byId)
-		require.NotEmpty(t, svc.dataKeyCache.namespacedCaches[namespace].byLabel)
-
-		err = svc.ReEncryptDataKeys(ctx, namespace)
-		require.NoError(t, err)
-
-		assert.Empty(t, svc.dataKeyCache.namespacedCaches[namespace].byId)
-		assert.Empty(t, svc.dataKeyCache.namespacedCaches[namespace].byLabel)
 	})
 }
 
@@ -474,13 +404,11 @@ func TestIntegration_SecretsService(t *testing.T) {
 					SecretKey:          defaultKey,
 					EncryptionProvider: "secretKey.v1",
 					Encryption: setting.EncryptionSettings{
-						DataKeysCleanupInterval: time.Nanosecond,
-						DataKeysCacheTTL:        5 * time.Minute,
-						Algorithm:               cipher.AesGcm,
+						Algorithm: cipher.AesGcm,
 					},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features)
+			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
@@ -513,10 +441,6 @@ func TestIntegration_SecretsService(t *testing.T) {
 			encrypted, err := svc.Encrypt(ctx, namespace, toEncrypt)
 			require.NoError(t, err)
 
-			// We simulate an instance restart. So, there's no data in the in-memory cache.
-			encMgr := svc.(*EncryptionManager)
-			encMgr.dataKeyCache.flush(namespace)
-
 			// And then, we MUST still be able to decrypt the previously encrypted data:
 			decrypted, err := svc.Decrypt(ctx, namespace, encrypted)
 			require.NoError(t, err)
@@ -539,9 +463,7 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 			SecretKey:          "SdlklWklckeLS",
 			EncryptionProvider: "secretKey.v1",
 			Encryption: setting.EncryptionSettings{
-				DataKeysCleanupInterval: time.Nanosecond,
-				DataKeysCacheTTL:        5 * time.Minute,
-				Algorithm:               cipher.AesGcm,
+				Algorithm: cipher.AesGcm,
 			},
 		},
 	}
@@ -560,12 +482,4 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	encMgr := svc.(*EncryptionManager)
 	require.Len(t, encMgr.providers, 2)
 	require.Contains(t, encMgr.providers, encryption.ProviderID("fakeProvider.v1"))
-}
-
-// Use this function at the beginning of those tests
-// that manipulates 'now', so it'll leave it in a
-// correct state once test execution finishes.
-func restoreTimeNowAfterTestExec(t *testing.T) {
-	t.Helper()
-	t.Cleanup(func() { now = time.Now })
 }

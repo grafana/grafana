@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/tracectx"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -28,6 +29,7 @@ type Worker struct {
 	keeperService              contracts.KeeperService
 	encryptionManager          contracts.EncryptionManager
 	enabled                    bool
+  metrics                    *OutboxMetrics
 }
 
 // DefaultConfig for the secure value outbox worker.
@@ -64,6 +66,7 @@ func NewWorker(
 	keeperService contracts.KeeperService,
 	encryptionManager contracts.EncryptionManager,
 	features featuremgmt.FeatureToggles,
+	reg prometheus.Registerer,
 ) (*Worker, error) {
 	if config.BatchSize == 0 {
 		return nil, fmt.Errorf("config.BatchSize is required")
@@ -91,6 +94,7 @@ func NewWorker(
 		keeperService:              keeperService,
 		encryptionManager:          encryptionManager,
 		enabled:                    enabled,
+    metrics:                    NewOutboxMetrics(reg),
 	}, nil
 }
 
@@ -102,6 +106,8 @@ func (w *Worker) Run(ctx context.Context) error {
 	if !w.enabled {
 		return nil
 	}
+
+	logging.FromContext(ctx).Debug("starting worker control loop")
 
 	t := time.NewTicker(w.config.PollingInterval)
 	defer t.Stop()
@@ -140,7 +146,6 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 
 		for _, message := range messages {
 			messageIDs = append(messageIDs, message.MessageID)
-
 			if err := w.processMessage(ctx, message); err != nil {
 				return fmt.Errorf("processing message: %+v %w", message, err)
 			}
@@ -158,8 +163,14 @@ func (w *Worker) ReceiveAndProcessMessages(ctx context.Context) error {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
-	opts := []trace.SpanStartOption{}
+	start := time.Now()
+	keeperType := "unknown"
+	defer func() {
+		w.metrics.OutboxMessageProcessingDuration.WithLabelValues(string(message.Type), keeperType).Observe(time.Since(start).Seconds())
+	}()
+	logging.FromContext(ctx).Debug("processing message", "type", message.Type, "name", message.Name, "namespace", message.Namespace, "receiveCount", message.ReceiveCount)
 
+	opts := []trace.SpanStartOption{}
 	// If there's no request ID in the message, start a new root span and log an error.
 	ctx, err := tracectx.HexDecodeTraceIntoContext(ctx, message.RequestID)
 	if err != nil {
@@ -193,11 +204,13 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
+	keeperType = string(keeperCfg.Type())
 
 	keeper, err := w.keeperService.KeeperForConfig(keeperCfg)
 	if err != nil {
 		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
+	logging.FromContext(ctx).Debug("retrieved keeper", "namespace", message.Namespace, "keeperName", message.KeeperName, "type", keeperCfg.Type())
 
 	switch message.Type {
 	case contracts.CreateSecretOutboxMessage:
