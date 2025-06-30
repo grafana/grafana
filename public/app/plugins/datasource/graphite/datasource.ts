@@ -410,7 +410,7 @@ export class GraphiteDatasource
       const targetAnnotation = this.templateSrv.replace(target.target, {}, 'glob');
       const graphiteQuery = {
         range: range,
-        targets: [{ target: targetAnnotation }],
+        targets: [{ target: targetAnnotation, refId: target.refId }],
         format: 'json',
         maxDataPoints: 100,
       } as unknown as DataQueryRequest<GraphiteQuery>;
@@ -979,7 +979,10 @@ export class GraphiteDatasource
       .fetch(options)
       .pipe(
         catchError((err) => {
-          return throwError(reduceError(err));
+          return throwError(() => {
+            const reduced = reduceError(err);
+            return new Error(`${reduced.data.message}`);
+          });
         })
       );
   }
@@ -988,8 +991,7 @@ export class GraphiteDatasource
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
       targets: Record<string, string> = {};
-    let target, targetValue, i;
-    const regex = /\#([A-Z])/g;
+    let target: GraphiteQuery, targetValue, i;
     const intervalFormatFixRegex = /'(\d+)m'/gi;
     let hasTargets = false;
 
@@ -1014,7 +1016,14 @@ export class GraphiteDatasource
       targets[target.refId] = targetValue;
     }
 
+    const regex = /\#([A-Z])/g;
+
     function nestedSeriesRegexReplacer(match: string, g1: string | number) {
+      // Handle the case where a query references itself to prevent infinite recursion
+      if (target.refId === g1) {
+        return targets[g1] || match;
+      }
+
       // Recursively replace all nested series references
       return originalTargetMap[g1].replace(regex, nestedSeriesRegexReplacer) || match;
     }
@@ -1026,7 +1035,7 @@ export class GraphiteDatasource
       }
 
       targetValue = targets[target.refId];
-      targetValue = this.templateSrv.replace(targetValue.replace(regex, nestedSeriesRegexReplacer));
+      targetValue = this.templateSrv.replace(targetValue.replace(regex, nestedSeriesRegexReplacer), scopedVars);
       targets[target.refId] = targetValue;
 
       if (!target.hide) {

@@ -113,9 +113,10 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
   public async create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       const login = contextSrv.user.login;
-      // GenerateName lets the apiserver create a new uid for the name
-      // THe passed in value is the suggested prefix
-      obj.metadata.generateName = login ? login.slice(0, 2) : 'g';
+      // GenerateName lets the apiserver create a unique name by appending random characters to the prefix.
+      // This strips out special characters, numbers, and symbols to ensure a valid prefix.
+      const alphabeticChars = login ? login.replace(/[^a-zA-Z]/g, '').slice(0, 2) : '';
+      obj.metadata.generateName = alphabeticChars || 'g';
     }
     setSavedFromUIAnnotation(obj.metadata);
     return getBackendSrv().post(this.url, obj, {
