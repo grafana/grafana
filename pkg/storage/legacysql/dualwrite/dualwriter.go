@@ -100,7 +100,7 @@ func (d *dualWriter) List(ctx context.Context, options *metainternalversion.List
 	// This can happen, as unified storage iteration is doing paging not only based on the provided limit,
 	// but also based on the response size. This check prevents starting the new iteration again.
 	if options.Continue != "" && legacyToken == "" {
-		return nil, nil
+		return d.NewList(), nil
 	}
 
 	// In some cases, where the stores are not in sync yet, the unified storage continue token might already

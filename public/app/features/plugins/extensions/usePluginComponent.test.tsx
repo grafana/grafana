@@ -333,7 +333,7 @@ describe('usePluginComponent()', () => {
     expect(log.warning).not.toHaveBeenCalled();
   });
 
-  it('should pass a read-only copy of the props (in dev mode)', async () => {
+  it('should pass a writable copy of the props (in dev mode)', async () => {
     config.buildInfo.env = 'development';
 
     type Props = {
@@ -377,12 +377,13 @@ describe('usePluginComponent()', () => {
     const rendered = render(Component && <Component {...originalProps} />);
     expect(rendered.getByText('Foo')).toBeVisible();
 
-    // Should throw an error if it mutates the props
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => render(Component && <Component {...originalProps} override />)).toThrow(
-      TypeError("'set' on proxy: trap returned falsish for property 'c'")
-    );
-    jest.spyOn(console, 'error').mockRestore();
+    // Should not throw an error if it mutates the props
+    expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
+
+    // Should log a warning
+    expect(log.warning).toHaveBeenCalledWith('Attempted to mutate object property "c"', {
+      stack: expect.any(String),
+    });
   });
 
   it('should pass a writable copy of the props (in production mode)', async () => {
@@ -429,7 +430,7 @@ describe('usePluginComponent()', () => {
     const rendered = render(Component && <Component {...originalProps} />);
     expect(rendered.getByText('Foo')).toBeVisible();
 
-    // Should throw an error if it mutates the props
+    // Should not throw an error if it mutates the props
     expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
 
     // Should log a warning

@@ -229,6 +229,9 @@ export const versionedComponents = {
         codeModeMetricNamesSuggestionLimit: {
           '11.1.0': 'data-testid code mode metric names suggestion limit',
         },
+        seriesLimit: {
+          '12.0.2': 'data-testid maximum series limit',
+        },
       },
       queryEditor: {
         explain: {
@@ -247,13 +250,13 @@ export const versionedComponents = {
           '10.4.0': 'data-testid prometheus format',
         },
         step: {
-          '10.4.0': 'prometheus-step', // id for autosize component
+          '10.4.0': 'data-testid prometheus-step', // id for autosize component
         },
         type: {
           '10.4.0': 'data-testid prometheus type', //wrapper for radio button group
         },
         exemplars: {
-          '10.4.0': 'prometheus-exemplars', // id for editor switch component
+          '10.4.0': 'data-testid prometheus-exemplars', // id for editor switch component
         },
         builder: {
           // see QueryBuilder below for commented selectors
@@ -346,7 +349,7 @@ export const versionedComponents = {
       },
       annotations: {
         minStep: {
-          '10.4.0': 'prometheus-annotation-min-step', // id for autosize input
+          '10.4.0': 'data-testid prometheus-annotation-min-step', // id for autosize input
         },
         title: {
           '10.4.0': 'data-testid prometheus annotation title',
