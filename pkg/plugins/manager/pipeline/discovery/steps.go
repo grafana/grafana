@@ -5,24 +5,16 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 )
-
-// DefaultFindFunc is the default function used for the Find step of the Discovery stage. It will scan the local
-// filesystem for plugins.
-func DefaultFindFunc(cfg *config.PluginManagementCfg) FindFunc {
-	return finder.NewLocalFinder(cfg.DevMode).Find
-}
 
 // PermittedPluginTypesFilter is a filter step that will filter out any plugins that are not of a permitted type.
 type PermittedPluginTypesFilter struct {
 	permittedTypes []plugins.Type
 }
 
-// NewPermittedPluginTypesFilterStep returns a new FindFilterFunc for filtering out any plugins that are not of a
+// NewPermittedPluginTypesFilterStep returns a new FilterFunc for filtering out any plugins that are not of a
 // permitted type. This includes both the primary plugin and any child plugins.
-func NewPermittedPluginTypesFilterStep(permittedTypes []plugins.Type) FindFilterFunc {
+func NewPermittedPluginTypesFilterStep(permittedTypes []plugins.Type) FilterFunc {
 	f := &PermittedPluginTypesFilter{
 		permittedTypes: permittedTypes,
 	}

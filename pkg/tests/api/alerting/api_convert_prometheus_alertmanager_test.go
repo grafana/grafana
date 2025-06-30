@@ -86,10 +86,9 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		require.Contains(t, retrievedConfig.TemplateFiles, "test.tmpl")
 		require.Equal(t, `{{ define "test.template" }}Test template{{ end }}`, retrievedConfig.TemplateFiles["test.tmpl"])
 
-		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers, 1)
-		require.Equal(t, "webhook", retrievedConfig.AlertmanagerConfig.Receivers[0].Name)
-		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs, 1)
-		require.Equal(t, "", retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs[0].URL.String())
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "name: webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "receiver: webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "webhook_configs:")
 	})
 
 	t.Run("delete alertmanager configuration", func(t *testing.T) {
@@ -127,7 +126,9 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 	})
 
 	t.Run("error cases", func(t *testing.T) {
-		t.Run("POST without config identifier header should fail", func(t *testing.T) {
+		t.Run("POST without config identifier header should use default identifier", func(t *testing.T) {
+			defer cleanup("")
+
 			headers := map[string]string{
 				"Content-Type":                      "application/yaml",
 				"X-Grafana-Alerting-Merge-Matchers": "environment=test",
@@ -138,7 +139,14 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			}
 
 			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
-			requireStatusCode(t, http.StatusBadRequest, status, "")
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			getHeaders := map[string]string{
+				"X-Grafana-Alerting-Config-Identifier": "default",
+			}
+			responseConfig, status, _ := apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
+			requireStatusCode(t, http.StatusOK, status, "")
+			require.NotEmpty(t, responseConfig.AlertmanagerConfig)
 		})
 
 		t.Run("POST without merge matchers header should fail", func(t *testing.T) {
@@ -185,11 +193,27 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 			requireStatusCode(t, http.StatusBadRequest, status, "")
 		})
 
-		t.Run("DELETE without config identifier header should fail", func(t *testing.T) {
-			headers := map[string]string{}
+		t.Run("DELETE without config identifier header should use default identifier", func(t *testing.T) {
+			createHeaders := map[string]string{
+				"Content-Type":                      "application/yaml",
+				"X-Grafana-Alerting-Merge-Matchers": "environment=test",
+			}
 
-			_, status, _ := apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, headers)
-			requireStatusCode(t, http.StatusBadRequest, status, "")
+			amConfig := apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: testAlertmanagerConfigYAML,
+			}
+
+			_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, createHeaders)
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusOK, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusAccepted, status, "")
+
+			_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, nil)
+			requireStatusCode(t, http.StatusNotFound, status, "")
 		})
 	})
 
@@ -245,10 +269,9 @@ receivers:
 		retrievedConfig := apiClient.ConvertPrometheusGetAlertmanagerConfig(t, getHeaders)
 
 		require.NotEmpty(t, retrievedConfig.AlertmanagerConfig)
-		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers, 1)
-		require.Equal(t, "updated-webhook", retrievedConfig.AlertmanagerConfig.Receivers[0].Name)
-		require.Len(t, retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs, 1)
-		require.Equal(t, "", retrievedConfig.AlertmanagerConfig.Receivers[0].WebhookConfigs[0].URL.String())
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "name: updated-webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "receiver: updated-webhook")
+		require.Contains(t, retrievedConfig.AlertmanagerConfig, "webhook_configs:")
 
 		require.Equal(t, `{{ define "updated.template" }}Updated Config{{ end }}`, retrievedConfig.TemplateFiles["updated.tmpl"])
 	})

@@ -8877,6 +8877,9 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -13895,16 +13898,10 @@
           }
         },
         "mute_time_intervals": {
-          "description": "Deprecated. Remove before v1.0 release.",
+          "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/MuteTimeInterval"
-          }
-        },
-        "receivers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Receiver"
           }
         },
         "route": {
@@ -15893,62 +15890,6 @@
         }
       }
     },
-    "GettableAlertmanagerConfig": {
-      "type": "object",
-      "properties": {
-        "global": {
-          "$ref": "#/definitions/GlobalConfig"
-        },
-        "inhibit_rules": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/InhibitRule"
-          }
-        },
-        "mute_time_intervals": {
-          "description": "Deprecated. Remove before v1.0 release.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MuteTimeInterval"
-          }
-        },
-        "receivers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Receiver"
-          }
-        },
-        "route": {
-          "$ref": "#/definitions/Route"
-        },
-        "templates": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeInterval"
-          }
-        }
-      }
-    },
-    "GettableAlertmanagerUserConfig": {
-      "type": "object",
-      "properties": {
-        "alertmanager_config": {
-          "$ref": "#/definitions/GettableAlertmanagerConfig"
-        },
-        "template_files": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "GettableAlertmanagers": {
       "type": "object",
       "properties": {
@@ -17041,6 +16982,7 @@
           "format": "int64"
         },
         "id": {
+          "description": "Deprecated: this field will be removed in the future",
           "type": "integer",
           "format": "int64"
         },
