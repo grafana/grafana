@@ -31,21 +31,18 @@ test.describe(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2
       );
       await nameInput.fill('VariableUnderTest');
-      await nameInput.blur();
 
       // Set constant value
       const constantInput = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInputV2
       );
       await constantInput.fill('pesto');
-      await constantInput.blur();
 
       // Set label
       const labelInput = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2
       );
       await labelInput.fill('Variable under test');
-      await labelInput.blur();
 
       // Navigate back to the homepage and change the selected variable value
       await dashboardPage

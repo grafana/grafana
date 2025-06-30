@@ -22,14 +22,12 @@ async function fillInCustomVariable(
     selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2
   );
   await nameInput.fill(name);
-  await nameInput.blur();
 
   // Set label
   const labelInput = dashboardPage.getByGrafanaSelector(
     selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2
   );
   await labelInput.fill(label);
-  await labelInput.blur();
 
   // Set custom values
   const customValueInput = dashboardPage.getByGrafanaSelector(
