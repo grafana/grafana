@@ -27,6 +27,7 @@ func ConvertToK8sResource(orgID int64, r definitions.Route, version string, name
 			GroupInterval:  optionalPrometheusDurationToString(r.GroupInterval),
 			RepeatInterval: optionalPrometheusDurationToString(r.RepeatInterval),
 			Receiver:       r.Receiver,
+			Name:           r.Name,
 		},
 	}
 	for _, route := range r.Routes {
@@ -38,7 +39,7 @@ func ConvertToK8sResource(orgID int64, r definitions.Route, version string, name
 
 	var result = &model.RoutingTree{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            model.UserDefinedRoutingTreeName,
+			Name:            r.Name,
 			Namespace:       namespacer(orgID),
 			ResourceVersion: version,
 		},
@@ -147,6 +148,7 @@ func convertToDomainModel(obj *model.RoutingTree) (definitions.Route, string, er
 	if len(errs) > 0 {
 		return definitions.Route{}, "", errors.Join(errs...)
 	}
+	result.Name = obj.Spec.Defaults.Name
 	result.Provenance = ""
 	return result, obj.ResourceVersion, nil
 }

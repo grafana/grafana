@@ -4,6 +4,7 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type RoutingTreeRouteDefaults struct {
+	Name           string   `json:"name"`
 	Receiver       string   `json:"receiver"`
 	GroupBy        []string `json:"group_by,omitempty"`
 	GroupWait      *string  `json:"group_wait,omitempty"`

@@ -65,6 +65,7 @@ func (s *legacyStorage) getUserDefinedRoutingTree(ctx context.Context) (*model.R
 	if err != nil {
 		return nil, err
 	}
+	res.Name = model.UserDefinedRoutingTreeName
 	return ConvertToK8sResource(orgId, res, version, s.namespacer)
 }
 

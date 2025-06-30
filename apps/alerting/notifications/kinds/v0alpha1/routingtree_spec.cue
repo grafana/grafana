@@ -6,6 +6,7 @@ RouteTreeSpec: {
 }
 
 #RouteDefaults: {
+	name: string
 	receiver: string
 	group_by?: [...string]
 	group_wait?:      string
