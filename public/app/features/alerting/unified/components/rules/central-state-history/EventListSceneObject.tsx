@@ -94,7 +94,7 @@ export const HistoryEventsList = ({
   }
 
   return (
-    <>
+    <Stack direction="column" gap={0.5}>
       {maximumEventsReached && (
         <Alert
           severity="warning"
@@ -108,7 +108,7 @@ export const HistoryEventsList = ({
       )}
       <LoadingIndicator visible={isLoading} />
       <HistoryLogEvents logRecords={historyRecords} addFilter={addFilter} timeRange={timeRange} />
-    </>
+    </Stack>
   );
 };
 
