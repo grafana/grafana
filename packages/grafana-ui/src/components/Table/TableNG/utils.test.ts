@@ -974,11 +974,6 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('getCellHeightCalculator', () => {
-    it.todo('returns a cell height calculator');
-    it.todo('returns a minimum height of the default row height');
-  });
-
   describe('getDefaultRowHeight', () => {
     const theme = createTheme();
 

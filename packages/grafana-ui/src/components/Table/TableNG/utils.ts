@@ -1,7 +1,6 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -31,26 +30,6 @@ export type CellHeightCalculator = (text: string, cellWidth: number) => number;
 
 /**
  * @internal
- * Returns a function that calculates the height of a cell based on its text content and width.
- */
-export function getCellHeightCalculator(
-  // should be pre-configured with font and letterSpacing
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding = 0
-) {
-  const { count } = varPreLine(ctx);
-
-  return (text: string, cellWidth: number) => {
-    const numLines = count(text, cellWidth);
-    const totalHeight = numLines * lineHeight + 2 * padding;
-    return Math.max(totalHeight, defaultRowHeight);
-  };
-}
-
-/**
- * @internal
  * Returns the default row height based on the theme and cell height setting.
  */
 export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCellHeight): number {
@@ -73,18 +52,14 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
  * @internal
  * Returns true if text overflow handling should be applied to the cell.
  */
-export function shouldTextOverflow(
-  key: string,
-  columnTypes: ColumnTypes,
-  textWrap: boolean,
-  field: Field,
-  cellType: TableCellDisplayMode
-): boolean {
+export function shouldTextOverflow(field: Field): boolean {
   const cellInspect = field.config?.custom?.inspect ?? false;
+  const cellOptions = getCellOptions(field);
+  const textWrap = ('wrapText' in cellOptions && cellOptions.wrapText) ?? false;
 
   // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
   // so we need to ensure we don't apply overflow hover states fo type image
-  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || columnTypes[key] !== FieldType.string) {
+  if (textWrap || cellInspect || cellOptions.type === TableCellDisplayMode.Image || field.type !== FieldType.string) {
     return false;
   }
 

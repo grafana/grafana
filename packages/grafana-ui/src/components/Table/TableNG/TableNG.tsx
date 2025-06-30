@@ -15,6 +15,7 @@ import {
 
 import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -37,7 +38,7 @@ import {
   usePaginatedRows,
   useRowHeight,
   useSortedRows,
-  useTextWraps,
+  useTypographyCtx,
 } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps } from './types';
 import {
@@ -49,7 +50,6 @@ import {
   getVisibleFields,
   shouldTextOverflow,
   getApplyToRowBgFn,
-  getColumnTypes,
   computeColWidths,
   applySort,
   getCellColors,
@@ -115,7 +115,6 @@ export function TableNG(props: TableNGProps) {
   }, [isContextMenuOpen]);
 
   const rows = useMemo(() => frameToRecords(data), [data]);
-  const columnTypes = useMemo(() => getColumnTypes(data.fields), [data.fields]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
 
   const {
@@ -130,9 +129,10 @@ export function TableNG(props: TableNGProps) {
     rows: sortedRows,
     sortColumns,
     setSortColumns,
-  } = useSortedRows(filteredRows, data.fields, { columnTypes, hasNestedFrames, initialSortBy });
+  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
+  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
+  const defaultHeaderHeight = getDefaultRowHeight(theme, TableCellHeight.Sm);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
@@ -146,16 +146,26 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
     [width, hasNestedFrames]
   );
+  const typographyCtx = useTypographyCtx();
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
-  const headerHeight = useHeaderHeight(
-    widths,
-    visibleFields,
+  const headerHeight = useHeaderHeight({
+    columnWidths: widths,
+    fields: visibleFields,
     hasHeader,
-    defaultRowHeight,
+    defaultHeight: defaultHeaderHeight,
     sortColumns,
-    !!showTypeIcons
-  );
-  const rowHeight = useRowHeight(widths, visibleFields, hasNestedFrames, defaultRowHeight, headerHeight, expandedRows);
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx,
+  });
+  const rowHeight = useRowHeight({
+    columnWidths: widths,
+    fields: visibleFields,
+    hasNestedFrames,
+    defaultHeight: defaultRowHeight,
+    headerHeight,
+    expandedRows,
+    typographyCtx,
+  });
 
   const {
     rows: paginatedRows,
@@ -175,7 +185,6 @@ export function TableNG(props: TableNGProps) {
   });
 
   // Create a map of column key to text wrap
-  const textWraps = useTextWraps(data.fields);
   const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
   const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
@@ -185,8 +194,8 @@ export function TableNG(props: TableNGProps) {
   );
 
   const renderCell = useMemo(
-    () => renderCellFactory(columnTypes, applyToRowBgFn, rowHeight, textWraps, theme, visibleFieldsByDisplayName),
-    [columnTypes, applyToRowBgFn, rowHeight, textWraps, theme, visibleFieldsByDisplayName]
+    () => renderCellFactory(applyToRowBgFn, rowHeight, theme, visibleFieldsByDisplayName),
+    [applyToRowBgFn, rowHeight, theme, visibleFieldsByDisplayName]
   );
 
   const commonDataGridProps = useMemo(
@@ -587,10 +596,8 @@ const renderRowFactory =
  */
 const renderCellFactory =
   (
-    columnTypes: Record<string, FieldType>,
     applyToRowBgFn: ((rowIdx: number) => CellColors) | undefined,
     rowHeight: number | ((row: TableRow) => number),
-    textWraps: Record<string, boolean>,
     theme: GrafanaTheme2,
     visibleFieldsByDisplayName: Record<string, Field>
   ) =>
@@ -604,7 +611,6 @@ const renderCellFactory =
     }
 
     const cellOptions = getCellOptions(field);
-    const cellType = cellOptions.type;
     const value = props.row[props.column.key];
 
     const colors: CellColors = (() => {
@@ -619,15 +625,10 @@ const renderCellFactory =
     })();
 
     const rh = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
-    const shouldOverflow = shouldTextOverflow(
-      displayName,
-      columnTypes,
-      textWraps[getDisplayName(field)],
-      field,
-      cellType
-    );
-    const shouldWrap = textWraps[displayName] ?? false;
-    const cellStyle = getCellStyles(theme, field, rh, shouldWrap, shouldOverflow, colors);
+
+    const shouldOverflow = shouldTextOverflow(field);
+    const textWrap = ('wrapText' in cellOptions && cellOptions.wrapText) ?? false;
+    const cellStyle = getCellStyles(theme, field, rh, textWrap, shouldOverflow, colors);
 
     return (
       <Cell
