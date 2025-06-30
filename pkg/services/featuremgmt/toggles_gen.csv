@@ -74,7 +74,6 @@ queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,fals
 queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
 queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
-lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
 addFieldFromCalculationStatFunctions,GA,@grafana/dataviz-squad,false,false,true

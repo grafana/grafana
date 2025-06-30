@@ -340,11 +340,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * Enables the loki data source to request structured metadata from the Loki server
-  * @default true
-  */
-  lokiStructuredMetadata?: boolean;
-  /**
   * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
