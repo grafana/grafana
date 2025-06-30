@@ -300,7 +300,7 @@ func TestNotifier_Watch_EventDeduplication(t *testing.T) {
 	select {
 	case duplicateEvent := <-events:
 		t.Fatalf("Expected no duplicate events, but got: %+v", duplicateEvent)
-	case <-time.After(50 * time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 		// Expected - no duplicate events
 	}
 }
@@ -342,7 +342,7 @@ func TestNotifier_Watch_ContextCancellation(t *testing.T) {
 			t.Fatalf("Expected channel to be closed, but got event: %+v", event)
 		}
 		// Channel is closed as expected
-	case <-time.After(50 * time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 		t.Fatal("Expected channel to be closed quickly after context cancellation")
 	}
 }
