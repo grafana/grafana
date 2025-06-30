@@ -442,16 +442,43 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		return model.LibraryElementSearchResult{}, folderFilter.parseError
 	}
 
-	// Get accessible folder UIDs for secure folder name search
-	fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
-	if err != nil {
-		return model.LibraryElementSearchResult{}, err
-	}
-	// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
-	accessibleFolderUIDs := make([]string, 0, len(fs)+2)
-	accessibleFolderUIDs = append(accessibleFolderUIDs, "general", "")
-	for _, f := range fs {
-		accessibleFolderUIDs = append(accessibleFolderUIDs, f.UID)
+	// Find folders whose TITLES match the search string (for comprehensive search)
+	var foldersWithMatchingTitles []string
+	if len(strings.TrimSpace(query.SearchString)) > 0 {
+		searchQuery := folder.SearchFoldersQuery{
+			OrgID:        signedInUser.GetOrgID(),
+			Title:        query.SearchString,
+			SignedInUser: signedInUser,
+		}
+
+		folderHits, err := l.folderService.SearchFolders(c, searchQuery)
+		if err != nil {
+			// Fallback to manual folder title filtering if SearchFolders is not available (legacy mode)
+			if strings.Contains(err.Error(), "cannot be called on the legacy folder service") {
+				// Legacy fallback: get folders and manually filter by title
+				fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
+					OrgID:        signedInUser.GetOrgID(),
+					SignedInUser: signedInUser,
+				})
+				if err != nil {
+					return model.LibraryElementSearchResult{}, err
+				}
+				foldersWithMatchingTitles = make([]string, 0, len(fs))
+				for _, f := range fs {
+					if strings.Contains(strings.ToLower(f.Title), strings.ToLower(query.SearchString)) {
+						foldersWithMatchingTitles = append(foldersWithMatchingTitles, f.UID)
+					}
+				}
+			} else {
+				return model.LibraryElementSearchResult{}, err
+			}
+		} else {
+			// SearchFolders worked - extract folder UIDs whose titles match
+			foldersWithMatchingTitles = make([]string, 0, len(folderHits))
+			for _, hit := range folderHits {
+				foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
+			}
+		}
 	}
 
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
@@ -460,10 +487,9 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			builder.Write(selectLibraryElementDTOWithMeta)
 			builder.Write(", '' as folder_uid ")
 			builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
-			builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 			builder.Write(` WHERE le.org_id=?  AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &builder)
-			writeSearchStringSQL(query, l.SQLStore, &builder, accessibleFolderUIDs)
+			writeSearchStringSQL(query, l.SQLStore, &builder, foldersWithMatchingTitles)
 			writeExcludeSQL(query, &builder)
 			writeTypeFilterSQL(typeFilter, &builder)
 			builder.Write(" ")
@@ -476,7 +502,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		builder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
-		writeSearchStringSQL(query, l.SQLStore, &builder, accessibleFolderUIDs)
+		writeSearchStringSQL(query, l.SQLStore, &builder, foldersWithMatchingTitles)
 		writeExcludeSQL(query, &builder)
 		writeTypeFilterSQL(typeFilter, &builder)
 		if err := folderFilter.writeFolderFilterSQL(false, &builder); err != nil {
@@ -556,7 +582,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
-			writeSearchStringSQL(query, l.SQLStore, &countBuilder, accessibleFolderUIDs)
+			writeSearchStringSQL(query, l.SQLStore, &countBuilder, foldersWithMatchingTitles)
 			writeExcludeSQL(query, &countBuilder)
 			writeTypeFilterSQL(typeFilter, &countBuilder)
 			countBuilder.Write(" ")
@@ -568,7 +594,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
-		writeSearchStringSQL(query, l.SQLStore, &countBuilder, accessibleFolderUIDs)
+		writeSearchStringSQL(query, l.SQLStore, &countBuilder, foldersWithMatchingTitles)
 		writeExcludeSQL(query, &countBuilder)
 		writeTypeFilterSQL(typeFilter, &countBuilder)
 		if err := folderFilter.writeFolderFilterSQL(true, &countBuilder); err != nil {
