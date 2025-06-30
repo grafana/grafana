@@ -94,7 +94,7 @@ func authorizeLibraryPanel(ctx context.Context, ac accesscontrol.AccessControl, 
 func authorizeDashboard(ctx context.Context, ac accesscontrol.AccessControl, user identity.Requester, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 	switch attr.GetVerb() {
 	case "list", "search":
-		// Detailed read permissions are handled by authz, this just checks whether the user can ready *any* library panel
+		// Detailed read permissions are handled by authz, this just checks whether the user can ready *any* dashboard
 		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead))
 		if !ok || err != nil {
 			return authorizer.DecisionDeny, "can not read any dashboards", err
