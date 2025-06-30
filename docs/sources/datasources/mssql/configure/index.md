@@ -69,13 +69,18 @@ refs:
      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
    - pattern: /docs/grafana-cloud/
      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval
+  data-sources:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
 
 
 ---
 
 # Configure the Microsoft SQL Server data source
 
-This document provides instructions for configuring the Microsoft SQL Server data source and explains available configuration options. For general information on managing data sources, refer to [Data source management](ref:data-source-management).
+This document provides instructions for configuring the Microsoft SQL Server data source and explains available configuration options. For general information on adding and managing data sources, refer to [Grafana data sources](ref:data-sources) and [Data source management](ref:data-source-management).
 
 ## Before you begin
 
@@ -102,41 +107,55 @@ Grafana takes you to the **Settings** tab, where you will set up your Microsoft 
 
 ## Configure the data source in the UI
 
-Following are configuration options for the Microsoft SQL Server data soruce:
+Following are configuration options for the Microsoft SQL Server data source:
 
-- **Name** - The data source name. Sets the name you use to refer to the data source in panels and queries. Examples: MSSQL-1, MSSQL_Sales1.
-- **Default** - Toggle to select as the default name in dashboard panels. When you go to a dashboard panel, this will be the default selected data source.
+| **Setting** | **Description** |
+|-------------|----------------|
+| **Name**    | The data source name. Sets the name you use to refer to the data source in panels and queries. Examples: `MSSQL-1`, `MSSQL_Sales1`. |
+| **Default** | Toggle to select as the default name in dashboard panels. When you go to a dashboard panel, this will be the default selected data source. |
 
 **Connection:**
 
- - **Host** - Sets the IP address/hostname and optional port of your MSSQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`).
-- **Database** - Sets the name of your MSSQL database.
+| Setting    | Description                                                                                                                                             |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Host**   | Sets the IP address or hostname (and optional port) of your MSSQL instance. The default port is `0`, which uses the driver's default. <br> You can include additional connection properties (e.g., `ApplicationIntent`) by separating them with semicolons (`;`). |
+| **Database** | Sets the name of the MSSQL database to connect to.                                                                                                    |
+
+
+ <!-- - **Host** - Sets the IP address/hostname and optional port of your MSSQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`).
+- **Database** - Sets the name of your MSSQL database. -->
 
 **TLS/SSL Auth:** 
 
-
 Encrypt - Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
 
-- **Disable** - Data sent between client and server is not encrypted.
-- **False** - The default setting. Data sent between client and server is not encrypted beyond the login packet.
-- **True** - Data sent between client and server is encrypted.
+| Encrypt Setting | Description                                                                                          |
+|-----------------|------------------------------------------------------------------------------------------------------|
+| **Disable**      | Data sent between the client and server is **not encrypted**.                                        |
+| **False**        | The default setting. Only the login packet is encrypted; **all other data is sent unencrypted**.    |
+| **True**         | **All data** sent between the client and server is **encrypted**.                                   |
 
-Note:
+<!-- - **Disable** - Data sent between client and server is not encrypted.
+- **False** - The default setting. Data sent between client and server is not encrypted beyond the login packet.
+- **True** - Data sent between client and server is encrypted. -->
+
+{{< admonition type="note" >}}
 If you're using an older version of Microsoft SQL Server like 2008 and 2008R2, you may need to disable encryption to be able to connect.
+{{< /admonition >}}
 
 **Authentication:** 
 
 Authentication Type
 
 - **SQL Server Authentication** -  This is the default mechanism to connect to MSSQL Server. Enter the SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.
-  - **Username** - 
-  - **Password** - 
+  - **Username** - Your Microsoft SQL Server user name.
+  - **Password** - Your Microsoft SQL Server password.
 
 - **Windows Authentication (Windows Integrated Security)** - This authentication method uses the logged-in Windows user's credentials to authenticate with SQL Server via single sign-on. This method is available when the user is already signed into Windows and SQL Server is configured to allow Windows Authentication.
 
 - **Windows AD (Active Directory username/password)** - Authenticates a domain user using their Active Directory username and password.
-  - **Username** - Format is `user@example.com`. The realm is derived from the username.
-  - **Password** - 
+  - **Username** - Must be in the format `user@example.com`. The domain (realm) is derived from the username.
+  - **Password** - The corresponding Active Directory password for the specified user.
 
 - **Windows AD: (Keytab)** - Authenticates a domain user using a keytab file.
   - **Username** - Format is `user@example.com`. The realm is derived from the username.
@@ -148,38 +167,47 @@ Authentication Type
   - **Username** Use the format `user@edomain.com`.
   - **Credential cache file path** - Add your credential cache file path. Example: /home/grot/cache.json
 
+| Authentication Type                       | Description                                                                                                                                                           | Credentials / Fields                                                                                 |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| **SQL Server Authentication**             | Default method to connect to MSSQL. Use a SQL Server or Windows login in `DOMAIN\User` format.                                                                       | - **Username**: SQL Server username<br>- **Password**: SQL Server password                            |
+| **Windows Authentication**<br>(Integrated Security) | Uses the logged-in Windows user's credentials via single sign-on. Available only when SQL Server allows Windows Authentication.                          | No input required; uses the logged-in Windows user's credentials                                     |
+| **Windows AD**<br>(Username/Password)     | Authenticates a domain user with their Active Directory username and password.                                                                                       | - **Username**: `user@example.com`<br>- **Password**: Active Directory password                        |
+| **Windows AD**<br>(Keytab)                | Authenticates a domain user using a keytab file.                                                                                                                      | - **Username**: `user@example.com`<br>- **Keytab file path**: Path to your keytab file                |
+| **Windows AD**<br>(Credential Cache)      | Uses a Kerberos credential cache already loaded in memory (e.g., from a prior `kinit` command). No file needed.                                                      | - **Credential cache path**: Path to in-memory credential (e.g., `/tmp/krb5cc_1000`)                 |
+| **Windows AD**<br>(Credential Cache File) | Authenticates a domain user using a credential cache file (`.ccache`).                                                                                                | - **Username**: `user@example.com`<br>- **Credential cache file path**: e.g., `/home/grot/cache.json` |
 
 
 
-
-
-| **Authentication Type**                | **Description**                                                                                                   | **Required Fields**                                                                                 |
+<!-- | **Authentication Type**                | **Description**                                                                                                   | **Required Fields**                                                                                 |
 |----------------------------------------|-------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
 | Windows AD (Keytab)                    | Authenticates a domain user using a keytab file.                                                                  | Username: `user@example.com`<br>Keytab file path: Path to your keytab file                          |
 | Windows AD (Credential Cache)          | Signs on a domain user via a Kerberos credential cache already loaded into memory (e.g., from a prior `kinit`). No file is needed. | Credential cache path: Path to your credential cache (e.g., `/tmp/krb5cc_1000`)                     |
-| Windows AD (Credential Cache File)     | Signs on a domain user via a credential cache file (`.ccache`).                                                   | Username: `user@edomain.com`<br>Credential cache file path: Path to your credential cache file (e.g., `/home/grot/cache.json`) |
+| Windows AD (Credential Cache File)     | Signs on a domain user via a credential cache file (`.ccache`).                                                   | Username: `user@edomain.com`<br>Credential cache file path: Path to your credential cache file (e.g., `/home/grot/cache.json`) | -->
 
-
-
-
-
-
-
-The default is `SQL server authentication`. 
 
 **Additional settings:**
 
 Additional settings are optional settings you configure for more control over your data source. This includes connection limits, connection timeout, group-by time interval, and Secure Socks Proxy.
 
-- **Connection limits** - 
+- **Connection limits**:
+
+| Setting         | Description                                                                                                                                                            |
+|-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Max open**     | The maximum number of open connections to the database. If set to `0`, there is no limit. If `max open` is greater than `0` and less than `max idle`, `max idle` is adjusted to match. |
+| **Auto max idle**| When enabled, automatically sets `max idle` to match `max open`. If `max open` isn’t set, it defaults to `100`.                                                     |
+| **Max idle**     | The maximum number of idle connections in the pool. If `max open` is set and is lower than `max idle`, then `max idle` is reduced to match. If set to `0`, no idle connections are retained. |
+| **Max lifetime** | The maximum time (in seconds) a connection can be reused before being closed and replaced. If set to `0`, connections are reused indefinitely.                      |
+
+
+<!-- 
   - **Max open** - The maximum number of open connections to the database. If set to 0, there is no limit. If `max open` is greater than 0 and less than the `max idle` setting, `max idle` will be adjusted to match it.
 
   - **Auto max idle** - Toggle on to automatically set the maximum idle connections to match the max open connections. If max open connections isn’t set, it defaults to `100`.
 
   - **Max idle** - The maximum number of idle connections in the pool. If `max open` connections is set to a value greater than 0 and is lower than this setting, `max idle` connections will be reduced to match it. If set to 0, idle connections are not retained.
 
-  - Max lifetime - Specifies the maximum duration (in seconds) that a connection can be reused before it is closed and replaced. If set to `0`, connections are reused indefinitely.
-
+  - **Max lifetime** - Specifies the maximum duration (in seconds) that a connection can be reused before it is closed and replaced. If set to `0`, connections are reused indefinitely.
+ -->
 
 
 **Connection details:**
