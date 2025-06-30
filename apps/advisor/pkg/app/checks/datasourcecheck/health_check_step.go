@@ -61,7 +61,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 		Headers:       map[string]string{},
 	}
 	resp, err := s.PluginClient.CheckHealth(ctx, req)
-	if err != nil || resp.Status != backend.HealthStatusOk {
+	if err != nil || (resp != nil && resp.Status != backend.HealthStatusOk) {
 		if err != nil {
 			log.Debug("Failed to check health", "datasource_uid", ds.UID, "error", err)
 			if errors.Is(err, plugins.ErrMethodNotImplemented) || errors.Is(err, plugins.ErrPluginUnavailable) {
@@ -70,6 +70,10 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 			}
 		} else {
 			log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
+		}
+		moreInfo := ""
+		if resp != nil {
+			moreInfo = fmt.Sprintf("Status: %s\nMessage: %s\nJSONDetails: %s", resp.Status, resp.Message, resp.JSONDetails)
 		}
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailureWithMoreInfo(
 			advisor.CheckReportFailureSeverityHigh,
@@ -82,7 +86,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 				},
 			},
-			fmt.Sprintf("Status: %s\nMessage: %s\nJSONDetails: %s", resp.Status, resp.Message, resp.JSONDetails),
+			moreInfo,
 		)}, nil
 	}
 	return nil, nil
