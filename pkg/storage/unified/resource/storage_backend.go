@@ -14,8 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// Unified storage backend
+const (
+	defaultListBufferSize = 100
+)
 
+// Unified storage backend based on KV storage.
 type kvStorageBackend struct {
 	snowflake  *snowflake.Node
 	kv         KV
@@ -80,24 +83,26 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		return 0, fmt.Errorf("invalid event type: %d", event.Type)
 	}
 
-	err := k.dataStore.Save(ctx, DataKey{
+	// Build the search document
+	doc, err := k.builder.BuildDocument(ctx, event.Key, rv, event.Value)
+	if err != nil {
+		return 0, fmt.Errorf("failed to build document: %w", err)
+	}
+
+	// Write the data
+	err = k.dataStore.Save(ctx, DataKey{
 		Namespace:       event.Key.Namespace,
 		Group:           event.Key.Group,
 		Resource:        event.Key.Resource,
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
-	}, io.NopCloser(bytes.NewReader(event.Value))) // TODO: this should be a reader instead of a byte array
+	}, io.NopCloser(bytes.NewReader(event.Value)))
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
 
 	// Write metadata
-	doc, err := k.builder.BuildDocument(ctx, event.Key, rv, event.Value)
-	if err != nil {
-		return 0, fmt.Errorf("failed to build document: %w", err)
-	}
-
 	err = k.metaStore.Save(ctx, MetaDataObj{
 		Key: MetaDataKey{
 			Namespace:       event.Key.Namespace,
@@ -187,6 +192,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		offset = token.StartOffset
 		resourceVersion = token.ResourceVersion
 	}
+
 	// We set the listRV to the current time.
 	listRV := k.snowflake.Generate().Int64()
 	if resourceVersion > 0 {
@@ -194,7 +200,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	}
 
 	// Fetch the latest objects
-	keys := make([]MetaDataKey, 0)
+	keys := make([]MetaDataKey, 0, min(defaultListBufferSize, req.Limit+1))
 	idx := 0
 	for metaKey, err := range k.metaStore.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Namespace: req.Options.Key.Namespace,
@@ -346,7 +352,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	listRV := k.snowflake.Generate().Int64()
 
 	// Get all history entries by iterating through datastore keys
-	historyKeys := make([]DataKey, 0)
+	historyKeys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
 
 	// Use datastore.Keys to get all data keys for this specific resource
 	for dataKey, err := range k.dataStore.Keys(ctx, ListRequestKey{
