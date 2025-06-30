@@ -177,7 +177,6 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			SecretsManagement: setting.SecretsManagerSettings{
 				SecretKey:          "sdDkslslld",
 				EncryptionProvider: "secretKey.v1",
-				Encryption:         setting.EncryptionSettings{},
 			},
 		}
 
