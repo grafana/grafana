@@ -291,61 +291,61 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 func TestSanitizeHTTPHeaderValueForGRPC(t *testing.T) {
 	testCases := []struct {
 		name     string
-		input    []byte
+		input    string
 		expected string
 	}{
 		{
 			name:     "Valid printable ASCII characters remain unchanged",
-			input:    []byte("Hello World! 123 @#$%^&*()"),
+			input:    "Hello World! 123 @#$%^&*()",
 			expected: "Hello World! 123 @#$%^&*()",
 		},
 		{
 			name: "Extended characters remain unchanged",
 			// %C3%A9 is encoded é
-			input:    []byte("naiv%C3%A9"),
+			input:    "naiv%C3%A9",
 			expected: "naiv%C3%A9",
 		},
 		{
 			name:     "naivé coming in as an iso8859-1 string",
-			input:    []byte{110, 97, 105, 118, 233},
+			input:    string([]byte{110, 97, 105, 118, 233}),
 			expected: "naiv%C3%A9",
 		},
 		{
 			name:     "Control characters are percent-encoded",
-			input:    []byte("hello\x00\x01\x1Fworld"),
+			input:    "hello\x00\x01\x1Fworld",
 			expected: "hello%00%01%1Fworld",
 		},
 		{
 			name:     "Tab character is percent-encoded",
-			input:    []byte("hello\tworld"),
+			input:    "hello\tworld",
 			expected: "hello%09world",
 		},
 		{
 			name:     "Newline character is percent-encoded",
-			input:    []byte("hello\nworld"),
+			input:    "hello\nworld",
 			expected: "hello%0Aworld",
 		},
 		{
 			name:     "Carriage return is percent-encoded",
-			input:    []byte("hello\rworld"),
+			input:    "hello\rworld",
 			expected: "hello%0Dworld",
 		},
 		{
 			name: "Mixed valid and invalid characters",
 			// %F0%9F%9A%80 is encoded 🚀
-			input:    []byte("Valid text\x00invalid\x1Fmore valid %F0%9F%9A%80"),
+			input:    "Valid text\x00invalid\x1Fmore valid %F0%9F%9A%80",
 			expected: "Valid text%00invalid%1Fmore valid %F0%9F%9A%80",
 		},
 		{
 			name:     "Empty string remains empty",
-			input:    []byte(""),
+			input:    "",
 			expected: "",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := sanitizeHTTPHeaderValueForGRPC(string(tc.input))
+			result := sanitizeHTTPHeaderValueForGRPC(tc.input)
 			require.Equal(t, tc.expected, result)
 		})
 	}
