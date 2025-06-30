@@ -115,8 +115,6 @@ func (m *TracingHeaderMiddleware) RunStream(ctx context.Context, req *backend.Ru
 // The spec defines that header values must consist of printable ASCII characters 0x20 (space) - 0x7E(tilde) inclusive.
 // First attempts to decode any percent-encoded characters, then encodes invalid characters.
 func sanitizeHTTPHeaderValueForGRPC(value string) string {
-	var sanitized strings.Builder
-	sanitized.Grow(len(value)) // Pre-allocate reasonable capacity
 	// First try to decode characters that were encoded by the frontend
 	decoder := charmap.ISO8859_1.NewDecoder()
 	decoded, _, err := transform.Bytes(decoder, []byte(value))
@@ -124,6 +122,8 @@ func sanitizeHTTPHeaderValueForGRPC(value string) string {
 	if err != nil {
 		decoded = []byte(value)
 	}
+	var sanitized strings.Builder
+	sanitized.Grow(len(decoded)) // Pre-allocate reasonable capacity
 	// Then encode invalid characters
 	for _, b := range decoded {
 		if b >= 0x20 && b <= 0x7E {
