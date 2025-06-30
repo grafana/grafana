@@ -26,21 +26,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetFolders(t *testing.T) {
-	testGetFolders(t, []string{featuremgmt.FlagNestedFolders})
-}
-
-func TestGetFoldersK8s(t *testing.T) {
-	testGetFolders(t, []string{featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesClientDashboardsFolders})
-}
-
-func testGetFolders(t *testing.T, featureToggles []string) {
 	// Setup Grafana and its Database
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
-		EnableFeatureToggles:  featureToggles,
+		EnableFeatureToggles:  []string{featuremgmt.FlagNestedFolders},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
