@@ -276,7 +276,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 	})
 }
 
-func TestSanitizeGrpcHeaderValue(t *testing.T) {
+func TestSanitizeHTTPHeaderValueForGRPC(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    string
@@ -331,7 +331,7 @@ func TestSanitizeGrpcHeaderValue(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := sanitizeGrpcHeaderValue(tc.input)
+			result := sanitizeHTTPHeaderValueForGRPC(tc.input)
 			require.Equal(t, tc.expected, result)
 		})
 	}
