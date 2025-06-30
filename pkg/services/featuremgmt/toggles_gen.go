@@ -87,10 +87,6 @@ const (
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
 
-	// FlagLokiQuerySplittingConfig
-	// Give users the option to configure split durations for Loki queries
-	FlagLokiQuerySplittingConfig = "lokiQuerySplittingConfig"
-
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"

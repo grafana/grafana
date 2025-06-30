@@ -1,17 +1,10 @@
 import { trim } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
-import {
-  CoreApp,
-  isValidDuration,
-  isValidGrafanaDuration,
-  LogSortOrderChangeEvent,
-  LogsSortOrder,
-  store,
-} from '@grafana/data';
+import { CoreApp, isValidGrafanaDuration, LogSortOrderChangeEvent, LogsSortOrder, store } from '@grafana/data';
 import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/plugin-ui';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
 
 import {
@@ -36,7 +29,6 @@ export interface Props {
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, queryStats, datasource }) => {
-    const [splitDurationValid, setSplitDurationValid] = useState(true);
     const maxLines = datasource.maxLines;
 
     useEffect(() => {
@@ -70,17 +62,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       },
       [onChange, onRunQuery, query]
     );
-
-    const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
-      const value = evt.currentTarget.value;
-      if (!isValidDuration(value)) {
-        setSplitDurationValid(false);
-        return;
-      }
-      setSplitDurationValid(true);
-      onChange({ ...query, splitDuration: value });
-      onRunQuery();
-    };
 
     const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
       onChange({ ...query, legendFormat: evt.currentTarget.value });
@@ -213,21 +194,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                 />
               </EditorField>
             </>
-          )}
-          {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
-            <EditorField
-              label="Split Duration"
-              tooltip="Defines the duration of a single query when query splitting is enabled."
-            >
-              <AutoSizeInput
-                minWidth={14}
-                type="string"
-                min={0}
-                defaultValue={query.splitDuration ?? '1d'}
-                onCommitChange={onChunkRangeChange}
-                invalid={!splitDurationValid}
-              />
-            </EditorField>
           )}
         </QueryOptionGroup>
       </EditorRow>
