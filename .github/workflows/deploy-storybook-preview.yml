@@ -50,6 +50,7 @@ jobs:
 
       - uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
+          environment: prod
           bucket: grafana-storybook-previews
           bucket_path: preview-${{ github.run_id }}/ # TODO: better path prefix - PR ID?
           path: packages/grafana-ui/dist/storybook/
