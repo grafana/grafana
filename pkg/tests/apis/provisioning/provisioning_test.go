@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -650,4 +651,127 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 
 		require.Nil(t, obj["status"], "should not have a status element")
 	}
+}
+
+func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := runGrafana(t)
+	ctx := context.Background()
+
+	const repo = "delete-test-repo"
+	localTmp := helper.RenderObject(t, "testdata/local-write.json.tmpl", map[string]any{
+		"Name":        repo,
+		"SyncEnabled": true,
+		"SyncTarget":  "instance",
+	})
+	_, err := helper.Repositories.Resource.Create(ctx, localTmp, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// create the structure:
+	// dashboard1.json
+	// folder/
+	//  dashboard2.json
+	// 	nested/
+	// 	  dashboard3.json
+	dashboard1 := helper.LoadFile("testdata/all-panels.json")
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("files", "dashboard1.json").
+		Body(dashboard1).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	require.NoError(t, result.Error())
+	dashboard2 := helper.LoadFile("testdata/text-options.json")
+	result = helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("files", "folder", "dashboard2.json").
+		Body(dashboard2).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	require.NoError(t, result.Error())
+	dashboard3 := helper.LoadFile("testdata/timeline-demo.json")
+	result = helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		SubResource("files", "folder", "nested", "dashboard3.json").
+		Body(dashboard3).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	require.NoError(t, result.Error())
+
+	helper.SyncAndWait(t, repo, nil)
+
+	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 3, len(dashboards.Items))
+
+	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 2, len(folders.Items))
+
+	t.Run("delete individual dashboard file, should delete from repo and grafana", func(t *testing.T) {
+		result := helper.AdminREST.Delete().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "dashboard1.json").
+			Do(ctx)
+		require.NoError(t, result.Error())
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
+		require.Error(t, err)
+		dashboards, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.Equal(t, 2, len(dashboards.Items))
+	})
+
+	t.Run("delete folder, should delete from repo and grafana all nested resources too", func(t *testing.T) {
+		// need to delete directly through the url, because the k8s client doesn't support `/` in a subresource
+		// but that is needed by gitsync to know that it is a folder
+		addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+		url := fmt.Sprintf("http://admin:admin@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/folder/", addr, repo)
+		req, err := http.NewRequest(http.MethodDelete, url, nil)
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// should be deleted from the repo
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder")
+		require.Error(t, err)
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard2.json")
+		require.Error(t, err)
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "nested")
+		require.Error(t, err)
+		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "nested", "dashboard3.json")
+		require.Error(t, err)
+
+		// all should be deleted from grafana
+		for _, d := range dashboards.Items {
+			_, err = helper.DashboardsV1.Resource.Get(ctx, d.GetName(), metav1.GetOptions{})
+			require.Error(t, err)
+		}
+		for _, f := range folders.Items {
+			_, err = helper.Folders.Resource.Get(ctx, f.GetName(), metav1.GetOptions{})
+			require.Error(t, err)
+		}
+	})
+
+	t.Run("deleting a non-existent file should fail", func(t *testing.T) {
+		result := helper.AdminREST.Delete().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("files", "non-existent.json").
+			Do(ctx)
+		require.Error(t, result.Error())
+	})
 }

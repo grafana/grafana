@@ -128,12 +128,6 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		// TODO: Implement folder delete
-		if r.Method == http.MethodDelete && isDir {
-			responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
-			return
-		}
-
 		var obj *provisioning.ResourceWrapper
 		code := http.StatusOK
 		switch r.Method {
