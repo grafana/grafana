@@ -408,15 +408,13 @@ export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions
   return [...fields];
 }
 
-export function applyStyles(style: React.CSSProperties, target: HTMLDivElement) {
-  let key: keyof CSSProperties;
-  for (key in style) {
-    target.style.setProperty(key, String(style[key]));
-  }
+export function applyStyles(styles: React.CSSProperties, target: HTMLDivElement) {
+  // INFO: CSSProperties can't be applied using setProperty, so we use Object.assign
+  Object.assign(target.style, styles);
 }
 
-export function removeStyles(style: React.CSSProperties, target: HTMLDivElement) {
-  for (const key in style) {
+export function removeStyles(styles: React.CSSProperties, target: HTMLDivElement) {
+  for (const key in styles) {
     target.style.removeProperty(key);
   }
 }
