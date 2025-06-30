@@ -291,56 +291,61 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 func TestSanitizeHTTPHeaderValueForGRPC(t *testing.T) {
 	testCases := []struct {
 		name     string
-		input    string
+		input    []byte
 		expected string
 	}{
 		{
 			name:     "Valid printable ASCII characters remain unchanged",
-			input:    "Hello World! 123 @#$%^&*()",
+			input:    []byte("Hello World! 123 @#$%^&*()"),
 			expected: "Hello World! 123 @#$%^&*()",
 		},
 		{
 			name: "Extended characters remain unchanged",
 			// %C3%A9 is encoded é
-			input:    "naiv%C3%A9",
+			input:    []byte("naiv%C3%A9"),
+			expected: "naiv%C3%A9",
+		},
+		{
+			name:     "naivé coming in as an iso8859-1 string",
+			input:    []byte{110, 97, 105, 118, 233},
 			expected: "naiv%C3%A9",
 		},
 		{
 			name:     "Control characters are percent-encoded",
-			input:    "hello\x00\x01\x1Fworld",
+			input:    []byte("hello\x00\x01\x1Fworld"),
 			expected: "hello%00%01%1Fworld",
 		},
 		{
 			name:     "Tab character is percent-encoded",
-			input:    "hello\tworld",
+			input:    []byte("hello\tworld"),
 			expected: "hello%09world",
 		},
 		{
 			name:     "Newline character is percent-encoded",
-			input:    "hello\nworld",
+			input:    []byte("hello\nworld"),
 			expected: "hello%0Aworld",
 		},
 		{
 			name:     "Carriage return is percent-encoded",
-			input:    "hello\rworld",
+			input:    []byte("hello\rworld"),
 			expected: "hello%0Dworld",
 		},
 		{
 			name: "Mixed valid and invalid characters",
 			// %F0%9F%9A%80 is encoded 🚀
-			input:    "Valid text\x00invalid\x1Fmore valid %F0%9F%9A%80",
+			input:    []byte("Valid text\x00invalid\x1Fmore valid %F0%9F%9A%80"),
 			expected: "Valid text%00invalid%1Fmore valid %F0%9F%9A%80",
 		},
 		{
 			name:     "Empty string remains empty",
-			input:    "",
+			input:    []byte(""),
 			expected: "",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := sanitizeHTTPHeaderValueForGRPC(tc.input)
+			result := sanitizeHTTPHeaderValueForGRPC(string(tc.input))
 			require.Equal(t, tc.expected, result)
 		})
 	}
