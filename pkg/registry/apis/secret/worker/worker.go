@@ -28,8 +28,8 @@ type Worker struct {
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
 	encryptionManager          contracts.EncryptionManager
+	metrics                    *OutboxMetrics
 	enabled                    bool
-  metrics                    *OutboxMetrics
 }
 
 // DefaultConfig for the secure value outbox worker.
@@ -93,8 +93,8 @@ func NewWorker(
 		keeperMetadataStorage:      keeperMetadataStorage,
 		keeperService:              keeperService,
 		encryptionManager:          encryptionManager,
+		metrics:                    NewOutboxMetrics(reg),
 		enabled:                    enabled,
-    metrics:                    NewOutboxMetrics(reg),
 	}, nil
 }
 

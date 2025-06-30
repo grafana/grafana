@@ -91,7 +91,6 @@ func RegisterAPIService(
 	accessControlService accesscontrol.Service,
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
-	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
 	// Don't register the API.
 	if cfg.StackID != "" {
@@ -129,7 +128,6 @@ func RegisterAPIService(
 		accessClient,
 		encryptionManager,
 		nil, // OSS does not need an allow list.
-		registerer,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
