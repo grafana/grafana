@@ -41,7 +41,7 @@ func defaultWatchOptions() watchOptions {
 	}
 }
 
-func newnotifier(eventStore *eventStore, opts notifierOptions) *notifier {
+func newNotifier(eventStore *eventStore, opts notifierOptions) *notifier {
 	if opts.log == nil {
 		opts.log = &logging.NoOpLogger{}
 	}
@@ -57,7 +57,7 @@ func (n *notifier) lastEventResourceVersion(ctx context.Context) (int64, error) 
 	return e.ResourceVersion, nil
 }
 
-func (n *notifier) cachekey(evt Event) string {
+func (n *notifier) cacheKey(evt Event) string {
 	return fmt.Sprintf("%s~%s~%s~%s~%d", evt.Namespace, evt.Group, evt.Resource, evt.Name, evt.ResourceVersion)
 }
 
@@ -98,7 +98,7 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 					}
 
 					// Skip if the event is already sent
-					if _, found := cache.Get(n.cachekey(evt)); found {
+					if _, found := cache.Get(n.cacheKey(evt)); found {
 						continue
 					}
 
@@ -108,7 +108,7 @@ func (n *notifier) Watch(ctx context.Context, opts watchOptions) <-chan Event {
 					// Send the event
 					select {
 					case events <- evt:
-						cache.Set(n.cachekey(evt), true, opts.LookbackPeriod)
+						cache.Set(n.cacheKey(evt), true, opts.LookbackPeriod)
 					case <-ctx.Done():
 						return
 					}

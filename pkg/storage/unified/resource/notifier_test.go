@@ -18,7 +18,7 @@ func setupTestNotifier(t *testing.T) (*notifier, *eventStore) {
 	})
 	kv := NewBadgerKV(db)
 	eventStore := newEventStore(kv)
-	notifier := newnotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
+	notifier := newNotifier(eventStore, notifierOptions{log: &logging.NoOpLogger{}})
 	return notifier, eventStore
 }
 
@@ -130,7 +130,7 @@ func TestNotifier_cachekey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := notifier.cachekey(tt.event)
+			result := notifier.cacheKey(tt.event)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -300,7 +300,7 @@ func TestNotifier_Watch_EventDeduplication(t *testing.T) {
 	select {
 	case duplicateEvent := <-events:
 		t.Fatalf("Expected no duplicate events, but got: %+v", duplicateEvent)
-	case <-time.After(50 * time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 		// Expected - no duplicate events
 	}
 }
@@ -342,7 +342,7 @@ func TestNotifier_Watch_ContextCancellation(t *testing.T) {
 			t.Fatalf("Expected channel to be closed, but got event: %+v", event)
 		}
 		// Channel is closed as expected
-	case <-time.After(50 * time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 		t.Fatal("Expected channel to be closed quickly after context cancellation")
 	}
 }
@@ -410,7 +410,6 @@ func TestNotifier_Watch_MultipleEvents(t *testing.T) {
 		},
 	}
 
-	// Save events with small delays
 	go func() {
 		for _, event := range testEvents {
 			err := eventStore.Save(ctx, event)
@@ -432,7 +431,7 @@ func TestNotifier_Watch_MultipleEvents(t *testing.T) {
 	// Verify all events were received
 	assert.Len(t, receivedEvents, len(testEvents))
 
-	// Verify the events match (order might vary due to async processing)
+	// Verify the events match and ordered by resource version
 	receivedNames := make([]string, len(receivedEvents))
 	for i, event := range receivedEvents {
 		receivedNames[i] = event.Name

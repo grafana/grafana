@@ -610,11 +610,6 @@ export interface FeatureToggles {
   */
   ssoSettingsLDAP?: boolean;
   /**
-  * Throws an error if a data source has an invalid UIDs
-  * @default true
-  */
-  failWrongDSUID?: boolean;
-  /**
   * Use openFGA as authorization engine.
   */
   zanzana?: boolean;
@@ -1036,4 +1031,9 @@ export interface FeatureToggles {
   * @default false
   */
   newInfluxDSConfigPageDesign?: boolean;
+  /**
+  * Set this to true to enable all app chrome extensions registered by plugins.
+  * @default false
+  */
+  enableAppChromeExtensions?: boolean;
 }
