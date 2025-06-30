@@ -197,6 +197,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
+	promtypemigrations "github.com/grafana/grafana/pkg/tsdb/prometheus/migration"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
 	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
@@ -392,6 +393,9 @@ var wireBasicSet = wire.NewSet(
 	secretsMigrations.ProvideDataSourceMigrationService,
 	secretsMigrations.ProvideSecretMigrationProvider,
 	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
+	promtypemigrations.ProvidePromTypeMigrationProvider,
+	promtypemigrations.ProvidePromMigrationService,
+	wire.Bind(new(promtypemigrations.PromTypeMigrationProvider), new(*promtypemigrations.PromTypeMigrationProviderImpl)),
 	resourcepermissions.NewActionSetService,
 	wire.Bind(new(accesscontrol.ActionResolver), new(resourcepermissions.ActionSetService)),
 	wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
