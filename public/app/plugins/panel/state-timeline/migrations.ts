@@ -2,7 +2,7 @@ import { isArray } from 'lodash';
 
 import { FieldConfigSource, MappingType, PanelModel, ValueMap, RangeMap, ValueMapping } from '@grafana/data';
 
-import { FieldConfig, Options, StateTimelineLegendValues } from './panelcfg.gen';
+import { FieldConfig, Options } from './panelcfg.gen';
 
 // This is called when the panel changes from another panel
 export const timelinePanelChangedHandler = (
@@ -80,11 +80,6 @@ export const timelinePanelChangedHandler = (
 
     // mutates the input
     panel.fieldConfig = fieldConfig;
-  }
-
-  // Ensure existing panels get the new legend values default
-  if (options.legend && (!options.legend.values || options.legend.values.length === 0)) {
-    options.legend.values = [StateTimelineLegendValues.Percentage];
   }
 
   return options;

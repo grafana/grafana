@@ -162,7 +162,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       name: 'Legend values',
       description: 'Select values to show in the legend',
       category: ['Legend'],
-      defaultValue: StateTimelineLegendValues.Percentage,
       settings: {
         options: [
           { value: StateTimelineLegendValues.Duration, label: 'Duration' },
