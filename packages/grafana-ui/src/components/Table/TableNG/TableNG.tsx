@@ -271,7 +271,6 @@ export function TableNG(props: TableNGProps) {
         const cellType = cellOptions.type;
         const fieldType = columnTypes[displayName];
         const shouldWrap = textWraps[displayName];
-        // const _rowHeight = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight
         const shouldOverflow = shouldTextOverflow(fieldType, cellType, shouldWrap, cellInspect);
 
         let lastRowIdx = -1;
