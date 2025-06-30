@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -274,6 +275,22 @@ func (s *outOfDateVersionStep) parseVersionInfo(currentVersion *semver.Version, 
 					info.latestMajorVersions[release.Major()] = *release
 				}
 			}
+		}
+	}
+
+	// Keep only the last 2 newer major versions
+	if len(info.latestMajorVersions) > 2 {
+		majorVersions := make([]uint64, 0, len(info.latestMajorVersions))
+		for major := range info.latestMajorVersions {
+			majorVersions = append(majorVersions, major)
+		}
+
+		slices.SortFunc(majorVersions, func(a, b uint64) int {
+			return int(b - a)
+		})
+
+		for _, major := range majorVersions[2:] {
+			delete(info.latestMajorVersions, major)
 		}
 	}
 

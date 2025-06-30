@@ -71,7 +71,7 @@ func (c *check) Steps() []checks.Step {
 			ghClient:       github.NewClient(nil).Repositories,
 		},
 		&outOfDateVersionStep{
-			GrafanaVersion: "v10.4.17", //c.cfg.BuildVersion,
+			GrafanaVersion: "v9.5.0", //c.cfg.BuildVersion,
 			ghClient:       github.NewClient(nil).Repositories,
 		},
 	}
