@@ -52,13 +52,13 @@ To download your Grafana Enterprise license:
 
 You must install a Grafana Enterprise build to use the enterprise features, which you can [download](https://grafana.com/grafana/download?edition=enterprise).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If you already use Grafana OSS, you can replace it with the same version of Grafana Enterprise.
 Ensure that you back up the configuration and database before proceeding.
 For more information, refer to [Back up Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/back-up-grafana/).
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 There is more than one way to add the license to a Grafana instance:
 

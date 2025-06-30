@@ -19,7 +19,11 @@ var (
 	ErrEncryptedValueNotFound = errors.New("encrypted value not found")
 )
 
-func ProvideEncryptedValueStorage(db contracts.Database, tracer trace.Tracer, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
+func ProvideEncryptedValueStorage(
+	db contracts.Database,
+	tracer trace.Tracer,
+	features featuremgmt.FeatureToggles,
+) (contracts.EncryptedValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptedValStorage{}, nil

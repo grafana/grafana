@@ -43,9 +43,10 @@ export const openQueryLibrary = async () => {
   const button = screen.getByRole('button', { name: 'Add query from library' });
   await userEvent.click(button);
   await waitFor(async () => {
-    screen.getByRole('dialog', {
-      name: 'Drawer title Query library',
+    const container = screen.getByRole('dialog', {
+      name: /Drawer title/,
     });
+    within(container).getByText('Query library');
   });
 };
 

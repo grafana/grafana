@@ -222,6 +222,9 @@
       "text-no-resources": "沒有找到資源",
       "title-error-occurred": "從 Azure Monitor 請求資源時發生錯誤"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "資源搜尋",
       "placeholder-resource-search": "搜尋資源"

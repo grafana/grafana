@@ -206,14 +206,10 @@ type QueryEditorProperty struct {
 
 // NewQueryEditorProperty creates a new QueryEditorProperty object.
 func NewQueryEditorProperty() *QueryEditorProperty {
-	return &QueryEditorProperty{}
+	return &QueryEditorProperty{
+		Type: QueryEditorPropertyTypeString,
+	}
 }
-
-type QueryEditorPropertyType string
-
-const (
-	QueryEditorPropertyTypeString QueryEditorPropertyType = "string"
-)
 
 type QueryEditorArrayExpression struct {
 	Type        QueryEditorArrayExpressionType                                  `json:"type"`
@@ -282,6 +278,12 @@ type QueryEditorOperatorValueType = StringOrBoolOrInt64OrArrayOfQueryEditorOpera
 func NewQueryEditorOperatorValueType() *QueryEditorOperatorValueType {
 	return NewStringOrBoolOrInt64OrArrayOfQueryEditorOperatorType()
 }
+
+type QueryEditorPropertyType string
+
+const (
+	QueryEditorPropertyTypeString QueryEditorPropertyType = "string"
+)
 
 type LogsQueryLanguage string
 

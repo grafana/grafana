@@ -1,6 +1,7 @@
 package secret
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -67,6 +69,7 @@ func NewSecretAPIBuilder(
 	accessClient claims.AccessClient,
 	encryptionManager contracts.EncryptionManager,
 	decryptersAllowList map[string]struct{},
+	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
 	worker, err := worker.NewWorker(worker.Config{
 		BatchSize:                    20,
@@ -81,6 +84,7 @@ func NewSecretAPIBuilder(
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
+		registerer,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("instantiating outbox worker: %w", err)
@@ -113,6 +117,7 @@ func RegisterAPIService(
 	accessControlService accesscontrol.Service,
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
+	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
 	// Don't register the API.
 	if cfg.StackID != "" {
@@ -150,6 +155,7 @@ func RegisterAPIService(
 		accessClient,
 		encryptionManager,
 		nil, // OSS does not need an allow list.
+		registerer,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
@@ -191,6 +197,10 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return fmt.Errorf("scheme set version priority: %w", err)
 	}
 
+	return nil
+}
+
+func (b *SecretAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return nil
 }
 
@@ -691,27 +701,14 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 
 	// When creating a resource and the name is empty, we need to generate one.
 	if operation == admission.Create && a.GetName() == "" {
-		generatedName, err := util.GetRandomString(8)
-		if err != nil {
-			return fmt.Errorf("generate random string: %w", err)
-		}
-
 		switch typedObj := obj.(type) {
 		case *secretv0alpha1.SecureValue:
-			optionalPrefix := typedObj.GenerateName
-			if optionalPrefix == "" {
-				optionalPrefix = "sv-"
-			}
-
-			typedObj.Name = optionalPrefix + generatedName
+			typedObj.SetName(cmp.Or(typedObj.GetGenerateName(), "sv-") + util.GenerateShortUID())
+			logging.FromContext(ctx).Debug("generated name for secure value", "name", typedObj.Name)
 
 		case *secretv0alpha1.Keeper:
-			optionalPrefix := typedObj.GenerateName
-			if optionalPrefix == "" {
-				optionalPrefix = "kp-"
-			}
-
-			typedObj.Name = optionalPrefix + generatedName
+			typedObj.SetName(cmp.Or(typedObj.GetGenerateName(), "kp-") + util.GenerateShortUID())
+			logging.FromContext(ctx).Debug("generated name for keeper", "name", typedObj.Name)
 		}
 	}
 

@@ -76,14 +76,14 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 
 	database := database.ProvideDatabase(testDB, tracer)
 
-	outboxQueue := metadata.ProvideOutboxQueue(database, tracer)
+	outboxQueue := metadata.ProvideOutboxQueue(database, tracer, nil)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, features)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, features)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
 	// Initialize access client + access control
@@ -100,7 +100,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 			},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
@@ -118,7 +118,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
 	require.NoError(t, err)
 
-	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encValueStore)
+	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encValueStore, nil)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 
@@ -139,6 +139,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
+		nil, // metrics
 	)
 	require.NoError(t, err)
 

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -20,9 +21,15 @@ type encryptionStoreImpl struct {
 	dialect sqltemplate.Dialect
 	tracer  trace.Tracer
 	log     log.Logger
+	metrics *DataKeyMetrics
 }
 
-func ProvideDataKeyStorage(db contracts.Database, tracer trace.Tracer, features featuremgmt.FeatureToggles) (contracts.DataKeyStorage, error) {
+func ProvideDataKeyStorage(
+	db contracts.Database,
+	tracer trace.Tracer,
+	features featuremgmt.FeatureToggles,
+	registerer prometheus.Registerer,
+) (contracts.DataKeyStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptionStoreImpl{}, nil
@@ -33,6 +40,7 @@ func ProvideDataKeyStorage(db contracts.Database, tracer trace.Tracer, features 
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 		tracer:  tracer,
 		log:     log.New("encryption.store"),
+		metrics: NewDataKeyMetrics(registerer),
 	}
 
 	return store, nil

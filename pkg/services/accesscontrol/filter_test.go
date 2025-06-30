@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestFilter_Datasources(t *testing.T) {
+func TestIntegrationFilter_Datasources(t *testing.T) {
 	tests := []filterDatasourcesTestCase{
 		{
 			desc:    "expect all data sources to be returned",

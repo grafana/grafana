@@ -53,7 +53,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error)
 	database := database.ProvideDatabase(testDB, tracer)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
 	require.NoError(t, err)
 
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
@@ -63,7 +63,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error)
 	require.NoError(t, err)
 
 	// Initialize the keeper service
-	keeperService, err := ProvideService(tracer, encValueStore, encryptionManager)
+	keeperService, err := ProvideService(tracer, encValueStore, encryptionManager, nil)
 
 	return keeperService, err
 }

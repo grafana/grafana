@@ -35,7 +35,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 			},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
 	require.NoError(tb, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: tb}

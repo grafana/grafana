@@ -49,6 +49,12 @@ To use the Grafana migration assistant, you need:
 - [`Admin`](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/) access to the Grafana Cloud Stack. To check your access level, go to `https://grafana.com/orgs/<YOUR-ORG-NAME>/members`.
 - [Grafana server administrator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#grafana-server-administrators) access to your existing Grafana OSS/Enterprise instance. To check your access level, go to `https://<GRAFANA-ONPREM-URL>/admin/users`.
 - Internet access from your existing Grafana OSS/Enterprise instance.
+- If you are running Grafana in a [highly-available setup](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/), we recommend scaling Grafana down to one replica to avoid a [known bug](https://github.com/grafana/grafana/issues/107264).
+- If your network requires external services to be on an allowlist to allow access, add the following IPs and URLs to your allowlist:
+  - [Hosted Grafana](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana)
+  - [Hosted Alerts](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-alerts)
+  - [AWS IP address ranges](https://docs.aws.amazon.com/en_us/vpc/latest/userguide/aws-ip-ranges.html) for the S3 service
+  - `*.grafana.net`
 
 ## Access the migration assistant
 
@@ -109,7 +115,7 @@ After connecting to the cloud stack, this is the empty state of the migration as
    | Folders | Nothing else |
    | All Alert rule groups | All other resources |
    | Alert Rules | <ul><li>Dashboards</li> <li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li> <li>Notification Policies</li> <li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
-   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li></ul> |
+   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
    | Notification Templates | Nothing else |
    | Contact Points | Notification Templates |
    | Mute Timings | Nothing else |
@@ -143,7 +149,7 @@ After a snapshot is created, a list of resources appears with resource Type and 
 
 ## Snapshots created by the migration assistant
 
-The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported Resources](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#supported-resources) for more details.
+The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported Resources](#supported-resources) for more details.
 
 When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage.
 
@@ -151,7 +157,7 @@ When you create a snapshot, the migration assistant makes a copy of all the reso
 In Grafana v11.2 to v11.6, you can't select specific resources to include in the snapshot, such as only dashboards. All supported resources are included by default.
 {{< /admonition >}}
 
-Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#migrate-multiple-organizations) for more information and guidance.
+Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](#migrate-multiple-organizations) for more information and guidance.
 
 ## Resource migration details
 
