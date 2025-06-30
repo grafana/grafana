@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ControlledCollapse, getDragStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, ControlledCollapse, getDragStyles, IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
@@ -24,7 +24,7 @@ interface Props {
 }
 
 export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, onResize }: Props) => {
-  const { closeDetails, detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
+  const { closeDetails, detailsWidth, onPermalinkClick, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -35,6 +35,14 @@ export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, o
     }
     onResize();
   }, [onResize, setDetailsWidth]);
+
+  const getLogLine = useCallback(() => {
+    return logs[0].entry;
+  }, [logs]);
+
+  const copyLinkToLogLine = useCallback(() => {
+    onPermalinkClick?.(logs[0]);
+  }, [logs, onPermalinkClick]);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
@@ -50,10 +58,32 @@ export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, o
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>
-          <div className={styles.closeIconContainer}>
+          <div className={styles.header}>
+            <Input />
+            {onPermalinkClick && logs[0].rowId !== undefined && logs[0].uid && (
+              <IconButton
+                tooltip={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}
+                aria-label={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}
+                tooltipPlacement="top"
+                size="md"
+                name="share-alt"
+                onClick={copyLinkToLogLine}
+                tabIndex={0}
+              />
+            )}
+            <ClipboardButton
+              className={styles.copyLogButton}
+              icon="copy"
+              variant="secondary"
+              fill="text"
+              size="md"
+              getText={getLogLine}
+              tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
+              tooltipPlacement="top"
+              tabIndex={0}
+            />
             <IconButton
               name="times"
-              className={styles.closeIcon}
               aria-label={t('logs.log-details.close', 'Close log details')}
               onClick={closeDetails}
             />
@@ -189,14 +219,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'auto',
     height: '100%',
   }),
-  closeIconContainer: css({
-    textAlign: 'right',
-    position: 'sticky',
+  header: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: theme.spacing(0.5),
     zIndex: theme.zIndex.modal,
-    paddingBottom: theme.spacing(0.5),
+    height: theme.spacing(5),
+    marginBottom: theme.spacing(0.5),
+    padding: theme.spacing(0.5, 1),
+    position: 'sticky',
     top: 0,
   }),
-  closeIcon: css({}),
+  copyLogButton: css({
+    padding: 0,
+    height: theme.spacing(4),
+    width: theme.spacing(2.5),
+    overflow: 'hidden',
+  }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
   }),
