@@ -1,5 +1,4 @@
 import { isNumber, isString } from 'lodash';
-import { CSSProperties } from 'react';
 
 import { DataFrame, Field, AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
@@ -415,6 +414,7 @@ export function applyStyles(styles: React.CSSProperties, target: HTMLDivElement)
 
 export function removeStyles(styles: React.CSSProperties, target: HTMLDivElement) {
   for (const key in styles) {
-    target.style.removeProperty(key);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+    target.style[key as any] = '';
   }
 }
