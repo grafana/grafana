@@ -68,7 +68,7 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		}
 		out = createdSecureValue
 
-		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+		if err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
 			RequestID:       requestID,
 			Type:            contracts.CreateSecretOutboxMessage,
 			Name:            sv.Name,
@@ -196,7 +196,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 
 		// Only the value needs to be updated asynchronously by the outbox worker
 		if encryptedSecret != "" {
-			if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+			if err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
 				RequestID:       requestID,
 				Type:            contracts.UpdateSecretOutboxMessage,
 				Name:            newSecureValue.Name,
@@ -246,7 +246,7 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 			return fmt.Errorf("setting secure value status phase: %+w", err)
 		}
 
-		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+		if err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
 			RequestID:  requestID,
 			Type:       contracts.DeleteSecretOutboxMessage,
 			Name:       name,

@@ -51,7 +51,7 @@ type outboxMessageDB struct {
 	Created         int64
 }
 
-func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (messageID int64, err error) {
+func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (err error) {
 	ctx, span := s.tracer.Start(ctx, "outboxStore.Append", trace.WithAttributes(
 		attribute.String("name", input.Name),
 		attribute.String("namespace", input.Namespace),
@@ -65,27 +65,23 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 			span.SetStatus(codes.Error, "failed to append outbox message")
 			span.RecordError(err)
 		}
-
-		if messageID != 0 {
-			span.SetAttributes(attribute.Int64("messageID", messageID))
-		}
 	}()
 
 	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
 	start := time.Now()
-	messageID, err = s.insertMessage(ctx, input)
+	err = s.insertMessage(ctx, input)
 	if err != nil {
-		return messageID, fmt.Errorf("inserting message into outbox table: %+w", err)
+		return fmt.Errorf("inserting message into outbox table: %+w", err)
 	}
 
 	s.metrics.OutboxAppendDuration.WithLabelValues(string(input.Type)).Observe(time.Since(start).Seconds())
 	s.metrics.OutboxAppendCount.WithLabelValues(string(input.Type)).Inc()
 
-	return messageID, nil
+	return nil
 }
 
-func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendOutboxMessage) (int64, error) {
+func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendOutboxMessage) error {
 	keeperName := sql.NullString{}
 	if input.KeeperName != nil {
 		keeperName = sql.NullString{
@@ -127,32 +123,27 @@ func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendO
 
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxAppend, req)
 	if err != nil {
-		return 0, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
 	}
 
 	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		if unifiedsql.IsRowAlreadyExistsError(err) {
-			return 0, contracts.ErrSecureValueOperationInProgress
+			return contracts.ErrSecureValueOperationInProgress
 		}
-		return 0, fmt.Errorf("inserting message into secure value outbox table: %w", err)
+		return fmt.Errorf("inserting message into secure value outbox table: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("get rows affected: %w", err)
+		return fmt.Errorf("get rows affected: %w", err)
 	}
 
 	if rowsAffected != 1 {
-		return 0, fmt.Errorf("expected to affect 1 row, but affected %d", rowsAffected)
+		return fmt.Errorf("expected to affect 1 row, but affected %d", rowsAffected)
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return id, fmt.Errorf("fetching last inserted id: %w", err)
-	}
-
-	return id, nil
+	return nil
 }
 
 func (s *outboxStore) ReceiveN(ctx context.Context, limit uint) ([]contracts.OutboxMessage, error) {

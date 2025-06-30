@@ -54,7 +54,7 @@ type OutboxMessage struct {
 
 type OutboxQueue interface {
 	// Appends a message to the outbox queue
-	Append(ctx context.Context, message AppendOutboxMessage) (int64, error)
+	Append(ctx context.Context, message AppendOutboxMessage) error
 	// Receives at most n messages from the outbox queue
 	ReceiveN(ctx context.Context, n uint) ([]OutboxMessage, error)
 	// Deletes a message from the outbox queue
