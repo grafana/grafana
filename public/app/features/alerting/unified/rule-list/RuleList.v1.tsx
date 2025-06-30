@@ -3,9 +3,8 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
-import { config, logInfo } from '@grafana/runtime';
+import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
@@ -22,6 +21,7 @@ import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
+import { useIsLLMPluginEnabled } from '../hooks/llmUtils';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
@@ -29,7 +29,6 @@ import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector'
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
-import { isLocalDevEnv } from '../utils/misc';
 import { createRelativeUrl } from '../utils/url';
 
 import { RuleListPageTitle } from './RuleListPageTitle';
@@ -175,8 +174,7 @@ export function CreateAlertButton() {
 
   const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
 
-  const isCloudEdition = config.buildInfo.edition !== GrafanaEdition.OpenSource;
-  const isAIEnabled = isLocalDevEnv() || isCloudEdition;
+  const { value: canRenderGenAIAlertRuleButton } = useIsLLMPluginEnabled();
 
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
@@ -188,7 +186,7 @@ export function CreateAlertButton() {
         >
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
-        {canCreateGrafanaRules && isAIEnabled && <GenAIAlertRuleButton />}
+        {canCreateGrafanaRules && canRenderGenAIAlertRuleButton && <GenAIAlertRuleButton />}
       </Stack>
     );
   }

@@ -29,6 +29,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { useIsLLMPluginEnabled } from '../../hooks/llmUtils';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -169,6 +170,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     setValue('content', template);
   };
 
+  const { value: canRenderGenAITemplateButton } = useIsLLMPluginEnabled();
   return (
     <>
       <FormProvider {...formApi}>
@@ -281,7 +283,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                   </Dropdown>
                                 )}
                                 {/* GenAI button – only available for Grafana Alertmanager */}
-                                {isGrafanaAlertManager && (
+                                {isGrafanaAlertManager && canRenderGenAITemplateButton && (
                                   <GenAITemplateButton
                                     onTemplateGenerated={handleTemplateGenerated}
                                     disabled={isProvisioned}

@@ -25,6 +25,7 @@ import {
 
 import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEventsReached } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { useIsLLMPluginEnabled } from '../../../hooks/llmUtils';
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
@@ -127,13 +128,17 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
   const styles = useStyles2(getStyles);
 
+  const { value: canRenderGenAITriageButton } = useIsLLMPluginEnabled();
+
   return (
     <Stack direction="column" gap={0}>
       <div className={styles.headerContainer}>
         <ListHeader />
-        <div className={styles.triageButtonContainer}>
-          <GenAITriageButton logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
-        </div>
+        {canRenderGenAITriageButton && (
+          <div className={styles.triageButtonContainer}>
+            <GenAITriageButton logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
+          </div>
+        )}
       </div>
       <ul>
         {pageItems.map((record) => {
