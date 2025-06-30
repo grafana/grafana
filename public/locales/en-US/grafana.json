@@ -2861,6 +2861,22 @@
         "title-warning": "Warning"
       }
     },
+    "triage-ai": {
+      "button": "Analyze with AI",
+      "modal": {
+        "analysis-title": "Alert Triage Analysis",
+        "analyze": "Analyze",
+        "analyzing": "🤖 Analyzing {logRecords.length} alert events...",
+        "custom-question": {
+          "help": "Leave empty for general triage analysis, or ask a specific question about the alert events.",
+          "label": "Ask a specific question (optional)",
+          "placeholder": "e.g., \"What's causing the database alerts ? \" or \"Are these alerts related to the recent deployment ? \""
+        },
+        "description": "AI analysis of current alert events to help understand patterns, prioritize response, and identify potential issues.",
+        "error": "{error}",
+        "title": "Alert Triage Analysis"
+      }
+    },
     "type-selector-button": {
       "add-expression": "Add expression"
     },

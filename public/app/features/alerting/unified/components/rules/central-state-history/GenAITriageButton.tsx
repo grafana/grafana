@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { llm } from '@grafana/llm';
-import { Button, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Modal, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { LogRecord } from '../state-history/common';
 
@@ -121,6 +121,7 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [customQuestion, setCustomQuestion] = useState('');
 
   // Tool handler for getting event data
   const handleGetEventData = useCallback(
@@ -217,9 +218,13 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
   });
 
   // Contains the actual user request for analysis
-  const createUserPrompt = (): llm.Message => ({
+  const createUserPrompt = (customQuestion?: string): llm.Message => ({
     role: 'user',
-    content: `Please analyze the current alert events and provide triage insights. I need to understand what's happening and prioritize my response. Focus on:
+    content: customQuestion
+      ? `Please analyze the current alert events and answer this specific question: "${customQuestion}"
+
+Use the get_event_data tool to access the current alert events and provide targeted analysis based on my question.`
+      : `Please analyze the current alert events and provide triage insights. I need to understand what's happening and prioritize my response. Focus on:
 
 1. What alerts need immediate attention?
 2. Are there any patterns or correlations I should be aware of?
@@ -321,7 +326,7 @@ Please use the get_event_data tool to access the current alert events and provid
       return;
     }
 
-    const messages: llm.Message[] = [createSystemPrompt(), createUserPrompt()];
+    const messages: llm.Message[] = [createSystemPrompt(), createUserPrompt(customQuestion.trim() || undefined)];
     handleAnalyzeWithTools(messages);
   };
 
@@ -329,6 +334,7 @@ Please use the get_event_data tool to access the current alert events and provid
     setShowModal(false);
     setAnalysis(null);
     setError(null);
+    setCustomQuestion('');
   };
 
   return (
@@ -336,11 +342,7 @@ Please use the get_event_data tool to access the current alert events and provid
       <Button
         variant="secondary"
         icon="ai"
-        onClick={() => {
-          setShowModal(true);
-          // Auto-start analysis when modal opens
-          setTimeout(() => handleAnalyze(), 100);
-        }}
+        onClick={() => setShowModal(true)}
         className={className}
         data-testid="triage-ai-button"
         disabled={logRecords.length === 0}
@@ -361,6 +363,27 @@ Please use the get_event_data tool to access the current alert events and provid
               potential issues.
             </Trans>
           </Text>
+
+          <Stack direction="column" gap={1}>
+            <Text variant="h6">
+              <Trans i18nKey="alerting.triage-ai.modal.custom-question.label">Ask a specific question (optional)</Trans>
+            </Text>
+            <TextArea
+              placeholder={t(
+                'alerting.triage-ai.modal.custom-question.placeholder',
+                `e.g., "What's causing the database alerts ? " or "Are these alerts related to the recent deployment ? "`
+              )}
+              value={customQuestion}
+              onChange={(e) => setCustomQuestion(e.currentTarget.value)}
+              rows={3}
+              disabled={isAnalyzing}
+            />
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="alerting.triage-ai.modal.custom-question.help">
+                Leave empty for general triage analysis, or ask a specific question about the alert events.
+              </Trans>
+            </Text>
+          </Stack>
 
           {error && (
             <div className={styles.error}>
@@ -384,9 +407,9 @@ Please use the get_event_data tool to access the current alert events and provid
             <Button variant="secondary" onClick={handleClose}>
               <Trans i18nKey="common.close">Close</Trans>
             </Button>
-            {!isAnalyzing && (
-              <Button variant="primary" onClick={handleAnalyze} icon="sync">
-                <Trans i18nKey="alerting.triage-ai.modal.reanalyze">Re-analyze</Trans>
+            {!analysis && !isAnalyzing && (
+              <Button variant="primary" onClick={handleAnalyze} icon="ai">
+                <Trans i18nKey="alerting.triage-ai.modal.analyze">Analyze</Trans>
               </Button>
             )}
           </Stack>
