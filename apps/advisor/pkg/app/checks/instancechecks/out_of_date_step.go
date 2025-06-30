@@ -22,6 +22,13 @@ const (
 	outOfDateVersion = "out_of_date_version"
 )
 
+type versionInfo struct {
+	latestSecurityPatch semver.Version
+	latestPatch         semver.Version
+	latestMinor         semver.Version
+	latestMajorVersions map[uint64]semver.Version
+}
+
 type ghReleaseLister interface {
 	GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error)
 	ListReleases(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.RepositoryRelease, *github.Response, error)
@@ -78,128 +85,76 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 		log.Warn("Unable to fetch the Grafana versions from GitHub, falling back to website", "error", err)
 	}
 
-	// Check the latest patch, minor and major versions.
-	latestSecurityPatch := *currentVersion
-	latestPatch := *currentVersion
-	latestMinor := *currentVersion
-	latestMajor := *currentVersion
-
-	for _, release := range releases {
-		// Find the latest security patch.
-		if release.Major() == latestSecurityPatch.Major() && release.Minor() == latestSecurityPatch.Minor() && release.Patch() == latestSecurityPatch.Patch() && release.Metadata() != latestSecurityPatch.Metadata() {
-			currentSecurityRelease, err := parseSecurityRelease(currentVersion.Metadata())
-			if err != nil {
-				log.Error("Unable to parse current version security release metadata", "version", currentVersion.String(), "error", err)
-				continue
-			}
-
-			upstreamSecurityRelease, err := parseSecurityRelease(release.Metadata())
-			if err != nil {
-				log.Error("Unable to parse release version security release metadata", "version", release.String(), "error", err)
-				continue
-			}
-
-			if upstreamSecurityRelease > currentSecurityRelease {
-				latestSecurityPatch = *release
-			}
-		}
-
-		// Find the latest patch version.
-		if release.Major() == latestPatch.Major() && release.Minor() == latestPatch.Minor() && release.Patch() > latestPatch.Patch() {
-			latestPatch = *release
-		}
-
-		// Find the latest minor version.
-		if release.Major() == latestMinor.Major() {
-			if release.Minor() > latestMinor.Minor() {
-				latestMinor = *release
-			} else if release.Minor() == latestMinor.Minor() && release.Patch() > latestMinor.Patch() {
-				latestMinor = *release
-			}
-		}
-
-		// Find the latest major version.
-		{
-			if release.Major() > latestMajor.Major() {
-				latestMajor = *release
-			} else if release.Major() == latestMajor.Major() {
-				if release.Minor() > latestMajor.Minor() {
-					latestMajor = *release
-				} else if release.Minor() == latestMajor.Minor() && release.Patch() > latestMajor.Patch() {
-					latestMajor = *release
-				}
-			}
-		}
-	}
+	versionInfo := s.parseVersionInfo(currentVersion, releases, log)
 
 	reportFailures := make([]advisor.CheckReportFailure, 0)
 
-	if latestMajor.Major() > currentVersion.Major() {
+	for majorVersion, latestVersionForMajor := range versionInfo.latestMajorVersions {
 		reportFailures = append(
 			reportFailures,
 			checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current major is still supported
 				s.ID(),
-				fmt.Sprintf("There's a new major version available: %s", latestMajor.String()),
+				fmt.Sprintf("There's a new major version available: %s", latestVersionForMajor.String()),
 				outOfDateVersion,
 				[]advisor.CheckErrorLink{
 					{
-						Message: "Upgrade to the latest major version",
-						Url:     "https://grafana.com/grafana/download/" + latestMajor.String(),
+						Message: fmt.Sprintf("Upgrade to major version %d", majorVersion),
+						Url:     "https://grafana.com/grafana/download/" + latestVersionForMajor.String(),
 					},
 				},
 			),
 		)
 	}
 
-	if latestMinor.Minor() > currentVersion.Minor() {
+	if versionInfo.latestMinor.Minor() > currentVersion.Minor() {
 		reportFailures = append(
 			reportFailures,
 			checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current minor is still supported
 				s.ID(),
-				fmt.Sprintf("There's a new minor version available: %s", latestMinor.String()),
+				fmt.Sprintf("There's a new minor version available: %s", versionInfo.latestMinor.String()),
 				outOfDateVersion,
 				[]advisor.CheckErrorLink{
 					{
 						Message: "Download",
-						Url:     "https://grafana.com/grafana/download/" + latestMinor.String(),
+						Url:     "https://grafana.com/grafana/download/" + versionInfo.latestMinor.String(),
 					},
 				},
 			),
 		)
 	}
 
-	if latestPatch.Patch() > currentVersion.Patch() {
+	if versionInfo.latestPatch.Patch() > currentVersion.Patch() {
 		reportFailures = append(
 			reportFailures,
 			checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				s.ID(),
-				fmt.Sprintf("New patch version available: %s", latestPatch.String()),
+				fmt.Sprintf("New patch version available: %s", versionInfo.latestPatch.String()),
 				outOfDateVersion,
 				[]advisor.CheckErrorLink{
 					{
 						Message: "Download",
-						Url:     "https://grafana.com/grafana/download/" + latestPatch.String(),
+						Url:     "https://grafana.com/grafana/download/" + versionInfo.latestPatch.String(),
 					},
 				},
 			),
 		)
 	}
 
-	if latestSecurityPatch.Patch() == currentVersion.Patch() && latestSecurityPatch.Metadata() != currentVersion.Metadata() {
+	if versionInfo.latestSecurityPatch.Patch() == currentVersion.Patch() && versionInfo.latestSecurityPatch.Metadata() != currentVersion.Metadata() {
 		reportFailures = append(
 			reportFailures,
 			checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				s.ID(),
-				fmt.Sprintf("New security patch available: %s", latestSecurityPatch.String()),
+				fmt.Sprintf("New security patch available: %s", versionInfo.latestSecurityPatch.String()),
 				outOfDateVersion,
 				[]advisor.CheckErrorLink{
 					{
 						Message: "Upgrade now",
-						Url:     "https://grafana.com/grafana/download/" + latestSecurityPatch.String(),
+						Url:     "https://grafana.com/grafana/download/" + versionInfo.latestSecurityPatch.String(),
 					},
 				},
 			),
@@ -234,6 +189,66 @@ func parseSecurityRelease(metadata string) (int, error) {
 	}
 
 	return releaseNumber, nil
+}
+
+func (s *outOfDateVersionStep) parseVersionInfo(currentVersion *semver.Version, releases []*semver.Version, log logging.Logger) *versionInfo {
+	info := &versionInfo{
+		latestSecurityPatch: *currentVersion,
+		latestPatch:         *currentVersion,
+		latestMinor:         *currentVersion,
+		latestMajorVersions: make(map[uint64]semver.Version),
+	}
+
+	for _, release := range releases {
+		// Find the latest security patch.
+		if release.Major() == info.latestSecurityPatch.Major() && release.Minor() == info.latestSecurityPatch.Minor() && release.Patch() == info.latestSecurityPatch.Patch() && release.Metadata() != info.latestSecurityPatch.Metadata() {
+			currentSecurityRelease, err := parseSecurityRelease(currentVersion.Metadata())
+			if err != nil {
+				log.Error("Unable to parse current version security release metadata", "version", currentVersion.String(), "error", err)
+				continue
+			}
+
+			upstreamSecurityRelease, err := parseSecurityRelease(release.Metadata())
+			if err != nil {
+				log.Error("Unable to parse release version security release metadata", "version", release.String(), "error", err)
+				continue
+			}
+
+			if upstreamSecurityRelease > currentSecurityRelease {
+				info.latestSecurityPatch = *release
+			}
+		}
+
+		// Find the latest patch version.
+		if release.Major() == info.latestPatch.Major() && release.Minor() == info.latestPatch.Minor() && release.Patch() > info.latestPatch.Patch() {
+			info.latestPatch = *release
+		}
+
+		// Find the latest minor version.
+		if release.Major() == info.latestMinor.Major() {
+			if release.Minor() > info.latestMinor.Minor() {
+				info.latestMinor = *release
+			} else if release.Minor() == info.latestMinor.Minor() && release.Patch() > info.latestMinor.Patch() {
+				info.latestMinor = *release
+			}
+		}
+
+		// Find the latest version for each major version that's newer than current.
+		if release.Major() > currentVersion.Major() {
+			if existing, exists := info.latestMajorVersions[release.Major()]; !exists {
+				info.latestMajorVersions[release.Major()] = *release
+			} else {
+				// Update if this release is newer than the existing one for this major
+				if release.Minor() > existing.Minor() {
+					info.latestMajorVersions[release.Major()] = *release
+				} else if release.Minor() == existing.Minor() && release.Patch() > existing.Patch() {
+					info.latestMajorVersions[release.Major()] = *release
+				}
+			}
+		}
+	}
+
+	return info
 }
 
 func (s *outOfDateVersionStep) fetchVersionsFromGitHub(ctx context.Context, currentVersion *semver.Version) ([]*semver.Version, error) {
