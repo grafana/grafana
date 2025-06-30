@@ -333,21 +333,28 @@ export function useTypographyCtx(): TypographyCtx {
   return typographyCtx;
 }
 
-function getLongestCellText(
-  fields: Field[],
-  wrapWidths: number[],
-  avgCharWidth: number,
-  wrappedColIdxs: boolean[],
-  getText: (field: Field) => string | null | undefined
-): { text: string; idx: number; numLines: number } {
+interface GetLongesCellTextOptions {
+  fields: Field[];
+  wrapWidths: number[];
+  avgCharWidth: number;
+  wrappedColIdxs: boolean[];
+  getText: (field: Field) => string | null | undefined;
+}
+
+function getLongestCellText({ fields, wrapWidths, avgCharWidth, wrappedColIdxs, getText }: GetLongesCellTextOptions): {
+  text: string;
+  idx: number;
+  numLines: number;
+} {
   let maxLines = 1;
   let maxLinesIdx = -1;
   let maxLinesText = '';
+  const spaceRegex = /[\s]+/;
 
   for (let i = 0; i < wrapWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const cellTextRaw = getText(fields[i]);
-      if (cellTextRaw != null) {
+      if (cellTextRaw != null && spaceRegex.test(cellTextRaw)) {
         const cellText = String(cellTextRaw);
         const charsPerLine = wrapWidths[i] / avgCharWidth;
         const approxLines = cellText.length / charsPerLine;
@@ -390,14 +397,15 @@ export function useHeaderHeight({
     () =>
       columnWidths.map((c, idx) => {
         let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
-        // if filtering is enabled, account for that icon
+        // filtering icon
         if (fields[idx]?.config?.custom?.filterable) {
           width -= ICON_WIDTH + ICON_GAP;
         }
-        // if sorting is toggled on, account for that icon too
+        // sorting icon
         if (sortColumns.some((col) => col.columnKey === getDisplayName(fields[idx]))) {
           width -= ICON_WIDTH + ICON_GAP;
         }
+        // type icon
         if (showTypeIcons) {
           width -= ICON_WIDTH + ICON_GAP;
         }
@@ -420,6 +428,8 @@ export function useHeaderHeight({
     ];
   }, [fields]);
 
+  console.log(columnAvailableWidths);
+
   const maxHeaderHeight = useMemo(() => {
     if (!hasHeader) {
       return 0;
@@ -428,13 +438,13 @@ export function useHeaderHeight({
       return defaultHeight;
     }
 
-    const { text: maxLinesText, idx: maxLinesIdx } = getLongestCellText(
+    const { text: maxLinesText, idx: maxLinesIdx } = getLongestCellText({
       fields,
-      columnAvailableWidths,
+      wrapWidths: columnAvailableWidths,
       avgCharWidth,
-      wrappedColHeaderIdxs,
-      getDisplayName
-    );
+      wrappedColIdxs: wrappedColHeaderIdxs,
+      getText: getDisplayName,
+    });
 
     return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight);
   }, [
@@ -513,13 +523,13 @@ export function useRowHeight({
       }
 
       // regular rows
-      const { text: maxLinesText, idx: maxLinesIdx } = getLongestCellText(
+      const { text: maxLinesText, idx: maxLinesIdx } = getLongestCellText({
         fields,
         wrapWidths,
         avgCharWidth,
-        wrappedColIdxs,
-        (field) => field.values[row.__index]
-      );
+        wrappedColIdxs: wrappedColIdxs,
+        getText: (field) => field.values[row.__index],
+      });
 
       if (!maxLinesText) {
         return defaultHeight;
