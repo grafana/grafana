@@ -350,9 +350,10 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
 };
 
-export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
+export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
   const columns = dimensions.map((dimension) => dimension.width).join('px ');
-  return `${columns}px 1fr`;
+  const logLineWidth = displayedFields.length > 0 ? '' : ' 1fr';
+  return `${columns}px${logLineWidth}`;
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;
@@ -525,10 +526,6 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
-      '& .field': {
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-      },
     }),
     wrappedLogLine: css({
       alignSelf: 'flex-start',
