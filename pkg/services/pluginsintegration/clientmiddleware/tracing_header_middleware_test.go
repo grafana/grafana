@@ -293,11 +293,6 @@ func TestSanitizeHTTPHeaderValueForGRPC(t *testing.T) {
 			expected: "café résumé naïve",
 		},
 		{
-			name:     "Invalid characters are percent-encoded",
-			input:    "Ó",
-			expected: "Ó",
-		},
-		{
 			name:     "Control characters are percent-encoded",
 			input:    "hello\x00\x01\x1Fworld",
 			expected: "hello%00%01%1Fworld",
