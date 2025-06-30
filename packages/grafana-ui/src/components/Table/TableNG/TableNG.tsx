@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { Key, useLayoutEffect, useMemo, useState } from 'react';
+import { Key, ReactNode, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -22,7 +22,7 @@ import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { CellColors } from '../types';
+import { CellColors, TableCellDisplayMode } from '../types';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
@@ -54,6 +54,8 @@ import {
   getCellColors,
   getCellOptions,
 } from './utils';
+
+type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
 
 export function TableNG(props: TableNGProps) {
   const {
@@ -137,10 +139,6 @@ export function TableNG(props: TableNGProps) {
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
-  const visibleFieldsByDisplayName: Record<string, Field> = useMemo(
-    () => visibleFields.reduce((acc, f) => ({ ...acc, [getDisplayName(f)]: f }), {}),
-    [visibleFields]
-  );
   const availableWidth = useMemo(
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
     [width, hasNestedFrames]
@@ -173,11 +171,6 @@ export function TableNG(props: TableNGProps) {
   const renderRow = useMemo(
     () => renderRowFactory(data.fields, panelContext, expandedRows, enableSharedCrosshair),
     [data, enableSharedCrosshair, expandedRows, panelContext]
-  );
-
-  const renderCell = useMemo(
-    () => renderCellFactory(columnTypes, applyToRowBgFn, rowHeight, textWraps, theme, visibleFieldsByDisplayName),
-    [columnTypes, applyToRowBgFn, rowHeight, textWraps, theme, visibleFieldsByDisplayName]
   );
 
   const commonDataGridProps = useMemo(
@@ -240,9 +233,19 @@ export function TableNG(props: TableNGProps) {
     ]
   );
 
-  const columns = useMemo<TableColumn[]>((): TableColumn[] => {
-    const columnsFromFields = (f: Field[], w: number[]): TableColumn[] =>
-      f.map((field, i): TableColumn => {
+  interface Schema {
+    columns: TableColumn[];
+    cellRootRenderers: Record<string, CellRootRenderer>;
+  }
+
+  const { columns, cellRootRenderers } = useMemo(() => {
+    const fromFields = (f: Field[], widths: number[]) => {
+      const result: Schema = {
+        columns: [],
+        cellRootRenderers: {},
+      };
+
+      f.forEach((field, i) => {
         const justifyContent = getTextAlign(field);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
@@ -253,7 +256,7 @@ export function TableNG(props: TableNGProps) {
         const cellInspect = Boolean(field.config.custom?.inspect);
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
         const showActions = cellInspect || showFilters;
-        const width = w[i];
+        const width = widths[i];
         const frame = data;
 
         // helps us avoid string cx and emotion per-cell
@@ -265,54 +268,100 @@ export function TableNG(props: TableNGProps) {
             )
           : undefined;
 
-        return {
+        const cellType = cellOptions.type;
+        const fieldType = columnTypes[displayName];
+        const shouldWrap = textWraps[displayName];
+        // const _rowHeight = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight
+        const shouldOverflow = shouldTextOverflow(fieldType, cellType, shouldWrap, cellInspect);
+
+        let lastRowIdx = -1;
+        let _rowHeight = 0;
+
+        // this fires first
+        const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
+          const rowIdx = props.row.__index;
+          const value = props.row[props.column.key];
+
+          // meh, this should be cached by the renderRow() call?
+          if (rowIdx !== lastRowIdx) {
+            _rowHeight = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
+            lastRowIdx = rowIdx;
+          }
+
+          let colors: CellColors;
+
+          if (applyToRowBgFn != null) {
+            colors = applyToRowBgFn(props.rowIdx);
+          } else if (cellType !== TableCellDisplayMode.Auto) {
+            const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
+            colors = getCellColors(theme, cellOptions, displayValue);
+          } else {
+            colors = {};
+          }
+
+          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, colors);
+
+          return (
+            <Cell
+              key={key}
+              {...props}
+              className={cx(props.className, cellStyle.cell)}
+              style={{ color: colors.textColor ?? 'inherit' }}
+            />
+          );
+        };
+
+        result.cellRootRenderers[displayName] = renderCellRoot;
+
+        // this fires second
+        const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+          const rowIdx = props.row.__index;
+          const value = props.row[props.column.key];
+
+          // TODO: defer until click?
+          const actions = getActions?.(frame, field, props.row.__index, replaceVariables);
+
+          return (
+            <>
+              {renderFieldCell({
+                actions,
+                cellOptions,
+                frame,
+                field,
+                height,
+                justifyContent,
+                rowIdx,
+                theme,
+                value,
+                width,
+                cellInspect,
+                showFilters,
+              })}
+              {showActions && (
+                <TableCellActions
+                  field={field}
+                  value={value}
+                  cellOptions={cellOptions}
+                  displayName={displayName}
+                  cellInspect={cellInspect}
+                  showFilters={showFilters}
+                  className={cellActionClassName}
+                  setIsInspecting={setIsInspecting}
+                  setContextMenuProps={setContextMenuProps}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              )}
+            </>
+          );
+        };
+
+        const column: TableColumn = {
           field,
           key: displayName,
           name: displayName,
           width,
           headerCellClass,
-          renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-            // TODO: once per row
-            const height = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
-            // TODO: defer until click?
-            const actions = getActions?.(frame, field, props.row.__index, replaceVariables);
-
-            const rowIdx = props.row.__index;
-            const value = props.row[displayName];
-
-            return (
-              <>
-                {renderFieldCell({
-                  actions,
-                  cellOptions,
-                  frame,
-                  field,
-                  height,
-                  justifyContent,
-                  rowIdx,
-                  theme,
-                  value,
-                  width,
-                  cellInspect,
-                  showFilters,
-                })}
-                {showActions && (
-                  <TableCellActions
-                    field={field}
-                    value={value}
-                    cellOptions={cellOptions}
-                    displayName={displayName}
-                    cellInspect={cellInspect}
-                    showFilters={showFilters}
-                    className={cellActionClassName}
-                    setIsInspecting={setIsInspecting}
-                    setContextMenuProps={setContextMenuProps}
-                    onCellFilterAdded={onCellFilterAdded}
-                  />
-                )}
-              </>
-            );
-          },
+          renderCell: renderCellContent,
           renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
             <HeaderCell
               column={column}
@@ -340,9 +389,14 @@ export function TableNG(props: TableNGProps) {
             return <div className={footerStyles.footerCell}>{footerCalcs[i]}</div>;
           },
         };
+
+        result.columns.push(column);
       });
 
-    const result: TableColumn[] = columnsFromFields(visibleFields, widths);
+      return result;
+    };
+
+    const result = fromFields(visibleFields, widths);
 
     // handle nested frames rendering from here.
     if (!hasNestedFrames) {
@@ -356,13 +410,15 @@ export function TableNG(props: TableNGProps) {
     }
 
     const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
-    const expandedColumns = columnsFromFields(
+    const { columns: nestedColumns, cellRootRenderers: nestedcellRootRenderers } = fromFields(
       firstNestedData.fields,
       computeColWidths(firstNestedData.fields, availableWidth)
     );
 
+    const renderCellRoot: CellRootRenderer = (key, props) => nestedcellRootRenderers[props.column.key](key, props);
+
     // If we have nested frames, we need to add a column for the row expansion
-    result.unshift({
+    result.columns.unshift({
       key: 'expanded',
       name: '',
       field: {
@@ -372,16 +428,16 @@ export function TableNG(props: TableNGProps) {
         values: [],
       },
       cellClass(row) {
-        if (Number(row.__depth) !== 0) {
+        if (row.__depth !== 0) {
           return styles.cellNested;
         }
         return;
       },
       colSpan(args) {
-        return args.type === 'ROW' && Number(args.row.__depth) === 1 ? data.fields.length : 1;
+        return args.type === 'ROW' && args.row.__depth === 1 ? data.fields.length : 1;
       },
       renderCell: ({ row }) => {
-        if (Number(row.__depth) === 0) {
+        if (row.__depth === 0) {
           return (
             <RowExpander
               height={defaultRowHeight}
@@ -405,9 +461,9 @@ export function TableNG(props: TableNGProps) {
           <DataGrid<TableRow, TableSummaryRow>
             {...commonDataGridProps}
             className={cx(styles.grid, styles.gridNested)}
-            columns={expandedColumns}
+            columns={nestedColumns}
             rows={expandedRecords}
-            renderers={{ renderRow, renderCell }}
+            renderers={{ renderRow, renderCell: renderCellRoot }}
           />
         );
       },
@@ -433,7 +489,6 @@ export function TableNG(props: TableNGProps) {
     onCellFilterAdded,
     panelContext,
     replaceVariables,
-    renderCell,
     rows,
     rowHeight,
     setFilter,
@@ -443,6 +498,10 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
+    applyToRowBgFn,
+    columnTypes,
+    height,
+    textWraps,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
@@ -453,6 +512,8 @@ export function TableNG(props: TableNGProps) {
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
+
+  const renderCellRoot: CellRootRenderer = (key, props) => cellRootRenderers[props.column.key](key, props);
 
   return (
     <>
@@ -471,7 +532,7 @@ export function TableNG(props: TableNGProps) {
               }
             : null
         }
-        renderers={{ renderRow, renderCell }}
+        renderers={{ renderRow, renderCell: renderCellRoot }}
       />
 
       {enablePagination && (
@@ -538,11 +599,11 @@ const renderRowFactory =
   ) =>
   (key: React.Key, props: RenderRowProps<TableRow, TableSummaryRow>): React.ReactNode => {
     const { row } = props;
-    const rowIdx = Number(row.__index);
+    const rowIdx = row.__index;
     const isExpanded = !!expandedRows[rowIdx];
 
     // Don't render non expanded child rows
-    if (Number(row.__depth) === 1 && !isExpanded) {
+    if (row.__depth === 1 && !isExpanded) {
       return null;
     }
 
@@ -571,63 +632,6 @@ const renderRowFactory =
     }
 
     return <Row key={key} {...props} {...handlers} />;
-  };
-
-/**
- * passed to the top-level `renderCell` prop on DataGrid. This applies all per-cell styles.
- */
-const renderCellFactory =
-  (
-    columnTypes: Record<string, FieldType>,
-    applyToRowBgFn: ((rowIdx: number) => CellColors) | undefined,
-    rowHeight: number | ((row: TableRow) => number),
-    textWraps: Record<string, boolean>,
-    theme: GrafanaTheme2,
-    visibleFieldsByDisplayName: Record<string, Field>
-  ) =>
-  (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>) => {
-    const displayName = props.column.key;
-    const field = visibleFieldsByDisplayName[displayName];
-
-    // exit early if we fail to look up the field from the column key.
-    if (!field) {
-      return <Cell key={key} {...props} />;
-    }
-
-    const cellOptions = getCellOptions(field);
-    const cellType = cellOptions.type;
-    const value = props.row[props.column.key];
-
-    const colors: CellColors = (() => {
-      if (applyToRowBgFn) {
-        return applyToRowBgFn(props.rowIdx);
-      }
-      const displayValue = field.display?.(value);
-      if (displayValue && cellOptions) {
-        return getCellColors(theme, cellOptions, displayValue);
-      }
-      return {};
-    })();
-
-    const rh = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
-    const shouldOverflow = shouldTextOverflow(
-      displayName,
-      columnTypes,
-      textWraps[getDisplayName(field)],
-      field,
-      cellType
-    );
-    const shouldWrap = textWraps[displayName] ?? false;
-    const cellStyle = getCellStyles(theme, field, rh, shouldWrap, shouldOverflow, colors);
-
-    return (
-      <Cell
-        key={key}
-        {...props}
-        className={cx(props.className, cellStyle.cell)}
-        style={{ color: colors.textColor ?? 'inherit' }}
-      />
-    );
   };
 
 const getGridStyles = (
