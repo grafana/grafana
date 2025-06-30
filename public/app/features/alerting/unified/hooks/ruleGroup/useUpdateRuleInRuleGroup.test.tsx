@@ -9,6 +9,8 @@ import { PostableRuleDTO } from 'app/types/unified-alerting-dto';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import {
+  grafanaRulerGroup,
+  grafanaRulerGroup2,
   grafanaRulerGroupName,
   grafanaRulerGroupName2,
   grafanaRulerNamespace,
@@ -71,13 +73,13 @@ describe('Updating a Grafana managed rule', () => {
 
     const ruleGroupID: RuleGroupIdentifier = {
       dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      groupName: grafanaRulerGroupName,
+      groupName: grafanaRulerGroup.name,
       namespaceName: grafanaRulerNamespace.uid,
     };
 
     const targetRuleGroupID: RuleGroupIdentifier = {
       dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      groupName: grafanaRulerGroupName2,
+      groupName: grafanaRulerGroup2.name,
       namespaceName: grafanaRulerNamespace.uid,
     };
 
