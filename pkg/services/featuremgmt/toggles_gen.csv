@@ -19,7 +19,6 @@ editPanelCSVDragAndDrop,experimental,@grafana/dataviz-squad,false,false,true
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,true
 lokiShardSplitting,experimental,@grafana/observability-logs,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,true
-lokiQuerySplittingConfig,experimental,@grafana/observability-logs,false,false,true
 individualCookiePreferences,experimental,@grafana/grafana-backend-group,false,false,false
 influxdbBackendMigration,GA,@grafana/partner-datasources,false,false,true
 influxqlStreamingParser,experimental,@grafana/partner-datasources,false,false,false
@@ -33,7 +32,6 @@ refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
 enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
-lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
 pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
 pluginsDetailsRightPanel,GA,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/oss-big-tent,false,false,true
@@ -75,7 +73,6 @@ queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,fals
 queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
 queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
-lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
 addFieldFromCalculationStatFunctions,GA,@grafana/dataviz-squad,false,false,true
@@ -231,3 +228,4 @@ alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,f
 preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
 newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
+enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true

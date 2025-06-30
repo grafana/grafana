@@ -58,6 +58,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EnableSharding = section.Key("enable_sharding").MustBool(false)
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
 	cfg.MemberlistAdvertiseAddr = section.Key("memberlist_advertise_addr").String()
+	cfg.MemberlistAdvertisePort = section.Key("memberlist_advertise_port").MustInt(7946)
 	cfg.MemberlistJoinMember = section.Key("memberlist_join_member").String()
 	cfg.MemberlistClusterLabel = section.Key("memberlist_cluster_label").String()
 	cfg.MemberlistClusterLabelVerificationDisabled = section.Key("memberlist_cluster_label_verification_disabled").MustBool(false)
