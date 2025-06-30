@@ -62,7 +62,6 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec.value", errs[0].Field)
 		})
-
 	})
 
 	t.Run("when updating a securevalue", func(t *testing.T) {
