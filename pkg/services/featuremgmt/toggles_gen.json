@@ -1927,7 +1927,8 @@
       "metadata": {
         "name": "lokiStructuredMetadata",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-11-16T16:06:14Z"
+        "creationTimestamp": "2023-11-16T16:06:14Z",
+        "deletionTimestamp": "2025-06-27T09:00:53Z"
       },
       "spec": {
         "description": "Enables the loki data source to request structured metadata from the Loki server",
