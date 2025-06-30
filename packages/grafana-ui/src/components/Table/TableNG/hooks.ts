@@ -354,12 +354,12 @@ function getLongestCellText({ fields, wrapWidths, avgCharWidth, wrappedColIdxs, 
   for (let i = 0; i < wrapWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const cellTextRaw = getText(fields[i]);
-      if (cellTextRaw != null && spaceRegex.test(cellTextRaw)) {
+      if (cellTextRaw != null) {
         const cellText = String(cellTextRaw);
         const charsPerLine = wrapWidths[i] / avgCharWidth;
         const approxLines = cellText.length / charsPerLine;
 
-        if (approxLines > maxLines) {
+        if (approxLines > maxLines && spaceRegex.test(cellText)) {
           maxLines = approxLines;
           maxLinesIdx = i;
           maxLinesText = cellText;
@@ -427,8 +427,6 @@ export function useHeaderHeight({
       hasWrappedColHeaders,
     ];
   }, [fields]);
-
-  console.log(columnAvailableWidths);
 
   const maxHeaderHeight = useMemo(() => {
     if (!hasHeader) {
