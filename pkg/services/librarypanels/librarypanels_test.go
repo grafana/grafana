@@ -850,7 +850,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
 			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
-		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac, dashService)
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, features, ac, dashService, nil, nil)
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
