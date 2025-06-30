@@ -934,4 +934,8 @@ const (
 	// FlagNewInfluxDSConfigPageDesign
 	// Enables new design for the InfluxDB data source configuration page
 	FlagNewInfluxDSConfigPageDesign = "newInfluxDSConfigPageDesign"
+
+	// FlagEnableAppChromeExtensions
+	// Set this to true to enable all app chrome extensions registered by plugins.
+	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
 )
