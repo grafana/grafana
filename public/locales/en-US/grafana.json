@@ -110,6 +110,12 @@
       "update-button": "Update",
       "users-heading": "Organization users"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "Dismiss",
+      "heading": "Enterprise authentication",
+      "learn-more-link": "Learn more",
+      "text": "Manage users, teams, and permissions automatically with <1>SAML</1>, <3>SCIM</3>, <6>LDAP</6>, and <8>RBAC</8> — available in Grafana Cloud and Enterprise."
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Custom branding",
