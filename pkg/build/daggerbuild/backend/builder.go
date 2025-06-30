@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
+	"strings"
 
 	"dagger.io/dagger"
 	"github.com/grafana/grafana/pkg/build/daggerbuild/containers"
@@ -75,6 +77,12 @@ func ViceroyContainer(
 		WithEnvVariable("PATH", "/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin:/usr/osxcross/bin")
 
 	return WithViceroyEnv(log, container, distro, opts)
+}
+
+func WithGoCachePlugin(c *dagger.Container, platform dagger.Platform) *dagger.Container {
+	return c.
+		WithExec([]string{"wget", "-q", fmt.Sprintf("https://github.com/grafana/go-cache-plugin/releases/download/v0.1.3/go-cache-plugin-%s", strings.ReplaceAll(string(platform), "/", "-")), "-O", "/bin/go-cache-plugin"}).
+		WithExec([]string{"chmod", "+x", "/bin/go-cache-plugin"})
 }
 
 func GolangContainer(
@@ -151,12 +159,12 @@ func Builder(
 		return nil, err
 	}
 
-	builder = builder.
-		WithMountedCache("/root/.cache/go", goBuildCache).
-		WithEnvVariable("GOCACHE", "/root/.cache/go")
-
-	if prog := opts.GoCacheProg; prog != "" {
-		builder = builder.WithEnvVariable("GOCACHEPROG", prog)
+	if _, ok := os.LookupEnv("GOCACHE_S3_BUCKET"); ok {
+		builder = WithGoModProxy(d, platform, builder, goVersion, goModCache)
+	} else {
+		builder = builder.
+			WithMountedCache("/root/.cache/go", goBuildCache).
+			WithEnvVariable("GOCACHE", "/root/.cache/go")
 	}
 
 	commitInfo := GetVCSInfo(src, version, opts.Enterprise)
@@ -186,7 +194,7 @@ func Builder(
 
 func Wire(d *dagger.Client, src *dagger.Directory, platform dagger.Platform, goVersion string, wireTag string) *dagger.File {
 	// withCue is only required during `make gen-go` in 9.5.x or older.
-	return withCue(golang.Container(d, platform, goVersion), src).
+	return golang.Container(d, platform, goVersion).
 		WithExec([]string{"apk", "add", "make"}).
 		WithDirectory("/src/", src, dagger.ContainerWithDirectoryOpts{
 			Include: []string{"**/*.mod", "**/*.sum", "**/*.work", ".git"},

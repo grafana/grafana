@@ -53,7 +53,6 @@ jobs:
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    # If it gets merged into `main` or `release-*`, then a junit test result is uploaded to GCS.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     strategy:
       matrix:
@@ -66,9 +65,43 @@ jobs:
     name: Grafana Enterprise (${{ matrix.shard }})
     runs-on: ubuntu-latest-8-cores
     permissions:
-      contents: read
-      id-token: write
+      contents: read # to clone repo
+      id-token: write # required for enterprise & AWS
+    env:
+      GOCACHE_HTTP: 'localhost:12345'
+      GOCACHE_MODPROXY: 'true'
+      GOCACHE_PLUGIN: '1234'
+      GOCACHE_S3_BUCKET: 'grafana-cicd-gha-cache-workloads-prod'
+      GOCACHE_S3_REGION: 'us-east-2'
+      GOCACHE_METRICS: 'true'
+      GOCACHE_DIR: '/tmp/gocache'
+      GOCACHEPROG: go-cache-plugin connect 1234
+      GOPROXY: 'http://localhost:12345/mod'
+      GOSUMDB: 'sum.golang.org http://localhost:12345/mod/sumdb/sum.golang.org'
     steps:
+      - name: Auth to AWS
+        uses: grafana/shared-workflows/actions/aws-auth@aws-auth/v1.0.2
+        with:
+          aws-region: "us-east-2"
+          pass-claims: "repository_owner, repository_name, job_workflow_ref, ref, event_name"
+          set-creds-in-environment: true
+          role-arn: 'arn:aws:iam::422075448034:role/github-actions/grafana-cicd'
+      - name: Install go-cache-plugin
+        env:
+          GOCP_VERSION: 'v0.1.1'
+          GOCP_OS: 'linux-amd64'
+          GOCP_HASH: 'b945e1b76e3020732be19561d161067535e55d12a0d222a2045ea8429bf8bc88'
+        run: |
+          set -xeuo pipefail
+          curl -LO https://github.com/grafana/go-cache-plugin/releases/download/"$GOCP_VERSION"/go-cache-plugin-"$GOCP_OS"
+          mv go-cache-plugin-"$GOCP_OS" go-cache-plugin
+          echo -e "$GOCP_HASH\tgo-cache-plugin" | sha256sum --check
+          chmod +x go-cache-plugin
+          file go-cache-plugin
+          sudo mv go-cache-plugin /bin/go-cache-plugin # move to PATH
+          go-cache-plugin version || true # success returns exit code 2
+          go-cache-plugin serve &
+
       # Set up repository clone
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,16 +111,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: false # download Go from the action super quickly. use S3 cache for code & modules.
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
           github-app-name: 'grafana-ci-bot'
-
-      # Prepare what we need to upload test results
-      - run: echo "RESULTS_FILE=$(date --rfc-3339=seconds --utc | sed -s 's/ /-/g')_${SHARD/\//_}.xml" >> "$GITHUB_ENV"
-        env:
-          SHARD: ${{ matrix.shard }}
-      - run: go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
 
       # Run code
       - name: Generate Go code
@@ -99,8 +127,6 @@ jobs:
           set -euo pipefail
 
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
-          # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
-          # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
           go test -short -timeout=30m "${PACKAGES[@]}"
 
   # This is the job that is actually required by rulesets.
