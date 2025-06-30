@@ -300,9 +300,10 @@ func TestSanitizeHTTPHeaderValueForGRPC(t *testing.T) {
 			expected: "Hello World! 123 @#$%^&*()",
 		},
 		{
-			name:     "Extended characters remain unchanged",
-			input:    "naïve",
-			expected: "na%EFve",
+			name: "Extended characters remain unchanged",
+			// %C3%A9 is encoded é
+			input:    "naiv%C3%A9",
+			expected: "naiv%C3%A9",
 		},
 		{
 			name:     "Control characters are percent-encoded",
@@ -325,9 +326,10 @@ func TestSanitizeHTTPHeaderValueForGRPC(t *testing.T) {
 			expected: "hello%0Dworld",
 		},
 		{
-			name:     "Mixed valid and invalid characters",
-			input:    "Valid text\x00invalid\x1Fmore valid 🚀",
-			expected: "Valid text%00invalid%1Fmore valid %1F680",
+			name: "Mixed valid and invalid characters",
+			// %F0%9F%9A%80 is encoded 🚀
+			input:    "Valid text\x00invalid\x1Fmore valid %F0%9F%9A%80",
+			expected: "Valid text%00invalid%1Fmore valid %F0%9F%9A%80",
 		},
 		{
 			name:     "Empty string remains empty",

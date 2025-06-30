@@ -7,6 +7,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -110,19 +112,24 @@ func (m *TracingHeaderMiddleware) RunStream(ctx context.Context, req *backend.Ru
 }
 
 // sanitizeHTTPHeaderValueForGRPC sanitizes header values according to HTTP/2 gRPC specification.
-// The spec defines that header values must §consist of printable ASCII characters 0x20 (space) - 0x7E(tilde) inclusive.
-// Other characters are percent-encoded.
+// The spec defines that header values must consist of printable ASCII characters 0x20 (space) - 0x7E(tilde) inclusive.
+// First attempts to decode any percent-encoded characters, then encodes invalid characters.
 func sanitizeHTTPHeaderValueForGRPC(value string) string {
-	// Can we use something from utf8 package to do this?
 	var sanitized strings.Builder
 	sanitized.Grow(len(value)) // Pre-allocate reasonable capacity
-
-	for _, r := range value {
-		code := int(r)
-		if code >= 0x20 && code <= 0x7E {
-			sanitized.WriteRune(r)
+	// First try to decode characters that were encoded by the frontend
+	decoder := charmap.ISO8859_1.NewDecoder()
+	decoded, _, err := transform.Bytes(decoder, []byte(value))
+	// If decoding fails, work with the original value
+	if err != nil {
+		decoded = []byte(value)
+	}
+	// Then encode invalid characters
+	for _, b := range decoded {
+		if b >= 0x20 && b <= 0x7E {
+			sanitized.WriteByte(b)
 		} else {
-			sanitized.WriteString(fmt.Sprintf("%%%02X", code))
+			sanitized.WriteString(fmt.Sprintf("%%%02X", b))
 		}
 	}
 
