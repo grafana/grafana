@@ -1,4 +1,5 @@
 import { map as _map, each, indexOf, isArray, isString } from 'lodash';
+import moment, { Moment } from 'moment';
 import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -12,16 +13,17 @@ import {
   DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
+  DateTime,
   dateTime,
   getSearchFilterScopedVar,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
   TimeRange,
-  TimeZone,
   toDataFrame,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
@@ -500,7 +502,9 @@ export class GraphiteDatasource
     return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
-  translateTime(date: any, roundUp?: boolean, timezone?: TimeZone) {
+  translateTime(date: DateTime | string, roundUp?: boolean, timezone?: TimeZone) {
+    let dateCopy: Moment;
+
     if (isString(date)) {
       if (date === 'now') {
         return 'now';
@@ -510,7 +514,16 @@ export class GraphiteDatasource
         date = date.replace('M', 'mon');
         return date;
       }
-      date = dateMath.parse(date, roundUp, timezone);
+      const parsedDate = dateMath.toDateTime(date, { roundUp, timezone });
+
+      // If the date is invalid return the original string
+      if (!parsedDate) {
+        return date;
+      }
+
+      dateCopy = moment(parsedDate.toDate());
+    } else {
+      dateCopy = moment(date.toDate());
     }
 
     // graphite' s from filter is exclusive
@@ -518,16 +531,16 @@ export class GraphiteDatasource
     // to guarantee that we get all the data that
     // exists for the specified range
     if (roundUp) {
-      if (date.get('s')) {
-        date.add(1, 's');
+      if (dateCopy.get('s')) {
+        dateCopy.add(1, 's');
       }
     } else if (roundUp === false) {
-      if (date.get('s')) {
-        date.subtract(1, 's');
+      if (dateCopy.get('s')) {
+        dateCopy.subtract(1, 's');
       }
     }
 
-    return date.unix();
+    return dateCopy.unix();
   }
 
   metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
