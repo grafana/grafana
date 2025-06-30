@@ -35,6 +35,7 @@ import { LogRecord } from '../state-history/common';
 
 import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
+import { GenAITriageButton } from './GenAITriageButton';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { useRuleHistoryRecords } from './useRuleHistoryRecords';
 
@@ -124,9 +125,16 @@ interface HistoryLogEventsProps {
 }
 function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
+  const styles = useStyles2(getStyles);
+
   return (
     <Stack direction="column" gap={0}>
-      <ListHeader />
+      <div className={styles.headerContainer}>
+        <ListHeader />
+        <div className={styles.triageButtonContainer}>
+          <GenAITriageButton logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
+        </div>
+      </div>
       <ul>
         {pageItems.map((record) => {
           return (
@@ -483,7 +491,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     headerWrapper: css({
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      // Remove border since it's now on headerContainer
     }),
     mainHeader: css({
       display: 'flex',
@@ -493,6 +501,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginLeft: '30px',
       padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
       gap: theme.spacing(0.5),
+    }),
+    headerContainer: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    triageButtonContainer: css({
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+    }),
+    triageButton: css({
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 };
