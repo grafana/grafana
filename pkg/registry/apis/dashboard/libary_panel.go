@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -21,12 +22,16 @@ var (
 	_ rest.SingularNameProvider = (*LibraryPanelStore)(nil)
 	_ rest.Getter               = (*LibraryPanelStore)(nil)
 	_ rest.Lister               = (*LibraryPanelStore)(nil)
+	_ rest.Creater              = (*LibraryPanelStore)(nil)
+	_ rest.GracefulDeleter      = (*LibraryPanelStore)(nil)
+	_ rest.Updater              = (*LibraryPanelStore)(nil)
 	_ rest.Storage              = (*LibraryPanelStore)(nil)
 )
 
 type LibraryPanelStore struct {
-	Access       legacy.DashboardAccess
-	ResourceInfo utils.ResourceInfo
+	Access        legacy.DashboardAccess
+	ResourceInfo  utils.ResourceInfo
+	AccessControl accesscontrol.AccessControl
 }
 
 func (s *LibraryPanelStore) New() runtime.Object {
@@ -49,6 +54,22 @@ func (s *LibraryPanelStore) NewList() runtime.Object {
 
 func (s *LibraryPanelStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.ResourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
+}
+
+func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("method not yet implemented")
+}
+
+func (s *LibraryPanelStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("method not yet implemented")
+}
+
+func (s *LibraryPanelStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	return nil, false, fmt.Errorf("method not yet implemented")
+}
+
+func (s *LibraryPanelStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, apierrors.NewMethodNotSupported(s.ResourceInfo.GroupResource(), "deletecollection")
 }
 
 func (s *LibraryPanelStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {

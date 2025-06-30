@@ -6,10 +6,12 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/authlib/types"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 )
 
 func GetAuthorizer(ac accesscontrol.AccessControl, l log.Logger) authorizer.Authorizer {
@@ -42,38 +44,87 @@ func GetAuthorizer(ac accesscontrol.AccessControl, l log.Logger) authorizer.Auth
 				return authorizer.DecisionDeny, "org mismatch", dashboards.ErrUserIsNotSignedInToOrg
 			}
 
-			switch attr.GetVerb() {
-			case "list", "search":
-				// Detailed read permissions are handled by authz, this just checks whether the user can ready *any* dashboard
-				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead))
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "can not read any dashboards", err
-				}
-			case "create":
-				// Detailed create permissions are handled by authz, this just checks whether the user can create *any* dashboard
-				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate))
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "can not create any dashboards", err
-				}
-			case "get":
-				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "can not view dashboard", err
-				}
-			case "update", "patch":
-				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "can not edit dashboard", err
-				}
-			case "delete":
-				ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
-				if !ok || err != nil {
-					return authorizer.DecisionDeny, "can not delete dashboard", err
-				}
-			default:
-				l.Info("unknown verb", "verb", attr.GetVerb())
-				return authorizer.DecisionDeny, "unsupported verb", nil // Unknown verb
+			// Determine if this is a library panel or dashboard resource
+			resource := attr.GetResource()
+			isLibraryPanel := resource == dashv0.LIBRARY_PANEL_RESOURCE
+
+			if isLibraryPanel {
+				return authorizeLibraryPanel(ctx, ac, user, attr)
+			} else {
+				return authorizeDashboard(ctx, ac, user, attr)
 			}
-			return authorizer.DecisionAllow, "", nil
 		})
+}
+
+func authorizeLibraryPanel(ctx context.Context, ac accesscontrol.AccessControl, user identity.Requester, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+	switch attr.GetVerb() {
+	case "list", "search":
+		// Detailed read permissions are handled by authz, this just checks whether the user can ready *any* library panel
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(libraryelements.ActionLibraryPanelsRead))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not read any library panels", err
+		}
+	case "create":
+		// TODO: uncomment this when we implement create :)
+		//
+		// Detailed create permissions are handled by authz, this just checks whether the user can create *any* library panel
+		// ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(libraryelements.ActionLibraryPanelsCreate))
+		// if !ok || err != nil {
+		// 	 return authorizer.DecisionDeny, "can not create any library panels", err
+		// }
+		return authorizer.DecisionDeny, "can not create any library panels", nil
+	case "get":
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(libraryelements.ActionLibraryPanelsRead, libraryelements.ScopeLibraryPanelsProvider.GetResourceScopeUID(attr.GetName())))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not view library panel", err
+		}
+	case "update", "patch":
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(libraryelements.ActionLibraryPanelsWrite, libraryelements.ScopeLibraryPanelsProvider.GetResourceScopeUID(attr.GetName())))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not edit library panel", err
+		}
+	case "delete":
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(libraryelements.ActionLibraryPanelsDelete, libraryelements.ScopeLibraryPanelsProvider.GetResourceScopeUID(attr.GetName())))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not delete library panel", err
+		}
+	default:
+		return authorizer.DecisionDeny, "unsupported verb for library panels", nil
+	}
+	return authorizer.DecisionAllow, "", nil
+}
+
+func authorizeDashboard(ctx context.Context, ac accesscontrol.AccessControl, user identity.Requester, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+	switch attr.GetVerb() {
+	case "list", "search":
+		// Detailed read permissions are handled by authz, this just checks whether the user can ready *any* dashboard
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not read any dashboards", err
+		}
+	case "create":
+		// Detailed create permissions are handled by authz, this just checks whether the user can create *any* dashboard
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not create any dashboards", err
+		}
+	case "get":
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not view dashboard", err
+		}
+	case "update", "patch":
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not edit dashboard", err
+		}
+	case "delete":
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsDelete, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(attr.GetName())))
+		if !ok || err != nil {
+			return authorizer.DecisionDeny, "can not delete dashboard", err
+		}
+	default:
+		return authorizer.DecisionDeny, "unsupported verb for dashboards", nil
+	}
+	return authorizer.DecisionAllow, "", nil
 }
