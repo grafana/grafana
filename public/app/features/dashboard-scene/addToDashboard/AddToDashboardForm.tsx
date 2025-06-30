@@ -90,7 +90,6 @@ export function AddToDashboardForm<TOptions extends string | undefined = undefin
       saveTarget: data.saveTarget,
       queries: panel.targets,
     });
-    // simple type assertion to make TS happy
     const error = addToDashboard({
       dashboardUid,
       panel,
