@@ -274,7 +274,7 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function addTransformTransition(transitions: string[]) {
+function addTransform(transitions: string[]) {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!prefersReducedMotion) {
     transitions.push('transform');
@@ -283,12 +283,25 @@ function addTransformTransition(transitions: string[]) {
   return transitions;
 }
 
+function getActiveButtonStyles(color: ThemeRichColor, theme: GrafanaTheme2, fill: ButtonFill) {
+  let background = fill === 'solid' ? color.activeMain : color.activeTransparent;
+
+  if (color.name === 'secondary') {
+    background = color.activeTransparentSecondary;
+  }
+
+  return {
+    background,
+    transform: 'scale(0.95)',
+  };
+}
+
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
   let hoverBorderColor = 'transparent';
 
-  // Secondary button has some special rules as we lack theem color token to
+  // Secondary button has some special rules as we lack the color token to
   // specify border color for normal button vs border color for outline button
   if (color.name === 'secondary') {
     borderColor = color.border;
@@ -301,7 +314,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: `1px solid ${outlineBorderColor}`,
-      transition: theme.transitions.create(addTransformTransition(['background-color', 'border-color', 'color']), {
+      transition: theme.transitions.create(addTransform(['background-color', 'border-color', 'color']), {
         duration: theme.transitions.duration.short,
       }),
 
@@ -311,9 +324,8 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         color: color.text,
       },
 
-      '&:active': {
-        borderColor: color.contrastColor,
-        transform: 'scale(0.95)',
+      '&:active, &:active:hover': {
+        ...getActiveButtonStyles(color, theme, fill),
       },
     };
   }
@@ -323,7 +335,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: '1px solid transparent',
-      transition: theme.transitions.create(addTransformTransition(['background-color', 'color', 'border-color']), {
+      transition: theme.transitions.create(addTransform(['background-color', 'color', 'border-color']), {
         duration: theme.transitions.duration.short,
       }),
 
@@ -337,9 +349,8 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
         textDecoration: 'none',
       },
 
-      '&:active': {
-        borderColor: outlineBorderColor,
-        transform: 'scale(0.95)',
+      '&:active, &:active:hover': {
+        ...getActiveButtonStyles(color, theme, fill),
       },
     };
   }
@@ -348,12 +359,9 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     background: color.main,
     color: color.contrastText,
     border: `1px solid ${borderColor}`,
-    transition: theme.transitions.create(
-      addTransformTransition(['background-color', 'box-shadow', 'border-color', 'color']),
-      {
-        duration: theme.transitions.duration.short,
-      }
-    ),
+    transition: theme.transitions.create(addTransform(['background-color', 'box-shadow', 'border-color', 'color']), {
+      duration: theme.transitions.duration.short,
+    }),
 
     '&:hover': {
       background: color.shade,
@@ -362,10 +370,8 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       borderColor: hoverBorderColor,
     },
 
-    '&:active': {
-      backgroundColor: color.contrastColor,
-      borderColor: theme.colors.emphasize(color.contrastColor, 0.33),
-      transform: 'scale(0.95)',
+    '&:active, &:active:hover': {
+      ...getActiveButtonStyles(color, theme, fill),
     },
   };
 }

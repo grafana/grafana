@@ -46,7 +46,9 @@ export interface ThemeRichColor {
   /**
    * Used for active state
    */
-  contrastColor: string;
+  activeTransparent: string;
+  activeTransparentSecondary: string;
+  activeMain: string;
   /** Used for text */
   text: string;
   /** Used for borders */

@@ -282,6 +282,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   }
 
   const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
+    const transparentAlpha = 0.15;
+    const activeTransparentAlpha = 0.195;
+    const activeTransparentSubtle = 0.1;
     color = { ...color, name };
     if (!color.main) {
       color.main = base[name].main;
@@ -295,61 +298,19 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
-    if (!color.contrastColor) {
-      if (base.mode === 'light') {
-        switch (name) {
-          case 'primary':
-            color.contrastColor = palette.orangeDarkMain;
-            break;
-          case 'secondary':
-            color.contrastColor = palette.blueDarkMain;
-            break;
-          case 'info':
-            color.contrastColor = palette.blueDarkMain;
-            break;
-          case 'error':
-            color.contrastColor = palette.orangeDarkMain;
-            break;
-          case 'success':
-            color.contrastColor = palette.orangeDarkMain;
-            break;
-          case 'warning':
-            color.contrastColor = palette.greenDarkMain;
-            break;
-          default:
-            color.contrastColor = palette.orangeDarkMain;
-            break;
-        }
-      } else {
-        switch (name) {
-          case 'primary':
-            color.contrastColor = palette.orangeLightMain;
-            break;
-          case 'secondary':
-            color.contrastColor = palette.blueLightMain;
-            break;
-          case 'info':
-            color.contrastColor = palette.blueLightMain;
-            break;
-          case 'error':
-            color.contrastColor = palette.orangeLightMain;
-            break;
-          case 'success':
-            color.contrastColor = palette.orangeLightMain;
-            break;
-          case 'warning':
-            color.contrastColor = palette.greenLightMain;
-            break;
-          default:
-            color.contrastColor = palette.orangeLightMain;
-            break;
-        }
-      }
 
-      console.log('color.contrastColor', color.contrastColor);
+    if (!color.activeMain) {
+      color.activeMain = base.mode === 'light' ? darken(color.main, 0.25) : lighten(color.main, 0.2);
     }
+    if (!color.activeTransparent) {
+      color.activeTransparent = alpha(color.main, activeTransparentAlpha);
+    }
+    if (!color.activeTransparentSecondary) {
+      color.activeTransparentSecondary = alpha(color.main, activeTransparentSubtle);
+    }
+
     if (!color.transparent) {
-      color.transparent = alpha(color.main, 0.15);
+      color.transparent = alpha(color.main, transparentAlpha);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
