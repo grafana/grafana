@@ -59,7 +59,7 @@ export function EnterpriseAuthFeaturesCard({ page }: Props) {
       </Stack>
       <div>
         <LinkButton
-          href={`https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-grafana-${page}`}
+          href={`https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-grafana&cnt-admin-${page}`}
           icon="external-link-alt"
           variant="secondary"
           target="_blank"
