@@ -3,7 +3,6 @@ package metadata
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -308,9 +307,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 			SecretKey:          "sdDkslslld",
 			EncryptionProvider: "secretKey.v1",
 			Encryption: setting.EncryptionSettings{
-				DataKeysCacheTTL:        5 * time.Minute,
-				DataKeysCleanupInterval: 1 * time.Nanosecond,
-				Algorithm:               cipher.AesGcm,
+				Algorithm: cipher.AesGcm,
 			},
 		},
 	}

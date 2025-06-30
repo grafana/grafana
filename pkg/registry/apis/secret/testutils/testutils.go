@@ -96,9 +96,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 			SecretKey:          defaultKey,
 			EncryptionProvider: "secretKey.v1",
 			Encryption: setting.EncryptionSettings{
-				DataKeysCleanupInterval: time.Nanosecond,
-				DataKeysCacheTTL:        5 * time.Minute,
-				Algorithm:               cipher.AesGcm,
+				Algorithm: cipher.AesGcm,
 			},
 		},
 	}
