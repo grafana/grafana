@@ -10,7 +10,7 @@ import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, rulerRuleType } from '.
 
 // rule-scoped actions
 // TOOD The interval field only make sense when adding a rule to a new rule group.
-// We need to find a better way to handle this.
+// We need to split these into distinct actions and introduce a separete addNewRuleGroupAction.
 export const addRuleAction = createAction<{ rule: PostableRuleDTO; groupName?: string; interval?: string }>(
   'ruleGroup/rules/add'
 );

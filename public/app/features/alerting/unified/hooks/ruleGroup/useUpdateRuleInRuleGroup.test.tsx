@@ -11,8 +11,6 @@ import { grantUserPermissions } from '../../mocks';
 import {
   grafanaRulerGroup,
   grafanaRulerGroup2,
-  grafanaRulerGroupName,
-  grafanaRulerGroupName2,
   grafanaRulerNamespace,
   grafanaRulerRule,
 } from '../../mocks/grafanaRulerApi';
@@ -43,7 +41,7 @@ describe('Updating a Grafana managed rule', () => {
 
     const ruleGroupID: RuleGroupIdentifier = {
       dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      groupName: grafanaRulerGroupName,
+      groupName: grafanaRulerGroup.name,
       namespaceName: grafanaRulerNamespace.uid,
     };
 
@@ -112,7 +110,7 @@ describe('Updating a Grafana managed rule', () => {
   it('should fail if the rule does not exist in the group', async () => {
     const ruleGroupID: RuleGroupIdentifier = {
       dataSourceName: GRAFANA_RULES_SOURCE_NAME,
-      groupName: grafanaRulerGroupName,
+      groupName: grafanaRulerGroup.name,
       namespaceName: grafanaRulerNamespace.uid,
     };
 
