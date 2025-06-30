@@ -209,7 +209,7 @@ func (s *service) starting(ctx context.Context) error {
 		return err
 	}
 
-	serverOptions := ResourceServerOptions{
+	serverOptions := ServerOptions{
 		DB:             s.db,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,

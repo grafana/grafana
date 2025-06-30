@@ -218,8 +218,11 @@ type ResourceServerOptions struct {
 
 	IndexMetrics *BleveIndexMetrics
 
+	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
-	QOSQueue         QOSEnqueuer
+
+	// QOSQueue is the quality of service queue used to enqueue
+	QOSQueue QOSEnqueuer
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {

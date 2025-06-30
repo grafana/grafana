@@ -158,7 +158,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		serverOptions := sql.ResourceServerOptions{
+		serverOptions := sql.ServerOptions{
 			DB:             db,
 			Cfg:            cfg,
 			Tracer:         tracer,

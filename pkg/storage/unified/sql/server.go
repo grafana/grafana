@@ -25,24 +25,23 @@ type QOSEnqueueDequeuer interface {
 	Dequeue(ctx context.Context) (func(ctx context.Context), error)
 }
 
-// ResourceServerOptions contains the options for creating a new ResourceServer
-type ResourceServerOptions struct {
-	DB               infraDB.DB
-	Cfg              *setting.Cfg
-	Tracer           trace.Tracer
-	Reg              prometheus.Registerer
-	AccessClient     types.AccessClient
-	SearchOptions    resource.SearchOptions
-	StorageMetrics   *resource.StorageMetrics
-	IndexMetrics     *resource.BleveIndexMetrics
-	Features         featuremgmt.FeatureToggles
-	MaxPageSizeBytes int
-	QOSQueue         QOSEnqueueDequeuer
+// ServerOptions contains the options for creating a new ResourceServer
+type ServerOptions struct {
+	DB             infraDB.DB
+	Cfg            *setting.Cfg
+	Tracer         trace.Tracer
+	Reg            prometheus.Registerer
+	AccessClient   types.AccessClient
+	SearchOptions  resource.SearchOptions
+	StorageMetrics *resource.StorageMetrics
+	IndexMetrics   *resource.BleveIndexMetrics
+	Features       featuremgmt.FeatureToggles
+	QOSQueue       QOSEnqueueDequeuer
 }
 
 // Creates a new ResourceServer
 func NewResourceServer(
-	opts ResourceServerOptions,
+	opts ServerOptions,
 ) (resource.ResourceServer, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	serverOptions := resource.ResourceServerOptions{
@@ -69,7 +68,7 @@ func NewResourceServer(
 	// based on the page size during tests.
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
-	opts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	serverOptions.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
 
 	eDB, err := dbimpl.ProvideResourceDB(opts.DB, opts.Cfg, opts.Tracer)
 	if err != nil {
@@ -98,12 +97,7 @@ func NewResourceServer(
 	serverOptions.IndexMetrics = opts.IndexMetrics
 	serverOptions.QOSQueue = opts.QOSQueue
 
-	rs, err := resource.NewResourceServer(serverOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	return rs, nil
+	return resource.NewResourceServer(serverOptions)
 }
 
 // isHighAvailabilityEnabled determines if high availability mode should
