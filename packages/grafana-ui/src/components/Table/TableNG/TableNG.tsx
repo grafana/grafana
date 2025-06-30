@@ -151,7 +151,7 @@ export function TableNG(props: TableNGProps) {
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
-    hasHeader,
+    enabled: hasHeader,
     defaultHeight: defaultHeaderHeight,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,

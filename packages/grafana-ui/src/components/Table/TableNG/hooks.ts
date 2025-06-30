@@ -333,7 +333,7 @@ export function useTypographyCtx(): TypographyCtx {
   return typographyCtx;
 }
 
-interface GetLongesCellTextOptions {
+interface GetMaxWrapCell {
   fields: Field[];
   wrapWidths: number[];
   avgCharWidth: number;
@@ -341,7 +341,11 @@ interface GetLongesCellTextOptions {
   getText: (field: Field) => string | null | undefined;
 }
 
-function getLongestCellText({ fields, wrapWidths, avgCharWidth, wrappedColIdxs, getText }: GetLongesCellTextOptions): {
+/**
+ * loop through the fields and their values, determine which cell is going to determine the
+ * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
+ */
+function getMaxWrapCell({ fields, wrapWidths, avgCharWidth, wrappedColIdxs, getText }: GetMaxWrapCell): {
   text: string;
   idx: number;
   numLines: number;
@@ -375,9 +379,9 @@ const ICON_WIDTH = 16;
 const ICON_GAP = 4;
 
 interface UseHeaderHeightOptions {
-  columnWidths: number[];
+  enabled: boolean;
   fields: Field[];
-  hasHeader: boolean;
+  columnWidths: number[];
   defaultHeight: number;
   sortColumns: SortColumn[];
   typographyCtx: TypographyCtx;
@@ -385,13 +389,13 @@ interface UseHeaderHeightOptions {
 }
 
 export function useHeaderHeight({
-  columnWidths,
   fields,
-  hasHeader,
+  enabled,
+  columnWidths,
   defaultHeight,
   sortColumns,
-  showTypeIcons = false,
   typographyCtx: { calcRowHeight, avgCharWidth },
+  showTypeIcons = false,
 }: UseHeaderHeightOptions): number {
   const columnAvailableWidths = useMemo(
     () =>
@@ -409,7 +413,7 @@ export function useHeaderHeight({
         if (showTypeIcons) {
           width -= ICON_WIDTH + ICON_GAP;
         }
-        return width;
+        return Math.floor(width);
       }),
     [fields, columnWidths, sortColumns, showTypeIcons]
   );
@@ -418,7 +422,7 @@ export function useHeaderHeight({
     let hasWrappedColHeaders = false;
     return [
       fields.map((field) => {
-        const wrapText = field.config.custom.wrapHeaderText;
+        const wrapText = field.config?.custom?.wrapHeaderText;
         if (wrapText === true) {
           hasWrappedColHeaders = true;
         }
@@ -429,14 +433,14 @@ export function useHeaderHeight({
   }, [fields]);
 
   const maxHeaderHeight = useMemo(() => {
-    if (!hasHeader) {
+    if (!enabled) {
       return 0;
     }
     if (!hasWrappedColHeaders) {
       return defaultHeight;
     }
 
-    const { text: maxLinesText, idx: maxLinesIdx } = getLongestCellText({
+    const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell({
       fields,
       wrapWidths: columnAvailableWidths,
       avgCharWidth,
@@ -451,7 +455,7 @@ export function useHeaderHeight({
     columnAvailableWidths,
     defaultHeight,
     fields,
-    hasHeader,
+    enabled,
     hasWrappedColHeaders,
     wrappedColHeaderIdxs,
   ]);
@@ -521,7 +525,7 @@ export function useRowHeight({
       }
 
       // regular rows
-      const { text: maxLinesText, idx: maxLinesIdx } = getLongestCellText({
+      const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell({
         fields,
         wrapWidths,
         avgCharWidth,

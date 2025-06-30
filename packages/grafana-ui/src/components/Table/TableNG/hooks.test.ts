@@ -1,9 +1,23 @@
 import { act, renderHook } from '@testing-library/react';
+import { varPreLine } from 'uwrap';
 
 import { Field, FieldType } from '@grafana/data';
 
-import { useFilteredRows, usePaginatedRows, useSortedRows, useFooterCalcs } from './hooks';
-import { getColumnTypes } from './utils';
+import {
+  useFilteredRows,
+  usePaginatedRows,
+  useSortedRows,
+  useFooterCalcs,
+  useHeaderHeight,
+  useTypographyCtx,
+} from './hooks';
+
+jest.mock('uwrap', () => ({
+  // ...jest.requireActual('uwrap'),
+  varPreLine: jest.fn(() => ({
+    count: jest.fn(() => 1),
+  })),
+}));
 
 describe('TableNG hooks', () => {
   function setupData() {
@@ -87,10 +101,8 @@ describe('TableNG hooks', () => {
   describe('useSortedRows', () => {
     it('should correctly set up the table with an initial sort', () => {
       const { fields, rows } = setupData();
-      const columnTypes = getColumnTypes(fields);
       const { result } = renderHook(() =>
         useSortedRows(rows, fields, {
-          columnTypes,
           hasNestedFrames: false,
           initialSortBy: [{ displayName: 'age', desc: false }],
         })
@@ -103,10 +115,8 @@ describe('TableNG hooks', () => {
 
     it('should change the sort on setSortColumns', () => {
       const { fields, rows } = setupData();
-      const columnTypes = getColumnTypes(fields);
       const { result } = renderHook(() =>
         useSortedRows(rows, fields, {
-          columnTypes,
           hasNestedFrames: false,
           initialSortBy: [{ displayName: 'age', desc: false }],
         })
@@ -370,6 +380,156 @@ describe('TableNG hooks', () => {
       );
 
       expect(result.current).toEqual(['Total', '6', '13']);
+    });
+  });
+
+  describe('useHeaderHeight', () => {
+    it('should return 0 when no header is present', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        const typographyCtx = useTypographyCtx();
+        return useHeaderHeight({
+          fields,
+          columnWidths: [],
+          enabled: false,
+          typographyCtx,
+          defaultHeight: 28,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(0);
+    });
+
+    it('should return the default height when wrap is disabled', () => {
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        const typographyCtx = useTypographyCtx();
+        return useHeaderHeight({
+          fields,
+          columnWidths: [],
+          enabled: true,
+          typographyCtx,
+          defaultHeight: 28,
+          sortColumns: [],
+        });
+      });
+      expect(result.current).toBe(28);
+    });
+
+    it('should return the appropriate height for wrapped text', () => {
+      // Simulate 2 lines of text
+      jest.mocked(varPreLine).mockReturnValue({
+        count: jest.fn(() => 2),
+        each: jest.fn(),
+        split: jest.fn(),
+        test: jest.fn(),
+      });
+
+      const { fields } = setupData();
+      const { result } = renderHook(() => {
+        const typographyCtx = useTypographyCtx();
+        return useHeaderHeight({
+          fields: fields.map((field) => {
+            if (field.name === 'name') {
+              return {
+                ...field,
+                name: 'Longer name that needs wrapping',
+                config: {
+                  ...field.config,
+                  custom: {
+                    ...field.config?.custom,
+                    wrapHeaderText: true,
+                  },
+                },
+              };
+            }
+            return field;
+          }),
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx,
+          defaultHeight: 28,
+          sortColumns: [],
+        });
+      });
+
+      expect(result.current).toBe(56);
+    });
+
+    it('should calculate the available width for a header cell based on the icons rendered within it', () => {
+      const countFn = jest.fn(() => 1);
+
+      // Simulate 2 lines of text
+      jest.mocked(varPreLine).mockReturnValue({
+        count: countFn,
+        each: jest.fn(),
+        split: jest.fn(),
+        test: jest.fn(),
+      });
+
+      const { fields } = setupData();
+
+      renderHook(() => {
+        const typographyCtx = useTypographyCtx();
+
+        return useHeaderHeight({
+          fields: fields.map((field) => {
+            if (field.name === 'name') {
+              return {
+                ...field,
+                name: 'Longer name that needs wrapping',
+                config: {
+                  ...field.config,
+                  custom: {
+                    ...field.config?.custom,
+                    wrapHeaderText: true,
+                  },
+                },
+              };
+            }
+            return field;
+          }),
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, avgCharWidth: 10 },
+          defaultHeight: 28,
+          sortColumns: [],
+          showTypeIcons: false,
+        });
+      });
+
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 87);
+
+      renderHook(() => {
+        const typographyCtx = useTypographyCtx();
+        return useHeaderHeight({
+          fields: fields.map((field) => {
+            if (field.name === 'name') {
+              return {
+                ...field,
+                name: 'Longer name that needs wrapping',
+                config: {
+                  ...field.config,
+                  custom: {
+                    ...field.config?.custom,
+                    filterable: true,
+                    wrapHeaderText: true,
+                  },
+                },
+              };
+            }
+            return field;
+          }),
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, avgCharWidth: 10 },
+          defaultHeight: 28,
+          sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
+          showTypeIcons: true,
+        });
+      });
+
+      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 27);
     });
   });
 });
