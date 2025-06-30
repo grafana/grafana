@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Controller, useForm, FormProvider } from 'react-hook-form';
+import { Controller, useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
@@ -121,8 +121,7 @@ const SaveProvisionedDashboardFormInner = ({
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
-  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { handleSubmit, watch, control, reset, register, setValue } = methods;
+  const { handleSubmit, watch, control, reset, register, setValue, formState } = useFormContext<ProvisionedDashboardFormData>();
   const [workflow, description] = watch(['workflow', 'description']);
 
   // LLM state
@@ -211,6 +210,8 @@ const SaveProvisionedDashboardFormInner = ({
 
   // Submit handler for saving the form data
   const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
+    console.log('handleFormSubmit', { title, description, repo, path, comment, ref });
+
     // Validate required fields
     if (!repo || !path) {
       console.error('Missing required fields for saving:', { repo, path });
@@ -237,24 +238,16 @@ const SaveProvisionedDashboardFormInner = ({
     });
   };
 
-  // Traditional save handler
-  const handleTraditionalSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      // Execute the normal form submit
-      const formData = methods.getValues();
-      await handleFormSubmit(formData);
-    } catch (error) {
-      console.error('Traditional save failed:', error);
-    }
+  const handleFormSubmitDebug = async (formData: any) => {
+    console.log('handleFormSubmitDebug', formData);
+    await handleFormSubmit(formData);
   };
 
   // Don't show AI buttons if LLM is not enabled
   const showAIButtons = isLLMEnabled;
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
+    <form onSubmit={handleSubmit(handleFormSubmitDebug)} name="save-provisioned-form">
       <Stack direction="column" gap={2}>
         {readOnly && (
           <Alert
@@ -274,8 +267,8 @@ const SaveProvisionedDashboardFormInner = ({
             <Field
               noMargin
               label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
-              invalid={!!methods.formState.errors.title}
-              error={methods.formState.errors.title?.message}
+              invalid={!!formState.errors.title}
+              error={formState.errors.title?.message}
             >
               <Stack direction="row" gap={1}>
                 <Input
@@ -305,8 +298,8 @@ const SaveProvisionedDashboardFormInner = ({
             <Field
               noMargin
               label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
-              invalid={!!methods.formState.errors.description}
-              error={methods.formState.errors.description?.message}
+              invalid={!!formState.errors.description}
+              error={formState.errors.description?.message}
             >
               <Stack direction="row" gap={1}>
                 <TextAreaWithSuffix
@@ -378,7 +371,7 @@ const SaveProvisionedDashboardFormInner = ({
             {/* Primary save button */}
             <Button 
               variant="primary"
-              onClick={handleTraditionalSave}
+              type="submit"
               disabled={request.isLoading || !isDirty || readOnly}
               tooltip={t(
                 'dashboard-scene.save-provisioned-dashboard-form.traditional-save-tooltip',

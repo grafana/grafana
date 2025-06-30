@@ -104,9 +104,9 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
     } = useFormContext();
 
     const workflow = watch('workflow');
-    const comment = watch('comment');
     const currentTitle = watch('title') || '';
     const currentDescription = watch('description') || '';
+    const comment = watch('comment');
 
     const pathText =
       resourceType === 'dashboard'
@@ -128,6 +128,10 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
 
     // Don't show AI buttons if autofill is disabled
     const showAIButtons = !fieldsAutoFilled && !autofillDisabledThisSession;
+
+    useEffect(() => {
+      console.log('watched comment:', comment);
+    }, [comment]);
 
     return (
       <>
@@ -175,7 +179,10 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
                   text={t('dashboard-scene.save-provisioned-dashboard-form.auto-generate', 'Auto-generate')}
                   tooltip={t('provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-comment', 'AI autofill comment')}
                   messages={aiContext.getCommentMessages(getDashboardContext(), currentTitle, currentDescription, changeInfo)}
-                  onGenerate={(response) => setValue('comment', response)}
+                  onGenerate={(response) => {
+                    console.log('GenAIButton generated comment:', response);
+                    setValue('comment', response, { shouldDirty: true, shouldTouch: true });
+                  }}
                   eventTrackingSrc={EventTrackingSrc.dashboardChanges}
                 />
               )}
@@ -186,10 +193,16 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
             'Git commit message'
           )}
         >
-          <TextAreaWithSuffix
-            id="dashboard-comment"
-            value={comment || ''}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue('comment', e.target.value)}
+          <Controller
+            control={control}
+            name="comment"
+            render={({ field }) => (
+              <TextAreaWithSuffix
+                id="dashboard-comment"
+                value={field.value || ''}
+                onChange={field.onChange}
+              />
+            )}
           />
         </Field>
 
@@ -264,16 +277,14 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
   }
 );
 
-export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  (props) => {
-    const { setValue } = useFormContext();
-    
-    return (
-      <AIContextProvider 
-        setValue={setValue}
-      >
-        <DashboardEditFormSharedFieldsInner {...props} />
-      </AIContextProvider>
-    );
-  }
-);
+export const DashboardEditFormSharedFields = (props: DashboardEditFormSharedFieldsProps) => {
+  const { setValue } = useFormContext();
+  
+  return (
+    <AIContextProvider 
+      setValue={setValue}
+    >
+      <DashboardEditFormSharedFieldsInner {...props} />
+    </AIContextProvider>
+  );
+};
