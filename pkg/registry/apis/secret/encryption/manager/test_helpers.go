@@ -2,7 +2,6 @@ package manager
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -30,10 +29,6 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          defaultKey,
 			EncryptionProvider: "secretKey.v1",
-			Encryption: setting.EncryptionSettings{
-				DataKeysCleanupInterval: time.Nanosecond,
-				DataKeysCacheTTL:        5 * time.Minute,
-			},
 		},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)

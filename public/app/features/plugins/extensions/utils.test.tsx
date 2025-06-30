@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
@@ -476,7 +476,7 @@ describe('Plugin Extensions / Utils', () => {
       }).toThrow(TypeError);
     });
 
-    it('should return a read-only proxy of a deep-copy of the original object in dev mode', () => {
+    it('should return a writable deep-copy of the original object in dev mode', () => {
       config.featureToggles.extensionsReadOnlyProxy = false;
       config.buildInfo.env = 'development';
 
@@ -485,34 +485,16 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
-      expect(isReadOnlyProxy(copy)).toBe(true);
+      expect(isMutationObserverProxy(copy)).toBe(true);
       expect(() => {
         copy.a = 'b';
-      }).toThrow(TypeError);
+      }).not.toThrow();
 
-      // Also test that we can handle frozen objects
-      // (This is not possible with getReadOnlyProxy, as it throws an error when the object is already frozen)
-      const obj2 = {
-        a: {
-          b: {
-            c: {
-              d: 'd',
-            },
-          },
-        },
-      };
+      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "a"`, {
+        stack: expect.any(String),
+      });
 
-      Object.freeze(obj2);
-      Object.freeze(obj2.a);
-      Object.freeze(obj2.a.b);
-
-      const copy2 = readOnlyCopy(obj2);
-
-      expect(() => {
-        copy2.a.b.c.d = 'testing';
-      }).toThrow("'set' on proxy: trap returned falsish for property 'd'");
-
-      expect(copy2.a.b.c.d).toBe('d');
+      expect(copy.a).toBe('b');
     });
 
     it('should return a writable deep-copy of the original object in production mode', () => {
@@ -705,7 +687,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
     });
 
-    it('should not be possible to mutate the props in development mode, and it also throws an error', async () => {
+    it('should not be possible to mutate the props in development mode, but it logs a warning', async () => {
       config.buildInfo.env = 'development';
       const pluginId = 'grafana-worldmap-panel';
       const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
@@ -713,16 +695,17 @@ describe('Plugin Extensions / Utils', () => {
 
       jest.spyOn(console, 'error').mockImplementation();
 
-      await expect(async () => {
-        await act(async () => {
-          render(<Component {...props} override />);
-        });
-      }).rejects.toThrow(`'set' on proxy: trap returned falsish for property 'c'`);
+      render(<Component {...props} override />);
 
-      // Logs an error
-      expect(console.error).toHaveBeenCalledWith(expect.any(String));
+      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
 
-      // Not able to mutate the props in development mode
+      // Logs a warning
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
+        stack: expect.any(String),
+      });
+
+      // Not able to mutate the props in dev mode either
       expect(props.a.b.c).toBe('Grafana');
     });
 

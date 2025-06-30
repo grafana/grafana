@@ -94,10 +94,6 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          defaultKey,
 			EncryptionProvider: "secretKey.v1",
-			Encryption: setting.EncryptionSettings{
-				DataKeysCleanupInterval: time.Nanosecond,
-				DataKeysCacheTTL:        5 * time.Minute,
-			},
 		},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)

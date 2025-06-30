@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
+func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 	type run struct {
 		cmd     accesscontrol.SaveExternalServiceRoleCommand
 		wantErr bool
@@ -152,7 +152,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 	}
 }
 
-func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
+func TestIntegrationAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 	extID := "app1"
 	tests := []struct {
 		name    string

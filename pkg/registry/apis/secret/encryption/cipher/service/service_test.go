@@ -2,7 +2,6 @@ package service
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,10 +19,6 @@ func newGcmService(t *testing.T) *Service {
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "SdlklWklckeLS",
 			EncryptionProvider: "secretKey.v1",
-			Encryption: setting.EncryptionSettings{
-				DataKeysCacheTTL:        5 * time.Minute,
-				DataKeysCleanupInterval: 1 * time.Nanosecond,
-			},
 		},
 	}
 
