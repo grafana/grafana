@@ -287,7 +287,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, _log: Extensi
 
 export function readOnlyCopy<T>(value: T, _log: ExtensionsLog = log): T {
   // Primitive types are read-only by default
-  if (!value || typeof value !== 'object') {
+  if (!value || typeof value !== 'object' || isMutationObserverProxy(value)) {
     return value;
   }
 
