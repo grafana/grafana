@@ -542,6 +542,41 @@ func TestLocalRepository_Delete(t *testing.T) {
 			comment:     "test delete with ref",
 			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
 		},
+		{
+			name: "delete folder with nested files",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				nestedFolderPath := filepath.Join(tempDir, "folder")
+				err := os.MkdirAll(nestedFolderPath, 0700)
+				require.NoError(t, err)
+				subFolderPath := filepath.Join(nestedFolderPath, "nested-folder")
+				err = os.MkdirAll(subFolderPath, 0700)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(nestedFolderPath, "nested-dash.txt"), []byte("content1"), 0600)
+				require.NoError(t, err)
+
+				// Create repository with the temp directory as permitted prefix
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "folder/",
+			ref:         "",
+			comment:     "test delete folder with nested content",
+			expectedErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
