@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../data-sources/graphite/query-editor/
-description: Guide for using the Graphite data source's query editor
+description: Guide for using the Graphite data source query editor.
 keywords:
   - grafana
   - microsoft
@@ -41,45 +41,53 @@ refs:
 
 Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
-It can handle all types of Graphite queries, including complex nested queries through the use of query references.
+It supports a variety of Graphite queries, including complex nested queries, through the use of query references.
 
 For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
-## View the raw query
+## Query editor elements
 
-To see the raw text of the query that Grafana sends to Graphite, click the **Toggle text edit mode** (pencil) icon.
+The query editor consists of the following elements:
+
+- **Series** - A series in Graphite is a unique time-series dataset, represented by a specific metric name and timestamped values. Click **select metric** to select a metric from the drop-down.
+
+- **Functions** - Graphite uses functions to manipulate data. Click the **+ sign** to view a list of functions in the drop-down. You can create a query with multiple functions.
+
+To view the raw query, click the **Pencil icon** in the upper right. Click the **Pencil icon** again to continue adding series and functions.
 
 ## Choose metrics to query
 
-Click **Select metric** to navigate the metric space.
-Once you begin, you can use the mouse or keyboard arrow keys.
-You can also select a wildcard and still continue.
+Click **Select metric** to browse the available metrics. You can navigate using your mouse or arrow keys. You can also select a wildcard.
 
 {{< figure src="/static/img/docs/graphite/graphite-query-editor-still.png" animated-gif="/static/img/docs/graphite/graphite-query-editor.gif" >}}
 
 ## Functions
 
-Click the plus icon next to **Function** to add a function. You can search for the function or select it from the menu. Once
-a function is selected, it will be added and your focus will be in the text box of the first parameter.
+Click the **+ sign** next to **Function** to add a function from the drop-down. You can also search by typing the first few letters of the function name.
 
-- To edit or change a parameter, click on it and it will turn into a text box.
-- To delete a function, click the function name followed by the x icon.
+After selecting a function, Grafana adds it to your query and automatically places your cursor in the first parameter field.
+
+To edit a parameter, click it to open an editable text box.
+
+To remove a function simply click on it, then click the **X icon** that appears above it.
 
 {{< figure src="/static/img/docs/graphite/graphite-functions-still.png" animated-gif="/static/img/docs/graphite/graphite-functions-demo.gif" >}}
 
-Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
+Some functions like `aliasByNode` support an optional second argument. To add this argument, hover your mouse over the argument and a dialog box appears. To remove the second optional parameter, click on it to delete it.
 
-To learn more, refer to [Graphite's documentation on functions](https://graphite.readthedocs.io/en/latest/functions.html).
+Refer to [Functions](https://graphite.readthedocs.io/en/latest/functions.html) in the Graphite documentation for more information.
 
-{{< admonition type="warning" >}}
-Some functions take a second argument that may be a function that returns a series. If you are adding a second argument that is a function, it is suggested to use a series reference from a second query instead of the function itself. The query editor does not currently support parsing of a second argument that is a function when switching between the query editor and the code editor.
-{{< /admonition >}}
+{{% admonition type="warning" %}}
+Some functions accept a second argument, which can itself be another function that returns a series. If you need to add a second argument that is a function, Grafana recommends using a series reference from a second query instead of embedding the function directly.
+
+Currently, the query editor does not support parsing a second function argument when switching between the query builder and the code editor.
+{{% /admonition %}}
 
 ### Sort labels
 
-If you have the same labels on multiple graphs, they are both sorted differently and use different colors.
+If the same labels appear on multiple graphs, they may be sorted differently and assigned different colors.
 
-To avoid this and consistently order labels by name, use the `sortByName()` function.
+To ensure consistent sorting and coloring, use the `sortByName()` function to order labels alphabetically.
 
 ### Modify the metric name in my tables or charts
 
@@ -91,60 +99,52 @@ Grafana consolidates all Graphite metrics so that Graphite doesn't return more d
 By default, Grafana consolidates data points using the `avg` function.
 To control how Graphite consolidates metrics, use the Graphite `consolidateBy()` function.
 
-{{< admonition type="note" >}}
-Legend summary values (max, min, total) can't all be correct at the same time because they are calculated client-side by Grafana.
-Depending on your consolidation function, only one or two can be correct at the same time.
-{{< /admonition >}}
+{{% admonition type="note" %}}
+Grafana calculates legend summary values like `max`, `min`, and `total` on the client side, after data has been calculated.
+Depending on the consolidation function used, only one or two of these values may be accurate at the same time.
+{{% /admonition %}}
 
 ### Combine time series
 
 To combine time series, click **Combine** in the **Functions** list.
 
-### Select and explor data with tags
+### Select and explore data with tags
 
-In Graphite, _everything_ is a tag.
+In Graphite, everything is a tag.
 
 When exploring data, previously selected tags filter the remaining result set.
 To select data, use the `seriesByTag` function, which takes tag expressions (`=`, `!=`, `=~`, `!=~`) to filter timeseries.
 
 The Grafana query builder does this for you automatically when you select a tag.
 
-{{< admonition type="note" >}}
-The regular expression search can be slow on high-cardinality tags, so try to use other tags to reduce the scope first.
-To help reduce the results, start by filtering on a particular name or namespace.
-{{< /admonition >}}
+{{% admonition type="note" %}}
+Regular expression searches can be slow on high-cardinality tags, so try to use other tags to reduce the scope first. To help reduce the results, start by filtering on a particular name or namespace.
+{{% /admonition %}}
 
-## Nest queries
+## Nested queries
 
-You can reference a query by the "letter" of its row, similar to a spreadsheet.
+Grafana lets you reference one query from another using its query letter, similar to how cell references work in a spreadsheet.
 
-If you add a second query to a graph, you can reference the first query by entering `#A`.
-This helps you build compounded queries.
+For example, if you add a second query and want to build on the results of query A, you can reference it using #A.
+
+This approach allows you to build compound or nested queries, making your panels more flexible and easier to manage.
 
 ## Use wildcards to make fewer queries
 
-To view multiple time series plotted on the same graph, use wildcards in your search to return all of the matching time series in one query.
+To display multiple time series on the same graph, use wildcards in your query to return all matching series at once.
 
-For example, to see how the CPU is being utilized on a machine, you can create a graph and use the single query `cpu.percent.*.g` to retrieve all time series that match that pattern.
-This is more efficient than adding a query for each time series, such as `cpu.percent.user.g`, `cpu.percent.system.g`, and so on, which results in many queries to the data source.
+For example, to monitor CPU utilization across a variety of metrics, you can use a single query like `cpu.percent.*.g` to retrieve all matching time series.
+This approach is more efficient than writing separate queries for each series, such as `cpu.percent.user.g`, `cpu.percent.system.g`, and others, which would result in multiple queries to the data source.
 
 ## Apply annotations
 
-[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
-You can add annotation queries in the Dashboard menu's Annotations view.
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs. You can add annotation queries in the dashboard menu's **Annotations** view.
 
 Graphite supports two ways to query annotations:
 
 - A regular metric query, using the `Graphite query` textbox.
 - A Graphite events query, using the `Graphite event tags` textbox with a tag, wildcard, or empty value
 
-## Get Grafana metrics into Graphite
-
-Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-For detailed instructions, refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring).
-
 ## Integration with Loki
 
-Graphite queries get converted to Loki queries when the data source selection changes in Explore. Loki label names and values are extracted from the Graphite queries according to mappings information provided in Graphite data source configuration. Queries using tags with `seriesByTags()` are also transformed without any additional setup.
-
-Refer to the Graphite data source settings for more details.
+When you change the data source to Loki in Explore, your Graphite queries are automatically converted to Loki queries. Loki label names and values are extracted based on the mapping information defined in your Graphite data source configuration. Grafana automatically transforms queries that use tags with `seriesByTags()` without requiring additional setup.
