@@ -77,6 +77,7 @@ export function TablePanel(props: Props) {
       fieldConfig={fieldConfig}
       getActions={getCellActions}
       replaceVariables={replaceVariables}
+      structureRev={data.structureRev}
     />
   );
 
