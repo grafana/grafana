@@ -230,24 +230,25 @@ export function getMutationObserverProxy<T extends object>(obj: T, _log: Extensi
   }
 
   const cache = new WeakMap();
+  const logFunction = isGrafanaDevMode() ? _log.error.bind(_log) : _log.warning.bind(_log); // should show error during local development
 
   return new Proxy(obj, {
     deleteProperty(target, prop) {
-      _log.warning(`Attempted to delete object property "${String(prop)}"`, {
+      logFunction(`Attempted to delete object property "${String(prop)}"`, {
         stack: new Error().stack ?? '',
       });
       Reflect.deleteProperty(target, prop);
       return true;
     },
     defineProperty(target, prop, descriptor) {
-      _log.warning(`Attempted to define object property "${String(prop)}"`, {
+      _log.debug(`Attempted to define object property "${String(prop)}"`, {
         stack: new Error().stack ?? '',
       });
       Reflect.defineProperty(target, prop, descriptor);
       return true;
     },
     set(target, prop, newValue) {
-      _log.warning(`Attempted to mutate object property "${String(prop)}"`, {
+      logFunction(`Attempted to mutate object property "${String(prop)}"`, {
         stack: new Error().stack ?? '',
       });
       Reflect.set(target, prop, newValue);

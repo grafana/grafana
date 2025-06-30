@@ -401,7 +401,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(proxy.a).toBe('b');
     });
 
-    it('should be possible to set new values, but logs a warning', () => {
+    it('should be possible to set new values, but logs a debug message', () => {
       const obj: { a: string; b?: string } = { a: 'a' };
       const proxy = getMutationObserverProxy(obj);
 
@@ -412,7 +412,7 @@ describe('Plugin Extensions / Utils', () => {
         });
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "b"`, {
+      expect(log.debug).toHaveBeenCalledWith(`Attempted to define object property "b"`, {
         stack: expect.any(String),
       });
 
@@ -534,7 +534,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(Object.isFrozen(copy.b)).toBe(true);
       expect(copy.b).toEqual({ c: 'c' });
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "a"`, {
+      expect(log.debug).toHaveBeenCalledWith(`Attempted to define object property "a"`, {
         stack: expect.any(String),
       });
     });
@@ -687,7 +687,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
     });
 
-    it('should not be possible to mutate the props in development mode, but it logs a warning', async () => {
+    it('should not be possible to mutate the props in development mode, but it logs an error', async () => {
       config.buildInfo.env = 'development';
       const pluginId = 'grafana-worldmap-panel';
       const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
@@ -700,8 +700,8 @@ describe('Plugin Extensions / Utils', () => {
       expect(await screen.findByText('Hello Grafana!')).toBeVisible();
 
       // Logs a warning
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
         stack: expect.any(String),
       });
 
