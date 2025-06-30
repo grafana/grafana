@@ -207,7 +207,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckReportFailure(ref common.ReferenceCal
 					},
 					"moreInfo": {
 						SchemaProps: spec.SchemaProps{
-							Description: "More information about the failure",
+							Description: "More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
