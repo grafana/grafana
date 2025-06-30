@@ -68,7 +68,11 @@ export function buildSelector(labels: SelectableLabel[]): string {
   const selectedLabels = [];
   for (const label of labels) {
     if (label.selected && label.values && label.values.length > 0) {
-      const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
+      const selectedValues = label.values
+        .filter((value) => value.selected)
+        .map((value) => value.name)
+        .sort((a, b) => a.localeCompare(b)
+        ); // sort selected values alphabetically
       if (selectedValues.length > 1) {
         selectedLabels.push(`${label.name}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`);
       } else if (selectedValues.length === 1) {
@@ -97,7 +101,13 @@ export function facetLabels(
           label.values?.filter((value) => value.selected).map((value) => value.name) || []
         );
         // Values for this label have not been requested yet, let's use the facetted ones as the initial values
-        existingValues = possibleValues.map((value) => ({ name: value, selected: selectedValues.has(value) }));
+        existingValues = possibleValues
+          .slice()
+          .sort((a, b) => a.localeCompare(b)) // sort raw label values alphabetically
+          .map((value) => ({
+            name: value,
+            selected: selectedValues.has(value),
+          }));
       }
       return { ...label, loading: false, values: existingValues, facets: existingValues.length };
     }
