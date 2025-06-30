@@ -8,9 +8,11 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/tracectx"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -27,6 +29,20 @@ type Worker struct {
 	keeperService              contracts.KeeperService
 	encryptionManager          contracts.EncryptionManager
 	metrics                    *OutboxMetrics
+	enabled                    bool
+}
+
+// DefaultConfig for the secure value outbox worker.
+var DefaultConfig = Config{
+	BatchSize:                    20,
+	ReceiveTimeout:               5 * time.Second,
+	PollingInterval:              100 * time.Millisecond,
+	MaxMessageProcessingAttempts: 10,
+}
+
+// ProvideWorkerConfig used for wire.
+func ProvideWorkerConfig() Config {
+	return DefaultConfig
 }
 
 type Config struct {
@@ -49,6 +65,7 @@ func NewWorker(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService contracts.KeeperService,
 	encryptionManager contracts.EncryptionManager,
+	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 ) (*Worker, error) {
 	if config.BatchSize == 0 {
@@ -64,6 +81,9 @@ func NewWorker(
 		return nil, fmt.Errorf("config.MaxMessageProcessingAttempts is required")
 	}
 
+	// Require both features to be enabled for the worker to run.
+	enabled := features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform)
+
 	return &Worker{
 		config:                     config,
 		tracer:                     tracer,
@@ -74,12 +94,21 @@ func NewWorker(
 		keeperService:              keeperService,
 		encryptionManager:          encryptionManager,
 		metrics:                    NewOutboxMetrics(reg),
+		enabled:                    enabled,
 	}, nil
 }
 
-// The main method to drive the worker
-func (w *Worker) ControlLoop(ctx context.Context) error {
+// Ensure that Worker implements the BackgroundService interface, so we can start it as a background service.
+var _ registry.BackgroundService = (*Worker)(nil)
+
+// Run is the main method to drive the worker
+func (w *Worker) Run(ctx context.Context) error {
+	if !w.enabled {
+		return nil
+	}
+
 	logging.FromContext(ctx).Debug("starting worker control loop")
+
 	t := time.NewTicker(w.config.PollingInterval)
 	defer t.Stop()
 

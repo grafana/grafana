@@ -130,6 +130,7 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		keeperMetadataStorage,
 		keeperService,
 		encryptionManager,
+		features,
 		nil, // metrics
 	)
 	require.NoError(t, err)

@@ -3,13 +3,10 @@ package secret
 import (
 	"cmp"
 	"context"
-	"errors"
 	"fmt"
-	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -40,10 +36,9 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder               = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupMutation              = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupValidation            = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupPostStartHookProvider = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupBuilder    = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupMutation   = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupValidation = (*SecretAPIBuilder)(nil)
 )
 
 type SecretAPIBuilder struct {
@@ -54,7 +49,6 @@ type SecretAPIBuilder struct {
 	secretsOutboxQueue         contracts.OutboxQueue
 	database                   contracts.Database
 	accessClient               claims.AccessClient
-	worker                     *worker.Worker
 	decryptersAllowList        map[string]struct{}
 }
 
@@ -69,26 +63,7 @@ func NewSecretAPIBuilder(
 	accessClient claims.AccessClient,
 	encryptionManager contracts.EncryptionManager,
 	decryptersAllowList map[string]struct{},
-	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
-	worker, err := worker.NewWorker(worker.Config{
-		BatchSize:                    20,
-		ReceiveTimeout:               5 * time.Second,
-		PollingInterval:              100 * time.Millisecond,
-		MaxMessageProcessingAttempts: 10,
-	},
-		tracer,
-		database,
-		secretsOutboxQueue,
-		secureValueMetadataStorage,
-		keeperMetadataStorage,
-		keeperService,
-		encryptionManager,
-		registerer,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating outbox worker: %w", err)
-	}
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
 		secureValueService:         secureValueService,
@@ -97,7 +72,6 @@ func NewSecretAPIBuilder(
 		secretsOutboxQueue:         secretsOutboxQueue,
 		database:                   database,
 		accessClient:               accessClient,
-		worker:                     worker,
 		decryptersAllowList:        decryptersAllowList,
 	}, nil
 }
@@ -117,7 +91,6 @@ func RegisterAPIService(
 	accessControlService accesscontrol.Service,
 	secretDBMigrator contracts.SecretDBMigrator,
 	encryptionManager contracts.EncryptionManager,
-	registerer prometheus.Registerer,
 ) (*SecretAPIBuilder, error) {
 	// Don't register the API.
 	if cfg.StackID != "" {
@@ -155,7 +128,6 @@ func RegisterAPIService(
 		accessClient,
 		encryptionManager,
 		nil, // OSS does not need an allow list.
-		registerer,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
@@ -723,19 +695,4 @@ func (b *SecretAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o
 	}
 
 	return nil
-}
-
-func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
-	return map[string]genericapiserver.PostStartHookFunc{
-		"start-outbox-queue-worker": func(hookCtx genericapiserver.PostStartHookContext) error {
-			if err := b.worker.ControlLoop(hookCtx.Context); err != nil {
-				if !errors.Is(err, context.Canceled) {
-					logging.FromContext(hookCtx).Error("secrets outbox worker exited control loop with error, secrets won't be created/updated/deleted/etc while the worker is not running: %+v", err)
-					return err
-				}
-			}
-
-			return nil
-		},
-	}, nil
 }
