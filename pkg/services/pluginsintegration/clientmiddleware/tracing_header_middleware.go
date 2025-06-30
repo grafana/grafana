@@ -110,9 +110,8 @@ func (m *TracingHeaderMiddleware) RunStream(ctx context.Context, req *backend.Ru
 }
 
 // sanitizeHTTPHeaderValueForGRPC sanitizes header values according to HTTP/2 gRPC specification.
-// The spec defines ASCII-Value as 1*( %x20-%x7E ) ; space and printable ASCII
-// Control characters (0x00-0x1F) are percent-encoded.
-// Allows printable ASCII (0x20-0x7E) and extended characters (> 0x7F).
+// The spec defines that header values must §consist of printable ASCII characters 0x20 (space) - 0x7E(tilde) inclusive.
+// Other characters are percent-encoded.
 func sanitizeHTTPHeaderValueForGRPC(value string) string {
 	// Can we use something from utf8 package to do this?
 	var sanitized strings.Builder
@@ -120,11 +119,9 @@ func sanitizeHTTPHeaderValueForGRPC(value string) string {
 
 	for _, r := range value {
 		code := int(r)
-		// Allow printable ASCII (space to ~) and extended characters
-		if (code >= 0x20 && code <= 0x7E) || code > 0x7F {
+		if code >= 0x20 && code <= 0x7E {
 			sanitized.WriteRune(r)
 		} else {
-			// Control characters (0x00-0x1F) need percent encoding
 			sanitized.WriteString(fmt.Sprintf("%%%02X", code))
 		}
 	}

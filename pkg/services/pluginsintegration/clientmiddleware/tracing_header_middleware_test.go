@@ -239,15 +239,23 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.Equal(t, `true`, cdt.RunStreamReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 		})
 
-		t.Run("When headers contain invalid characters, they are sanitized", func(t *testing.T) {
+		t.Run("sanitizes grpc header values for invalid utf-8", func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
 			require.NoError(t, err)
 
-			// Set headers with control characters that need sanitization
-			req.Header[`X-Dashboard-Uid`] = []string{"dashboard\x00uid"}
-			req.Header[`X-Datasource-Uid`] = []string{"datasource\tuid"}
-			req.Header[`X-Panel-Id`] = []string{"panel\nid"}
-			req.Header[`X-Grafana-Org-Id`] = []string{"org\rid"}
+			// Create invalid UTF-8 strings
+			invalidUTF8Dashboard := string([]byte{'d', 'a', 's', 'h', 0xFF, 0xFE, 'u', 'i', 'd'})
+			invalidUTF8Panel := string([]byte{'p', 'a', 'n', 'e', 'l', 0x80, 'i', 'd'})
+
+			// Set headers with various characters that need to be sanitization
+			req.Header[`X-Dashboard-Title`] = []string{invalidUTF8Dashboard} // invalid UTF-8
+			req.Header[`X-Panel-Title`] = []string{invalidUTF8Panel}         // invalid UTF-8
+
+			// Set headers that don't need sanitization
+			req.Header[`X-Dashboard-Uid`] = []string{"dashboard\x00uid"} // control character
+			req.Header[`X-Datasource-Uid`] = []string{"datasource\tuid"} // tab character
+			req.Header[`X-Query-Group-Id`] = []string{"valid-text-123"}  // valid characters
+			req.Header[`X-Grafana-From-Expr`] = []string{"café résumé"}  // extended characters
 
 			pluginCtx := backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -267,11 +275,15 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			// Verify that headers were sanitized (control characters percent-encoded)
-			require.Equal(t, `dashboard%00uid`, cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
-			require.Equal(t, `datasource%09uid`, cdt.QueryDataReq.GetHTTPHeader(`X-Datasource-Uid`))
-			require.Equal(t, `panel%0Aid`, cdt.QueryDataReq.GetHTTPHeader(`X-Panel-Id`))
-			require.Equal(t, `org%0Did`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Org-Id`))
+			// Invalid UTF-8 should be sanitized
+			require.Equal(t, "dash%FFFD%FFFDuid", cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Title`))
+			require.Equal(t, "panel%FFFDid", cdt.QueryDataReq.GetHTTPHeader(`X-Panel-Title`))
+
+			// Valid characters should remain unchanged
+			require.Equal(t, "valid-text-123", cdt.QueryDataReq.GetHTTPHeader(`X-Query-Group-Id`))
+			require.Equal(t, "café résumé", cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-From-Expr`))
+			require.Equal(t, "dashboard\x00uid", cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
+			require.Equal(t, "datasource\tuid", cdt.QueryDataReq.GetHTTPHeader(`X-Datasource-Uid`))
 		})
 	})
 }
