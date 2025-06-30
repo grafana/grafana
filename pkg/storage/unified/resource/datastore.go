@@ -49,6 +49,10 @@ func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s", k.Namespace, k.Group, k.Resource, k.Name, k.ResourceVersion, k.Action)
 }
 
+func (k DataKey) Equals(other DataKey) bool {
+	return k.Namespace == other.Namespace && k.Group == other.Group && k.Resource == other.Resource && k.Name == other.Name && k.ResourceVersion == other.ResourceVersion && k.Action == other.Action
+}
+
 func (k DataKey) Validate() error {
 	if k.Namespace == "" {
 		if k.Group != "" || k.Resource != "" || k.Name != "" {
@@ -205,6 +209,29 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 			}
 		}
 	}
+}
+
+// LastResourceVersion returns the last key for a given resource
+func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey) (DataKey, error) {
+	if err := key.Validate(); err != nil {
+		return DataKey{}, fmt.Errorf("invalid data key: %w", err)
+	}
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
+		return DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	}
+	prefix := key.Prefix()
+	for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Limit:    1,
+		Sort:     SortOrderDesc,
+	}) {
+		if err != nil {
+			return DataKey{}, err
+		}
+		return ParseKey(key)
+	}
+	return DataKey{}, ErrNotFound
 }
 
 func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error) {
