@@ -410,12 +410,14 @@ export function TableNG(props: TableNGProps) {
     }
 
     const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
-    const { columns: nestedColumns, cellRootRenderers: nestedcellRootRenderers } = fromFields(
+    const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
       firstNestedData.fields,
       computeColWidths(firstNestedData.fields, availableWidth)
     );
 
-    const renderCellRoot: CellRootRenderer = (key, props) => nestedcellRootRenderers[props.column.key](key, props);
+    const renderCellRoot: CellRootRenderer = (key, props) => nestedCellRootRenderers[props.column.key](key, props);
+
+    result.cellRootRenderers.expanded = (key, props) => <Cell key={key} {...props} />;
 
     // If we have nested frames, we need to add a column for the row expansion
     result.columns.unshift({
@@ -513,7 +515,9 @@ export function TableNG(props: TableNGProps) {
   const displayedEnd = pageRangeEnd;
   const numRows = sortedRows.length;
 
-  const renderCellRoot: CellRootRenderer = (key, props) => cellRootRenderers[props.column.key](key, props);
+  const renderCellRoot: CellRootRenderer = (key, props) => {
+    return cellRootRenderers[props.column.key](key, props);
+  };
 
   return (
     <>
