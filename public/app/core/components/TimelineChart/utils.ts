@@ -783,7 +783,7 @@ function processSeriesGroups(
         let getDisplayValues: (() => LegendDisplayValue[]) | undefined;
 
         if (hasDurationData) {
-          const values = options.values || ['percentage'];
+          const values = options.values || [];
 
           if (options.displayMode === 'table') {
             getDisplayValues = () => createTableLegendValues(info, values);
