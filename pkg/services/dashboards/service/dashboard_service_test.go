@@ -2643,7 +2643,7 @@ func TestCleanUpDashboard(t *testing.T) {
 	}
 }
 
-func TestK8sDashboardCleanupJob(t *testing.T) {
+func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 	tests := []struct {
 		name            string
 		featureEnabled  bool
