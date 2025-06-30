@@ -423,6 +423,7 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,
 	secretmetadata.ProvideOutboxQueue,
+	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
