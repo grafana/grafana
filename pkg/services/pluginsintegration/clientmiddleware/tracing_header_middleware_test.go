@@ -276,8 +276,8 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.NoError(t, err)
 
 			// Invalid UTF-8 should be sanitized
-			require.Equal(t, "dash%FFFD%FFFDuid", cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Title`))
-			require.Equal(t, "panel%FFFDid", cdt.QueryDataReq.GetHTTPHeader(`X-Panel-Title`))
+			require.Equal(t, "dash%C3%BF%C3%BEuid", cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Title`))
+			require.Equal(t, "panel%C2%80id", cdt.QueryDataReq.GetHTTPHeader(`X-Panel-Title`))
 
 			// Valid characters should remain unchanged
 			require.Equal(t, "valid-text-123", cdt.QueryDataReq.GetHTTPHeader(`X-Query-Group-Id`))
