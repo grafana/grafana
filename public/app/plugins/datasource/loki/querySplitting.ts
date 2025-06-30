@@ -359,9 +359,7 @@ export function runSplitQuery(
   return runSplitGroupedQueries(datasource, requests, options).pipe(
     tap((response) => {
       if (response.state === LoadingState.Done) {
-        trackGroupedQueries(response, requests, request, startTime, {
-          predefinedOperations: datasource.predefinedOperations,
-        });
+        trackGroupedQueries(response, requests, request, startTime);
       }
     })
   );

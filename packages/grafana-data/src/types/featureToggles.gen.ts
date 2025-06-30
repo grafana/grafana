@@ -166,10 +166,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Adds predefined query operations to Loki query editor
-  */
-  lokiPredefinedOperations?: boolean;
-  /**
   * Enables the plugins frontend sandbox
   */
   pluginsFrontendSandbox?: boolean;
