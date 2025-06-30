@@ -2,8 +2,6 @@ import ansicolor from 'ansicolor';
 
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 
