@@ -156,9 +156,7 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 		_ = obj.Value.Close()
 		return Event{}, err
 	}
-	if err = obj.Value.Close(); err != nil {
-		return Event{}, err
-	}
+	defer func() { _ = obj.Value.Close() }()
 	return event, nil
 }
 
