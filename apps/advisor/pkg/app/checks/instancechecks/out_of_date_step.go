@@ -88,77 +88,106 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 	versionInfo := s.parseVersionInfo(currentVersion, releases, log)
 
 	reportFailures := make([]advisor.CheckReportFailure, 0)
+	uniqueReportedVersions := make(map[string]struct{})
 
+	// Report failures for all newer major versions
 	for majorVersion, latestVersionForMajor := range versionInfo.latestMajorVersions {
-		reportFailures = append(
-			reportFailures,
-			checks.NewCheckReportFailure(
-				advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current major is still supported
-				s.ID(),
-				fmt.Sprintf("There's a new major version available: %s", latestVersionForMajor.String()),
-				outOfDateVersion,
-				[]advisor.CheckErrorLink{
-					{
-						Message: fmt.Sprintf("Upgrade to major version %d", majorVersion),
-						Url:     "https://grafana.com/grafana/download/" + latestVersionForMajor.String(),
+		versionString := latestVersionForMajor.String()
+
+		if _, ok := uniqueReportedVersions[versionString]; !ok {
+			reportFailures = append(
+				reportFailures,
+				checks.NewCheckReportFailure(
+					advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current major is still supported
+					s.ID(),
+					fmt.Sprintf("There's a new major version available: %s", versionString),
+					outOfDateVersion,
+					[]advisor.CheckErrorLink{
+						{
+							Message: fmt.Sprintf("Upgrade to major version %d", majorVersion),
+							Url:     "https://grafana.com/grafana/download/" + versionString,
+						},
 					},
-				},
-			),
-		)
+				),
+			)
+
+			uniqueReportedVersions[versionString] = struct{}{}
+		}
 	}
 
+	// Report minor version updates
 	if versionInfo.latestMinor.Minor() > currentVersion.Minor() {
-		reportFailures = append(
-			reportFailures,
-			checks.NewCheckReportFailure(
-				advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current minor is still supported
-				s.ID(),
-				fmt.Sprintf("There's a new minor version available: %s", versionInfo.latestMinor.String()),
-				outOfDateVersion,
-				[]advisor.CheckErrorLink{
-					{
-						Message: "Download",
-						Url:     "https://grafana.com/grafana/download/" + versionInfo.latestMinor.String(),
+		versionString := versionInfo.latestMinor.String()
+
+		if _, ok := uniqueReportedVersions[versionString]; !ok {
+			reportFailures = append(
+				reportFailures,
+				checks.NewCheckReportFailure(
+					advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current minor is still supported
+					s.ID(),
+					fmt.Sprintf("There's a new minor version available: %s", versionString),
+					outOfDateVersion,
+					[]advisor.CheckErrorLink{
+						{
+							Message: "Download",
+							Url:     "https://grafana.com/grafana/download/" + versionString,
+						},
 					},
-				},
-			),
-		)
+				),
+			)
+
+			uniqueReportedVersions[versionString] = struct{}{}
+		}
 	}
 
+	// Report patch version updates
 	if versionInfo.latestPatch.Patch() > currentVersion.Patch() {
-		reportFailures = append(
-			reportFailures,
-			checks.NewCheckReportFailure(
-				advisor.CheckReportFailureSeverityHigh,
-				s.ID(),
-				fmt.Sprintf("New patch version available: %s", versionInfo.latestPatch.String()),
-				outOfDateVersion,
-				[]advisor.CheckErrorLink{
-					{
-						Message: "Download",
-						Url:     "https://grafana.com/grafana/download/" + versionInfo.latestPatch.String(),
+		versionString := versionInfo.latestPatch.String()
+
+		if _, ok := uniqueReportedVersions[versionString]; !ok {
+			reportFailures = append(
+				reportFailures,
+				checks.NewCheckReportFailure(
+					advisor.CheckReportFailureSeverityHigh,
+					s.ID(),
+					fmt.Sprintf("New patch version available: %s", versionString),
+					outOfDateVersion,
+					[]advisor.CheckErrorLink{
+						{
+							Message: "Upgrade now",
+							Url:     "https://grafana.com/grafana/download/" + versionString,
+						},
 					},
-				},
-			),
-		)
+				),
+			)
+
+			uniqueReportedVersions[versionString] = struct{}{}
+		}
 	}
 
+	// Report security patch updates
 	if versionInfo.latestSecurityPatch.Patch() == currentVersion.Patch() && versionInfo.latestSecurityPatch.Metadata() != currentVersion.Metadata() {
-		reportFailures = append(
-			reportFailures,
-			checks.NewCheckReportFailure(
-				advisor.CheckReportFailureSeverityHigh,
-				s.ID(),
-				fmt.Sprintf("New security patch available: %s", versionInfo.latestSecurityPatch.String()),
-				outOfDateVersion,
-				[]advisor.CheckErrorLink{
-					{
-						Message: "Upgrade now",
-						Url:     "https://grafana.com/grafana/download/" + versionInfo.latestSecurityPatch.String(),
+		versionString := versionInfo.latestSecurityPatch.String()
+
+		if _, ok := uniqueReportedVersions[versionString]; !ok {
+			reportFailures = append(
+				reportFailures,
+				checks.NewCheckReportFailure(
+					advisor.CheckReportFailureSeverityHigh,
+					s.ID(),
+					fmt.Sprintf("New security patch available: %s", versionString),
+					outOfDateVersion,
+					[]advisor.CheckErrorLink{
+						{
+							Message: "Upgrade now",
+							Url:     "https://grafana.com/grafana/download/" + versionString,
+						},
 					},
-				},
-			),
-		)
+				),
+			)
+
+			uniqueReportedVersions[versionString] = struct{}{}
+		}
 	}
 
 	if len(reportFailures) == 0 {

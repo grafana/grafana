@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/google/go-github/v70/github"
-	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 )
 
 var _ checks.Check = (*check)(nil)
