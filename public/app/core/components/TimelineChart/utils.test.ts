@@ -1306,7 +1306,7 @@ describe('prepareTimelineLegendItems', () => {
     const multipleSeriesFrames = [
       {
         refId: 'A',
-        name: 'Service A',
+        name: 'A',
         fields: [
           {
             name: 'time',
@@ -1321,7 +1321,7 @@ describe('prepareTimelineLegendItems', () => {
             },
           },
           {
-            name: 'state',
+            name: 'Service A',
             values: ['Low', 'High'],
             config: {
               custom: {
@@ -1340,7 +1340,7 @@ describe('prepareTimelineLegendItems', () => {
       },
       {
         refId: 'B',
-        name: 'Service B',
+        name: 'B',
         fields: [
           {
             name: 'time',
@@ -1355,7 +1355,7 @@ describe('prepareTimelineLegendItems', () => {
             },
           },
           {
-            name: 'state',
+            name: 'Service B',
             values: ['Up', 'Down'],
             config: {
               custom: {
@@ -1377,8 +1377,8 @@ describe('prepareTimelineLegendItems', () => {
     const multipleSeriesResult = prepareTimelineLegendItems(
       multipleSeriesFrames,
       {
-        displayMode: LegendDisplayMode.Table,
-        values: ['duration', 'percentage', 'occurrences'],
+        displayMode: LegendDisplayMode.List,
+        values: [],
         calcs: [],
         placement: 'bottom',
         showLegend: true,
