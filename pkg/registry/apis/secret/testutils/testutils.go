@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -88,9 +87,6 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          defaultKey,
 			EncryptionProvider: "secretKey.v1",
-			Encryption: setting.EncryptionSettings{
-				Algorithm: cipher.AesGcm,
-			},
 		},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)

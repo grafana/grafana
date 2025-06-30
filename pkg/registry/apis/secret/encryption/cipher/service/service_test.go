@@ -8,7 +8,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,9 +19,6 @@ func newGcmService(t *testing.T) *Service {
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "SdlklWklckeLS",
 			EncryptionProvider: "secretKey.v1",
-			Encryption: setting.EncryptionSettings{
-				Algorithm: cipher.AesGcm,
-			},
 		},
 	}
 
@@ -56,20 +52,5 @@ func TestService(t *testing.T) {
 
 		assert.Equal(t, []byte("grafana"), decrypted)
 		// We'll let the provider deal with testing details.
-	})
-
-	t.Run("decrypting legacy ciphertext should work", func(t *testing.T) {
-		t.Parallel()
-
-		// Raw slice of bytes that corresponds to the following ciphertext:
-		// - 'grafana' as payload
-		// - '1234' as secret
-		// - no encryption algorithm metadata
-		ciphertext := []byte{73, 71, 50, 57, 121, 110, 90, 109, 115, 23, 237, 13, 130, 188, 151, 118, 98, 103, 80, 209, 79, 143, 22, 122, 44, 40, 102, 41, 136, 16, 27}
-
-		svc := newGcmService(t)
-		decrypted, err := svc.Decrypt(t.Context(), ciphertext, "1234")
-		require.NoError(t, err)
-		assert.Equal(t, []byte("grafana"), decrypted)
 	})
 }
