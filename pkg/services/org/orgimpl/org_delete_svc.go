@@ -3,6 +3,7 @@ package orgimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -59,7 +60,7 @@ func (s *DeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand)
 	ctx, _ = identity.WithServiceIdentity(ctx, cmd.ID)
 	err = s.dashSvc.DeleteAllDashboards(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete dashboards for org %d: %w", cmd.ID, err)
 	}
 
 	return s.store.Delete(ctx, cmd)
