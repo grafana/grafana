@@ -367,9 +367,9 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	}
 
 	// Apply filtering based on version match
-	versionMatch := req.GetVersionMatchV2()
 
-	if versionMatch == resourcepb.ResourceVersionMatchV2_Exact {
+	switch req.GetVersionMatchV2() {
+	case resourcepb.ResourceVersionMatchV2_Exact:
 		if req.ResourceVersion <= 0 {
 			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
 		}
@@ -380,7 +380,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 			}
 		}
 		historyKeys = exactKeys
-	} else if versionMatch == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+	case resourcepb.ResourceVersionMatchV2_NotOlderThan:
 		if req.ResourceVersion > 0 {
 			var filteredKeys []DataKey
 			for _, key := range historyKeys {
@@ -390,7 +390,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 			}
 			historyKeys = filteredKeys
 		}
-	} else {
+	default:
 		if req.ResourceVersion > 0 {
 			var filteredKeys []DataKey
 			for _, key := range historyKeys {
@@ -403,7 +403,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	}
 
 	// Apply "live" history logic: ignore events before the last delete
-	useLatestDeletionAsMinRV := req.ResourceVersion == 0 && req.Source != resourcepb.ListRequest_TRASH && versionMatch != resourcepb.ResourceVersionMatchV2_Exact
+	useLatestDeletionAsMinRV := req.ResourceVersion == 0 && req.Source != resourcepb.ListRequest_TRASH && req.GetVersionMatchV2() != resourcepb.ResourceVersionMatchV2_Exact
 	if useLatestDeletionAsMinRV {
 		latestDeleteRV := int64(0)
 		for _, key := range historyKeys {
@@ -498,8 +498,8 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	// If err != ErrNotFound, the resource exists, so no trash entries should be returned
 
 	// Apply version filtering
-	versionMatch := req.GetVersionMatchV2()
-	if versionMatch == resourcepb.ResourceVersionMatchV2_Exact {
+	switch req.GetVersionMatchV2() {
+	case resourcepb.ResourceVersionMatchV2_Exact:
 		if req.ResourceVersion <= 0 {
 			return 0, fmt.Errorf("expecting an explicit resource version query when using Exact matching")
 		}
@@ -510,7 +510,7 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 			}
 		}
 		trashKeys = exactKeys
-	} else if versionMatch == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+	case resourcepb.ResourceVersionMatchV2_NotOlderThan:
 		if req.ResourceVersion > 0 {
 			var filteredKeys []DataKey
 			for _, key := range trashKeys {
@@ -520,7 +520,7 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 			}
 			trashKeys = filteredKeys
 		}
-	} else {
+	default:
 		if req.ResourceVersion > 0 {
 			var filteredKeys []DataKey
 			for _, key := range trashKeys {
