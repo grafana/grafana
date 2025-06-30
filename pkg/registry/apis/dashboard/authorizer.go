@@ -100,7 +100,7 @@ func authorizeDashboard(ctx context.Context, ac accesscontrol.AccessControl, use
 			return authorizer.DecisionDeny, "can not read any dashboards", err
 		}
 	case "create":
-		// Detailed create permissions are handled by authz, this just checks whether the user can create *any* library panel
+		// Detailed create permissions are handled by authz, this just checks whether the user can create *any* dashboard
 		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate))
 		if !ok || err != nil {
 			return authorizer.DecisionDeny, "can not create any dashboards", err
