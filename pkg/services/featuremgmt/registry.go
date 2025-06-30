@@ -564,14 +564,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:         "lokiStructuredMetadata",
-			Description:  "Enables the loki data source to request structured metadata from the Loki server",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
 			Description:  "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
 			Stage:        FeatureStageExperimental,
