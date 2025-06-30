@@ -3,10 +3,10 @@ import { Property } from 'csstype';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
+import { TableCellDisplayMode } from '../../types';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { ImageCellProps } from '../types';
 import { getCellLinks } from '../utils';

@@ -1,4 +1,4 @@
-import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning';
+import { RepositorySpec, SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryFormData } from '../types';
 

@@ -8,15 +8,23 @@ import RuleEditor from 'app/features/alerting/unified/rule-editor/RuleEditor';
 
 export enum GrafanaRuleFormStep {
   Query = 2,
+  FolderLabels = 3,
+  Evaluation = 4,
   Notification = 5,
 }
 
 export const ui = {
   loadingIndicator: byText('Loading rule...'),
   manualRestoreBanner: byText(/restoring rule manually/i),
+  formSteps: {
+    folderLabels: byTestId(selectors.components.AlertRules.step(GrafanaRuleFormStep.FolderLabels.toString())),
+    evaluation: byTestId(selectors.components.AlertRules.step(GrafanaRuleFormStep.Evaluation.toString())),
+    notification: byTestId(selectors.components.AlertRules.step(GrafanaRuleFormStep.Notification.toString())),
+  },
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     metric: byRole('textbox', { name: 'metric' }),
+    targetDatasource: byTestId('target-data-source'),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId(selectors.components.DataSourcePicker.inputV2),
     folder: byTestId('folder-picker'),

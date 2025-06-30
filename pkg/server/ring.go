@@ -113,7 +113,8 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 	}, []string{"operation", "status_code"})
 
 	factory := ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
-		opts, err := clientCfg.DialOption(grpcclient.Instrument(factoryRequestDuration))
+		unaryInterceptors, streamInterceptors := grpcclient.Instrument(factoryRequestDuration)
+		opts, err := clientCfg.DialOption(unaryInterceptors, streamInterceptors, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -123,10 +124,7 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
 		}
 
-		client, err := resource.NewResourceClient(conn, cfg, features, tracer)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get resource client for server %s %s: %s", inst.Id, inst.Addr, err)
-		}
+		client := resource.NewAuthlessResourceClient(conn)
 
 		return &resource.RingClient{
 			Client:       client,

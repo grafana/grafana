@@ -13,7 +13,10 @@ export const flows = {
     e2e.components.PanelEditor.ElementEditPane.addVariableButton().should('be.visible').click();
   },
   newEditPanelCommonVariableInputs(variable: Variable) {
-    e2e.components.PanelEditor.ElementEditPane.variableType(variable.type).should('be.visible').click();
+    e2e.components.PanelEditor.ElementEditPane.variableType(variable.type)
+      .scrollIntoView()
+      .should('be.visible')
+      .click();
     e2e.components.PanelEditor.ElementEditPane.variableNameInput().clear().type(variable.name).blur();
     e2e.components.PanelEditor.ElementEditPane.variableLabelInput().clear().type(variable.label).blur();
   },

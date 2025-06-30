@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { useStyles2 } from '../../../../themes';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { Popover } from '../../../Tooltip/Popover';
-import { TableRow } from '../types';
+import { FilterType, TableRow } from '../types';
 
 import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
@@ -14,8 +14,8 @@ import { FilterPopup } from './FilterPopup';
 interface Props {
   name: string;
   rows: any[];
-  filter: any;
-  setFilter: (value: any) => void;
+  filter: FilterType;
+  setFilter: (value: FilterType) => void;
   field?: Field;
   crossFilterOrder: string[];
   crossFilterRows: { [key: string]: TableRow[] };
@@ -43,8 +43,6 @@ export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder,
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
   const styles = useStyles2(getStyles);
   const filterEnabled = useMemo(() => Boolean(filterValue), [filterValue]);
-  const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
-  const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
   const [searchFilter, setSearchFilter] = useState(filter[name]?.searchFilter || '');
   const [operator, setOperator] = useState<SelectableValue<string>>(filter[name]?.operator || REGEX_OPERATOR);
 
@@ -53,7 +51,10 @@ export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder,
       className={cx(styles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
       ref={ref}
       type="button"
-      onClick={onShowPopover}
+      onClick={(ev) => {
+        setPopoverVisible(true);
+        ev.stopPropagation();
+      }}
     >
       <Icon name="filter" />
       {isPopoverVisible && ref.current && (
@@ -65,13 +66,18 @@ export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder,
               filterValue={filterValue}
               setFilter={setFilter}
               field={field}
-              onClose={onClosePopover}
+              onClose={() => setPopoverVisible(false)}
               searchFilter={searchFilter}
               setSearchFilter={setSearchFilter}
               operator={operator}
               setOperator={setOperator}
             />
           }
+          onKeyDown={(event) => {
+            if (event.key === ' ') {
+              event.stopPropagation();
+            }
+          }}
           placement="bottom-start"
           referenceElement={ref.current}
           show

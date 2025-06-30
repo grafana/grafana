@@ -36,5 +36,7 @@ type TimeIntervalSpec struct {
 
 // NewTimeIntervalSpec creates a new TimeIntervalSpec object.
 func NewTimeIntervalSpec() *TimeIntervalSpec {
-	return &TimeIntervalSpec{}
+	return &TimeIntervalSpec{
+		TimeIntervals: []TimeIntervalInterval{},
+	}
 }

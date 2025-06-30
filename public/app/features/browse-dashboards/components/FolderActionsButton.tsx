@@ -1,11 +1,10 @@
 import { useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
-import { ProvisionedResourceDeleteModal } from 'app/features/dashboard-scene/saving/provisioned/ProvisionedResourceDeleteModal';
 import { FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -15,6 +14,7 @@ import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
+import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
 interface Props {
   folder: FolderDTO;
@@ -23,9 +23,10 @@ interface Props {
 export function FolderActionsButton({ folder }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
+  const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
   const [deleteFolder] = useDeleteFolderMutation();
-  const { t } = useTranslate();
+
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
   // Can only move folders when nestedFolders is enabled and the folder is not provisioned
@@ -91,14 +92,7 @@ export function FolderActionsButton({ folder }: Props) {
   };
 
   const showDeleteProvisionedModal = () => {
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: ProvisionedResourceDeleteModal,
-        props: {
-          resource: folder,
-        },
-      })
-    );
+    setShowDeleteProvisionedFolderDrawer(true);
   };
 
   const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
@@ -109,7 +103,8 @@ export function FolderActionsButton({ folder }: Props) {
     <Menu>
       {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
       {canMoveFolder && <MenuItem onClick={showMoveModal} label={moveLabel} />}
-      {canDeleteFolders && (
+      {/* TODO: remove isProvisionedFolder check once BE folder delete flow is complete */}
+      {canDeleteFolders && !isProvisionedFolder && (
         <MenuItem
           destructive
           onClick={isProvisionedFolder ? showDeleteProvisionedModal : showDeleteModal}
@@ -139,6 +134,18 @@ export function FolderActionsButton({ folder }: Props) {
           size="md"
         >
           <Permissions resource="folders" resourceId={folder.uid} canSetPermissions={canSetPermissions} />
+        </Drawer>
+      )}
+      {showDeleteProvisionedFolderDrawer && (
+        <Drawer
+          title={t('browse-dashboards.action.delete-provisioned-folder', 'Delete provisioned folder')}
+          subtitle={folder.title}
+          onClose={() => setShowDeleteProvisionedFolderDrawer(false)}
+        >
+          <DeleteProvisionedFolderForm
+            parentFolder={folder}
+            onDismiss={() => setShowDeleteProvisionedFolderDrawer(false)}
+          />
         </Drawer>
       )}
     </>

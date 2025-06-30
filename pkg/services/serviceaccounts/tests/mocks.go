@@ -137,20 +137,6 @@ func (_m *MockServiceAccountService) ListTokens(ctx context.Context, query *serv
 	return r0, r1
 }
 
-// MigrateApiKey provides a mock function with given fields: ctx, orgID, keyId
-func (_m *MockServiceAccountService) MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error {
-	ret := _m.Called(ctx, orgID, keyId)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
-		r0 = rf(ctx, orgID, keyId)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // MigrateApiKeysToServiceAccounts provides a mock function with given fields: ctx, orgID
 func (_m *MockServiceAccountService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
 	ret := _m.Called(ctx, orgID)

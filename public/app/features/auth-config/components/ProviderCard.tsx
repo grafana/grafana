@@ -1,6 +1,7 @@
 import { isIconName } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { Badge, Card, Icon } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Badge, Card, Icon, TextLink } from '@grafana/ui';
+import { CloudEnterpriseBadge } from 'app/core/components/Branding/CloudEnterpriseBadge';
 
 import { UIMap } from '../constants';
 import { getProviderUrl } from '../utils/url';
@@ -14,7 +15,6 @@ type Props = {
 };
 
 export function ProviderCard({ providerId, enabled, configPath, authType, onClick }: Props) {
-  const { t } = useTranslate();
   //@ts-expect-error
   const url = getProviderUrl({ configPath, id: providerId });
   const [iconName, displayName] = UIMap[providerId] || ['lock', providerId.toUpperCase()];
@@ -36,6 +36,58 @@ export function ProviderCard({ providerId, enabled, configPath, authType, onClic
           }
           color={enabled ? 'green' : 'blue'}
         />
+      </Card.Actions>
+    </Card>
+  );
+}
+
+export function ProviderSAMLCard() {
+  return (
+    <Card noMargin>
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+      <Card.Heading>SAML</Card.Heading>
+      <Card.Meta>
+        <TextLink
+          external
+          variant="bodySmall"
+          color="secondary"
+          href="https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-grafana&cnt=admin-authorization-saml"
+        >
+          {t('auth-config.provider-card.saml-learn-more', 'Single sign-on (SSO) with SAML.')}
+        </TextLink>
+      </Card.Meta>
+      <Card.Figure>
+        <Icon name="lock" size={'xxxl'} />
+      </Card.Figure>
+      <Card.Actions>
+        <CloudEnterpriseBadge />
+      </Card.Actions>
+    </Card>
+  );
+}
+
+export function ProviderSCIMCard() {
+  return (
+    <Card noMargin>
+      {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+      <Card.Heading>SCIM</Card.Heading>
+      <Card.Meta>
+        <div>
+          <TextLink
+            external
+            variant="bodySmall"
+            color="secondary"
+            href="https://grafana.com/auth/sign-up/create-user?cloud-auth=&redirectPath=cloud-auth&utm_source=oss-grafana&cnt=admin-authorization-scim"
+          >
+            {t('auth-config.provider-card.scim-learn-more', ' Sync users and teams with SCIM.')}
+          </TextLink>
+        </div>
+      </Card.Meta>
+      <Card.Figure>
+        <Icon name="sync" size={'xxxl'} />
+      </Card.Figure>
+      <Card.Actions>
+        <CloudEnterpriseBadge />
       </Card.Actions>
     </Card>
   );

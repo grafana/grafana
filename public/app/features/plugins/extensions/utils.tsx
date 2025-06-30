@@ -295,11 +295,6 @@ export function readOnlyCopy<T>(value: T, _log: ExtensionsLog = log): T {
     return getReadOnlyProxy(value);
   }
 
-  // In dev mode: we return a read-only proxy (throws errors for any mutation), but with a deep-cloned version of the original object (so no interference with other call-sites)
-  if (isGrafanaDevMode()) {
-    return getReadOnlyProxy(cloneDeep(value));
-  }
-
   // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
   return getMutationObserverProxy(cloneDeep(value), _log);
 }
@@ -377,6 +372,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
   if (uncategorized.length > 0) {
     if (subMenu.length > 0) {
       subMenu.push({
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         text: 'divider',
         type: 'divider',
       });
