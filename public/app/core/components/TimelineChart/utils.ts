@@ -619,11 +619,10 @@ interface DurationCalculationConfig {
   fields: Field[];
   timeRange: TimeRange;
   frame: DataFrame;
-  frames: DataFrame[];
 }
 
 function calculateStateDurations(config: DurationCalculationConfig): Map<string, StateDurationInfo> {
-  const { fields, timeRange, frame, frames } = config;
+  const { fields, timeRange, frame } = config;
   const durations = new Map<string, StateDurationInfo>();
 
   if (fields.length < 2) {
@@ -668,19 +667,13 @@ function calculateStateDurations(config: DurationCalculationConfig): Map<string,
       }
     }
 
-    const seriesName = getSeriesName(field, frame, frames);
+    const seriesName = getFieldDisplayName(field, frame);
     seriesDurations.forEach((info, state) => {
       durations.set(`${seriesName}:${state}`, info);
     });
   }
 
   return durations;
-}
-
-function getSeriesName(field: Field, frame: DataFrame, frames: DataFrame[]): string {
-  return frames.length > 1
-    ? frame.name || frame.refId || getFieldDisplayName(field, frame)
-    : getFieldDisplayName(field, frame);
 }
 
 function createListLegendValues(info: StateDurationInfo, values: string[]): string[] {
@@ -824,7 +817,7 @@ export function prepareTimelineLegendItems(
         return;
       }
 
-      const seriesName = getSeriesName(field, frame, frames);
+      const seriesName = getFieldDisplayName(field, frame);
       if (!seriesGroups.has(seriesName)) {
         seriesGroups.set(seriesName, []);
       }
@@ -843,7 +836,6 @@ export function prepareTimelineLegendItems(
         fields: frame.fields,
         timeRange,
         frame,
-        frames,
       });
       frameDurations.forEach((info, key) => {
         allDurations.set(key, info);
