@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -52,7 +53,9 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 		if gotVal == "" {
 			continue
 		}
-		gotVal = sanitizeHTTPHeaderValueForGRPC(gotVal)
+		if !utf8.ValidString(gotVal) {
+			gotVal = sanitizeHTTPHeaderValueForGRPC(gotVal)
+		}
 		req.SetHTTPHeader(headerName, gotVal)
 	}
 }
@@ -111,6 +114,7 @@ func (m *TracingHeaderMiddleware) RunStream(ctx context.Context, req *backend.Ru
 // Control characters (0x00-0x1F) are percent-encoded.
 // Allows printable ASCII (0x20-0x7E) and extended characters (> 0x7F).
 func sanitizeHTTPHeaderValueForGRPC(value string) string {
+	// Can we use something from utf8 package to do this?
 	var sanitized strings.Builder
 	sanitized.Grow(len(value)) // Pre-allocate reasonable capacity
 
