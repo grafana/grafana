@@ -72,8 +72,6 @@ This document provides instructions for configuring the Graphite data source and
 
 - Familiarize yourself with your Graphite security configuration and gather any necessary security certificates and client keys.
 
-- Verify that data from Graphite is being written to your Grafana instance.
-
 ## Add the Graphite data source
 
 To configure basic settings for the data source, complete the following steps:
