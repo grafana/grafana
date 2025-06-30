@@ -341,6 +341,8 @@ interface GetMaxWrapCell {
   getText: (field: Field) => string | null | undefined;
 }
 
+const spaceRegex = /\s/;
+
 /**
  * loop through the fields and their values, determine which cell is going to determine the
  * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
@@ -353,20 +355,23 @@ function getMaxWrapCell({ fields, wrapWidths, avgCharWidth, wrappedColIdxs, getT
   let maxLines = 1;
   let maxLinesIdx = -1;
   let maxLinesText = '';
-  const spaceRegex = /[\s]+/;
 
   for (let i = 0; i < wrapWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const cellTextRaw = getText(fields[i]);
+
       if (cellTextRaw != null) {
         const cellText = String(cellTextRaw);
-        const charsPerLine = wrapWidths[i] / avgCharWidth;
-        const approxLines = cellText.length / charsPerLine;
 
-        if (approxLines > maxLines && spaceRegex.test(cellText)) {
-          maxLines = approxLines;
-          maxLinesIdx = i;
-          maxLinesText = cellText;
+        if (spaceRegex.test(cellText)) {
+          const charsPerLine = wrapWidths[i] / avgCharWidth;
+          const approxLines = cellText.length / charsPerLine;
+
+          if (approxLines > maxLines) {
+            maxLines = approxLines;
+            maxLinesIdx = i;
+            maxLinesText = cellText;
+          }
         }
       }
     }
