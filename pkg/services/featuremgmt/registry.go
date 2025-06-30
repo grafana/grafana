@@ -398,14 +398,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:         "angularDeprecationUI",
-			Description:  "Display Angular warnings in dashboards and panels",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-			Expression:   "true", // Enabled by default
-		},
-		{
 			Name:         "dashgpt",
 			Description:  "Enable AI powered features in dashboards",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1049,13 +1041,6 @@ var (
 			AllowSelfServe:  true,
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
-		},
-		{
-			Name:        "failWrongDSUID",
-			Description: "Throws an error if a data source has an invalid UIDs",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:              "zanzana",
@@ -1785,6 +1770,16 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPartnerPluginsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:              "enableAppChromeExtensions",
+			Description:       "Set this to true to enable all app chrome extensions registered by plugins.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false", // extensions will be disabled by default
 		},
 	}
 )

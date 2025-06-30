@@ -243,11 +243,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Display Angular warnings in dashboards and panels
-  * @default true
-  */
-  angularDeprecationUI?: boolean;
-  /**
   * Enable AI powered features in dashboards
   * @default true
   */
@@ -614,11 +609,6 @@ export interface FeatureToggles {
   * @default true
   */
   ssoSettingsLDAP?: boolean;
-  /**
-  * Throws an error if a data source has an invalid UIDs
-  * @default true
-  */
-  failWrongDSUID?: boolean;
   /**
   * Use openFGA as authorization engine.
   */
@@ -1041,4 +1031,9 @@ export interface FeatureToggles {
   * @default false
   */
   newInfluxDSConfigPageDesign?: boolean;
+  /**
+  * Set this to true to enable all app chrome extensions registered by plugins.
+  * @default false
+  */
+  enableAppChromeExtensions?: boolean;
 }
