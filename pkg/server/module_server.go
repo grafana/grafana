@@ -116,10 +116,10 @@ type ModuleServer struct {
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
 
-	MemberlistKVConfig    kv.Config
-	httpServerRouter      *mux.Router
-	storageRing           *ring.Ring
-	storageRingClientPool *ringclient.Pool
+	MemberlistKVConfig        kv.Config
+	httpServerRouter          *mux.Router
+	indexServerRing           *ring.Ring
+	indexServerRingClientPool *ringclient.Pool
 }
 
 // init initializes the server and its services.
@@ -162,8 +162,8 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
-	m.RegisterModule(modules.StorageRing, s.initRing)
-	m.RegisterModule(modules.Distributor, s.initDistributor)
+	m.RegisterModule(modules.StorageRing, s.initIndexServerRing)
+	m.RegisterModule(modules.IndexServerDistributor, s.initIndexServerDistributor)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)
@@ -183,7 +183,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.storageRing, s.MemberlistKVConfig)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.indexServerRing, s.MemberlistKVConfig)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
