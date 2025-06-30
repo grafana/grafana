@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestSecretsKVStoreSQL(t *testing.T) {
+func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
