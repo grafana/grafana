@@ -111,6 +111,10 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	return r.nanogitRepo.LatestRef(ctx)
 }
 
+func (r *githubRepository) ListBranches(ctx context.Context) ([]pgh.Branch, error) {
+	return r.apiRepo.ListBranches(ctx)
+}
+
 func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
 	return r.nanogitRepo.CompareFiles(ctx, base, ref)
 }

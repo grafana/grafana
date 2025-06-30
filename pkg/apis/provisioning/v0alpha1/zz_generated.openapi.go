@@ -33,6 +33,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats":           schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":      schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":  schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefItem":                schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefList":                schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":             schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryList":         schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec":         schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
@@ -947,6 +949,85 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.Refe
 				},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RefItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_RefList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefItem"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefItem", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 

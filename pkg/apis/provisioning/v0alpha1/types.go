@@ -454,3 +454,17 @@ type HistoryItem struct {
 	Authors   []Author `json:"authors"`
 	CreatedAt int64    `json:"createdAt"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type RefList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []RefItem `json:"items"`
+}
+
+type RefItem struct {
+	Name string `json:"name"`
+	Hash string `json:"hash,omitempty"`
+}

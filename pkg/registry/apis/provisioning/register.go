@@ -357,6 +357,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		getter: b,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -785,6 +786,22 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
 		s := defs[defsBase+"FileList"].Schema
+		mt["*/*"].Schema = &s
+	}
+
+	// Show refs endpoint documentation
+	sub = oas.Paths.Paths[repoprefix+"/refs"]
+	if sub != nil {
+		sub.Get.Description = "Get the repository branches and references"
+		sub.Get.Summary = "Repository refs listing"
+		sub.Get.Parameters = []*spec3.Parameter{}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs[defsBase+"RefList"].Schema
 		mt["*/*"].Schema = &s
 	}
 

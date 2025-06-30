@@ -442,6 +442,34 @@ func (r *githubClient) BranchExists(ctx context.Context, owner, repository, bran
 	return false, err
 }
 
+func (r *githubClient) ListBranches(ctx context.Context, owner, repository string) ([]Branch, error) {
+	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.Branch, *github.Response, error) {
+		return r.gh.Repositories.ListBranches(ctx, owner, repository, &github.BranchListOptions{
+			ListOptions: *opts,
+		})
+	}
+
+	branches, err := paginatedList(
+		ctx,
+		listFn,
+		defaultListOptions(100), // Limit to 100 branches max
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to the interface type
+	ret := make([]Branch, 0, len(branches))
+	for _, b := range branches {
+		ret = append(ret, Branch{
+			Name: b.GetName(),
+			Sha:  b.GetCommit().GetSHA(),
+		})
+	}
+
+	return ret, nil
+}
+
 func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
 	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.Hook, *github.Response, error) {
 		return r.gh.Repositories.ListHooks(ctx, owner, repository, opts)

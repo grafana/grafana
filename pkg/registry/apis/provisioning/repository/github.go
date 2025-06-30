@@ -47,6 +47,8 @@ type GithubRepository interface {
 	Owner() string
 	Repo() string
 	Client() pgh.Client
+	// TODO(meher): Should this move to an interface? Maybe BranchReader?
+	ListBranches(ctx context.Context) ([]pgh.Branch, error)
 }
 
 func NewGitHub(
@@ -530,6 +532,16 @@ func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	}
 
 	return branch.Sha, nil
+}
+
+func (r *githubRepository) ListBranches(ctx context.Context) ([]pgh.Branch, error) {
+	ctx, _ = r.logger(ctx, "")
+	branches, err := r.gh.ListBranches(ctx, r.owner, r.repo)
+	if err != nil {
+		return nil, fmt.Errorf("list branches: %w", err)
+	}
+
+	return branches, nil
 }
 
 func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error) {

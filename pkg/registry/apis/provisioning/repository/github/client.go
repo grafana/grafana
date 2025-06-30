@@ -91,6 +91,8 @@ type Client interface {
 	BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error)
 	// GetBranch returns the branch of the repository.
 	GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error)
+	// ListBranches returns the list of branches in the repository.
+	ListBranches(ctx context.Context, owner, repository string) ([]Branch, error)
 
 	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error)
