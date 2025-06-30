@@ -1,9 +1,6 @@
 package featuremgmt
 
 import (
-	"fmt"
-
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 )
@@ -31,12 +28,7 @@ func (p *inMemoryBulkProvider) ListFlags() ([]string, error) {
 	return keys, nil
 }
 
-func newStaticProvider(cfg *setting.Cfg) (openfeature.FeatureProvider, error) {
-	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
-	}
-
+func newStaticProvider(confFlags map[string]bool) (openfeature.FeatureProvider, error) {
 	flags := make(map[string]memprovider.InMemoryFlag, len(standardFeatureFlags))
 
 	// Add flags from config.ini file

@@ -420,12 +420,17 @@ func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 
 func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
 	sb := &db.SQLBuilder{}
-	sb.Write("SELECT ")
-	sb.Write(`(SELECT COUNT (*) from ` + ss.dialect.Quote("org_user") + ` AS ou ` +
-		`LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = ou.user_id ` +
-		`WHERE ou.role =? ` +
-		`AND u.is_service_account = ` + ss.dialect.BooleanStr(false) + ` ` +
-		`AND u.is_disabled = ` + ss.dialect.BooleanStr(false) + `) AS user_accounts_with_no_role`)
+	sb.Write(`
+		SELECT sub.user_accounts_with_no_role
+		FROM (
+		  SELECT COUNT(*) AS user_accounts_with_no_role
+		  FROM ` + ss.dialect.Quote("org_user") + ` AS ou
+		  LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = ou.user_id
+		  WHERE ou.role = ?
+		  AND u.is_service_account = ` + ss.dialect.BooleanStr(false) + `
+		  AND u.is_disabled = ` + ss.dialect.BooleanStr(false) + `
+		) AS sub
+	`)
 	sb.AddParams("None")
 
 	var countStats int64
