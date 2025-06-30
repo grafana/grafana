@@ -3248,6 +3248,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Включено",
       "text-badge-not-enabled": "Не включена"
     },
@@ -3280,6 +3282,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Управление параметрами аутентификации и настройка единого входа Подробнее см. в нашей <2>документации</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3516,7 +3524,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда."
+    "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3916,6 +3930,7 @@
   "close-button": {
     "tooltip": "Закрыть"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Ошибка при загрузке параметров."
@@ -9552,6 +9567,15 @@
       "view": "Просмотр"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Открыть варианты визуализации",
       "switch-to-table": "Переключиться на таблицу"
     },
@@ -11662,6 +11686,12 @@
     "zone": {
       "select-aria-label": "Указатель часового пояса",
       "select-search-input": "Введите объект для поиска (страну, город, аббревиатуру)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
