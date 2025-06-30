@@ -2866,7 +2866,7 @@
       "modal": {
         "analysis-title": "Alert Triage Analysis",
         "analyze": "Analyze",
-        "analyzing": "🤖 Analyzing {logRecords.length} alert events...",
+        "analyzing": "🤖 Analyzing {{logRecordsLength}} alert events...",
         "custom-question": {
           "help": "Leave empty for general triage analysis, or ask a specific question about the alert events.",
           "label": "Ask a specific question (optional)",

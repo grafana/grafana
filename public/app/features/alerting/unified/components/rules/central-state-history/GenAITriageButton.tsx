@@ -122,6 +122,7 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customQuestion, setCustomQuestion] = useState('');
+  const logRecordsLength = logRecords.length;
 
   // Tool handler for getting event data
   const handleGetEventData = useCallback(
@@ -394,8 +395,8 @@ Please use the get_event_data tool to access the current alert events and provid
           {isAnalyzing && (
             <div className={styles.analyzing}>
               <Text variant="body">
-                <Trans i18nKey="alerting.triage-ai.modal.analyzing">
-                  🤖 Analyzing {logRecords.length} alert events...
+                <Trans i18nKey="alerting.triage-ai.modal.analyzing" values={{ logRecordsLength }}>
+                  🤖 Analyzing {{ logRecordsLength }} alert events...
                 </Trans>
               </Text>
             </div>
