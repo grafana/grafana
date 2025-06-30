@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
+// The maximum size of a secure value in bytes when written as raw input.
+const SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES = 24576 // 24 KiB
+
 type DecryptSecureValue struct {
 	Keeper     *string
 	Ref        string

@@ -245,6 +245,13 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 	}
 
 	// General validations.
+	if len(sv.Spec.Value) > contracts.SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES {
+		errs = append(
+			errs,
+			field.TooLong(field.NewPath("spec", "value"), len(sv.Spec.Value), contracts.SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES),
+		)
+	}
+
 	if errs := validateDecrypters(sv.Spec.Decrypters, decryptersAllowList); len(errs) > 0 {
 		return errs
 	}
