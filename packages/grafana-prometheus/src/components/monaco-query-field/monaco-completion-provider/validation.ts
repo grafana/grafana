@@ -7,7 +7,7 @@ export const ErrorId = 0;
 
 export const warningTypes: Record<string, string> = {
   SubqueryExpr: 'Subquery detected, this may cause performance issues. Consider using ... instead.',
-}
+};
 
 interface ParserIssueBoundary {
   startLineNumber: number;
@@ -34,7 +34,7 @@ export function validateQuery(
   interpolatedQuery: string,
   queryLines: string[],
   parser: LRParser
-): { errors: ParserIssueBoundary[], warnings: ParserIssueBoundary[] } {
+): { errors: ParserIssueBoundary[]; warnings: ParserIssueBoundary[] } {
   if (!query) {
     return { errors: [], warnings: [] };
   }
@@ -55,17 +55,28 @@ export function validateQuery(
   let parseWarnings: ParseIssue[] = interpolatedWarnings;
   if (query !== interpolatedQuery) {
     const { errors: queryErrors, warnings: queryWarnings } = parseQuery(query, parser);
-    parseErrors = interpolatedErrors.flatMap((interpolatedError) => queryErrors.filter((queryError) => interpolatedError.text === queryError.text) || interpolatedError);
-    parseWarnings = interpolatedWarnings.flatMap((interpolatedWarning) => queryWarnings.filter((queryWarning) => interpolatedWarning.node.from === queryWarning.node.from) || interpolatedWarning);
+    parseErrors = interpolatedErrors.flatMap(
+      (interpolatedError) =>
+        queryErrors.filter((queryError) => interpolatedError.text === queryError.text) || interpolatedError
+    );
+    parseWarnings = interpolatedWarnings.flatMap(
+      (interpolatedWarning) =>
+        queryWarnings.filter((queryWarning) => interpolatedWarning.node.from === queryWarning.node.from) ||
+        interpolatedWarning
+    );
   }
 
-  const errorBoundaries = parseErrors.map((parseError) => findIssueBoundary(query, queryLines, parseError, 'error')).filter(isValidIssueBoundary);
-  const warningBoundaries = parseWarnings.map((parseWarning) => findIssueBoundary(query, queryLines, parseWarning, 'warning')).filter(isValidIssueBoundary);
+  const errorBoundaries = parseErrors
+    .map((parseError) => findIssueBoundary(query, queryLines, parseError, 'error'))
+    .filter(isValidIssueBoundary);
+  const warningBoundaries = parseWarnings
+    .map((parseWarning) => findIssueBoundary(query, queryLines, parseWarning, 'warning'))
+    .filter(isValidIssueBoundary);
 
   return {
-    errors: errorBoundaries || [],
-    warnings: warningBoundaries || [],
-  }
+    errors: errorBoundaries,
+    warnings: warningBoundaries,
+  };
 }
 
 function parseQuery(query: string, parser: LRParser) {
@@ -90,7 +101,12 @@ function parseQuery(query: string, parser: LRParser) {
   return { errors: parseErrors, warnings: parseWarnings };
 }
 
-function findIssueBoundary(query: string, queryLines: string[], parseError: ParseIssue, issueType: 'error' | 'warning'): ParserIssueBoundary | null {
+function findIssueBoundary(
+  query: string,
+  queryLines: string[],
+  parseError: ParseIssue,
+  issueType: 'error' | 'warning'
+): ParserIssueBoundary | null {
   if (queryLines.length === 1) {
     const isEmptyString = parseError.node.from === parseError.node.to;
     const errorNode = isEmptyString && parseError.node.parent ? parseError.node.parent : parseError.node;

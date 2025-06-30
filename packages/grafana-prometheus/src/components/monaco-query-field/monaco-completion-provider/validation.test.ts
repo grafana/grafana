@@ -17,28 +17,31 @@ describe('Monaco Query Validation', () => {
     'rate(http_requests_total[5m])',
     'topk(3, sum by (app, proc) (rate(instance_cpu_time_ns[5m])))',
   ])('Identifies valid queries', (query: string) => {
-    expect(validateQuery(query, query, [], parser).errors).toEqual([])
+    expect(validateQuery(query, query, [], parser).errors).toEqual([]);
   });
 
   test('Identifies invalid queries', () => {
     // Missing } at the end
     let query = 'access_evaluation_duration_sum{job="grafana"';
-    expect(validateQuery(query, query, [query], parser)).toEqual(
-      { errors: [{ endColumn: 45, endLineNumber: 1, issue: '{job="grafana"', startColumn: 31, startLineNumber: 1 }], warnings: [] }
-    );
-
+    expect(validateQuery(query, query, [query], parser)).toEqual({
+      errors: [{ endColumn: 45, endLineNumber: 1, issue: '{job="grafana"', startColumn: 31, startLineNumber: 1 }],
+      warnings: [],
+    });
 
     // Missing handler="value"
     query = 'http_requests_total{job="apiserver", handler}[5m]';
-    expect(validateQuery(query, query, [query], parser)).toEqual(
-      { errors: [{ endColumn: 45, endLineNumber: 1, issue: 'handler', startColumn: 38, startLineNumber: 1 }], warnings: [] },
-    );
+    expect(validateQuery(query, query, [query], parser)).toEqual({
+      errors: [{ endColumn: 45, endLineNumber: 1, issue: 'handler', startColumn: 38, startLineNumber: 1 }],
+      warnings: [],
+    });
 
     // Missing : in [30s:5s]
     query = 'max_over_time(deriv(rate(distance_covered_total[5s])[30s5s])[10m:])';
     expect(validateQuery(query, query, [query], parser)).toEqual({
       errors: [{ endColumn: 59, endLineNumber: 1, issue: '5s', startColumn: 57, startLineNumber: 1 }],
-      warnings: [{ endColumn: 67, endLineNumber: 1, issue: warningTypes.SubqueryExpr, startColumn: 15, startLineNumber: 1 }]
+      warnings: [
+        { endColumn: 67, endLineNumber: 1, issue: warningTypes.SubqueryExpr, startColumn: 15, startLineNumber: 1 },
+      ],
     });
   });
 
@@ -58,7 +61,8 @@ sum by (job) (
 )`;
     const queryLines = query.split('\n');
     expect(validateQuery(query, query, queryLines, parser)).toEqual({
-      errors: [{ endColumn: 30, endLineNumber: 3, issue: '', startColumn: 30, startLineNumber: 3 }], warnings: []
+      errors: [{ endColumn: 30, endLineNumber: 3, issue: '', startColumn: 30, startLineNumber: 3 }],
+      warnings: [],
     });
   });
 });

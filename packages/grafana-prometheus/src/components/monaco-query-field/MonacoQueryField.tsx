@@ -257,14 +257,19 @@ const MonacoQueryField = (props: Props) => {
                 return;
               }
               const query = model.getValue();
-              const { errors, warnings } = validateQuery(query, datasource.interpolateString(query, placeHolderScopedVars), model.getLinesContent(), parser);
+              const { errors, warnings } = validateQuery(
+                query,
+                datasource.interpolateString(query, placeHolderScopedVars),
+                model.getLinesContent(),
+                parser
+              );
 
               const errorMarkers = errors.map(({ issue, ...boundary }) => {
                 return {
                   message: `${issue ? `Error parsing "${issue}"` : 'Parse error'}. The query appears to be incorrect and could fail to be executed.`,
                   severity: monaco.MarkerSeverity.Error,
                   ...boundary,
-                }
+                };
               });
 
               const warningMarkers = warnings.map(({ issue, ...boundary }) => {
@@ -272,7 +277,7 @@ const MonacoQueryField = (props: Props) => {
                   message: `Warning: ${issue}`,
                   severity: monaco.MarkerSeverity.Warning,
                   ...boundary,
-                }
+                };
               });
 
               monaco.editor.setModelMarkers(model, 'owner', [...errorMarkers, ...warningMarkers]);
