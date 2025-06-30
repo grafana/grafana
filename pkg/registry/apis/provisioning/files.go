@@ -113,7 +113,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 		isDir := safepath.IsDir(opts.Path)
 		if r.Method == http.MethodGet && isDir {
-			files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, readWriter)
+			files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, repo)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -206,7 +206,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 }
 
 // listFolderFiles returns a list of files in a folder
-func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
+func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, repo repository.Repository) (*provisioning.FileList, error) {
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -224,6 +224,11 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 	}
 
 	// TODO: Add pagination
+	readWriter, ok := repo.(repository.ReaderWriter)
+	if !ok {
+		return nil, apierrors.NewBadRequest("repository does not support read-writing")
+	}
+
 	rsp, err := readWriter.ReadTree(ctx, ref)
 	if err != nil {
 		return nil, err
@@ -234,11 +239,25 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 		if !v.Blob {
 			continue // folder item
 		}
-		files.Items = append(files.Items, provisioning.FileItem{
+
+		fileItem := provisioning.FileItem{
 			Path: v.Path,
 			Size: v.Size,
 			Hash: v.Hash,
-		})
+		}
+
+		// Populate FileURL for GitHub repositories
+		if githubRepo, ok := repo.(repository.GithubRepository); ok {
+			branch := ref
+			if branch == "" {
+				branch = repo.Config().Spec.GitHub.Branch
+			}
+			owner := githubRepo.Owner()
+			repoName := githubRepo.Repo()
+			fileItem.FileURL = fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", owner, repoName, branch, v.Path)
+		}
+
+		files.Items = append(files.Items, fileItem)
 	}
 
 	return files, nil

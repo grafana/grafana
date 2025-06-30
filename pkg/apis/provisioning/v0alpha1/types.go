@@ -353,6 +353,7 @@ type FileItem struct {
 	Hash     string `json:"hash,omitempty"`
 	Modified int64  `json:"modified,omitempty"`
 	Author   string `json:"author,omitempty"`
+	FileURL  string `json:"fileURL,omitempty"`
 }
 
 // Information we can get just from the file listing

@@ -194,6 +194,13 @@ func schema_pkg_apis_provisioning_v0alpha1_FileItem(ref common.ReferenceCallback
 							Format: "",
 						},
 					},
+					"fileURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The URL to the file in the repository",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"path"},
 			},
