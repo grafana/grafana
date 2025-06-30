@@ -195,11 +195,11 @@ ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
 gen-enterprise-go:
 	@echo "skipping re-generating Wire graph for enterprise: not enabled"
 else
-gen-enterprise-go: ## Generate API Swagger specification
+gen-enterprise-go: ## Generate Wire graph (Enterprise)
 	@echo "re-generating Wire graph for enterprise"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
 endif
-gen-go: gen-enterprise-go
+gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generatng Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
