@@ -11,6 +11,7 @@ import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 import { LogLineVirtualization } from './virtualization';
 
 const TRUNCATION_DEFAULT_LENGTH = 50000;
+const NEWLINES_REGEX = /(\r\n|\n|\r)/g;
 
 export class LogListModel implements LogRowModel {
   collapsed: boolean | undefined = undefined;
@@ -101,7 +102,7 @@ export class LogListModel implements LogRowModel {
         ? this.raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : this.raw;
       if (!this._wrapLogMessage) {
-        this._body = this._body.replace(/(\r\n|\n|\r)/g, '');
+        this._body = this._body.replace(NEWLINES_REGEX, '');
       }
     }
     return this._body;
@@ -146,7 +147,7 @@ export class LogListModel implements LogRowModel {
       fieldValue = field ? field.values.toString() : '';
     }
     if (!this._wrapLogMessage) {
-      return fieldValue.replace(/(\r\n|\n|\r)/g, '');
+      return fieldValue.replace(NEWLINES_REGEX, '');
     }
     return fieldValue;
   }
