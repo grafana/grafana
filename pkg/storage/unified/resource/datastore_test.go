@@ -606,7 +606,8 @@ func TestDataStore_Delete(t *testing.T) {
 		}
 
 		err := ds.Delete(ctx, nonExistentKey)
-		require.NoError(t, err) // BadgerDB doesn't return error for non-existent keys
+		require.Error(t, err)
+		require.Equal(t, ErrNotFound, err)
 	})
 }
 
@@ -1403,8 +1404,7 @@ func TestDataStore_LastResourceVersion(t *testing.T) {
 		require.Equal(t, resourceKey.Name, lastKey.Name)
 		require.Equal(t, DataActionCreated, lastKey.Action)
 
-		// The returned key should be one of our saved keys
-		require.Contains(t, []int64{rv1.Int64(), rv2.Int64(), rv3.Int64()}, lastKey.ResourceVersion)
+		require.Equal(t, rv3.Int64(), lastKey.ResourceVersion)
 	})
 
 	t.Run("returns error for non-existent resource", func(t *testing.T) {

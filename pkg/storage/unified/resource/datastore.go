@@ -224,6 +224,7 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 		StartKey: prefix,
 		EndKey:   PrefixRangeEnd(prefix),
 		Limit:    1,
+		Sort:     SortOrderDesc,
 	}) {
 		if err != nil {
 			return DataKey{}, err
