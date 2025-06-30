@@ -51,4 +51,4 @@ Set a **Soft min** or **soft max** option for better control of y-axis limits. B
 
 To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max).
 
-![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
+![Label example](/media/docs/grafana/panels-visualizations/screenshot-soft-min-max-v12.0.png)

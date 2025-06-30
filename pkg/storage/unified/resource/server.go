@@ -156,6 +156,10 @@ type SearchOptions struct {
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
+	// Build empty index on startup for large indexes so that
+	// we don't re-attempt to build the index later.
+	InitMaxCount int
+
 	// Channel to watch for index events (for testing)
 	IndexEventsChan chan *IndexEvent
 
@@ -812,6 +816,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		Namespace: key.Namespace,
 		Verb:      utils.VerbGet,
 	})
+	var trashChecker claims.ItemChecker // only for trash
+	if req.Source == resourcepb.ListRequest_TRASH {
+		trashChecker, err = s.access.Compile(ctx, user, claims.ListRequest{
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Verb:      utils.VerbSetPermissions, // Basically Admin
+		})
+		if err != nil {
+			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+		}
+	}
 	if err != nil {
 		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -831,8 +847,12 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				ResourceVersion: iter.ResourceVersion(),
 				Value:           iter.Value(),
 			}
-
-			if !checker(iter.Name(), iter.Folder()) {
+			// Trash is only accessible to admins or the user who deleted the object
+			if req.Source == resourcepb.ListRequest_TRASH {
+				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
+					continue
+				}
+			} else if !checker(iter.Name(), iter.Folder()) {
 				continue
 			}
 
@@ -873,6 +893,28 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 	rsp.ResourceVersion = rv
 	return rsp, err
+}
+
+// isTrashItemAuthorized checks if the user has access to the trash item.
+func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return false
+	}
+
+	partial := &metav1.PartialObjectMetadata{}
+	err := json.Unmarshal(iter.Value(), partial)
+	if err != nil {
+		return false
+	}
+
+	obj, err := utils.MetaAccessor(partial)
+	if err != nil {
+		return false
+	}
+
+	// Trash is only accessible to admins or the user who deleted the object
+	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
 }
 
 func (s *server) initWatcher() error {

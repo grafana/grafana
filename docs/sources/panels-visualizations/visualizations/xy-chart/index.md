@@ -41,7 +41,7 @@ XY charts provide a way to visualize arbitrary x and y values in a graph so that
 
 ## Supported data formats
 
-You can use any type of tabular data with at least two numeric fields in an xy chart. This type of visualization doesn't require time data.
+You can use any type of tabular data with at least two numeric fields in an xy chart. The x field can be a time field. This type of visualization doesn't require time data, but it can be used.
 
 ## Configuration options
 
@@ -93,7 +93,7 @@ When you select **Auto** as your series mapping mode, the following options are 
 | Option | Description |
 | ------ | ----------- |
 | Frame | By default, an xy chart displays all data frames. You can filter to select only one frame. |
-| [X field](#x-field) | Select which field or fields x represents. By default, this is the first number field in each data frame. For an example of this in **Auto** mode, refer to the [X field section](#x-field). |
+| [X field](#x-field) | Select which field or fields x represents. By default, this is the first number or time field in each data frame. For an example of this in **Auto** mode, refer to the [X field section](#x-field). |
 | [Y field](#y-field) | After the x-field is set, by default, all the remaining number fields in the data frame are designated as the y-fields. You can use this option to explicitly choose which fields to use for y. For more information on how to use this in **Auto** mode, refer to the [Y field section](#y-field). |
 
 <!-- prettier-ignore-end -->
@@ -121,7 +121,7 @@ In **Manual** mode, these fields are required:
 
 #### X field
 
-In **Auto** series mapping mode, select which field or fields x represents. By default, this is the first number field in each data frame. For example, you enter the following CSV content:
+In **Auto** series mapping mode, select which field or fields x represents. By default, this is the first number or time field in each data frame. For example, you enter the following CSV content:
 
 | a   | b   | c   |
 | --- | --- | --- |
