@@ -210,10 +210,6 @@ export class LogLineVirtualization {
       },
     ];
     for (const field in fieldWidths) {
-      // Skip the log line when it's a displayed field
-      if (field === LOG_LINE_BODY_FIELD_NAME) {
-        continue;
-      }
       dimensions.push({
         field,
         width: fieldWidths[field],
