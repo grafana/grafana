@@ -12079,6 +12079,7 @@
           "polynomial": "Polynomial"
         }
       },
+      "regression": "regression",
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer-editor": {
