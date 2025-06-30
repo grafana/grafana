@@ -423,6 +423,35 @@ describe('field convert types transformer', () => {
     ]);
   });
 
+  it('will support custom join separators for field type string, correctly handling undefined and null', () => {
+    const options = {
+      conversions: [{ targetField: 'mixed_values', destinationType: FieldType.string, joinWith: '&' }],
+    };
+
+    const mixedValues = toDataFrame({
+      fields: [
+        {
+          name: 'mixed_values',
+          type: FieldType.string,
+          values: [['a', 'b', 'c'], ['d', undefined, 'f'], undefined, 'regular string', null],
+        },
+      ],
+    });
+
+    const stringified = convertFieldTypes(options, [mixedValues]);
+    expect(
+      stringified[0].fields.map(({ type, values }) => ({
+        type,
+        values,
+      }))
+    ).toEqual([
+      {
+        type: FieldType.string,
+        values: ['a&b&c', 'd&&f', undefined, '"regular string"', 'null'],
+      },
+    ]);
+  });
+
   it('will convert time fields to strings', () => {
     const options = {
       conversions: [{ targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM' }],
