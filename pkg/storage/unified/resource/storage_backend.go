@@ -3,15 +3,19 @@ package resource
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand/v2"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -140,7 +144,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
 	if req.Key == nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 400, Message: "missing key"}}
+		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
 	meta, err := k.metaStore.GetResourceKeyAtRevision(ctx, MetaGetRequestKey{
 		Namespace: req.Key.Namespace,
@@ -149,9 +153,9 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Name:      req.Key.Name,
 	}, req.ResourceVersion)
 	if err == ErrNotFound {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
+		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "not found"}}
 	} else if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
+		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
 	data, err := k.dataStore.Get(ctx, DataKey{
 		Namespace:       req.Key.Namespace,
@@ -162,11 +166,11 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Action:          meta.Action,
 	})
 	if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
+		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
 	value, err := io.ReadAll(data)
 	if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: err.Error()}}
+		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
 	return &BackendReadResponse{
 		Key:             req.Key,
@@ -588,9 +592,10 @@ type kvHistoryIterator struct {
 	dataStore     *dataStore
 
 	// current
-	rv    int64
-	err   error
-	value []byte
+	rv     int64
+	err    error
+	value  []byte
+	folder string
 }
 
 func (i *kvHistoryIterator) Next() bool {
@@ -614,6 +619,21 @@ func (i *kvHistoryIterator) Next() bool {
 		i.err = err
 		return false
 	}
+
+	// Extract the folder from the meta data
+	partial := &metav1.PartialObjectMetadata{}
+	err = json.Unmarshal(i.value, partial)
+	if err != nil {
+		i.err = err
+		return false
+	}
+
+	meta, err := utils.MetaAccessor(partial)
+	if err != nil {
+		i.err = err
+		return false
+	}
+	i.folder = meta.GetFolder()
 	i.err = nil
 
 	return true
