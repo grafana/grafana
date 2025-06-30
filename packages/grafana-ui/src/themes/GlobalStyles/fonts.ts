@@ -50,6 +50,16 @@ export function getFontStyles(theme: GrafanaTheme2) {
     },
     {
       '@font-face': {
+        fontFamily: 'InterTnum',
+        fontStyle: 'normal',
+        fontWeight: 400,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}inter/Inter-Regular_freeze.woff2') format('woff2')`,
+        unicodeRange: 'U+0020-007E',
+      },
+    },
+    {
+      '@font-face': {
         fontFamily: 'Inter',
         fontStyle: 'normal',
         fontWeight: 500,

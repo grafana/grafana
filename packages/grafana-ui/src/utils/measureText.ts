@@ -1,3 +1,5 @@
+import charMap from './tnumReplacements.gen';
+
 let _context: CanvasRenderingContext2D;
 const cache = new Map<string, TextMetrics>();
 const cacheLimit = 500;
@@ -13,17 +15,51 @@ export function getCanvasContext() {
   return _context;
 }
 
+interface FontStyle {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
+}
+
+const spanCache = new Map<string, HTMLSpanElement>();
+
+export function measureTextCSS(text: string, style: FontStyle): DOMRect {
+  const styleCSS = `
+    position: absolute;
+    visibility: hidden;
+    white-space: pre;
+    font-family: ${style.fontFamily};
+    font-size: ${style.fontSize}px;
+    font-weight: ${style.fontWeight};
+  `;
+
+  const cachedSpan = spanCache.get(styleCSS);
+  if (cachedSpan) {
+    cachedSpan.textContent = text;
+    return cachedSpan.getBoundingClientRect();
+  }
+
+  const span = document.createElement('span');
+  span.textContent = text;
+  span.style.cssText = styleCSS;
+
+  document.body.appendChild(span);
+  spanCache.set(styleCSS, span);
+  const measurement = span.getBoundingClientRect();
+  return measurement;
+}
+
 /**
  * @beta
  */
 export function measureText(text: string, fontSize: number, fontWeight = 400): TextMetrics {
   const fontStyle = `${fontWeight} ${fontSize}px 'Inter'`;
-  const cacheKey = text + fontStyle;
-  const fromCache = cache.get(cacheKey);
+  // const cacheKey = text + fontStyle;
+  // const fromCache = cache.get(cacheKey);
 
-  if (fromCache) {
-    return fromCache;
-  }
+  // if (fromCache) {
+  //   return fromCache;
+  // }
 
   const context = getCanvasContext();
 
@@ -33,11 +69,46 @@ export function measureText(text: string, fontSize: number, fontWeight = 400): T
 
   const metrics = context.measureText(text);
 
-  if (cache.size === cacheLimit) {
-    cache.clear();
+  // if (cache.size === cacheLimit) {
+  //   cache.clear();
+  // }
+
+  // cache.set(cacheKey, metrics);
+
+  return metrics;
+}
+
+// TODO: lazily generate this in measureText
+const allChars = [...charMap.keys()].map((c) => `\\u{${c.codePointAt(0)!.toString(16)}}`).join('');
+const singlePassRe = new RegExp(`[${allChars}]`, 'gu');
+
+// TODO: this doesn't check if the text is rendered with tnums, so if its not then it'll
+// measure wider than it should
+export function measureTextTnum(_text: string, fontSize: number, fontWeight = 400): TextMetrics {
+  const fontStyle = `${fontWeight} ${fontSize}px 'Inter'`;
+
+  // const cacheKey = _text + fontStyle;
+  // const fromCache = cache.get(cacheKey);
+
+  // if (fromCache) {
+  //   return fromCache;
+  // }
+
+  let text = _text.replace(singlePassRe, (ch) => charMap.get(ch)!);
+
+  const context = getCanvasContext();
+
+  if (ctxFontStyle !== fontStyle) {
+    context.font = ctxFontStyle = fontStyle;
   }
 
-  cache.set(cacheKey, metrics);
+  const metrics = context.measureText(text);
+
+  // if (cache.size === cacheLimit) {
+  //   cache.clear();
+  // }
+
+  // cache.set(cacheKey, metrics);
 
   return metrics;
 }
@@ -55,6 +126,7 @@ export function calculateFontSize(
 ) {
   // calculate width in 14px
   const textSize = measureText(text, 14, fontWeight);
+
   // how much bigger than 14px can we make it while staying within our width constraints
   const fontSizeBasedOnWidth = (width / (textSize.width + 2)) * 14;
   const fontSizeBasedOnHeight = height / lineHeight;
