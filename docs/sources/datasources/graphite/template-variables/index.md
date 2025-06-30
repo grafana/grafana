@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Graphite template variables
+menuTitle: Template variables
 title: Graphite template variables
 weight: 300
 refs:
@@ -46,15 +46,13 @@ To view an example templated dashboard, refer to [Graphite Templated Nested dash
 
 ## Use query variables
 
-With Graphite, the most commonly supported variables are query variables.
-
-Grafana supports three query types specifically for Graphite-based template variables:
+With Graphite data sources, you can only create query variables. Grafana supports three specific query types for Graphite-based variables:
 
 | Query type            | Description                                                                                                                                                     | Example usage                            |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
-| **Default query**     | Allows you to dynamically list metrics, nodes, or tag values using Graphite functions such as `tags()`, `tag_values(<metric>, <tag>)`, `expand(<metric>)`, etc. | `tag_values(apps.*.requests.count, app)` |
-| **Value query**       | Returns the unique values for a specific tag key within a given metric series, often used to populate drop-downs with tag values.                               | `tag_values(apps.*.status.*, status)`    |
-| **Metric name query** | Returns all metric series that match a specified pattern or wildcard. Useful for listing available metrics or filtering series names.                           | `apps.*.requests.count`                  |
+| **Default query**     | Allows you to dynamically list metrics, nodes, or tag values using Graphite functions. | `tag_values(apps.*.requests.count, app)` |
+| **Value query**       | Returns all the values for a query that includes a metric and function.                               | `tag_values(apps.*.status.*, status)`    |
+| **Metric name query** | Returns all the names for a query that includes a metric and function.                           | `apps.*.requests.count`                  |
 
 ### Choose a variable syntax
 

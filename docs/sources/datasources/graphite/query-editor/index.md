@@ -16,7 +16,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Graphite query editor
+menuTitle: Query editor
 title: Graphite query editor
 weight: 300
 refs:
