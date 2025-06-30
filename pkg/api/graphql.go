@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
+	playlistapp "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/playlist"
@@ -205,9 +206,6 @@ func (hs *HTTPServer) createFederatedGateway(ctx context.Context) (*gateway.Fede
 
 // createPlaylistGraphQLProvider creates a playlist app provider that can provide GraphQL subgraphs
 func (hs *HTTPServer) createPlaylistGraphQLProvider() (graphqlsubgraph.GraphQLSubgraphProvider, error) {
-	// DEBUG: Log provider creation
-	fmt.Printf("🔍 createPlaylistGraphQLProvider() started\n")
-
 	// Import the playlist app registration
 	// Since we have access to playlistService, we can create a provider
 	// This is a simplified approach that reuses the existing service
@@ -216,7 +214,6 @@ func (hs *HTTPServer) createPlaylistGraphQLProvider() (graphqlsubgraph.GraphQLSu
 		cfg:             hs.Cfg,
 	}
 
-	fmt.Printf("✅ createPlaylistGraphQLProvider() completed\n")
 	return provider, nil
 }
 
@@ -228,24 +225,18 @@ type playlistGraphQLProvider struct {
 
 // GetGraphQLSubgraph implements GraphQLSubgraphProvider interface
 func (p *playlistGraphQLProvider) GetGraphQLSubgraph() (graphqlsubgraph.GraphQLSubgraph, error) {
-	// DEBUG: Log method start
-	fmt.Printf("🔍 GetGraphQLSubgraph() started\n")
 
 	// Get the group version for the playlist app
-	fmt.Printf("🔍 About to call PlaylistKind() for group/version...\n")
 	playlistKind := playlistv0alpha1.PlaylistKind()
 	gv := schema.GroupVersion{
 		Group:   playlistKind.Group(),
 		Version: playlistKind.Version(),
 	}
-	fmt.Printf("✅ Group/Version: %s\n", gv.String())
 
 	// Get the managed kinds
-	fmt.Printf("🔍 Creating kinds array...\n")
 	kinds := []resource.Kind{
 		playlistKind,
 	}
-	fmt.Printf("✅ Kinds array created with %d items\n", len(kinds))
 
 	// Create a storage adapter that bridges GraphQL storage interface
 	// to the existing playlist service
@@ -268,11 +259,17 @@ func (p *playlistGraphQLProvider) GetGraphQLSubgraph() (graphqlsubgraph.GraphQLS
 		}
 	}
 
+	// Create resource handler registry and register the playlist handler
+	resourceHandlers := graphqlsubgraph.NewResourceHandlerRegistry()
+	playlistHandler := playlistapp.NewPlaylistGraphQLHandler()
+	resourceHandlers.RegisterHandler(playlistHandler)
+
 	// Create the subgraph using the helper function
 	return graphqlsubgraph.CreateSubgraphFromConfig(graphqlsubgraph.SubgraphProviderConfig{
-		GroupVersion:  gv,
-		Kinds:         kinds,
-		StorageGetter: storageGetter,
+		GroupVersion:     gv,
+		Kinds:            kinds,
+		StorageGetter:    storageGetter,
+		ResourceHandlers: resourceHandlers,
 	})
 }
 
@@ -314,19 +311,11 @@ func (a *playlistServiceStorageAdapter) Get(ctx context.Context, namespace, name
 	// Note: Using direct conversion here since the function is not exported
 	// In production, this should use an exported conversion function
 
-	// DEBUG: Log the DTO we received
-	fmt.Printf("🔍 Storage adapter Get(): dto = %+v\n", dto)
-	fmt.Printf("🔍 Storage adapter Get(): dto.Name = %s\n", dto.Name)
-	fmt.Printf("🔍 Storage adapter Get(): dto.Uid = %s\n", dto.Uid)
-	fmt.Printf("🔍 Storage adapter Get(): dto.Interval = %s\n", dto.Interval)
-	fmt.Printf("🔍 Storage adapter Get(): dto.Items count = %d\n", len(dto.Items))
-
 	spec := playlistv0alpha1.PlaylistSpec{
 		Title:    dto.Name,
 		Interval: dto.Interval,
 	}
 	for _, item := range dto.Items {
-		fmt.Printf("🔍 Storage adapter Get(): item = %+v\n", item)
 		spec.Items = append(spec.Items, playlistv0alpha1.PlaylistItem{
 			Type:  playlistv0alpha1.PlaylistItemType(item.Type),
 			Value: item.Value,
@@ -334,6 +323,10 @@ func (a *playlistServiceStorageAdapter) Get(ctx context.Context, namespace, name
 	}
 
 	p := &playlistv0alpha1.Playlist{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: playlistv0alpha1.GroupVersion.String(),
+			Kind:       "Playlist",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              dto.Uid,
 			Namespace:         a.namespacer(dto.OrgID),
@@ -342,12 +335,6 @@ func (a *playlistServiceStorageAdapter) Get(ctx context.Context, namespace, name
 		},
 		Spec: spec,
 	}
-
-	// DEBUG: Log the converted resource
-	fmt.Printf("🔍 Storage adapter Get(): converted resource = %+v\n", p)
-	fmt.Printf("🔍 Storage adapter Get(): converted resource.Spec = %+v\n", p.Spec)
-	fmt.Printf("🔍 Storage adapter Get(): converted resource.Spec.Title = %s\n", p.Spec.Title)
-	fmt.Printf("🔍 Storage adapter Get(): converted resource.Spec.Items count = %d\n", len(p.Spec.Items))
 
 	return p, nil
 }
@@ -367,10 +354,6 @@ func (a *playlistServiceStorageAdapter) List(ctx context.Context, namespace stri
 		return nil, fmt.Errorf("failed to list playlists for org %d: %v", orgID, err)
 	}
 
-	// DEBUG: Log the playlists we received
-	fmt.Printf("🔍 Storage adapter List(): orgID = %d\n", orgID)
-	fmt.Printf("🔍 Storage adapter List(): playlists count = %d\n", len(playlists))
-
 	// Convert the service results to Kubernetes resource format
 	list := &playlistv0alpha1.PlaylistList{
 		ListMeta: metav1.ListMeta{},
@@ -378,11 +361,6 @@ func (a *playlistServiceStorageAdapter) List(ctx context.Context, namespace stri
 	}
 
 	for i, dto := range playlists {
-		// DEBUG: Log each playlist DTO
-		fmt.Printf("🔍 Storage adapter List(): playlist[%d] = %+v\n", i, dto)
-		fmt.Printf("🔍 Storage adapter List(): playlist[%d].Name = %s\n", i, dto.Name)
-		fmt.Printf("🔍 Storage adapter List(): playlist[%d].Uid = %s\n", i, dto.Uid)
-		fmt.Printf("🔍 Storage adapter List(): playlist[%d].Items count = %d\n", i, len(dto.Items))
 
 		// Convert each DTO to K8s resource format
 		spec := playlistv0alpha1.PlaylistSpec{
@@ -390,7 +368,6 @@ func (a *playlistServiceStorageAdapter) List(ctx context.Context, namespace stri
 			Interval: dto.Interval,
 		}
 		for _, item := range dto.Items {
-			fmt.Printf("🔍 Storage adapter List(): playlist[%d] item = %+v\n", i, item)
 			spec.Items = append(spec.Items, playlistv0alpha1.PlaylistItem{
 				Type:  playlistv0alpha1.PlaylistItemType(item.Type),
 				Value: item.Value,
@@ -398,6 +375,10 @@ func (a *playlistServiceStorageAdapter) List(ctx context.Context, namespace stri
 		}
 
 		list.Items[i] = playlistv0alpha1.Playlist{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: playlistv0alpha1.GroupVersion.String(),
+				Kind:       "Playlist",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              dto.Uid,
 				Namespace:         a.namespacer(dto.OrgID),
@@ -406,14 +387,7 @@ func (a *playlistServiceStorageAdapter) List(ctx context.Context, namespace stri
 			},
 			Spec: spec,
 		}
-
-		// DEBUG: Log the converted resource
-		fmt.Printf("🔍 Storage adapter List(): converted playlist[%d] = %+v\n", i, list.Items[i])
-		fmt.Printf("🔍 Storage adapter List(): converted playlist[%d].Spec.Title = %s\n", i, list.Items[i].Spec.Title)
 	}
-
-	// DEBUG: Log the final list
-	fmt.Printf("🔍 Storage adapter List(): final list items count = %d\n", len(list.Items))
 
 	return list, nil
 }

@@ -95,11 +95,17 @@ func (p *PlaylistAppProvider) GetGraphQLSubgraph() (graphqlsubgraph.GraphQLSubgr
 		}
 	}
 
+	// Create resource handler registry and register the playlist handler
+	resourceHandlers := graphqlsubgraph.NewResourceHandlerRegistry()
+	playlistHandler := NewPlaylistGraphQLHandler()
+	resourceHandlers.RegisterHandler(playlistHandler)
+
 	// Create the subgraph using the helper function
 	return graphqlsubgraph.CreateSubgraphFromConfig(graphqlsubgraph.SubgraphProviderConfig{
-		GroupVersion:  gv,
-		Kinds:         kinds,
-		StorageGetter: storageGetter,
+		GroupVersion:     gv,
+		Kinds:            kinds,
+		StorageGetter:    storageGetter,
+		ResourceHandlers: resourceHandlers,
 	})
 }
 
