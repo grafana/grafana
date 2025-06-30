@@ -1,13 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "app",
-  "name": "NAME",
+  "name": "Upgrades",
   "id": "upgrades-app",
   "metrics": true,
-  "backend": true,
-  "executable": "gpx_upgrades-app",
+  "backend": false,
   "info": {
-    "description": "",
+    "description": "Upgrade Grafana to the latest version",
     "author": {
       "name": "AUTHOR",
       "url": ""
@@ -24,7 +23,7 @@
   },
   "includes": [
     {
-      "name": "Todos",
+      "name": "Upgrades",
       "path": "/a/upgrades-app/",
       "type": "page",
       "role": "Admin",
