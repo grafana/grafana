@@ -85,7 +85,7 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     return (
       <PluginContextProvider meta={pluginMeta}>
-        <Component {...readOnlyCopy(props, log)} />
+        <Component {...writableProxy(props, log)} />
       </PluginContextProvider>
     );
   };
@@ -241,6 +241,8 @@ export function getMutationObserverProxy<T extends object>(obj: T, _log: Extensi
       return true;
     },
     defineProperty(target, prop, descriptor) {
+      // because immer (used by RTK) calls Object.isFrozen and Object.freeze we know that defineProperty will be called
+      // behind the scenes as well so we only log message with debug level to minimize the noise and false positives
       _log.debug(`Attempted to define object property "${String(prop)}"`, {
         stack: new Error().stack ?? '',
       });
@@ -286,7 +288,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, _log: Extensi
   });
 }
 
-export function readOnlyCopy<T>(value: T, _log: ExtensionsLog = log): T {
+export function writableProxy<T>(value: T, _log: ExtensionsLog = log): T {
   // Primitive types are read-only by default
   if (!value || typeof value !== 'object') {
     return value;

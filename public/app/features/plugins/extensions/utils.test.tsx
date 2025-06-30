@@ -21,7 +21,7 @@ import {
   getAppPluginDependencies,
   getExtensionPointPluginMeta,
   getMutationObserverProxy,
-  readOnlyCopy,
+  writableProxy,
   isMutationObserverProxy,
 } from './utils';
 
@@ -439,7 +439,7 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe('readOnlyCopy()', () => {
+  describe('writableProxy()', () => {
     const originalEnv = config.buildInfo.env;
 
     beforeEach(() => {
@@ -452,19 +452,19 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return the same value for primitive types', () => {
-      expect(readOnlyCopy(1)).toBe(1);
-      expect(readOnlyCopy('a')).toBe('a');
-      expect(readOnlyCopy(true)).toBe(true);
-      expect(readOnlyCopy(false)).toBe(false);
-      expect(readOnlyCopy(null)).toBe(null);
-      expect(readOnlyCopy(undefined)).toBe(undefined);
+      expect(writableProxy(1)).toBe(1);
+      expect(writableProxy('a')).toBe('a');
+      expect(writableProxy(true)).toBe(true);
+      expect(writableProxy(false)).toBe(false);
+      expect(writableProxy(null)).toBe(null);
+      expect(writableProxy(undefined)).toBe(undefined);
     });
 
     it('should return a writable deep-copy of the original object in dev mode', () => {
       config.buildInfo.env = 'development';
 
       const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
+      const copy = writableProxy(obj);
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -484,7 +484,7 @@ describe('Plugin Extensions / Utils', () => {
       config.buildInfo.env = 'production';
 
       const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
+      const copy = writableProxy(obj);
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -504,7 +504,7 @@ describe('Plugin Extensions / Utils', () => {
       config.buildInfo.env = 'production';
 
       const obj = { a: 'a', b: { c: 'c' } };
-      const copy = readOnlyCopy(obj);
+      const copy = writableProxy(obj);
 
       expect(() => {
         Object.freeze(copy);
