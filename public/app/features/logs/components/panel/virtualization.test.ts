@@ -38,7 +38,6 @@ describe('Virtualization', () => {
 
   beforeEach(() => {
     log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` }, preProcessOptions);
-    //virtualization = new LogLineVirtualization(createTheme(), 'default');
     container = document.createElement('div');
     jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(CONTAINER_SIZE);
     LETTER_WIDTH = virtualization.measureTextWidth('e');
@@ -216,6 +215,29 @@ describe('Virtualization', () => {
       log.collapsed = false;
       const size = getLogLineSize(virtualization, [log], container, [], { ...defaultOptions, wrap: true }, 0);
       expect(size).toBe(TWO_LINES_HEIGHT);
+    });
+  });
+
+  describe('calculateFieldDimensions', () => {
+    test('Measures displayed fields including the log line body', () => {
+      expect(virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME])).toEqual([
+        {
+          field: 'timestamp',
+          width: 23,
+        },
+        {
+          field: 'level',
+          width: 4,
+        },
+        {
+          field: 'place',
+          width: 4,
+        },
+        {
+          field: '___LOG_LINE_BODY___',
+          width: 13,
+        },
+      ]);
     });
   });
 
