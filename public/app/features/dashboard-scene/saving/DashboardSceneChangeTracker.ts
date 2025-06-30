@@ -171,6 +171,7 @@ export class DashboardSceneChangeTracker {
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
         if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+          console.log({ event });
           const eventPayload = (event as any)?.payload?.partialUpdate;
           if (eventPayload?.from && eventPayload?.to) {
             console.log({ eventPayload });
