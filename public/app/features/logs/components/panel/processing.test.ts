@@ -124,6 +124,22 @@ describe('preProcessLogs', () => {
       expect(logListModel.getDisplayedFieldValue('place')).toBe(logListModel.labels['place']);
       expect(logListModel.body).toBe(logListModel.raw);
     });
+
+    test('Strips ansi colors for measurement', () => {
+      const logListModel = createLogLine(
+        { entry: `log \u001B[31mmessage\u001B[0m 1` },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true,
+        }
+      );
+      expect(logListModel.getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME, false)).toBe(
+        `log \u001B[31mmessage\u001B[0m 1`
+      );
+      expect(logListModel.getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME, true)).toBe('log message 1');
+    });
   });
 
   test('Orders logs', () => {
