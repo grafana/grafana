@@ -172,35 +172,24 @@ func TestIntegrationDistributor(t *testing.T) {
 		}
 	})
 
-	stopServers := func(done chan error) {
-		var wg sync.WaitGroup
-		for _, testServer := range testServers {
-			wg.Add(1)
-			go func(s testModuleServer) {
-				defer wg.Done()
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-				defer cancel()
-				if err := testServer.server.Shutdown(ctx, "tests are done"); err != nil {
-					require.NoError(t, err)
-				}
-			}(testServer)
-		}
-		wg.Wait()
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := distributorServer.server.Shutdown(ctx, "tests are done"); err != nil {
-			require.NoError(t, err)
-		}
-		done <- nil
+	var wg sync.WaitGroup
+	for _, testServer := range testServers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if err := testServer.server.Shutdown(ctx, "tests are done"); err != nil {
+				require.NoError(t, err)
+			}
+		}()
 	}
+	wg.Wait()
 
-	done := make(chan error, 1)
-	go stopServers(done)
-	select {
-	case <-done:
-	case <-time.After(30 * time.Second):
-		t.Fatal("timeout waiting for servers to shutdown")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := distributorServer.server.Shutdown(ctx, "tests are done"); err != nil {
+		require.NoError(t, err)
 	}
 }
 
