@@ -472,6 +472,11 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		historyKeys = append(historyKeys, dataKey)
 	}
 
+	// Check if context has been cancelled
+	if ctx.Err() != nil {
+		return 0, ctx.Err()
+	}
+
 	// Handle trash differently from regular history
 	if req.Source == resourcepb.ListRequest_TRASH {
 		return k.processTrashEntries(ctx, req, fn, historyKeys, lastSeenRV, sortAscending, listRV)
