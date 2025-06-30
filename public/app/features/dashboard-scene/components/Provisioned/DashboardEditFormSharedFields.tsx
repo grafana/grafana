@@ -4,6 +4,8 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Field, TextArea, Input, RadioButtonGroup, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { useLLMStream, StreamStatus } from 'app/features/dashboard/components/GenAI/hooks';
+import { isLLMPluginEnabled, Message, Role, DEFAULT_LLM_MODEL, sanitizeReply } from 'app/features/dashboard/components/GenAI/utils';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
@@ -132,64 +134,203 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
     const currentAiLoading = aiLoading || localAiLoading;
     const currentSetAiLoading = setAiLoading || setLocalAiLoading;
 
-    // Typing effect function
-    const typeText = async (text: string, setValue: (value: string) => void, delay = 20) => {
-      setValue(''); // Clear the field first
-      for (let i = 0; i <= text.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, delay));
-        setValue(text.slice(0, i));
-      }
-    };
+    // LLM state for different fields
+    const [isLLMEnabled, setIsLLMEnabled] = useState(false);
 
-    // Sample AI generated content
-    const generateSampleContent = () => ({
-      path: `${resourceType}s/${new Date().getFullYear()}/optimized-${resourceType}-${Date.now()}.json`,
-      comment: `Add enhanced ${resourceType} with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
-      branch: `feature/enhanced-${resourceType}-${new Date().toISOString().slice(0, 7)}`,
+    // Check if LLM is enabled
+    useEffect(() => {
+      isLLMPluginEnabled().then(setIsLLMEnabled);
+    }, []);
+
+    // LLM stream hooks for each field
+    const commentLLMStream = useLLMStream({
+      model: DEFAULT_LLM_MODEL,
+      temperature: 0.8,
+      onResponse: useCallback((response: string) => {
+        const sanitized = sanitizeReply(response);
+        setValue('comment', sanitized);
+        currentSetAiLoading((prev: any) => ({ ...prev, comment: false }));
+      }, [setValue, currentSetAiLoading])
     });
+
+    const branchLLMStream = useLLMStream({
+      model: DEFAULT_LLM_MODEL,
+      temperature: 0.7,
+      onResponse: useCallback((response: string) => {
+        const sanitized = sanitizeReply(response);
+        setValue('ref', sanitized);
+        currentSetAiLoading((prev: any) => ({ ...prev, branch: false }));
+      }, [setValue, currentSetAiLoading])
+    });
+
+    const pathLLMStream = useLLMStream({
+      model: DEFAULT_LLM_MODEL,
+      temperature: 0.6,
+      onResponse: useCallback((response: string) => {
+        const sanitized = sanitizeReply(response);
+        setValue('path', sanitized);
+        currentSetAiLoading((prev: any) => ({ ...prev, path: false }));
+      }, [setValue, currentSetAiLoading])
+    });
+
+    // Typing effect function
+    // const typeText = async (text: string, setValue: (value: string) => void, delay = 20) => {
+    //   setValue(''); // Clear the field first
+    //   for (let i = 0; i <= text.length; i++) {
+    //     await new Promise(resolve => setTimeout(resolve, delay));
+    //     setValue(text.slice(0, i));
+    //   }
+    // };
+
+    // Helper function to create comment generation messages
+    const getCommentMessages = useCallback((): Message[] => {
+      const currentTitle = watch('title') || '';
+      const currentDescription = watch('description') || '';
+      
+      return [
+        {
+          role: Role.system,
+          content: `You are an expert in Git version control and ${resourceType} management. 
+Your goal is to write a clear, descriptive Git commit message that explains the changes being made to this ${resourceType}.
+The commit message should be professional, concise, and follow Git best practices.
+It should be between 50-150 characters and explain what this change accomplishes.
+Do not include quotes in your response.`
+        },
+        {
+          role: Role.user,
+          content: `Create a Git commit message for ${isNew ? 'adding a new' : 'updating an existing'} ${resourceType} with:
+Title: "${currentTitle}"
+Description: "${currentDescription}"
+${isNew ? 'This is a new ' + resourceType + ' being added to the repository.' : 'This is an update to an existing ' + resourceType + '.'}`
+        }
+      ];
+    }, [resourceType, isNew, watch]);
+
+    // Helper function to create branch name generation messages
+    const getBranchMessages = useCallback((): Message[] => {
+      const currentTitle = watch('title') || '';
+      
+      return [
+        {
+          role: Role.system,
+          content: `You are an expert in Git branch naming conventions.
+Your goal is to create a descriptive branch name that follows Git best practices.
+The branch name should be lowercase, use hyphens to separate words, and be concise but descriptive.
+Common prefixes are: feature/, bugfix/, hotfix/, chore/, update/
+The branch name should be between 15-50 characters.
+Do not include quotes in your response.`
+        },
+        {
+          role: Role.user,
+          content: `Create a Git branch name for ${isNew ? 'adding' : 'updating'} a ${resourceType} titled: "${currentTitle}"`
+        }
+      ];
+    }, [resourceType, isNew, watch]);
+
+    // Helper function to create path generation messages
+    const getPathMessages = useCallback((): Message[] => {
+      const currentTitle = watch('title') || '';
+      const currentYear = new Date().getFullYear();
+      
+      return [
+        {
+          role: Role.system,
+          content: `You are an expert in file organization and naming conventions.
+Your goal is to create a logical file path for storing a ${resourceType} in a repository.
+The path should be organized, follow naming conventions, and include appropriate subdirectories.
+For dashboards, use .json extension. Use lowercase with hyphens for separation.
+Consider organizing by year, category, or purpose.
+The path should be between 20-80 characters.
+Do not include quotes in your response.`
+        },
+        {
+          role: Role.user,
+          content: `Create a file path for a ${resourceType} titled: "${currentTitle}" 
+Current year: ${currentYear}
+This should be a well-organized path within a Git repository.`
+        }
+      ];
+    }, [resourceType, watch]);
 
     // Handlers for AI autofill
     const handleAIFillComment = async () => {
+      if (!isLLMEnabled) {
+        console.log('LLM is not enabled');
+        return;
+      }
+      
       currentSetAiLoading((prev: any) => ({ ...prev, comment: true }));
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const content = generateSampleContent();
-        await typeText(content.comment, (value) => setValue('comment', value), 40);
+        const messages = getCommentMessages();
+        commentLLMStream.setMessages(messages);
       } catch (error) {
         console.error('AI autofill comment error:', error);
-      } finally {
         currentSetAiLoading((prev: any) => ({ ...prev, comment: false }));
       }
     };
 
     const handleAIFillBranch = async () => {
+      if (!isLLMEnabled) {
+        console.log('LLM is not enabled');
+        return;
+      }
+      
       currentSetAiLoading((prev: any) => ({ ...prev, branch: true }));
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const content = generateSampleContent();
-        await typeText(content.branch, (value) => setValue('ref', value));
+        const messages = getBranchMessages();
+        branchLLMStream.setMessages(messages);
       } catch (error) {
         console.error('AI autofill branch error:', error);
-      } finally {
         currentSetAiLoading((prev: any) => ({ ...prev, branch: false }));
       }
     };
 
     const handleAIFillPath = async () => {
+      if (!isLLMEnabled) {
+        console.log('LLM is not enabled');
+        return;
+      }
+      
       currentSetAiLoading((prev: any) => ({ ...prev, path: true }));
       
       try {
-        await new Promise(resolve => setTimeout(resolve, 900));
-        const content = generateSampleContent();
-        await typeText(content.path, (value) => setValue('path', value));
+        const messages = getPathMessages();
+        pathLLMStream.setMessages(messages);
       } catch (error) {
         console.error('AI autofill path error:', error);
-      } finally {
         currentSetAiLoading((prev: any) => ({ ...prev, path: false }));
       }
     };
+
+    // Update loading states based on stream status
+    useEffect(() => {
+      if (commentLLMStream.streamStatus === StreamStatus.GENERATING) {
+        currentSetAiLoading((prev: any) => ({ ...prev, comment: true }));
+      } else if (commentLLMStream.streamStatus === StreamStatus.COMPLETED || commentLLMStream.error) {
+        currentSetAiLoading((prev: any) => ({ ...prev, comment: false }));
+      }
+    }, [commentLLMStream.streamStatus, commentLLMStream.error, currentSetAiLoading]);
+
+    useEffect(() => {
+      if (branchLLMStream.streamStatus === StreamStatus.GENERATING) {
+        currentSetAiLoading((prev: any) => ({ ...prev, branch: true }));
+      } else if (branchLLMStream.streamStatus === StreamStatus.COMPLETED || branchLLMStream.error) {
+        currentSetAiLoading((prev: any) => ({ ...prev, branch: false }));
+      }
+    }, [branchLLMStream.streamStatus, branchLLMStream.error, currentSetAiLoading]);
+
+    useEffect(() => {
+      if (pathLLMStream.streamStatus === StreamStatus.GENERATING) {
+        currentSetAiLoading((prev: any) => ({ ...prev, path: true }));
+      } else if (pathLLMStream.streamStatus === StreamStatus.COMPLETED || pathLLMStream.error) {
+        currentSetAiLoading((prev: any) => ({ ...prev, path: false }));
+      }
+    }, [pathLLMStream.streamStatus, pathLLMStream.error, currentSetAiLoading]);
+
+    // Don't show AI buttons if LLM is not enabled
+    const showAIButtons = isLLMEnabled && !fieldsAutoFilled && !autofillDisabledThisSession;
 
     return (
       <>
@@ -208,7 +349,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
             {...register('path')} 
             readOnly={!isNew}
             suffix={
-              isNew && !fieldsAutoFilled && !autofillDisabledThisSession ? (
+              isNew && showAIButtons ? (
                 <IconButton
                   name={currentAiLoading.path ? "spinner" : "ai-sparkle"}
                   tooltip={t(
@@ -240,7 +381,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
               'Add a note to describe your changes (optional)'
             )}
             suffix={
-              !readOnly && !fieldsAutoFilled && !autofillDisabledThisSession ? (
+              !readOnly && showAIButtons ? (
                 <IconButton
                   name={currentAiLoading.comment ? "spinner" : "ai-sparkle"}
                   tooltip={t(
@@ -287,7 +428,7 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
                   id="provisioned-resource-form-branch" 
                   {...register('ref', { validate: validateBranchName })}
                   suffix={
-                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
+                    showAIButtons ? (
                       <IconButton
                         name={currentAiLoading.branch ? "spinner" : "ai-sparkle"}
                         tooltip={t(

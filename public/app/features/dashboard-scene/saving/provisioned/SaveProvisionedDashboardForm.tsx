@@ -11,6 +11,8 @@ import { Alert, Button, Field, Input, Stack, TextArea, IconButton, useStyles2, u
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
+import { useLLMStream, StreamStatus } from 'app/features/dashboard/components/GenAI/hooks';
+import { isLLMPluginEnabled, Message, Role, DEFAULT_LLM_MODEL, sanitizeReply } from 'app/features/dashboard/components/GenAI/utils';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
@@ -100,6 +102,39 @@ const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuf
   );
 };
 
+// Helper to summarize diffs for LLM prompt
+function summarizeDiffs(diffs: Record<string, any[]>): string {
+  if (!diffs) {
+    return '';
+  }
+  const lines: string[] = [];
+  let count = 0;
+  for (const [section, changes] of Object.entries(diffs)) {
+    for (const diff of changes) {
+      if (count >= 5) {
+        lines.push('...and more');
+        break;
+      }
+      const opText = diff.op === 'add' ? 'added' : diff.op === 'remove' ? 'removed' : 'changed';
+      const path = diff.path.join('.');
+      let desc = '';
+      if (diff.op === 'replace') {
+        desc = `from "${String(diff.originalValue)}" to "${String(diff.value)}"`;
+      } else if (diff.op === 'add') {
+        desc = `set to "${String(diff.value)}"`;
+      } else if (diff.op === 'remove') {
+        desc = `was "${String(diff.originalValue)}"`;
+      }
+      lines.push(`- ${section}: ${opText} ${path}${desc ? ' ' + desc : ''}`);
+      count++;
+    }
+    if (count >= 5) {
+      break;
+    }
+  }
+  return lines.length > 0 ? lines.join('\n') : '';
+}
+
 export function SaveProvisionedDashboardForm({
   defaultValues,
   dashboard,
@@ -131,97 +166,303 @@ export function SaveProvisionedDashboardForm({
     magicSave: false,
   });
 
-  // Track which save mode was last used and current session preferences
-  const [lastUsedSaveMode, setLastUsedSaveMode] = useState<'traditional' | 'magic'>(() => {
-    try {
-      return (localStorage.getItem('grafana-dashboard-last-save-mode') as 'traditional' | 'magic') || 'magic';
-    } catch {
-      return 'magic';
-    }
+  // LLM state
+  const [isLLMEnabled, setIsLLMEnabled] = useState(false);
+
+  // Check if LLM is enabled
+  useEffect(() => {
+    isLLMPluginEnabled().then(setIsLLMEnabled);
+  }, []);
+
+  // LLM stream hooks for title and description
+  const titleLLMStream = useLLMStream({
+    model: DEFAULT_LLM_MODEL,
+    temperature: 0.7,
+    onResponse: useCallback((response: string) => {
+      const sanitized = sanitizeReply(response);
+      setValue('title', sanitized);
+      setAiLoading(prev => ({ ...prev, title: false }));
+    }, [setValue])
   });
 
-  // Track if autofill is disabled for this session (when traditional save is used)
-  const [autofillDisabledThisSession, setAutofillDisabledThisSession] = useState(false);
+  const descriptionLLMStream = useLLMStream({
+    model: DEFAULT_LLM_MODEL,
+    temperature: 0.8,
+    onResponse: useCallback((response: string) => {
+      const sanitized = sanitizeReply(response);
+      setValue('description', sanitized);
+      setAiLoading(prev => ({ ...prev, description: false }));
+    }, [setValue])
+  });
 
-  // Track if fields were auto-filled to hide AI buttons
-  const [fieldsAutoFilled, setFieldsAutoFilled] = useState(false);
+  // LLM stream for comment generation
+  const commentLLMStream = useLLMStream({
+    model: DEFAULT_LLM_MODEL,
+    temperature: 0.8,
+    onResponse: useCallback((response: string) => {
+      const sanitized = sanitizeReply(response);
+      setValue('comment', sanitized);
+      setAiLoading(prev => ({ ...prev, comment: false }));
+    }, [setValue])
+  });
 
+  // LLM stream for path generation
+  const pathLLMStream = useLLMStream({
+    model: DEFAULT_LLM_MODEL,
+    temperature: 0.6,
+    onResponse: useCallback((response: string) => {
+      const sanitized = sanitizeReply(response);
+      setValue('path', sanitized);
+      setAiLoading(prev => ({ ...prev, path: false }));
+    }, [setValue])
+  });
 
+  // LLM stream for branch generation
+  const branchLLMStream = useLLMStream({
+    model: DEFAULT_LLM_MODEL,
+    temperature: 0.7,
+    onResponse: useCallback((response: string) => {
+      const sanitized = sanitizeReply(response);
+      setValue('ref', sanitized);
+      setAiLoading(prev => ({ ...prev, branch: false }));
+    }, [setValue])
+  });
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  // Save the last used save mode to localStorage
-  const saveLastUsedMode = (mode: 'traditional' | 'magic') => {
-    setLastUsedSaveMode(mode);
-    try {
-      localStorage.setItem('grafana-dashboard-last-save-mode', mode);
-    } catch (error) {
-      console.warn('Failed to save last used save mode:', error);
-    }
-  };
-
-  // Typing effect function
-  const typeText = async (text: string, setValue: (value: string) => void, delay = 20) => {
-    setValue(''); // Clear the field first
-    for (let i = 0; i <= text.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, delay));
-      setValue(text.slice(0, i));
-    }
-  };
-
-  // Sample AI generated content
-  const generateSampleContent = useCallback(() => ({
-    title: `${dashboard.state.title || 'Dashboard'} - Enhanced Analytics`,
-    description: `This dashboard provides comprehensive monitoring and analytics for ${dashboard.state.title || 'your system'}. It includes real-time metrics, performance indicators, and actionable insights to help you monitor system health, track key performance metrics, and identify potential issues before they impact your operations.`,
-  }), [dashboard.state.title]);
-
-  // Instant auto-fill function (no typing effect)
-  const instantAutoFill = useCallback(() => {
-    const content = generateSampleContent();
-    
-    // Generate shared fields content
-    const sharedContent = {
-      path: `dashboards/${new Date().getFullYear()}/optimized-dashboard-${Date.now()}.json`,
-      comment: `Add enhanced dashboard with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
-      branch: `feature/enhanced-dashboard-${new Date().toISOString().slice(0, 7)}`,
+  // Helper function to get dashboard context for AI generation
+  const getDashboardContext = useCallback(() => {
+    const dashboardModel = {
+      title: dashboard.state.title || 'Untitled Dashboard',
+      tags: dashboard.state.tags || [],
+      isNew: isNew,
+      changeInfo: changeInfo ? {
+        hasChanges: changeInfo.hasChanges,
+        hasTimeChanges: changeInfo.hasTimeChanges,
+        hasVariableValueChanges: changeInfo.hasVariableValueChanges,
+        hasRefreshChange: changeInfo.hasRefreshChange,
+        hasFolderChanges: changeInfo.hasFolderChanges,
+        hasMigratedToV2: changeInfo.hasMigratedToV2,
+        diffCount: changeInfo.diffCount,
+      } : null,
     };
+    return dashboardModel;
+  }, [dashboard.state, isNew, changeInfo]);
 
-    // Fill all fields instantly
-    setValue('title', content.title);
-    setValue('description', content.description);
+  // Helper function to create title generation messages
+  const getTitleMessages = useCallback((): Message[] => {
+    const dashboardContext = getDashboardContext();
     
-    // Fill path if it's a new dashboard
-    if (isNew) {
-      setValue('path', sharedContent.path);
-    }
-    
-    // Fill comment if not read-only
-    if (!readOnly) {
-      setValue('comment', sharedContent.comment);
-    }
-    
-    // Fill branch if workflow is set to branch
-    if (workflow === 'branch') {
-      setValue('ref', sharedContent.branch);
-    }
-  }, [setValue, generateSampleContent, isNew, readOnly, workflow]);
+    const messages = [
+      {
+        role: Role.system,
+        content: `You are an expert in creating Grafana Dashboard titles.
+Your goal is to write a concise, descriptive dashboard title.
+The title should be clear, professional, and indicate what the dashboard monitors or displays.
+It should be between 15-60 characters and capture the essence of the dashboard's purpose.
+Do not include quotes in your response.
+Focus on the main purpose or system being monitored.`
+      },
+      {
+        role: Role.user,
+        content: `Create a title for a dashboard with:
+Current title: "${dashboardContext.title}"
+Tags: ${dashboardContext.tags.join(', ') || 'None'}
+${dashboardContext.isNew ? 'This is a new dashboard that will contain monitoring visualizations.' : 'This is an existing dashboard being updated.'}`
+      }
+    ];
 
-  // Auto-fill on mount if last used mode was magic and autofill not disabled this session
-  useEffect(() => {
-    if (lastUsedSaveMode === 'magic' && !autofillDisabledThisSession && isNew && !readOnly) {
-      // Small delay to ensure form is ready after reset
-      const timer = setTimeout(() => {
-        instantAutoFill();
-        setFieldsAutoFilled(true);
-      }, 100);
-      return () => clearTimeout(timer);
+    console.log('AI Title Generation - Context:', { dashboardContext });
+    console.log('AI Title Generation - Messages:', messages);
+
+    return messages;
+  }, [getDashboardContext]);
+
+  // Helper function to create description generation messages
+  const getDescriptionMessages = useCallback((): Message[] => {
+    const dashboardContext = getDashboardContext();
+    const currentTitle = watch('title') || dashboardContext.title;
+    
+    const messages = [
+      {
+        role: Role.system,
+        content: `You are an expert in creating Grafana Dashboard descriptions.
+Your goal is to write a descriptive and informative dashboard description.
+The description should explain the purpose of the dashboard, what it monitors, and what insights it provides.
+It should be between 100-300 characters and be helpful for users to understand the dashboard's value.
+Do not include quotes in your response.
+Focus on the business value and monitoring capabilities.`
+      },
+      {
+        role: Role.user,
+        content: `Create a description for a dashboard titled: "${currentTitle}"
+Tags: ${dashboardContext.tags.join(', ') || 'None'}
+${dashboardContext.isNew ? 
+  'This dashboard will provide comprehensive monitoring and analytics for system performance and health.' : 
+  'This dashboard provides monitoring and analytics capabilities and is being updated.'}`
+      }
+    ];
+
+    console.log('AI Description Generation - Context:', { dashboardContext, currentTitle });
+    console.log('AI Description Generation - Messages:', messages);
+
+    return messages;
+  }, [getDashboardContext, watch]);
+
+  // Helper function to create comment generation messages
+  const getCommentMessages = useCallback((): Message[] => {
+    const dashboardContext = getDashboardContext();
+    const currentTitle = watch('title') || dashboardContext.title;
+    const currentDescription = watch('description') || '';
+    
+    // Build change details from changeInfo
+    let changeDetails = '';
+    let diffSummary = '';
+    if (changeInfo) {
+      const changes = [];
+      
+      if (changeInfo.hasTimeChanges) {
+        changes.push('time range');
+      }
+      if (changeInfo.hasVariableValueChanges) {
+        changes.push('variable values');
+      }
+      if (changeInfo.hasRefreshChange) {
+        changes.push('refresh interval');
+      }
+      if (changeInfo.hasFolderChanges) {
+        changes.push('folder location');
+      }
+      if (changeInfo.hasMigratedToV2) {
+        changes.push('dashboard format migration');
+      }
+      
+      // Add general changes if specific changes aren't detected
+      if (changes.length === 0 && changeInfo.hasChanges) {
+        changes.push('dashboard configuration');
+      }
+      
+      if (changes.length > 0) {
+        changeDetails = `\n\nChanges detected: ${changes.join(', ')}`;
+        if (changeInfo.diffCount > 0) {
+          changeDetails += ` (${changeInfo.diffCount} total changes)`;
+        }
+      }
+      // Add diff summary
+      if (changeInfo.diffs) {
+        diffSummary = summarizeDiffs(changeInfo.diffs);
+        if (diffSummary) {
+          changeDetails += `\n\nExample changes:\n${diffSummary}`;
+        }
+      }
     }
-    // Return undefined when condition is not met
-    return undefined;
-  }, [lastUsedSaveMode, autofillDisabledThisSession, isNew, readOnly, defaultValues, instantAutoFill]);
+    
+    const messages = [
+      {
+        role: Role.system,
+        content: `You are an expert in Git version control and dashboard management.
+
+Your goal is to write a clear, descriptive Git commit message that explains the changes being made to this dashboard.
+
+The commit message should be professional, concise, and follow Git best practices.
+
+It should not be longer than 100 words and explain what this change accomplishes.
+
+Focus on the specific changes made rather than generic descriptions.
+
+Do not include quotes in your response.`
+      },
+      {
+        role: Role.user,
+        content: `Create a Git commit message for ${dashboardContext.isNew ? 'adding a new' : 'updating an existing'} dashboard with:
+
+${dashboardContext.isNew ? 'This is a new dashboard being added to the repository.' : 'This is an update to an existing dashboard.'}${changeDetails}`
+      }
+    ];
+
+    // Log the context and messages being sent to LLM
+    console.log('AI Comment Generation - Context:', {
+      dashboardContext,
+      currentTitle,
+      currentDescription,
+      changeInfo: changeInfo ? {
+        hasChanges: changeInfo.hasChanges,
+        hasTimeChanges: changeInfo.hasTimeChanges,
+        hasVariableValueChanges: changeInfo.hasVariableValueChanges,
+        hasRefreshChange: changeInfo.hasRefreshChange,
+        hasFolderChanges: changeInfo.hasFolderChanges,
+        hasMigratedToV2: changeInfo.hasMigratedToV2,
+        diffCount: changeInfo.diffCount,
+        diffs: changeInfo.diffs ? Object.keys(changeInfo.diffs) : null,
+      } : null,
+      changeDetails,
+      diffSummary,
+    });
+    console.log('AI Comment Generation - Messages:', messages);
+
+    return messages;
+  }, [getDashboardContext, watch, changeInfo]);
+
+  // Helper function to create path generation messages
+  const getPathMessages = useCallback((): Message[] => {
+    const dashboardContext = getDashboardContext();
+    const currentTitle = watch('title') || dashboardContext.title;
+    const currentYear = new Date().getFullYear();
+    
+    const messages = [
+      {
+        role: Role.system,
+        content: `You are an expert in file organization and naming conventions.
+Your goal is to create a logical file path for storing a dashboard in a repository.
+The path should be organized, follow naming conventions, and include appropriate subdirectories.
+For dashboards, use .json extension. Use lowercase with hyphens for separation.
+Consider organizing by year, category, or purpose.
+The path should be between 20-80 characters.
+Do not include quotes in your response.`
+      },
+      {
+        role: Role.user,
+        content: `Create a file path for a dashboard titled: "${currentTitle}" 
+Current year: ${currentYear}
+This should be a well-organized path within a Git repository.`
+      }
+    ];
+
+    console.log('AI Path Generation - Context:', { dashboardContext, currentTitle, currentYear });
+    console.log('AI Path Generation - Messages:', messages);
+
+    return messages;
+  }, [getDashboardContext, watch]);
+
+  // Helper function to create branch name generation messages
+  const getBranchMessages = useCallback((): Message[] => {
+    const dashboardContext = getDashboardContext();
+    const currentTitle = watch('title') || dashboardContext.title;
+    
+    const messages = [
+      {
+        role: Role.system,
+        content: `You are an expert in Git branch naming conventions.
+Your goal is to create a descriptive branch name that follows Git best practices.
+The branch name should be lowercase, use hyphens to separate words, and be concise but descriptive.
+Common prefixes are: feature/, bugfix/, hotfix/, chore/, update/
+The branch name should be between 15-50 characters.
+Do not include quotes in your response.`
+      },
+      {
+        role: Role.user,
+        content: `Create a Git branch name for ${dashboardContext.isNew ? 'adding' : 'updating'} a dashboard titled: "${currentTitle}"`
+      }
+    ];
+
+    console.log('AI Branch Generation - Context:', { dashboardContext, currentTitle });
+    console.log('AI Branch Generation - Messages:', messages);
+
+    return messages;
+  }, [getDashboardContext, watch]);
 
   const onRequestError = (error: unknown) => {
     appEvents.publish({
@@ -272,111 +513,197 @@ export function SaveProvisionedDashboardForm({
     isNew,
   });
 
-  // AI handler functions with loading and typing effects
+  // AI handler functions with LLM integration
   const handleAIFillTitle = async () => {
+    console.log('AI Autofill - Title generation started');
+    
+    if (!isLLMEnabled) {
+      console.log('LLM is not enabled');
+      return;
+    }
+    
     setAiLoading(prev => ({ ...prev, title: true }));
     
     try {
-      // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const content = generateSampleContent();
-      await typeText(content.title, (value) => setValue('title', value));
+      const messages = getTitleMessages();
+      console.log('AI Autofill - Setting title messages:', messages);
+      titleLLMStream.setMessages(messages);
     } catch (error) {
       console.error('AI autofill title error:', error);
-    } finally {
       setAiLoading(prev => ({ ...prev, title: false }));
     }
   };
 
   const handleAIFillDescription = async () => {
+    console.log('AI Autofill - Description generation started');
+    
+    if (!isLLMEnabled) {
+      console.log('LLM is not enabled');
+      return;
+    }
+    
     setAiLoading(prev => ({ ...prev, description: true }));
     
     try {
-      // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      const content = generateSampleContent();
-      await typeText(content.description, (value) => setValue('description', value), 30);
+      const messages = getDescriptionMessages();
+      console.log('AI Autofill - Setting description messages:', messages);
+      descriptionLLMStream.setMessages(messages);
     } catch (error) {
       console.error('AI autofill description error:', error);
-    } finally {
       setAiLoading(prev => ({ ...prev, description: false }));
     }
   };
 
+  // Update loading states based on stream status
+  useEffect(() => {
+    if (titleLLMStream.streamStatus === StreamStatus.GENERATING) {
+      setAiLoading(prev => ({ ...prev, title: true }));
+    } else if (titleLLMStream.streamStatus === StreamStatus.COMPLETED || titleLLMStream.error) {
+      setAiLoading(prev => ({ ...prev, title: false }));
+    }
+  }, [titleLLMStream.streamStatus, titleLLMStream.error]);
+
+  useEffect(() => {
+    if (descriptionLLMStream.streamStatus === StreamStatus.GENERATING) {
+      setAiLoading(prev => ({ ...prev, description: true }));
+    } else if (descriptionLLMStream.streamStatus === StreamStatus.COMPLETED || descriptionLLMStream.error) {
+      setAiLoading(prev => ({ ...prev, description: false }));
+    }
+  }, [descriptionLLMStream.streamStatus, descriptionLLMStream.error]);
+
+  useEffect(() => {
+    if (commentLLMStream.streamStatus === StreamStatus.GENERATING) {
+      setAiLoading(prev => ({ ...prev, comment: true }));
+    } else if (commentLLMStream.streamStatus === StreamStatus.COMPLETED || commentLLMStream.error) {
+      setAiLoading(prev => ({ ...prev, comment: false }));
+    }
+  }, [commentLLMStream.streamStatus, commentLLMStream.error]);
+
+  useEffect(() => {
+    if (pathLLMStream.streamStatus === StreamStatus.GENERATING) {
+      setAiLoading(prev => ({ ...prev, path: true }));
+    } else if (pathLLMStream.streamStatus === StreamStatus.COMPLETED || pathLLMStream.error) {
+      setAiLoading(prev => ({ ...prev, path: false }));
+    }
+  }, [pathLLMStream.streamStatus, pathLLMStream.error]);
+
+  useEffect(() => {
+    if (branchLLMStream.streamStatus === StreamStatus.GENERATING) {
+      setAiLoading(prev => ({ ...prev, branch: true }));
+    } else if (branchLLMStream.streamStatus === StreamStatus.COMPLETED || branchLLMStream.error) {
+      setAiLoading(prev => ({ ...prev, branch: false }));
+    }
+  }, [branchLLMStream.streamStatus, branchLLMStream.error]);
+
   const handleAIFillAllInternal = async (isParallel = false) => {
+    console.log('AI Autofill - Internal autofill started', { isParallel, isNew, readOnly, workflow });
+    
     setAiLoading(prev => ({ ...prev, all: true }));
     
     try {
-      // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const content = generateSampleContent();
-      
-      // Generate shared fields content
-      const sharedContent = {
-        path: `dashboards/${new Date().getFullYear()}/optimized-dashboard-${Date.now()}.json`,
-        comment: `Add enhanced dashboard with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
-        branch: `feature/enhanced-dashboard-${new Date().toISOString().slice(0, 7)}`,
+      if (!isLLMEnabled) {
+        console.log('LLM is not enabled');
+        return;
+      }
+
+      // Helper function to wait for a field to complete generation
+      const waitForFieldCompletion = (fieldName: keyof typeof aiLoading) => {
+        return new Promise<void>((resolve) => {
+          const checkCompletion = () => {
+            if (!aiLoading[fieldName]) {
+              console.log(`AI Autofill - Field ${fieldName} completed`);
+              resolve();
+            } else {
+              setTimeout(checkCompletion, 100);
+            }
+          };
+          checkCompletion();
+        });
       };
 
       if (isParallel) {
-        // Parallel mode - fill all fields simultaneously with faster typing
-        const fillPromises = [];
+        console.log('AI Autofill - Starting parallel mode');
+        // Parallel mode - trigger all LLM streams simultaneously
+        const promises = [];
         
-        // Always fill title and description for new dashboards (faster delays)
-        fillPromises.push(typeText(content.title, (value) => setValue('title', value), 10));
-        fillPromises.push(typeText(content.description, (value) => setValue('description', value), 15));
+        // Always fill title and description for new dashboards
+        console.log('AI Autofill - Triggering title generation');
+        titleLLMStream.setMessages(getTitleMessages());
+        promises.push(waitForFieldCompletion('title'));
+        
+        console.log('AI Autofill - Triggering description generation');
+        descriptionLLMStream.setMessages(getDescriptionMessages());
+        promises.push(waitForFieldCompletion('description'));
         
         // Fill path if it's a new dashboard
         if (isNew) {
-          fillPromises.push(typeText(sharedContent.path, (value) => setValue('path', value), 10));
+          console.log('AI Autofill - Triggering path generation');
+          pathLLMStream.setMessages(getPathMessages());
+          promises.push(waitForFieldCompletion('path'));
         }
         
         // Fill comment if not read-only
         if (!readOnly) {
-          fillPromises.push(typeText(sharedContent.comment, (value) => setValue('comment', value), 20));
+          console.log('AI Autofill - Triggering comment generation');
+          commentLLMStream.setMessages(getCommentMessages());
+          promises.push(waitForFieldCompletion('comment'));
         }
         
         // Fill branch if workflow is set to branch
         if (workflow === 'branch') {
-          fillPromises.push(typeText(sharedContent.branch, (value) => setValue('ref', value), 10));
+          console.log('AI Autofill - Triggering branch generation');
+          branchLLMStream.setMessages(getBranchMessages());
+          promises.push(waitForFieldCompletion('branch'));
         }
         
-        // Wait for all fields to complete simultaneously
-        await Promise.all(fillPromises);
+        // Wait for all LLM streams to complete
+        console.log('AI Autofill - Waiting for all parallel operations to complete');
+        await Promise.all(promises);
       } else {
-        // Serial mode - fill fields one by one (original behavior)
+        console.log('AI Autofill - Starting serial mode');
+        // Serial mode - fill fields one by one using LLM
+        
         // Fill title first
-        await typeText(content.title, (value) => setValue('title', value));
+        console.log('AI Autofill - Triggering title generation (serial)');
+        titleLLMStream.setMessages(getTitleMessages());
+        await waitForFieldCompletion('title');
         
         // Small delay between fields
         await new Promise(resolve => setTimeout(resolve, 300));
         
         // Then fill description
-        await typeText(content.description, (value) => setValue('description', value), 30);
+        console.log('AI Autofill - Triggering description generation (serial)');
+        descriptionLLMStream.setMessages(getDescriptionMessages());
+        await waitForFieldCompletion('description');
         
         // Small delay before shared fields
         await new Promise(resolve => setTimeout(resolve, 300));
         
         // Fill path if it's a new dashboard
         if (isNew) {
-          await typeText(sharedContent.path, (value) => setValue('path', value));
+          console.log('AI Autofill - Triggering path generation (serial)');
+          pathLLMStream.setMessages(getPathMessages());
+          await waitForFieldCompletion('path');
           await new Promise(resolve => setTimeout(resolve, 300));
         }
         
         // Fill comment if not read-only
         if (!readOnly) {
-          await typeText(sharedContent.comment, (value) => setValue('comment', value), 40);
+          console.log('AI Autofill - Triggering comment generation (serial)');
+          commentLLMStream.setMessages(getCommentMessages());
+          await waitForFieldCompletion('comment');
           await new Promise(resolve => setTimeout(resolve, 300));
         }
         
         // Fill branch if workflow is set to branch
         if (workflow === 'branch') {
-          await typeText(sharedContent.branch, (value) => setValue('ref', value));
+          console.log('AI Autofill - Triggering branch generation (serial)');
+          branchLLMStream.setMessages(getBranchMessages());
+          await waitForFieldCompletion('branch');
         }
       }
+      
+      console.log('AI Autofill - Internal autofill completed successfully');
     } catch (error) {
       console.error('AI autofill all error:', error);
     } finally {
@@ -412,58 +739,44 @@ export function SaveProvisionedDashboardForm({
     });
   };
 
-  // Traditional save handler (disables autofill for this session)
+  // Traditional save handler
   const handleTraditionalSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mark traditional mode as used
-    saveLastUsedMode('traditional');
     
     try {
       // Execute the normal form submit
       const formData = methods.getValues();
       await handleFormSubmit(formData);
-      
-      // Only disable autofill after successful save
-      setAutofillDisabledThisSession(true);
     } catch (error) {
-      // Don't disable autofill if save failed
       console.error('Traditional save failed:', error);
     }
   };
 
-  // Magic save handler that combines AI autofill and save
-  const handleMagicSave = async () => {
-    if (readOnly) {return;}
+  // AI autofill handler that fills all fields with AI-generated content
+  const handleAIAutofill = async () => {
+    console.log('AI Autofill - Starting autofill all fields');
+    
+    if (readOnly) {
+      console.log('AI Autofill - Skipping due to read-only mode');
+      return;
+    }
     
     setAiLoading(prev => ({ ...prev, magicSave: true }));
     
     try {
-      // Mark magic mode as used
-      saveLastUsedMode('magic');
-      
-      // First fill all fields with AI in parallel mode for faster execution
+      console.log('AI Autofill - Executing parallel autofill');
+      // Fill all fields with AI in parallel mode for faster execution
       await handleAIFillAllInternal(true);
       
-      // Shorter wait for form to update since parallel is faster
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Then trigger the save using the form's submit handler
-      const formData = methods.getValues();
-      
-      // Validate that we have the required fields
-      if (!formData.title || !formData.path) {
-        throw new Error('Required fields are missing after AI autofill');
-      }
-      
-      await handleFormSubmit(formData);
+      // Don't automatically save - let user manually save after autofill
+      console.log('AI Autofill - Autofill completed - user can now save manually');
     } catch (error) {
-      console.error('Magic save error:', error);
+      console.error('AI autofill error:', error);
       // Show error to user
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [
-          t('dashboard-scene.save-provisioned-dashboard-form.magic-save-error', 'Magic save failed'), 
+          t('dashboard-scene.save-provisioned-dashboard-form.autofill-error', 'AI autofill failed'), 
           error
         ],
       });
@@ -471,6 +784,9 @@ export function SaveProvisionedDashboardForm({
       setAiLoading(prev => ({ ...prev, magicSave: false }));
     }
   };
+
+  // Don't show AI buttons if LLM is not enabled
+  const showAIButtons = isLLMEnabled;
 
   return (
     <FormProvider {...methods}>
@@ -500,7 +816,7 @@ export function SaveProvisionedDashboardForm({
                 <Input
                   id="dashboard-title"
                   suffix={
-                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
+                    showAIButtons ? (
                       <IconButton
                         name={aiLoading.title ? "spinner" : "ai-sparkle"}
                         tooltip={t(
@@ -534,7 +850,7 @@ export function SaveProvisionedDashboardForm({
                   value={description || ''}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue('description', e.target.value)}
                   suffix={
-                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
+                    showAIButtons ? (
                       <IconButton
                         name={aiLoading.description ? "spinner" : "ai-sparkle"}
                         tooltip={t(
@@ -594,16 +910,13 @@ export function SaveProvisionedDashboardForm({
             isNew={isNew}
             aiLoading={aiLoading}
             setAiLoading={setAiLoading}
-            fieldsAutoFilled={fieldsAutoFilled}
-            autofillDisabledThisSession={autofillDisabledThisSession}
           />
 
           <Stack gap={2}>
             <Stack direction="row" gap={2}>
-              {/* Always show both buttons in consistent positions */}
               {/* Primary button (left) - changes based on last used mode */}
               <Button 
-                variant={lastUsedSaveMode === 'traditional' ? 'primary' : 'secondary'}
+                variant="primary"
                 onClick={handleTraditionalSave}
                 disabled={request.isLoading || !isDirty || readOnly}
                 tooltip={t(
@@ -616,21 +929,21 @@ export function SaveProvisionedDashboardForm({
                   : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
               </Button>
               
-              {/* Quick Save button (right) - always visible unless disabled for session */}
-              {!autofillDisabledThisSession && (
+              {/* Autofill button (right) - always visible when LLM is enabled */}
+              {isLLMEnabled && (
                 <Button 
-                  variant={lastUsedSaveMode === 'magic' ? 'primary' : 'secondary'}
+                  variant="secondary"
                   icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
-                  onClick={handleMagicSave}
+                  onClick={handleAIAutofill}
                   disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
                   tooltip={t(
-                    'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
-                    'AI autofill all fields and save automatically'
+                    'dashboard-scene.save-provisioned-dashboard-form.autofill-tooltip',
+                    'AI autofill all fields'
                   )}
                 >
                   {aiLoading.magicSave 
-                    ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
-                    : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Quick Save')
+                    ? t('dashboard-scene.save-provisioned-dashboard-form.autofilling', 'Autofilling...')
+                    : t('dashboard-scene.save-provisioned-dashboard-form.autofill', 'Autofill')
                   }
                 </Button>
               )}
