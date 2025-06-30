@@ -123,7 +123,7 @@ function findIssueBoundary(
       startColumn: errorNode.from + 1,
       endLineNumber: 1,
       endColumn: errorNode.to + 1,
-      issue: issue,
+      issue,
     };
   }
 
