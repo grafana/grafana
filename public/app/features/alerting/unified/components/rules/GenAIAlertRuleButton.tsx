@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { llm } from '@grafana/llm';
-import { locationService } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 
 import { useListContactPointsv0alpha1 } from '../../../../../../../packages/grafana-alerting/src/grafana/contactPoints/hooks/useContactPoints';
@@ -40,15 +40,37 @@ const GET_CONTACT_POINTS_TOOL = {
   },
 };
 
+// Tool definition for getting available data sources
+const GET_DATA_SOURCES_TOOL = {
+  type: 'function' as const,
+  function: {
+    name: 'get_data_sources',
+    description:
+      'Retrieves a list of all data sources available for alerting. This includes Prometheus, Loki, InfluxDB, and other monitoring data sources that support alerting queries.',
+    parameters: {
+      type: 'object',
+      properties: {
+        alertingOnly: {
+          type: 'boolean',
+          description: 'Whether to only return data sources that support alerting',
+          default: true,
+        },
+      },
+      required: [],
+    },
+  },
+};
+
 const SYSTEM_PROMPT_CONTENT = `You are an expert in creating Grafana alert rules. Based on the user's description, generate a properly structured alert rule configuration.
 
 You have access to tools that can help you:
 - get_contact_points: Use this to retrieve available contact points when the user asks about notifications or wants to see what contact points are available
+- get_data_sources: Use this to see what data sources are available for querying (Prometheus, Loki, etc.) - use this to set proper datasourceUid values. If the user doesn't specify a particular data source, use the one marked with "isDefault": true
 
 Return a JSON object that matches the RuleFormValues interface with these key fields:
 - name: A descriptive name for the alert rule
 - type: Always use "grafana-alerting"
-- queries: An array of alert queries with proper datasource configuration
+- queries: An array of alert queries with proper datasource configuration (use actual datasource UIDs from get_data_sources)
 - condition: The refId of the query condition (usually "C")
 - evaluateFor: How long the condition must be true (e.g., "5m")
 - noDataState: What to do when no data (usually "NoData")
@@ -69,9 +91,11 @@ Return a JSON object that matches the RuleFormValues interface with these key fi
   - activeTimeIntervals: [] (array of active timing names)
 
 For queries, include:
-- A data query (refId: "A") from appropriate datasource
+- A data query (refId: "A") from appropriate datasource (use actual datasourceUid from get_data_sources tool)
 - A condition query (refId: "C") that evaluates the data
 
+When the user mentions specific metrics or data sources, always use the get_data_sources tool first to see what's available and get the correct UIDs.
+If the user doesn't specify a data source, use the default one (isDefault: true) from the available data sources.
 When the user mentions notifications or asks about contact points, always use the get_contact_points tool first to see what's available.
 
 Example structure:
@@ -82,7 +106,7 @@ Example structure:
     {
       "refId": "A",
       "model": {"expr": "cpu_usage", "refId": "A"},
-      "datasourceUid": "prometheus-uid",
+      "datasourceUid": "actual-prometheus-uid-from-tool",
       "queryType": "",
       "relativeTimeRange": {"from": 600, "to": 0}
     },
@@ -137,22 +161,38 @@ const AlertRulePreview = ({ generatedRule, styles }: AlertRulePreviewProps) => {
       </h4>
       <div className={styles.rulePreview}>
         <p>
-          <strong>Name:</strong> {generatedRule.name}
+          <strong>
+            <Trans i18nKey="alerting.generate-ai-rule.modal.preview-name">Name:</Trans>
+          </strong>{' '}
+          {generatedRule.name}
         </p>
         <p>
-          <strong>Evaluation Period:</strong> {generatedRule.evaluateFor}
+          <strong>
+            <Trans i18nKey="alerting.generate-ai-rule.modal.preview-evaluation-period">Evaluation Period:</Trans>
+          </strong>{' '}
+          {generatedRule.evaluateFor}
         </p>
         <p>
-          <strong>Queries:</strong> {generatedRule.queries?.length || 0} configured
+          <strong>
+            <Trans i18nKey="alerting.generate-ai-rule.modal.preview-queries">Queries:</Trans>
+          </strong>{' '}
+          {generatedRule.queries?.length || 0}{' '}
+          <Trans i18nKey="alerting.generate-ai-rule.modal.preview-configured">configured</Trans>
         </p>
         {generatedRule.annotations && generatedRule.annotations.length > 0 && (
           <p>
-            <strong>Description:</strong> {generatedRule.annotations.find((a) => a.key === 'description')?.value}
+            <strong>
+              <Trans i18nKey="alerting.generate-ai-rule.modal.preview-description">Description:</Trans>
+            </strong>{' '}
+            {generatedRule.annotations.find((a) => a.key === 'description')?.value}
           </p>
         )}
         {generatedRule.contactPoints?.grafana?.selectedContactPoint && (
           <p>
-            <strong>Contact Point:</strong> {generatedRule.contactPoints.grafana.selectedContactPoint}
+            <strong>
+              <Trans i18nKey="alerting.generate-ai-rule.modal.preview-contact-point">Contact Point:</Trans>
+            </strong>{' '}
+            {generatedRule.contactPoints.grafana.selectedContactPoint}
           </p>
         )}
       </div>
@@ -219,6 +259,36 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
     },
     [contactPoints, contactPointsLoading]
   );
+
+  // Tool handler for getting available data sources
+  const handleGetDataSources = useCallback(async (args: unknown) => {
+    try {
+      // Get all data sources that support alerting
+      const dataSourceSrv = getDataSourceSrv();
+      const alertingDataSources = dataSourceSrv.getList({ alerting: true });
+
+      // Only extract what the AI actually needs
+      const dataSources = alertingDataSources.map((ds) => ({
+        name: ds.name,
+        uid: ds.uid,
+        type: ds.type,
+        isDefault: ds.isDefault,
+      }));
+
+      return {
+        success: true,
+        dataSources,
+        count: dataSources.length,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        dataSources: [],
+        count: 0,
+      };
+    }
+  }, []);
 
   // Sets up the AI's behavior and context
   const createSystemPrompt = (): llm.Message => ({
@@ -293,7 +363,7 @@ Please generate a complete alert rule configuration that monitors for this condi
         const response = await llm.chatCompletions({
           model: llm.Model.LARGE, // Use LARGE model for better results
           messages,
-          tools: [GET_CONTACT_POINTS_TOOL],
+          tools: [GET_CONTACT_POINTS_TOOL, GET_DATA_SOURCES_TOOL],
           temperature: 0.3,
         });
 
@@ -322,6 +392,17 @@ Please generate a complete alert rule configuration that monitors for this condi
                 content: JSON.stringify(result), // The result of the tool call
                 tool_call_id: toolCall.id, // Links this result back to the specific tool call that generated it
               });
+            } else if (toolCall.function.name === 'get_data_sources') {
+              // If the tool call is for getting data sources
+              const args = JSON.parse(toolCall.function.arguments);
+              const result = await handleGetDataSources(args);
+
+              // Add the tool result to the messages
+              finalMessages.push({
+                role: 'tool',
+                content: JSON.stringify(result),
+                tool_call_id: toolCall.id,
+              });
             }
           }
 
@@ -330,7 +411,7 @@ Please generate a complete alert rule configuration that monitors for this condi
           const finalResponse = await llm.chatCompletions({
             model: llm.Model.LARGE, // Use LARGE model for better results
             messages: finalMessages,
-            tools: [GET_CONTACT_POINTS_TOOL],
+            tools: [GET_CONTACT_POINTS_TOOL, GET_DATA_SOURCES_TOOL],
             temperature: 0.3,
           });
 
@@ -353,7 +434,7 @@ Please generate a complete alert rule configuration that monitors for this condi
         setIsGenerating(false);
       }
     },
-    [handleGetContactPoints, handleParsedResponse]
+    [handleGetContactPoints, handleGetDataSources, handleParsedResponse]
   );
 
   const handleGenerate = () => {
@@ -411,7 +492,7 @@ Please generate a complete alert rule configuration that monitors for this condi
             label={t('alerting.generate-ai-rule.modal.prompt-label', 'Describe the alert rule you want to create')}
             description={t(
               'alerting.generate-ai-rule.modal.prompt-description',
-              'Describe what you want to monitor and when you want to be alerted. For example: "Alert when CPU usage is above 80% for more than 5 minutes". You can also ask about available contact points.'
+              'Describe what you want to monitor and when you want to be alerted. For example: "Alert when CPU usage is above 80% for more than 5 minutes". You can also ask about available contact points or data sources.'
             )}
             noMargin
           >
