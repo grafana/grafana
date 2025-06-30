@@ -960,15 +960,24 @@ func schema_pkg_apis_provisioning_v0alpha1_RefItem(ref common.ReferenceCallback)
 				Properties: map[string]spec.Schema{
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The name of the reference (branch or tag)",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"hash": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The SHA hash of the commit this ref points to",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"refURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The URL to the reference (branch or tag)",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

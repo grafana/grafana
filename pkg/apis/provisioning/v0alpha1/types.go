@@ -465,6 +465,10 @@ type RefList struct {
 }
 
 type RefItem struct {
+	// The name of the reference (branch or tag)
 	Name string `json:"name"`
+	// The SHA hash of the commit this ref points to
 	Hash string `json:"hash,omitempty"`
+	// The URL to the reference (branch or tag)
+	RefURL string `json:"refURL,omitempty"`
 }

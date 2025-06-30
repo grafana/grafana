@@ -82,10 +82,15 @@ func (c *refsConnector) listRefs(ctx context.Context, repo repository.Repository
 			return nil, fmt.Errorf("failed to list branches: %w", err)
 		}
 
+		owner := typedRepo.Owner()
+		repoName := typedRepo.Repo()
+
 		for _, branch := range branches {
+			branchURL := fmt.Sprintf("https://github.com/%s/%s/tree/%s", owner, repoName, branch.Name)
 			refsList.Items = append(refsList.Items, provisioning.RefItem{
-				Name: branch.Name,
-				Hash: branch.Sha,
+				Name:   branch.Name,
+				Hash:   branch.Sha,
+				RefURL: branchURL,
 			})
 		}
 
