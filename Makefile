@@ -198,7 +198,7 @@ gen-enterprise-go: ## Generate API Swagger specification
 	@echo "re-generating Wire graph for enterprise"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
 endif
-gen-go:
+gen-go: gen-enterprise-go
 	@echo "generatng Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
