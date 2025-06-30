@@ -118,26 +118,26 @@ func run(ctx context.Context, cmd *cli.Command) error {
 
 	c, runErr := RunTest(ctx, d, svc)
 	if runErr != nil {
-		return fmt.Errorf("failed to run a11y test suite: %w", runErr)
+		return fmt.Errorf("failed to run e2e test suite: %w", runErr)
 	}
 
 	c, syncErr := c.Sync(ctx)
 	if syncErr != nil {
-		return fmt.Errorf("failed to sync a11y test suite: %w", syncErr)
+		return fmt.Errorf("failed to sync e2e test suite: %w", syncErr)
 	}
 
 	code, codeErr := c.ExitCode(ctx)
 	if codeErr != nil {
-		return fmt.Errorf("failed to get exit code of a11y test suite: %w", codeErr)
+		return fmt.Errorf("failed to get exit code of e2e test suite: %w", codeErr)
 	}
 
 	if code == 0 {
-		log.Printf("a11y tests passed with exit code %d", code)
+		log.Printf("e2e tests passed with exit code %d", code)
 	} else {
-		return fmt.Errorf("a11y tests failed with exit code %d", code)
+		return fmt.Errorf("e2e tests failed with exit code %d", code)
 	}
 
-	log.Println("a11y tests completed successfully")
+	log.Println("e2e tests completed successfully")
 	return nil
 }
 
