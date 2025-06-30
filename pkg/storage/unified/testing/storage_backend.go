@@ -990,7 +990,7 @@ func runTestIntegrationBackendCreateNewResource(t *testing.T, backend resource.S
 			Resource:  "tests",
 			Name:      "test",
 		},
-		Value: []byte(`{"apiVersion":"test.grafana/v0alpha1","kind":"tests","metadata":{"name":"test","namespace":"default","uid":"test-uid-123"}}`),
+		Value: []byte(`{"apiVersion":"test.grafana/v0alpha1","kind":"Test","metadata":{"name":"test","namespace":"default","uid":"test-uid-123"}}`),
 	}
 
 	response, err := server.Create(ctx, request)
