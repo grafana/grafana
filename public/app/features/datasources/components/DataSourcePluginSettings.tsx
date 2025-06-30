@@ -34,7 +34,7 @@ export class DataSourcePluginSettings extends PureComponent<Props> {
       <div>
         {plugin.components.ConfigEditor &&
           createElement(plugin.components.ConfigEditor, {
-            options: readOnlyCopy(dataSource),
+            options: readOnlyCopy(dataSource, { source: 'datasource', pluginId: plugin.meta?.id }),
             onOptionsChange: this.onModelChanged,
           })}
       </div>

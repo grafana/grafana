@@ -22,7 +22,7 @@ import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
-import { ExtensionsLog, log } from './logs/log';
+import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 
@@ -47,7 +47,7 @@ export function createOpenModalFunction(pluginId: string): PluginExtensionEventH
         component: wrapWithPluginContext<ModalWrapperProps>(
           pluginId,
           getModalWrapper({ title, body, width, height }),
-          log
+          baseLog
         ),
       })
     );
@@ -85,7 +85,7 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     return (
       <PluginContextProvider meta={pluginMeta}>
-        <Component {...readOnlyCopy(props, log)} />
+        <Component {...readOnlyCopy(props, { log, source: 'extension', pluginId })} />
       </PluginContextProvider>
     );
   };
@@ -218,36 +218,44 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
   });
 }
 
+type MutationSource = 'extension' | 'datasource';
+interface ProxyOptions {
+  log?: ExtensionsLog;
+  source?: MutationSource;
+  pluginId?: string;
+}
+
 /**
  * Returns a proxy that logs any attempted mutation to the original object.
  *
  * @param obj The object to observe
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
-export function getMutationObserverProxy<T extends object>(obj: T, _log: ExtensionsLog = log): T {
+export function getMutationObserverProxy<T extends object>(obj: T, options: ProxyOptions = {}): T {
   if (!obj || typeof obj !== 'object' || isMutationObserverProxy(obj)) {
     return obj;
   }
 
+  const { log = baseLog, source = 'extension', pluginId = 'unknown' } = options;
   const cache = new WeakMap();
 
   return new Proxy(obj, {
     deleteProperty(target, prop) {
-      _log.warning(`Attempted to delete object property "${String(prop)}"`, {
+      log.warning(`Attempted to delete object property "${String(prop)}" from ${source} with id ${pluginId}`, {
         stack: new Error().stack ?? '',
       });
       Reflect.deleteProperty(target, prop);
       return true;
     },
     defineProperty(target, prop, descriptor) {
-      _log.warning(`Attempted to define object property "${String(prop)}"`, {
+      log.warning(`Attempted to define object property "${String(prop)}" from ${source} with id ${pluginId}`, {
         stack: new Error().stack ?? '',
       });
       Reflect.defineProperty(target, prop, descriptor);
       return true;
     },
     set(target, prop, newValue) {
-      _log.warning(`Attempted to mutate object property "${String(prop)}"`, {
+      log.warning(`Attempted to mutate object property "${String(prop)}" from ${source} with id ${pluginId}`, {
         stack: new Error().stack ?? '',
       });
       Reflect.set(target, prop, newValue);
@@ -275,7 +283,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, _log: Extensi
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
-          cache.set(value, getMutationObserverProxy(value, _log));
+          cache.set(value, getMutationObserverProxy(value, { log, source, pluginId }));
         }
         return cache.get(value);
       }
@@ -285,7 +293,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, _log: Extensi
   });
 }
 
-export function readOnlyCopy<T>(value: T, _log: ExtensionsLog = log): T {
+export function readOnlyCopy<T>(value: T, options: ProxyOptions = {}): T {
   // Primitive types are read-only by default
   if (!value || typeof value !== 'object') {
     return value;
@@ -296,7 +304,7 @@ export function readOnlyCopy<T>(value: T, _log: ExtensionsLog = log): T {
   }
 
   // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
-  return getMutationObserverProxy(cloneDeep(value), _log);
+  return getMutationObserverProxy(cloneDeep(value), options);
 }
 
 function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {

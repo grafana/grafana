@@ -394,9 +394,12 @@ describe('Plugin Extensions / Utils', () => {
         proxy.a = 'b';
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "a"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to mutate object property "a" from extension with id unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       expect(proxy.a).toBe('b');
     });
@@ -412,9 +415,12 @@ describe('Plugin Extensions / Utils', () => {
         });
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "b"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to define object property "b" from extension with id unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       expect(proxy.b).toBe('b');
     });
@@ -432,9 +438,12 @@ describe('Plugin Extensions / Utils', () => {
         delete proxy.a.c;
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to delete object property "c"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to delete object property "c" from extension with id unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       expect(proxy.a.c).toBeUndefined();
     });
@@ -490,9 +499,12 @@ describe('Plugin Extensions / Utils', () => {
         copy.a = 'b';
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "a"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to mutate object property "a" from extension with id unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       expect(copy.a).toBe('b');
     });
@@ -511,9 +523,12 @@ describe('Plugin Extensions / Utils', () => {
         copy.a = 'b';
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "a"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to mutate object property "a" from extension with id unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       expect(copy.a).toBe('b');
     });
@@ -534,9 +549,12 @@ describe('Plugin Extensions / Utils', () => {
       expect(Object.isFrozen(copy.b)).toBe(true);
       expect(copy.b).toEqual({ c: 'c' });
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "a"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to define object property "a" from extension with id unknown`,
+        {
+          stack: expect.any(String),
+        }
+      );
     });
   });
 
@@ -701,9 +719,12 @@ describe('Plugin Extensions / Utils', () => {
 
       // Logs a warning
       expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       // Not able to mutate the props in dev mode either
       expect(props.a.b.c).toBe('Grafana');
@@ -721,9 +742,12 @@ describe('Plugin Extensions / Utils', () => {
 
       // Logs a warning
       expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
-        stack: expect.any(String),
-      });
+      expect(log.warning).toHaveBeenCalledWith(
+        `Attempted to mutate object property "c" from extension with id grafana-worldmap-panel`,
+        {
+          stack: expect.any(String),
+        }
+      );
 
       // Not able to mutate the props in production mode either
       expect(props.a.b.c).toBe('Grafana');
