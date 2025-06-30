@@ -9,7 +9,7 @@ test.use({
 test.describe(
   'Public dashboards',
   {
-    tag: ['@dashboards', '@wip'],
+    tag: ['@dashboards'],
   },
   () => {
     test('Create, open and disable a public dashboard', async ({
