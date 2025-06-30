@@ -1,7 +1,7 @@
 name: Deploy Storybook preview
 
 on:
-  # pull_request:
+  pull_request:
   #   paths:
   #     - 'packages/grafana-ui/**'
   push:
@@ -40,13 +40,6 @@ jobs:
 
       - name: Build storybook
         run: yarn storybook:build
-
-      - name: Log in to GCS
-        id: login-to-gcs
-        uses: grafana/shared-workflows/actions/login-to-gcs@main
-        with:
-          environment: prod
-          service_account: github-gf-storybook-preview@grafanalabs-workload-identity.iam.gserviceaccount.com
 
       - uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
