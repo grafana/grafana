@@ -448,20 +448,12 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		}
 	}
 
-	// Apply limit
-	hasMore := false
-	if req.Limit > 0 && len(pagedKeys) > int(req.Limit) {
-		hasMore = true
-		pagedKeys = pagedKeys[:req.Limit]
-	}
-
 	iter := kvHistoryIterator{
 		keys:          pagedKeys,
 		currentIndex:  -1,
 		ctx:           ctx,
 		listRV:        listRV,
 		sortAscending: sortAscending,
-		hasMore:       hasMore,
 		dataStore:     k.dataStore,
 	}
 
@@ -566,20 +558,12 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 		}
 	}
 
-	// Apply limit
-	hasMore := false
-	if req.Limit > 0 && len(pagedKeys) > int(req.Limit) {
-		hasMore = true
-		pagedKeys = pagedKeys[:req.Limit]
-	}
-
 	iter := kvHistoryIterator{
 		keys:          pagedKeys,
 		currentIndex:  -1,
 		ctx:           ctx,
 		listRV:        listRV,
 		sortAscending: sortAscending,
-		hasMore:       hasMore,
 		dataStore:     k.dataStore,
 	}
 
@@ -598,7 +582,6 @@ type kvHistoryIterator struct {
 	currentIndex  int
 	listRV        int64
 	sortAscending bool
-	hasMore       bool
 	dataStore     *dataStore
 
 	// current
@@ -638,9 +621,6 @@ func (i *kvHistoryIterator) Error() error {
 }
 
 func (i *kvHistoryIterator) ContinueToken() string {
-	if !i.hasMore {
-		return ""
-	}
 	// Use the resource version from the last item in the current page
 	var lastRV int64
 	if len(i.keys) > 0 {
@@ -656,11 +636,6 @@ func (i *kvHistoryIterator) ContinueToken() string {
 	}
 	tokenStr := token.String()
 	return tokenStr
-}
-
-// HasMore returns true if there are more items after the current position
-func (i *kvHistoryIterator) HasMore() bool {
-	return i.currentIndex < len(i.keys)-1
 }
 
 func (i *kvHistoryIterator) ResourceVersion() int64 {
