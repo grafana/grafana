@@ -47,8 +47,12 @@ export class LogListModel implements LogRowModel {
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _virtualization?: LogLineVirtualization;
+  private _wrapLogMessage: boolean;
 
-  constructor(log: LogRowModel, { escape, getFieldLinks, grammar, timeZone, virtualization }: PreProcessLogOptions) {
+  constructor(
+    log: LogRowModel,
+    { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+  ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
     this.dataFrame = log.dataFrame;
@@ -82,6 +86,7 @@ export class LogListModel implements LogRowModel {
       defaultWithMS: true,
     });
     this._virtualization = virtualization;
+    this._wrapLogMessage = wrapLogMessage;
 
     let raw = log.raw;
     if (escape && log.hasUnescapedContent) {
@@ -95,6 +100,9 @@ export class LogListModel implements LogRowModel {
       this._body = this.collapsed
         ? this.raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : this.raw;
+      if (!this._wrapLogMessage) {
+        this._body = this._body.replace(/(\r\n|\n|\r)/g, '');
+      }
     }
     return this._body;
   }
@@ -127,14 +135,20 @@ export class LogListModel implements LogRowModel {
     if (fieldName === LOG_LINE_BODY_FIELD_NAME) {
       return this.body;
     }
+    let fieldValue = '';
     if (this.labels[fieldName] != null) {
-      return this.labels[fieldName];
-    }
-    const field = this.fields.find((field) => {
-      return field.keys[0] === fieldName;
-    });
+      fieldValue = this.labels[fieldName];
+    } else {
+      const field = this.fields.find((field) => {
+        return field.keys[0] === fieldName;
+      });
 
-    return field ? field.values.toString() : '';
+      fieldValue = field ? field.values.toString() : '';
+    }
+    if (!this._wrapLogMessage) {
+      return fieldValue.replace(/(\r\n|\n|\r)/g, '');
+    }
+    return fieldValue;
   }
 
   updateCollapsedState(displayedFields: string[], container: HTMLDivElement | null) {
@@ -172,15 +186,18 @@ export interface PreProcessOptions {
   order: LogsSortOrder;
   timeZone: string;
   virtualization?: LogLineVirtualization;
+  wrapLogMessage: boolean;
 }
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, timeZone, virtualization }: PreProcessOptions,
+  { escape, getFieldLinks, order, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) => preProcessLog(log, { escape, getFieldLinks, grammar, timeZone, virtualization }));
+  return orderedLogs.map((log) =>
+    preProcessLog(log, { escape, getFieldLinks, grammar, timeZone, virtualization, wrapLogMessage })
+  );
 };
 
 interface PreProcessLogOptions {
@@ -189,6 +206,7 @@ interface PreProcessLogOptions {
   grammar?: Grammar;
   timeZone: string;
   virtualization?: LogLineVirtualization;
+  wrapLogMessage: boolean;
 }
 const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions): LogListModel => {
   return new LogListModel(log, options);
