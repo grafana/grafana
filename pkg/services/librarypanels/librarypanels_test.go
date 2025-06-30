@@ -55,7 +55,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestConnectLibraryPanelsForDashboard(t *testing.T) {
+func TestIntegrationConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -348,7 +348,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 		})
 }
 
-func TestImportLibraryPanelsForDashboard(t *testing.T) {
+func TestIntegrationImportLibraryPanelsForDashboard(t *testing.T) {
 	testScenario(t, "When an admin tries to import a dashboard with a library panel that does not exist, it should import the library panel",
 		func(t *testing.T, sc scenarioContext) {
 			var missingUID = "jL6MrxCMz"

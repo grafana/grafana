@@ -1,0 +1,15 @@
+name: Verify i18n
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+jobs:
+  verify-i18n:
+    uses: grafana/grafana-github-actions/.github/workflows/verify-i18n.yml@main
