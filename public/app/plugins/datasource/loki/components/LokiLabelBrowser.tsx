@@ -26,6 +26,7 @@ const MAX_LABEL_COUNT = 1000;
 const MAX_VALUE_COUNT = 10000;
 const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
+const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
 export interface BrowserProps {
   languageProvider: LokiLanguageProvider;
@@ -71,8 +72,7 @@ export function buildSelector(labels: SelectableLabel[]): string {
       const selectedValues = label.values
         .filter((value) => value.selected)
         .map((value) => value.name)
-        .sort((a, b) => a.localeCompare(b)
-        ); // sort selected values alphabetically
+        .sort(collator.compare); // sort selected values alphabetically
       if (selectedValues.length > 1) {
         selectedLabels.push(`${label.name}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`);
       } else if (selectedValues.length === 1) {
@@ -103,7 +103,7 @@ export function facetLabels(
         // Values for this label have not been requested yet, let's use the facetted ones as the initial values
         existingValues = possibleValues
           .slice()
-          .sort((a, b) => a.localeCompare(b)) // sort raw label values alphabetically
+          .sort(collator.compare) // sort raw label values alphabetically
           .map((value) => ({
             name: value,
             selected: selectedValues.has(value),
