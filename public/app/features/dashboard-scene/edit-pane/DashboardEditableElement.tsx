@@ -1,17 +1,17 @@
 import { ReactNode, useMemo, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { SceneObject } from '@grafana/scenes';
 import { Button, Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
-import { redoButtonId, undoButtonID } from '../scene/new-toolbar/RightActions';
 import { EditSchemaV2Button } from '../scene/new-toolbar/actions/EditSchemaV2Button';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
-import { dashboardEditActions } from './shared';
+import { dashboardEditActions, undoRedoWasClicked } from './shared';
 
 export class DashboardEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -23,8 +23,12 @@ export class DashboardEditableElement implements EditableDashboardElement {
       typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
       icon: 'apps',
       instanceName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    const { $variables, body } = this.dashboard.state;
+    return [$variables!, ...body.getOutlineChildren()];
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -96,12 +100,8 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
         valueBeforeEdit.current = e.currentTarget.value;
       }}
       onBlur={(e) => {
-        // If the title input is currently focused and we click undo/redo
-        // we don't want to mess with the stack
-        const clickedUndoRedo =
-          e.relatedTarget && (e.relatedTarget.id === undoButtonID || e.relatedTarget.id === redoButtonId);
         const titleUnchanged = valueBeforeEdit.current === e.currentTarget.value;
-        const shouldSkip = titleUnchanged || clickedUndoRedo;
+        const shouldSkip = titleUnchanged || undoRedoWasClicked(e);
         if (shouldSkip) {
           return;
         }
@@ -119,11 +119,30 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
 export function DashboardDescriptionInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { description } = dashboard.useState();
 
+  // We want to save the unchanged value for the 'undo' action
+  const valueBeforeEdit = useRef('');
+
   return (
     <TextArea
       id={id}
       value={description}
       onChange={(e) => dashboard.setState({ description: e.currentTarget.value })}
+      onFocus={(e) => {
+        valueBeforeEdit.current = e.currentTarget.value;
+      }}
+      onBlur={(e) => {
+        const descriptionUnchanged = valueBeforeEdit.current === e.currentTarget.value;
+        const shouldSkip = descriptionUnchanged || undoRedoWasClicked(e);
+        if (shouldSkip) {
+          return;
+        }
+
+        dashboardEditActions.changeDescription({
+          source: dashboard,
+          oldDescription: valueBeforeEdit.current,
+          newDescription: e.currentTarget.value,
+        });
+      }}
     />
   );
 }

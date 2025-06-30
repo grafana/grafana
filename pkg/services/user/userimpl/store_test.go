@@ -1021,7 +1021,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 	return users
 }
 
-func TestMetricsUsage(t *testing.T) {
+func TestIntegrationMetricsUsage(t *testing.T) {
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	quotaService := quotaimpl.ProvideService(ss, cfg)

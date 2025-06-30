@@ -106,9 +106,9 @@ Some visualizations, for example [candlestick](ref:candlestick) and [flame graph
 
 You can find the following options under the **Tooltip** section in the panel edit pane.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Not all of the options listed apply to all visualizations with tooltips.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Tooltip mode
 
