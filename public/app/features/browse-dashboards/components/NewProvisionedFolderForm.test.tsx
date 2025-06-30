@@ -8,7 +8,7 @@ import { validationSrv } from 'app/features/manage-dashboards/services/Validatio
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { FolderDTO } from '../../../types';
-import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
+import { ProvisionedFolderFormDataResult, useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
@@ -76,7 +76,7 @@ interface Props {
   parentFolder?: FolderDTO;
 }
 
-function setup(props: Partial<Props> = {}) {
+function setup(props: Partial<Props> = {}, hookData = mockHookData) {
   const user = userEvent.setup();
 
   const defaultProps: Props = {
@@ -99,6 +99,8 @@ function setup(props: Partial<Props> = {}) {
     ...props,
   };
 
+  (useProvisionedFolderFormData as jest.Mock).mockReturnValue(hookData);
+
   return {
     user,
     ...render(<NewProvisionedFolderForm {...defaultProps} />),
@@ -114,16 +116,13 @@ const mockRequest = {
   data: { resource: { upsert: { metadata: { name: 'new-folder' } } } },
 };
 
-const mockHookData = {
+const mockHookData: ProvisionedFolderFormDataResult = {
   repository: {
     name: 'test-repo',
     title: 'Test Repository',
     type: 'github',
-    github: {
-      url: 'https://github.com/grafana/grafana',
-      branch: 'main',
-    },
-    workflows: [{ name: 'default', path: 'workflows/default.json' }],
+    workflows: ['write', 'branch'],
+    target: 'folder',
   },
   folder: {
     metadata: {
@@ -131,6 +130,10 @@ const mockHookData = {
         'grafana.app/sourcePath': '/dashboards',
       },
     },
+    spec: {
+      title: '',
+    },
+    status: {},
   },
   workflowOptions: [
     { label: 'Commit directly', value: 'write' },
@@ -157,8 +160,6 @@ describe('NewProvisionedFolderForm', () => {
     };
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
-    (useProvisionedFolderFormData as jest.Mock).mockReturnValue(mockHookData);
-
     // Mock usePullRequestParam
     (usePullRequestParam as jest.Mock).mockReturnValue(null);
 
@@ -181,23 +182,25 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should return null when initialValues is not available', () => {
-    (useProvisionedFolderFormData as jest.Mock).mockReturnValue({
-      ...mockHookData,
-      initialValues: undefined,
-    });
-
-    const { container } = setup();
+    const { container } = setup(
+      {},
+      {
+        ...mockHookData,
+        initialValues: undefined,
+      }
+    );
     expect(container.firstChild).toBeNull();
   });
 
   it('should show error when repository is not found', () => {
-    (useProvisionedFolderFormData as jest.Mock).mockReturnValue({
-      ...mockHookData,
-      repository: undefined,
-      initialValues: undefined,
-    });
-
-    const { container } = setup();
+    const { container } = setup(
+      {},
+      {
+        ...mockHookData,
+        repository: undefined,
+        initialValues: undefined,
+      }
+    );
     expect(container.firstChild).toBeNull();
   });
 
@@ -422,21 +425,24 @@ describe('NewProvisionedFolderForm', () => {
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
     await user.click(cancelButton);
 
-    // Check if onDismiss was called
     expect(props.onDismiss).toHaveBeenCalled();
   });
 
   it('should show read-only alert when repository has no workflows', () => {
     // Mock repository with empty workflows array
-    (useProvisionedFolderFormData as jest.Mock).mockReturnValue({
-      ...mockHookData,
-      repository: {
-        ...mockHookData.repository,
-        workflows: [],
-      },
-    });
-
-    setup();
+    setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          name: 'test-repo',
+          title: 'Test Repository',
+          type: 'github',
+          workflows: [],
+          target: 'folder',
+        },
+      }
+    );
 
     // Read-only alert should be visible
     expect(screen.getByText('This repository is read only')).toBeInTheDocument();
