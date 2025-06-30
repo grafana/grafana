@@ -1,0 +1,42 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "NAME",
+  "id": "upgrades-app",
+  "metrics": true,
+  "backend": true,
+  "executable": "gpx_upgrades-app",
+  "info": {
+    "description": "",
+    "author": {
+      "name": "AUTHOR",
+      "url": ""
+    },
+    "keywords": [],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {
+      "name": "Todos",
+      "path": "/a/upgrades-app/",
+      "type": "page",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": true,
+      "slug": "upgrades",
+      "icon": "",
+      "uid": ""
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=7.0.0",
+    "plugins": []
+  }
+}
