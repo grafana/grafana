@@ -52,7 +52,7 @@ type ZanzanaServerSettings struct {
 
 func (cfg *Cfg) readZanzanaSettings() {
 	zc := ZanzanaClientSettings{}
-	clientSec := cfg.Raw.Section("zanzana.client")
+	clientSec := cfg.SectionWithEnvOverrides("zanzana.client")
 
 	zc.Mode = ZanzanaMode(clientSec.Key("mode").MustString("embedded"))
 	validModes := []ZanzanaMode{ZanzanaModeEmbedded, ZanzanaModeClient}
@@ -70,7 +70,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	cfg.ZanzanaClient = zc
 
 	zs := ZanzanaServerSettings{}
-	serverSec := cfg.Raw.Section("zanzana.server")
+	serverSec := cfg.SectionWithEnvOverrides("zanzana.server")
 
 	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("127.0.0.1:8080")
 	zs.CheckQueryCache = serverSec.Key("check_query_cache").MustBool(true)
