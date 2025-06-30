@@ -21,11 +21,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
-  add-field-from-calculation-transform:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation
 ---
 
 # Canvas

@@ -17,4 +17,4 @@ For each value mapping, set the following options:
 - **Color** (Optional)
 - **Icon** (Canvas only)
 
-To learn more, refer to [Configure value mappings](../../configure-value-mappings/).
+To learn more, refer to [Configure value mappings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/).
