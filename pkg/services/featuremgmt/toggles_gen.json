@@ -945,6 +945,22 @@
     },
     {
       "metadata": {
+        "name": "enableAppChromeExtensions",
+        "resourceVersion": "1750235111726",
+        "creationTimestamp": "2025-06-18T08:25:11Z"
+      },
+      "spec": {
+        "description": "Set this to true to enable all app chrome extensions registered by plugins.",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-04-24T14:46:31Z"
