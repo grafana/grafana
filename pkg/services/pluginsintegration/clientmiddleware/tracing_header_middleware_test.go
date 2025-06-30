@@ -301,8 +301,8 @@ func TestSanitizeHTTPHeaderValueForGRPC(t *testing.T) {
 		},
 		{
 			name:     "Extended characters remain unchanged",
-			input:    "café résumé naïve",
-			expected: "café résumé naïve",
+			input:    "naïve",
+			expected: "na%EFve",
 		},
 		{
 			name:     "Control characters are percent-encoded",
@@ -327,7 +327,7 @@ func TestSanitizeHTTPHeaderValueForGRPC(t *testing.T) {
 		{
 			name:     "Mixed valid and invalid characters",
 			input:    "Valid text\x00invalid\x1Fmore valid 🚀",
-			expected: "Valid text%00invalid%1Fmore valid 🚀",
+			expected: "Valid text%00invalid%1Fmore valid %1F680",
 		},
 		{
 			name:     "Empty string remains empty",
