@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, TestDataSourceResponse } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   PanelBuilders,
@@ -37,7 +38,11 @@ class LokiAPIDatasource extends RuntimeDataSource {
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
-    return Promise.resolve({ status: 'success', message: 'Data source is working', title: 'Success' });
+    return Promise.resolve({
+      status: 'success',
+      message: t('alerting.loki-apidatasource.message.data-source-is-working', 'Data source is working'),
+      title: t('alerting.loki-apidatasource.title.success', 'Success'),
+    });
   }
 }
 

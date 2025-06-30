@@ -46,9 +46,6 @@ type ListIterator interface {
 	// ContinueToken returns the token that can be used to start iterating *after* this item
 	ContinueToken() string
 
-	// ContinueTokenWithCurrentRV returns the token that can be used to start iterating *before* this item
-	ContinueTokenWithCurrentRV() string
-
 	// ResourceVersion of the current item
 	ResourceVersion() int64
 
@@ -101,6 +98,9 @@ type StorageBackend interface {
 	// results.  The list options can be used to improve performance
 	// but are the the final answer.
 	ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
+
+	// ListHistory is like ListIterator, but it returns the history of a resource
+	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -156,8 +156,15 @@ type SearchOptions struct {
 	// Skip building index on startup for small indexes
 	InitMinCount int
 
+	// Build empty index on startup for large indexes so that
+	// we don't re-attempt to build the index later.
+	InitMaxCount int
+
 	// Channel to watch for index events (for testing)
 	IndexEventsChan chan *IndexEvent
+
+	// Interval for periodic index rebuilds (0 disables periodic rebuilds)
+	RebuildInterval time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -195,6 +202,8 @@ type ResourceServerOptions struct {
 	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
+
+	MaxPageSizeBytes int
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -217,6 +226,11 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		opts.Now = func() int64 {
 			return time.Now().UnixMilli()
 		}
+	}
+
+	if opts.MaxPageSizeBytes <= 0 {
+		// By default, we use 2MB for the page size.
+		opts.MaxPageSizeBytes = 1024 * 1024 * 2
 	}
 
 	// Initialize the blob storage
@@ -247,19 +261,20 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		tracer:         opts.Tracer,
-		log:            logger,
-		backend:        opts.Backend,
-		blob:           blobstore,
-		diagnostics:    opts.Diagnostics,
-		access:         opts.AccessClient,
-		writeHooks:     opts.WriteHooks,
-		lifecycle:      opts.Lifecycle,
-		now:            opts.Now,
-		ctx:            ctx,
-		cancel:         cancel,
-		storageMetrics: opts.storageMetrics,
-		indexMetrics:   opts.IndexMetrics,
+		tracer:           opts.Tracer,
+		log:              logger,
+		backend:          opts.Backend,
+		blob:             blobstore,
+		diagnostics:      opts.Diagnostics,
+		access:           opts.AccessClient,
+		writeHooks:       opts.WriteHooks,
+		lifecycle:        opts.Lifecycle,
+		now:              opts.Now,
+		ctx:              ctx,
+		cancel:           cancel,
+		storageMetrics:   opts.storageMetrics,
+		indexMetrics:     opts.IndexMetrics,
+		maxPageSizeBytes: opts.MaxPageSizeBytes,
 	}
 
 	if opts.Search.Resources != nil {
@@ -304,6 +319,8 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
+
+	maxPageSizeBytes int
 }
 
 // Init implements ResourceServer.
@@ -788,7 +805,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if req.Limit < 1 {
 		req.Limit = 50 // default max 50 items in a page
 	}
-	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
+	maxPageBytes := s.maxPageSizeBytes
 	pageBytes := 0
 	rsp := &resourcepb.ListResponse{}
 
@@ -799,6 +816,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		Namespace: key.Namespace,
 		Verb:      utils.VerbGet,
 	})
+	var trashChecker claims.ItemChecker // only for trash
+	if req.Source == resourcepb.ListRequest_TRASH {
+		trashChecker, err = s.access.Compile(ctx, user, claims.ListRequest{
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Verb:      utils.VerbSetPermissions, // Basically Admin
+		})
+		if err != nil {
+			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+		}
+	}
 	if err != nil {
 		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -808,7 +837,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}}, nil
 	}
 
-	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
+	iterFunc := func(iter ListIterator) error {
 		for iter.Next() {
 			if err := iter.Error(); err != nil {
 				return err
@@ -818,8 +847,12 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				ResourceVersion: iter.ResourceVersion(),
 				Value:           iter.Value(),
 			}
-
-			if !checker(iter.Name(), iter.Folder()) {
+			// Trash is only accessible to admins or the user who deleted the object
+			if req.Source == resourcepb.ListRequest_TRASH {
+				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
+					continue
+				}
+			} else if !checker(iter.Name(), iter.Folder()) {
 				continue
 			}
 
@@ -827,13 +860,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			rsp.Items = append(rsp.Items, item)
 			if len(rsp.Items) >= int(req.Limit) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
-				if req.Source == resourcepb.ListRequest_HISTORY || req.Source == resourcepb.ListRequest_TRASH {
-					// For history lists, we need to use the current RV in the continue token
-					// to ensure consistent pagination. The order depends on VersionMatch:
-					// - NotOlderThan: ascending order (oldest to newest)
-					// - Unset: descending order (newest to oldest)
-					t = iter.ContinueTokenWithCurrentRV()
-				}
 				if iter.Next() {
 					rsp.NextPageToken = t
 				}
@@ -841,7 +867,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 			}
 		}
 		return iter.Error()
-	})
+	}
+
+	var rv int64
+	switch req.Source {
+	case resourcepb.ListRequest_STORE:
+		rv, err = s.backend.ListIterator(ctx, req, iterFunc)
+	case resourcepb.ListRequest_HISTORY, resourcepb.ListRequest_TRASH:
+		rv, err = s.backend.ListHistory(ctx, req, iterFunc)
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
+	}
+
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -856,6 +893,28 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 	rsp.ResourceVersion = rv
 	return rsp, err
+}
+
+// isTrashItemAuthorized checks if the user has access to the trash item.
+func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return false
+	}
+
+	partial := &metav1.PartialObjectMetadata{}
+	err := json.Unmarshal(iter.Value(), partial)
+	if err != nil {
+		return false
+	}
+
+	obj, err := utils.MetaAccessor(partial)
+	if err != nil {
+		return false
+	}
+
+	// Trash is only accessible to admins or the user who deleted the object
+	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
 }
 
 func (s *server) initWatcher() error {

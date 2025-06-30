@@ -3,10 +3,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
-import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
+import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -39,6 +39,7 @@ const initialFormValues: Partial<FormData> = {
   ref: `folder/${Date.now()}`,
 };
 
+// TODO: use useProvisionedFolderFormData hook to manage form data and repository state
 export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: Props) {
   const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: parentFolder?.uid });
   const prURL = usePullRequestParam();
@@ -62,8 +63,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     setValue('workflow', getDefaultWorkflow(repository));
   }, [repository, setValue]);
 
-  const { t } = useTranslate();
-
+  // TODO: replace with useProvisionedRequestHandler hook
   useEffect(() => {
     const appEvents = getAppEvents();
     if (request.isSuccess && repository) {
@@ -101,18 +101,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
         ],
       });
     }
-  }, [
-    request.isSuccess,
-    request.isError,
-    request.error,
-    onSubmit,
-    ref,
-    request.data,
-    workflow,
-    navigate,
-    repository,
-    t,
-  ]);
+  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, request.data, workflow, navigate, repository]);
 
   if (isLoading) {
     return <Spinner />;
@@ -207,6 +196,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
           />
         </Field>
 
+        {/* TODO: use DashboardEditFormSharedFields to replace comment and workflow input*/}
         <Field label={t('browse-dashboards.new-provisioned-folder-form.label-comment', 'Comment')}>
           <TextArea
             {...register('comment')}

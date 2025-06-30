@@ -218,6 +218,10 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Use experimental git library for provisioning
+  */
+  nanoGit?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -239,11 +243,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Display Angular warnings in dashboards and panels
-  * @default true
-  */
-  angularDeprecationUI?: boolean;
-  /**
   * Enable AI powered features in dashboards
   * @default true
   */
@@ -260,10 +259,6 @@ export interface FeatureToggles {
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
   sseGroupByDatasource?: boolean;
-  /**
-  * Enables RBAC support for library panels
-  */
-  libraryPanelRBAC?: boolean;
   /**
   * Enables running Loki queries in parallel
   */
@@ -299,6 +294,10 @@ export interface FeatureToggles {
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
+  /**
+  * Routes library panel requests from /api to the /apis endpoint
+  */
+  kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
   */
@@ -456,10 +455,6 @@ export interface FeatureToggles {
   */
   alertingQueryOptimization?: boolean;
   /**
-  * Enables the nested folder picker without having nested folders enabled
-  */
-  newFolderPicker?: boolean;
-  /**
   * Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
   */
   jitterAlertRulesWithinGroups?: boolean;
@@ -611,13 +606,9 @@ export interface FeatureToggles {
   authZGRPCServer?: boolean;
   /**
   * Use the new SSO Settings API to configure LDAP
-  */
-  ssoSettingsLDAP?: boolean;
-  /**
-  * Throws an error if a data source has an invalid UIDs
   * @default true
   */
-  failWrongDSUID?: boolean;
+  ssoSettingsLDAP?: boolean;
   /**
   * Use openFGA as authorization engine.
   */
@@ -658,10 +649,6 @@ export interface FeatureToggles {
   * Allows access to the new react-data-grid based table component.
   */
   tableNextGen?: boolean;
-  /**
-  * Send dashboard and panel names to Loki when querying
-  */
-  lokiSendDashboardPanelNames?: boolean;
   /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
@@ -777,11 +764,6 @@ export interface FeatureToggles {
   */
   jaegerBackendMigration?: boolean;
   /**
-  * Uses the original report or dashboard time range instead of making an absolute transformation
-  * @default true
-  */
-  reportingUseRawTimeRange?: boolean;
-  /**
   * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
   * @default true
   */
@@ -838,6 +820,7 @@ export interface FeatureToggles {
   improvedExternalSessionHandlingSAML?: boolean;
   /**
   * Enables LBAC for datasources for Mimir to apply LBAC filtering of metrics to the client requests for users in teams
+  * @default true
   */
   teamHttpHeadersMimir?: boolean;
   /**
@@ -845,19 +828,9 @@ export interface FeatureToggles {
   */
   teamHttpHeadersTempo?: boolean;
   /**
-  * Test feature toggle to see how cohorts could be set up AB testing
-  * @default false
-  */
-  ABTestFeatureToggleA?: boolean;
-  /**
   * Use new **Combobox** component for template variables
   */
   templateVariablesUsesCombobox?: boolean;
-  /**
-  * Test feature toggle to see how cohorts could be set up AB testing
-  * @default false
-  */
-  ABTestFeatureToggleB?: boolean;
   /**
   * Enables Advisor app
   */
@@ -922,11 +895,6 @@ export interface FeatureToggles {
   */
   alertRuleRestore?: boolean;
   /**
-  * Enables writing to data sources for Grafana-managed recording rules.
-  * @default false
-  */
-  grafanaManagedRecordingRulesDatasources?: boolean;
-  /**
   * Enables running Infinity queries in parallel
   */
   infinityRunQueriesInParallel?: boolean;
@@ -977,10 +945,6 @@ export interface FeatureToggles {
   */
   alertingRuleRecoverDeleted?: boolean;
   /**
-  * Support Application Signals queries in the X-Ray datasource
-  */
-  xrayApplicationSignals?: boolean;
-  /**
   * use multi-tenant path for awsTempCredentials
   */
   multiTenantTempCredentials?: boolean;
@@ -1028,4 +992,48 @@ export interface FeatureToggles {
   * Use proxy-based read-only objects for plugin extensions instead of deep cloning
   */
   extensionsReadOnlyProxy?: boolean;
+  /**
+  * Registers AuthZ /apis endpoint
+  */
+  kubernetesAuthzApis?: boolean;
+  /**
+  * Enables restore deleted dashboards feature
+  * @default false
+  */
+  restoreDashboards?: boolean;
+  /**
+  * Skip token rotation if it was already rotated less than 5 seconds ago
+  * @default false
+  */
+  skipTokenRotationIfRecent?: boolean;
+  /**
+  * Enable configuration of alert enrichments in Grafana Cloud.
+  * @default false
+  */
+  alertEnrichment?: boolean;
+  /**
+  * Enables the API to import Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerAPI?: boolean;
+  /**
+  * Prefer library panel title over viz panel title.
+  * @default false
+  */
+  preferLibraryPanelTitle?: boolean;
+  /**
+  * Use fixed-width numbers globally in the UI
+  * @default true
+  */
+  tabularNumbers?: boolean;
+  /**
+  * Enables new design for the InfluxDB data source configuration page
+  * @default false
+  */
+  newInfluxDSConfigPageDesign?: boolean;
+  /**
+  * Set this to true to enable all app chrome extensions registered by plugins.
+  * @default false
+  */
+  enableAppChromeExtensions?: boolean;
 }

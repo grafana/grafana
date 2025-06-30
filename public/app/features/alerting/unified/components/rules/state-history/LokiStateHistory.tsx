@@ -5,7 +5,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFrame, GrafanaTheme2, TimeRange, dateTime } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
@@ -75,7 +75,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     setInstancesFilter('');
     setValue('query', '');
   }, [setInstancesFilter, setValue]);
-  const { t } = useTranslate();
 
   if (isLoading) {
     return (
@@ -199,8 +198,6 @@ interface SearchFieldInputProps extends Omit<React.ComponentProps<typeof Input>,
 
 const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProps>(
   ({ showClearFilterSuffix, onClearFilterClick, ...rest }: SearchFieldInputProps, ref) => {
-    const { t } = useTranslate();
-
     return (
       <Field
         label={

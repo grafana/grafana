@@ -42,6 +42,7 @@ type DashboardService interface {
 	UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*Dashboard, error)
 	ValidateDashboardRefreshInterval(minRefreshInterval string, targetRefreshInterval string) error
 	ValidateBasicDashboardProperties(title string, uid string, message string) error
+	GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error)
 }
 
 type PermissionsRegistrationService interface {
@@ -86,9 +87,9 @@ type Store interface {
 	GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
-	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
-	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
-	GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*Dashboard, error)
+	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioningSearchResults, error)
+	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioningSearchResults, error)
+	GetProvisionedDashboardsByName(ctx context.Context, name string, orgID int64) ([]*DashboardProvisioningSearchResults, error)
 	GetOrphanedProvisionedDashboards(ctx context.Context, notIn []string, orgID int64) ([]*Dashboard, error)
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)
 	SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error)
@@ -104,4 +105,6 @@ type Store interface {
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
+
+	GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error)
 }

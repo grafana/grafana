@@ -61,7 +61,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestProvisioningApi(t *testing.T) {
+func TestIntegrationProvisioningApi(t *testing.T) {
 	t.Run("policies", func(t *testing.T) {
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -643,6 +643,20 @@ func TestProvisioningApi(t *testing.T) {
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
+		})
+
+		t.Run("have reached the rule quota, PUT returns 403", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			quotas := provisioning.MockQuotaChecker{}
+			quotas.EXPECT().LimitExceeded()
+			env.quotas = &quotas
+			sut := createProvisioningSrvSutFromEnv(t, &env)
+			group := createTestAlertRuleGroup(1)
+			rc := createTestRequestCtx()
+
+			response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+			require.Equal(t, 403, response.Status())
 		})
 
 		t.Run("are valid", func(t *testing.T) {
@@ -1605,7 +1619,7 @@ func TestProvisioningApi(t *testing.T) {
 	})
 }
 
-func TestProvisioningApiContactPointExport(t *testing.T) {
+func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
 		env := createTestEnv(t, testConfig)
 		env.ac = &recordingAccessControlFake{

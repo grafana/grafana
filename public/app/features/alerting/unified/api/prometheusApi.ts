@@ -1,7 +1,13 @@
 import { useCallback } from 'react';
 
 import { useDispatch } from 'app/types';
-import { GrafanaPromRuleGroupDTO, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { RuleHealth } from 'app/types/unified-alerting';
+import {
+  GrafanaPromRuleGroupDTO,
+  PromAlertingRuleState,
+  PromRuleDTO,
+  PromRuleGroupDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -33,6 +39,9 @@ type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'
   dashboardUid?: string;
   panelId?: number;
   limitAlerts?: number;
+  contactPoint?: string;
+  health?: RuleHealth[];
+  state?: PromAlertingRuleState[];
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -72,12 +81,25 @@ export const prometheusApi = alertingApi.injectEndpoints({
       },
     }),
     getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
-      query: ({ folderUid, groupName, ruleName, groupLimit, limitAlerts, groupNextToken }) => ({
+      query: ({
+        folderUid,
+        groupName,
+        ruleName,
+        contactPoint,
+        health,
+        state,
+        groupLimit,
+        limitAlerts,
+        groupNextToken,
+      }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
           folder_uid: folderUid,
           rule_group: groupName,
           rule_name: ruleName,
+          receiver_name: contactPoint,
+          health: health,
+          state: state,
           limit_alerts: limitAlerts,
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,

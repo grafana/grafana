@@ -1,14 +1,12 @@
 import * as React from 'react';
 
 import { PluginErrorCode } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 
 type Props = { error?: PluginErrorCode };
 
 export function PluginDisabledBadge({ error }: Props): React.ReactElement {
-  const { t } = useTranslate();
-
   const tooltip = errorCodeToTooltip(error);
   return (
     <Badge

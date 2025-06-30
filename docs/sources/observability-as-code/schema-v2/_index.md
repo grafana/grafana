@@ -18,7 +18,13 @@ weight: 200
 
 # Dashboard JSON schema v2
 
-{{< docs/experimental product="Dashboard JSON schema v2" featureFlag="`dashboardNewLayouts`" >}}
+{{< admonition type="caution" >}}
+
+Dashboard JSON schema v2 is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `dashboardNewLayouts` feature toggle in Grafana to use this feature.
+
+**Do not enable this feature in production environments as it may result in the irreversible loss of data.**
+
+{{< /admonition >}}
 
 Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings.
 
