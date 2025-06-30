@@ -95,7 +95,7 @@ require (
 	github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
 	github.com/grafana/grafana-app-sdk v0.39.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.38.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.39.1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.38.7 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
@@ -200,11 +200,11 @@ require (
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/alerting-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.33.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.33.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.33.1 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.33.1 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.33.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.33.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.33.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.33.2 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.33.2 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.33.2 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // @grafana/grafana-app-platform-squad
@@ -569,8 +569,8 @@ require (
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/telebot.v3 v3.2.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	k8s.io/apiextensions-apiserver v0.33.1 // indirect
-	k8s.io/kms v0.33.1 // indirect
+	k8s.io/apiextensions-apiserver v0.33.2 // indirect
+	k8s.io/kms v0.33.2 // indirect
 	modernc.org/libc v1.65.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.10.0 // indirect
@@ -583,6 +583,8 @@ require (
 require github.com/dgraph-io/badger/v4 v4.7.0 // @grafana/grafana-search-and-storage
 
 require github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-backend-group
+
+require github.com/graphql-go/graphql v0.8.1
 
 require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
@@ -623,3 +625,6 @@ exclude github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
 // This was retracted, but seems to be known by the Go module proxy, and is
 // otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
+
+// Use local grafana-app-sdk with GraphQL federation functionality
+replace github.com/grafana/grafana-app-sdk => ../grafana-app-sdk
