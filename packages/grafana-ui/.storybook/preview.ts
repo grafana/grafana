@@ -49,7 +49,9 @@ if (process.env.NODE_ENV === 'development') {
  * See https://github.com/mswjs/msw-storybook-addon#configuring-msw
  * to learn how to customize it
  */
-initialize();
+initialize({
+  onUnhandledRequest: 'bypass',
+});
 
 const preview: Preview = {
   decorators: [withTheme(handleThemeChange), withTimeZone()],
