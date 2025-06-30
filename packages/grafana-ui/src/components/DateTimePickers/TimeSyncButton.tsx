@@ -1,4 +1,5 @@
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
+
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 

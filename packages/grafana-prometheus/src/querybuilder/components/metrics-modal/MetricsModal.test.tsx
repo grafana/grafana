@@ -5,8 +5,9 @@ import userEvent from '@testing-library/user-event';
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../../datasource';
-import PromQlLanguageProvider from '../../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
+import { getMockTimeRange } from '../../../test/__mocks__/datasource';
 import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 
@@ -243,19 +244,19 @@ const listOfMetrics: string[] = [
 ];
 
 function createDatasource(withLabels?: boolean) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
 
-  // display different results if their are labels selected in the PromVisualQuery
+  // display different results if their labels are selected in the PromVisualQuery
   if (withLabels) {
-    languageProvider.metricsMetadata = {
+    languageProvider.retrieveMetricsMetadata = jest.fn().mockReturnValue({
       'with-labels': {
         type: 'with-labels-type',
         help: 'with-labels-help',
       },
-    };
+    });
   } else {
     // all metrics
-    languageProvider.metricsMetadata = {
+    languageProvider.retrieveMetricsMetadata = jest.fn().mockReturnValue({
       'all-metrics': {
         type: 'all-metrics-type',
         help: 'all-metrics-help',
@@ -273,7 +274,7 @@ function createDatasource(withLabels?: boolean) {
         help: 'a native histogram',
       },
       // missing metadata for other metrics is tested for, see below
-    };
+    });
   }
 
   const datasource = new PrometheusDatasource(
@@ -296,6 +297,7 @@ function createProps(query: PromVisualQuery, datasource: PrometheusDatasource, m
     onClose: jest.fn(),
     query: query,
     initialMetrics: metrics,
+    timeRange: getMockTimeRange(),
   };
 }
 
@@ -307,5 +309,5 @@ function setup(query: PromVisualQuery, metrics: string[], withlabels?: boolean) 
   // render the modal only
   const { container } = render(<MetricsModal {...props} />);
 
-  return container;
+  return { container, datasource };
 }
