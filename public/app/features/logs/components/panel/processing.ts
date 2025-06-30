@@ -1,3 +1,4 @@
+import ansicolor from 'ansicolor';
 import Prism, { Grammar } from 'prismjs';
 
 import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
@@ -132,9 +133,9 @@ export class LogListModel implements LogRowModel {
     return checkLogsSampled(this);
   }
 
-  getDisplayedFieldValue(fieldName: string): string {
+  getDisplayedFieldValue(fieldName: string, stripAnsi = false): string {
     if (fieldName === LOG_LINE_BODY_FIELD_NAME) {
-      return this.body;
+      return stripAnsi ? ansicolor.strip(this.body) : this.body;
     }
     let fieldValue = '';
     if (this.labels[fieldName] != null) {
@@ -155,8 +156,8 @@ export class LogListModel implements LogRowModel {
   updateCollapsedState(displayedFields: string[], container: HTMLDivElement | null) {
     const lineLength =
       displayedFields.length > 0
-        ? displayedFields.map((field) => this.getDisplayedFieldValue(field)).join('').length
-        : this.raw.length;
+        ? displayedFields.map((field) => this.getDisplayedFieldValue(field, true)).join('').length
+        : this.entry.length;
     const collapsed =
       lineLength >= (this._virtualization?.getTruncationLength(container) ?? TRUNCATION_DEFAULT_LENGTH)
         ? true
