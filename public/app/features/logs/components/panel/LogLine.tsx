@@ -526,6 +526,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
+      '& .field': {
+        overflow: 'hidden',
+      },
     }),
     wrappedLogLine: css({
       alignSelf: 'flex-start',
