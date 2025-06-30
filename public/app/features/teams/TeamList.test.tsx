@@ -13,6 +13,9 @@ jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: (action: string) => true,
     licensedAccessControlEnabled: () => false,
+    user: {
+      helpFlags1: 0,
+    },
   },
 }));
 
