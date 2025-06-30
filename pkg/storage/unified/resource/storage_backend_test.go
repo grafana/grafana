@@ -87,6 +87,8 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 				expectedAction = DataActionUpdated
 			case resourcepb.WatchEvent_DELETED:
 				expectedAction = DataActionDeleted
+			default:
+				t.Fatalf("unexpected event type: %v", tt.eventType)
 			}
 
 			dataKey := DataKey{

@@ -674,9 +674,7 @@ func (i *kvHistoryIterator) Name() string {
 }
 
 func (i *kvHistoryIterator) Folder() string {
-	// DataObj doesn't contain folder information, so we return empty string
-	// In a real implementation, we might need to get this from metadata
-	return ""
+	return i.folder
 }
 
 func (i *kvHistoryIterator) Value() []byte {
