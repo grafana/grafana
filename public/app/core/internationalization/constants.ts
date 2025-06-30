@@ -5,6 +5,8 @@ import { DEFAULT_LANGUAGE, PSEUDO_LOCALE, LANGUAGES as SUPPORTED_LANGUAGES } fro
 
 export type LocaleFileLoader = () => Promise<ResourceKey>;
 
+export const GRAFANA_NAMESPACE = 'grafana' as const;
+
 type BaseLanguageDefinition = (typeof SUPPORTED_LANGUAGES)[number];
 export interface LanguageDefinition<Namespace extends string = string> extends BaseLanguageDefinition {
   /** Function to load translations */
@@ -16,7 +18,7 @@ export const LANGUAGES: LanguageDefinition[] = SUPPORTED_LANGUAGES.map((def) => 
   const locale = def.code === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : def.code;
   return {
     ...def,
-    loader: { grafana: () => import(`../../../locales/${locale}/grafana.json`) },
+    loader: { [GRAFANA_NAMESPACE]: () => import(`../../../locales/${locale}/grafana.json`) },
   };
 });
 

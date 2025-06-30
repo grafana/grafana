@@ -7,10 +7,10 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -86,11 +86,6 @@ func ProvideUnifiedStorageGrpcService(
 	memberlistKVConfig kv.Config,
 ) (UnifiedStorageGrpcService, error) {
 	tracer := otel.Tracer("unified-storage")
-
-	// reg can be nil when running unified storage in standalone mode
-	if reg == nil {
-		reg = prometheus.DefaultRegisterer
-	}
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
 	// grpcutils.NewGrpcAuthenticator should be used instead.
@@ -279,31 +274,14 @@ func (f *authenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 	return newCtx, err
 }
 
-const (
-	metricsNamespace = "grafana"
-	metricsSubSystem = "grpc_authenticator_with_fallback"
-)
-
-var once sync.Once
-
 func newMetrics(reg prometheus.Registerer) *metrics {
-	m := &metrics{
-		requestsTotal: prometheus.NewCounterVec(
+	return &metrics{
+		requestsTotal: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "requests_total",
-				Help:      "Number requests using the authenticator with fallback",
+				Name: "grafana_grpc_authenticator_with_fallback_requests_total",
+				Help: "Number requests using the authenticator with fallback",
 			}, []string{"fallback_used", "result"}),
 	}
-
-	if reg != nil {
-		once.Do(func() {
-			reg.MustRegister(m.requestsTotal)
-		})
-	}
-
-	return m
 }
 
 func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
@@ -319,12 +297,13 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer trace.Tracer, fallback func(context.Context) (context.Context, error)) func(context.Context) (context.Context, error) {
 	authCfg := ReadGrpcServerConfig(cfg)
 	authenticator := grpcutils.NewAuthenticator(authCfg, tracer)
+	metrics := newMetrics(reg)
 	return func(ctx context.Context) (context.Context, error) {
 		a := &authenticatorWithFallback{
 			authenticator: authenticator,
 			fallback:      fallback,
 			tracer:        tracer,
-			metrics:       newMetrics(reg),
+			metrics:       metrics,
 		}
 		return a.Authenticate(ctx)
 	}

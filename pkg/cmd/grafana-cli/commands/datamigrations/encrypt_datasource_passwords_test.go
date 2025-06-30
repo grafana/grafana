@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestPasswordMigrationCommand(t *testing.T) {
+func TestIntegrationPasswordMigrationCommand(t *testing.T) {
 	// setup datasources with password, basic_auth and none
 	store := db.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
