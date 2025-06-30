@@ -1,6 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2, PopoverContent } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
@@ -21,6 +22,9 @@ interface Props {
 export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssage, tooltipMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+
+  // Disable OrgRole.None if access control is not licensed
+  const disabledOptions = contextSrv.licensedAccessControlEnabled() ? [] : [OrgRole.None];
 
   return (
     <>
@@ -46,6 +50,7 @@ export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssag
         value={value}
         onChange={onChange}
         disabled={disabled}
+        disabledOptions={disabledOptions}
       />
     </>
   );
