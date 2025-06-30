@@ -641,8 +641,9 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					},
 					"value": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The raw value is only valid for write. Read/List will always be empty. There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.",
+							Description: "The raw value is only valid for write. Read/List will always be empty. There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`. Minimum and maximum lengths in bytes.",
 							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](24576),
 							Type:        []string{"string"},
 							Format:      "",
 						},
