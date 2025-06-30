@@ -8,6 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	graphqlsubgraph "github.com/grafana/grafana-app-sdk/graphql/subgraph"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/playlist/pkg/apis"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
@@ -26,6 +28,9 @@ type PlaylistAppProvider struct {
 	cfg     *setting.Cfg
 	service playlistsvc.Service
 }
+
+// Ensure PlaylistAppProvider implements GraphQLSubgraphProvider
+var _ graphqlsubgraph.GraphQLSubgraphProvider = (*PlaylistAppProvider)(nil)
 
 func RegisterApp(
 	p playlistsvc.Service,
@@ -47,6 +52,55 @@ func RegisterApp(
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, playlistapp.New)
 	return provider
+}
+
+// GetGraphQLSubgraph implements GraphQLSubgraphProvider interface
+// This creates a GraphQL subgraph for the playlist app with auto-generated
+// schema and resolvers based on the PlaylistKind.
+func (p *PlaylistAppProvider) GetGraphQLSubgraph() (graphqlsubgraph.GraphQLSubgraph, error) {
+	// Get the group version for the playlist app
+	gv := schema.GroupVersion{
+		Group:   playlistv0alpha1.PlaylistKind().Group(),
+		Version: playlistv0alpha1.PlaylistKind().Version(),
+	}
+
+	// Get the managed kinds
+	kinds := []resource.Kind{
+		playlistv0alpha1.PlaylistKind(),
+	}
+
+	// Create a storage adapter that bridges GraphQL storage interface
+	// to the existing REST storage
+	storageGetter := func(gvr schema.GroupVersionResource) graphqlsubgraph.Storage {
+		// Only handle playlist resources
+		expectedGVR := schema.GroupVersionResource{
+			Group:    gv.Group,
+			Version:  gv.Version,
+			Resource: playlistv0alpha1.PlaylistKind().Plural(),
+		}
+
+		if gvr != expectedGVR {
+			return nil
+		}
+
+		// Return a storage adapter that wraps the legacy storage
+		legacyStore := p.legacyStorageGetter(gvr)
+		if legacyStore == nil {
+			return nil
+		}
+
+		return &playlistStorageAdapter{
+			legacyStorage: legacyStore,
+			namespacer:    request.GetNamespaceMapper(p.cfg),
+		}
+	}
+
+	// Create the subgraph using the helper function
+	return graphqlsubgraph.CreateSubgraphFromConfig(graphqlsubgraph.SubgraphProviderConfig{
+		GroupVersion:  gv,
+		Kinds:         kinds,
+		StorageGetter: storageGetter,
+	})
 }
 
 func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.Storage {
