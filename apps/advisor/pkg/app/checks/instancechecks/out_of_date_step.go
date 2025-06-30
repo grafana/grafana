@@ -11,6 +11,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/google/go-github/v70/github"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 )
@@ -56,13 +57,11 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 		return nil, fmt.Errorf("invalid item type %T", it)
 	}
 	if item != outOfDateVersion {
-		// Not interested in this item
 		return nil, nil
 	}
 
 	currentVersion, err := semver.NewVersion(s.GrafanaVersion)
 	if err != nil {
-		// Unable to parse the version so unable to check if it's out of support
 		log.Error("Unable to parse the version", "version", s.GrafanaVersion, "error", err)
 		return nil, nil
 	}
@@ -245,12 +244,20 @@ func (s *outOfDateVersionStep) fetchVersionsFromGitHub(ctx context.Context, curr
 			PerPage: 100,
 		})
 		if err != nil {
-			// Unable to get the release info so unable to check if it's out of support
 			return nil, fmt.Errorf("unable to get the release info: %w", err)
 		}
 
 		if len(ghReleases) == 0 {
-			// No more releases
+			break
+		}
+
+		// GitHub returns releases in reverse chronological order, so we can stop the iterator if the first release on the page is already too old.
+		// This is an optimization because of the aggressive rate limiting.
+		firstVersionInPage, err := semver.NewVersion(ghReleases[0].GetTagName())
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse the last release version %s: %w", ghReleases[0].GetTagName(), err)
+		}
+		if firstVersionInPage.LessThan(currentVersion) {
 			break
 		}
 
