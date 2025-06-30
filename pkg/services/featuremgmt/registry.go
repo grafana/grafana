@@ -164,13 +164,6 @@ var (
 			AllowSelfServe: true,
 		},
 		{
-			Name:         "lokiQuerySplittingConfig",
-			Description:  "Give users the option to configure split durations for Loki queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			Stage:       FeatureStageExperimental,
