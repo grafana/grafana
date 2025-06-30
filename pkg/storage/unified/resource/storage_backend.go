@@ -359,9 +359,6 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 			return 0, err
 		}
 		historyKeys = append(historyKeys, dataKey)
-		if len(historyKeys) >= int(req.Limit+1) {
-			break
-		}
 	}
 
 	// Handle trash differently from regular history
@@ -621,21 +618,15 @@ func (i *kvHistoryIterator) Error() error {
 }
 
 func (i *kvHistoryIterator) ContinueToken() string {
-	// Use the resource version from the last item in the current page
-	var lastRV int64
-	if len(i.keys) > 0 {
-		lastRV = i.keys[len(i.keys)-1].ResourceVersion
-	} else {
-		// Fallback to current RV if no entries
-		lastRV = i.rv
+	if i.currentIndex < 0 || i.currentIndex >= len(i.keys) {
+		return ""
 	}
 	token := ContinueToken{
 		StartOffset:     i.rv,
-		ResourceVersion: lastRV,
+		ResourceVersion: i.keys[i.currentIndex].ResourceVersion,
 		SortAscending:   i.sortAscending,
 	}
-	tokenStr := token.String()
-	return tokenStr
+	return token.String()
 }
 
 func (i *kvHistoryIterator) ResourceVersion() int64 {
