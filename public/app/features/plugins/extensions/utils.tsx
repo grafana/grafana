@@ -292,10 +292,6 @@ export function readOnlyCopy<T>(value: T, _log: ExtensionsLog = log): T {
     return value;
   }
 
-  if (config.featureToggles.extensionsReadOnlyProxy) {
-    return getReadOnlyProxy(value);
-  }
-
   // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
   return getMutationObserverProxy(cloneDeep(value), _log);
 }

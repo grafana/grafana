@@ -22,7 +22,6 @@ import {
   getExtensionPointPluginMeta,
   getMutationObserverProxy,
   readOnlyCopy,
-  isReadOnlyProxy,
   isMutationObserverProxy,
 } from './utils';
 
@@ -445,7 +444,6 @@ describe('Plugin Extensions / Utils', () => {
 
     beforeEach(() => {
       jest.spyOn(console, 'warn').mockImplementation();
-      config.featureToggles.extensionsReadOnlyProxy = false;
     });
 
     afterEach(() => {
@@ -462,22 +460,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(readOnlyCopy(undefined)).toBe(undefined);
     });
 
-    it('should return a read-only proxy of the original object if the feature flag is enabled', () => {
-      config.featureToggles.extensionsReadOnlyProxy = true;
-
-      const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
-
-      expect(copy).not.toBe(obj);
-      expect(copy.a).toBe('a');
-      expect(isReadOnlyProxy(copy)).toBe(true);
-      expect(() => {
-        copy.a = 'b';
-      }).toThrow(TypeError);
-    });
-
     it('should return a writable deep-copy of the original object in dev mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
       config.buildInfo.env = 'development';
 
       const obj = { a: 'a' };
@@ -498,7 +481,6 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return a writable deep-copy of the original object in production mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
       config.buildInfo.env = 'production';
 
       const obj = { a: 'a' };
@@ -519,7 +501,6 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should allow freezing the object in production mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
       config.buildInfo.env = 'production';
 
       const obj = { a: 'a', b: { c: 'c' } };
