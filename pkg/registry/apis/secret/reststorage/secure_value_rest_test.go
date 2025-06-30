@@ -1,6 +1,7 @@
 package reststorage_test
 
 import (
+	"context"
 	"fmt"
 	"maps"
 	"slices"
@@ -8,13 +9,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestValidateSecureValue(t *testing.T) {
@@ -315,6 +322,7 @@ func TestSecureValueRestCreate(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
+		ctx := context.Background()
 
 		sv := &secretv0alpha1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
@@ -330,13 +338,42 @@ func TestSecureValueRestCreate(t *testing.T) {
 			},
 		}
 
+		restStorage := reststorage.NewSecureValueRest(
+			noop.NewTracerProvider().Tracer("test"),
+			sut.SecureValueService,
+			secretv0alpha1.SecureValuesResourceInfo,
+		)
+
+		ctx = createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:*"}, types.TypeUser)
+		ctx = request.WithNamespace(ctx, sv.Namespace)
+
+		validationFunc := func(_ context.Context, _ runtime.Object) error { return nil }
+
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v1")
-		createdSv, err := sut.CreateSv(testutils.CreateSvWithSv(sv))
+		createdSv, err := restStorage.Create(ctx, sv, validationFunc, &metav1.CreateOptions{})
 		require.NoError(t, err)
-		require.Empty(t, createdSv.Status.ExternalID)
+		require.Empty(t, createdSv.(*secretv0alpha1.SecureValue).Status.ExternalID)
 
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
-		_, err = sut.CreateSv(testutils.CreateSvWithSv(sv))
+		_, err = restStorage.Create(ctx, sv, validationFunc, &metav1.CreateOptions{})
 		require.ErrorIs(t, err, contracts.ErrSecureValueAlreadyExists)
 	})
+}
+
+func createAuthContext(ctx context.Context, namespace string, permissions []string, identityType types.IdentityType) context.Context {
+	requester := &identity.StaticRequester{
+		Type:      identityType,
+		Namespace: namespace,
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				Permissions: permissions,
+			},
+		},
+	}
+
+	if identityType == types.TypeUser {
+		requester.UserID = 1
+	}
+
+	return types.WithAuthInfo(ctx, requester)
 }

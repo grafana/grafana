@@ -46,12 +46,11 @@ func TestProcessMessage(t *testing.T) {
 		})
 
 		sut := testutils.Setup(t, testutils.WithWorkerConfig(workerCfg), testutils.WithKeeperService(keeperService))
+		ctx := context.Background()
 
 		// Queue a create secure value operation
-		sv, err := sut.CreateSv()
+		sv, err := sut.CreateSv(ctx)
 		require.NoError(t, err)
-
-		ctx := context.Background()
 
 		for range workerCfg.MaxMessageProcessingAttempts + 1 {
 			// The secure value status should be Pending while the worker is trying to process the message
@@ -78,12 +77,11 @@ func TestProcessMessage(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
+		ctx := context.Background()
 
 		// Queue a create secure value operation
-		sv, err := sut.CreateSv()
+		sv, err := sut.CreateSv(ctx)
 		require.NoError(t, err)
-
-		ctx := context.Background()
 
 		// Worker receives and processes the message
 		require.NoError(t, sut.Worker.ReceiveAndProcessMessages(ctx))
@@ -102,12 +100,11 @@ func TestProcessMessage(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
+		ctx := context.Background()
 
 		// Queue a create secure value operation
-		sv, err := sut.CreateSv()
+		sv, err := sut.CreateSv(ctx)
 		require.NoError(t, err)
-
-		ctx := context.Background()
 
 		// Worker receives and processes the message
 		require.NoError(t, sut.Worker.ReceiveAndProcessMessages(ctx))
@@ -121,7 +118,7 @@ func TestProcessMessage(t *testing.T) {
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
 
 		// Queue an update operation
-		sv, err = sut.UpdateSv(sv)
+		sv, err = sut.UpdateSv(ctx, sv)
 		require.NoError(t, err)
 		require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
 
@@ -141,12 +138,11 @@ func TestProcessMessage(t *testing.T) {
 		t.Parallel()
 
 		sut := testutils.Setup(t)
+		ctx := context.Background()
 
 		// Queue a create secure value operation
-		sv, err := sut.CreateSv()
+		sv, err := sut.CreateSv(ctx)
 		require.NoError(t, err)
-
-		ctx := context.Background()
 
 		// Worker receives and processes the message
 		require.NoError(t, sut.Worker.ReceiveAndProcessMessages(ctx))
@@ -157,7 +153,7 @@ func TestProcessMessage(t *testing.T) {
 		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, sv.Status.Phase)
 
 		// Queue a delete operation
-		updatedSv, err := sut.DeleteSv(sv.Namespace, sv.Name)
+		updatedSv, err := sut.DeleteSv(ctx, sv.Namespace, sv.Name)
 		require.NoError(t, err)
 		require.Equal(t, secretv0alpha1.SecureValuePhasePending, updatedSv.Status.Phase)
 
@@ -181,7 +177,7 @@ func TestProcessMessage(t *testing.T) {
 
 		// Queue a create secure value operation
 		var secret string
-		_, err := sut.CreateSv(func(cfg *testutils.CreateSvConfig) {
+		_, err := sut.CreateSv(ctx, func(cfg *testutils.CreateSvConfig) {
 			secret = string(cfg.Sv.Spec.Value)
 		})
 		require.NoError(t, err)
@@ -203,7 +199,7 @@ func TestProcessMessage(t *testing.T) {
 		ctx := context.Background()
 
 		// Queue a create secure value operation
-		sv, err := sut.CreateSv()
+		sv, err := sut.CreateSv(ctx)
 		require.NoError(t, err)
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
 
@@ -213,7 +209,7 @@ func TestProcessMessage(t *testing.T) {
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue(newValue)
 
 		// Queue an update secure value operation
-		_, err = sut.UpdateSv(sv)
+		_, err = sut.UpdateSv(ctx, sv)
 		require.NoError(t, err)
 
 		messages, err := sut.OutboxQueue.ReceiveN(ctx, 100)
@@ -232,14 +228,14 @@ func TestProcessMessage(t *testing.T) {
 		ctx := context.Background()
 
 		// Queue a create secure value operation
-		sv, err := sut.CreateSv()
+		sv, err := sut.CreateSv(ctx)
 		require.NoError(t, err)
 		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
 
 		require.NoError(t, sut.Worker.ReceiveAndProcessMessages(ctx))
 
 		// Queue a delete secure value operation
-		_, err = sut.DeleteSv(sv.Namespace, sv.Name)
+		_, err = sut.DeleteSv(ctx, sv.Namespace, sv.Name)
 		require.NoError(t, err)
 
 		messages, err := sut.OutboxQueue.ReceiveN(ctx, 100)
