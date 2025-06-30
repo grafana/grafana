@@ -45,14 +45,24 @@ func getMiddleware(model *datasourceInfo, routePath string) (httpclient.Middlewa
 	var provider tokenprovider.TokenProvider
 	switch model.authenticationType {
 	case gceAuthentication:
-		provider = tokenprovider.NewGceAccessTokenProvider(providerConfig)
+		if model.usingImpersonation {
+			providerConfig.TargetPrincipal = model.serviceAccountToImpersonate
+			provider = tokenprovider.NewImpersonatedGceAccessTokenProvider(providerConfig)
+		} else {
+			provider = tokenprovider.NewGceAccessTokenProvider(providerConfig)
+		}
 	case jwtAuthentication:
 		providerConfig.JwtTokenConfig = &tokenprovider.JwtTokenConfig{
 			Email:      model.clientEmail,
 			URI:        model.tokenUri,
 			PrivateKey: []byte(model.privateKey),
 		}
-		provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
+		if model.usingImpersonation {
+			providerConfig.TargetPrincipal = model.serviceAccountToImpersonate
+			provider = tokenprovider.NewImpersonatedJwtAccessTokenProvider(providerConfig)
+		} else {
+			provider = tokenprovider.NewJwtAccessTokenProvider(providerConfig)
+		}
 	}
 
 	return tokenprovider.AuthMiddleware(provider), nil
