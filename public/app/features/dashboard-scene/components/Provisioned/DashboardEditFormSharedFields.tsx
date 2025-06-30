@@ -14,10 +14,11 @@ interface DashboardEditFormSharedFieldsProps {
   readOnly?: boolean;
   workflow?: WorkflowOption;
   isGitHub?: boolean;
+  hidePath?: boolean;
 }
 
 export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType }) => {
+  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType, hidePath = false }) => {
     const {
       control,
       register,
@@ -32,16 +33,18 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
     return (
       <>
         {/* Path */}
-        <Field
-          noMargin
-          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}
-          description={t(
-            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
-            pathText
-          )}
-        >
-          <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
-        </Field>
+        {!hidePath && (
+          <Field
+            noMargin
+            label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}
+            description={t(
+              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
+              pathText
+            )}
+          >
+            <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
+          </Field>
+        )}
 
         {/* Comment */}
         <Field

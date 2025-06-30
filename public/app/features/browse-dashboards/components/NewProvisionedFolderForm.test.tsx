@@ -3,13 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { FolderDTO } from '../../../types';
+import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
 
@@ -41,21 +40,15 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => {
   };
 });
 
-jest.mock('app/api/clients/folder/v1beta1', () => {
+jest.mock('../hooks/useProvisionedFolderFormData', () => {
   return {
-    useGetFolderQuery: jest.fn(),
+    useProvisionedFolderFormData: jest.fn(),
   };
 });
 
 jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => {
   return {
     usePullRequestParam: jest.fn(),
-  };
-});
-
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
-  return {
-    useGetResourceRepositoryView: jest.fn(),
   };
 });
 
@@ -79,17 +72,15 @@ jest.mock('../../dashboard-scene/saving/provisioned/defaults', () => {
 });
 
 interface Props {
-  onSubmit: () => void;
-  onCancel: () => void;
-  parentFolder: FolderDTO;
+  onDismiss?: () => void;
+  parentFolder?: FolderDTO;
 }
 
 function setup(props: Partial<Props> = {}) {
   const user = userEvent.setup();
 
   const defaultProps: Props = {
-    onSubmit: jest.fn(),
-    onCancel: jest.fn(),
+    onDismiss: jest.fn(),
     parentFolder: {
       id: 1,
       uid: 'folder-uid',
@@ -123,6 +114,39 @@ const mockRequest = {
   data: { resource: { upsert: { metadata: { name: 'new-folder' } } } },
 };
 
+const mockHookData = {
+  repository: {
+    name: 'test-repo',
+    title: 'Test Repository',
+    type: 'github',
+    github: {
+      url: 'https://github.com/grafana/grafana',
+      branch: 'main',
+    },
+    workflows: [{ name: 'default', path: 'workflows/default.json' }],
+  },
+  folder: {
+    metadata: {
+      annotations: {
+        'grafana.app/sourcePath': '/dashboards',
+      },
+    },
+  },
+  workflowOptions: [
+    { label: 'Commit directly', value: 'write' },
+    { label: 'Create a branch', value: 'branch' },
+  ],
+  isGitHub: true,
+  initialValues: {
+    title: '',
+    comment: '',
+    ref: 'folder/test-timestamp',
+    repo: 'test-repo',
+    path: '/dashboards',
+    workflow: 'write',
+  },
+};
+
 describe('NewProvisionedFolderForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -133,39 +157,13 @@ describe('NewProvisionedFolderForm', () => {
     };
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
-    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
-      isLoading: false,
-      repository: {
-        name: 'test-repo',
-        title: 'Test Repository',
-        type: 'github',
-        github: {
-          url: 'https://github.com/grafana/grafana',
-          branch: 'main',
-        },
-        workflows: [{ name: 'default', path: 'workflows/default.json' }],
-      },
-    });
-
-    // Mock useGetFolderQuery
-    (useGetFolderQuery as jest.Mock).mockReturnValue({
-      data: {
-        metadata: {
-          annotations: {
-            'source.path': '/dashboards',
-          },
-        },
-      },
-      isLoading: false,
-      isError: false,
-    });
+    (useProvisionedFolderFormData as jest.Mock).mockReturnValue(mockHookData);
 
     // Mock usePullRequestParam
     (usePullRequestParam as jest.Mock).mockReturnValue(null);
 
     // Mock useCreateRepositoryFilesWithPathMutation
     const mockCreate = jest.fn();
-
     (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([mockCreate, mockRequest]);
 
     (validationSrv.validateNewFolderName as jest.Mock).mockResolvedValue(true);
@@ -182,25 +180,25 @@ describe('NewProvisionedFolderForm', () => {
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
-  it('should show loading state when repository data is loading', () => {
-    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
-      isLoading: true,
+  it('should return null when initialValues is not available', () => {
+    (useProvisionedFolderFormData as jest.Mock).mockReturnValue({
+      ...mockHookData,
+      initialValues: undefined,
     });
 
-    setup();
-
-    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    const { container } = setup();
+    expect(container.firstChild).toBeNull();
   });
 
   it('should show error when repository is not found', () => {
-    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
-      isLoading: false,
+    (useProvisionedFolderFormData as jest.Mock).mockReturnValue({
+      ...mockHookData,
       repository: undefined,
+      initialValues: undefined,
     });
 
-    setup();
-
-    expect(screen.getByText('Repository not found')).toBeInTheDocument();
+    const { container } = setup();
+    expect(container.firstChild).toBeNull();
   });
 
   it('should show branch field when branch workflow is selected', async () => {
@@ -289,6 +287,7 @@ describe('NewProvisionedFolderForm', () => {
         expect.objectContaining({
           ref: undefined, // write workflow uses undefined ref
           name: 'test-repo',
+          path: '/dashboards/new-test-folder/',
           message: 'Creating a new test folder',
           body: {
             title: 'New Test Folder',
@@ -298,8 +297,8 @@ describe('NewProvisionedFolderForm', () => {
       );
     });
 
-    // Check if onSubmit was called
-    expect(props.onSubmit).toHaveBeenCalled();
+    // Check if onDismiss was called
+    expect(props.onDismiss).toHaveBeenCalled();
   });
 
   it('should create folder with branch workflow', async () => {
@@ -341,6 +340,7 @@ describe('NewProvisionedFolderForm', () => {
         expect.objectContaining({
           ref: 'feature/new-folder',
           name: 'test-repo',
+          path: '/dashboards/branch-folder/',
           message: 'Create folder: Branch Folder',
           body: {
             title: 'Branch Folder',
@@ -415,28 +415,23 @@ describe('NewProvisionedFolderForm', () => {
     expect(screen.getByRole('link')).toHaveTextContent('https://github.com/grafana/grafana/pull/1234');
   });
 
-  it('should call onCancel when cancel button is clicked', async () => {
+  it('should call onDismiss when cancel button is clicked', async () => {
     const { user, props } = setup();
 
     // Click cancel button
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
     await user.click(cancelButton);
 
-    // Check if onCancel was called
-    expect(props.onCancel).toHaveBeenCalled();
+    // Check if onDismiss was called
+    expect(props.onDismiss).toHaveBeenCalled();
   });
 
   it('should show read-only alert when repository has no workflows', () => {
     // Mock repository with empty workflows array
-    (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
+    (useProvisionedFolderFormData as jest.Mock).mockReturnValue({
+      ...mockHookData,
       repository: {
-        name: 'test-repo',
-        title: 'Test Repository',
-        type: 'github',
-        github: {
-          url: 'https://github.com/grafana/grafana',
-          branch: 'main',
-        },
+        ...mockHookData.repository,
         workflows: [],
       },
     });
