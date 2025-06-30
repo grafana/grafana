@@ -442,7 +442,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		return model.LibraryElementSearchResult{}, folderFilter.parseError
 	}
 
-	// Find folders whose TITLES match the search string (for comprehensive search)
 	var foldersWithMatchingTitles []string
 	if len(strings.TrimSpace(query.SearchString)) > 0 {
 		searchQuery := folder.SearchFoldersQuery{
@@ -453,9 +452,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 
 		folderHits, err := l.folderService.SearchFolders(c, searchQuery)
 		if err != nil {
-			// Fallback to manual folder title filtering if SearchFolders is not available (legacy mode)
 			if strings.Contains(err.Error(), "cannot be called on the legacy folder service") {
-				// Legacy fallback: get folders and manually filter by title
 				fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
 					OrgID:        signedInUser.GetOrgID(),
 					SignedInUser: signedInUser,
@@ -473,7 +470,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 				return model.LibraryElementSearchResult{}, err
 			}
 		} else {
-			// SearchFolders worked - extract folder UIDs whose titles match
 			foldersWithMatchingTitles = make([]string, 0, len(folderHits))
 			for _, hit := range folderHits {
 				foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
