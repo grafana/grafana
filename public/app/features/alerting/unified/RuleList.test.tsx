@@ -42,6 +42,11 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn(),
   useReturnToPrevious: jest.fn(),
 }));
+
+jest.mock('./hooks/llmUtils', () => ({
+  useIsLLMPluginEnabled: () => ({ value: false, loading: false, error: null }),
+}));
+
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
