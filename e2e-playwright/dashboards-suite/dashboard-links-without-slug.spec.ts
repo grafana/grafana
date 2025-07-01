@@ -49,21 +49,21 @@ test.describe(
         .getByGrafanaSelector(selectors.components.DataLinksContextMenu.singleLink)
         .getByText(/9yy21uzzxypg/)
         .click();
-      await expect(page.getByText(/Loading/)).not.toBeVisible();
+      await expect(page.getByText(/Loading/)).toBeHidden();
       await expect(page).toHaveURL(new RegExp(urlShouldContain));
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.DataLinksContextMenu.singleLink)
         .getByText(/dr199bpvpcru/)
         .click();
-      await expect(page.getByText(/Loading/)).not.toBeVisible();
+      await expect(page.getByText(/Loading/)).toBeHidden();
       await expect(page).toHaveURL(new RegExp(urlShouldContain));
 
       await dashboardPage
         .getByGrafanaSelector(selectors.components.DataLinksContextMenu.singleLink)
         .getByText(/dre33fzyxcrz/)
         .click();
-      await expect(page.getByText(/Loading/)).not.toBeVisible();
+      await expect(page.getByText(/Loading/)).toBeHidden();
       await expect(page).toHaveURL(new RegExp(urlShouldContain));
     });
   }

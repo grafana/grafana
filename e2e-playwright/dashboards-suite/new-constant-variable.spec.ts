@@ -59,7 +59,7 @@ test.describe(
       // Assert the variable is not visible in the dashboard navigation (constant variables are hidden)
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('Variable under test'))
-      ).not.toBeVisible();
+      ).toBeHidden();
     });
   }
 );

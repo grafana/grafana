@@ -43,7 +43,7 @@ test.describe(
       ).toBeVisible();
 
       // gdev dashboards folder is collapsed - its content should not be visible
-      await expect(page.getByTestId(selectors.pages.BrowseDashboards.table.row('Bar Gauge Demo'))).not.toBeVisible();
+      await expect(page.getByTestId(selectors.pages.BrowseDashboards.table.row('Bar Gauge Demo'))).toBeHidden();
 
       // should click a folder and see its children
       await page
@@ -99,7 +99,7 @@ test.describe(
       await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
       await expect(
         page.getByTestId(selectors.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard'))
-      ).not.toBeVisible();
+      ).toBeHidden();
     });
   }
 );

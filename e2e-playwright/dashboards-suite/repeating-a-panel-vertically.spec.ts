@@ -90,7 +90,7 @@ test.describe(
 
       for (const title of panelsNotShown) {
         const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(title));
-        await expect(panel).not.toBeVisible();
+        await expect(panel).toBeHidden();
       }
     });
 
@@ -129,7 +129,7 @@ test.describe(
 
       for (const title of panelsNotShown) {
         const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(title));
-        await expect(panel).not.toBeVisible();
+        await expect(panel).toBeHidden();
       }
     });
   }

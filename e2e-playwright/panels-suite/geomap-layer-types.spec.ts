@@ -37,7 +37,7 @@ test.describe(
       await expect(page.locator('[data-testid="layer-drag-drop-list"]')).toContainText('geojson');
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_DATA))
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
       ).toBeVisible();
@@ -48,10 +48,10 @@ test.describe(
       await expect(page.locator('[data-testid="layer-drag-drop-list"]')).toContainText('osm-standard');
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_DATA))
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
-      ).not.toBeVisible();
+      ).toBeHidden();
 
       // CARTO basemap
       await input.fill('CARTO basemap');

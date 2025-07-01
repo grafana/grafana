@@ -55,7 +55,7 @@ test.describe('query editor with mocked responses', () => {
     await expect(
       panelEditPage.panel.getErrorIcon(),
       formatExpectError('Did not expect panel error to be displayed after query execution')
-    ).not.toBeVisible();
+    ).toBeHidden();
     await expect(
       panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.body),
       formatExpectError('Expected certain select options to be displayed after clicking on the select input')

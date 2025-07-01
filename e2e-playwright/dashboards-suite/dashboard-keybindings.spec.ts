@@ -29,8 +29,8 @@ test.describe(
       await page.keyboard.press('Shift+C');
 
       await expect(panelContents).toHaveCount(0);
-      await expect(page.getByText('server = A, pod = Bob')).not.toBeVisible();
-      await expect(page.getByText('server = B, pod = Bob')).not.toBeVisible();
+      await expect(page.getByText('server = A, pod = Bob')).toBeHidden();
+      await expect(page.getByText('server = B, pod = Bob')).toBeHidden();
 
       // Expand all rows using keyboard shortcut: d + Shift+E
       await page.keyboard.press('d');
@@ -55,7 +55,7 @@ test.describe(
       // Press Escape to close inspector
       await page.keyboard.press('Escape');
 
-      await expect(page.getByTestId(selectors.components.PanelInspector.Json.content)).not.toBeVisible();
+      await expect(page.getByTestId(selectors.components.PanelInspector.Json.content)).toBeHidden();
     });
   }
 );

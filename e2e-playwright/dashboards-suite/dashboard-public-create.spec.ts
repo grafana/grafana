@@ -36,22 +36,22 @@ test.describe(
       // Create flow shouldn't show these elements
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput)
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton)
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch)
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch)
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.PauseSwitch)
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.DeleteButton)
-      ).not.toBeVisible();
+      ).toBeHidden();
 
       // Acknowledge checkboxes
       await dashboardPage
@@ -76,16 +76,16 @@ test.describe(
       // These elements shouldn't be rendered after creating public dashboard
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox)
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox)
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox)
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.CreateButton)
-      ).not.toBeVisible();
+      ).toBeHidden();
 
       // These elements should be rendered
       await expect(

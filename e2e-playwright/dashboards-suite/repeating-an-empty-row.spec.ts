@@ -78,7 +78,7 @@ test.describe(
 
       for (const title of rowsNotShown) {
         const row = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(title));
-        await expect(row).not.toBeVisible();
+        await expect(row).toBeHidden();
       }
     });
 
@@ -111,7 +111,7 @@ test.describe(
 
       for (const title of rowsNotShown) {
         const row = dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(title));
-        await expect(row).not.toBeVisible();
+        await expect(row).toBeHidden();
       }
     });
   }

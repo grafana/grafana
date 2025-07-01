@@ -93,12 +93,12 @@ test.describe(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
     });
 
     test('adding a single value query variable', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {

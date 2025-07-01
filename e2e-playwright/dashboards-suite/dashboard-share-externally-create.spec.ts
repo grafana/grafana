@@ -36,7 +36,7 @@ test.describe(
       await expect(page).not.toHaveURL(/.*shareView=public_dashboard.*/);
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareExternally.container)
-      ).not.toBeVisible();
+      ).toBeHidden();
     });
 
     test('Create and disable a shared dashboard and check API', async ({
@@ -66,27 +66,27 @@ test.describe(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.ShareDashboardDrawer.ShareExternally.Configuration.enableTimeRangeSwitch
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.ShareDashboardDrawer.ShareExternally.Configuration.enableAnnotationsSwitch
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.ShareDashboardDrawer.ShareExternally.Configuration.copyUrlButton
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.ShareDashboardDrawer.ShareExternally.Configuration.revokeAccessButton
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.ShareDashboardDrawer.ShareExternally.Configuration.toggleAccessButton
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
 
       // Acknowledge checkbox
       await expect(
@@ -127,12 +127,12 @@ test.describe(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.ShareDashboardDrawer.ShareExternally.Creation.willBePublicCheckbox
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
       await expect(
         dashboardPage.getByGrafanaSelector(
           selectors.pages.ShareDashboardDrawer.ShareExternally.Creation.PublicShare.createButton
         )
-      ).not.toBeVisible();
+      ).toBeHidden();
 
       // These elements should be rendered
       await expect(

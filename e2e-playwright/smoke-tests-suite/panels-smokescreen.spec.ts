@@ -38,7 +38,7 @@ test.describe(
           await expect(vizPicker).toHaveText(panel.name);
 
           // Ensure no unexpected error occurred
-          await expect(page.getByText('An unexpected error happened')).not.toBeVisible();
+          await expect(page.getByText('An unexpected error happened')).toBeHidden();
         }
       }
     });

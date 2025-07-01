@@ -33,7 +33,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.disableTransformationButton).click();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage)
-      ).not.toBeVisible();
+      ).toBeHidden();
     });
   }
 );

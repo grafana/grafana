@@ -15,9 +15,7 @@ test.describe(
       await expect(panelTitle).toBeVisible();
 
       // Check that the panel is visible
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))
-      ).not.toBeVisible();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))).toBeHidden();
       await expect(panelTitle.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
 
       // Open panel menu and click edit
@@ -38,10 +36,8 @@ test.describe(
 
       // Check query content is visible and other tabs are not
       await expect(page.locator(`[data-testid="${selectors.components.QueryTab.content}"]`)).toBeVisible();
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.AlertTab.content)).not.toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelAlertTabContent.content)
-      ).not.toBeVisible();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.AlertTab.content)).toBeHidden();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelAlertTabContent.content)).toBeHidden();
 
       // Can change to Transform tab
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
@@ -49,29 +45,25 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Transforms.addTransformationButton)
       ).toBeVisible();
-      await expect(page.locator(`[data-testid="${selectors.components.QueryTab.content}"]`)).not.toBeVisible();
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.AlertTab.content)).not.toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelAlertTabContent.content)
-      ).not.toBeVisible();
+      await expect(page.locator(`[data-testid="${selectors.components.QueryTab.content}"]`)).toBeHidden();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.AlertTab.content)).toBeHidden();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelAlertTabContent.content)).toBeHidden();
 
       // Can change to Alerts tab (graph panel is the default vis so the alerts tab should be rendered)
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Alert')).click();
       await expect(page.locator(selectors.components.Tab.active(''))).toContainText('Alert0'); // no alert so Alert + 0
-      await expect(page.locator(`[data-testid="${selectors.components.QueryTab.content}"]`)).not.toBeVisible();
+      await expect(page.locator(`[data-testid="${selectors.components.QueryTab.content}"]`)).toBeHidden();
 
       // Go back to Queries tab
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Queries')).click();
 
       // Check that Time series is chosen
-      expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
         'Time series'
       );
 
       // Check that table view works
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))
-      ).not.toBeVisible();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))).toBeHidden();
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
       const tableHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header);
       await expect(tableHeader).toBeVisible();
@@ -81,18 +73,18 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item('Text')).click();
       // Check current visualization shows Text
-      expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
         'Text'
       );
 
       // Data pane should not be rendered
-      await expect(dataPane).not.toBeVisible();
+      await expect(dataPane).toBeHidden();
 
       // Change to Table panel
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item('Table')).click();
       // Check current visualization shows Table
-      expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker)).toContainText(
         'Table'
       );
 

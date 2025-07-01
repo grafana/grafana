@@ -73,7 +73,7 @@ test.describe(
         });
 
         const input = page.locator('[data-testid="panel-editor-custom-editor-input"]');
-        await expect(input).not.toBeDisabled();
+        await expect(input).toBeEnabled();
         await expect(input).toHaveValue('');
 
         await input.fill('x');
@@ -112,7 +112,7 @@ test.describe(
         ];
 
         for (const id of iframeIds) {
-          await expect(page.locator(`#${id}`)).not.toBeVisible();
+          await expect(page.locator(`#${id}`)).toBeHidden();
         }
       });
 
@@ -123,7 +123,7 @@ test.describe(
 
         // this button reaches out of the panel div and modifies the element dataset
         await page.locator('[data-testid="button-reach-out"]').click();
-        await expect(page.locator('[data-sandbox-test="true"]')).not.toBeVisible();
+        await expect(page.locator('[data-sandbox-test="true"]')).toBeHidden();
       });
 
       test('Does not Reaches out of the panel editor', async ({ gotoDashboardPage, page }) => {
@@ -133,10 +133,10 @@ test.describe(
         });
 
         const input = page.locator('[data-testid="panel-editor-custom-editor-input"]');
-        await expect(input).not.toBeDisabled();
+        await expect(input).toBeEnabled();
 
         await input.fill('x');
-        await expect(page.locator('[data-sandbox-test="panel-editor"]')).not.toBeVisible();
+        await expect(page.locator('[data-sandbox-test="panel-editor"]')).toBeHidden();
       });
 
       test('Can access specific window global variables', async ({ page, gotoDashboardPage }) => {

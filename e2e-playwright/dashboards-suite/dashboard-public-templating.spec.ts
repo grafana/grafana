@@ -52,7 +52,7 @@ test.describe(
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardModal.PublicDashboard.PauseSwitch)
-      ).not.toBeVisible();
+      ).toBeHidden();
     });
   }
 );
