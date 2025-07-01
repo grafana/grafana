@@ -23,9 +23,6 @@ test.describe(
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // e2e.flows.scenes.addPanel();
-      // Scroll to the bottom
-      // const primaryBody = dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody);
       await page.evaluate(() => {
         window.scrollTo(0, document.body.scrollHeight);
       });
