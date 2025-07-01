@@ -7,6 +7,11 @@
         "name": "CloudWatch Annotation Single Statistic",
         "enable": true,
         "iconColor": "red",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        },
         "dimensions": {
           "InstanceId": "i-123456"
         },
@@ -19,6 +24,11 @@
         "name": "CloudWatch Annotation Multiple Statistics",
         "enable": true,
         "iconColor": "blue",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        },
         "dimensions": {
           "InstanceId": "i-789012"
         },
@@ -31,6 +41,11 @@
         "name": "CloudWatch Annotation Empty Statistics",
         "enable": true,
         "iconColor": "green",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        },
         "dimensions": {
           "LoadBalancer": "my-lb"
         },
@@ -42,7 +57,12 @@
       {
         "name": "CloudWatch Annotation Invalid Statistics",
         "enable": true,
-        "iconColor": "yellow", 
+        "iconColor": "yellow",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        },
         "dimensions": {
           "TableName": "my-table"
         },
@@ -55,7 +75,9 @@
         "name": "Non-CloudWatch Annotation",
         "enable": true,
         "iconColor": "purple",
-        "datasource": "prometheus"
+        "datasource": {
+          "uid": "prometheus"
+        }
       }
     ]
   },
@@ -64,9 +86,19 @@
       "id": 1,
       "type": "timeseries",
       "title": "CloudWatch Single Query Multiple Statistics",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
       "targets": [
         {
           "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
           "dimensions": {
             "InstanceId": "i-123456"
           },
@@ -82,9 +114,19 @@
       "id": 2,
       "type": "timeseries",
       "title": "CloudWatch Single Query Single Statistic",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
       "targets": [
         {
           "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
           "dimensions": {
             "LoadBalancer": "my-load-balancer"
           },
@@ -99,9 +141,19 @@
       "id": 3,
       "type": "timeseries",
       "title": "CloudWatch Query No Statistics Array",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
       "targets": [
         {
           "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
           "dimensions": {
             "DBInstanceIdentifier": "my-db"
           },
@@ -116,9 +168,17 @@
       "id": 4,
       "type": "timeseries",
       "title": "Mixed CloudWatch and Non-CloudWatch Queries",
+      "datasource": {
+        "uid": "prometheus"
+      },
       "targets": [
         {
           "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
           "dimensions": {
             "QueueName": "my-queue"
           },
@@ -130,10 +190,17 @@
         {
           "refId": "B",
           "expr": "up",
-          "datasource": "prometheus"
+          "datasource": {
+            "uid": "prometheus"
+          }
         },
         {
           "refId": "C",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
           "dimensions": {
             "TopicName": "my-topic"
           },
@@ -148,9 +215,19 @@
       "id": 5,
       "type": "timeseries",
       "title": "CloudWatch Query Empty Statistics",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
       "targets": [
         {
           "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
           "dimensions": {
             "BucketName": "my-bucket"
           },
@@ -165,9 +242,19 @@
       "id": 6,
       "type": "timeseries",
       "title": "CloudWatch Query Invalid Statistics",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
       "targets": [
         {
           "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
           "dimensions": {
             "FunctionName": "my-function"
           },
@@ -183,14 +270,39 @@
       "type": "row",
       "collapsed": true,
       "title": "Collapsed Row with CloudWatch",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          }
+        }
+      ],
       "panels": [
         {
           "id": 8,
           "type": "timeseries",
           "title": "Nested CloudWatch Query Multiple Statistics",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
           "targets": [
             {
               "refId": "A",
+              "datasource": {
+                "uid": "default-ds-uid",
+                "type": "prometheus",
+                "apiVersion": "v1"
+              },
               "dimensions": {
                 "StreamName": "my-stream"
               },
@@ -206,12 +318,47 @@
     {
       "id": 9,
       "type": "timeseries",
+      "title": "CloudWatch Query with Existing Editor Mode",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "ClusterName": "my-cluster"
+          },
+          "namespace": "AWS/ECS",
+          "region": "us-east-1",
+          "metricName": "CPUUtilization",
+          "statistics": ["Average", "Maximum"],
+          "metricEditorMode": 1,
+          "metricQueryType": 1,
+          "period": "300"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
       "title": "Non-CloudWatch Panel",
+      "datasource": {
+        "uid": "prometheus"
+      },
       "targets": [
         {
           "refId": "A",
           "expr": "cpu_usage",
-          "datasource": "prometheus"
+          "datasource": {
+            "uid": "prometheus"
+          }
         }
       ]
     }

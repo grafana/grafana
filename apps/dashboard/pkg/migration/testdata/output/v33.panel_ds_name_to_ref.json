@@ -465,7 +465,9 @@
           "dimensions": {
             "InstanceId": "i-123456"
           },
+          "metricEditorMode": 0,
           "metricName": "CPUUtilization",
+          "metricQueryType": 0,
           "namespace": "AWS/EC2",
           "period": "300",
           "refId": "A",
@@ -482,7 +484,9 @@
           "dimensions": {
             "InstanceId": "i-123456"
           },
+          "metricEditorMode": 0,
           "metricName": "CPUUtilization",
+          "metricQueryType": 0,
           "namespace": "AWS/EC2",
           "period": "300",
           "refId": "B",
@@ -499,7 +503,9 @@
           "dimensions": {
             "InstanceId": "i-123456"
           },
+          "metricEditorMode": 0,
           "metricName": "CPUUtilization",
+          "metricQueryType": 0,
           "namespace": "AWS/EC2",
           "period": "300",
           "refId": "C",
@@ -531,7 +537,9 @@
           "dimensions": {
             "LoadBalancer": "my-load-balancer"
           },
+          "metricEditorMode": 0,
           "metricName": "RequestCount",
+          "metricQueryType": 0,
           "namespace": "AWS/ApplicationELB",
           "refId": "A",
           "region": "us-west-2",
@@ -551,7 +559,9 @@
           "dimensions": {
             "DBInstanceIdentifier": "my-db"
           },
+          "metricEditorMode": 0,
           "metricName": "DatabaseConnections",
+          "metricQueryType": 0,
           "namespace": "AWS/RDS",
           "refId": "C",
           "region": "us-east-1",
@@ -564,7 +574,9 @@
           "dimensions": {
             "LoadBalancer": "my-load-balancer"
           },
+          "metricEditorMode": 0,
           "metricName": "RequestCount",
+          "metricQueryType": 0,
           "namespace": "AWS/ApplicationELB",
           "refId": "D",
           "region": "us-west-2",
@@ -612,7 +624,9 @@
               "dimensions": {
                 "QueueName": "my-queue"
               },
+              "metricEditorMode": 0,
               "metricName": "ApproximateNumberOfMessages",
+              "metricQueryType": 0,
               "namespace": "AWS/SQS",
               "refId": "A",
               "region": "us-east-1",
@@ -627,7 +641,9 @@
               "dimensions": {
                 "QueueName": "my-queue"
               },
+              "metricEditorMode": 0,
               "metricName": "ApproximateNumberOfMessages",
+              "metricQueryType": 0,
               "namespace": "AWS/SQS",
               "refId": "B",
               "region": "us-east-1",
@@ -642,7 +658,9 @@
               "dimensions": {
                 "QueueName": "my-queue"
               },
+              "metricEditorMode": 0,
               "metricName": "ApproximateNumberOfMessages",
+              "metricQueryType": 0,
               "namespace": "AWS/SQS",
               "refId": "C",
               "region": "us-east-1",
