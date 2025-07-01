@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, MouseEvent, useRef } from 'react';
+import { useCallback, useMemo, MouseEvent, useRef, ChangeEvent } from 'react';
 
 import { colorManipulator, GrafanaTheme2, LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,9 +13,10 @@ import { LogListModel } from './processing';
 
 interface Props {
   log: LogListModel;
+  onSearch(e: ChangeEvent<HTMLInputElement> | undefined): void;
 }
 
-export const LogLineDetailsHeader = ({ log }: Props) => {
+export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
   const {
     closeDetails,
     displayedFields,
@@ -71,9 +72,34 @@ export const LogLineDetailsHeader = ({ log }: Props) => {
     }
   }, [logLineDisplayed, onClickHideField, onClickShowField]);
 
+  const clearSearch = useMemo(
+    () => (
+      <IconButton
+        name="times"
+        size="sm"
+        onClick={() => {
+          onSearch(undefined);
+        }}
+        tooltip={t('logs.log-line-details.clear-search', 'Clear')}
+      />
+    ),
+    [onSearch]
+  );
+
+  const handleSearch = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      onSearch(e);
+    },
+    [onSearch]
+  );
+
   return (
     <div className={styles.header} ref={containerRef}>
-      <Input placeholder={t('logs.log-line-details.search-placeholder', 'Search field names and values')} />
+      <Input
+        onChange={handleSearch}
+        placeholder={t('logs.log-line-details.search-placeholder', 'Search field names and values')}
+        suffix={clearSearch}
+      />
       {showLogLineToggle && (
         <IconButton
           tooltip={

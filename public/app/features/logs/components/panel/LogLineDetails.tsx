@@ -6,7 +6,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
 
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
-import { LogLineDetailsHeader } from './LogLineDetailsHeader';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
@@ -45,7 +44,6 @@ export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, o
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>
-          <LogLineDetailsHeader log={showDetails[0]} />
           <LogLineDetailsComponent log={showDetails[0]} logOptionsStorageKey={logOptionsStorageKey} logs={logs} />
         </div>
       </div>

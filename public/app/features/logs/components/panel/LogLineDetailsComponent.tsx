@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { ChangeEvent, startTransition, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,6 +11,7 @@ import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
 import { LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
+import { LogLineDetailsHeader } from './LogLineDetailsHeader';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
@@ -20,6 +21,8 @@ interface LogLineDetailsComponentProps {
 }
 
 export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: LogLineDetailsComponentProps) => {
+  const [search, setSearch] = useState('');
+  const inputRef = useRef('');
   const styles = useStyles2(getStyles);
   const extensionLinks = useAttributesExtensionLinks(log);
   const fieldsWithLinks = useMemo(() => {
@@ -67,28 +70,65 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
     [logOptionsStorageKey]
   );
 
+  const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement> | undefined) => {
+    if (e === undefined) {
+      inputRef.current = '';
+      setSearch('');
+      return;
+    }
+    inputRef.current = e.target.value;
+    startTransition(() => {
+      setSearch(inputRef.current);
+    });
+  }, []);
+
   return (
-    <div className={styles.componentWrapper}>
-      <ControlledCollapse
-        label={t('logs.log-line-details.log-line-section', 'Log line')}
-        collapsible
-        isOpen={logLineOpen}
-        onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
-      >
-        <div className={styles.logLineWrapper}>{log.raw}</div>
-      </ControlledCollapse>
-      {fieldsWithLinks.length > 0 && (
+    <>
+      <LogLineDetailsHeader log={log} onSearch={handleSearch} />
+      <div className={styles.componentWrapper}>
         <ControlledCollapse
-          label={t('logs.log-line-details.links-section', 'Links')}
+          label={t('logs.log-line-details.log-line-section', 'Log line')}
           collapsible
-          isOpen={linksOpen}
-          onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
+          isOpen={logLineOpen}
+          onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
         >
-          <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
+          <div className={styles.logLineWrapper}>{log.raw}</div>
         </ControlledCollapse>
-      )}
-      {labelGroups.map((group) =>
-        group === '' ? (
+        {fieldsWithLinks.length > 0 && (
+          <ControlledCollapse
+            label={t('logs.log-line-details.links-section', 'Links')}
+            collapsible
+            isOpen={linksOpen}
+            onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
+          >
+            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
+          </ControlledCollapse>
+        )}
+        {labelGroups.map((group) =>
+          group === '' ? (
+            <ControlledCollapse
+              key={'fields'}
+              label={t('logs.log-line-details.fields-section', 'Fields')}
+              collapsible
+              isOpen={fieldsOpen}
+              onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
+            >
+              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
+              <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
+            </ControlledCollapse>
+          ) : (
+            <ControlledCollapse
+              key={group}
+              label={group}
+              collapsible
+              isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName}`, true)}
+              onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
+            >
+              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
+            </ControlledCollapse>
+          )
+        )}
+        {!labelGroups.length && (
           <ControlledCollapse
             key={'fields'}
             label={t('logs.log-line-details.fields-section', 'Fields')}
@@ -96,33 +136,11 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
             isOpen={fieldsOpen}
             onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
           >
-            <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
             <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
           </ControlledCollapse>
-        ) : (
-          <ControlledCollapse
-            key={group}
-            label={group}
-            collapsible
-            isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName}`, true)}
-            onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
-          >
-            <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
-          </ControlledCollapse>
-        )
-      )}
-      {!labelGroups.length && (
-        <ControlledCollapse
-          key={'fields'}
-          label={t('logs.log-line-details.fields-section', 'Fields')}
-          collapsible
-          isOpen={fieldsOpen}
-          onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
-        >
-          <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
-        </ControlledCollapse>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 
