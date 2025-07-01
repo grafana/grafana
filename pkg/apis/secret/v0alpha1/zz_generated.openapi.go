@@ -25,6 +25,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig":       schema_pkg_apis_secret_v0alpha1_GCPKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials":  schema_pkg_apis_secret_v0alpha1_HashiCorpCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig": schema_pkg_apis_secret_v0alpha1_HashiCorpKeeperConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.InlineSecureValue":     schema_pkg_apis_secret_v0alpha1_InlineSecureValue(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Keeper":                schema_pkg_apis_secret_v0alpha1_Keeper(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperList":            schema_pkg_apis_secret_v0alpha1_KeeperList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperSpec":            schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref),
@@ -352,6 +353,47 @@ func schema_pkg_apis_secret_v0alpha1_HashiCorpKeeperConfig(ref common.ReferenceC
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.CredentialValue"},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_InlineSecureValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Access secure values inside any resource",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"create": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Create a secure value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reference a shared secret (enterprise only)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The resolved UID within the secret service",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"remove": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Remove this value -- cascading delete to the secret service if necessary",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

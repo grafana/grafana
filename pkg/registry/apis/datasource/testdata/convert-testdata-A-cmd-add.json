@@ -14,8 +14,6 @@
     "bbb": true,
     "ccc": 1.234
   },
-  "secureJsonData": {
-    "password": "XXXX"
-  },
+  "secureJsonData": {},
   "uid": "cejobd88i85j4d"
 }

@@ -61,7 +61,7 @@ func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDat
 }
 
 func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
-	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
+	if query.OrgID == 0 {
 		return nil, datasources.ErrDataSourceIdentifierNotSet
 	}
 
@@ -69,6 +69,8 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		if err := util.ValidateUID(query.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, "read", fmt.Errorf("invalid UID"))
 		}
+	} else if query.ID == 0 {
+		return nil, datasources.ErrDataSourceIdentifierNotSet
 	}
 
 	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
@@ -324,11 +326,13 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			cmd.JsonData = simplejson.New()
 		}
 
-		if cmd.UID != "" {
-			if err := util.ValidateUID(cmd.UID); err != nil {
-				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
-				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
-			}
+		if cmd.OrgID == 0 || cmd.ID == 0 || cmd.UID == "" {
+			return datasources.ErrDataSourceIdentifierNotSet
+		}
+
+		if err := util.ValidateUID(cmd.UID); err != nil {
+			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
+			return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 		}
 
 		ds = &datasources.DataSource{

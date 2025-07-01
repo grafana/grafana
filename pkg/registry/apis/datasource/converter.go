@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -68,6 +70,12 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 	}
 	cfg.UID = gapiutil.CalculateClusterWideUID(cfg)
 
+	if ds.ID > 0 {
+		cfg.Labels = map[string]string{
+			utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(ds.ID, 10),
+		}
+	}
+
 	if ds.JsonData != nil {
 		val, ok := ds.JsonData.Interface().(map[string]any)
 		if !ok {
@@ -77,10 +85,10 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 	}
 
 	if ds.SecureJsonData != nil {
-		cfg.Secure = make(map[string]v0alpha1.SecureValue)
+		cfg.Secure = make(secret.InlineSecureValues)
 		for k := range ds.SecureJsonData {
-			cfg.Secure[k] = v0alpha1.SecureValue{
-				Reference: "~", // ????
+			cfg.Secure[k] = secret.InlineSecureValue{
+				UID: "????", // ????
 			}
 		}
 	}
@@ -166,8 +174,8 @@ func toSecureJsonData(ds *v0alpha1.GenericDataSource) map[string]string {
 
 	secure := map[string]string{}
 	for k, v := range ds.Secure {
-		if v.Input != "" {
-			secure[k] = v.Input
+		if v.Create != "" {
+			secure[k] = v.Create.DangerouslyExposeAndConsumeValue()
 		}
 		if v.Remove {
 			secure[k] = "" // Weirdly, this is the best we can do with the legacy API :(

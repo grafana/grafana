@@ -4,21 +4,23 @@ import (
 	"maps"
 	"strings"
 
-	common "k8s.io/kube-openapi/pkg/common"
+	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
 // This should eventually live in grafana-app-sdk
-func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefinitions {
-	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		defs := v0alpha1.GetOpenAPIDefinitions(ref) // common grafana apis
+func GetOpenAPIDefinitions(builders []APIGroupBuilder) openapi.GetOpenAPIDefinitions {
+	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
+		defs := common.GetOpenAPIDefinitions(ref) // common grafana apis
 		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))
+		maps.Copy(defs, secret.GetOpenAPIDefinitions(ref)) // Expose secret reference to all resources
 		// TODO: add timerange to upstream SDK setup
-		maps.Copy(defs, map[string]common.OpenAPIDefinition{
+		maps.Copy(defs, map[string]openapi.OpenAPIDefinition{
 			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.TimeRange": {
 				Schema: spec.Schema{
 					SchemaProps: spec.SchemaProps{
