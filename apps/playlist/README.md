@@ -140,6 +140,43 @@ These examples use HTTP Basic Authentication with `admin:admin`. In production e
 - Replace `admin:admin` with your actual credentials
 - Consider using `--netrc` or environment variables for credentials
 
+## GraphQL API (Read-Only)
+
+### List all playlists via GraphQL
+
+```bash
+curl -X POST http://localhost:3000/api/graphql \
+  -u admin:admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query GetPlaylists { playlist_playlists(namespace: \"default\") { items { metadata { name namespace creationTimestamp } uid name interval items { id playlistUid type value order title } } } }"
+  }'
+```
+
+### Get specific playlist information via GraphQL (simplified)
+
+```bash
+curl -X POST http://localhost:3000/api/graphql \
+  -u admin:admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query GetPlaylist { playlist_playlist(namespace: \"default\", name: \"my-playlist\") { metadata { name } uid name interval } }"
+  }'
+```
+
+### Basic playlist query
+
+```bash
+curl -X POST http://localhost:3000/api/graphql \
+  -u admin:admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query GetPlaylists { playlist_playlists(namespace: \"default\") { items { metadata { name } uid name interval } } }"
+  }'
+```
+
+**Note**: The GraphQL API currently only supports **read operations** (queries). Create, update, and delete operations via GraphQL are not yet implemented. For write operations, use the REST API endpoints above.
+
 ## Response Format
 
 All responses follow the Kubernetes API conventions and return JSON objects with:
