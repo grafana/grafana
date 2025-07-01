@@ -238,8 +238,8 @@ export const LogLineDetailsField = ({
     <>
       <tr>
         {!disableActions && (
-          <td>
-            <div className={styles.actions}>
+          <td className={styles.actions}>
+            <div>
               {onClickFilterLabel && (
                 <AsyncIconButton
                   name="search-plus"
@@ -367,12 +367,16 @@ export const LogLineDetailsField = ({
 const getFieldStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     whiteSpace: 'nowrap',
+    width: theme.spacing(11.5),
   }),
   label: css({
-    maxWidth: '25%',
+    maxWidth: '40%',
     overflowWrap: 'break-word',
+    wordBreak: 'break-word',
   }),
   value: css({
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
     button: {
       visibility: 'hidden',
     },
