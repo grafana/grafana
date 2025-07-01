@@ -5,9 +5,9 @@ import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { GenAIAlertRuleButton } from '../components/rules/AIGen/GenAIAlertRuleButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
-import { GenAIAlertRuleButton } from '../components/rules/GenAIAlertRuleButton';
 import { useIsLLMPluginEnabled } from '../hooks/llmUtils';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';

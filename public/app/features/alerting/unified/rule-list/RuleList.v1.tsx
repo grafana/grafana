@@ -12,8 +12,8 @@ import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { GenAIAlertRuleButton } from '../components/rules/AIGen/GenAIAlertRuleButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
-import { GenAIAlertRuleButton } from '../components/rules/GenAIAlertRuleButton';
 import { NoRulesSplash } from '../components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../components/rules/RuleDetails';
 import { RuleListErrors } from '../components/rules/RuleListErrors';

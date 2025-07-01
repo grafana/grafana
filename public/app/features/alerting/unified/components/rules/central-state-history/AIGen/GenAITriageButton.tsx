@@ -10,16 +10,6 @@ import { LogRecord } from '../../state-history/common';
 
 import { createSystemPrompt, createUserPrompt } from './prompt';
 
-// Interface for event data structure
-interface ProcessedEvent {
-  timestamp: string;
-  alertRule: string;
-  previousState: string;
-  currentState: string;
-  labels: Record<string, string>;
-  ruleUID?: string;
-  fingerprint?: string;
-}
 interface TriageAnalysisProps {
   analysis: string;
   styles: ReturnType<typeof getStyles>;
@@ -62,7 +52,6 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
 
   const systemPrompt = createSystemPrompt();
 
-  const userPrompt = createUserPrompt(logRecords, timeRange, customQuestion.trim() || undefined);
   // Handle LLM call without tools
   const handleAnalyze = useCallback(async () => {
     if (logRecords.length === 0) {
@@ -79,6 +68,8 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
       if (!enabled) {
         throw new Error('LLM service is not configured or enabled');
       }
+
+      const userPrompt = createUserPrompt(logRecords, timeRange, customQuestion.trim() || undefined);
 
       const messages: llm.Message[] = [systemPrompt, userPrompt];
 
@@ -100,7 +91,7 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
     } finally {
       setIsAnalyzing(false);
     }
-  }, [logRecords.length, systemPrompt, createUserPrompt, customQuestion]);
+  }, [systemPrompt, customQuestion, timeRange, logRecords]);
 
   const handleClose = () => {
     setShowModal(false);

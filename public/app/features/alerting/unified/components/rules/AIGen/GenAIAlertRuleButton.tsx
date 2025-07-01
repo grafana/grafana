@@ -2,150 +2,29 @@ import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
+import { useListContactPointsv0alpha1 } from '@grafana/alerting/unstable';
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { llm } from '@grafana/llm';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 
-import { useListContactPointsv0alpha1 } from '../../../../../../../packages/grafana-alerting/src/grafana/contactPoints/hooks/useContactPoints';
-import { LogMessages, logInfo } from '../../Analytics';
-import { getDefaultFormValues } from '../../rule-editor/formDefaults';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { LogMessages, logInfo } from '../../../Analytics';
+import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+
+import {
+  GET_CONTACT_POINTS_TOOL,
+  GET_DATA_SOURCES_TOOL,
+  createSystemPrompt,
+  createUserPrompt,
+  handleGetContactPoints,
+  handleGetDataSources,
+} from './prompt';
 
 // TODO:
 // - Create tool for getting folders ?
 // - Create tool for getting groups ?
-
-// Tool definition for getting contact points
-const GET_CONTACT_POINTS_TOOL = {
-  type: 'function' as const,
-  function: {
-    name: 'get_contact_points',
-    description:
-      'Retrieves a list of all contact points (notification receivers) configured in Grafana Alerting. Contact points define how and where alert notifications are sent.',
-    parameters: {
-      type: 'object',
-      properties: {
-        limit: {
-          type: 'number',
-          description: 'Optional limit for the number of contact points to return',
-          minimum: 1,
-          maximum: 1000,
-        },
-      },
-      required: [],
-    },
-  },
-};
-
-// Tool definition for getting available data sources
-const GET_DATA_SOURCES_TOOL = {
-  type: 'function' as const,
-  function: {
-    name: 'get_data_sources',
-    description:
-      'Retrieves a list of all data sources available for alerting. This includes Prometheus, Loki, InfluxDB, and other monitoring data sources that support alerting queries.',
-    parameters: {
-      type: 'object',
-      properties: {
-        alertingOnly: {
-          type: 'boolean',
-          description: 'Whether to only return data sources that support alerting',
-          default: true,
-        },
-      },
-      required: [],
-    },
-  },
-};
-
-const SYSTEM_PROMPT_CONTENT = `You are an expert in creating Grafana alert rules. Based on the user's description, generate a properly structured alert rule configuration.
-
-You have access to tools that can help you:
-- get_contact_points: Use this to retrieve available contact points when the user asks about notifications or wants to see what contact points are available
-- get_data_sources: Use this to see what data sources are available for querying (Prometheus, Loki, etc.) - use this to set proper datasourceUid values. If the user doesn't specify a particular data source, use the one marked with "isDefault": true
-
-Return a JSON object that matches the RuleFormValues interface with these key fields:
-- name: A descriptive name for the alert rule
-- type: Always use "grafana-alerting"
-- queries: An array of alert queries with proper datasource configuration (use actual datasource UIDs from get_data_sources)
-- condition: The refId of the query condition (usually "C")
-- evaluateFor: How long the condition must be true (e.g., "5m")
-- noDataState: What to do when no data (usually "NoData")
-- execErrState: What to do on execution error (usually "Alerting")
-- annotations: Array of key-value pairs for additional information
-- labels: Array of key-value pairs for categorization
-- folder: Object with title and uid for organization (find the folder in the user's organization, if it doesn't exist, create it)
-- group: The group name for the alert rule (find a group inside the folder, if it doesn't exist, create it)
-- contactPoints: Use actual contact point names from the get_contact_points tool when available. Include all required routing settings:
-  - selectedContactPoint: The contact point name
-  - overrideGrouping: false (unless specifically requested)
-  - groupBy: [] (empty array unless custom grouping requested)
-  - overrideTimings: false (unless custom timing requested)
-  - groupWaitValue: "" (empty unless overrideTimings is true)
-  - groupIntervalValue: "" (empty unless overrideTimings is true)
-  - repeatIntervalValue: "" (empty unless overrideTimings is true)
-  - muteTimeIntervals: [] (array of mute timing names)
-  - activeTimeIntervals: [] (array of active timing names)
-
-For queries, include:
-- A data query (refId: "A") from appropriate datasource (use actual datasourceUid from get_data_sources tool)
-- A condition query (refId: "C") that evaluates the data
-
-When the user mentions specific metrics or data sources, always use the get_data_sources tool first to see what's available and get the correct UIDs.
-If the user doesn't specify a data source, use the default one (isDefault: true) from the available data sources.
-When the user mentions notifications or asks about contact points, always use the get_contact_points tool first to see what's available.
-
-Example structure:
-{
-  "name": "High CPU Usage Alert",
-  "type": "grafana-alerting",
-  "queries": [
-    {
-      "refId": "A",
-      "model": {"expr": "cpu_usage", "refId": "A"},
-      "datasourceUid": "actual-prometheus-uid-from-tool",
-      "queryType": "",
-      "relativeTimeRange": {"from": 600, "to": 0}
-    },
-    {
-      "refId": "C",
-      "model": {"expression": "A > 80", "type": "threshold", "refId": "C"},
-      "datasourceUid": "__expr__",
-      "queryType": "",
-      "relativeTimeRange": {"from": 0, "to": 0}
-    }
-  ],
-  "condition": "C",
-  "evaluateFor": "5m",
-  "noDataState": "NoData",
-  "execErrState": "Alerting",
-  "annotations": [
-    {"key": "description", "value": "CPU usage is above 80%"},
-    {"key": "summary", "value": "High CPU usage detected"}
-  ],
-  "labels": [
-    {"key": "severity", "value": "warning"},
-    {"key": "team", "value": "infrastructure"}
-  ],
-  "folder": {"title": "Generated Alerts", "uid": "generated-alerts"},
-  "contactPoints": {
-    "grafana": {
-      "selectedContactPoint": "actual-contact-point-name",
-      "overrideGrouping": false,
-      "groupBy": [],
-      "overrideTimings": false,
-      "groupWaitValue": "",
-      "groupIntervalValue": "",
-      "repeatIntervalValue": "",
-      "muteTimeIntervals": [],
-      "activeTimeIntervals": []
-    }
-  }
-}
-
-Respond only with the JSON object, no additional text.`;
 
 interface AlertRulePreviewProps {
   generatedRule: RuleFormValues;
@@ -207,101 +86,14 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
   const styles = useStyles2(getStyles);
   const location = useLocation();
 
+  // Call the React hook at component level
+  const { data: contactPointsData, isLoading: contactPointsLoading } = useListContactPointsv0alpha1();
+
   const [showModal, setShowModal] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [generatedRule, setGeneratedRule] = useState<RuleFormValues | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Get contact points data for the tool
-  const { data: contactPoints, isLoading: contactPointsLoading } = useListContactPointsv0alpha1();
-
-  // Tool handler for getting contact points
-  const handleGetContactPoints = useCallback(
-    async (args: unknown) => {
-      try {
-        if (contactPointsLoading) {
-          return {
-            success: false,
-            error: 'Contact points are still loading',
-            contactPoints: [],
-            count: 0,
-          };
-        }
-
-        const processedContactPoints =
-          contactPoints?.items.map((contactPoint) => ({
-            name: contactPoint.spec.title,
-            id: contactPoint.metadata.uid,
-            provisioned: contactPoint.status.additionalFields?.provisioned,
-            integrations: contactPoint.spec.integrations.map((integration) => ({
-              type: integration.type,
-              hasSettings: Object.keys(integration.settings || {}).length > 0,
-            })),
-            inUseByRoutes: contactPoint.status.operatorStates?.policies_count || 0,
-            inUseByRules: contactPoint.status.operatorStates?.rules_count || 0,
-          })) || [];
-
-        return {
-          success: true,
-          contactPoints: processedContactPoints,
-          count: processedContactPoints.length,
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred',
-          contactPoints: [],
-          count: 0,
-        };
-      }
-    },
-    [contactPoints, contactPointsLoading]
-  );
-
-  // Tool handler for getting available data sources
-  const handleGetDataSources = useCallback(async (args: unknown) => {
-    try {
-      // Get all data sources that support alerting
-      const dataSourceSrv = getDataSourceSrv();
-      const alertingDataSources = dataSourceSrv.getList({ alerting: true });
-
-      // Only extract what the AI actually needs
-      const dataSources = alertingDataSources.map((ds) => ({
-        name: ds.name,
-        uid: ds.uid,
-        type: ds.type,
-        isDefault: ds.isDefault,
-      }));
-
-      return {
-        success: true,
-        dataSources,
-        count: dataSources.length,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-        dataSources: [],
-        count: 0,
-      };
-    }
-  }, []);
-
-  // Sets up the AI's behavior and context
-  const createSystemPrompt = (): llm.Message => ({
-    role: 'system',
-    content: SYSTEM_PROMPT_CONTENT,
-  });
-
-  //  Contains the actual user request/query
-  const createUserPrompt = (userInput: string): llm.Message => ({
-    role: 'user',
-    content: `Create an alert rule for: ${userInput}
-
-Please generate a complete alert rule configuration that monitors for this condition and includes appropriate thresholds, evaluation periods, and notification details.`,
-  });
 
   // Parse and handle the LLM response
   const handleParsedResponse = useCallback((reply: string) => {
@@ -383,7 +175,7 @@ Please generate a complete alert rule configuration that monitors for this condi
             if (toolCall.function.name === 'get_contact_points') {
               // If the tool call is for getting contact points
               const args = JSON.parse(toolCall.function.arguments);
-              const result = await handleGetContactPoints(args);
+              const result = await handleGetContactPoints(args, contactPointsData, contactPointsLoading);
 
               // Add the tool result to the messages
               finalMessages.push({
@@ -433,7 +225,7 @@ Please generate a complete alert rule configuration that monitors for this condi
         setIsGenerating(false);
       }
     },
-    [handleGetContactPoints, handleGetDataSources, handleParsedResponse]
+    [handleParsedResponse, contactPointsData, contactPointsLoading]
   );
 
   const handleGenerate = () => {
