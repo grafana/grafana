@@ -104,7 +104,7 @@ func migrateAnnotations(dashboard map[string]interface{}, datasources []DataSour
 		}
 
 		// Always migrate datasource, even if it doesn't exist (will be set to default)
-		ds, _ := queryMap["datasource"]
+		ds := queryMap["datasource"]
 		queryMap["datasource"] = MigrateDatasourceNameToRef(ds, map[string]bool{"returnDefaultAsNull": false}, datasources)
 	}
 }
