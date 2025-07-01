@@ -32,6 +32,7 @@ export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
   const pinned = useLogIsPinned(log);
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const copyLogLine = useCallback(() => {
     copyText(log.entry, containerRef);
@@ -79,6 +80,9 @@ export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
         size="sm"
         onClick={() => {
           onSearch(undefined);
+          if (inputRef.current) {
+            inputRef.current.value = '';
+          }
         }}
         tooltip={t('logs.log-line-details.clear-search', 'Clear')}
       />
@@ -98,6 +102,7 @@ export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
       <Input
         onChange={handleSearch}
         placeholder={t('logs.log-line-details.search-placeholder', 'Search field names and values')}
+        ref={inputRef}
         suffix={clearSearch}
       />
       {showLogLineToggle && (

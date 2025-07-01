@@ -3,7 +3,7 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
+import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
@@ -17,21 +17,24 @@ import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsFieldsProps {
+  fields: FieldDef[];
   log: LogListModel;
   logs: LogListModel[];
-  fields: FieldDef[];
+  search?: string;
 }
 
-export const LogLineDetailsFields = ({ log, logs, fields }: LogLineDetailsFieldsProps) => {
+export const LogLineDetailsFields = ({ fields, log, logs, search }: LogLineDetailsFieldsProps) => {
   if (!fields.length) {
     return null;
   }
   const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
+  const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
+
   return (
     <table className={styles.fieldsTable}>
       <tbody>
-        {fields.map((field, i) => (
+        {filteredFields.map((field, i) => (
           <LogLineDetailsField
             key={`${field.keys[0]}=${field.values[0]}-${i}`}
             getLogs={getLogs}
@@ -58,21 +61,28 @@ export interface LabelWithLinks {
 }
 
 interface LogLineDetailsLabelFieldsProps {
+  fields: LabelWithLinks[];
   log: LogListModel;
   logs: LogListModel[];
-  fields: LabelWithLinks[];
+  search?: string;
 }
 
-export const LogLineDetailsLabelFields = ({ log, logs, fields }: LogLineDetailsLabelFieldsProps) => {
+export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
   if (!fields.length) {
     return null;
   }
   const styles = useStyles2(getFieldsStyles);
   const getLogs = useCallback(() => logs, [logs]);
+  const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
+
+  if (filteredFields.length === 0) {
+    return t('logs.log-line-details.search.no-results', 'No results to display.');
+  }
+
   return (
     <table className={styles.fieldsTable}>
       <tbody>
-        {fields.map((field, i) => (
+        {filteredFields.map((field, i) => (
           <LogLineDetailsField
             key={`${field.key}=${field.value}-${i}`}
             getLogs={getLogs}
@@ -470,3 +480,35 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
 
   return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
+
+function filterFields(fields: FieldDef[], search: string) {
+  const keys = fields.map((field) => field.keys.join(' '));
+  const keysIdx = fuzzySearch(keys, search);
+  const values = fields.map((field) => field.values.join(' '));
+  const valuesIdx = fuzzySearch(values, search);
+
+  const results = keysIdx.map((index) => fields[index]);
+  valuesIdx.forEach((index) => {
+    if (!results.includes(fields[index])) {
+      results.push(fields[index]);
+    }
+  });
+
+  return results;
+}
+
+function filterLabels(labels: LabelWithLinks[], search: string) {
+  const keys = labels.map((field) => field.key);
+  const keysIdx = fuzzySearch(keys, search);
+  const values = labels.map((field) => field.value);
+  const valuesIdx = fuzzySearch(values, search);
+
+  const results = keysIdx.map((index) => labels[index]);
+  valuesIdx.forEach((index) => {
+    if (!results.includes(labels[index])) {
+      results.push(labels[index]);
+    }
+  });
+
+  return results;
+}

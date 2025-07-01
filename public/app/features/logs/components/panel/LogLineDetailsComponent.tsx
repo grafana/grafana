@@ -101,7 +101,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
             isOpen={linksOpen}
             onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
           >
-            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
+            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks} search={search} />
           </ControlledCollapse>
         )}
         {labelGroups.map((group) =>
@@ -113,8 +113,8 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
               isOpen={fieldsOpen}
               onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
             >
-              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
-              <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
+              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
+              <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
             </ControlledCollapse>
           ) : (
             <ControlledCollapse
@@ -124,7 +124,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
               isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName}`, true)}
               onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
             >
-              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
+              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
             </ControlledCollapse>
           )
         )}
@@ -136,7 +136,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
             isOpen={fieldsOpen}
             onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
           >
-            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
+            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
           </ControlledCollapse>
         )}
       </div>
