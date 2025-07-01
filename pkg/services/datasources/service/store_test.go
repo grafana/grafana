@@ -152,6 +152,19 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Equal(t, "v0alpha1", ds.APIVersion)
 		})
 
+		t.Run("updates datasource with uid", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ds := initDatasource(db)
+			cmd := defaultUpdateDatasourceCommand
+			cmd.UID = ds.UID
+			cmd.Version = ds.Version
+			cmd.URL = "http://localhost:3333"
+			ss := SqlStore{db: db}
+			ds, err := ss.UpdateDataSource(context.Background(), &cmd)
+			require.NoError(t, err)
+			require.Equal(t, "http://localhost:3333", ds.URL)
+		})
+
 		t.Run("does not overwrite UID if not specified", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)

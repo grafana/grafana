@@ -61,7 +61,7 @@ func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDat
 }
 
 func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
-	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
+	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) { // nolint:staticcheck
 		return nil, datasources.ErrDataSourceIdentifierNotSet
 	}
 
@@ -323,8 +323,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
-
-		if cmd.UID != "" {
+		if cmd.ID == 0 && cmd.UID == "" {
+			return datasources.ErrDataSourceIdentifierNotSet
+		}
+		if len(cmd.UID) > 0 {
 			if err := util.ValidateUID(cmd.UID); err != nil {
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
 				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
