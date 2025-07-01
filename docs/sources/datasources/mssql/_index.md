@@ -84,7 +84,21 @@ refs:
      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure
    - pattern: /docs/grafana-cloud/
      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure
-
+  mssql-query-editor:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/
+  mssql-template-variables:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/
+  query-caching:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching
 
 ---
 
@@ -93,14 +107,13 @@ refs:
 Grafana ships with built-in support for Microsoft SQL Server (MSSQL).
 You can query and visualize data from any Microsoft SQL Server 2005 or newer, including the Microsoft Azure SQL Database.
 
+Use this data source to create dashboards, explore SQL data, and monitor MSSQL-based workloads in real time.
+
 The following documentation will help you get started working with the Microsoft SQL Server (MSSQL) data source:
 
 - [Configure the  Microsoft SQL Server data source](ref:configure-mssql-data-source)
-- [Microsoft SQL Server query editor]()
-- [Microsoft SQL Server template variables]()
-
-<!-- Once you've added the Microsoft SQL Server data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor](query-editor/) when they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore). -->
-
+- [Microsoft SQL Server query editor](ref:mssql-query-editor)
+- [Microsoft SQL Server template variables](ref:mssql-template-variables)
 
 ## Get the most out of the data source
 
@@ -111,3 +124,4 @@ After installing and configuring the Microsoft SQL Server data source, you can:
 - Add [transformations](ref:transformations)
 - Add [annotations](ref:annotate-visualizations)
 - Set up [alerting](ref:alerting)
+- Optimize performance with [query caching](ref:query-caching)

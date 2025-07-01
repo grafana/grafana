@@ -121,10 +121,6 @@ Following are configuration options for the Microsoft SQL Server data source:
 | **Host**   | Sets the IP address or hostname (and optional port) of your MSSQL instance. The default port is `0`, which uses the driver's default. <br> You can include additional connection properties (e.g., `ApplicationIntent`) by separating them with semicolons (`;`). |
 | **Database** | Sets the name of the MSSQL database to connect to.                                                                                                    |
 
-
- <!-- - **Host** - Sets the IP address/hostname and optional port of your MSSQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`).
-- **Database** - Sets the name of your MSSQL database. -->
-
 **TLS/SSL Auth:** 
 
 Encrypt - Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server.
@@ -135,37 +131,11 @@ Encrypt - Determines whether or to which extent a secure SSL TCP/IP connection w
 | **False**        | The default setting. Only the login packet is encrypted; **all other data is sent unencrypted**.    |
 | **True**         | **All data** sent between the client and server is **encrypted**.                                   |
 
-<!-- - **Disable** - Data sent between client and server is not encrypted.
-- **False** - The default setting. Data sent between client and server is not encrypted beyond the login packet.
-- **True** - Data sent between client and server is encrypted. -->
-
 {{< admonition type="note" >}}
 If you're using an older version of Microsoft SQL Server like 2008 and 2008R2, you may need to disable encryption to be able to connect.
 {{< /admonition >}}
 
 **Authentication:** 
-
-Authentication Type
-
-- **SQL Server Authentication** -  This is the default mechanism to connect to MSSQL Server. Enter the SQL Server Authentication login or the Windows Authentication login in the DOMAIN\User format.
-  - **Username** - Your Microsoft SQL Server user name.
-  - **Password** - Your Microsoft SQL Server password.
-
-- **Windows Authentication (Windows Integrated Security)** - This authentication method uses the logged-in Windows user's credentials to authenticate with SQL Server via single sign-on. This method is available when the user is already signed into Windows and SQL Server is configured to allow Windows Authentication.
-
-- **Windows AD (Active Directory username/password)** - Authenticates a domain user using their Active Directory username and password.
-  - **Username** - Must be in the format `user@example.com`. The domain (realm) is derived from the username.
-  - **Password** - The corresponding Active Directory password for the specified user.
-
-- **Windows AD: (Keytab)** - Authenticates a domain user using a keytab file.
-  - **Username** - Format is `user@example.com`. The realm is derived from the username.
-  - **Keytab file path** - Add your keytab file path.
-- **Windows AD (Credential Cache)** - Sign on for domain user via credential cache.
- Authenticates a domain user using a Kerberos credential cache already loaded into memory (e.g., from a prior kinit command). No file is needed.
-  - **Credential cache path *** - Add your credential cache path. Example: /tmp/krb5cc_1000
-- **Windows AD: (Credential cache _file_)** - Sign on for domain user via credential cache file. Authenticates a domain user using a credential cache file (`.ccache`).
-  - **Username** Use the format `user@edomain.com`.
-  - **Credential cache file path** - Add your credential cache file path. Example: /home/grot/cache.json
 
 | Authentication Type                       | Description                                                                                                                                                           | Credentials / Fields                                                                                 |
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
@@ -176,20 +146,11 @@ Authentication Type
 | **Windows AD**<br>(Credential Cache)      | Uses a Kerberos credential cache already loaded in memory (e.g., from a prior `kinit` command). No file needed.                                                      | - **Credential cache path**: Path to in-memory credential (e.g., `/tmp/krb5cc_1000`)                 |
 | **Windows AD**<br>(Credential Cache File) | Authenticates a domain user using a credential cache file (`.ccache`).                                                                                                | - **Username**: `user@example.com`<br>- **Credential cache file path**: e.g., `/home/grot/cache.json` |
 
-
-
-<!-- | **Authentication Type**                | **Description**                                                                                                   | **Required Fields**                                                                                 |
-|----------------------------------------|-------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| Windows AD (Keytab)                    | Authenticates a domain user using a keytab file.                                                                  | Username: `user@example.com`<br>Keytab file path: Path to your keytab file                          |
-| Windows AD (Credential Cache)          | Signs on a domain user via a Kerberos credential cache already loaded into memory (e.g., from a prior `kinit`). No file is needed. | Credential cache path: Path to your credential cache (e.g., `/tmp/krb5cc_1000`)                     |
-| Windows AD (Credential Cache File)     | Signs on a domain user via a credential cache file (`.ccache`).                                                   | Username: `user@edomain.com`<br>Credential cache file path: Path to your credential cache file (e.g., `/home/grot/cache.json`) | -->
-
-
 **Additional settings:**
 
 Additional settings are optional settings you configure for more control over your data source. This includes connection limits, connection timeout, group-by time interval, and Secure Socks Proxy.
 
-- **Connection limits**:
+**Connection limits**:
 
 | Setting         | Description                                                                                                                                                            |
 |-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -198,18 +159,6 @@ Additional settings are optional settings you configure for more control over yo
 | **Max idle**     | The maximum number of idle connections in the pool. If `max open` is set and is lower than `max idle`, then `max idle` is reduced to match. If set to `0`, no idle connections are retained. |
 | **Max lifetime** | The maximum time (in seconds) a connection can be reused before being closed and replaced. If set to `0`, connections are reused indefinitely.                      |
 
-
-<!-- 
-  - **Max open** - The maximum number of open connections to the database. If set to 0, there is no limit. If `max open` is greater than 0 and less than the `max idle` setting, `max idle` will be adjusted to match it.
-
-  - **Auto max idle** - Toggle on to automatically set the maximum idle connections to match the max open connections. If max open connections isn’t set, it defaults to `100`.
-
-  - **Max idle** - The maximum number of idle connections in the pool. If `max open` connections is set to a value greater than 0 and is lower than this setting, `max idle` connections will be reduced to match it. If set to 0, idle connections are not retained.
-
-  - **Max lifetime** - Specifies the maximum duration (in seconds) that a connection can be reused before it is closed and replaced. If set to `0`, connections are reused indefinitely.
- -->
-
-
 **Connection details:**
 
 | **Setting**           | **Description**                                                                                                                                                                                                                  |
@@ -217,14 +166,8 @@ Additional settings are optional settings you configure for more control over yo
 | **Min time interval**     | Specifies the lower bound for the auto-generated `GROUP BY` time interval. Grafana recommends matching this value to your data's write frequency—for example, `1m` if data is written every minute. Refer to [Min time interval](#min-time-interval) for details. |
 | **Connection timeout**    | Specifies the maximum number of seconds to wait when attempting to connect to the database before timing out. A value of `0` (the default) disables the timeout.                            |
 
-
 **Windows ADS Advanced Settings**
 
-- **UDP Preference Limit** - _Optional_ The default is 1 and means always use TCP and is optional. The **UDP Preference Limit** setting defines the maximum size packet that the Kerberos libraries will attempt to send over a UDP connection before retrying with TCP. Default is 1 which means always use TCP.
-
-- **DNS Lookup KDC** - This setting controls whether DNS `SRV` records should be used to discover the [Key Distribution Centers (KDCs)](https://web.mit.edu/kerberos/krb5-latest/doc/admin/realm_config.html#key-distribution-centers) and other servers for the specified realm. The default is `true`.
-
-- **krb5 config file path** - The path to the configuration file for the [MIT krb5 package](https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html). The default is `/etc/krb5.conf`.
 
 | Setting                  | Description                                                                                                                                                                                                                       | Default             |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|
@@ -232,35 +175,15 @@ Additional settings are optional settings you configure for more control over yo
 | **DNS Lookup KDC**       | Controls whether DNS `SRV` records are used to locate [Key Distribution Centers (KDCs)](https://web.mit.edu/kerberos/krb5-latest/doc/admin/realm_config.html#key-distribution-centers) and other servers for the realm.         | `true`              |
 | **krb5 config file path**| Specifies the path to the Kerberos configuration file used by the [MIT krb5 package](https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html).                                                             | `/etc/krb5.conf`    |
 
-
-
 **Private data source connect** - _Only for Grafana Cloud users._ 
 
 Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](ref:configure-pdc) for instructions on setting up a PDC connection.
 
 Click **Manage private data source connect** to open your PDC connection page and view your configuration details.
 
-After configuring your Graphite data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
+After configuring your MSSQL data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 
-<!-- 
-1. Set the data source's basic configuration options:
-
-| Name                | Description                                                                                                                                                                                                                                                                                                                                                        |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                           |
-| **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                                                                                                                                                                                                                           |
-| **Host**            | Sets the IP address/hostname and optional port of your MSSQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`).                                                                                                                    |
-| **Database**        | Sets the name of your MSSQL database.                                                                                                                                                                                                                                                                                                                             |
-| **Authentication**  | Sets the authentication mode, either using SQL Server authentication, Windows authentication (single sign-on for Windows users), Azure Active Directory authentication, or various forms of Windows Active Directory authentication.                                                                                                                               |
-| **User**            | Defines the database user's username.                                                                                                                                                                                                                                                                                                                              |
-| **Password**        | Defines the database user's password.                                                                                                                                                                                                                                                                                                                              |
-| **Encrypt**         | Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server. Options include: `disable` - data sent between client and server is not encrypted; `false` - data sent between client and server is not encrypted beyond the login packet; `true` - data sent between client and server is encrypted. Default is `false`. |
-| **Max open**        | Sets the maximum number of open connections to the database. Default is `100`.                                                                                                                                                                                                                                                                                     |
-| **Max idle**        | Sets the maximum number of connections in the idle connection pool. Default is `100`.                                                                                                                                                                                                                                                                              |
-| **Auto (max idle)** | If set will set the maximum number of idle connections to the number of maximum open connections. Default is `true`.                                                                                                                                                                                                                                               |
-| **Max lifetime**    | Sets the maximum number of seconds that the data source can reuse a connection. Default is `14400` (4 hours).                                                                                                                                                                                                                                                      |
-
-You can also configure settings specific to the Microsoft SQL Server data source. These options are described in the sections below. -->
+**Database Connection OK**
 
 ### Min time interval
 
@@ -279,19 +202,14 @@ This value _must_ be formatted as a number followed by a valid time identifier:
 | `s`        | second      |
 | `ms`       | millisecond |
 
-We recommend setting this value to match your Microsoft SQL Server write frequency.
+Grafana recommends setting this value to match your Microsoft SQL Server write frequency.
 For example, use `1m` if Microsoft SQL Server writes data every minute.
 
 You can also override this setting in a dashboard panel under its data source options.
 
 ### Database user permissions
 
-Grafana doesn't validate that a query is safe, and could include any SQL statement.
-For example, Microsoft SQL Server would execute destructive queries like `DELETE FROM user;` and `DROP TABLE user;` if the querying user has permission to do so.
-
-To protect against this, we strongly recommend that you create a specific MSSQL user with restricted permissions.
-
-Grant only `SELECT` permissions on the specified database and tables that you want to query to the database user you specified when you added the data source:
+When adding a data source, ensure the database user you specify has only SELECT permissions on the relevant database and tables. Grafana does not validate the safety of queries, which means they can include potentially harmful SQL statements, such as `USE otherdb`; or `DROP TABLE user;`, which could get executed. To minimize this risk, Grafana strongly recommends creating a dedicated MySQL user with restricted permissions.
 
 ```sql
 CREATE USER grafanareader WITH PASSWORD 'password'
@@ -304,7 +222,7 @@ Also, ensure that the user doesn't have any unwanted privileges from the public 
 
 If you use older versions of Microsoft SQL Server, such as 2008 and 2008R2, you might need to disable encryption before you can connect the data source.
 
-We recommend that you use the latest available service pack for optimal compatibility.
+Grafana recommends that you use the latest available service pack for optimal compatibility.
 
 ### Provision the data source
 

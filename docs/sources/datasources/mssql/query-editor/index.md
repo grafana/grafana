@@ -88,7 +88,7 @@ The following components will help you build a T-SQL query:
 
 - **Dataset** - Select a database to query from the drop-down. Grafana automatically populates the drop-down with all databases the user has access to. If a default database is configured in the Data Source Configuration page or via a provisioning file, users will be limited to querying only that predefined database.
 
-  Note that `tempdb`, `model`, `msdb`, and `master` system databases are intentionally excluded from the query editor drop-down.
+  Note that `tempdb`, `model`, `msdb`, and `master` system databases are not included in the query editor drop-down.
 
 - **Table** - Select a table from the drop-down. After selecting a database, the next drop-down displays all available tables in that database.
 
@@ -112,15 +112,6 @@ The following components will help you build a T-SQL query:
 
 For additional detail about using formats, refer to [Table queries](#table-queries) and [Time series queries](#time-series-queries).
 
-### Dataset and table selection
-
-In the **Dataset** drop-down, select the MSSQL database to query. Grafana populates the drop-down with all databases that the user can access.
-Once you select a database, Grafana populates the drop-down with all available tables.
-
-If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single pre-configured database for querying.
-
-Grafana doesn't include the `tempdb`,`model`,`msdb`, and `master` databases in the query editor drop-down.
-
 ## Code mode
 
 {{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
@@ -133,11 +124,9 @@ This mode is ideal for advanced users who need full control over the SQL query o
 
 Code mode has several features in a toolbar located in the editor's lower-right corner.
 
-To reformat the query, click the brackets button (`{}`).
-
-To expand the code editor, click the chevron button pointing downward.
-
-To run the query, click the **Run query** button or use the keyboard shortcut **<key>Ctrl</key>/<key>Cmd</key> + <key>Enter</key>/<key>Return</key>**.
+- To reformat the query, click the brackets button (`{}`).
+- To expand the code editor, click the chevron button pointing downward.
+- To run the query, click the **Run query** button or use the keyboard shortcut **<key>Ctrl</key>/<key>Cmd</key> + <key>Enter</key>/<key>Return</key>**.
 
 ### Use autocompletion
 

@@ -63,8 +63,6 @@ A query can return multiple columns, and Grafana automatically generates a list 
 SELECT [host].[hostname], [other_host].[hostname2] FROM host JOIN other_host ON [host].[city] = [other_host].[city]
 ```
 
-<!-- You can also create a key/value variable using a query that returns two columns named `__text` and `__value`. The `__text` column defines what is shown in the drop-down, while the `__value` column is passed to the panel queries. This is useful when you want to display a user-friendly label (like a hostname) but use a different underlying value (like an ID). -->
-
 You can also create a key/value variable using a query that returns two columns named `__text` and `__value`.
 
 - The `__text` column defines the label shown in the drop-down.
