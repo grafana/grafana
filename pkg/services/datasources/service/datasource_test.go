@@ -419,6 +419,27 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("should update with UID", func(t *testing.T) {
+		dsService := initDSService(t)
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+			URL:   "http://before",
+		})
+		require.NoError(t, err)
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			UID:   ds.UID,
+			OrgID: ds.OrgID,
+			URL:   "http://after",
+		}
+
+		after, err := dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+		require.Equal(t, "http://after", after.URL)
+	})
+
 	t.Run("should return error if datasource with same name exist", func(t *testing.T) {
 		dsService := initDSService(t)
 

@@ -152,19 +152,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Equal(t, "v0alpha1", ds.APIVersion)
 		})
 
-		t.Run("updates datasource with uid", func(t *testing.T) {
-			db := db.InitTestDB(t)
-			ds := initDatasource(db)
-			cmd := defaultUpdateDatasourceCommand
-			cmd.UID = ds.UID
-			cmd.Version = ds.Version
-			cmd.URL = "http://localhost:3333"
-			ss := SqlStore{db: db}
-			ds, err := ss.UpdateDataSource(context.Background(), &cmd)
-			require.NoError(t, err)
-			require.Equal(t, "http://localhost:3333", ds.URL)
-		})
-
 		t.Run("does not overwrite UID if not specified", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
@@ -267,6 +254,21 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{ID: ds.ID, OrgID: ds.OrgID})
+			require.NoError(t, err)
+
+			query := datasources.GetDataSourcesQuery{OrgID: 10}
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
+			require.NoError(t, err)
+
+			require.Equal(t, 0, len(dataSources))
+		})
+
+		t.Run("can delete datasource with UID", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := SqlStore{db: db}
+
+			err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{UID: ds.UID, OrgID: ds.OrgID})
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourcesQuery{OrgID: 10}
