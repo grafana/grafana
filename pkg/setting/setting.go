@@ -567,6 +567,9 @@ type Cfg struct {
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
 	EnableSharding                             bool
+	QOSEnabled                                 bool
+	QOSNumberWorker                            int
+	QOSMaxSizePerTenant                        int
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string
 	MemberlistAdvertisePort                    int

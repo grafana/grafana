@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
@@ -24,6 +25,9 @@ func QueueOptionsWithDefaults(opts *QueueOptions) *QueueOptions {
 	}
 	if opts.Registerer == nil {
 		opts.Registerer = prometheus.NewRegistry()
+	}
+	if opts.Logger == nil {
+		opts.Logger = log.New("qos.test")
 	}
 	return opts
 }
