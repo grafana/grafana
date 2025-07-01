@@ -38,6 +38,9 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       const layoutItem = panelToReplace.parent;
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
+        // keep the same key from the panelToReplace
+        // this is important for edit mode
+        newPanel.setState({ key: panelToReplace.state.key });
         layoutItem.setElementBody(newPanel);
       }
     } else {

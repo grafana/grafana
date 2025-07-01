@@ -222,6 +222,9 @@
       "text-no-resources": "Inga resurser hittades",
       "title-error-occurred": "Ett fel uppstod vid begäran av resurser från Azure Monitor"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Resurssökning",
       "placeholder-resource-search": "Sök efter en resurs"

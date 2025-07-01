@@ -35,7 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestContactPointService(t *testing.T) {
+func TestIntegrationContactPointService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -360,7 +360,7 @@ func TestContactPointService(t *testing.T) {
 	})
 }
 
-func TestContactPointServiceDecryptRedact(t *testing.T) {
+func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -425,6 +425,9 @@ func TestRemoveSecretsForContactPoint(t *testing.T) {
 		},
 		"jira": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
 			settings["api_token"] = "test-token"
+		},
+		"oncall": func(settings map[string]any) { // add authorization_credentials field since it's expected as a secret field
+			settings["authorization_credentials"] = "test-authz-creds"
 		},
 	}
 

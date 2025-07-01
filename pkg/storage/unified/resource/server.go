@@ -19,9 +19,20 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/scheduler"
+)
+
+const (
+	// DefaultMaxBackoff is the default maximum backoff duration for enqueue operations.
+	DefaultMaxBackoff = 1 * time.Second
+	// DefaultMinBackoff is the default minimum backoff duration for enqueue operations.
+	DefaultMinBackoff = 100 * time.Millisecond
+	// DefaultMaxRetries is the default maximum number of retries for enqueue operations.
+	DefaultMaxRetries = 3
 )
 
 // ResourceServer implements all gRPC services
@@ -134,6 +145,10 @@ type BlobSupport interface {
 	// TODO? List+Delete?  This is for admin access
 }
 
+type QOSEnqueuer interface {
+	Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error
+}
+
 type BlobConfig struct {
 	// The CDK configuration URL
 	URL string
@@ -155,6 +170,10 @@ type SearchOptions struct {
 
 	// Skip building index on startup for small indexes
 	InitMinCount int
+
+	// Build empty index on startup for large indexes so that
+	// we don't re-attempt to build the index later.
+	InitMaxCount int
 
 	// Channel to watch for index events (for testing)
 	IndexEventsChan chan *IndexEvent
@@ -199,7 +218,11 @@ type ResourceServerOptions struct {
 
 	IndexMetrics *BleveIndexMetrics
 
+	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
+
+	// QOSQueue is the quality of service queue used to enqueue
+	QOSQueue QOSEnqueuer
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -218,6 +241,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Diagnostics == nil {
 		opts.Diagnostics = &noopService{}
 	}
+
 	if opts.Now == nil {
 		opts.Now = func() int64 {
 			return time.Now().UnixMilli()
@@ -227,6 +251,10 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.MaxPageSizeBytes <= 0 {
 		// By default, we use 2MB for the page size.
 		opts.MaxPageSizeBytes = 1024 * 1024 * 2
+	}
+
+	if opts.QOSQueue == nil {
+		opts.QOSQueue = scheduler.NewNoopQueue()
 	}
 
 	// Initialize the blob storage
@@ -271,6 +299,8 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		storageMetrics:   opts.storageMetrics,
 		indexMetrics:     opts.IndexMetrics,
 		maxPageSizeBytes: opts.MaxPageSizeBytes,
+		reg:              opts.Reg,
+		queue:            opts.QOSQueue,
 	}
 
 	if opts.Search.Resources != nil {
@@ -317,6 +347,8 @@ type server struct {
 	initErr error
 
 	maxPageSizeBytes int
+	reg              prometheus.Registerer
+	queue            QOSEnqueuer
 }
 
 // Init implements ResourceServer.
@@ -566,6 +598,25 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return rsp, nil
 	}
 
+	var (
+		res *resourcepb.CreateResponse
+		err error
+	)
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+		res, err = s.create(ctx, user, req)
+	})
+	if runErr != nil {
+		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.CreateResponse {
+			return &resourcepb.CreateResponse{Error: e}
+		})
+	}
+
+	return res, err
+}
+
+func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
+	rsp := &resourcepb.CreateResponse{}
+
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
 	if e != nil {
 		rsp.Error = e
@@ -601,6 +652,24 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		return rsp, nil
 	}
 
+	var (
+		res *resourcepb.UpdateResponse
+		err error
+	)
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+		res, err = s.update(ctx, user, req)
+	})
+	if runErr != nil {
+		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.UpdateResponse {
+			return &resourcepb.UpdateResponse{Error: e}
+		})
+	}
+
+	return res, err
+}
+
+func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
+	rsp := &resourcepb.UpdateResponse{}
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
@@ -650,6 +719,25 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		return rsp, nil
 	}
 
+	var (
+		res *resourcepb.DeleteResponse
+		err error
+	)
+
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+		res, err = s.delete(ctx, user, req)
+	})
+	if runErr != nil {
+		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.DeleteResponse {
+			return &resourcepb.DeleteResponse{Error: e}
+		})
+	}
+
+	return res, err
+}
+
+func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
+	rsp := &resourcepb.DeleteResponse{}
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
@@ -740,6 +828,23 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
 
+	var (
+		res *resourcepb.ReadResponse
+		err error
+	)
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+		res, err = s.read(ctx, user, req)
+	})
+	if runErr != nil {
+		return HandleQueueError(runErr, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
+			return &resourcepb.ReadResponse{Error: e}
+		})
+	}
+
+	return res, err
+}
+
+func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
 	rsp := s.backend.ReadResource(ctx, req)
 	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
 		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
@@ -812,6 +917,18 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		Namespace: key.Namespace,
 		Verb:      utils.VerbGet,
 	})
+	var trashChecker claims.ItemChecker // only for trash
+	if req.Source == resourcepb.ListRequest_TRASH {
+		trashChecker, err = s.access.Compile(ctx, user, claims.ListRequest{
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Verb:      utils.VerbSetPermissions, // Basically Admin
+		})
+		if err != nil {
+			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+		}
+	}
 	if err != nil {
 		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -831,8 +948,12 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 				ResourceVersion: iter.ResourceVersion(),
 				Value:           iter.Value(),
 			}
-
-			if !checker(iter.Name(), iter.Folder()) {
+			// Trash is only accessible to admins or the user who deleted the object
+			if req.Source == resourcepb.ListRequest_TRASH {
+				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
+					continue
+				}
+			} else if !checker(iter.Name(), iter.Folder()) {
 				continue
 			}
 
@@ -873,6 +994,28 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	}
 	rsp.ResourceVersion = rv
 	return rsp, err
+}
+
+// isTrashItemAuthorized checks if the user has access to the trash item.
+func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return false
+	}
+
+	partial := &metav1.PartialObjectMetadata{}
+	err := json.Unmarshal(iter.Value(), partial)
+	if err != nil {
+		return false
+	}
+
+	obj, err := utils.MetaAccessor(partial)
+	if err != nil {
+		return false
+	}
+
+	// Trash is only accessible to admins or the user who deleted the object
+	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
 }
 
 func (s *server) initWatcher() error {
@@ -1194,4 +1337,42 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 		rsp.Error = AsErrorResult(err)
 	}
 	return rsp, nil
+}
+
+func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: DefaultMinBackoff,
+		MaxBackoff: DefaultMaxBackoff,
+		MaxRetries: DefaultMaxRetries,
+	})
+
+	var (
+		wg  sync.WaitGroup
+		err error
+	)
+	wg.Add(1)
+	wrapped := func(ctx context.Context) {
+		runnable(ctx)
+		wg.Done()
+	}
+	for boff.Ongoing() {
+		err = s.queue.Enqueue(ctx, tenantID, wrapped)
+		if err == nil {
+			break
+		}
+		s.log.Warn("failed to enqueue runnable, retrying",
+			"maxRetries", DefaultMaxRetries,
+			"tenantID", tenantID,
+			"error", err)
+		boff.Wait()
+	}
+	if err != nil {
+		s.log.Error("failed to enqueue runnable",
+			"maxRetries", DefaultMaxRetries,
+			"tenantID", tenantID,
+			"error", err)
+		return fmt.Errorf("failed to enqueue runnable for tenant %s: %w", tenantID, err)
+	}
+	wg.Wait()
+	return nil
 }

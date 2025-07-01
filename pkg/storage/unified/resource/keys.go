@@ -79,6 +79,11 @@ func ReadSearchID(x *resourcepb.ResourceKey, v string) error {
 // The namespace/group/resource
 func NSGR(x *resourcepb.ResourceKey) string {
 	var sb strings.Builder
+	appendNSGR(&sb, x)
+	return sb.String()
+}
+
+func appendNSGR(sb *strings.Builder, x *resourcepb.ResourceKey) string {
 	if x.Namespace == "" {
 		sb.WriteString(clusterNamespace)
 	} else {
@@ -88,5 +93,13 @@ func NSGR(x *resourcepb.ResourceKey) string {
 	sb.WriteString(x.Group)
 	sb.WriteString("/")
 	sb.WriteString(x.Resource)
+	return sb.String()
+}
+
+func nsgrWithName(x *resourcepb.ResourceKey) string {
+	var sb strings.Builder
+	appendNSGR(&sb, x)
+	sb.WriteString("/")
+	sb.WriteString(x.Name)
 	return sb.String()
 }
