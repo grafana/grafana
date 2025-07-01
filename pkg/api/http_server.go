@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/anonymous"
@@ -201,6 +202,7 @@ type HTTPServer struct {
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
+	appRegistryService           *appregistry.Service
 
 	userService          user.Service
 	tempUserService      tempUser.Service
@@ -263,6 +265,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	appRegistryService *appregistry.Service,
 	secretsMigrator secrets.Migrator, secretsService secrets.Service,
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
@@ -353,6 +356,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		playlistService:              playlistService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
+		appRegistryService:           appRegistryService,
 		PublicDashboardsApi:          publicDashboardsApi,
 		userService:                  userService,
 		tempUserService:              tempUserService,

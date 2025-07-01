@@ -55,11 +55,21 @@ func (p *InvestigationsAppProvider) GetGraphQLSubgraph() (graphqlsubgraph.GraphQ
 	}
 
 	// Create a storage adapter that bridges GraphQL storage interface
-	// to the existing REST storage (if needed in the future)
+	// to the existing REST storage
 	storageGetter := func(gvr schema.GroupVersionResource) graphqlsubgraph.Storage {
-		// For now, return nil as investigations don't have custom storage adapter
-		// This can be implemented later if needed
-		return nil
+		// Only handle investigation resources
+		expectedGVR := schema.GroupVersionResource{
+			Group:    gv.Group,
+			Version:  gv.Version,
+			Resource: investigationv0alpha1.InvestigationKind().Plural(),
+		}
+
+		if gvr != expectedGVR {
+			return nil
+		}
+
+		// Return a storage adapter that uses the REST API
+		return NewInvestigationsStorageAdapter(p.cfg)
 	}
 
 	// Create resource handler registry and register the investigation handler
