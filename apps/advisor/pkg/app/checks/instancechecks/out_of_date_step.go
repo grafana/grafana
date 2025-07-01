@@ -81,10 +81,10 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 		return nil, nil
 	}
 
-	releases, err := s.fetchVersionsFromGitHub(ctx, currentVersion)
+	releases, err := s.fetchVersionsFromGrafanaAPI(ctx, currentVersion)
 	if err != nil {
 		var gerr error
-		releases, gerr = s.fetchVersionsFromGrafanaAPI(ctx, currentVersion)
+		releases, gerr = s.fetchVersionsFromGitHub(ctx, currentVersion)
 		if gerr != nil {
 			log.Error("Unable to fetch the Grafana versions", "github_error", err, "website_error", gerr)
 			return nil, nil
@@ -98,6 +98,11 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 	reportFailures := make([]advisor.CheckReportFailure, 0)
 	uniqueReportedVersions := make(map[string]struct{})
 
+	severity := advisor.CheckReportFailureSeverityHigh
+	if s.isVersionSupported(*currentVersion, releases) {
+		severity = advisor.CheckReportFailureSeverityLow
+	}
+
 	// Report failures for all newer major versions
 	for majorVersion, latestVersionForMajor := range versionInfo.latestMajorVersions {
 		versionString := latestVersionForMajor.String()
@@ -108,13 +113,13 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 			reportFailures = append(
 				reportFailures,
 				checks.NewCheckReportFailure(
-					advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current major is still supported
+					severity,
 					s.ID(),
 					fmt.Sprintf("There's a new major version %s released on %s", versionString, releaseDate.Format(time.DateOnly)),
 					outOfDateVersion,
 					[]advisor.CheckErrorLink{
 						{
-							Message: fmt.Sprintf("Upgrade to major version %d", majorVersion),
+							Message: fmt.Sprintf("Upgrade to major version %d", majorVersion) + s.oosMsg(latestVersionForMajor, releases),
 							Url:     "https://grafana.com/grafana/download/" + versionString,
 						},
 					},
@@ -135,13 +140,13 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 			reportFailures = append(
 				reportFailures,
 				checks.NewCheckReportFailure(
-					advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current minor is still supported
+					severity,
 					s.ID(),
 					fmt.Sprintf("There's a new minor version %s released on %s", versionString, releaseDate.Format(time.DateOnly)),
 					outOfDateVersion,
 					[]advisor.CheckErrorLink{
 						{
-							Message: "Download",
+							Message: "Download" + s.oosMsg(versionInfo.latestMinor, releases),
 							Url:     "https://grafana.com/grafana/download/" + versionString,
 						},
 					},
@@ -162,13 +167,13 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 			reportFailures = append(
 				reportFailures,
 				checks.NewCheckReportFailure(
-					advisor.CheckReportFailureSeverityHigh,
+					severity,
 					s.ID(),
 					fmt.Sprintf("New patch version %s released on %s", versionString, releaseDate.Format(time.DateOnly)),
 					outOfDateVersion,
 					[]advisor.CheckErrorLink{
 						{
-							Message: "Upgrade now",
+							Message: "Upgrade now" + s.oosMsg(versionInfo.latestPatch, releases),
 							Url:     "https://grafana.com/grafana/download/" + versionString,
 						},
 					},
@@ -189,13 +194,13 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 			reportFailures = append(
 				reportFailures,
 				checks.NewCheckReportFailure(
-					advisor.CheckReportFailureSeverityHigh,
+					severity,
 					s.ID(),
 					fmt.Sprintf("New security patch %s released on %s", versionString, releaseDate.Format(time.DateOnly)),
 					outOfDateVersion,
 					[]advisor.CheckErrorLink{
 						{
-							Message: "Upgrade now",
+							Message: "Upgrade now" + s.oosMsg(versionInfo.latestSecurityPatch, releases),
 							Url:     "https://grafana.com/grafana/download/" + versionString,
 						},
 					},
@@ -424,4 +429,57 @@ func (s *outOfDateVersionStep) fetchVersionsFromGrafanaAPI(ctx context.Context, 
 	}
 
 	return releases, nil
+}
+
+func (s *outOfDateVersionStep) findLatestMajor(releases map[semver.Version]*releaseDetails) uint64 {
+	latestMajor := uint64(0)
+	for version := range releases {
+		if version.Major() > latestMajor {
+			latestMajor = version.Major()
+		}
+	}
+	return latestMajor
+}
+
+func (s *outOfDateVersionStep) findLatestMinorForMajor(major uint64, releases map[semver.Version]*releaseDetails) uint64 {
+	latestMinor := uint64(0)
+	for version := range releases {
+		if version.Major() == major && version.Minor() > latestMinor {
+			latestMinor = version.Minor()
+		}
+	}
+	return latestMinor
+}
+
+func (s *outOfDateVersionStep) isVersionSupported(version semver.Version, releases map[semver.Version]*releaseDetails) bool {
+	releaseDetails, ok := releases[version]
+	if !ok {
+		return false
+	}
+
+	latestOverallMajor := s.findLatestMajor(releases)
+
+	// Only support versions from the latest major and the previous major (N-1)
+	if version.Major() < latestOverallMajor-1 {
+		return false
+	}
+
+	if version.Major() == latestOverallMajor-1 {
+		latestMinorForMajor := s.findLatestMinorForMajor(version.Major(), releases)
+
+		// Latest minor of previous major gets 15 months support
+		if version.Minor() == latestMinorForMajor {
+			return time.Now().Before(releaseDetails.releaseDate.AddDate(0, 15, 0))
+		}
+	}
+
+	// All other versions get 9 months of support
+	return time.Now().Before(releaseDetails.releaseDate.AddDate(0, 9, 0))
+}
+
+func (s *outOfDateVersionStep) oosMsg(version semver.Version, releases map[semver.Version]*releaseDetails) string {
+	if s.isVersionSupported(version, releases) {
+		return ""
+	}
+	return " (OUT OF SUPPORT)"
 }
