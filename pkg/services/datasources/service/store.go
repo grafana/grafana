@@ -67,7 +67,7 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 
 	if len(query.UID) > 0 {
 		if err := util.ValidateUID(query.UID); err != nil {
-			logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, "read", fmt.Errorf("invalid UID"))
+			logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, "read", fmt.Errorf("invalid UID")) // nolint:staticcheck
 		}
 	}
 
@@ -80,7 +80,7 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 	has, err := sess.Get(datasource)
 
 	if err != nil {
-		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID)
+		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
 		return nil, err
 	} else if !has {
 		return nil, datasources.ErrDataSourceNotFound
