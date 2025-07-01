@@ -154,7 +154,7 @@ export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
           size="md"
           name="gf-pin"
           onClick={togglePinning}
-          tooltip={t('logs.log-line-details.unpin-line', 'Pin log')}
+          tooltip={t('logs.log-line-details.pin-line', 'Pin log')}
           tooltipPlacement="top"
           tabIndex={0}
         />

@@ -266,10 +266,10 @@ export const LogLineDetailsField = ({
                   name="search-minus"
                   tooltip={
                     app === CoreApp.Explore && log.dataFrame?.refId
-                      ? t('logs.un-themed-log-details-log.filter-out-query', 'Filter out value in query {{query}}', {
+                      ? t('logs.log-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
                           query: log.dataFrame?.refId,
                         })
-                      : t('logs.un-themed-log-details-log.filter-out', 'Filter out value')
+                      : t('logs.log-details.fields.filter-out', 'Filter out value')
                   }
                   onClick={filterOutLabel}
                 />
@@ -278,7 +278,7 @@ export const LogLineDetailsField = ({
                 <IconButton
                   variant="primary"
                   tooltip={t(
-                    'logs.un-themed-log-details-log.toggle-field-button.tooltip-hide-this-field',
+                    'logs.log-details.fields.toggle-field-button.hide-this-field',
                     'Hide this field'
                   )}
                   name="eye"
@@ -288,7 +288,7 @@ export const LogLineDetailsField = ({
               {singleKey && !displayedFields.includes(keys[0]) && (
                 <IconButton
                   tooltip={t(
-                    'logs.un-themed-log-details-log.toggle-field-button.tooltip-field-instead-message',
+                    'logs.log-details.fields.toggle-field-button.field-instead-message',
                     'Show this field instead of the message'
                   )}
                   name="eye"
@@ -298,7 +298,7 @@ export const LogLineDetailsField = ({
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
-                tooltip={t('logs.un-themed-log-details-log.tooltip-adhoc-statistics', 'Ad-hoc statistics')}
+                tooltip={t('logs.log-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
                 className="stats-button"
                 disabled={!singleKey}
                 onClick={showStats}
@@ -355,7 +355,7 @@ export const LogLineDetailsField = ({
             <IconButton
               variant={showFieldsStats ? 'primary' : 'secondary'}
               name="signal"
-              tooltip={t('logs.un-themed-log-details-log.tooltip-hide-adhoc-statistics', 'Hide ad-hoc statistics')}
+              tooltip={t('logs.log-details.fields.hide-adhoc-statistics', 'Hide ad-hoc statistics')}
               onClick={showStats}
             />
           </td>
@@ -412,7 +412,7 @@ const ClipboardButtonWrapper = ({ value }: { value: string }) => {
     <div className={styles.button}>
       <ClipboardButton
         getText={() => value}
-        title={t('logs.un-themed-log-details-log.title-copy-value-to-clipboard', 'Copy value to clipboard')}
+        title={t('logs.log-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
         fill="text"
         variant="secondary"
         icon="copy"
