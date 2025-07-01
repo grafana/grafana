@@ -1,7 +1,9 @@
 import { DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const deselectPanels = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls).click();
+  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls).click({
+    position: { x: 0, y: 0 },
+  });
 };
 
 export const flows = {
@@ -21,6 +23,24 @@ export const flows = {
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
       .fill(newPanelTitle);
+  },
+  async changePanelDescription(
+    dashboardPage: DashboardPage,
+    selectors: E2ESelectorGroups,
+    panelTitle: string,
+    newDescription: string
+  ) {
+    await deselectPanels(dashboardPage, selectors);
+    const panelTitleRegex = new RegExp(`^${panelTitle}$`);
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
+      .filter({ hasText: panelTitleRegex })
+      .first()
+      .click();
+    const descriptionTextArea = dashboardPage
+      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
+      .locator('textarea');
+    await descriptionTextArea.fill(newDescription);
   },
   async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
     await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
