@@ -2,7 +2,7 @@ import { pick } from 'lodash';
 import memoize from 'micro-memoize';
 
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { MatcherOperator, ROUTES_META_SYMBOL, Route } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -37,7 +37,7 @@ const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 const {
   useListNamespacedRoutingTreeQuery,
   useReplaceNamespacedRoutingTreeMutation,
-  useLazyListNamespacedRoutingTreeQuery,
+  useLazyReadNamespacedRoutingTreeQuery,
 } = routingTreeApi;
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
@@ -90,15 +90,16 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
   const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
-  const [listNamespacedRoutingTree] = useLazyListNamespacedRoutingTreeQuery();
+  const [readNamespacedRoutingTree] = useLazyReadNamespacedRoutingTreeQuery();
 
   const updateUsingK8sApi = useAsync(async (update: Partial<FormAmRoute>) => {
     const namespace = getAPINamespace();
-    const result = await listNamespacedRoutingTree({ namespace });
+    const name = update.name ?? ROOT_ROUTE_NAME;
+    const result = await readNamespacedRoutingTree({ namespace, name: name })
 
-    const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
+    const [rootTree] = result.data ? k8sRoutesToRoutesMemoized([result.data]) : [];
     if (!rootTree) {
-      throw new Error(`no root route found for namespace ${namespace}`);
+      throw new Error(`no root route found for namespace ${namespace} and name ${name}`);
     }
 
     const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
@@ -108,7 +109,7 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
     const routeObject = createKubernetesRoutingTreeSpec(newRouteTree);
 
     return updatedNamespacedRoute({
-      name: ROOT_ROUTE_NAME,
+      name: name,
       namespace,
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: cleanKubernetesRouteIDs(routeObject),
     }).unwrap();
@@ -125,33 +126,34 @@ export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertm
 export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
-  const [listNamespacedRoutingTree] = useLazyListNamespacedRoutingTreeQuery();
+  const [readNamespacedRoutingTree] = useLazyReadNamespacedRoutingTreeQuery();
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
 
-  const deleteFromK8sApi = useAsync(async (id: string) => {
+  const deleteFromK8sApi = useAsync(async (route: RouteWithID) => {
     const namespace = getAPINamespace();
-    const result = await listNamespacedRoutingTree({ namespace });
+    const name = route.name ?? ROOT_ROUTE_NAME;
+    const result = await readNamespacedRoutingTree({ namespace, name: name })
 
-    const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
+    const [rootTree] = result.data ? k8sRoutesToRoutesMemoized([result.data]) : [];
     if (!rootTree) {
       throw new Error(`no root route found for namespace ${namespace}`);
     }
 
     const rootRouteWithIdentifiers = addUniqueIdentifierToRoute(rootTree);
-    const newRouteTree = omitRouteFromRouteTree(id, rootRouteWithIdentifiers);
+    const newRouteTree = omitRouteFromRouteTree(route.id, rootRouteWithIdentifiers);
 
     // Create the K8s route object
     const routeObject = createKubernetesRoutingTreeSpec(newRouteTree);
 
     return updatedNamespacedRoute({
-      name: ROOT_ROUTE_NAME,
+      name: name,
       namespace,
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: routeObject,
     }).unwrap();
   });
 
-  const deleteFromAlertmanagerConfiguration = useAsync(async (id: string) => {
-    const action = deleteRouteAction({ id });
+  const deleteFromAlertmanagerConfiguration = useAsync(async (route: RouteWithID) => {
+    const action = deleteRouteAction({ id: route.id });
     return produceNewAlertmanagerConfiguration(action);
   });
 
@@ -161,23 +163,24 @@ export function useDeleteNotificationPolicy({ alertmanager }: BaseAlertmanagerAr
 export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
   const [produceNewAlertmanagerConfiguration] = useProduceNewAlertmanagerConfiguration();
-  const [listNamespacedRoutingTree] = useLazyListNamespacedRoutingTreeQuery();
+  const [readNamespacedRoutingTree] = useLazyReadNamespacedRoutingTreeQuery();
   const [updatedNamespacedRoute] = useReplaceNamespacedRoutingTreeMutation();
 
   const addToK8sApi = useAsync(
     async ({
       partialRoute,
-      referenceRouteIdentifier,
+      referenceRoute,
       insertPosition,
     }: {
       partialRoute: Partial<FormAmRoute>;
-      referenceRouteIdentifier: string;
+      referenceRoute: RouteWithID;
       insertPosition: InsertPosition;
     }) => {
       const namespace = getAPINamespace();
-      const result = await listNamespacedRoutingTree({ namespace });
+      const name = referenceRoute.name ?? ROOT_ROUTE_NAME;
+      const result = await readNamespacedRoutingTree({ namespace, name: name })
 
-      const [rootTree] = result.data ? k8sRoutesToRoutesMemoized(result.data.items) : [];
+      const [rootTree] = result.data ? k8sRoutesToRoutesMemoized([result.data]) : [];
       if (!rootTree) {
         throw new Error(`no root route found for namespace ${namespace}`);
       }
@@ -186,7 +189,7 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
       const newRouteTree = addRouteToReferenceRoute(
         alertmanager ?? '',
         partialRoute,
-        referenceRouteIdentifier,
+        referenceRoute.id,
         rootRouteWithIdentifiers,
         insertPosition
       );
@@ -195,7 +198,7 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
       const routeObject = createKubernetesRoutingTreeSpec(newRouteTree);
 
       return updatedNamespacedRoute({
-        name: ROOT_ROUTE_NAME,
+        name: name,
         namespace,
         comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: cleanKubernetesRouteIDs(routeObject),
       }).unwrap();
@@ -205,16 +208,16 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
   const addToAlertmanagerConfiguration = useAsync(
     async ({
       partialRoute,
-      referenceRouteIdentifier,
+      referenceRoute,
       insertPosition,
     }: {
       partialRoute: Partial<FormAmRoute>;
-      referenceRouteIdentifier: string;
+      referenceRoute: RouteWithID;
       insertPosition: InsertPosition;
     }) => {
       const action = addRouteAction({
         partialRoute,
-        referenceRouteIdentifier,
+        referenceRouteIdentifier: referenceRoute.id,
         insertPosition,
         alertmanager,
       });
@@ -229,7 +232,7 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
   return routes?.map((route) => {
     return {
       ...route.spec.defaults,
-      routes: route.spec.routes?.map(k8sSubRouteToRoute),
+      routes: route.spec.routes?.map((subroute) => (k8sSubRouteToRoute(subroute, route.spec.defaults.name))),
       [ROUTES_META_SYMBOL]: {
         provisioned: isK8sEntityProvisioned(route),
         resourceVersion: route.metadata.resourceVersion,
@@ -244,10 +247,11 @@ function isValidMatcherOperator(type: string): type is MatcherOperator {
   return Object.values<string>(MatcherOperator).includes(type);
 }
 
-export function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route): Route {
+export function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route, rootName?: string): Route {
   return {
     ...route,
-    routes: route.routes?.map(k8sSubRouteToRoute),
+    name: rootName,
+    routes: route.routes?.map((subroute) => (k8sSubRouteToRoute(subroute, rootName))),
     matchers: undefined,
     object_matchers: route.matchers?.map(({ label, type, value }) => {
       if (!isValidMatcherOperator(type)) {
@@ -281,10 +285,13 @@ export function createKubernetesRoutingTreeSpec(
 ): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree {
   const inheritableDefaultProperties: InheritableProperties = pick(rootRoute, INHERITABLE_KEYS);
 
+  const name = rootRoute.name ?? ROOT_ROUTE_NAME;
+
   const defaults: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefaults = {
     ...inheritableDefaultProperties,
     // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
     receiver: rootRoute.receiver ?? '',
+    name: name,
   };
 
   const routes = rootRoute.routes?.map(routeToK8sSubRoute) ?? [];
@@ -297,7 +304,7 @@ export function createKubernetesRoutingTreeSpec(
   return {
     spec: spec,
     metadata: {
-      name: ROOT_ROUTE_NAME,
+      name: name,
       resourceVersion: rootRoute[ROUTES_META_SYMBOL]?.resourceVersion,
     },
   };

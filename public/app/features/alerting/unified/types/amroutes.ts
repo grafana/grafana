@@ -2,6 +2,7 @@ import { MatcherFieldValue } from './silence-form';
 
 export interface FormAmRoute {
   id: string;
+  name?: string;
   object_matchers: MatcherFieldValue[];
   continue: boolean;
   receiver: string;

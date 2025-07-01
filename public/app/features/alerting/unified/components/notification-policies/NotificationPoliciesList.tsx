@@ -8,7 +8,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
-import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
+import { addUniqueIdentifierToRoutes } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { computeInheritedTree } from 'app/features/alerting/unified/utils/notification-policies';
 import { ObjectMatcher, ROUTES_META_SYMBOL, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -31,6 +31,7 @@ import {
   useNotificationPolicyRoute,
   useUpdateExistingNotificationPolicy,
 } from './useNotificationPolicyRoute';
+import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 export const NotificationPoliciesList = () => {
   const appNotification = useAppNotification();
@@ -61,7 +62,7 @@ export const NotificationPoliciesList = () => {
   // We make the assumption that the first policy is the default one
   // At the time of writing, this will be always the case for the AM config response, and the K8S API
   // TODO in the future: Generalise the component to support any number of "root" policies
-  const [defaultPolicy] = currentData ?? [];
+  const defaultPolicies = currentData ?? [];
 
   // deleting policies
   const [deleteNotificationPolicy, deleteNotificationPolicyState] = useDeleteNotificationPolicy({
@@ -92,12 +93,21 @@ export const NotificationPoliciesList = () => {
     skip: !shouldFetchContactPoints,
   });
 
-  const rootRoute = useMemo(() => {
-    if (defaultPolicy) {
-      return addUniqueIdentifierToRoute(defaultPolicy);
+  const rootRoutes = useMemo(() => {
+    if (defaultPolicies?.length) {
+      return addUniqueIdentifierToRoutes(defaultPolicies);
     }
     return;
-  }, [defaultPolicy]);
+  }, [defaultPolicies]);
+
+  // TODO: Implement filters, ...
+  const defaultRootRoute = useMemo(() => {
+    if (rootRoutes?.length) {
+      return rootRoutes.find((route) => route.name === ROOT_ROUTE_NAME);
+    }
+    return;
+  }, [rootRoutes]);
+
 
   // useAsync could also work but it's hard to wait until it's done in the tests
   // Combining with useEffect gives more predictable results because the condition is in useEffect
@@ -107,14 +117,14 @@ export const NotificationPoliciesList = () => {
   );
 
   useEffect(() => {
-    if (rootRoute && alertGroups) {
-      triggerGetRouteGroupsMap(rootRoute, alertGroups, { unquoteMatchers: !isGrafanaAlertmanager });
+    if (defaultRootRoute && alertGroups) {
+      triggerGetRouteGroupsMap(defaultRootRoute, alertGroups, { unquoteMatchers: !isGrafanaAlertmanager });
     }
-  }, [rootRoute, alertGroups, triggerGetRouteGroupsMap, isGrafanaAlertmanager]);
+  }, [defaultRootRoute, alertGroups, triggerGetRouteGroupsMap, isGrafanaAlertmanager]);
 
   // these are computed from the contactPoint and labels matchers filter
   const routesMatchingFilters = useMemo(() => {
-    if (!rootRoute) {
+    if (!defaultRootRoute) {
       const emptyResult: RoutesMatchingFilters = {
         filtersApplied: false,
         matchedRoutesWithPath: new Map(),
@@ -123,8 +133,8 @@ export const NotificationPoliciesList = () => {
       return emptyResult;
     }
 
-    return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
-  }, [contactPointFilter, labelMatchersFilter, rootRoute]);
+    return findRoutesMatchingFilters(defaultRootRoute, { contactPointFilter, labelMatchersFilter });
+  }, [contactPointFilter, labelMatchersFilter, defaultRootRoute]);
 
   const refetchPolicies = () => {
     refetchNotificationPolicyRoute();
@@ -139,7 +149,7 @@ export const NotificationPoliciesList = () => {
   }
 
   async function handleDelete(route: RouteWithID) {
-    await deleteNotificationPolicy.execute(route.id);
+    await deleteNotificationPolicy.execute(route);
     handleActionResult({ error: deleteNotificationPolicyState.error });
   }
 
@@ -150,7 +160,7 @@ export const NotificationPoliciesList = () => {
   ) {
     await addNotificationPolicy.execute({
       partialRoute,
-      referenceRouteIdentifier: referenceRoute.id,
+      referenceRoute: referenceRoute,
       insertPosition,
     });
     handleActionResult({ error: addNotificationPolicyState.error });
@@ -190,7 +200,7 @@ export const NotificationPoliciesList = () => {
     return null;
   }
 
-  const hasPoliciesData = rootRoute && !fetchPoliciesError && !isLoading;
+  const hasPoliciesData = rootRoutes && !fetchPoliciesError && !isLoading;
   const hasPoliciesError = Boolean(fetchPoliciesError) && !isLoading;
   const hasConflictError = [
     addNotificationPolicyState,
@@ -237,26 +247,29 @@ export const NotificationPoliciesList = () => {
             onChangeReceiver={setContactPointFilter}
             matchingCount={routesMatchingFilters.matchedRoutesWithPath.size}
           />
-          <Policy
-            receivers={receivers}
-            // add the timing defaults to the default policy to make sure child policies inherit properly
-            currentRoute={defaults(rootRoute, TIMING_OPTIONS_DEFAULTS)}
-            contactPointsState={contactPointsState.receivers}
-            readOnly={!hasConfigurationAPI}
-            provisioned={rootRoute[ROUTES_META_SYMBOL]?.provisioned}
-            alertManagerSourceName={selectedAlertmanager}
-            onAddPolicy={openAddModal}
-            onEditPolicy={openEditModal}
-            onDeletePolicy={openDeleteModal}
-            onShowAlertInstances={showAlertGroupsModal}
-            routesMatchingFilters={routesMatchingFilters}
-            matchingInstancesPreview={{
-              groupsMap: routeAlertGroupsMap,
-              enabled: Boolean(canSeeAlertGroups && !instancesPreviewError),
-            }}
-            isAutoGenerated={false}
-            isDefaultPolicy
-          />
+          {rootRoutes?.map((rootRoute) => (
+            <Policy
+              key={rootRoute.id}
+              receivers={receivers}
+              // add the timing defaults to the default policy to make sure child policies inherit properly
+              currentRoute={defaults(rootRoute, TIMING_OPTIONS_DEFAULTS)}
+              contactPointsState={contactPointsState.receivers}
+              readOnly={!hasConfigurationAPI}
+              provisioned={rootRoute[ROUTES_META_SYMBOL]?.provisioned}
+              alertManagerSourceName={selectedAlertmanager}
+              onAddPolicy={openAddModal}
+              onEditPolicy={openEditModal}
+              onDeletePolicy={openDeleteModal}
+              onShowAlertInstances={showAlertGroupsModal}
+              routesMatchingFilters={routesMatchingFilters}
+              matchingInstancesPreview={{
+                groupsMap: routeAlertGroupsMap,
+                enabled: Boolean(canSeeAlertGroups && !instancesPreviewError),
+              }}
+              isAutoGenerated={false}
+              isDefaultPolicy
+            />
+          ))}
         </Stack>
       )}
       {addModal}
