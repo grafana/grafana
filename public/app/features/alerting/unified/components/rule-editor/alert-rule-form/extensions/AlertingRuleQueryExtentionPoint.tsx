@@ -4,7 +4,7 @@ import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { ToolbarButton } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 import { ConfirmNavigationModal } from './ConfirmationNavigationModal';
 
@@ -20,6 +20,15 @@ const QUERYLESS_APPS = [
   'grafana-metricsdrilldown-app',
 ];
 
+// Map data source types to compatible queryless apps
+const DATASOURCE_TO_QUERYLESS_APP: Record<string, string[]> = {
+  prometheus: ['grafana-metricsdrilldown-app'],
+  // todo: add more data source types here
+  // 'pyroscope': ['grafana-pyroscope-app'],
+  // 'loki': ['grafana-lokiexplore-app'],
+  // 'tempo': ['grafana-exploretraces-app'],
+};
+
 export function AlertingRuleQueryExtentionPoint(props: Props): ReactElement | null {
   const { extensionsToShow, query } = props;
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -32,8 +41,25 @@ export function AlertingRuleQueryExtentionPoint(props: Props): ReactElement | nu
     limitPerPlugin: 3,
   });
 
-  // Filter queryless links if needed
-  const querylessLinks = links.filter((link) => QUERYLESS_APPS.includes(link.pluginId));
+  // const hasQueryInRule = query.expr !== undefined;
+
+  // filter the link so that the query data source matches the queryless app data source
+  // we only want one link per query row editor
+  const querylessLinks = links.filter((link) => {
+    if (!QUERYLESS_APPS.includes(link.pluginId)) {
+      return false;
+    }
+
+    // Get the data source type from the query
+    const datasourceType = query.datasource?.type;
+    if (!datasourceType) {
+      return false;
+    }
+
+    // Check if this queryless app is compatible with the data source type
+    const compatibleApps = DATASOURCE_TO_QUERYLESS_APP[datasourceType.toLowerCase()] || [];
+    return compatibleApps.includes(link.pluginId);
+  });
 
   // Use the first available queryless link
   const selectedQuerylessLink = querylessLinks[0];
@@ -48,17 +74,16 @@ export function AlertingRuleQueryExtentionPoint(props: Props): ReactElement | nu
 
   return (
     <>
-      {extensionsToShow === 'queryless' && (
+      {extensionsToShow === 'queryless' && querylessLinks.length > 0 && (
         <div>
-          <ToolbarButton
+          <Button
             aria-label={t('alerting.rule-editor.go-queryless.aria-label', 'Go queryless')}
-            disabled={querylessLinks.length === 0}
-            variant="canvas"
-            isOpen={isModalOpen}
+            variant="secondary"
             onClick={handleGoQuerylessClick}
+            title={selectedQuerylessLink.description}
           >
             <Trans i18nKey="alerting.rule-editor.go-queryless">Go queryless</Trans>
-          </ToolbarButton>
+          </Button>
         </div>
       )}
 
@@ -71,15 +96,4 @@ export function AlertingRuleQueryExtentionPoint(props: Props): ReactElement | nu
       )}
     </>
   );
-}
-
-export type PluginExtensionAlertingRuleContext = {
-  targets: DataQuery[];
-};
-
-function useExtensionPointContext(props: Props): PluginExtensionAlertingRuleContext {
-  const { query } = props;
-  return {
-    targets: [query],
-  };
 }
