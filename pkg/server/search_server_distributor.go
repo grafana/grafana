@@ -10,18 +10,18 @@ import (
 	"go.opentelemetry.io/otel"
 )
 
-func (ms *ModuleServer) initDistributor() (services.Service, error) {
+func (ms *ModuleServer) initSearchServerDistributor() (services.Service, error) {
 	var (
 		distributor = &distributorService{}
-		tracer      = otel.Tracer("unified-storage-distributor")
+		tracer      = otel.Tracer("index-server-distributor")
 		err         error
 	)
-	distributor.grpcHandler, err = resource.ProvideDistributorServer(ms.cfg, ms.features, ms.registerer, tracer, ms.storageRing, ms.storageRingClientPool)
+	distributor.grpcHandler, err = resource.ProvideSearchDistributorServer(ms.cfg, ms.features, ms.registerer, tracer, ms.searchServerRing, ms.searchServerRingClientPool)
 	if err != nil {
 		return nil, err
 	}
 
-	return services.NewBasicService(nil, distributor.running, nil).WithName(modules.Distributor), nil
+	return services.NewBasicService(nil, distributor.running, nil).WithName(modules.SearchServerDistributor), nil
 }
 
 type distributorService struct {

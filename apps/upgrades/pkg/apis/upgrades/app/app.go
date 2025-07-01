@@ -17,12 +17,21 @@ import (
 	"k8s.io/klog/v2"
 )
 
+type UpgradesConfig struct {
+	CurrentVersion string
+}
+
 func New(cfg app.Config) (app.App, error) {
 	log := logging.DefaultLogger.With("app", "upgrades.app")
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
 	client, err := clientGenerator.ClientFor(upgradesv0alpha1.UpgradeMetadataKind())
 	if err != nil {
 		return nil, err
+	}
+
+	upgradesConfig, ok := cfg.SpecificConfig.(*UpgradesConfig)
+	if !ok {
+		return nil, fmt.Errorf("invalid config type %T", cfg.SpecificConfig)
 	}
 
 	simpleConfig := simple.AppConfig{
@@ -79,7 +88,7 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
-	a.AddRunnable(NewVersionChecker(log, client))
+	a.AddRunnable(NewVersionChecker(log, client, upgradesConfig.CurrentVersion))
 
 	return a, nil
 }

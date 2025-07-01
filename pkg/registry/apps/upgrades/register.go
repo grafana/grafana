@@ -24,6 +24,9 @@ func RegisterApp(
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: upgradesv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     upgradesapp.GetKinds(),
+		CustomConfig: any(&upgradesapp.UpgradesConfig{
+			CurrentVersion: cfg.BuildVersion,
+		}),
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, upgradesapp.New)
 	return provider

@@ -107,10 +107,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Give users the option to configure split durations for Loki queries
-  */
-  lokiQuerySplittingConfig?: boolean;
-  /**
   * Support overriding cookie preferences per user
   */
   individualCookiePreferences?: boolean;
@@ -165,10 +161,6 @@ export interface FeatureToggles {
   * Enables extra themes
   */
   extraThemes?: boolean;
-  /**
-  * Adds predefined query operations to Loki query editor
-  */
-  lokiPredefinedOperations?: boolean;
   /**
   * Enables the plugins frontend sandbox
   */
@@ -344,11 +336,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * Enables the loki data source to request structured metadata from the Loki server
-  * @default true
-  */
-  lokiStructuredMetadata?: boolean;
-  /**
   * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
   */
   cachingOptimizeSerializationMemoryUsage?: boolean;
@@ -432,10 +419,6 @@ export interface FeatureToggles {
   * Enables shared crosshair in table panel
   */
   tableSharedCrosshair?: boolean;
-  /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
   /**
   * Enables query hints for Loki
   * @default true
@@ -680,6 +663,7 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
+  * @default true
   */
   improvedExternalSessionHandling?: boolean;
   /**
@@ -816,6 +800,7 @@ export interface FeatureToggles {
   k8SFolderMove?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
+  * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
@@ -989,10 +974,6 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
-  */
-  extensionsReadOnlyProxy?: boolean;
-  /**
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
@@ -1031,4 +1012,9 @@ export interface FeatureToggles {
   * @default false
   */
   newInfluxDSConfigPageDesign?: boolean;
+  /**
+  * Set this to true to enable all app chrome extensions registered by plugins.
+  * @default false
+  */
+  enableAppChromeExtensions?: boolean;
 }
