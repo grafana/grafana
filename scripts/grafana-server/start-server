@@ -64,7 +64,6 @@ cp -r devenv $
 
 echo -e "Starting Grafana server port $PORT"
 
-
 # We get a lot of "context canceled" errors from navigating away from pages,
 # so filter them out because they're not useful
 {
