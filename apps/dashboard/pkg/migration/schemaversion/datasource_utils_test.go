@@ -301,9 +301,9 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 				},
 			},
 			{
-				name:      "empty string should return nil",
+				name:      "empty string should return empty object",
 				nameOrRef: "",
-				expected:  nil,
+				expected:  map[string]interface{}{},
 			},
 		}
 
@@ -369,9 +369,9 @@ func TestMigrateDatasourceNameToRef(t *testing.T) {
 				},
 			},
 			{
-				name:      "empty string should return nil",
+				name:      "empty string should return empty object",
 				nameOrRef: "",
-				expected:  nil,
+				expected:  map[string]interface{}{},
 			},
 		}
 
