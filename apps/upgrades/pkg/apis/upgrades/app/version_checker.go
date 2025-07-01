@@ -40,25 +40,30 @@ func (v *VersionChecker) Run(ctx context.Context) error {
 	logger := v.log.WithContext(ctx)
 	logger.Debug("Starting version cron")
 
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 
+	checkVersionsFunc := func(ctx context.Context) {
+		logger.Info("Inserting fake upgrade metadata")
+		upgrades, err := v.GetLatestVersions(ctx)
+		if err != nil {
+			logger.Error("Error getting latest versions", "error", err)
+			return
+		}
+
+		for _, upgrade := range upgrades {
+			_, err := v.client.Create(ctx, upgrade.GetStaticMetadata().Identifier(), upgrade, resource.CreateOptions{})
+			if err != nil {
+				logger.Error("Error creating upgrade metadata", "error", err)
+			}
+		}
+	}
+
+	checkVersionsFunc(ctx)
 	for {
 		select {
 		case <-ticker.C:
-			logger.Info("Inserting fake upgrade metadata")
-			upgrades, err := v.GetLatestVersions(ctx)
-			if err != nil {
-				logger.Error("Error getting latest versions", "error", err)
-				continue
-			}
-
-			for _, upgrade := range upgrades {
-				_, err := v.client.Create(ctx, upgrade.GetStaticMetadata().Identifier(), upgrade, resource.CreateOptions{})
-				if err != nil {
-					logger.Error("Error creating upgrade metadata", "error", err)
-				}
-			}
+			checkVersionsFunc(ctx)
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -256,6 +261,7 @@ func (v *VersionChecker) GetLatestVersions(ctx context.Context) ([]*upgradesv0al
 // parseVersionInfo parses the version info from the releases and returns the recommended versions to upgrade to.
 // It looks for the latest security patch for your current version, the latest patch for your minor version, and the latest patch for each supported major version above your current major version.
 // The method does not take care of deduplication of the same upgrade paths.
+// TODO: We need to check when the v0 patch for the latest minor was released, and determine if that is out of support.
 func (v *VersionChecker) parseVersionInfo(ctx context.Context, currentVersion semver.Version, releases []semver.Version) *versionInfo {
 	log := v.log.WithContext(ctx)
 	info := &versionInfo{
@@ -469,13 +475,6 @@ func (v *VersionChecker) isVersionSupported(version semver.Version, releases map
 
 	// All other versions get 9 months of support
 	return time.Now().Before(releaseDetails.releaseDate.AddDate(0, 9, 0))
-}
-
-func (v *VersionChecker) oosMsg(version semver.Version, releases map[semver.Version]*releaseDetails) string {
-	if v.isVersionSupported(version, releases) {
-		return ""
-	}
-	return " (OUT OF SUPPORT)"
 }
 
 // fetchVersionsFromGitHub is a backup method for fetching the versions from the Grafana API. It is unauthenticated and prone to rate limiting.
