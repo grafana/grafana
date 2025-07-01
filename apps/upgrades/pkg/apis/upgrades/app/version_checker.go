@@ -38,19 +38,46 @@ func NewVersionChecker(log logging.Logger, client resource.Client, currentVersio
 
 func (v *VersionChecker) Run(ctx context.Context) error {
 	logger := v.log.WithContext(ctx)
-	logger.Debug("Starting version cron")
 
+	logger.Info("Cleaning up old upgrade metadata")
+	for continueToken := ""; true; {
+		// Delete all "new" upgrade paths and generate new ones -- only the latest set of releases will ever be relevant.
+		resp, err := v.client.List(ctx, "default", resource.ListOptions{
+			Continue: continueToken,
+		})
+		if err != nil {
+			logger.Error("Error listing upgrade metadata", "error", err)
+			return err
+		}
+
+		//
+		for _, item := range resp.GetItems() {
+			upgrade := item.(*upgradesv0alpha1.UpgradeMetadata)
+			if upgrade.Spec.State == "new" {
+				if err := v.client.Delete(ctx, upgrade.GetStaticMetadata().Identifier(), resource.DeleteOptions{}); err != nil {
+					logger.Error("Error deleting upgrade metadata", "error", err)
+				}
+			}
+		}
+
+		if resp.GetContinue() == "" {
+			break
+		}
+		continueToken = resp.GetContinue()
+	}
+
+	logger.Info("Starting version cron")
 	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 
 	checkVersionsFunc := func(ctx context.Context) {
-		logger.Info("Inserting fake upgrade metadata")
 		upgrades, err := v.GetLatestVersions(ctx)
 		if err != nil {
 			logger.Error("Error getting latest versions", "error", err)
 			return
 		}
 
+		logger.Info("Inserting new upgrade metadata", "count", len(upgrades))
 		for _, upgrade := range upgrades {
 			_, err := v.client.Create(ctx, upgrade.GetStaticMetadata().Identifier(), upgrade, resource.CreateOptions{})
 			if err != nil {
