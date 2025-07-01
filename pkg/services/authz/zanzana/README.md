@@ -163,7 +163,87 @@ This service is located in the grafana-enterprise repo, so make sure you have li
  docker compose up -d
  ```
 
+Then add grafana configured in client mode to be able to test requests against zanzana server. Unfortunately, due to issue with config implementation, stack id cannot be configured through env variables, so you should create ini file and put it there:
+
+```ini
+[environment]
+stack_id = 11
+```
+
+Then link it to the grafana client. Default stack id is `11` and token is `ThisIsMySecretToken`. Those values configured in `auth-signer` by default, so if you need to change it, follow instructions in [auth signer readme](/devenv/docker/blocks/auth/signer/README.md)
+
+```yaml
+  grafana-client:
+    image: grafana/grafana:main
+    ports:
+      - "3002:3000"
+    volumes:
+      - "./dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml"
+      - "./dev-dashboards:/usr/share/grafana/devenv/dev-dashboards"
+      - "./datasources_docker.yaml:/etc/grafana/provisioning/datasources/datasources.yaml"
+      - "<path_to_grafana_config_file_ini>:/etc/grafana/grafana.ini"
+    environment:
+      GF_DEFAULT_APP_MODE: development
+      GF_LOG_LEVEL: debug
+      GF_ENVIRONMENT_STACK_ID: 11
+      GF_FEATURE_TOGGLES_ENABLE: zanzana authZGRPCServer unifiedStorage unifiedStorageSearch
+      GF_ZANZANA_CLIENT_MODE: client
+      GF_ZANZANA_CLIENT_ADDRESS: host.docker.internal:10000
+      GF_ZANZANA_CLIENT_TOKEN: ThisIsMySecretToken
+      GF_ZANZANA_CLIENT_TOKEN_EXCHANGE_URL: http://host.docker.internal:6481/sign/access-token
+```
+
+Run containers:
+
+```sh
+ docker compose up -d
+ ```
+
+Finally, configure zanzana standalone server (this is your `custom.ini` file in grafana repo):
+
+```ini
+app_mode = development
+
+target = zanzana-server
+
+[log]
+level = debug
+
+[feature_toggles]
+zanzana = true
+
+[zanzana.server]
+check_query_cache = true
+signing_keys_url = http://localhost:6481/jwks
+
+[grpc_server]
+enabled = true
+address = 127.0.0.1:10000
+
+[database]
+type = postgres
+host = 127.0.0.1:5432
+name = grafana
+user = grafana
+password = password
+
+[tracing.opentelemetry.otlp]
+address = localhost:4317
+```
+
+Now you can run zanzana server:
+
+```sh
+make build-go
+./bin/<arch>/grafana server target
+```
+
+To test everything out, go to grafana client (http://localhost:3002) and open any dashboard. There should be some records in the zanzana server logs
+
+If you want to debug zanzana server, you can run it from VS Code debug panel - select `Run Authz server` target. Make sure that no grafana instances running at port `3001` since it's default port for this debug config (`docker compose stop grafana` if you have grafana running in docker, or remap it to another port).
+
 ## Zanzana cli
+
 Zanzana can be run as a standalone OpenFGA HTTP server that allows you to use the OpenFGA CLI to debug and manage fine-grained authorization relationships within Grafana.
 
 To test this you need to run standalone zanzana server. Use following config:
@@ -177,6 +257,7 @@ target = zanzana-server
 zanzana = true
 
 [zanzana.server]
+allow_insecure = true
 http_addr = 127.0.0.1:8080
 
 [grpc_server]
@@ -187,7 +268,7 @@ address = 127.0.0.1:10000
 And then run grafana server target:
 
 ```bash
-./bin/darwin-arm64/grafana server target
+./bin/<arch>/grafana server target
 ```
 
 ### Using OpenFGA CLI
