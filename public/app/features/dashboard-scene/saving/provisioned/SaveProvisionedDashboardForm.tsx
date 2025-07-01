@@ -350,7 +350,7 @@ const SaveProvisionedDashboardFormInner = ({
                           'dashboard-scene.save-provisioned-dashboard-form.ai-fill-title',
                           'AI autofill title'
                         )}
-                        messages={aiContext.getTitleMessages(getDashboardContext())}
+                        messages={aiContext.getTitleMessages(getDashboardContext(), changeInfo)}
                         onGenerate={(response) => {
                           setValue('title', response, { shouldDirty: true });
                           setAiLoading((prev) => ({ ...prev, title: false }));
@@ -389,7 +389,8 @@ const SaveProvisionedDashboardFormInner = ({
                         )}
                         messages={aiContext.getDescriptionMessages(
                           getDashboardContext(),
-                          watch('title') || getDashboardContext().title
+                          watch('title') || getDashboardContext().title,
+                          changeInfo
                         )}
                         onGenerate={(response) => {
                           setValue('description', response, { shouldDirty: true });

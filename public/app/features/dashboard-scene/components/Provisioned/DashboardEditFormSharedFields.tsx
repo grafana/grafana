@@ -225,7 +225,7 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
                       'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-path',
                       'AI autofill path'
                     )}
-                    messages={aiContext.getPathMessages(getDashboardContext(), currentTitle)}
+                    messages={aiContext.getPathMessages(getDashboardContext(), currentTitle, changeInfo)}
                     onGenerate={(response) => {
                       setValue('path', response, { shouldDirty: true });
                       setAiLoading((prev) => ({ ...prev, path: false }));
@@ -328,7 +328,7 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
                         'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-branch',
                         'AI autofill branch'
                       )}
-                      messages={aiContext.getBranchMessages(getDashboardContext(), currentTitle)}
+                      messages={aiContext.getBranchMessages(getDashboardContext(), currentTitle, changeInfo)}
                       onGenerate={(response) => {
                         setValue('ref', response, { shouldDirty: true });
                         setAiLoading((prev) => ({ ...prev, ref: false }));

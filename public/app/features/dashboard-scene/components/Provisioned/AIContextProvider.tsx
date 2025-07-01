@@ -14,14 +14,15 @@ interface AIContextValue {
   branchLLMStream: ReturnType<typeof useLLMStream>;
   
   // Message generation functions
-  getTitleMessages: (dashboardContext: any) => Message[];
-  getDescriptionMessages: (dashboardContext: any, currentTitle: string) => Message[];
+  getTitleMessages: (dashboardContext: any, changeInfo?: DashboardChangeInfo) => Message[];
+  getDescriptionMessages: (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo) => Message[];
   getCommentMessages: (dashboardContext: any, currentTitle: string, currentDescription: string, changeInfo?: DashboardChangeInfo) => Message[];
-  getPathMessages: (dashboardContext: any, currentTitle: string) => Message[];
-  getBranchMessages: (dashboardContext: any, currentTitle: string) => Message[];
+  getPathMessages: (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo) => Message[];
+  getBranchMessages: (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo) => Message[];
   
   // Utility functions
   summarizeDiffs: (diffs: Record<string, any[]>) => string;
+  getChangeDetails: (changeInfo?: DashboardChangeInfo) => { changeDetails: string; diffSummary: string };
 }
 
 const AIContext = createContext<AIContextValue | null>(null);
@@ -117,64 +118,11 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
     }, [setValue, setAiLoading])
   });
 
-  // Message generation functions
-  const getTitleMessages = useCallback((dashboardContext: any): Message[] => {
-    const messages = [
-      {
-        role: Role.system,
-        content: `You are an expert in creating Grafana Dashboard titles.
-Your goal is to write a concise, descriptive dashboard title.
-The title should be clear, professional, and indicate what the dashboard monitors or displays.
-It should be between 15-60 characters and capture the essence of the dashboard's purpose.
-Do not include quotes in your response.
-Focus on the main purpose or system being monitored.`
-      },
-      {
-        role: Role.user,
-        content: `Create a title for a dashboard with:
-Current title: "${dashboardContext.title}"
-Tags: ${dashboardContext.tags.join(', ') || 'None'}
-${dashboardContext.isNew ? 'This is a new dashboard that will contain monitoring visualizations.' : 'This is an existing dashboard being updated.'}`
-      }
-    ];
-
-    console.log('AI Title Generation - Context:', { dashboardContext });
-    console.log('AI Title Generation - Messages:', messages);
-
-    return messages;
-  }, []);
-
-  const getDescriptionMessages = useCallback((dashboardContext: any, currentTitle: string): Message[] => {
-    const messages = [
-      {
-        role: Role.system,
-        content: `You are an expert in creating Grafana Dashboard descriptions.
-Your goal is to write a descriptive and informative dashboard description.
-The description should explain the purpose of the dashboard, what it monitors, and what insights it provides.
-It should be between 100-300 characters and be helpful for users to understand the dashboard's value.
-Do not include quotes in your response.
-Focus on the business value and monitoring capabilities.`
-      },
-      {
-        role: Role.user,
-        content: `Create a description for a dashboard titled: "${currentTitle}"
-Tags: ${dashboardContext.tags.join(', ') || 'None'}
-${dashboardContext.isNew ? 
-  'This dashboard will provide comprehensive monitoring and analytics for system performance and health.' : 
-  'This dashboard provides monitoring and analytics capabilities and is being updated.'}`
-      }
-    ];
-
-    console.log('AI Description Generation - Context:', { dashboardContext, currentTitle });
-    console.log('AI Description Generation - Messages:', messages);
-
-    return messages;
-  }, []);
-
-  const getCommentMessages = useCallback((dashboardContext: any, currentTitle: string, currentDescription: string, changeInfo?: DashboardChangeInfo): Message[] => {
-    // Build change details from changeInfo
+  // Utility function to extract change details and diff summary from changeInfo
+  const getChangeDetails = (changeInfo?: DashboardChangeInfo) => {
     let changeDetails = '';
     let diffSummary = '';
+    
     if (changeInfo) {
       const changes = [];
       
@@ -205,6 +153,7 @@ ${dashboardContext.isNew ?
           changeDetails += ` (${changeInfo.diffCount} total changes)`;
         }
       }
+      
       // Add diff summary
       if (changeInfo.diffs) {
         diffSummary = summarizeDiffs(changeInfo.diffs);
@@ -213,6 +162,70 @@ ${dashboardContext.isNew ?
         }
       }
     }
+    
+    return { changeDetails, diffSummary };
+  };
+
+  // Message generation functions
+  const getTitleMessages = (dashboardContext: any, changeInfo?: DashboardChangeInfo): Message[] => {
+    const { changeDetails } = getChangeDetails(changeInfo);
+    
+    const messages = [
+      {
+        role: Role.system,
+        content: `You are an expert in creating Grafana Dashboard titles.
+Your goal is to write a concise, descriptive dashboard title.
+The title should be clear, professional, and indicate what the dashboard monitors or displays.
+It should be between 15-60 characters and capture the essence of the dashboard's purpose.
+Do not include quotes in your response.
+Focus on the main purpose or system being monitored.`
+      },
+      {
+        role: Role.user,
+        content: `Create a title for a dashboard with:
+Current title: "${dashboardContext.title}"
+Tags: ${dashboardContext.tags.join(', ') || 'None'}
+${dashboardContext.isNew ? 'This is a new dashboard that will contain monitoring visualizations.' : 'This is an existing dashboard being updated.'}${changeDetails}`
+      }
+    ];
+
+    console.log('AI Title Generation - Context:', { dashboardContext, changeInfo });
+    console.log('AI Title Generation - Messages:', messages);
+
+    return messages;
+  };
+
+  const getDescriptionMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
+    const { changeDetails } = getChangeDetails(changeInfo);
+    
+    const messages = [
+      {
+        role: Role.system,
+        content: `You are an expert in creating Grafana Dashboard descriptions.
+Your goal is to write a descriptive and informative dashboard description.
+The description should explain the purpose of the dashboard, what it monitors, and what insights it provides.
+It should be between 100-300 characters and be helpful for users to understand the dashboard's value.
+Do not include quotes in your response.
+Focus on the business value and monitoring capabilities.`
+      },
+      {
+        role: Role.user,
+        content: `Create a description for a dashboard titled: "${currentTitle}"
+Tags: ${dashboardContext.tags.join(', ') || 'None'}
+${dashboardContext.isNew ? 
+  'This dashboard will provide comprehensive monitoring and analytics for system performance and health.' : 
+  'This dashboard provides monitoring and analytics capabilities and is being updated.'}${changeDetails}`
+      }
+    ];
+
+    console.log('AI Description Generation - Context:', { dashboardContext, currentTitle, changeInfo });
+    console.log('AI Description Generation - Messages:', messages);
+
+    return messages;
+  };
+
+  const getCommentMessages = (dashboardContext: any, currentTitle: string, currentDescription: string, changeInfo?: DashboardChangeInfo): Message[] => {
+    const { changeDetails } = getChangeDetails(changeInfo);
     
     const messages = [
       {
@@ -253,15 +266,15 @@ ${dashboardContext.isNew ? 'This is a new dashboard being added to the repositor
         diffs: changeInfo.diffs ? Object.keys(changeInfo.diffs) : null,
       } : null,
       changeDetails,
-      diffSummary,
     });
     console.log('AI Comment Generation - Messages:', messages);
 
     return messages;
-  }, [summarizeDiffs]);
+  };
 
-  const getPathMessages = useCallback((dashboardContext: any, currentTitle: string): Message[] => {
+  const getPathMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
     const currentYear = new Date().getFullYear();
+    const { changeDetails } = getChangeDetails(changeInfo);
     
     const messages = [
       {
@@ -278,17 +291,19 @@ Do not include quotes in your response.`
         role: Role.user,
         content: `Create a file path for a dashboard titled: "${currentTitle}" 
 Current year: ${currentYear}
-This should be a well-organized path within a Git repository.`
+This should be a well-organized path within a Git repository.${changeDetails}`
       }
     ];
 
-    console.log('AI Path Generation - Context:', { dashboardContext, currentTitle, currentYear });
+    console.log('AI Path Generation - Context:', { dashboardContext, currentTitle, currentYear, changeInfo });
     console.log('AI Path Generation - Messages:', messages);
 
     return messages;
-  }, []);
+  };
 
-  const getBranchMessages = useCallback((dashboardContext: any, currentTitle: string): Message[] => {
+  const getBranchMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
+    const { changeDetails } = getChangeDetails(changeInfo);
+    
     const messages = [
       {
         role: Role.system,
@@ -301,15 +316,15 @@ Do not include quotes in your response.`
       },
       {
         role: Role.user,
-        content: `Create a Git branch name for ${dashboardContext.isNew ? 'adding' : 'updating'} a dashboard titled: "${currentTitle}"`
+        content: `Create a Git branch name for ${dashboardContext.isNew ? 'adding' : 'updating'} a dashboard titled: "${currentTitle}"${changeDetails}`
       }
     ];
 
-    console.log('AI Branch Generation - Context:', { dashboardContext, currentTitle });
+    console.log('AI Branch Generation - Context:', { dashboardContext, currentTitle, changeInfo });
     console.log('AI Branch Generation - Messages:', messages);
 
     return messages;
-  }, []);
+  };
 
   const value: AIContextValue = {
     titleLLMStream,
@@ -323,6 +338,7 @@ Do not include quotes in your response.`
     getPathMessages,
     getBranchMessages,
     summarizeDiffs,
+    getChangeDetails,
   };
 
   return (
