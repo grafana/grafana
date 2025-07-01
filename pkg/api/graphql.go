@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -13,8 +14,10 @@ import (
 	graphqlsubgraph "github.com/grafana/grafana-app-sdk/graphql/subgraph"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
+	investigationv0alpha1 "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
+	investigationsapp "github.com/grafana/grafana/pkg/registry/apps/investigations"
 	playlistapp "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -137,11 +140,17 @@ func (hs *HTTPServer) GraphQLHandler(c *contextmodel.ReqContext) response.Respon
 		}
 
 		// Execute the GraphQL query using the composed schema
+		// Extract authentication from the request and add it to context
+		ctx := c.Req.Context()
+		if authHeader := c.Req.Header.Get("Authorization"); authHeader != "" {
+			ctx = context.WithValue(ctx, "auth_header", authHeader)
+		}
+
 		result := graphql.Do(graphql.Params{
 			Schema:         *composedSchema,
 			RequestString:  requestBody.Query,
 			VariableValues: requestBody.Variables,
-			Context:        c.Req.Context(),
+			Context:        ctx,
 		})
 
 		// Convert GraphQL result to HTTP response
@@ -199,6 +208,28 @@ func (hs *HTTPServer) createFederatedGateway(ctx context.Context) (*gateway.Fede
 	err = gw.RegisterSubgraph(playlistGV, subgraph)
 	if err != nil {
 		return nil, fmt.Errorf("failed to register playlist subgraph: %w", err)
+	}
+
+	// Create the investigations app provider
+	investigationsProvider, err := hs.createInvestigationsGraphQLProvider()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create investigations GraphQL provider: %w", err)
+	}
+
+	// Get the GraphQL subgraph from the investigations provider
+	investigationsSubgraph, err := investigationsProvider.GetGraphQLSubgraph()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get investigations GraphQL subgraph: %w", err)
+	}
+
+	// Register the investigations subgraph with the gateway
+	investigationsGV := schema.GroupVersion{
+		Group:   investigationv0alpha1.InvestigationKind().Group(),
+		Version: investigationv0alpha1.InvestigationKind().Version(),
+	}
+	err = gw.RegisterSubgraph(investigationsGV, investigationsSubgraph)
+	if err != nil {
+		return nil, fmt.Errorf("failed to register investigations subgraph: %w", err)
 	}
 
 	return gw, nil
@@ -408,4 +439,187 @@ func (a *playlistServiceStorageAdapter) Update(ctx context.Context, namespace, n
 func (a *playlistServiceStorageAdapter) Delete(ctx context.Context, namespace, name string) error {
 	// For now, return a simple error since we need to implement proper playlist-to-resource conversion
 	return fmt.Errorf("playlist storage adapter Delete not yet implemented")
+}
+
+// investigationsRESTStorageAdapter adapts the investigations REST API to work with GraphQL storage interface
+type investigationsRESTStorageAdapter struct {
+	namespacer request.NamespaceMapper
+	cfg        *setting.Cfg
+}
+
+// Ensure investigationsRESTStorageAdapter implements graphqlsubgraph.Storage
+var _ graphqlsubgraph.Storage = (*investigationsRESTStorageAdapter)(nil)
+
+// Get retrieves a single investigation by namespace and name
+func (a *investigationsRESTStorageAdapter) Get(ctx context.Context, namespace, name string) (resource.Object, error) {
+	// Make internal HTTP request to investigations API
+	url := fmt.Sprintf("http://localhost:%s/apis/investigations.grafana.app/v0alpha1/namespaces/%s/investigations/%s", a.cfg.HTTPPort, namespace, name)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	// Try to get authentication from the context and pass it through
+	if authHeader := ctx.Value("auth_header"); authHeader != nil {
+		if authStr, ok := authHeader.(string); ok {
+			req.Header.Set("Authorization", authStr)
+		}
+	}
+
+	// Fallback: use basic auth for internal calls
+	if req.Header.Get("Authorization") == "" {
+		req.SetBasicAuth("admin", "admin")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get investigation %s: %w", name, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("investigation not found: %s", name)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get investigation %s: status %d", name, resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var investigation investigationv0alpha1.Investigation
+	if err := json.Unmarshal(body, &investigation); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal investigation: %w", err)
+	}
+
+	return &investigation, nil
+}
+
+// List retrieves multiple investigations with optional filtering
+func (a *investigationsRESTStorageAdapter) List(ctx context.Context, namespace string, options graphqlsubgraph.ListOptions) (resource.ListObject, error) {
+	// Make internal HTTP request to investigations API
+	url := fmt.Sprintf("http://localhost:%s/apis/investigations.grafana.app/v0alpha1/namespaces/%s/investigations", a.cfg.HTTPPort, namespace)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	// Try to get authentication from the context and pass it through
+	if authHeader := ctx.Value("auth_header"); authHeader != nil {
+		if authStr, ok := authHeader.(string); ok {
+			req.Header.Set("Authorization", authStr)
+		}
+	}
+
+	// Fallback: use basic auth for internal calls
+	if req.Header.Get("Authorization") == "" {
+		req.SetBasicAuth("admin", "admin")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list investigations: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to list investigations: status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var investigationList investigationv0alpha1.InvestigationList
+	if err := json.Unmarshal(body, &investigationList); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal investigation list: %w", err)
+	}
+
+	return &investigationList, nil
+}
+
+// Create creates a new investigation
+func (a *investigationsRESTStorageAdapter) Create(ctx context.Context, namespace string, obj resource.Object) (resource.Object, error) {
+	return nil, fmt.Errorf("investigation storage adapter Create not yet implemented")
+}
+
+// Update updates an existing investigation
+func (a *investigationsRESTStorageAdapter) Update(ctx context.Context, namespace, name string, obj resource.Object) (resource.Object, error) {
+	return nil, fmt.Errorf("investigation storage adapter Update not yet implemented")
+}
+
+// Delete deletes an investigation by namespace and name
+func (a *investigationsRESTStorageAdapter) Delete(ctx context.Context, namespace, name string) error {
+	return fmt.Errorf("investigation storage adapter Delete not yet implemented")
+}
+
+// createInvestigationsGraphQLProvider creates an investigations app provider that can provide GraphQL subgraphs
+func (hs *HTTPServer) createInvestigationsGraphQLProvider() (graphqlsubgraph.GraphQLSubgraphProvider, error) {
+	// Create a simple investigations GraphQL provider
+	provider := &investigationsGraphQLProvider{
+		cfg: hs.Cfg,
+	}
+
+	return provider, nil
+}
+
+// investigationsGraphQLProvider is a simple GraphQL provider wrapper for the investigations app
+type investigationsGraphQLProvider struct {
+	cfg *setting.Cfg
+}
+
+// GetGraphQLSubgraph implements GraphQLSubgraphProvider interface
+func (p *investigationsGraphQLProvider) GetGraphQLSubgraph() (graphqlsubgraph.GraphQLSubgraph, error) {
+	// Get the group version for the investigations app
+	investigationKind := investigationv0alpha1.InvestigationKind()
+	investigationsGV := schema.GroupVersion{
+		Group:   investigationKind.Group(),
+		Version: investigationKind.Version(),
+	}
+
+	// Get the managed kinds
+	kinds := []resource.Kind{
+		investigationKind,
+	}
+
+	// Create a storage getter that provides investigations storage
+	storageGetter := func(gvr schema.GroupVersionResource) graphqlsubgraph.Storage {
+		// Only handle investigation resources
+		expectedGVR := schema.GroupVersionResource{
+			Group:    investigationsGV.Group,
+			Version:  investigationsGV.Version,
+			Resource: investigationv0alpha1.InvestigationKind().Plural(),
+		}
+
+		if gvr != expectedGVR {
+			return nil
+		}
+
+		// Return a storage adapter that uses the REST API
+		return &investigationsRESTStorageAdapter{
+			namespacer: request.GetNamespaceMapper(p.cfg),
+			cfg:        p.cfg,
+		}
+	}
+
+	// Create resource handler registry and register the investigation handler
+	resourceHandlers := graphqlsubgraph.NewResourceHandlerRegistry()
+	investigationHandler := investigationsapp.NewInvestigationGraphQLHandler()
+	resourceHandlers.RegisterHandler(investigationHandler)
+
+	// Create the subgraph using the helper function
+	return graphqlsubgraph.CreateSubgraphFromConfig(graphqlsubgraph.SubgraphProviderConfig{
+		GroupVersion:     investigationsGV,
+		Kinds:            kinds,
+		StorageGetter:    storageGetter,
+		ResourceHandlers: resourceHandlers,
+	})
 }
