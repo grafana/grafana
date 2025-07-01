@@ -48,11 +48,11 @@ To view an example templated dashboard, refer to [Graphite Templated Nested dash
 
 With Graphite data sources, you can only create query variables. Grafana supports three specific query types for Graphite-based variables:
 
-| Query type            | Description                                                                                                                                                     | Example usage                            |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Query type            | Description                                                                            | Example usage                            |
+| --------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------- |
 | **Default query**     | Allows you to dynamically list metrics, nodes, or tag values using Graphite functions. | `tag_values(apps.*.requests.count, app)` |
-| **Value query**       | Returns all the values for a query that includes a metric and function.                               | `tag_values(apps.*.status.*, status)`    |
-| **Metric name query** | Returns all the names for a query that includes a metric and function.                           | `apps.*.requests.count`                  |
+| **Value query**       | Returns all the values for a query that includes a metric and function.                | `tag_values(apps.*.status.*, status)`    |
+| **Metric name query** | Returns all the names for a query that includes a metric and function.                 | `apps.*.requests.count`                  |
 
 ### Choose a variable syntax
 

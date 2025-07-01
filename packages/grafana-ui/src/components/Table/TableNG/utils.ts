@@ -74,21 +74,14 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(
-  key: string,
-  columnTypes: ColumnTypes,
+  fieldType: FieldType,
+  cellType: TableCellDisplayMode,
   textWrap: boolean,
-  field: Field,
-  cellType: TableCellDisplayMode
+  cellInspect: boolean
 ): boolean {
-  const cellInspect = field.config?.custom?.inspect ?? false;
-
   // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
   // so we need to ensure we don't apply overflow hover states fo type image
-  if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || columnTypes[key] !== FieldType.string) {
-    return false;
-  }
-
-  return true;
+  return fieldType === FieldType.string && cellType !== TableCellDisplayMode.Image && !textWrap && !cellInspect;
 }
 
 /**
