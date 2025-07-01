@@ -2713,6 +2713,48 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/loki@workspace:public/app/plugins/datasource/loki":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/loki@workspace:public/app/plugins/datasource/loki"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@grafana/data": "npm:12.1.0-pre"
+    "@grafana/e2e-selectors": "npm:12.1.0-pre"
+    "@grafana/lezer-logql": "npm:0.2.7"
+    "@grafana/llm": "npm:0.22.1"
+    "@grafana/monaco-logql": "npm:^0.0.8"
+    "@grafana/plugin-configs": "npm:12.1.0-pre"
+    "@grafana/runtime": "npm:12.1.0-pre"
+    "@grafana/schema": "npm:12.1.0-pre"
+    "@grafana/ui": "npm:12.1.0-pre"
+    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/react": "npm:16.2.0"
+    "@testing-library/user-event": "npm:14.6.1"
+    "@types/d3-random": "npm:^3.0.2"
+    "@types/jest": "npm:29.5.14"
+    "@types/lodash": "npm:4.17.15"
+    "@types/node": "npm:22.15.0"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    "@types/uuid": "npm:10.0.0"
+    d3-random: "npm:^3.0.1"
+    lodash: "npm:4.17.21"
+    micro-memoize: "npm:^4.1.2"
+    react: "npm:18.3.1"
+    react-dom: "npm:18.3.1"
+    react-select: "npm:5.10.1"
+    react-use: "npm:17.6.0"
+    rxjs: "npm:7.8.2"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.8.1"
+    typescript: "npm:5.7.3"
+    uuid: "npm:11.1.0"
+    webpack: "npm:5.97.1"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
@@ -3500,11 +3542,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.22.1":
-  version: 6.22.1
-  resolution: "@grafana/scenes-react@npm:6.22.1"
+"@grafana/scenes-react@npm:^6.24.0":
+  version: 6.25.0
+  resolution: "@grafana/scenes-react@npm:6.25.0"
   dependencies:
-    "@grafana/scenes": "npm:6.22.1"
+    "@grafana/scenes": "npm:6.25.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3516,13 +3558,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/42c171bb743cf270370ff204afc63df20629f06e462015a4a425857b9380ee03b5dfda6aa6babc5fa52b2759cbee1c72f5db8a70c4e77d8c3b7bf8f56c91ef9d
+  checksum: 10/3064b8270098f4489239051741ccc4edb73352f91687fe14037751593363526164ad737e51e6820a850eba436f04454d0b8d7be14fbdb0e403161045d39f6064
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.22.1, @grafana/scenes@npm:^6.22.1":
-  version: 6.22.1
-  resolution: "@grafana/scenes@npm:6.22.1"
+"@grafana/scenes@npm:6.25.0, @grafana/scenes@npm:^6.24.0":
+  version: 6.25.0
+  resolution: "@grafana/scenes@npm:6.25.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3542,7 +3584,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/a20a2a96f637e5d022b3d9c7bc5fe3e2e6d083052798c7f429d3913268fbb704d77c77932d7620b76110a3351971174a3fa54031004ca9c721a976b2593dc34e
+  checksum: 10/eae7ccb82fad458dffbc71fa8b8273e8a57686cd95c0aa76929df51b81eca43117c3d04e31a279d87fd295672df98b0ee28c3501377518c73f6c935a1a791f20
   languageName: node
   linkType: hard
 
@@ -3733,7 +3775,7 @@ __metadata:
     react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
-    react-data-grid: "grafana/react-data-grid#3420f7f2a9e0d707d3313ec5b143a6be53f720b5"
+    react-data-grid: "grafana/react-data-grid#de920f0105cb2b7d774444e7443a675f3b568ad6"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.8"
     react-highlight-words: "npm:0.21.0"
@@ -18160,8 +18202,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.22.1"
-    "@grafana/scenes-react": "npm:^6.22.1"
+    "@grafana/scenes": "npm:^6.24.0"
+    "@grafana/scenes-react": "npm:^6.24.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -26617,15 +26659,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-data-grid@grafana/react-data-grid#3420f7f2a9e0d707d3313ec5b143a6be53f720b5":
-  version: 7.0.0-beta.55
-  resolution: "react-data-grid@https://github.com/grafana/react-data-grid.git#commit=3420f7f2a9e0d707d3313ec5b143a6be53f720b5"
+"react-data-grid@grafana/react-data-grid#de920f0105cb2b7d774444e7443a675f3b568ad6":
+  version: 7.0.0-beta.56
+  resolution: "react-data-grid@https://github.com/grafana/react-data-grid.git#commit=de920f0105cb2b7d774444e7443a675f3b568ad6"
   dependencies:
     clsx: "npm:^2.0.0"
   peerDependencies:
     react: ^18.0 || ^19.0
     react-dom: ^18.0 || ^19.0
-  checksum: 10/9fe309924a7b22d0a62f0df69bdc7b9e0df62c5624e96125f2d729500dfe103037cfbe654fa63294d89fc9b5fea618a540160e2e12e7de4c7052049827df3687
+  checksum: 10/efc1dcb764fa5f3549d012737e79d423b34e6ad7b0a122849d757f59b45e648afe7c5cfeb1a61464245aa7b393f9251ff91fd49f8f857139d7df185c23d68b68
   languageName: node
   linkType: hard
 

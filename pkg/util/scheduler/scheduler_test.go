@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -130,16 +131,16 @@ func TestScheduler(t *testing.T) {
 	t.Run("ProcessItems", func(t *testing.T) {
 		t.Parallel()
 
-		q := NewQueue(QueueOptionsWithDefaults(nil))
+		q := NewQueue(QueueOptionsWithDefaults(&QueueOptions{MaxSizePerTenant: 1000}))
 		require.NoError(t, services.StartAndAwaitRunning(context.Background(), q))
 
-		const itemCount = 10
+		const itemCount = 1000
 		var processed sync.Map
 		var wg sync.WaitGroup
 		wg.Add(itemCount)
 
 		scheduler, err := NewScheduler(q, &Config{
-			NumWorkers: 2,
+			NumWorkers: 10,
 			MaxBackoff: 100 * time.Millisecond,
 			Logger:     log.New("qos.test"),
 		})
@@ -148,8 +149,11 @@ func TestScheduler(t *testing.T) {
 
 		for i := 0; i < itemCount; i++ {
 			itemID := i
-			require.NoError(t, q.Enqueue(context.Background(), "tenant-1", func(_ context.Context) {
+			tenantIndex := itemID % 10
+			tenantID := fmt.Sprintf("tenant-%d", tenantIndex)
+			require.NoError(t, q.Enqueue(context.Background(), tenantID, func(_ context.Context) {
 				processed.Store(itemID, true)
+				time.Sleep(10 * time.Millisecond)
 				wg.Done()
 			}))
 		}
