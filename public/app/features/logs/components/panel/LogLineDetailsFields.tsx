@@ -336,11 +336,6 @@ export const LogLineDetailsField = ({
                   <div key={`${link.title}-${i}`} className={styles.link}>
                     <DataLinkButton
                       buttonProps={{
-                        // Show tooltip message if max number of pinned lines has been reached
-                        tooltip:
-                          typeof pinLineButtonTooltipTitle === 'object' && link.onClick
-                            ? pinLineButtonTooltipTitle
-                            : undefined,
                         variant: 'secondary',
                         fill: 'outline',
                         ...(link.icon && { icon: link.icon }),
