@@ -28,7 +28,7 @@
       "type": "page",
       "role": "Admin",
       "addToNav": true,
-      "defaultNav": true,
+      "defaultNav": false,
       "slug": "upgrades",
       "icon": "",
       "uid": ""

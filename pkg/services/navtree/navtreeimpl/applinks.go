@@ -346,6 +346,13 @@ func (s *ServiceImpl) readNavigationSettings() {
 		}
 	}
 
+	s.navigationAppConfig["upgrades-app"] = NavigationAppConfig{
+		SectionID: navtree.NavIDApps,
+		Text:      "Upgrades",
+		SubTitle:  "Upgrade Grafana to the latest version",
+		IsNew:     true,
+	}
+
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
 		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfgAccess, SortWeight: 2},
 	}
