@@ -24,17 +24,17 @@ func GetVersions(ctx context.Context, src *dagger.Directory) (Deps, error) {
 		return Deps{}, err
 	}
 
-	// parse JSON in-Go, no jq needed
-	var pkg struct {
+	// parse package.json
+	var pkgJson struct {
 		DevDependencies map[string]string `json:"devDependencies"`
 	}
-	if err := json.Unmarshal([]byte(pkgJSON), &pkg); err != nil {
+	if err := json.Unmarshal([]byte(pkgJSON), &pkgJson); err != nil {
 		return Deps{}, err
 	}
 
 	return Deps{
 		NodeVersion:       strings.TrimSpace(strings.TrimPrefix(nvmrc, "v")),
-		PlaywrightVersion: strings.TrimSpace(pkg.DevDependencies["@playwright/test"]),
+		PlaywrightVersion: strings.TrimSpace(pkgJson.DevDependencies["@playwright/test"]),
 	}, nil
 }
 
@@ -95,6 +95,11 @@ func RunTest(
 	nodeBase := WithNode(d, deps.NodeVersion)
 	playwrightBase := WithPlaywright(d, nodeBase, deps.PlaywrightVersion)
 
+	playwrightCommand := []string{"yarn", "e2e:playwright"}
+	if opts.Shard != "" {
+		playwrightCommand = append(playwrightCommand, "--shard", opts.Shard)
+	}
+
 	e2eContainer := WithYarnInstall(d, playwrightBase, yarnHostSrc).
 		WithWorkdir("/src").
 		WithDirectory("/src", e2eHostSrc).
@@ -104,7 +109,7 @@ func RunTest(
 		WithEnvVariable("PORT", fmt.Sprint(grafanaPort)).
 		WithServiceBinding(grafanaHost, opts.GrafanaService).
 		WithEnvVariable("PLAYWRIGHT_HTML_OPEN", "never").
-		WithExec([]string{"yarn", "e2e:playwright"}, dagger.ContainerWithExecOpts{
+		WithExec(playwrightCommand, dagger.ContainerWithExecOpts{
 			Expect: dagger.ReturnTypeAny,
 		})
 

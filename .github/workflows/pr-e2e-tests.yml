@@ -140,12 +140,26 @@ jobs:
   run-playwright-tests:
     needs:
       - build-grafana
-    name: Playwright E2E tests
+    name: Playwright E2E tests (${{ matrix.shard }})
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
 
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
+
     steps:
+      - name: Generate artifact ID
+        id: id
+        env:
+          SHARD: ${{ matrix.shard }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          safe_shard=$(echo "$SHARD" | sed 's/\//-/g')
+          echo "id=$RUN_NUMBER-$safe_shard" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -156,17 +170,17 @@ jobs:
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz
+          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}
       - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: playwright-report-${{ github.run_number }}
+          name: playwright-report_${{ steps.id.outputs.id }}
           path: ./dist/playwright-report
           retention-days: 1
       - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: test-results-${{ github.run_number }}
+          name: test-results_${{ steps.id.outputs.id }}
           path: ./dist/test-results
           retention-days: 1
 
