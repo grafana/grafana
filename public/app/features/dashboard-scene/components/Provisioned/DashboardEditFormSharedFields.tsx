@@ -92,6 +92,7 @@ interface DashboardEditFormSharedFieldsProps {
   autofillDisabledThisSession?: boolean;
   changeInfo?: DashboardChangeInfo;
   setAiLoading: (updater: (prev: any) => any) => void;
+  shouldAutoGenerateAll?: boolean;
 }
 
 const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsProps>(
@@ -105,6 +106,7 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
     autofillDisabledThisSession = false,
     changeInfo,
     setAiLoading,
+    shouldAutoGenerateAll,
   }) => {
     const {
       control,
@@ -143,6 +145,70 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
     useEffect(() => {
       console.log('watched comment:', comment);
     }, [comment]);
+
+    // Autofill handlers for each field
+    // const handleAIFillPath = useCallback(() => {
+    //   setAiLoading((prev) => ({ ...prev, path: true }));
+    //   const dashboardContext = getDashboardContext();
+    //   aiContext.pathLLMStream.setMessages(aiContext.getPathMessages(dashboardContext, currentTitle));
+    // }, [aiContext, getDashboardContext, currentTitle, setAiLoading]);
+
+    // const handleAIFillComment = useCallback(() => {
+    //   setAiLoading((prev) => ({ ...prev, comment: true }));
+    //   const dashboardContext = getDashboardContext();
+    //   aiContext.commentLLMStream.setMessages(aiContext.getCommentMessages(dashboardContext, currentTitle, currentDescription, changeInfo));
+    // }, [aiContext, getDashboardContext, currentTitle, currentDescription, changeInfo, setAiLoading]);
+
+    // const handleAIFillBranch = useCallback(() => {
+    //   setAiLoading((prev) => ({ ...prev, ref: true }));
+    //   const dashboardContext = getDashboardContext();
+    //   aiContext.branchLLMStream.setMessages(aiContext.getBranchMessages(dashboardContext, currentTitle));
+    // }, [aiContext, getDashboardContext, currentTitle, setAiLoading]);
+
+    // Per-field effect for autofill
+    useEffect(() => {
+      /**
+       * We use a retry approach here because, due to React rendering and DOM timing,
+       * the GenAIButton may not be present in the DOM on the first effect run.
+       * This can happen especially when the drawer opens and the form is mounting.
+       * We retry a few times (with a short delay) to ensure the button is available before clicking.
+       * This avoids race conditions and ensures autofill is reliably triggered for all fields.
+       */
+      if (shouldAutoGenerateAll) {
+        let retries = 0;
+        const maxRetries = 5;
+        const retryDelay = 120; // ms
+
+        function tryClick(id: string) {
+          const btn = document.getElementById(id)?.querySelector('button');
+          if (btn) {
+            btn.click();
+            return true;
+          }
+          return false;
+        }
+
+        function clickWithRetry(id: string) {
+          if (tryClick(id)) {
+            return;
+          }
+          if (retries < maxRetries) {
+            retries++;
+            setTimeout(() => clickWithRetry(id), retryDelay);
+          } else {
+            console.warn(`GenAIButton for ${id} not found after ${maxRetries} retries`);
+          }
+        }
+
+        if (isNew) {
+          clickWithRetry('path-ai-button-container');
+        }
+        clickWithRetry('comment-ai-button-container');
+        if (workflow === 'branch') {
+          clickWithRetry('ref-ai-button-container');
+        }
+      }
+    }, [shouldAutoGenerateAll, isNew, workflow]);
 
     return (
       <>
