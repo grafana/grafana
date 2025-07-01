@@ -12,6 +12,7 @@ import { DataLinksCell } from './DataLinksCell';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
+import { PillCell } from './PillCell';
 import { SparklineCell } from './SparklineCell';
 
 export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
@@ -81,6 +82,12 @@ const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={
 
 const ACTIONS_RENDERER: TableCellRenderer = (props) => <ActionsCell actions={props.actions} />;
 
+const PILL_RENDERER: TableCellRenderer = (props) => (
+  <PillCell
+    {...props}
+  />
+);
+
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;
 }
@@ -104,6 +111,7 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.ColorText]: AUTO_RENDERER,
   [TableCellDisplayMode.ColorBackground]: AUTO_RENDERER,
   [TableCellDisplayMode.Auto]: AUTO_RENDERER,
+  [TableCellDisplayMode.Pill]: PILL_RENDERER,
 };
 
 /** @internal */
