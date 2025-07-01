@@ -284,7 +284,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
     const transparentAlpha = 0.15;
     const activeTransparentAlpha = 0.195;
-    const activeTransparentSubtle = 0.1;
+    const activeTransparentSubtle = 0.12;
     color = { ...color, name };
     if (!color.main) {
       color.main = base[name].main;

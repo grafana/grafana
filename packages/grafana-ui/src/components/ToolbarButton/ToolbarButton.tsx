@@ -1,14 +1,15 @@
-import { cx, css } from '@emotion/css';
-import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import { ButtonHTMLAttributes, forwardRef } from 'react';
 
-import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getFocusStyles, getMouseFocusStyles, mediaUp } from '../../themes/mixins';
+import { getButtonFocusStyles, getMouseFocusStyles, mediaUp } from '../../themes/mixins';
 import { IconSize } from '../../types/icon';
-import { getPropertiesForVariant } from '../Button/Button';
+import { addTransformTransition } from '../../utils/transitions';
+import { getActiveTransformStyle, getPropertiesForVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -126,6 +127,9 @@ function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
   return icon;
 }
 
+// @todo move somewhere centralized
+const activeAlpha = 0.12;
+
 const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
@@ -155,9 +159,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.colors.secondary.border}`,
       whiteSpace: 'nowrap',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
-          duration: theme.transitions.duration.short,
-        }),
+        transition: theme.transitions.create(
+          addTransformTransition(['background', 'box-shadow', 'border-color', 'color']),
+          {
+            duration: theme.transitions.duration.short,
+          }
+        ),
       },
 
       [theme.breakpoints.down('md')]: {
@@ -165,11 +172,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus, &:focus-visible': {
-        ...getFocusStyles(theme),
+        ...getButtonFocusStyles(theme),
         zIndex: 1,
       },
 
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
+
+      '&:active, &:focus:active': {
+        ...getActiveTransformStyle(),
+        background: colorManipulator.alpha(theme.colors.secondary.main, activeAlpha),
+      },
 
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
@@ -192,6 +204,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         color: theme.colors.text.primary,
         background: theme.colors.action.hover,
+      },
+      '&:active, &:focus:active': {
+        background: colorManipulator.alpha(theme.colors.action.hover, activeAlpha),
       },
     }),
     canvas: defaultOld,
