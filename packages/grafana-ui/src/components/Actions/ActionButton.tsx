@@ -13,8 +13,6 @@ type ActionButtonProps = ButtonProps & {
   action: ActionModel<Field>;
 };
 
-// Test comment to trigger storybook verification tests in CI
-
 /**
  * @internal
  */
