@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, colorManipulator, deprecationWarning } from '@grafana/data';
+import { colorManipulator, deprecationWarning, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
 import { IconRenderer } from '../Button/Button';
@@ -130,6 +130,17 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       padding: 0,
       color: iconColor,
 
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['outline', 'outline-offset', 'box-shadow'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['transform', 'outline', 'outline-offset', 'box-shadow'], {
+          duration: theme.transitions.duration.short,
+        }),
+      },
+
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
         color: theme.colors.action.disabledText,
@@ -147,12 +158,11 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transitionDuration: '0.2s',
           transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
-          transitionProperty: 'opacity',
+          transitionProperty: 'opacity, background-color',
         },
       },
 
-      '&:focus, &:focus-visible': getFocusStyles(theme),
-
+      '&:focus, &:focus-visible': getButtonFocusStyles(theme),
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
       '&:hover': {
@@ -162,9 +172,22 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
           opacity: 1,
         },
       },
+      '&:active, &:active:hover': {
+        transform: 'scale(0.95)',
+        '&:before': {
+          backgroundColor: getActiveColor(iconColor, variant, theme),
+          opacity: 1,
+        },
+      },
     }),
     icon: css({
       verticalAlign: 'baseline',
     }),
   };
 };
+
+function getActiveColor(iconColor: string, variant: string, theme: GrafanaTheme2) {
+  return variant === 'secondary'
+    ? colorManipulator.alpha(theme.colors.action.hover, 0.24)
+    : colorManipulator.alpha(iconColor, 0.24);
+}

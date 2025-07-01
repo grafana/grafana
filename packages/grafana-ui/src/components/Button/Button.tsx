@@ -8,6 +8,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
+import { addTransformTransition } from '../../utils/transitions';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -274,28 +275,6 @@ export const getButtonStyles = (props: StyleProps) => {
   };
 };
 
-function addTransform(transitions: string[]) {
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!prefersReducedMotion) {
-    transitions.push('transform');
-  }
-
-  return transitions;
-}
-
-function getActiveButtonStyles(color: ThemeRichColor, theme: GrafanaTheme2, fill: ButtonFill) {
-  let background = fill === 'solid' ? color.activeMain : color.activeTransparent;
-
-  if (color.name === 'secondary') {
-    background = color.activeTransparentSecondary;
-  }
-
-  return {
-    background,
-    transform: 'scale(0.95)',
-  };
-}
-
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill) {
   let outlineBorderColor = color.border;
   let borderColor = 'transparent';
@@ -314,7 +293,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: `1px solid ${outlineBorderColor}`,
-      transition: theme.transitions.create(addTransform(['background-color', 'border-color', 'color']), {
+      transition: theme.transitions.create(addTransformTransition(['background-color', 'border-color', 'color']), {
         duration: theme.transitions.duration.short,
       }),
 
@@ -335,7 +314,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: 'transparent',
       color: color.text,
       border: '1px solid transparent',
-      transition: theme.transitions.create(addTransform(['background-color', 'color', 'border-color']), {
+      transition: theme.transitions.create(addTransformTransition(['background-color', 'color', 'border-color']), {
         duration: theme.transitions.duration.short,
       }),
 
@@ -359,9 +338,12 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
     background: color.main,
     color: color.contrastText,
     border: `1px solid ${borderColor}`,
-    transition: theme.transitions.create(addTransform(['background-color', 'box-shadow', 'border-color', 'color']), {
-      duration: theme.transitions.duration.short,
-    }),
+    transition: theme.transitions.create(
+      addTransformTransition(['background-color', 'box-shadow', 'border-color', 'color']),
+      {
+        duration: theme.transitions.duration.short,
+      }
+    ),
 
     '&:hover': {
       background: color.shade,
@@ -404,6 +386,19 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     ...disabledStyles,
     background: theme.colors.action.disabledBackground,
     border: `1px solid transparent`,
+  };
+}
+
+export function getActiveButtonStyles(color: ThemeRichColor, theme: GrafanaTheme2, fill: ButtonFill) {
+  let background = fill === 'solid' ? color.activeMain : color.activeTransparent;
+
+  if (color.name === 'secondary') {
+    background = color.activeTransparentSecondary;
+  }
+
+  return {
+    background,
+    transform: 'scale(0.95)',
   };
 }
 
