@@ -1851,6 +1851,10 @@
               ]
             }
           },
+          "moreInfo": {
+            "description": "More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.",
+            "type": "string"
+          },
           "severity": {
             "description": "Severity of the failure",
             "type": "string",

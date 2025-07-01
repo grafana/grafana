@@ -420,10 +420,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
-  /**
   * Enables query hints for Loki
   * @default true
   */
@@ -667,6 +663,7 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
+  * @default true
   */
   improvedExternalSessionHandling?: boolean;
   /**
@@ -803,6 +800,7 @@ export interface FeatureToggles {
   k8SFolderMove?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
+  * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
@@ -975,10 +973,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingBulkActionsInUI?: boolean;
-  /**
-  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
-  */
-  extensionsReadOnlyProxy?: boolean;
   /**
   * Registers AuthZ /apis endpoint
   */

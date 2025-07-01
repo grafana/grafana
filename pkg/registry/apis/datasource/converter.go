@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -91,11 +92,16 @@ func (r *converter) toAddCommand(ds *v0alpha1.GenericDataSource) (*datasources.A
 	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
+	info, err := types.ParseNamespace(ds.Namespace)
+	if err != nil {
+		return nil, err
+	}
 
 	cmd := &datasources.AddDataSourceCommand{
-		Name: ds.Spec.Title,
-		UID:  ds.Name,
-		Type: r.dstype,
+		Name:  ds.Spec.Title,
+		UID:   ds.Name,
+		OrgID: info.OrgID,
+		Type:  r.dstype,
 
 		Access:          datasources.DsAccess(ds.Spec.Access),
 		URL:             ds.Spec.URL,
@@ -121,11 +127,16 @@ func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasource
 	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
+	info, err := types.ParseNamespace(ds.Namespace)
+	if err != nil {
+		return nil, err
+	}
 
 	cmd := &datasources.UpdateDataSourceCommand{
-		Name: ds.Spec.Title,
-		UID:  ds.Name,
-		Type: r.dstype,
+		Name:  ds.Spec.Title,
+		UID:   ds.Name,
+		OrgID: info.OrgID,
+		Type:  r.dstype,
 
 		Access:          datasources.DsAccess(ds.Spec.Access),
 		URL:             ds.Spec.URL,
@@ -136,15 +147,15 @@ func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasource
 		WithCredentials: ds.Spec.WithCredentials,
 		IsDefault:       ds.Spec.IsDefault,
 		ReadOnly:        ds.Spec.ReadOnly,
+
+		// The only field different than add
+		Version: int(ds.Generation),
 	}
 
 	if len(ds.Spec.JsonData.Object) > 0 {
 		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
 	}
 	cmd.SecureJsonData = toSecureJsonData(ds)
-
-	// The only thing differnet from the add command???
-	cmd.Version = int(ds.Generation)
 	return cmd, nil
 }
 
