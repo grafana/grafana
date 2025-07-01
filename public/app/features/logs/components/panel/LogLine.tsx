@@ -369,6 +369,8 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     parsedField: theme.colors.text.primary,
   };
 
+  const hoverColor = tinycolor(theme.colors.background.canvas).darken(4).toRgbString();
+
   return {
     logLine: css({
       color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
@@ -380,7 +382,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
-        background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
+        background: hoverColor,
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -441,7 +443,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: theme.isDark ? `hsla(0, 0%, 0%, 0.5)` : `hsla(0, 0%, 0%, 0.1)`,
+      background: hoverColor,
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
@@ -543,7 +545,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     }),
     fieldsWrapper: css({
       '&:hover': {
-        background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
+        background: hoverColor,
       },
     }),
     collapsedLogLine: css({
