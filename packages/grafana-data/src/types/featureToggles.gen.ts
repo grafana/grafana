@@ -667,6 +667,7 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
+  * @default true
   */
   improvedExternalSessionHandling?: boolean;
   /**
@@ -803,6 +804,7 @@ export interface FeatureToggles {
   k8SFolderMove?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
+  * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
