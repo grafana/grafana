@@ -1,7 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 test(
-  'Scenario test: Can actually login successfully',
+  'Scenario test: Can login successfully',
   {
     tag: ['@scenarios'],
   },

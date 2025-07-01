@@ -20,13 +20,4 @@ else
   ./scripts/grafana-server/wait-for-grafana
 fi
 
-# Wait for health endpoint to be ready
-echo "Waiting for Grafana health endpoint..."
-while ! curl -s "http://localhost:3001/api/health" > /dev/null; do
-  sleep 1
-done
-echo "Grafana health endpoint is ready"
-
-
-# PORT=3001 HOST=localhost yarn playwright test
-PORT=3001 HOST=localhost yarn playwright test --grep @panels
+PORT=3001 HOST=localhost yarn playwright test
