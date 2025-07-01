@@ -9,7 +9,9 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  # TODO: re-enable this before merging
+  # cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  cancel-in-progress: false
 
 permissions: {}
 
@@ -140,7 +142,7 @@ jobs:
   run-playwright-tests:
     needs:
       - build-grafana
-    name: Playwright E2E tests (${{ matrix.shard }})
+    name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
@@ -148,18 +150,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ["1/8", "2/8", "3/8", "4/8", "5/8", "6/8", "7/8", "8/8"]
+        shard: [1, 2, 3, 4]
+        shardTotal: 4
 
     steps:
-      - name: Generate artifact ID
-        id: id
-        env:
-          SHARD: ${{ matrix.shard }}
-          RUN_NUMBER: ${{ github.run_number }}
-        run: |
-          set -euo pipefail
-          safe_shard=$(echo "$SHARD" | sed 's/\//-/g')
-          echo "id=$RUN_NUMBER-$safe_shard" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -170,19 +164,49 @@ jobs:
         uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
-          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}
+          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --blob-dir=./blob-report
       - uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
-          name: playwright-report_${{ steps.id.outputs.id }}
-          path: ./dist/playwright-report
+          name: playwright-blob-${{ github.run_number }}-${{ matrix.shard }}
+          path: ./blob-report
           retention-days: 1
-      - uses: actions/upload-artifact@v4
-        if: success() || failure()
+
+  required-playwright-tests:
+    needs:
+      - run-playwright-tests
+    if: ${{ !cancelled() }}
+    name: All Playwright tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
         with:
-          name: test-results_${{ steps.id.outputs.id }}
-          path: ./dist/test-results
-          retention-days: 1
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Download blob reports from GitHub Actions Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: playwright-blob-*
+          merge-multiple: true
+
+      - name: Merge into HTML Report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-${{ github.run_number }}
+          path: playwright-report
+          retention-days: 7
 
   run-a11y-test:
     needs:

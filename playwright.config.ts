@@ -13,7 +13,6 @@ export default defineConfig<PluginOptions>({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   reporter: [
-    ['list'], // for terminal
     ['html'], // pretty
   ],
   use: {

@@ -9,6 +9,13 @@ import (
 	"dagger.io/dagger"
 )
 
+var (
+	// Locations in the container to write results to
+	testResultsDir = "/playwright-test-results"
+	htmlResultsDir = "/playwright-html-report"
+	blobResultsDir = "/playwright-blob-report"
+)
+
 type Deps struct {
 	NodeVersion       string
 	PlaywrightVersion string
@@ -39,8 +46,11 @@ func GetVersions(ctx context.Context, src *dagger.Directory) (Deps, error) {
 }
 
 type RunTestOpts struct {
-	Shard          string
-	GrafanaService *dagger.Service
+	Shard                string
+	GrafanaService       *dagger.Service
+	HTMLReportExportDir  string
+	BlobReportExportDir  string
+	TestResultsExportDir string
 }
 
 func RunTest(
@@ -95,10 +105,7 @@ func RunTest(
 	nodeBase := WithNode(d, deps.NodeVersion)
 	playwrightBase := WithPlaywright(d, nodeBase, deps.PlaywrightVersion)
 
-	playwrightCommand := []string{"yarn", "e2e:playwright"}
-	if opts.Shard != "" {
-		playwrightCommand = append(playwrightCommand, "--shard", opts.Shard)
-	}
+	playwrightCommand := buildPlaywrightCommand(opts)
 
 	e2eContainer := WithYarnInstall(d, playwrightBase, yarnHostSrc).
 		WithWorkdir("/src").
@@ -108,23 +115,65 @@ func RunTest(
 		WithEnvVariable("HOST", grafanaHost).
 		WithEnvVariable("PORT", fmt.Sprint(grafanaPort)).
 		WithServiceBinding(grafanaHost, opts.GrafanaService).
+		WithEnvVariable("bustcache", "1").
 		WithEnvVariable("PLAYWRIGHT_HTML_OPEN", "never").
+		WithEnvVariable("PLAYWRIGHT_HTML_OUTPUT_DIR", htmlResultsDir).
+		WithEnvVariable("PLAYWRIGHT_BLOB_OUTPUT_DIR", blobResultsDir).
 		WithExec(playwrightCommand, dagger.ContainerWithExecOpts{
 			Expect: dagger.ReturnTypeAny,
 		})
 
-	// TODO: wrap in conditional arg
-	_, err = e2eContainer.Directory("/src/playwright-report").Export(ctx, "./dist/playwright-report")
-	if err != nil {
-		return nil, err
+	if opts.TestResultsExportDir != "" {
+		_, err = e2eContainer.Directory(testResultsDir).Export(ctx, opts.TestResultsExportDir)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	_, err = e2eContainer.Directory("/src/test-results").Export(ctx, "./dist/test-results")
-	if err != nil {
-		return nil, err
+	if opts.HTMLReportExportDir != "" {
+		_, err = e2eContainer.Directory(htmlResultsDir).Export(ctx, opts.HTMLReportExportDir)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if opts.BlobReportExportDir != "" {
+		_, err = e2eContainer.Directory(blobResultsDir).Export(ctx, opts.BlobReportExportDir)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return e2eContainer, nil
+}
+
+func buildPlaywrightCommand(opts RunTestOpts) []string {
+	playwrightReporters := []string{
+		"dot", // minimal output in shards
+	}
+
+	if opts.HTMLReportExportDir != "" {
+		playwrightReporters = append(playwrightReporters, "html")
+	}
+
+	if opts.BlobReportExportDir != "" {
+		playwrightReporters = append(playwrightReporters, "blob")
+	}
+
+	playwrightCommand := []string{
+		"yarn",
+		"e2e:playwright",
+		"--reporter",
+		strings.Join(playwrightReporters, ","),
+		"--output",
+		testResultsDir,
+	}
+
+	if opts.Shard != "" {
+		playwrightCommand = append(playwrightCommand, "--shard", opts.Shard)
+	}
+
+	return playwrightCommand
 }
 
 func WithNode(d *dagger.Client, version string) *dagger.Container {
