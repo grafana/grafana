@@ -1,0 +1,45 @@
+name: Check jobs results
+description: Checks if any jobs have failed and exits with error if failures are found. Use to check the results of matrix test runs.
+inputs:
+  needs:
+    description: JSON string containing the needs context from the workflow
+    required: true
+    type: string
+  failure-message:
+    description: Custom message to display when failures are found
+    required: false
+    type: string
+    default: "One or more jobs have failed"
+  success-message:
+    description: Custom message to display when all jobs pass
+    required: false
+    type: string
+    default: "All jobs passed successfully"
+runs:
+  using: "composite"
+  steps:
+    - name: Check test suites
+      shell: bash
+      env:
+        NEEDS: ${{ inputs.needs }}
+        FAILURE_MSG: ${{ inputs.failure-message }}
+        SUCCESS_MSG: ${{ inputs.success-message }}
+      run: |
+        set -euo pipefail
+
+        # Extract failures
+        FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+
+        # Display the failures for debugging
+        echo "Failed jobs:"
+        echo "$FAILURES"
+
+        # Check if there are any failures
+        if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
+          echo "❌ $FAILURE_MSG"
+          echo "Failed suites:"
+          echo "$FAILURES" | jq -r 'to_entries[] | "- \(.key): \(.value)"'
+          exit 1
+        fi
+
+        echo "✅ $SUCCESS_MSG"
