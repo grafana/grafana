@@ -118,7 +118,14 @@ func migrateCloudWatchQueriesInPanel(panel map[string]interface{}) {
 		}
 
 		// Get valid statistics (including null and empty strings)
-		validStats := getValidStatistics(t["statistics"])
+		validStats, isEmpty := getValidStatistics(t["statistics"])
+
+		// Handle empty array case (preserve it)
+		if isEmpty {
+			// Keep empty array as-is
+			newTargets = append(newTargets, t)
+			continue
+		}
 
 		// Remove statistics field for processing
 		delete(t, "statistics")
@@ -183,9 +190,18 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 			continue
 		}
 
-		// Get valid statistics (including null and empty strings)
-		validStats := getValidStatistics(a["statistics"])
+		// Get original name for suffix generation
 		originalName, _ := a["name"].(string)
+
+		// Get valid statistics (including null and empty strings)
+		validStats, isEmpty := getValidStatistics(a["statistics"])
+
+		// Handle empty array case (preserve it)
+		if isEmpty {
+			// Keep empty array as-is
+			annotationsList[i] = a
+			continue
+		}
 
 		// Handle based on number of valid statistics
 		switch len(validStats) {
@@ -235,15 +251,15 @@ func migrateCloudWatchAnnotationQueries(dashboard map[string]interface{}) {
 }
 
 // getValidStatistics extracts valid statistics from the statistics field
-func getValidStatistics(statisticsField interface{}) []interface{} {
+func getValidStatistics(statisticsField interface{}) ([]interface{}, bool) {
 	statistics, ok := statisticsField.([]interface{})
 	if !ok {
-		return nil
+		return nil, false
 	}
 
-	// Special case: preserve empty arrays
+	// Special case: empty arrays should be preserved
 	if len(statistics) == 0 {
-		return []interface{}{} // Return empty slice to indicate "keep empty array"
+		return nil, true // Return nil with true flag to indicate "empty array"
 	}
 
 	var valid []interface{}
@@ -253,7 +269,7 @@ func getValidStatistics(statisticsField interface{}) []interface{} {
 			valid = append(valid, stat)
 		}
 	}
-	return valid
+	return valid, false
 }
 
 // getSuffixForStat returns the appropriate suffix for annotation names
