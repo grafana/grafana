@@ -325,6 +325,24 @@ To edit dashboards, follow these steps:
 1. Click **Save**.
 1. Toggle off the edit mode switch.
 
+### Undo and redo
+
+When a dashboard is in edit mode, you can undo and redo changes you've made using the buttons on the toolbar:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-undo-redo-icons-v12.0.png" max-width="500px" alt="Undo and redo buttons" >}}
+
+When you've made a change and hover the cursor over the buttons, the tooltip displays the change you're about to undo or redo.
+Also, you can continue undoing or redoing as many changes as you need:
+
+{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-undo-redo-v12.0.mp4" >}}
+
+The undo and redo buttons are only available at the dashboard level and only apply to changes made there, such as dashboard layout and grouping and high-level dashboard or panel updates.
+They aren't visible and don't apply when you're configuring a panel or making changes in the dashboard settings.
+
+{{< admonition type="note" >}}
+Not all dashboard edit actions can be undone or redone yet.
+{{< /admonition >}}
+
 ## Move or resize a panel
 
 <!-- previous headings Move a panel & Resize a panel -->
