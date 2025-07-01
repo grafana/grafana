@@ -127,6 +127,7 @@ function FormContent({
             workflow={workflow}
             workflowOptions={workflowOptions}
             isGitHub={isGitHub}
+            setAiLoading={() => {}}
           />
 
           {/* Delete / Cancel button */}

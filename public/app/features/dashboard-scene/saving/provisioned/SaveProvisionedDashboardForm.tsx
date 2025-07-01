@@ -303,7 +303,7 @@ const SaveProvisionedDashboardFormInner = ({
 
   const onMagicSaveClick = async () => {
     try {
-      setShouldTriggerMagicSave(true);
+      // setShouldTriggerMagicSave(true);
 
       const formData = watch();
       // Triggers the AI buttons for the non-already filled fields
@@ -513,9 +513,9 @@ const SaveProvisionedDashboardFormInner = ({
               ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
               : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Quick Save')}
           </Button>
-          {/* <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+          <Button variant="secondary" onClick={drawer.onClose} fill="outline">
             <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
-          </Button> */}
+          </Button>
         </Stack>
       </Stack>
     </form>

@@ -65,7 +65,7 @@ function setup(options: SetupOptions = {}) {
     user,
     ...render(
       <FormWrapper>
-        <DashboardEditFormSharedFields {...componentProps} resourceType="dashboard" />
+        <DashboardEditFormSharedFields {...componentProps} resourceType="dashboard" setAiLoading={() => {}} />
       </FormWrapper>
     ),
   };
@@ -193,6 +193,7 @@ describe('DashboardEditFormSharedFields', () => {
               ]}
               isNew={true}
               resourceType="dashboard"
+              setAiLoading={() => {}}
             />
           </FormProvider>
         );
