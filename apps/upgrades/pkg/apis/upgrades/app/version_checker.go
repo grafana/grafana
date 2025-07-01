@@ -119,7 +119,6 @@ func (v *VersionChecker) GetLatestVersions(ctx context.Context) ([]*upgradesv0al
 	latestVersions := make([]*upgradesv0alpha1.UpgradeMetadata, 0)
 	uniqueReportedVersions := make(map[string]struct{})
 
-	// TODO: There are different concerns to address: 1. Is the current version out of support? 2. Is the target version being proposed out of support?
 	isCurrentVersionOutOfSupport := !v.isVersionSupported(*currentVersion, releases)
 
 	// Report failures for all newer major versions
@@ -362,21 +361,21 @@ func parseSecurityRelease(metadata string) (int, error) {
 	return releaseNumber, nil
 }
 
+type grafanaAPIResponse struct {
+	Versions []struct {
+		Channels struct {
+			Stable bool `json:"stable"`
+		} `json:"channels"`
+
+		Product     string `json:"product"`
+		ReleaseDate string `json:"releaseDate"`
+		Version     string `json:"version"`
+		WhatsNewURL string `json:"whatsNewUrl"`
+	} `json:"items"`
+}
+
 // fetchVersionsFromGrafanaAPI fetches the stable versions from the public API and returns all of the versions newer than the current Grafana version
 func (v *VersionChecker) fetchVersionsFromGrafanaAPI(ctx context.Context, currentVersion *semver.Version) (map[semver.Version]*releaseDetails, error) {
-	type grafanaAPIResponse struct {
-		Versions []struct {
-			Channels struct {
-				Stable bool `json:"stable"`
-			} `json:"channels"`
-
-			Product     string `json:"product"`
-			ReleaseDate string `json:"releaseDate"`
-			Version     string `json:"version"`
-			WhatsNewURL string `json:"whatsNewUrl"`
-		} `json:"items"`
-	}
-
 	const product = "grafana"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://grafana.com/api/"+product+"/versions", nil)
@@ -417,9 +416,9 @@ func (v *VersionChecker) fetchVersionsFromGrafanaAPI(ctx context.Context, curren
 			break
 		}
 
-		releaseDate, err := time.Parse(time.RFC3339, releaseVersion.ReleaseDate)
+		releaseDate, err := getReleaseDateForPatch(apiResponse, *version)
 		if err != nil {
-			return nil, fmt.Errorf("invalid release date format: %s, error: %w", releaseVersion.ReleaseDate, err)
+			return nil, fmt.Errorf("error getting release date for patch version %s: %w", version.String(), err)
 		}
 
 		releases[*version] = &releaseDetails{
@@ -429,6 +428,18 @@ func (v *VersionChecker) fetchVersionsFromGrafanaAPI(ctx context.Context, curren
 	}
 
 	return releases, nil
+}
+
+func getReleaseDateForPatch(rawVersions grafanaAPIResponse, patchVersion semver.Version) (time.Time, error) {
+	// Figure out which minor version this patch belongs to.
+	minorVersion := fmt.Sprintf("%d.%d.0", patchVersion.Major(), patchVersion.Minor())
+
+	for _, releaseVersion := range rawVersions.Versions {
+		if releaseVersion.Version == minorVersion {
+			return time.Parse(time.RFC3339, releaseVersion.ReleaseDate)
+		}
+	}
+	return time.Time{}, fmt.Errorf("release date not found for patch version %s", patchVersion.String())
 }
 
 func (v *VersionChecker) findLatestMajor(releases map[semver.Version]*releaseDetails) uint64 {

@@ -21,11 +21,12 @@ func RegisterApp(
 	provider := &UpgradesAppProvider{
 		cfg: cfg,
 	}
+	grafanaVersion := cfg.SectionWithEnvOverrides("upgrades").Key("fake_version").MustString(cfg.BuildVersion)
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: upgradesv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     upgradesapp.GetKinds(),
 		CustomConfig: any(&upgradesapp.UpgradesConfig{
-			CurrentVersion: cfg.BuildVersion,
+			CurrentVersion: grafanaVersion,
 		}),
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, upgradesapp.New)
