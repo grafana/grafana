@@ -1,7 +1,7 @@
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
 
 import { stringifyErrorLike } from '../../../utils/misc';
 

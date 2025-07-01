@@ -11,26 +11,23 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
-  PluginType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, HorizontalGroup, InlineFormLabel, Modal, ScrollContainer, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
-import { Trans, t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { isAngularDatasourcePluginAndNotHidden } from '../../plugins/angularDeprecation/utils';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
@@ -315,7 +312,9 @@ export class QueryGroup extends PureComponent<Props, State> {
             className={styles.expressionButton}
             data-testid="query-tab-add-expression"
           >
-            <span>Expression&nbsp;</span>
+            <span>
+              <Trans i18nKey="query.query-group.expression">Expression</Trans>
+            </span>
           </Button>
         )}
         {this.renderExtraActions()}
@@ -409,6 +408,7 @@ export function QueryGroupTopSection({
 }: QueryGroupTopSectionProps) {
   const styles = getStyles();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+
   return (
     <>
       <div data-testid={selectors.components.QueryTab.queryGroupTopSection}>
@@ -463,15 +463,6 @@ export function QueryGroupTopSection({
             </>
           )}
         </div>
-        {dataSource && isAngularDatasourcePluginAndNotHidden(dataSource.uid) && (
-          <AngularDeprecationPluginNotice
-            pluginId={dataSource.type}
-            pluginType={PluginType.datasource}
-            angularSupportEnabled={config?.angularSupportEnabled}
-            showPluginDetailsLink={true}
-            interactionElementId="datasource-query"
-          />
-        )}
       </div>
       {isHelpOpen && (
         <Modal

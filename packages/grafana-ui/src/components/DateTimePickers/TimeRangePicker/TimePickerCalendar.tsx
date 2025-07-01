@@ -7,7 +7,7 @@ import { createRef, FormEvent, memo } from 'react';
 import { DateTime, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../../themes';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { WeekStart } from '../WeekStartPicker';
 
@@ -35,7 +35,7 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       padding: theme.spacing(1),
       label: 'calendar',
       boxShadow: theme.shadows.z3,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
     }),

@@ -11,9 +11,9 @@ import {
   OneClickMode,
   ActionModel,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
-import { t } from 'app/core/internationalization';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import {
@@ -334,8 +334,8 @@ export class ElementState implements LayerElement {
         placement.height = height;
         break;
       case VerticalConstraint.Scale:
-        placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100;
-        placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100;
+        placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100 * transformScale;
+        placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100 * transformScale;
         break;
     }
 
@@ -360,8 +360,8 @@ export class ElementState implements LayerElement {
         placement.width = width;
         break;
       case HorizontalConstraint.Scale:
-        placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100;
-        placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100;
+        placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100 * transformScale;
+        placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100 * transformScale;
         break;
     }
 
@@ -752,7 +752,7 @@ export class ElementState implements LayerElement {
           <ConfirmModal
             isOpen={true}
             title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
-            body={action.confirmation}
+            body={action.confirmation(/** TODO: implement actionVars */)}
             confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
             confirmButtonVariant="primary"
             onConfirm={() => {

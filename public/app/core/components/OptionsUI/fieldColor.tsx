@@ -13,6 +13,7 @@ import {
   FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
@@ -98,7 +99,7 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
         <div style={{ marginBottom: theme.spacing(2) }}>
           <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} inputId={id} />
         </div>
-        <Field label="Color series by">
+        <Field label={t('options-ui.field-color.color-by-label', 'Color series by')}>
           <RadioButtonGroup value={value?.seriesBy ?? 'last'} options={seriesModes} onChange={onSeriesModeChange} />
         </Field>
       </>
@@ -138,7 +139,7 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
       if (gradient === '') {
         gradient = `linear-gradient(90deg, ${color} 0%`;
       } else {
-        const valuePercent = i / (colors.length - 1);
+        const valuePercent = i / colors.length;
         const pos = valuePercent * 100;
         gradient += `, ${lastColor} ${pos}%, ${color} ${pos}%`;
       }

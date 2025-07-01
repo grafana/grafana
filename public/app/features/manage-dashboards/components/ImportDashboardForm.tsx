@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {
@@ -53,6 +53,7 @@ export const ImportDashboardForm = ({
       onSubmit(getValues());
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
+
   const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
   const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exists) ?? [];
 
@@ -86,9 +87,10 @@ export const ImportDashboardForm = ({
       </Field>
       <Field
         label={t('manage-dashboards.import-dashboard-form.label-unique-identifier-uid', 'Unique identifier (UID)')}
-        description="The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
-                The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any
-                bookmarked links to that dashboard."
+        description={t(
+          'manage-dashboards.import-dashboard-form.description-unique-identifier-uid',
+          'The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.'
+        )}
         invalid={!!errors.uid}
         error={errors.uid && errors.uid.message}
       >
@@ -168,7 +170,10 @@ export const ImportDashboardForm = ({
       <ImportDashboardLibraryPanelsList
         inputs={existingLibraryPanels}
         label={t('manage-dashboards.import-dashboard-form.label-existing-library-panels', 'Existing library panels')}
-        description="List of existing library panels. These panels are not affected by the import."
+        description={t(
+          'manage-dashbaords.import-dashboard-form.description-existing-library-panels',
+          'List of existing library panels. These panels are not affected by the import.'
+        )}
         folderName={watchFolder.title}
       />
       <Stack>

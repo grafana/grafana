@@ -198,7 +198,7 @@ describe('Dashboard time zone support', () => {
     e2e.flows.setTimeRange({
       from: 'now-6h',
       to: 'now',
-      zone: 'America/Los_Angeles',
+      zone: 'America/Los Angeles',
     });
     // Need to wait for 2 calls as there's 2 panels
     cy.wait(['@dataQuery', '@dataQuery']);

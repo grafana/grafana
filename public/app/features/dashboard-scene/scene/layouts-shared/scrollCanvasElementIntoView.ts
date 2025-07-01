@@ -1,4 +1,4 @@
-import { SceneObject } from '@grafana/scenes';
+import { SceneGridRow, SceneObject } from '@grafana/scenes';
 
 import { RowItem } from '../layout-rows/RowItem';
 import { TabItem } from '../layout-tabs/TabItem';
@@ -21,6 +21,10 @@ export function scrollCanvasElementIntoView(sceneObject: SceneObject, ref: React
       parent.onCollapseToggle();
     }
 
+    if (parent instanceof SceneGridRow && parent.state.isCollapsed) {
+      parent.onCollapseToggle();
+    }
+
     if (parent instanceof TabItem) {
       const tabsManager = parent.parent;
       if (tabsManager instanceof TabsLayoutManager && tabsManager.getCurrentTab() !== parent) {
@@ -38,6 +42,6 @@ export function scrollCanvasElementIntoView(sceneObject: SceneObject, ref: React
   }, 10);
 }
 
-function scrollIntoView(element: HTMLElement) {
+export function scrollIntoView(element: HTMLElement) {
   element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
 }

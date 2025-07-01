@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { DB, ResourceSelectorProps, SQLDialect, toOption } from '../types';
@@ -75,7 +76,7 @@ export const DatasetSelector = ({
 
   return (
     <Select
-      aria-label="Dataset selector"
+      aria-label={t('grafana-sql.components.dataset-selector.aria-label-dataset-selector', 'Dataset selector')}
       inputId={inputId}
       value={dataset}
       options={state.value}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"slices"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -26,10 +27,14 @@ func TestRepository(ctx context.Context, repo Repository) (*provisioning.TestRes
 		rsp := &provisioning.TestResults{
 			Code:    http.StatusUnprocessableEntity, // Invalid
 			Success: false,
-			Errors:  make([]string, len(errors)),
+			Errors:  make([]provisioning.ErrorDetails, len(errors)),
 		}
-		for i, v := range errors {
-			rsp.Errors[i] = v.Error()
+		for i, err := range errors {
+			rsp.Errors[i] = provisioning.ErrorDetails{
+				Type:   metav1.CauseType(err.Type),
+				Field:  err.Field,
+				Detail: err.Detail,
+			}
 		}
 		return rsp, nil
 	}
@@ -71,11 +76,16 @@ func ValidateRepository(repo Repository) field.ErrorList {
 			cfg.Spec.GitHub, "Github config only valid when type is github"))
 	}
 
+	if cfg.Spec.Type != provisioning.GitRepositoryType && cfg.Spec.Git != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "git"),
+			cfg.Spec.Git, "Git config only valid when type is git"))
+	}
+
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
 		case provisioning.WriteWorkflow: // valid; no fall thru
 		case provisioning.BranchWorkflow:
-			if cfg.Spec.Type != provisioning.GitHubRepositoryType {
+			if !cfg.Spec.Type.IsGit() {
 				list = append(list, field.Invalid(field.NewPath("spec", "workflow"), w, "branch is only supported on git repositories"))
 			}
 		default:
@@ -84,4 +94,16 @@ func ValidateRepository(repo Repository) field.ErrorList {
 	}
 
 	return list
+}
+
+func fromFieldError(err *field.Error) *provisioning.TestResults {
+	return &provisioning.TestResults{
+		Code:    http.StatusBadRequest,
+		Success: false,
+		Errors: []provisioning.ErrorDetails{{
+			Type:   metav1.CauseType(err.Type),
+			Field:  err.Field,
+			Detail: err.Detail,
+		}},
+	}
 }

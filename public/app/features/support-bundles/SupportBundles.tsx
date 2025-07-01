@@ -2,20 +2,13 @@ import { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, StoreState } from 'app/types';
 
 import { loadBundles, removeBundle, checkBundles } from './state/actions';
-
-const subTitle = (
-  <span>
-    Support bundles allow you to easily collect and share Grafana logs, configuration, and data with the Grafana Labs
-    team.
-  </span>
-);
 
 const NewBundleButton = (
   <LinkButton icon="plus" href="support-bundles/create" variant="primary">
@@ -57,6 +50,15 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
   const hasDeleteAccess = contextSrv.hasPermission(AccessControlAction.ActionSupportBundlesDelete);
 
   const actions = hasAccess ? NewBundleButton : undefined;
+
+  const subTitle = (
+    <span>
+      <Trans i18nKey="support-bundles.support-bundles-unconnected.sub-title">
+        Support bundles allow you to easily collect and share Grafana logs, configuration, and data with the Grafana
+        Labs team.
+      </Trans>
+    </span>
+  );
 
   return (
     <Page navId="support-bundles" subTitle={subTitle} actions={actions}>

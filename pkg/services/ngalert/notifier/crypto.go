@@ -18,6 +18,9 @@ import (
 type Crypto interface {
 	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
+	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
 
 	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
 	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
@@ -73,7 +76,7 @@ func encryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 	for _, r := range c {
 		switch r.Type() {
 		case definitions.GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				if encryptExisting {
 					for k, v := range gr.SecureSettings {
 						encryptedData, err := encrypt(context.Background(), []byte(v))
@@ -183,7 +186,7 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 
 	// Copy the previously known secure settings.
 	for i, r := range receivers {
-		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+		for j, gr := range r.GrafanaManagedReceivers {
 			if gr.UID == "" { // new receiver
 				continue
 			}
@@ -232,4 +235,39 @@ func (c *alertmanagerCrypto) getDecryptedSecret(r *definitions.PostableGrafanaRe
 // Encrypt delegates encryption to secrets.Service.
 func (c *alertmanagerCrypto) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	return c.secrets.Encrypt(ctx, payload, opt)
+}
+
+func (c *alertmanagerCrypto) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
+	return c.secrets.Decrypt(ctx, payload)
+}
+
+func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+	for i := range config.ExtraConfigs {
+		encryptedValue, err := c.secrets.Encrypt(ctx, []byte(config.ExtraConfigs[i].AlertmanagerConfig), secrets.WithoutScope())
+		if err != nil {
+			return fmt.Errorf("failed to encrypt extra configuration: %w", err)
+		}
+
+		config.ExtraConfigs[i].AlertmanagerConfig = base64.StdEncoding.EncodeToString(encryptedValue)
+	}
+
+	return nil
+}
+
+func (c *alertmanagerCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+	for i := range config.ExtraConfigs {
+		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig)
+		if err != nil {
+			return fmt.Errorf("failed to base64 decode extra configuration: %w", err)
+		}
+
+		decryptedValue, err := c.secrets.Decrypt(ctx, encryptedValue)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt extra configuration: %w", err)
+		}
+
+		config.ExtraConfigs[i].AlertmanagerConfig = string(decryptedValue)
+	}
+
+	return nil
 }

@@ -419,7 +419,7 @@ function toEquableDataFrame(source: DataFrame): DataFrame {
   return toDataFrame({
     meta: undefined,
     ...source,
-    fields: source.fields.map((field: any) => {
+    fields: source.fields.map((field) => {
       return {
         ...field,
         config: {},

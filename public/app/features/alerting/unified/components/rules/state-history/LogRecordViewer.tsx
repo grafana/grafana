@@ -4,6 +4,7 @@ import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
 
 import { Label } from '../../Label';
@@ -54,7 +55,13 @@ export const LogRecordViewerByTimestamp = memo(
     });
 
     return (
-      <ul className={styles.logsScrollable} aria-label="State history by timestamp">
+      <ul
+        className={styles.logsScrollable}
+        aria-label={t(
+          'alerting.log-record-viewer-by-timestamp.aria-label-state-history-by-timestamp',
+          'State history by timestamp'
+        )}
+      >
         {Array.from(groupedLines.entries()).map(([key, records]) => {
           return (
             <li
@@ -144,7 +151,11 @@ const Timestamp = ({ time }: TimestampProps) => {
       <Stack alignItems="center" gap={1}>
         <Icon name="clock-nine" size="sm" />
         <span className={styles.timestampText}>{dateTimeFormat(dateTime)}</span>
-        <small>({formatDistanceToNowStrict(dateTime)} ago)</small>
+        <small>
+          <Trans i18nKey="alerting.timestamp.time-ago" values={{ time: formatDistanceToNowStrict(dateTime) }}>
+            ({'{{time}}'} ago)
+          </Trans>
+        </small>
       </Stack>
     </div>
   );

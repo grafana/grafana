@@ -5,6 +5,7 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
@@ -36,7 +37,11 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
         <button
           className={styles.swatch}
           {...focusProps}
-          aria-label={colorLabel ? `${colorLabel} color` : 'Pick a color'}
+          aria-label={
+            colorLabel
+              ? t('grafana-ui.color-swatch.aria-label-selected-color', '{{colorLabel}} color', { colorLabel })
+              : t('grafana-ui.color-swatch.aria-label-default', 'Pick a color')
+          }
           type="button"
         />
       </div>

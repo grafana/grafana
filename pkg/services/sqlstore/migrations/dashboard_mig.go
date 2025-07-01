@@ -3,7 +3,7 @@ package migrations
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -289,14 +289,15 @@ func RunDashboardTagMigrations(sess *xorm.Session, driverName string) error {
 	WHERE
     	(dashboard_uid IS NULL OR org_id IS NULL)
     	AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = dashboard_tag.dashboard_id);`
-	if driverName == Postgres {
+	switch driverName {
+	case Postgres:
 		sql = `UPDATE dashboard_tag
 		SET dashboard_uid = dashboard.uid,
 			org_id = dashboard.org_id
 		FROM dashboard
 		WHERE dashboard_tag.dashboard_id = dashboard.id
 			AND (dashboard_tag.dashboard_uid IS NULL OR dashboard_tag.org_id IS NULL);`
-	} else if driverName == MySQL {
+	case MySQL:
 		sql = `UPDATE dashboard_tag
 		LEFT JOIN dashboard ON dashboard_tag.dashboard_id = dashboard.id
 		SET dashboard_tag.dashboard_uid = dashboard.uid,

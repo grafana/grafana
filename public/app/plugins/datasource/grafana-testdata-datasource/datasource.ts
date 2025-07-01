@@ -17,6 +17,7 @@ import {
   MutableDataFrame,
   AnnotationQuery,
   getSearchFilterScopedVar,
+  FieldType,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
@@ -96,6 +97,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
           break;
         case 'flame_graph':
           streams.push(this.flameGraphQuery(target));
+          break;
+        case 'steps':
+          streams.push(this.stepsQuery(target));
           break;
         case 'trace':
           streams.push(this.trace(options));
@@ -346,6 +350,39 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
         error: ex instanceof Error ? ex : new Error('Unkown error'),
       }).pipe(delay(100));
     }
+  }
+
+  // Incremented with each refresh in a step query
+  step = 0;
+
+  stepsQuery(target: TestDataDataQuery): Observable<DataQueryResponse> {
+    let steps = (target.csvContent ?? `a\n,b\nc\n`)
+      .split('\n')
+      .map((v) => v.trim())
+      .filter((v) => Boolean(v.length));
+
+    this.step = this.step % steps.length;
+    const step = target.alias?.length ? target.alias : 'step';
+
+    const frame: DataFrame = {
+      refId: target.refId,
+      fields: [
+        { name: 'time', type: FieldType.time, values: [Date.now()], config: {} },
+        { name: 'index', type: FieldType.number, values: [this.step], config: {} },
+        { name: step, type: FieldType.string, values: [steps[this.step]], config: {} },
+      ],
+      length: 1,
+    };
+    for (let i = 0; i < steps.length; i++) {
+      frame.fields.push({
+        name: `${step}-${steps[i]}`,
+        type: FieldType.boolean,
+        values: [i <= this.step],
+        config: {},
+      });
+    }
+    this.step++;
+    return of({ data: [frame] }).pipe(delay(50));
   }
 
   serverErrorQuery(

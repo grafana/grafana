@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { Button, DeleteButton, EmptyState, Icon, IconButton, Stack, TagList, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface DashboardLinkListProps {
   links: DashboardLink[];
@@ -23,6 +23,7 @@ export function DashboardLinkList({
   onDelete,
 }: DashboardLinkListProps) {
   const styles = useStyles2(getStyles);
+
   const isEmptyList = links.length === 0;
 
   if (isEmptyList) {
@@ -57,8 +58,12 @@ export function DashboardLinkList({
       <table role="grid" className="filter-table filter-table--hover">
         <thead>
           <tr>
-            <th>Type</th>
-            <th>Info</th>
+            <th>
+              <Trans i18nKey="dashboard-scene.dashboard-link-list.type">Type</Trans>
+            </th>
+            <th>
+              <Trans i18nKey="dashboard-scene.dashboard-link-list.info">Info</Trans>
+            </th>
             <th colSpan={3} />
           </tr>
         </thead>
@@ -77,20 +82,36 @@ export function DashboardLinkList({
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 {idx !== 0 && (
-                  <IconButton name="arrow-up" onClick={() => onOrderChange(idx, -1)} tooltip="Move link up" />
+                  <IconButton
+                    name="arrow-up"
+                    onClick={() => onOrderChange(idx, -1)}
+                    tooltip={t('dashboard-scene.dashboard-link-list.tooltip-move-link-up', 'Move link up')}
+                  />
                 )}
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 {links.length > 1 && idx !== links.length - 1 ? (
-                  <IconButton name="arrow-down" onClick={() => onOrderChange(idx, 1)} tooltip="Move link down" />
+                  <IconButton
+                    name="arrow-down"
+                    onClick={() => onOrderChange(idx, 1)}
+                    tooltip={t('dashboard-scene.dashboard-link-list.tooltip-move-link-down', 'Move link down')}
+                  />
                 ) : null}
               </td>
               <td style={{ width: '1%' }} role="gridcell">
-                <IconButton name="copy" onClick={() => onDuplicate(link)} tooltip="Copy link" />
+                <IconButton
+                  name="copy"
+                  onClick={() => onDuplicate(link)}
+                  tooltip={t('dashboard-scene.dashboard-link-list.tooltip-copy-link', 'Copy link')}
+                />
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 <DeleteButton
-                  aria-label={`Delete link with title "${link.title}"`}
+                  aria-label={t(
+                    'dashboard-scene.dashboard-link-list.delete-aria-label',
+                    'Delete link with title "{{title}}"',
+                    { title: link.title }
+                  )}
                   size="sm"
                   onConfirm={() => onDelete(idx)}
                 />
@@ -100,7 +121,7 @@ export function DashboardLinkList({
         </tbody>
       </table>
       <Button className={styles.newLinkButton} icon="plus" onClick={onNew}>
-        New link
+        <Trans i18nKey="dashboard-scene.dashboard-link-list.new-link">New link</Trans>
       </Button>
     </>
   );

@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';
@@ -33,6 +34,7 @@ export const LogsTableAvailableFields = (props: {
 }): JSX.Element => {
   const { labels, valueFilter, toggleColumn } = props;
   const theme = useTheme2();
+
   const styles = getLogsFieldsStyles(theme);
   const labelKeys = Object.keys(labels).filter((labelName) => valueFilter(labelName));
   if (labelKeys.length) {
@@ -43,7 +45,11 @@ export const LogsTableAvailableFields = (props: {
           <div
             key={labelName}
             className={styles.wrap}
-            title={`${labelName} appears in ${labels[labelName]?.percentOfLinesWithLabel}% of log lines`}
+            title={t(
+              'explore.logs-table-available-fields.title-label-percentage',
+              '{{labelName}} appears in {{percentage}}% of log lines',
+              { labelName, percentage: labels[labelName]?.percentOfLinesWithLabel }
+            )}
           >
             <LogsTableNavField
               showCount={true}

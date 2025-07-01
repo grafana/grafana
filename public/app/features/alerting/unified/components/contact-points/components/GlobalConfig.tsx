@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
 import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
@@ -16,7 +17,13 @@ const GlobalConfig = () => {
 
   if (error) {
     return (
-      <Alert severity="error" title="Failed to fetch notification template">
+      <Alert
+        severity="error"
+        title={t(
+          'alerting.global-config.title-failed-to-fetch-notification-template',
+          'Failed to fetch notification template'
+        )}
+      >
         {String(error)}
       </Alert>
     );

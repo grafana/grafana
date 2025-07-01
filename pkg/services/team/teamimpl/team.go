@@ -32,13 +32,13 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Ser
 	}, nil
 }
 
-func (s *Service) CreateTeam(ctx context.Context, name, email string, orgID int64) (team.Team, error) {
+func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	_, span := s.tracer.Start(ctx, "team.CreateTeam", trace.WithAttributes(
-		attribute.Int64("orgID", orgID),
-		attribute.String("name", name),
+		attribute.Int64("orgID", cmd.OrgID),
+		attribute.String("name", cmd.Name),
 	))
 	defer span.End()
-	return s.store.Create(name, email, orgID)
+	return s.store.Create(ctx, cmd)
 }
 
 func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {

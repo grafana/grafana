@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 
@@ -21,7 +22,7 @@ export function PanelNotSupported({ message }: Props): JSX.Element {
           <h2>{message}</h2>
           <div>
             <Button size="md" variant="secondary" icon="arrow-left" onClick={onBackToQueries}>
-              Go back to Queries
+              <Trans i18nKey="dashboard.panel-not-supported.go-back-to-queries">Go back to Queries</Trans>
             </Button>
           </div>
         </Stack>

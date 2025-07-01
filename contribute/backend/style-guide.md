@@ -14,7 +14,7 @@ To ensure consistency across the Go codebase, we require all code to
 pass a number of linter checks.
 
 We use [GolangCI-Lint](https://github.com/golangci/golangci-lint) with a
-custom configuration [.golangci.toml](/.golangci.toml) to run these
+custom configuration [.golangci.yml](/.golangci.yml) to run these
 checks.
 
 To run all linters, use the `lint-go` Makefile target:

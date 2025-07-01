@@ -1,5 +1,6 @@
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   SceneObjectBase,
@@ -13,7 +14,6 @@ import {
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -50,7 +50,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 
   public getTabLabel() {
-    return 'Queries';
+    return t('dashboard-scene.panel-data-queries-tab.tab-label', 'Queries');
   }
 
   public getItemsCount() {
@@ -377,7 +377,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
               variant="secondary"
               data-testid={selectors.components.QueryTab.addQuery}
             >
-              Add query
+              <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.add-query">Add query</Trans>
             </Button>
             {queryLibraryEnabled && (
               <Button
@@ -400,7 +400,9 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
             variant="secondary"
             data-testid={selectors.components.QueryTab.addExpression}
           >
-            <span>Expression&nbsp;</span>
+            <span>
+              <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
+            </span>
           </Button>
         )}
         {model.renderExtraActions()}

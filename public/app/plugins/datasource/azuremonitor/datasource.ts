@@ -96,7 +96,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       // Migrate old query structures
       const target = migrateQuery(baseTarget);
 
-      // Skip hidden or invalid queries or ones without properties
+      // Skip hidden or invalid queries, or ones without properties
       if (!target.queryType || target.hide || !hasQueryForType(target)) {
         continue;
       }

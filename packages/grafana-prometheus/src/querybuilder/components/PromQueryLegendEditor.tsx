@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { AutoSizeInput, Select } from '@grafana/ui';
 
@@ -66,8 +67,12 @@ export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
 
     return (
       <EditorField
-        label="Legend"
-        tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
+        label={t('grafana-prometheus.querybuilder.prom-query-legend-editor.label-legend', 'Legend')}
+        tooltip={t(
+          'grafana-prometheus.querybuilder.prom-query-legend-editor.tooltip-legend',
+          'Series name override or template. Ex. {{templateExample}} will be replaced with label value for {{labelName}}.',
+          { templateExample: '{{hostname}}', labelName: 'hostname' }
+        )}
         data-testid={selectors.components.DataSource.Prometheus.queryEditor.legend}
       >
         <>
@@ -75,6 +80,7 @@ export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
             <AutoSizeInput
               id="legendFormat"
               minWidth={22}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="auto"
               defaultValue={legendFormat}
               onCommitChange={onLegendFormatChanged}
@@ -85,7 +91,10 @@ export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(
             <Select
               inputId="legend.mode"
               isSearchable={false}
-              placeholder="Select legend mode"
+              placeholder={t(
+                'grafana-prometheus.querybuilder.prom-query-legend-editor.placeholder-select-legend-mode',
+                'Select legend mode'
+              )}
               options={legendModeOptions}
               width={22}
               onChange={onLegendModeChanged}

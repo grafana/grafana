@@ -1,4 +1,5 @@
 import { DataQueryError } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Alert, JSONFormatter } from '@grafana/ui';
 
 interface InspectErrorTabProps {
@@ -32,12 +33,18 @@ function renderError(error: DataQueryError) {
     if (!json) {
       return (
         <>
-          {error.status && <>Status: {error.status}. Message: </>}
+          {error.status && (
+            <Trans i18nKey="inspector.inspect-error-tab.error-status-message" values={{ errorStatus: error.status }}>
+              Status: {'{{errorStatus}}'}. Message:
+            </Trans>
+          )}{' '}
           {msg}
           {error.traceId != null && (
             <>
               <br />
-              (Trace ID: {error.traceId})
+              <Trans i18nKey="inspector.inspect-error-tab.error-trace-message" values={{ errorTrace: error.traceId }}>
+                (Trace ID: {'{{errorTrace}}'})
+              </Trans>
             </>
           )}
         </>
@@ -46,7 +53,11 @@ function renderError(error: DataQueryError) {
       return (
         <>
           {msg !== '' && <h3>{msg}</h3>}
-          {error.status && <>Status: {error.status}</>}
+          {error.status && (
+            <Trans i18nKey="inspector.inspect-error-tab.error-status-no-message" values={{ errorStatus: error.status }}>
+              Status: {'{{errorStatus}}'}
+            </Trans>
+          )}
           <JSONFormatter json={json} open={5} />
         </>
       );

@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { DeleteButton, Icon, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { ApiKey } from 'app/types';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 
 export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabled, onDelete }: Props): JSX.Element => {
   const theme = useTheme2();
+
   const styles = getStyles(theme);
 
   return (
@@ -49,7 +50,11 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
               <td className="width-1 text-center">{key.isRevoked && <TokenRevoked />}</td>
               <td>
                 <DeleteButton
-                  aria-label={`Delete service account token ${key.name}`}
+                  aria-label={t(
+                    'serviceaccounts.service-account-tokens-table.aria-label-delete-button',
+                    'Delete service account token {{key}}',
+                    { key: key.name }
+                  )}
                   size="sm"
                   onConfirm={() => onDelete(key)}
                   disabled={tokenActionsDisabled}
@@ -85,11 +90,17 @@ function formatSecondsLeftUntilExpiration(secondsUntilExpiration: number): strin
 
 const TokenRevoked = () => {
   const styles = useStyles2(getStyles);
+
   return (
     <span className={styles.hasExpired}>
-      Revoked
+      <Trans i18nKey="serviceaccounts.token-revoked.revoked-label">Revoked</Trans>
       <span className={styles.tooltipContainer}>
-        <Tooltip content="This token has been publicly exposed. Please rotate this token">
+        <Tooltip
+          content={t(
+            'serviceaccounts.token-revoked.content-token-publicly-exposed-please-rotate',
+            'This token has been publicly exposed. Please rotate this token'
+          )}
+        >
           <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
         </Tooltip>
       </span>
@@ -104,6 +115,7 @@ interface TokenExpirationProps {
 
 const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
   const styles = useStyles2(getStyles);
+
   if (!token.expiration) {
     return (
       <span className={styles.neverExpire}>
@@ -121,9 +133,11 @@ const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
   if (token.hasExpired) {
     return (
       <span className={styles.hasExpired}>
-        Expired
+        <Trans i18nKey="serviceaccounts.token-expiration.expired-label">Expired</Trans>
         <span className={styles.tooltipContainer}>
-          <Tooltip content="This token has expired">
+          <Tooltip
+            content={t('serviceaccounts.token-expiration.content-this-token-has-expired', 'This token has expired')}
+          >
             <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
           </Tooltip>
         </span>

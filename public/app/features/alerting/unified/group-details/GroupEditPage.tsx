@@ -5,6 +5,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -19,7 +20,6 @@ import {
 } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 import { GrafanaRulesSourceSymbol, RuleGroupIdentifierV2, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -29,7 +29,6 @@ import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { EvaluationGroupQuickPick } from '../components/rule-editor/EvaluationGroupQuickPick';
-import { evaluateEveryValidationOptions } from '../components/rules/EditRuleGroupModal';
 import { useDeleteRuleGroup } from '../hooks/ruleGroup/useDeleteRuleGroup';
 import { UpdateGroupDelta, useUpdateRuleGroup } from '../hooks/ruleGroup/useUpdateRuleGroup';
 import { isLoading, useAsync } from '../hooks/useAsync';
@@ -43,6 +42,7 @@ import { stringifyErrorLike } from '../utils/misc';
 import { alertListPageLink, createListFilterLink, groups } from '../utils/navigation';
 
 import { DraggableRulesTable } from './components/DraggableRulesTable';
+import { evaluateEveryValidationOptions } from './validation';
 
 type GroupEditPageRouteParams = {
   dataSourceUid?: string;

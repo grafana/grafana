@@ -86,7 +86,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *
 			// Only deal with subpaths that are definitions, for now
 			// TODO incorporate smarts about grouped lineages here
 			if name == "" {
-				if !(sels[0].IsDefinition() || sels[0].String() == "spec") {
+				if !sels[0].IsDefinition() && sels[0].String() != "spec" {
 					return false
 				}
 				// It might seem to make sense that we'd strip out the leading # here for
@@ -235,7 +235,7 @@ func findDeclNode(name, basename string, tf *ast.File) declPair {
 			}
 		case ast.VarDecl:
 			if x.Names.Idents[0].Name == "default"+name {
-				p.D = &x.Names.Idents[0]
+				p.D = &x.Idents[0]
 				if name == "spec" {
 					p.D.Name = "default" + basename
 				}

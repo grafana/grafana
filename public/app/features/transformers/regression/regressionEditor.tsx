@@ -9,14 +9,14 @@ import {
   FieldMatcherID,
   Field,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineField, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
-import { DEFAULTS, ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+import { DEFAULTS, DEGREES, ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
 
 const fieldNamePickerSettings = {
   editor: FieldNamePicker,
@@ -33,8 +33,14 @@ export const RegressionTransformerEditor = ({
   onChange,
 }: TransformerUIProps<RegressionTransformerOptions>) => {
   const modelTypeOptions = [
-    { label: 'Linear', value: ModelType.linear },
-    { label: 'Polynomial', value: ModelType.polynomial },
+    {
+      label: t('transformers.regression-transformer-editor.model-type-options.label.linear', 'Linear'),
+      value: ModelType.linear,
+    },
+    {
+      label: t('transformers.regression-transformer-editor.model-type-options.label.polynomial', 'Polynomial'),
+      value: ModelType.polynomial,
+    },
   ];
 
   useEffect(() => {
@@ -116,7 +122,10 @@ export const RegressionTransformerEditor = ({
       <InlineField
         labelWidth={LABEL_WIDTH}
         label={t('transformers.regression-transformer-editor.label-predicted-points', 'Predicted points')}
-        tooltip={'Number of X,Y points to predict'}
+        tooltip={t(
+          'transformers.regression-transformer-editor.tooltip-number-of-xy-points-to-predict',
+          'Number of X,Y points to predict'
+        )}
       >
         <NumberInput
           value={options.predictionCount ?? DEFAULTS.predictionCount}
@@ -132,12 +141,12 @@ export const RegressionTransformerEditor = ({
         >
           <Select<number>
             value={options.degree ?? DEFAULTS.degree}
-            options={[
-              { label: 'Quadratic', value: 2 },
-              { label: 'Cubic', value: 3 },
-              { label: 'Quartic', value: 4 },
-              { label: 'Quintic', value: 5 },
-            ]}
+            options={DEGREES.map((deg) => {
+              return {
+                label: deg.label(),
+                value: deg.value,
+              };
+            })}
             onChange={(v) => {
               onChange({ ...options, degree: v.value });
             }}

@@ -29,10 +29,9 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder       = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupMutation      = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupValidation    = (*SecretAPIBuilder)(nil)
-	_ builder.APIGroupRouteProvider = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupBuilder    = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupMutation   = (*SecretAPIBuilder)(nil)
+	_ builder.APIGroupValidation = (*SecretAPIBuilder)(nil)
 )
 
 type SecretAPIBuilder struct {
@@ -62,11 +61,19 @@ func RegisterAPIService(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
+	secretDBMigrator contracts.SecretDBMigrator,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return nil, nil
+	}
+
+	// Some DBs that claim to be MySQL/Postgres-compatible might not support table locking.
+	lockDatabase := cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
+
+	if err := secretDBMigrator.RunMigrations(context.Background(), lockDatabase); err != nil {
+		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
@@ -120,6 +127,10 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return nil
 }
 
+func (b *SecretAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return nil
+}
+
 // UpdateAPIGroupInfo is called when creating a generic API server for this group of kinds.
 func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	secureValueResource := secretv0alpha1.SecureValuesResourceInfo
@@ -134,7 +145,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueMetadataStorage, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
-		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),
+		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, b.accessClient, keeperResource),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage
@@ -154,11 +165,6 @@ func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authsvc.NewResourceAuthorizer(b.accessClient)
-}
-
-// Register additional routes with the server.
-func (b *SecretAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil
 }
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.

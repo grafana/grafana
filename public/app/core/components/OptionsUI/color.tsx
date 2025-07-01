@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useTheme2, useStyles2, ColorPicker, IconButton } from '@grafana/ui';
 import { ColorSwatch } from '@grafana/ui/internal';
 
@@ -57,7 +58,11 @@ export const ColorValueEditor = ({ value, settings, onChange, details }: Props) 
                   </span>
                 )}
                 {settings?.isClearable && value && (
-                  <IconButton name="times" onClick={() => onChange(undefined)} tooltip="Clear settings" />
+                  <IconButton
+                    name="times"
+                    onClick={() => onChange(undefined)}
+                    tooltip={t('options-ui.color.clear-tooltip', 'Clear settings')}
+                  />
                 )}
               </>
             )}

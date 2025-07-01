@@ -1,16 +1,16 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { memo, useMemo } from 'react';
 
-import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/unified-alerting';
+import { DataSourceRuleGroupIdentifier, Rule } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { equal, fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
-import { getRulePluginOrigin, prometheusRuleType } from '../utils/rules';
-import { createRelativeUrl } from '../utils/url';
+import { isCloudRulerGroup } from '../utils/rules';
 
-import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
+import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
+import { getMatchingRulerRule } from './ruleMatching';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
@@ -26,25 +26,12 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
 }: DataSourceRuleLoaderProps) {
   const { rulesSource, namespace, groupName } = groupIdentifier;
 
-  const ruleIdentifier = fromRule(rulesSource.name, namespace.name, groupName, rule);
-  const href = createViewLinkFromIdentifier(ruleIdentifier);
-  const originMeta = getRulePluginOrigin(rule);
+  const { data: dsFeatures } = useDiscoverDsFeaturesQuery({ uid: rulesSource.uid });
 
-  // @TODO work with context API to propagate rulerConfig and such
-  const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: rulesSource.uid });
-
-  // @TODO refactor this to use a separate hook (useRuleWithLocation() and useCombinedRule() seems to introduce infinite loading / recursion)
-  const {
-    isLoading,
-    data: rulerRuleGroup,
-    // error,
-  } = useGetRuleGroupForNamespaceQuery(
-    {
-      namespace: namespace.name,
-      group: groupName,
-      rulerConfig: dataSourceInfo?.rulerConfig!,
-    },
-    { skip: !dataSourceInfo?.rulerConfig }
+  const { isLoading, data: rulerRuleGroup } = useGetRuleGroupForNamespaceQuery(
+    dsFeatures?.rulerConfig
+      ? { namespace: namespace.name, group: groupName, rulerConfig: dsFeatures?.rulerConfig }
+      : skipToken
   );
 
   const rulerRule = useMemo(() => {
@@ -52,10 +39,12 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
       return;
     }
 
-    return rulerRuleGroup.rules.find((rule) =>
-      equal(fromRulerRule(rulesSource.name, namespace.name, groupName, rule), ruleIdentifier)
-    );
-  }, [rulesSource, namespace, groupName, ruleIdentifier, rulerRuleGroup]);
+    if (!isCloudRulerGroup(rulerRuleGroup)) {
+      return;
+    }
+
+    return getMatchingRulerRule(rulerRuleGroup, rule);
+  }, [rulerRuleGroup, rule]);
 
   // 1. get the rule from the ruler API with "ruleWithLocation"
   // 1.1 skip this if this datasource does not have a ruler
@@ -74,53 +63,13 @@ export const DataSourceRuleLoader = memo(function DataSourceRuleLoader({
     return null;
   }, [groupIdentifier, isLoading, rule, rulerRule]);
 
-  if (prometheusRuleType.alertingRule(rule)) {
-    return (
-      <AlertRuleListItem
-        name={rule.name}
-        rulesSource={rulesSource}
-        application={dataSourceInfo?.application}
-        group={groupName}
-        namespace={namespace.name}
-        href={href}
-        summary={rule.annotations?.summary}
-        state={rule.state}
-        health={rule.health}
-        error={rule.lastError}
-        labels={rule.labels}
-        isProvisioned={undefined}
-        instancesCount={rule.alerts?.length}
-        actions={actions}
-        origin={originMeta}
-      />
-    );
-  }
-
-  if (prometheusRuleType.recordingRule(rule)) {
-    return (
-      <RecordingRuleListItem
-        name={rule.name}
-        rulesSource={rulesSource}
-        application={dataSourceInfo?.application}
-        group={groupName}
-        namespace={namespace.name}
-        href={href}
-        health={rule.health}
-        error={rule.lastError}
-        labels={rule.labels}
-        isProvisioned={undefined}
-        actions={actions}
-        origin={originMeta}
-      />
-    );
-  }
-
-  return <UnknownRuleListItem rule={rule} groupIdentifier={groupIdentifier} />;
+  return (
+    <DataSourceRuleListItem
+      rule={rule}
+      rulerRule={rulerRule}
+      groupIdentifier={groupIdentifier}
+      application={dsFeatures?.application}
+      actions={actions}
+    />
+  );
 });
-
-function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
-  const paramId = encodeURIComponent(stringifyIdentifier(identifier));
-  const paramSource = encodeURIComponent(identifier.ruleSourceName);
-
-  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
-}

@@ -24,15 +24,11 @@ jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
 
 function setup(app: CoreApp): { onRunQuery: jest.Mock } {
   const dataSource = {
-    getInitHints: () => [],
     getPrometheusTime: jest.fn((date, roundup) => 123),
     getQueryHints: jest.fn(() => []),
-    getDebounceTimeInMilliseconds: jest.fn(() => 300),
     languageProvider: {
       start: () => Promise.resolve([]),
-      syntax: () => {},
-      getLabelKeys: () => [],
-      metrics: [],
+      retrieveMetrics: () => [],
     },
   } as unknown as PrometheusDatasource;
   const onRunQuery = jest.fn();

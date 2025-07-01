@@ -209,7 +209,7 @@
           "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "azure",
@@ -880,7 +880,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -934,7 +934,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -959,52 +959,6 @@
     "defaultNavUrl": "/plugins/grafana-pyroscope-datasource/",
     "category": "profiling",
     "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Graph (old)",
-    "type": "panel",
-    "id": "graph",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "The old default graph panel",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        }
-      ],
-      "logos": {
-        "small": "public/app/plugins/panel/graph/img/icn-graph-panel.svg",
-        "large": "public/app/plugins/panel/graph/img/icn-graph-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/graph/",
-    "category": "",
-    "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
@@ -1241,12 +1195,16 @@
           "url": "https://www.jaegertracing.io"
         },
         {
-          "name": "GitHub Project",
+          "name": "Jaeger GitHub Project",
           "url": "https://github.com/jaegertracing/jaeger"
         },
         {
+          "name": "Repository",
+          "url": "https://github.com/grafana/grafana"
+        },
+        {
           "name": "Raise issue",
-          "url": "https://github.com/jaegertracing/jaeger/issues/new"
+          "url": "https://github.com/grafana/grafana/issues/new"
         },
         {
           "name": "Documentation",
@@ -1259,7 +1217,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1367,12 +1325,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.4.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1417,7 +1375,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1467,7 +1425,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1671,7 +1629,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1776,7 +1734,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2053,52 +2011,6 @@
     "angularDetected": false
   },
   {
-    "name": "Table (old)",
-    "type": "panel",
-    "id": "table-old",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Table Panel for Grafana",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        }
-      ],
-      "logos": {
-        "small": "public/app/plugins/panel/table-old/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/table-old/img/icn-table-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/table-old/",
-    "category": "",
-    "state": "deprecated",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Tempo",
     "type": "datasource",
     "id": "tempo",
@@ -2130,7 +2042,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2180,7 +2092,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2533,7 +2445,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },

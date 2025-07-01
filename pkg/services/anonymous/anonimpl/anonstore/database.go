@@ -145,11 +145,14 @@ func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) 
 		}
 	}
 
-	if s.sqlStore.GetDBType() == migrator.Spanner {
-		return s.insertIntoSpanner(ctx, device)
+	// If CreatedAt time is not set (i.e. it's zero), and we end up creating the device, use current time as creation time.
+	// If database converts zero time to NULL, but CreatedAt is not nullable, this helps to fix that problem too.
+	created := device.CreatedAt
+	if created.IsZero() {
+		created = time.Now()
 	}
 
-	args := []any{device.DeviceID, device.ClientIP, device.UserAgent, device.CreatedAt.UTC(), device.UpdatedAt.UTC()}
+	args := []any{device.DeviceID, device.ClientIP, device.UserAgent, created.UTC(), device.UpdatedAt.UTC()}
 	switch s.sqlStore.GetDBType() {
 	case migrator.Postgres:
 		query = `INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
@@ -184,26 +187,6 @@ func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) 
 	})
 
 	return err
-}
-
-// In Spanner INSERT OR UPDATE only works when conflict is on primary key. However here we expect conflict on non-PK
-// column "device_id", so we need to use a transaction instead.
-func (s *AnonDBStore) insertIntoSpanner(ctx context.Context, dev *Device) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		prev := &Device{DeviceID: dev.DeviceID}
-		ok, err := dbSession.Table(tableName).Get(prev)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			_, err = dbSession.Table(tableName).Insert(dev)
-			return err
-		}
-
-		// Include all columns in the update, even when empty (it's what inserts for other databases do too).
-		_, err = dbSession.Table(tableName).Where("device_id=?", dev.DeviceID).MustCols("client_ip", "user_agent", "created_at", "updated_at").Update(dev)
-		return err
-	})
 }
 
 func (s *AnonDBStore) CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error) {
@@ -275,8 +258,8 @@ func (s *AnonDBStore) SearchDevices(ctx context.Context, query *SearchDeviceQuer
 		sess.Where("d.updated_at BETWEEN ? AND ?", query.From.UTC(), query.To.UTC())
 
 		if query.Query != "" {
-			queryWithWildcards := "%" + strings.Replace(query.Query, "\\", "", -1) + "%"
-			sess.Where("d.client_ip "+s.sqlStore.GetDialect().LikeStr()+" ?", queryWithWildcards)
+			sql, param := s.sqlStore.GetDialect().LikeOperator("d.client_ip", true, strings.ReplaceAll(query.Query, "\\", ""), true)
+			sess.Where(sql, param)
 		}
 
 		// get total

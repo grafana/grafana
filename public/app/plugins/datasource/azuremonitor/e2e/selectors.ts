@@ -76,10 +76,16 @@ export const components = {
       formatSelection: {
         input: 'data-testid format-selection',
       },
+      runQuery: {
+        button: 'data-testid run-query',
+      },
     },
     argsQueryEditor: {
       container: {
         input: 'data-testid azure-monitor-arg-query-editor',
+      },
+      scope: {
+        input: 'data-testid azure-monitor-arg-query-editor-scope',
       },
       subscriptions: {
         input: 'data-testid azure-monitor-args-subscription',

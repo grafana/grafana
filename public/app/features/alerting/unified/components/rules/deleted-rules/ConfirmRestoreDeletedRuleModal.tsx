@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { ComponentProps } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';
@@ -32,6 +32,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
   onRestoreError,
 }: ModalProps) => {
   const [restoreMethod, { error }] = useRestoreDeletedRule();
+
   const title = t('alerting.deleted-rules.restore-modal.title', 'Restore deleted alert rule');
   const errorTitle = t('alerting.deleted-rules.restore-modal.error', 'Could not restore deleted alert rule');
   const confirmText = !error
@@ -160,7 +161,7 @@ const redirectToRestoreForm = async (ruleToRecover: RulerGrafanaRuleDTO) => {
   const ruleFormUrl = createRelativeUrl(urlPath, {
     isManualRestore: 'true',
     defaults: JSON.stringify(formValues),
-    returnTo: location.pathname + location.search,
+    returnTo: window.location.pathname + window.location.search,
   });
 
   locationService.push(ruleFormUrl);

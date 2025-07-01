@@ -7,22 +7,23 @@ import (
 	"fmt"
 	"testing"
 
-	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/mattn/go-sqlite3"
 
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var (
 	errTest = errors.New("things happened")
-	resKey  = &resource.ResourceKey{
+	resKey  = &resourcepb.ResourceKey{
 		Namespace: "ns",
 		Group:     "gr",
 		Resource:  "rs",
@@ -212,7 +213,7 @@ func TestBackend_create(t *testing.T) {
 	})
 	require.NoError(t, err)
 	event := resource.WriteEvent{
-		Type:   resource.WatchEvent_ADDED,
+		Type:   resourcepb.WatchEvent_ADDED,
 		Key:    resKey,
 		Object: meta,
 	}
@@ -251,7 +252,7 @@ func TestBackend_create(t *testing.T) {
 
 		// Then we try to insert the same resource again. This should fail.
 		_, err = b.create(ctx, event)
-		require.ErrorIs(t, err, unifiedbackend.ErrResourceAlreadyExists)
+		require.ErrorIs(t, err, resource.ErrResourceAlreadyExists)
 	})
 
 	t.Run("error inserting into resource", func(t *testing.T) {
@@ -292,7 +293,7 @@ func TestBackend_update(t *testing.T) {
 	require.NoError(t, err)
 	meta.SetFolder("folderuid")
 	event := resource.WriteEvent{
-		Type:   resource.WatchEvent_MODIFIED,
+		Type:   resourcepb.WatchEvent_MODIFIED,
 		Key:    resKey,
 		Object: meta,
 	}
@@ -350,7 +351,7 @@ func TestBackend_delete(t *testing.T) {
 	})
 	require.NoError(t, err)
 	event := resource.WriteEvent{
-		Type:   resource.WatchEvent_DELETED,
+		Type:   resourcepb.WatchEvent_DELETED,
 		Key:    resKey,
 		Object: meta,
 	}
@@ -402,6 +403,7 @@ func TestBackend_delete(t *testing.T) {
 }
 
 type readHistoryRow struct {
+	guid             string
 	namespace        string
 	group            string
 	resource         string
@@ -419,6 +421,7 @@ func TestBackend_ReadResource(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 
 		expectedReadRow := readHistoryRow{
+			guid:             "guid",
 			namespace:        "ns",
 			group:            "gr",
 			resource:         "rs",
@@ -427,11 +430,12 @@ func TestBackend_ReadResource(t *testing.T) {
 			resource_version: "300",
 			value:            "rv-300",
 		}
-		readResource := []string{"namespace", "group", "resource", "name", "folder", "resource_version", "value"}
+		readResource := []string{"guid", "namespace", "group", "resource", "name", "folder", "resource_version", "value"}
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectQuery("SELECT .* FROM resource").
 			WillReturnRows(sqlmock.NewRows(readResource).
 				AddRow(
+					expectedReadRow.guid,
 					expectedReadRow.namespace,
 					expectedReadRow.group,
 					expectedReadRow.resource,
@@ -442,7 +446,7 @@ func TestBackend_ReadResource(t *testing.T) {
 				))
 		b.SQLMock.ExpectCommit()
 
-		req := &resource.ReadRequest{
+		req := &resourcepb.ReadRequest{
 			Key: resKey,
 		}
 		rps := b.ReadResource(ctx, req)
@@ -461,7 +465,7 @@ func TestBackend_ReadResource(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{}))
 		b.SQLMock.ExpectCommit()
 
-		req := &resource.ReadRequest{
+		req := &resourcepb.ReadRequest{
 			Key: resKey,
 		}
 		res := b.ReadResource(ctx, req)
@@ -474,6 +478,7 @@ func TestBackend_ReadResource(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 
 		expectedReadRow := readHistoryRow{
+			guid:             "guid",
 			namespace:        "ns",
 			group:            "gr",
 			resource:         "rs",
@@ -483,11 +488,12 @@ func TestBackend_ReadResource(t *testing.T) {
 			value:            "rv-300",
 		}
 
-		readHistoryColumns := []string{"namespace", "group", "resource", "name", "folder", "resource_version", "value"}
+		readHistoryColumns := []string{"guid", "namespace", "group", "resource", "name", "folder", "resource_version", "value"}
 		b.SQLMock.ExpectBegin()
 		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").
 			WillReturnRows(sqlmock.NewRows(readHistoryColumns).
 				AddRow(
+					expectedReadRow.guid,
 					expectedReadRow.namespace,
 					expectedReadRow.group,
 					expectedReadRow.resource,
@@ -498,7 +504,7 @@ func TestBackend_ReadResource(t *testing.T) {
 				))
 		b.SQLMock.ExpectCommit()
 
-		req := &resource.ReadRequest{
+		req := &resourcepb.ReadRequest{
 			Key:             resKey,
 			ResourceVersion: 300,
 		}
@@ -516,7 +522,7 @@ func TestBackend_ReadResource(t *testing.T) {
 		b.SQLMock.ExpectQuery("SELECT .* FROM resource_history").
 			WillReturnError(errTest)
 
-		req := &resource.ReadRequest{
+		req := &resourcepb.ReadRequest{
 			Key: resKey,
 		}
 		rps := b.ReadResource(ctx, req)
@@ -528,19 +534,19 @@ func TestBackend_getHistory(t *testing.T) {
 	t.Parallel()
 
 	// Common setup
-	key := &resource.ResourceKey{
+	key := &resourcepb.ResourceKey{
 		Namespace: "ns",
 		Group:     "gr",
 		Resource:  "rs",
 		Name:      "nm",
 	}
 	rv1, rv2, rv3 := int64(100), int64(200), int64(300)
-	cols := []string{"resource_version", "namespace", "name", "folder", "value"}
+	cols := []string{"guid", "resource_version", "namespace", "group", "resource", "name", "folder", "value"}
 
 	tests := []struct {
 		name                          string
-		source                        resource.ListRequest_Source
-		versionMatch                  resource.ResourceVersionMatchV2
+		source                        resourcepb.ListRequest_Source
+		versionMatch                  resourcepb.ResourceVersionMatchV2
 		resourceVersion               int64
 		expectedVersions              []int64
 		expectedListRv                int64
@@ -550,8 +556,8 @@ func TestBackend_getHistory(t *testing.T) {
 	}{
 		{
 			name:              "with ResourceVersionMatch_NotOlderThan",
-			source:            resource.ListRequest_HISTORY,
-			versionMatch:      resource.ResourceVersionMatchV2_NotOlderThan,
+			source:            resourcepb.ListRequest_HISTORY,
+			versionMatch:      resourcepb.ResourceVersionMatchV2_NotOlderThan,
 			resourceVersion:   rv2,
 			expectedVersions:  []int64{rv2, rv3}, // Should be in ASC order due to NotOlderThan
 			expectedListRv:    rv3,
@@ -559,8 +565,8 @@ func TestBackend_getHistory(t *testing.T) {
 		},
 		{
 			name:                          "with ResourceVersionMatch_NotOlderThan and ResourceVersion=0",
-			source:                        resource.ListRequest_HISTORY,
-			versionMatch:                  resource.ResourceVersionMatchV2_NotOlderThan,
+			source:                        resourcepb.ListRequest_HISTORY,
+			versionMatch:                  resourcepb.ResourceVersionMatchV2_NotOlderThan,
 			resourceVersion:               0,
 			expectedVersions:              []int64{rv1, rv2, rv3}, // Should be in ASC order due to NotOlderThan
 			expectedListRv:                rv3,
@@ -569,8 +575,8 @@ func TestBackend_getHistory(t *testing.T) {
 		},
 		{
 			name:              "with ResourceVersionMatch_Exact",
-			source:            resource.ListRequest_HISTORY,
-			versionMatch:      resource.ResourceVersionMatchV2_Exact,
+			source:            resourcepb.ListRequest_HISTORY,
+			versionMatch:      resourcepb.ResourceVersionMatchV2_Exact,
 			resourceVersion:   rv2,
 			expectedVersions:  []int64{rv2},
 			expectedListRv:    rv3,
@@ -578,7 +584,7 @@ func TestBackend_getHistory(t *testing.T) {
 		},
 		{
 			name:                          "with ResourceVersionMatch_Unset (default)",
-			source:                        resource.ListRequest_HISTORY,
+			source:                        resourcepb.ListRequest_HISTORY,
 			expectedVersions:              []int64{rv3, rv2, rv1}, // Should be in DESC order by default
 			expectedListRv:                rv3,
 			expectedRowsCount:             3,
@@ -586,14 +592,14 @@ func TestBackend_getHistory(t *testing.T) {
 		},
 		{
 			name:            "error with ResourceVersionMatch_Exact and ResourceVersion <= 0",
-			source:          resource.ListRequest_HISTORY,
-			versionMatch:    resource.ResourceVersionMatchV2_Exact,
+			source:          resourcepb.ListRequest_HISTORY,
+			versionMatch:    resourcepb.ResourceVersionMatchV2_Exact,
 			resourceVersion: 0,
 			expectedErr:     "expecting an explicit resource version query when using Exact matching",
 		},
 		{
 			name:              "with ListRequest_TRASH",
-			source:            resource.ListRequest_TRASH,
+			source:            resourcepb.ListRequest_TRASH,
 			expectedVersions:  []int64{rv3, rv2, rv1}, // Should be in DESC order by default
 			expectedListRv:    rv3,
 			expectedRowsCount: 3,
@@ -607,8 +613,8 @@ func TestBackend_getHistory(t *testing.T) {
 			b, ctx := setupBackendTest(t)
 
 			// Build request with appropriate matcher
-			req := &resource.ListRequest{
-				Options:         &resource.ListOptions{Key: key},
+			req := &resourcepb.ListRequest{
+				Options:         &resourcepb.ListOptions{Key: key},
 				ResourceVersion: tc.resourceVersion,
 				VersionMatchV2:  tc.versionMatch,
 				Source:          tc.source,
@@ -658,8 +664,11 @@ func TestBackend_getHistory(t *testing.T) {
 				historyRows := sqlmock.NewRows(cols)
 				for _, rv := range tc.expectedVersions {
 					historyRows.AddRow(
+						"guid",                           // guid
 						rv,                               // resource_version
 						"ns",                             // namespace
+						"gr",                             // group
+						"rs",                             // resource
 						"nm",                             // name
 						"folder",                         // folder
 						[]byte(fmt.Sprintf("rv-%d", rv)), // value
@@ -692,7 +701,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 	t.Parallel()
 
 	// Common setup
-	key := &resource.ResourceKey{
+	key := &resourcepb.ResourceKey{
 		Namespace: "ns",
 		Group:     "gr",
 		Resource:  "rs",
@@ -741,11 +750,11 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 
 		// Test each page
 		for _, page := range pages {
-			req := &resource.ListRequest{
-				Options:         &resource.ListOptions{Key: key},
+			req := &resourcepb.ListRequest{
+				Options:         &resourcepb.ListOptions{Key: key},
 				ResourceVersion: initialRV,
-				VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
-				Source:          resource.ListRequest_HISTORY,
+				VersionMatchV2:  resourcepb.ResourceVersionMatchV2_NotOlderThan,
+				Source:          resourcepb.ListRequest_HISTORY,
 				Limit:           4,
 			}
 			if page.token != nil {
@@ -782,11 +791,11 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 	t.Run("pagination with ResourceVersion=0 and NotOlderThan should return entries in ASC order", func(t *testing.T) {
 		b, ctx := setupBackendTest(t)
 
-		req := &resource.ListRequest{
-			Options:         &resource.ListOptions{Key: key},
+		req := &resourcepb.ListRequest{
+			Options:         &resourcepb.ListOptions{Key: key},
 			ResourceVersion: 0,
-			VersionMatchV2:  resource.ResourceVersionMatchV2_NotOlderThan,
-			Source:          resource.ListRequest_HISTORY,
+			VersionMatchV2:  resourcepb.ResourceVersionMatchV2_NotOlderThan,
+			Source:          resourcepb.ListRequest_HISTORY,
 			Limit:           4,
 		}
 
@@ -830,12 +839,15 @@ func setupHistoryTest(b testBackend, resourceVersions []int64, latestRV int64, e
 	}
 
 	// Create the mock rows for the history items
-	cols := []string{"resource_version", "namespace", "name", "folder", "value"}
+	cols := []string{"guid", "resource_version", "namespace", "group", "resource", "name", "folder", "value"}
 	historyRows := sqlmock.NewRows(cols)
 	for _, rv := range resourceVersions {
 		historyRows.AddRow(
+			"guid",                           // guid
 			rv,                               // resource_version
 			"ns",                             // namespace
+			"gr",                             // group
+			"rs",                             // resource
 			"nm",                             // name
 			"folder",                         // folder
 			[]byte(fmt.Sprintf("rv-%d", rv)), // value

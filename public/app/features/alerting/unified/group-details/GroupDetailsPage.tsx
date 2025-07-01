@@ -2,9 +2,9 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, LinkButton, Text, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { Trans, t } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
 import { GrafanaRulesSourceSymbol, RuleGroup } from 'app/types/unified-alerting';
 import { PromRuleType, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -16,10 +16,12 @@ import { DynamicTable, DynamicTableColumnProps } from '../components/DynamicTabl
 import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupExporter';
 import { useFolder } from '../hooks/useFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../rule-editor/formDefaults';
+import { createViewLinkFromIdentifier } from '../rule-list/DataSourceRuleListItem';
 import { useRulesAccess } from '../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../utils/datasource';
 import { makeFolderLink, stringifyErrorLike } from '../utils/misc';
 import { createListFilterLink, groups } from '../utils/navigation';
+import { fromRule, fromRulerRule } from '../utils/rule-id';
 import {
   calcRuleEvalsToStartAlerting,
   getRuleName,
@@ -77,6 +79,7 @@ function GroupDetailsPage() {
       : skipToken
   );
 
+  const ruleSourceName = isGrafanaRuleGroup ? GRAFANA_RULES_SOURCE_NAME : getDataSourceByUid(dataSourceUid)?.name;
   const isLoading = isFolderLoading || isDsFeaturesLoading || isRuleNamespacesLoading || isRuleGroupLoading;
 
   const groupInterval = promGroup?.interval
@@ -147,8 +150,12 @@ function GroupDetailsPage() {
             <div>{stringifyErrorLike(ruleNamespacesError || ruleGroupError)}</div>
           </Alert>
         )}
-        {promGroup && <GroupDetails group={promRuleGroupToRuleGroupDetails(promGroup)} />}
-        {rulerGroup && <GroupDetails group={rulerRuleGroupToRuleGroupDetails(rulerGroup)} />}
+        {promGroup && ruleSourceName && (
+          <GroupDetails group={promRuleGroupToRuleGroupDetails(ruleSourceName, namespaceName, promGroup)} />
+        )}
+        {rulerGroup && ruleSourceName && (
+          <GroupDetails group={rulerRuleGroupToRuleGroupDetails(ruleSourceName, namespaceName, rulerGroup)} />
+        )}
         {!promGroup && !rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
       </>
     </AlertingPageWrapper>
@@ -212,12 +219,14 @@ interface RuleGroupDetails {
 
 interface AlertingRuleDetails {
   name: string;
+  href?: string;
   type: 'alerting';
   pendingPeriod: string;
   evaluationsToFire: number;
 }
 interface RecordingRuleDetails {
   name: string;
+  href?: string;
   type: 'recording';
 }
 
@@ -246,8 +255,16 @@ function RulesTable({ rules }: { rules: RuleDetails[] }) {
       {
         id: 'alertName',
         label: t('alerting.group-details.rule-name', 'Rule name'),
-        renderCell: ({ data }) => {
-          return <Text truncate>{data.name}</Text>;
+        renderCell: ({ data: { name, href } }) => {
+          if (href) {
+            return (
+              <TextLink href={href} inline={false} color="primary">
+                {name}
+              </TextLink>
+            );
+          }
+
+          return <Text truncate>{name}</Text>;
         },
         size: 0.4,
       },
@@ -283,29 +300,41 @@ function RulesTable({ rules }: { rules: RuleDetails[] }) {
   return <DynamicTable items={rows} cols={columns} />;
 }
 
-function promRuleGroupToRuleGroupDetails(group: RuleGroup): RuleGroupDetails {
+function promRuleGroupToRuleGroupDetails(
+  ruleSourceName: string,
+  namespaceName: string,
+  group: RuleGroup
+): RuleGroupDetails {
   const groupIntervalMs = group.interval * 1000;
 
   return {
     name: group.name,
     interval: formatPrometheusDuration(group.interval * 1000),
     rules: group.rules.map<RuleDetails>((rule) => {
+      const ruleIdentifier = fromRule(ruleSourceName, namespaceName, group.name, rule);
+      const href = ruleIdentifier ? createViewLinkFromIdentifier(ruleIdentifier) : undefined;
+
       switch (rule.type) {
         case PromRuleType.Alerting:
           return {
             name: rule.name,
+            href,
             type: 'alerting',
             pendingPeriod: formatPrometheusDuration(rule.duration ? rule.duration * 1000 : 0),
             evaluationsToFire: calcRuleEvalsToStartAlerting(rule.duration ? rule.duration * 1000 : 0, groupIntervalMs),
           };
         case PromRuleType.Recording:
-          return { name: rule.name, type: 'recording' };
+          return { name: rule.name, href, type: 'recording' };
       }
     }),
   };
 }
 
-function rulerRuleGroupToRuleGroupDetails(group: RulerRuleGroupDTO): RuleGroupDetails {
+function rulerRuleGroupToRuleGroupDetails(
+  ruleSourceName: string,
+  namespaceName: string,
+  group: RulerRuleGroupDTO
+): RuleGroupDetails {
   const groupIntervalMs = safeParsePrometheusDuration(group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   return {
@@ -314,9 +343,13 @@ function rulerRuleGroupToRuleGroupDetails(group: RulerRuleGroupDTO): RuleGroupDe
     rules: group.rules.map<RuleDetails>((rule) => {
       const name = getRuleName(rule);
 
+      const ruleIdentifier = fromRulerRule(ruleSourceName, namespaceName, group.name, rule);
+      const href = createViewLinkFromIdentifier(ruleIdentifier);
+
       if (rulerRuleType.any.alertingRule(rule)) {
         return {
           name,
+          href,
           type: 'alerting',
           pendingPeriod: rule.for ?? '0s',
           evaluationsToFire: calcRuleEvalsToStartAlerting(
@@ -326,7 +359,7 @@ function rulerRuleGroupToRuleGroupDetails(group: RulerRuleGroupDTO): RuleGroupDe
         };
       }
 
-      return { name, type: 'recording' };
+      return { name, href, type: 'recording' };
     }),
   };
 }

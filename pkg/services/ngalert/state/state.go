@@ -63,6 +63,9 @@ type State struct {
 	// conditions.
 	Values map[string]float64
 
+	// FiredAt is the time the state first transitions to Alerting.
+	FiredAt *time.Time
+
 	StartsAt time.Time
 	// EndsAt is different from the Prometheus EndsAt as EndsAt is updated for both Normal states
 	// and states that have been resolved. It cannot be used to determine when a state was resolved.
@@ -100,6 +103,7 @@ func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, 
 		EndsAt:               result.EvaluatedAt,
 		ResolvedAt:           nil,
 		LastSentAt:           nil,
+		FiredAt:              nil,
 		LastEvaluationString: "",
 		LastEvaluationTime:   result.EvaluatedAt,
 		EvaluationDuration:   result.EvaluationDuration,
@@ -128,6 +132,7 @@ func (a *State) Copy() *State {
 		Values:               a.Values,
 		StartsAt:             a.StartsAt,
 		EndsAt:               a.EndsAt,
+		FiredAt:              a.FiredAt,
 		ResolvedAt:           a.ResolvedAt,
 		LastSentAt:           a.LastSentAt,
 		LastEvaluationString: a.LastEvaluationString,
@@ -159,6 +164,9 @@ func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time) {
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
 	a.Error = nil
+
+	// FiredAt is only ever set when the state is set to Alerting.
+	a.FiredAt = &startsAt
 }
 
 // SetPending sets the state to Pending. It changes both the start and end time.
@@ -211,16 +219,30 @@ func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
 	a.EndsAt = nextEndsTime(interval, evaluatedAt)
 }
 
-// AddErrorInformation adds annotations to the state to indicate that an error occurred.
-// If addDatasourceInfoToLabels is true, the ref_id and datasource_uid are added to the labels,
-// otherwise, they are added to the annotations.
-func (a *State) AddErrorInformation(err error, rule *models.AlertRule, addDatasourceInfoToLabels bool) {
+// addErrorInfoToAnnotations adds annotations to the state to indicate that an error occurred.
+func (a *State) addErrorInfoToAnnotations(err error, rule *models.AlertRule) {
 	if err == nil {
 		return
 	}
 
 	a.Annotations["Error"] = err.Error()
 
+	refID, datasourceUID := datasourceErrorInfo(err, rule)
+
+	if refID != "" || datasourceUID != "" {
+		a.Annotations["ref_id"] = refID
+		a.Annotations["datasource_uid"] = datasourceUID
+	} else {
+		// Remove the ref_id and datasource_uid from the annotations if they are present.
+		// It can happen if the alert state hasn't changed, but the error is different now.
+		delete(a.Annotations, "ref_id")
+		delete(a.Annotations, "datasource_uid")
+	}
+}
+
+// datasourceErrorInfo returns ref_id and datasource_uid if the evaluation
+// failed because a query returned an error.
+func datasourceErrorInfo(err error, rule *models.AlertRule) (string, string) {
 	// If the evaluation failed because a query returned an error then add the Ref ID and
 	// Datasource UID as labels or annotations
 	var utilError errutil.Error
@@ -228,22 +250,12 @@ func (a *State) AddErrorInformation(err error, rule *models.AlertRule, addDataso
 		(errors.Is(err, expr.QueryError) || errors.Is(err, expr.ConversionError)) {
 		for _, next := range rule.Data {
 			if next.RefID == utilError.PublicPayload["refId"].(string) {
-				if addDatasourceInfoToLabels {
-					a.Labels["ref_id"] = next.RefID
-					a.Labels["datasource_uid"] = next.DatasourceUID
-				} else {
-					a.Annotations["ref_id"] = next.RefID
-					a.Annotations["datasource_uid"] = next.DatasourceUID
-				}
-				break
+				return next.RefID, next.DatasourceUID
 			}
 		}
-	} else {
-		// Remove the ref_id and datasource_uid from the annotations if they are present.
-		// It can happen if the alert state hasn't changed, but the error is different now.
-		delete(a.Annotations, "ref_id")
-		delete(a.Annotations, "datasource_uid")
 	}
+
+	return "", ""
 }
 
 func (a *State) SetNextValues(result eval.Result) {
@@ -280,7 +292,7 @@ type StateTransition struct {
 }
 
 func (c StateTransition) Formatted() string {
-	return FormatStateAndReason(c.State.State, c.State.StateReason)
+	return FormatStateAndReason(c.State.State, c.StateReason)
 }
 
 func (c StateTransition) PreviousFormatted() string {
@@ -288,7 +300,7 @@ func (c StateTransition) PreviousFormatted() string {
 }
 
 func (c StateTransition) Changed() bool {
-	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
+	return c.PreviousState != c.State.State || c.PreviousStateReason != c.StateReason
 }
 
 type StateTransitions []StateTransition
@@ -393,6 +405,8 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	case eval.Alerting:
 		prevEndsAt := state.EndsAt
 		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		// explicitly clear errors
+		state.Error = nil
 		logger.Debug("Keeping state",
 			"state",
 			state.State,
@@ -417,8 +431,9 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 		}
 	default:
 		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-		if rule.For > 0 {
-			// If the alert rule has a For duration that should be observed then the state should be set to Pending
+		if state.State != eval.Recovering && rule.For > 0 {
+			// If the alert rule has a For duration that should be observed then the state should be set to Pending.
+			// If the alert is currently in the Recovering state then we skip Pending and set it directly to Alerting.
 			logger.Debug("Changing state",
 				"previous_state",
 				state.State,
@@ -453,12 +468,11 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		resultAlerting(state, rule, result, logger, models.StateReasonError)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
-		state.AddErrorInformation(result.Error, rule, false)
+		state.addErrorInfoToAnnotations(result.Error, rule)
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
 			state.Error = result.Error
-			state.AddErrorInformation(result.Error, rule, true)
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 			logger.Debug("Keeping state",
 				"state",
@@ -480,20 +494,23 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				"next_ends_at",
 				nextEndsAt)
 			state.SetError(result.Error, result.EvaluatedAt, nextEndsAt)
-			state.AddErrorInformation(result.Error, rule, true)
+		}
+		// TODO: always add annotations
+		if result.Error != nil {
+			state.Annotations["Error"] = result.Error.Error()
 		}
 	case models.OkErrState:
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
 		resultNormal(state, rule, result, logger, "") // TODO: Should we add a reason?
-		state.AddErrorInformation(result.Error, rule, false)
+		state.addErrorInfoToAnnotations(result.Error, rule)
 	case models.KeepLastErrState:
 		logger := logger.New("previous_handler", handlerStr)
 		resultKeepLast(state, rule, result, logger)
-		state.AddErrorInformation(result.Error, rule, false)
+		state.addErrorInfoToAnnotations(result.Error, rule)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
-		state.AddErrorInformation(result.Error, rule, false)
+		state.addErrorInfoToAnnotations(result.Error, rule)
 	}
 }
 
@@ -572,7 +589,7 @@ func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, lo
 // - The state has been resolved since the last notification.
 // - The state is firing and the last notification was sent at least resendDelay ago.
 // - The state was resolved within the resolvedRetention period, and the last notification was sent at least resendDelay ago.
-func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.Duration) bool {
+func (a *State) NeedsSending(now time.Time, resendDelay time.Duration, resolvedRetention time.Duration) bool {
 	if a.State == eval.Pending {
 		// We do not send notifications for pending states.
 		return false
@@ -585,13 +602,13 @@ func (a *State) NeedsSending(resendDelay time.Duration, resolvedRetention time.D
 
 	// For normal states, we should only be sending if this is a resolved notification or a re-send of the resolved
 	// notification within the resolvedRetention period.
-	if a.State == eval.Normal && (a.ResolvedAt == nil || a.LastEvaluationTime.Sub(*a.ResolvedAt) > resolvedRetention) {
+	if a.State == eval.Normal && (a.ResolvedAt == nil || now.Sub(*a.ResolvedAt) > resolvedRetention) {
 		return false
 	}
 
-	// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay.
+	// We should send, and re-send notifications, each time LastSentAt is <= now + resendDelay.
 	// This can include normal->normal transitions that were resolved in recent past evaluations.
-	return a.LastSentAt == nil || !a.LastSentAt.Add(resendDelay).After(a.LastEvaluationTime)
+	return a.LastSentAt == nil || !a.LastSentAt.Add(resendDelay).After(now)
 }
 
 func (a *State) Equals(b *State) bool {
@@ -600,9 +617,9 @@ func (a *State) Equals(b *State) bool {
 		a.CacheID == b.CacheID &&
 		a.Labels.String() == b.Labels.String() &&
 		a.State.String() == b.State.String() &&
-		a.StartsAt == b.StartsAt &&
-		a.EndsAt == b.EndsAt &&
-		a.LastEvaluationTime == b.LastEvaluationTime &&
+		a.StartsAt.Equal(b.StartsAt) &&
+		a.EndsAt.Equal(b.EndsAt) &&
+		a.LastEvaluationTime.Equal(b.LastEvaluationTime) &&
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }
 
@@ -648,6 +665,20 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 // IsStale returns true if the state is stale, meaning that the state is ready to be evicted from the cache.
 func (a *State) IsStale() bool {
 	return a.StateReason == models.StateReasonMissingSeries
+}
+
+// If the state is Normal, and the previous state was Alerting, Error, NoData, or Recovering,
+// we can consider the state to be resolved. This is used to determine if we should send a resolved notification.
+func (a *State) ShouldBeResolved(oldState eval.State) bool {
+	if a.State != eval.Normal {
+		return false
+	}
+
+	if oldState != eval.Alerting && oldState != eval.Error && oldState != eval.NoData && oldState != eval.Recovering {
+		return false
+	}
+
+	return true
 }
 
 // shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
@@ -757,6 +788,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	newState.LastEvaluationString = existingState.LastEvaluationString
 	newState.StartsAt = existingState.StartsAt
 	newState.EndsAt = existingState.EndsAt
+	newState.FiredAt = existingState.FiredAt
 	newState.ResolvedAt = existingState.ResolvedAt
 	newState.LastSentAt = existingState.LastSentAt
 	// Annotations can change over time, however we also want to maintain
@@ -771,20 +803,6 @@ func patch(newState, existingState *State, result eval.Result) {
 		if _, ok = newState.Annotations[key]; !ok {
 			newState.Annotations[key] = value
 		}
-	}
-
-	// if the current state is "data source error" then it may have additional labels that may not exist in the new state.
-	// See https://github.com/grafana/grafana/blob/c7fdf8ce706c2c9d438f5e6eabd6e580bac4946b/pkg/services/ngalert/state/state.go#L161-L163
-	// copy known labels over to the new instance, it can help reduce flapping
-	// TODO fix this?
-	if existingState.State == eval.Error && result.State == eval.Error {
-		setIfExist := func(lbl string) {
-			if v, ok := existingState.Labels[lbl]; ok {
-				newState.Labels[lbl] = v
-			}
-		}
-		setIfExist("datasource_uid")
-		setIfExist("ref_id")
 	}
 }
 
@@ -804,27 +822,6 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 
 	// Add the instance to the log context to help correlate log lines for a state
 	logger = logger.New("instance", result.Instance)
-
-	// if the current state is Error but the result is different, then we need o clean up the extra labels
-	// that were added after the state key was calculated
-	// https://github.com/grafana/grafana/blob/1df4d332c982dc5e394201bb2ef35b442727ce63/pkg/services/ngalert/state/state.go#L298-L311
-	// Usually, it happens in the case of classic conditions when the evalResult does not have labels.
-	//
-	// This is temporary change to make sure that the labels are not persistent in the state after it was in Error state
-	// TODO yuri. Remove it when correct Error result with labels is provided
-	if a.State == eval.Error && result.State != eval.Error {
-		// This is possible because state was updated after the CacheID was calculated.
-		_, curOk := a.Labels["ref_id"]
-		_, resOk := result.Instance["ref_id"]
-		if curOk && !resOk {
-			delete(a.Labels, "ref_id")
-		}
-		_, curOk = a.Labels["datasource_uid"]
-		_, resOk = result.Instance["datasource_uid"]
-		if curOk && !resOk {
-			delete(a.Labels, "datasource_uid")
-		}
-	}
 
 	switch result.State {
 	case eval.Normal:

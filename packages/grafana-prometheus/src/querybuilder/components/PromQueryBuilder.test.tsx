@@ -8,14 +8,14 @@ import {
   LoadingState,
   MutableDataFrame,
   PanelData,
-  QueryHint,
   TimeRange,
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
+import * as queryHints from '../../query_hints';
 import { PromApplication, PromOptions } from '../../types';
 import { getLabelSelects } from '../testUtils';
 import { PromVisualQuery } from '../types';
@@ -73,7 +73,7 @@ describe('PromQueryBuilder', () => {
 
   it('renders all the query sections', async () => {
     setup(bugQuery);
-    expect(screen.getByText('random_metric')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('random_metric')).toBeInTheDocument();
     expect(screen.getByText('localhost:9090')).toBeInTheDocument();
     expect(screen.getByText('Rate')).toBeInTheDocument();
     const sumBys = screen.getAllByTestId('operations.1.wrapper');
@@ -89,7 +89,9 @@ describe('PromQueryBuilder', () => {
   it('tries to load metrics without labels', async () => {
     const { languageProvider, container } = setup();
     await openMetricSelect(container);
-    await waitFor(() => expect(languageProvider.getLabelValues).toHaveBeenCalledWith(expect.anything(), '__name__'));
+    await waitFor(() =>
+      expect(languageProvider.queryLabelValues).toHaveBeenCalledWith(expect.anything(), '__name__', undefined)
+    );
   });
 
   it('tries to load metrics with labels', async () => {
@@ -99,10 +101,10 @@ describe('PromQueryBuilder', () => {
     });
     await openMetricSelect(container);
     await waitFor(() =>
-      expect(languageProvider.getSeries).toHaveBeenCalledWith(
+      expect(languageProvider.queryLabelValues).toHaveBeenCalledWith(
         expect.anything(),
-        '{label_name="label_value"}',
-        expect.anything()
+        expect.anything(),
+        '{label_name="label_value"}'
       )
     );
   });
@@ -119,10 +121,7 @@ describe('PromQueryBuilder', () => {
     const { languageProvider } = setup();
     await openLabelNameSelect();
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        '{__name__="random_metric"}'
-      )
+      expect(languageProvider.queryLabelKeys).toHaveBeenCalledWith(expect.anything(), '{__name__="random_metric"}')
     );
   });
 
@@ -143,7 +142,7 @@ describe('PromQueryBuilder', () => {
     });
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(
+      expect(languageProvider.queryLabelKeys).toHaveBeenCalledWith(
         expect.anything(),
         '{label_name="label_value", __name__="random_metric"}'
       )
@@ -157,7 +156,7 @@ describe('PromQueryBuilder', () => {
       metric: '',
     });
     await openLabelNameSelect();
-    await waitFor(() => expect(languageProvider.fetchLabels).toBeCalled());
+    await waitFor(() => expect(languageProvider.queryLabelKeys).toBeCalled());
   });
 
   it('shows hints for histogram metrics', async () => {
@@ -167,8 +166,16 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     await openMetricSelect(container);
-    await userEvent.click(screen.getByText('histogram_metric_bucket'));
-    await waitFor(() => expect(screen.getByText('hint: add histogram_quantile')).toBeInTheDocument());
+
+    // We need to trigger the option selection to show the hint
+    // Just press Enter to select the current option (which should be our metric)
+    const input = screen.getByTestId('data-testid metric select');
+    await userEvent.type(input, '{enter}');
+
+    // Now check for the hint
+    await waitFor(() => {
+      expect(screen.getByText('hint: add histogram_quantile')).toBeInTheDocument();
+    });
   });
 
   it('shows hints for counter metrics', async () => {
@@ -178,7 +185,13 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     await openMetricSelect(container);
-    await userEvent.click(screen.getByText('histogram_metric_sum'));
+
+    // We need to trigger the option selection to show the hint
+    // Just press Enter to select the current option (which should be our metric)
+    const input = screen.getByTestId('data-testid metric select');
+    await userEvent.type(input, '{enter}');
+
+    // Now check for the hint
     await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
   });
 
@@ -200,7 +213,13 @@ describe('PromQueryBuilder', () => {
       data
     );
     await openMetricSelect(container);
-    await userEvent.click(screen.getByText('histogram_metric_sum'));
+
+    // We need to trigger the option selection to show the hint
+    // Just press Enter to select the current option (which should be our metric)
+    const input = screen.getByTestId('data-testid metric select');
+    await userEvent.type(input, '{enter}');
+
+    // Now check for the hints - should be multiple in this case
     await waitFor(() => expect(screen.getAllByText(/hint:/)).toHaveLength(2));
   });
 
@@ -239,12 +258,7 @@ describe('PromQueryBuilder', () => {
 
   it('renders hint if initial hint provided', async () => {
     const { datasource } = createDatasource();
-    datasource.getInitHints = (): QueryHint[] => [
-      {
-        label: 'Initial hint',
-        type: 'warning',
-      },
-    ];
+    jest.spyOn(queryHints, 'getInitHints').mockReturnValue([{ label: 'Initial hint', type: 'warning' }]);
     const props = createProps(datasource);
     render(
       <PromQueryBuilder
@@ -261,7 +275,7 @@ describe('PromQueryBuilder', () => {
 
   it('renders no hint if no initial hint provided', async () => {
     const { datasource } = createDatasource();
-    datasource.getInitHints = (): QueryHint[] => [];
+    jest.spyOn(queryHints, 'getInitHints').mockReturnValue([]);
     const props = createProps(datasource);
     render(
       <PromQueryBuilder
@@ -283,10 +297,7 @@ describe('PromQueryBuilder', () => {
     });
     await openLabelNameSelect();
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(
-        expect.anything(),
-        '{__name__="random_metric"}'
-      )
+      expect(languageProvider.queryLabelKeys).toHaveBeenCalledWith(expect.anything(), '{__name__="random_metric"}')
     );
   });
 
@@ -313,7 +324,7 @@ describe('PromQueryBuilder', () => {
     );
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchLabelsWithMatch).toHaveBeenCalledWith(
+      expect(languageProvider.queryLabelKeys).toHaveBeenCalledWith(
         expect.anything(),
         '{label_name="label_value", __name__="random_metric"}'
       )
@@ -323,7 +334,7 @@ describe('PromQueryBuilder', () => {
 });
 
 function createDatasource(options?: Partial<DataSourceInstanceSettings<PromOptions>>) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
   const datasource = new PrometheusDatasource(
     {
       url: '',
@@ -359,9 +370,12 @@ function setup(
 }
 
 async function openMetricSelect(container: HTMLElement) {
-  const select = container.querySelector('#prometheus-metric-select');
+  const select = container.querySelector('[data-testid="data-testid metric select"]');
   if (select) {
     await userEvent.click(select);
+    // Also focus to ensure callbacks are triggered
+    await userEvent.type(select, ' ');
+    await userEvent.clear(select);
   }
 }
 

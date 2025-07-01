@@ -36,44 +36,18 @@ const plugin: CatalogPlugin = {
   isPreinstalled: { found: false, withVersion: false },
 };
 
-function setup(opts: { angularSupportEnabled: boolean; angularDetected: boolean }) {
-  config.angularSupportEnabled = opts.angularSupportEnabled;
-  render(
-    <TestProvider>
-      <InstallControlsButton
-        plugin={{ ...plugin, angularDetected: opts.angularDetected }}
-        pluginStatus={PluginStatus.INSTALL}
-      />
-    </TestProvider>
-  );
-}
-
 describe('InstallControlsButton', () => {
-  let oldAngularSupportEnabled = config.angularSupportEnabled;
-  afterAll(() => {
-    config.angularSupportEnabled = oldAngularSupportEnabled;
+  it('should not allow install if angular is detected', () => {
+    render(
+      <TestProvider>
+        <InstallControlsButton plugin={{ ...plugin, angularDetected: true }} pluginStatus={PluginStatus.INSTALL} />
+      </TestProvider>
+    );
+    const el = screen.getByRole('button');
+    expect(el).toHaveTextContent(/install/i);
+    expect(el).toBeVisible();
+    expect(el).toBeDisabled();
   });
-
-  describe.each([{ angularSupportEnabled: true }, { angularSupportEnabled: false }])(
-    'angular support is $angularSupportEnabled',
-    ({ angularSupportEnabled }) => {
-      it.each([
-        { angularDetected: true, expectEnabled: angularSupportEnabled },
-        { angularDetected: false, expectEnabled: true },
-      ])('angular detected is $angularDetected', ({ angularDetected, expectEnabled }) => {
-        setup({ angularSupportEnabled, angularDetected });
-
-        const el = screen.getByRole('button');
-        expect(el).toHaveTextContent(/install/i);
-        expect(el).toBeVisible();
-        if (expectEnabled) {
-          expect(el).toBeEnabled();
-        } else {
-          expect(el).toBeDisabled();
-        }
-      });
-    }
-  );
 
   it("should allow to uninstall a plugin even if it's unpublished", () => {
     render(

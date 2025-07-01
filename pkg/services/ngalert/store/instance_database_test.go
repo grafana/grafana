@@ -443,7 +443,7 @@ func TestIntegrationFullSync(t *testing.T) {
 
 		invalidInstance := generateTestAlertInstance(orgID, "")
 		// Make the invalid instance actually invalid
-		invalidInstance.AlertInstanceKey.RuleUID = ""
+		invalidInstance.RuleUID = ""
 
 		err := ng.InstanceStore.FullSync(ctx, []models.AlertInstance{validInstance, invalidInstance}, 2)
 		require.NoError(t, err)
@@ -594,6 +594,7 @@ func generateTestAlertInstance(orgID int64, ruleID string) models.AlertInstance 
 		CurrentStateSince: time.Now(),
 		LastEvalTime:      time.Now(),
 		LastSentAt:        util.Pointer(time.Now()),
+		FiredAt:           util.Pointer(time.Now()),
 		ResolvedAt:        util.Pointer(time.Now()),
 		CurrentReason:     "abc",
 	}

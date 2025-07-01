@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path"
 
 	"gopkg.in/yaml.v3"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,20 +17,37 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
-)
-
-type ParserFactory struct {
-	ClientFactory *ClientFactory
+// ParserFactory is a factory for creating parsers for a given repository
+//
+//go:generate mockery --name ParserFactory --structname MockParserFactory --inpackage --filename parser_factory_mock.go --with-expecter
+type ParserFactory interface {
+	GetParser(ctx context.Context, repo repository.Reader) (Parser, error)
 }
 
-func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (*Parser, error) {
+// Parser is a parser for a given repository
+//
+//go:generate mockery --name Parser --structname MockParser --inpackage --filename parser_mock.go --with-expecter
+type Parser interface {
+	Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error)
+}
+
+type parserFactory struct {
+	ClientFactory ClientFactory
+}
+
+func NewParserFactory(clientFactory ClientFactory) ParserFactory {
+	return &parserFactory{clientFactory}
+}
+
+func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
 	config := repo.Config()
 
 	clients, err := f.ClientFactory.Clients(ctx, config.GetNamespace())
@@ -39,7 +56,7 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 	}
 
 	urls, _ := repo.(repository.RepositoryWithURLs)
-	return &Parser{
+	return &parser{
 		repo: provisioning.ResourceRepositoryInfo{
 			Type:      config.Spec.Type,
 			Title:     config.Spec.Title,
@@ -51,7 +68,7 @@ func (f *ParserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 	}, nil
 }
 
-type Parser struct {
+type parser struct {
 	// The target repository
 	repo provisioning.ResourceRepositoryInfo
 
@@ -59,7 +76,7 @@ type Parser struct {
 	urls repository.RepositoryWithURLs
 
 	// ResourceClients give access to k8s apis
-	clients *ResourceClients
+	clients ResourceClients
 }
 
 type ParsedResource struct {
@@ -81,9 +98,9 @@ type ParsedResource struct {
 	Meta utils.GrafanaMetaAccessor
 
 	// The Kind is defined in the file
-	GVK *schema.GroupVersionKind
+	GVK schema.GroupVersionKind
 	// The Resource is found by mapping Kind to the right apiserver
-	GVR *schema.GroupVersionResource
+	GVR schema.GroupVersionResource
 	// Client that can talk to this resource
 	Client dynamic.ResourceInterface
 
@@ -101,45 +118,36 @@ type ParsedResource struct {
 	Upsert *unstructured.Unstructured
 
 	// If we got some Errors
-	Errors []error
+	Errors []string
 }
 
-// FIXME: eliminate clients from parser
-
-func (r *Parser) Clients() *ResourceClients {
-	return r.clients
-}
-
-func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate bool) (parsed *ParsedResource, err error) {
-	logger := logging.FromContext(ctx).With("path", info.Path, "validate", validate)
+func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
+	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
 		Info: info,
 		Repo: r.repo,
 	}
 
 	if err := IsPathSupported(info.Path); err != nil {
-		return parsed, err
+		return nil, err
 	}
 
-	if info.Path == "" {
-		return parsed, errors.New("path is required")
-	}
-
-	parsed.Obj, parsed.GVK, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if err != nil {
-		logger.Debug("failed to find GVK of the input data", "error", err)
-		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, info)
-		if err != nil {
-			logger.Debug("also failed to get GVK from fallback loader?", "error", err)
-			return parsed, err
+	var gvk *schema.GroupVersionKind
+	parsed.Obj, gvk, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
+	if err != nil || gvk == nil {
+		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
+		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
+		if err != nil || gvk == nil {
+			return nil, apierrors.NewBadRequest("unable to read file as a resource")
 		}
 	}
+
+	parsed.GVK = *gvk
 
 	if r.urls != nil {
 		parsed.URLs, err = r.urls.ResourceURLs(ctx, info)
 		if err != nil {
-			logger.Debug("failed to load resource URLs", "error", err)
-			return parsed, err
+			return nil, fmt.Errorf("load resource URLs: %w", err)
 		}
 	}
 
@@ -152,13 +160,13 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 
 	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get meta accessor: %w", err)
 	}
 	obj := parsed.Obj
 
 	// Validate the namespace
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.repo.Namespace {
-		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
+		return nil, apierrors.NewBadRequest("the file namespace does not match target namespace")
 	}
 
 	obj.SetNamespace(r.repo.Namespace)
@@ -171,68 +179,128 @@ func (r *Parser) Parse(ctx context.Context, info *repository.FileInfo, validate 
 		Checksum: info.Hash,
 	})
 
-	// Calculate name+folder from the file path
+	if obj.GetName() == "" {
+		if obj.GetGenerateName() == "" {
+			return nil, ErrMissingName
+		}
+		// Generate a new UID
+		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
+	}
+
+	// Calculate folder identifier from the file path
 	if info.Path != "" {
-		objName, folderName := NamesFromHashedRepoPath(r.repo.Name, info.Path)
-		parsed.Meta.SetFolder(folderName)
-		if obj.GetName() == "" {
-			obj.SetName(objName) // use the name saved in config
+		dirPath := safepath.Dir(info.Path)
+		if dirPath != "" {
+			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
 		}
 	}
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
 
-	// We can not do anything more if no kind is defined
-	if parsed.GVK == nil {
-		return parsed, nil
-	}
-
+	// FIXME: remove this check once we have better unit tests
 	if r.clients == nil {
-		return parsed, fmt.Errorf("no client configured")
+		return parsed, fmt.Errorf("no clients configured")
 	}
 
-	client, gvr, err := r.clients.ForKind(*parsed.GVK)
+	// TODO: catch the not found gvk error to return bad request
+	parsed.Client, parsed.GVR, err = r.clients.ForKind(parsed.GVK)
 	if err != nil {
-		return nil, err // does not map to a resour e
+		return nil, fmt.Errorf("get client for kind: %w", err)
 	}
 
-	parsed.GVR = &gvr
-	parsed.Client = client
-	if !validate {
-		return parsed, nil
-	}
-
-	if parsed.Client == nil {
-		parsed.Errors = append(parsed.Errors, fmt.Errorf("unable to find client"))
-		return parsed, nil
-	}
-
-	// Dry run CREATE or UPDATE
-	parsed.Existing, _ = parsed.Client.Get(ctx, obj.GetName(), metav1.GetOptions{})
-	if parsed.Existing == nil {
-		parsed.Action = provisioning.ResourceActionCreate
-		parsed.DryRunResponse, err = parsed.Client.Create(ctx, obj, metav1.CreateOptions{
-			DryRun: []string{"All"},
-		})
-	} else {
-		parsed.Action = provisioning.ResourceActionUpdate
-		parsed.DryRunResponse, err = parsed.Client.Update(ctx, obj, metav1.UpdateOptions{
-			DryRun: []string{"All"},
-		})
-	}
-	if err != nil {
-		parsed.Errors = append(parsed.Errors, err)
-	}
 	return parsed, nil
 }
 
-func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
-	// TODO? should we use the dryRun (validated) version?
-	obj := make(map[string]any)
-	for k, v := range f.Obj.Object {
-		if k != "metadata" {
-			obj[k] = v
+func (f *ParsedResource) DryRun(ctx context.Context) error {
+	if f.DryRunResponse != nil {
+		return nil // this already ran (and helpful for testing)
+	}
+
+	// FIXME: remove this check once we have better unit tests
+	if f.Client == nil {
+		return fmt.Errorf("no client configured")
+	}
+
+	// Use the same identity that would eventually write the resource (via Run)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	if err != nil {
+		return err
+	}
+
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
+	// FIXME: shouldn't we check for the specific error?
+	// Dry run CREATE or UPDATE
+	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+	if f.Existing == nil {
+		f.Action = provisioning.ResourceActionCreate
+		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+			DryRun:          []string{"All"},
+			FieldValidation: fieldValidation,
+		})
+	} else {
+		f.Action = provisioning.ResourceActionUpdate
+		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+			DryRun:          []string{"All"},
+			FieldValidation: fieldValidation,
+		})
+	}
+	return err
+}
+
+func (f *ParsedResource) Run(ctx context.Context) error {
+	// FIXME: remove this check once we have better unit tests
+	if f.Client == nil {
+		return fmt.Errorf("unable to find client")
+	}
+
+	// Always use the provisioning identity when writing
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	if err != nil {
+		return err
+	}
+
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
+	// If we have already tried loading existing, start with create
+	if f.DryRunResponse != nil && f.Existing == nil {
+		f.Action = provisioning.ResourceActionCreate
+		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+			FieldValidation: fieldValidation,
+		})
+		if err == nil {
+			return nil // it worked, return
 		}
+	}
+
+	// Try update, otherwise create
+	f.Action = provisioning.ResourceActionUpdate
+	f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+		FieldValidation: fieldValidation,
+	})
+	if apierrors.IsNotFound(err) {
+		f.Action = provisioning.ResourceActionCreate
+		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+			FieldValidation: fieldValidation,
+		})
+	}
+	return err
+}
+
+func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
+	obj := f.Obj.DeepCopy().Object
+	delete(obj, "status")
+	name := f.Obj.GetName()
+	if name == "" {
+		delete(obj, "metadata")
+	} else {
+		obj["metadata"] = map[string]any{"name": name}
 	}
 
 	switch path.Ext(f.Info.Path) {
@@ -258,16 +326,10 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		Action: f.Action,
 	}
 
-	if f.GVK != nil {
-		res.Type.Group = f.GVK.Group
-		res.Type.Version = f.GVK.Version
-		res.Type.Kind = f.GVK.Kind
-	}
-
-	// The resource (GVR) is derived from the kind (GVK)
-	if f.GVR != nil {
-		res.Type.Resource = f.GVR.Resource
-	}
+	res.Type.Group = f.GVK.Group
+	res.Type.Version = f.GVK.Version
+	res.Type.Kind = f.GVK.Kind
+	res.Type.Resource = f.GVR.Resource
 
 	if f.Obj != nil {
 		res.File = v0alpha1.Unstructured{Object: f.Obj.Object}
@@ -288,9 +350,8 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 		URLs:       f.URLs,
 		Timestamp:  info.Modified,
 		Resource:   res,
+		Errors:     f.Errors,
 	}
-	for _, err := range f.Errors {
-		wrap.Errors = append(wrap.Errors, err.Error())
-	}
+
 	return wrap
 }

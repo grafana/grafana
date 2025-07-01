@@ -11,7 +11,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -55,7 +55,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 		k8sclient: client.NewK8sHandler(
 			dual,
 			request.GetNamespaceMapper(cfg),
-			v1alpha1.DashboardResourceInfo.GroupVersionResource(),
+			dashv0.DashboardResourceInfo.GroupVersionResource(),
 			restConfigProvider.GetRestConfig,
 			dashboardStore,
 			userService,
@@ -226,11 +226,13 @@ func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboa
 	// generation id in unified storage, so we cannot query for the dashboard version directly, and we cannot use search as history is not indexed.
 	// use batches to make sure we don't load too much data at once.
 	const batchSize = 50
-	labelSelector := utils.LabelKeyGetHistory + "=" + dashboardUID
+	labelSelector := utils.LabelKeyGetHistory + "=true"
+	fieldSelector := "metadata.name=" + dashboardUID
 	var continueToken string
 	for {
 		out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
 			LabelSelector: labelSelector,
+			FieldSelector: fieldSelector,
 			Limit:         int64(batchSize),
 			Continue:      continueToken,
 		})
@@ -260,8 +262,11 @@ func (s *Service) getHistoryThroughK8s(ctx context.Context, orgID int64, dashboa
 }
 
 func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashboardUID string, limit int64, continueToken string) (*dashver.DashboardVersionResponse, error) {
+	labelSelector := utils.LabelKeyGetHistory + "=true"
+	fieldSelector := "metadata.name=" + dashboardUID
 	out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
-		LabelSelector: utils.LabelKeyGetHistory + "=" + dashboardUID,
+		LabelSelector: labelSelector,
+		FieldSelector: fieldSelector,
 		Limit:         limit,
 		Continue:      continueToken,
 	})

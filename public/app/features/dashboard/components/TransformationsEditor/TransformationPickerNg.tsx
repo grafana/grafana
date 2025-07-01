@@ -11,6 +11,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
@@ -71,14 +72,17 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
       onClose={() => {
         onClose && onClose();
       }}
-      title="Add another transformation"
+      title={t('dashboard.transformation-picker-ng.title-add-another-transformation', 'Add another transformation')}
     >
       <div className={styles.searchWrapper}>
         <Input
           data-testid={selectors.components.Transforms.searchInput}
           className={styles.searchInput}
           value={search ?? ''}
-          placeholder="Search for transformation"
+          placeholder={t(
+            'dashboard.transformation-picker-ng.placeholder-search-for-transformation',
+            'Search for transformation'
+          )}
           onChange={onSearchChange}
           onKeyDown={onSearchKeyDown}
           suffix={suffix}
@@ -86,7 +90,9 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           autoFocus={true}
         />
         <div className={styles.showImages}>
-          <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
+          <span className={styles.illustationSwitchLabel}>
+            <Trans i18nKey="dashboard.transformation-picker-ng.show-images">Show images</Trans>
+          </span>{' '}
           <Switch
             value={showIllustrations}
             onChange={() => onShowIllustrationsChange && onShowIllustrationsChange(!showIllustrations)}
@@ -283,7 +289,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
 
 const getImagePath = (id: string, disabled: boolean) => {
   const folder = config.theme2.isDark ? 'dark' : 'light';
-  return `public/img/transformations/${folder}/${id}.svg`;
+  return `public/build/img/transformations/${folder}/${id}.svg`;
 };
 
 const TransformationDescriptionOverrides: { [key: string]: string } = {

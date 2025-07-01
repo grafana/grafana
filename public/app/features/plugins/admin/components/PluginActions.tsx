@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, PluginErrorCode } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
@@ -27,7 +27,7 @@ export const PluginActions = ({ plugin }: Props) => {
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
   const [needReload, setNeedReload] = useState(false);
 
-  if (!plugin) {
+  if (!plugin || plugin.angularDetected) {
     return null;
   }
 

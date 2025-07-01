@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Box, Button, Stack, Text } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 interface EmptyTransformationsProps {
   onShowPicker: () => void;
@@ -27,7 +27,7 @@ export function EmptyTransformationsMessage(props: EmptyTransformationsProps) {
           onClick={props.onShowPicker}
           data-testid={selectors.components.Transforms.addTransformationButton}
         >
-          Add transformation
+          <Trans i18nKey="dashboard-scene.empty-transformations-message.add-transformation">Add transformation</Trans>
         </Button>
       </Stack>
     </Box>
