@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Controller, useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -42,10 +42,12 @@ interface TextAreaWithSuffixProps extends React.ComponentProps<typeof TextArea> 
   suffix?: React.ReactNode;
 }
 
+const LOCAL_STORAGE_LAST_SAVE_MODE_KEY = 'grafana-dashboard-last-save-mode';
+
 const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuffixProps) => {
   const theme = useTheme2();
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const styles = useStyles2(() => ({
     wrapper: css({
       position: 'relative',
@@ -92,8 +94,8 @@ const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuf
 
   return (
     <div className={styles.wrapper}>
-      <TextArea 
-        {...textAreaProps} 
+      <TextArea
+        {...textAreaProps}
         ref={textAreaRef}
         value={value}
         className={styles.textArea}
@@ -121,8 +123,41 @@ const SaveProvisionedDashboardFormInner = ({
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
-  const { handleSubmit, watch, control, reset, register, setValue, formState } = useFormContext<ProvisionedDashboardFormData>();
-  const [workflow, description] = watch(['workflow', 'description']);
+  const { handleSubmit, watch, control, reset, register, setValue, formState, getValues } =
+    useFormContext<ProvisionedDashboardFormData>();
+
+  const [aiLoading, setAiLoading] = useState({
+    title: false,
+    description: false,
+    path: false,
+    comment: false,
+    ref: false,
+  });
+  const [shouldTriggerMagicSave, setShouldTriggerMagicSave] = useState(false);
+
+  const workflow = watch('workflow');
+
+  const fieldsWithAIAutofill = useMemo(() => {
+    const fields = ['comment'];
+
+    if (isNew) {
+      fields.push('title', 'description', 'path');
+    }
+
+    if (workflow === 'branch') {
+      fields.push('ref');
+    }
+
+    return fields;
+  }, [isNew, workflow]);
+
+  // Track which save mode was last used and current session preferences
+  const [lastUsedSaveMode, setLastUsedSaveMode] = useState<'traditional' | 'magic'>(() => {
+    return (localStorage.getItem(LOCAL_STORAGE_LAST_SAVE_MODE_KEY) as 'traditional' | 'magic') || 'magic';
+  });
+
+  const isMagicSaveMode = lastUsedSaveMode === 'magic';
+  const isMagicSaveLoading = Object.values(aiLoading).some((loading) => loading) || request.isLoading;
 
   // LLM state
   const [isLLMEnabled, setIsLLMEnabled] = useState(false);
@@ -146,15 +181,17 @@ const SaveProvisionedDashboardFormInner = ({
       title: dashboard.state.title || 'Untitled Dashboard',
       tags: dashboard.state.tags || [],
       isNew: isNew,
-      changeInfo: changeInfo ? {
-        hasChanges: changeInfo.hasChanges,
-        hasTimeChanges: changeInfo.hasTimeChanges,
-        hasVariableValueChanges: changeInfo.hasVariableValueChanges,
-        hasRefreshChange: changeInfo.hasRefreshChange,
-        hasFolderChanges: changeInfo.hasFolderChanges,
-        hasMigratedToV2: changeInfo.hasMigratedToV2,
-        diffCount: changeInfo.diffCount,
-      } : null,
+      changeInfo: changeInfo
+        ? {
+            hasChanges: changeInfo.hasChanges,
+            hasTimeChanges: changeInfo.hasTimeChanges,
+            hasVariableValueChanges: changeInfo.hasVariableValueChanges,
+            hasRefreshChange: changeInfo.hasRefreshChange,
+            hasFolderChanges: changeInfo.hasFolderChanges,
+            hasMigratedToV2: changeInfo.hasMigratedToV2,
+            diffCount: changeInfo.diffCount,
+          }
+        : null,
     };
     return dashboardModel;
   }, [dashboard.state, isNew, changeInfo]);
@@ -209,42 +246,102 @@ const SaveProvisionedDashboardFormInner = ({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
-    console.log('handleFormSubmit', { title, description, repo, path, comment, ref });
+  const handleFormSubmit = useCallback(
+    async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
+      console.log('handleFormSubmit', { title, description, repo, path, comment, ref });
 
-    // Validate required fields
-    if (!repo || !path) {
-      console.error('Missing required fields for saving:', { repo, path });
-      return;
-    }
+      // Validate required fields
+      if (!repo || !path) {
+        console.error('Missing required fields for saving:', { repo, path });
+        return;
+      }
 
-    // If user is writing to the original branch, override ref with whatever we loaded from
-    if (workflow === 'write') {
-      ref = loadedFromRef;
-    }
+      // If user is writing to the original branch, override ref with whatever we loaded from
+      if (workflow === 'write') {
+        ref = loadedFromRef;
+      }
 
-    const body = dashboard.getSaveResource({
-      isNew,
-      title,
-      description,
-    });
+      const body = dashboard.getSaveResource({
+        isNew,
+        title,
+        description,
+      });
 
-    createOrUpdateFile({
-      ref,
-      name: repo,
-      path,
-      message: comment,
-      body,
-    });
-  };
+      await createOrUpdateFile({
+        ref,
+        name: repo,
+        path,
+        message: comment,
+        body,
+      }).unwrap();
+    },
+    [workflow, loadedFromRef, dashboard, isNew, createOrUpdateFile]
+  );
 
   const handleFormSubmitDebug = async (formData: any) => {
     console.log('handleFormSubmitDebug', formData);
+    setShouldTriggerMagicSave(false);
     await handleFormSubmit(formData);
+    saveLastUsedMode('traditional');
+  };
+
+  // Save the last used save mode to localStorage
+  const saveLastUsedMode = (mode: 'traditional' | 'magic') => {
+    setLastUsedSaveMode(mode);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_LAST_SAVE_MODE_KEY, mode);
+    } catch (error) {
+      console.warn('Failed to save last used save mode:', error);
+    }
+  };
+
+  const nonDirtyAIFields = Object.keys(watch()).filter(
+    (fieldName) =>
+      fieldsWithAIAutofill.includes(fieldName) &&
+      !formState.dirtyFields[fieldName as keyof ProvisionedDashboardFormData]
+  );
+
+  const onMagicSaveClick = async () => {
+    try {
+      setShouldTriggerMagicSave(true);
+
+      const formData = watch();
+      // Triggers the AI buttons for the non-already filled fields
+      nonDirtyAIFields.forEach((fieldName) => {
+        setAiLoading((prev) => ({ ...prev, [fieldName]: true }));
+        const button = document.getElementById(`${fieldName}-ai-button-container`)?.querySelector('button');
+        if (button) {
+          button.click();
+        }
+      });
+
+      if (!formData.title || !formData.path) {
+        throw new Error('Required fields are missing after AI autofill');
+      }
+    } catch (error) {
+      console.error('Magic save error:', error);
+      // Show error to user
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('dashboard-scene.save-provisioned-dashboard-form.magic-save-error', 'Magic save failed'), error],
+      });
+    }
   };
 
   // Don't show AI buttons if LLM is not enabled
   const showAIButtons = isLLMEnabled;
+
+  useEffect(() => {
+    const triggerSave = async () => {
+      if (shouldTriggerMagicSave && !isMagicSaveLoading && nonDirtyAIFields.length === 0) {
+        await handleFormSubmit(getValues());
+        // Mark magic mode as used
+        saveLastUsedMode('magic');
+      }
+    };
+
+    triggerSave();
+  }, [shouldTriggerMagicSave, isMagicSaveLoading, getValues, nonDirtyAIFields.length, handleFormSubmit]);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmitDebug)} name="save-provisioned-form">
@@ -266,60 +363,75 @@ const SaveProvisionedDashboardFormInner = ({
           <>
             <Field
               noMargin
-              label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <span>{t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}</span>
+                  {showAIButtons && (
+                    <div id="title-ai-button-container">
+                      <GenAIButton
+                        tooltip={t(
+                          'dashboard-scene.save-provisioned-dashboard-form.ai-fill-title',
+                          'AI autofill title'
+                        )}
+                        messages={aiContext.getTitleMessages(getDashboardContext())}
+                        onGenerate={(response) => {
+                          setValue('title', response, { shouldDirty: true });
+                          setAiLoading((prev) => ({ ...prev, title: false }));
+                        }}
+                        eventTrackingSrc={EventTrackingSrc.dashboardTitle}
+                      />
+                    </div>
+                  )}
+                </Stack>
+              }
               invalid={!!formState.errors.title}
               error={formState.errors.title?.message}
             >
-              <Stack direction="row" gap={1}>
-                <Input
-                  id="dashboard-title"
-                  {...register('title', {
-                    required: t(
-                      'dashboard-scene.save-provisioned-dashboard-form.title-required',
-                      'Dashboard title is required'
-                    ),
-                    validate: validateTitle,
-                  })}
-                />
-                {showAIButtons && (
-                  <GenAIButton
-                    text=""
-                    tooltip={t(
-                      'dashboard-scene.save-provisioned-dashboard-form.ai-fill-title',
-                      'AI autofill title'
-                    )}
-                    messages={aiContext.getTitleMessages(getDashboardContext())}
-                    onGenerate={(response) => setValue('title', response)}
-                    eventTrackingSrc={EventTrackingSrc.dashboardTitle}
-                  />
-                )}
-              </Stack>
+              <Input
+                id="dashboard-title"
+                {...register('title', {
+                  required: t(
+                    'dashboard-scene.save-provisioned-dashboard-form.title-required',
+                    'Dashboard title is required'
+                  ),
+                  validate: validateTitle,
+                })}
+              />
             </Field>
             <Field
               noMargin
-              label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <span>{t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}</span>
+                  {showAIButtons && (
+                    <div id="description-ai-button-container">
+                      <GenAIButton
+                        tooltip={t(
+                          'dashboard-scene.save-provisioned-dashboard-form.ai-fill-description',
+                          'AI autofill description'
+                        )}
+                        messages={aiContext.getDescriptionMessages(
+                          getDashboardContext(),
+                          watch('title') || getDashboardContext().title
+                        )}
+                        onGenerate={(response) => {
+                          setValue('description', response, { shouldDirty: true });
+                          setAiLoading((prev) => ({ ...prev, description: false }));
+                        }}
+                        eventTrackingSrc={EventTrackingSrc.dashboardDescription}
+                      />
+                    </div>
+                  )}
+                </Stack>
+              }
               invalid={!!formState.errors.description}
               error={formState.errors.description?.message}
             >
-              <Stack direction="row" gap={1}>
-                <TextAreaWithSuffix
-                  id="dashboard-description"
-                  value={description || ''}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue('description', e.target.value)}
-                />
-                {showAIButtons && (
-                  <GenAIButton
-                    text=""
-                    tooltip={t(
-                      'dashboard-scene.save-provisioned-dashboard-form.ai-fill-description',
-                      'AI autofill description'
-                    )}
-                    messages={aiContext.getDescriptionMessages(getDashboardContext(), watch('title') || getDashboardContext().title)}
-                    onGenerate={(response) => setValue('description', response)}
-                    eventTrackingSrc={EventTrackingSrc.dashboardDescription}
-                  />
-                )}
-              </Stack>
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => <TextAreaWithSuffix {...field} />}
+              />
             </Field>
 
             <Field
@@ -364,28 +476,46 @@ const SaveProvisionedDashboardFormInner = ({
           isGitHub={isGitHub}
           isNew={isNew}
           changeInfo={changeInfo}
+          setAiLoading={setAiLoading}
         />
 
-        <Stack gap={2}>
-          <Stack direction="row" gap={2}>
-            {/* Primary save button */}
-            <Button 
-              variant="primary"
-              type="submit"
-              disabled={request.isLoading || !isDirty || readOnly}
-              tooltip={t(
-                'dashboard-scene.save-provisioned-dashboard-form.traditional-save-tooltip',
-                'Save dashboard without AI assistance'
-              )}
-            >
-              {request.isLoading
-                ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-                : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
-            </Button>
-          </Stack>
-          <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+        <Stack
+          gap={2}
+          direction={isMagicSaveMode ? 'row-reverse' : 'row'}
+          justifyContent={isMagicSaveMode ? 'flex-end' : 'flex-start'}
+        >
+          <Button
+            variant={isMagicSaveMode ? 'secondary' : 'primary'}
+            fill={isMagicSaveMode ? 'outline' : 'solid'}
+            type="submit"
+            disabled={request.isLoading || !isDirty || readOnly}
+            tooltip={t(
+              'dashboard-scene.save-provisioned-dashboard-form.traditional-save-tooltip',
+              'Save dashboard without AI assistance'
+            )}
+          >
+            {request.isLoading && !shouldTriggerMagicSave
+              ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+              : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
           </Button>
+          <Button
+            variant={isMagicSaveMode ? 'primary' : 'secondary'}
+            fill={isMagicSaveMode ? 'solid' : 'outline'}
+            icon={isMagicSaveLoading && shouldTriggerMagicSave ? 'spinner' : 'ai-sparkle'}
+            onClick={onMagicSaveClick}
+            disabled={isMagicSaveLoading || request.isLoading || readOnly || !isDirty}
+            tooltip={t(
+              'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
+              'AI autofill all fields and save automatically'
+            )}
+          >
+            {isMagicSaveLoading && shouldTriggerMagicSave
+              ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
+              : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Quick Save')}
+          </Button>
+          {/* <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
+          </Button> */}
         </Stack>
       </Stack>
     </form>
@@ -395,12 +525,10 @@ const SaveProvisionedDashboardFormInner = ({
 export function SaveProvisionedDashboardForm(props: Props) {
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues: props.defaultValues });
   const { setValue } = methods;
-  
+
   return (
     <FormProvider {...methods}>
-      <AIContextProvider 
-        setValue={setValue}
-      >
+      <AIContextProvider setValue={setValue}>
         <SaveProvisionedDashboardFormInner {...props} />
       </AIContextProvider>
     </FormProvider>

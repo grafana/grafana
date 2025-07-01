@@ -22,7 +22,7 @@ interface TextAreaWithSuffixProps extends React.ComponentProps<typeof TextArea> 
 const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuffixProps) => {
   const theme = useTheme2();
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const styles = useStyles2(() => ({
     wrapper: css({
       position: 'relative',
@@ -69,8 +69,8 @@ const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuf
 
   return (
     <div className={styles.wrapper}>
-      <TextArea 
-        {...textAreaProps} 
+      <TextArea
+        {...textAreaProps}
         ref={textAreaRef}
         value={value}
         className={styles.textArea}
@@ -91,10 +91,21 @@ interface DashboardEditFormSharedFieldsProps {
   fieldsAutoFilled?: boolean;
   autofillDisabledThisSession?: boolean;
   changeInfo?: DashboardChangeInfo;
+  setAiLoading: (updater: (prev: any) => any) => void;
 }
 
 const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflowOptions, isGitHub, isNew, resourceType, fieldsAutoFilled = false, autofillDisabledThisSession = false, changeInfo }) => {
+  ({
+    readOnly = false,
+    workflowOptions,
+    isGitHub,
+    isNew,
+    resourceType,
+    fieldsAutoFilled = false,
+    autofillDisabledThisSession = false,
+    changeInfo,
+    setAiLoading,
+  }) => {
     const {
       control,
       register,
@@ -139,16 +150,23 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
         <Field
           noMargin
           label={
-            <Stack direction="row" alignItems="center" gap={1}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
               <span>{t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}</span>
               {isNew && showAIButtons && (
-                <GenAIButton
-                  text={t('dashboard-scene.save-provisioned-dashboard-form.auto-generate', 'Auto-generate')}
-                  tooltip={t('provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-path', 'AI autofill path')}
-                  messages={aiContext.getPathMessages(getDashboardContext(), currentTitle)}
-                  onGenerate={(response) => setValue('path', response)}
-                  eventTrackingSrc={EventTrackingSrc.dashboardTitle}
-                />
+                <div id="path-ai-button-container">
+                  <GenAIButton
+                    tooltip={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-path',
+                      'AI autofill path'
+                    )}
+                    messages={aiContext.getPathMessages(getDashboardContext(), currentTitle)}
+                    onGenerate={(response) => {
+                      setValue('path', response, { shouldDirty: true });
+                      setAiLoading((prev) => ({ ...prev, path: false }));
+                    }}
+                    eventTrackingSrc={EventTrackingSrc.dashboardTitle}
+                  />
+                </div>
               )}
             </Stack>
           }
@@ -157,8 +175,8 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
             pathText
           )}
         >
-          <Input 
-            id="dashboard-path" 
+          <Input
+            id="dashboard-path"
             {...register('path', {
               required: t(
                 'provisioned-resource-form.save-or-delete-resource-shared-fields.path-required',
@@ -172,19 +190,31 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
         <Field
           noMargin
           label={
-            <Stack direction="row" alignItems="center" gap={1}>
-              <span>{t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}</span>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+              <span>
+                {t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
+              </span>
               {!readOnly && showAIButtons && (
-                <GenAIButton
-                  text={t('dashboard-scene.save-provisioned-dashboard-form.auto-generate', 'Auto-generate')}
-                  tooltip={t('provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-comment', 'AI autofill comment')}
-                  messages={aiContext.getCommentMessages(getDashboardContext(), currentTitle, currentDescription, changeInfo)}
-                  onGenerate={(response) => {
-                    console.log('GenAIButton generated comment:', response);
-                    setValue('comment', response, { shouldDirty: true, shouldTouch: true });
-                  }}
-                  eventTrackingSrc={EventTrackingSrc.dashboardChanges}
-                />
+                <div id="comment-ai-button-container">
+                  <GenAIButton
+                    tooltip={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-comment',
+                      'AI autofill comment'
+                    )}
+                    messages={aiContext.getCommentMessages(
+                      getDashboardContext(),
+                      currentTitle,
+                      currentDescription,
+                      changeInfo
+                    )}
+                    onGenerate={(response) => {
+                      console.log('GenAIButton generated comment:', response);
+                      setValue('comment', response, { shouldDirty: true, shouldTouch: true });
+                      setAiLoading((prev) => ({ ...prev, comment: false }));
+                    }}
+                    eventTrackingSrc={EventTrackingSrc.dashboardChanges}
+                  />
+                </div>
               )}
             </Stack>
           }
@@ -197,11 +227,7 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
             control={control}
             name="comment"
             render={({ field }) => (
-              <TextAreaWithSuffix
-                id="dashboard-comment"
-                value={field.value || ''}
-                onChange={field.onChange}
-              />
+              <TextAreaWithSuffix id="dashboard-comment" value={field.value || ''} onChange={field.onChange} />
             )}
           />
         </Field>
@@ -215,14 +241,7 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
             control={control}
             name="workflow"
             render={({ field: { ref, value, onChange, ...field } }) => {
-              return (
-                <RadioButtonGroup
-                  {...field}
-                  value={value}
-                  onChange={onChange}
-                  options={workflowOptions}
-                />
-              );
+              return <RadioButtonGroup {...field} value={value} onChange={onChange} options={workflowOptions} />;
             }}
           />
         </Field>
@@ -232,16 +251,25 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
           <Field
             noMargin
             label={
-              <Stack direction="row" alignItems="center" gap={1}>
-                <span>{t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}</span>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                <span>
+                  {t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
+                </span>
                 {showAIButtons && (
-                  <GenAIButton
-                    text={t('dashboard-scene.save-provisioned-dashboard-form.auto-generate', 'Auto-generate')}
-                    tooltip={t('provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-branch', 'AI autofill branch')}
-                    messages={aiContext.getBranchMessages(getDashboardContext(), currentTitle)}
-                    onGenerate={(response) => setValue('ref', response)}
-                    eventTrackingSrc={EventTrackingSrc.dashboardTitle}
-                  />
+                  <div id="ref-ai-button-container">
+                    <GenAIButton
+                      tooltip={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-branch',
+                        'AI autofill branch'
+                      )}
+                      messages={aiContext.getBranchMessages(getDashboardContext(), currentTitle)}
+                      onGenerate={(response) => {
+                        setValue('ref', response, { shouldDirty: true });
+                        setAiLoading((prev) => ({ ...prev, ref: false }));
+                      }}
+                      eventTrackingSrc={EventTrackingSrc.dashboardTitle}
+                    />
+                  </div>
                 )}
               </Stack>
             }
@@ -279,11 +307,9 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
 
 export const DashboardEditFormSharedFields = (props: DashboardEditFormSharedFieldsProps) => {
   const { setValue } = useFormContext();
-  
+
   return (
-    <AIContextProvider 
-      setValue={setValue}
-    >
+    <AIContextProvider setValue={setValue}>
       <DashboardEditFormSharedFieldsInner {...props} />
     </AIContextProvider>
   );
