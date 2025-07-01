@@ -103,6 +103,8 @@ linters:
             - '**/pkg/tsdb/cloudwatch/**/*'
             - '**/pkg/tsdb/loki/*'
             - '**/pkg/tsdb/loki/**/*'
+            - '**/pkg/tsdb/zipkin/*'
+            - '**/pkg/tsdb/zipkin/**/*'
             - '**/pkg/tsdb/jaeger/*'
             - '**/pkg/tsdb/jaeger/**/*'
           deny:
