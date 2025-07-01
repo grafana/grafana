@@ -3,7 +3,7 @@ import { createTheme, LogsSortOrder } from '@grafana/data';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../__mocks__/logRow';
 
-import { LogListModel } from './processing';
+import { LogListModel, PreProcessOptions } from './processing';
 import { LogLineVirtualization, getLogLineSize, DisplayOptions } from './virtualization';
 
 describe('Virtualization', () => {
@@ -28,12 +28,16 @@ describe('Virtualization', () => {
     hasSampledLogs: false,
   };
 
+  const preProcessOptions: PreProcessOptions = {
+    escape: false,
+    order: LogsSortOrder.Descending,
+    timeZone: 'browser',
+    virtualization,
+    wrapLogMessage: true,
+  };
+
   beforeEach(() => {
-    log = createLogLine(
-      { labels: { place: 'luna' }, entry: `log message 1` },
-      { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
-    );
-    //virtualization = new LogLineVirtualization(createTheme(), 'default');
+    log = createLogLine({ labels: { place: 'luna' }, entry: `log message 1` }, preProcessOptions);
     container = document.createElement('div');
     jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(CONTAINER_SIZE);
     LETTER_WIDTH = virtualization.measureTextWidth('e');
@@ -86,7 +90,7 @@ describe('Virtualization', () => {
           entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join(''),
           logLevel: undefined,
         },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        preProcessOptions
       );
 
       const size = getLogLineSize(virtualization, [log], container, [], { ...defaultOptions, wrap: true }, 0);
@@ -96,7 +100,7 @@ describe('Virtualization', () => {
     test('Measures a multi-line log line with level, controls, and displayed time', () => {
       log = createLogLine(
         { labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        preProcessOptions
       );
 
       const size = getLogLineSize(
@@ -118,7 +122,7 @@ describe('Virtualization', () => {
           entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join(''),
           logLevel: undefined,
         },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        preProcessOptions
       );
 
       const size = getLogLineSize(
@@ -136,7 +140,7 @@ describe('Virtualization', () => {
     test('Measures displayed fields in a log line with level, controls, and displayed time', () => {
       log = createLogLine(
         { labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        preProcessOptions
       );
 
       const size = getLogLineSize(
@@ -154,7 +158,7 @@ describe('Virtualization', () => {
     test('Measures a multi-line log line with duplicates', () => {
       log = createLogLine(
         { labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        preProcessOptions
       );
       log.duplicates = 1;
 
@@ -173,7 +177,7 @@ describe('Virtualization', () => {
     test('Measures a multi-line log line with errors', () => {
       log = createLogLine(
         { labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        preProcessOptions
       );
 
       const size = getLogLineSize(
@@ -191,7 +195,7 @@ describe('Virtualization', () => {
     test('Measures a multi-line sampled log line', () => {
       log = createLogLine(
         { labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        preProcessOptions
       );
 
       const size = getLogLineSize(
@@ -214,6 +218,29 @@ describe('Virtualization', () => {
     });
   });
 
+  describe('calculateFieldDimensions', () => {
+    test('Measures displayed fields including the log line body', () => {
+      expect(virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME])).toEqual([
+        {
+          field: 'timestamp',
+          width: 23,
+        },
+        {
+          field: 'level',
+          width: 4,
+        },
+        {
+          field: 'place',
+          width: 4,
+        },
+        {
+          field: '___LOG_LINE_BODY___',
+          width: 13,
+        },
+      ]);
+    });
+  });
+
   describe('With small font size', () => {
     const virtualization = new LogLineVirtualization(createTheme(), 'small');
 
@@ -232,7 +259,7 @@ describe('Virtualization', () => {
           entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join(''),
           logLevel: undefined,
         },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        preProcessOptions
       );
 
       const size = getLogLineSize(

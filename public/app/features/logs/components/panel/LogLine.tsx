@@ -192,7 +192,7 @@ const LogLineComponent = memo(
           {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
           <div
-            className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
+            className={`${styles.fieldsWrapper} ${detailsShown ? styles.detailsDisplayed : ''} ${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`} ${collapsed === true ? styles.collapsedLogLine : ''} ${enableLogDetails ? styles.clickable : ''}`}
             style={
               collapsed && virtualization
                 ? { maxHeight: `${virtualization.getTruncationLineCount() * virtualization.getLineHeight()}px` }
@@ -350,9 +350,10 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
   return <span className="field log-syntax-highlight" dangerouslySetInnerHTML={{ __html: log.highlightedBody }} />;
 };
 
-export function getGridTemplateColumns(dimensions: LogFieldDimension[]) {
+export function getGridTemplateColumns(dimensions: LogFieldDimension[], displayedFields: string[]) {
   const columns = dimensions.map((dimension) => dimension.width).join('px ');
-  return `${columns}px 1fr`;
+  const logLineWidth = displayedFields.length > 0 ? '' : ' 1fr';
+  return `${columns}px${logLineWidth}`;
 }
 
 export type LogLineStyles = ReturnType<typeof getStyles>;
@@ -368,6 +369,8 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
     parsedField: theme.colors.text.primary,
   };
 
+  const hoverColor = tinycolor(theme.colors.background.canvas).darken(4).toRgbString();
+
   return {
     logLine: css({
       color: tinycolor(theme.colors.text.secondary).setAlpha(0.75).toRgbString(),
@@ -379,7 +382,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
-        background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
+        background: hoverColor,
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -440,7 +443,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.bodySmall.lineHeight,
     }),
     detailsDisplayed: css({
-      background: theme.isDark ? `hsla(0, 0%, 0%, 0.5)` : `hsla(0, 0%, 0%, 0.1)`,
+      background: hoverColor,
     }),
     pinnedLogLine: css({
       backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
@@ -525,6 +528,9 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
+      '& .field': {
+        overflow: 'hidden',
+      },
     }),
     wrappedLogLine: css({
       alignSelf: 'flex-start',
@@ -535,6 +541,11 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       },
       '& .field:last-child': {
         marginRight: 0,
+      },
+    }),
+    fieldsWrapper: css({
+      '&:hover': {
+        background: hoverColor,
       },
     }),
     collapsedLogLine: css({
