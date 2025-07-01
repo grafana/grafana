@@ -137,6 +137,39 @@ jobs:
           path: videos
           retention-days: 1
 
+  run-playwright-tests:
+    needs:
+      - build-grafana
+    name: Playwright E2E tests
+    runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-grafana.outputs.artifact }}
+      - name: Run E2E tests
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+            args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz
+      - uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: ./dist/playwright-report
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: test-results-${{ github.run_number }}
+          path: ./dist/test-results
+          retention-days: 1
+
   run-a11y-test:
     needs:
       - build-grafana
