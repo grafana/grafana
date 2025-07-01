@@ -976,10 +976,6 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
-  */
-  extensionsReadOnlyProxy?: boolean;
-  /**
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
