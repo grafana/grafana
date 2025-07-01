@@ -101,7 +101,18 @@ export const StatusHistoryPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Multi ? TooltipHoverMode.xAll : TooltipHoverMode.xOne
                 }
-                queryZoom={onChangeTimeRange}
+                queryZoom={(event: { from: number; to: number }) => {
+                  const from = new Date(event.from).toISOString();
+                  const to = new Date(event.to).toISOString();
+                  window.parent.postMessage(
+                    {
+                      source: 'grafana-dashboard-time-range-changed',
+                      payload: { from, to },
+                    },
+                    '*'
+                  );
+                  onChangeTimeRange(event);
+                }}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
                 getDataLinks={(seriesIdx: number, dataIdx: number) =>
