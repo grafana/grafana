@@ -38,5 +38,8 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
       - name: Run Storybook and E2E tests
         run: yarn e2e:playwright:storybook
