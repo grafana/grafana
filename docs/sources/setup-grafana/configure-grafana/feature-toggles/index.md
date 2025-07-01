@@ -103,7 +103,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`          | Runs CloudWatch metrics queries as separate batches                                                    |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
-| `regressionTransformation`        | Enables regression analysis transformation                                                             |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage                                              |
 | `tableNextGen`                    | Allows access to the new react-data-grid based table component.                                        |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |

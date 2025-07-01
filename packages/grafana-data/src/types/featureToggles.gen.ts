@@ -420,10 +420,6 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Enables regression analysis transformation
-  */
-  regressionTransformation?: boolean;
-  /**
   * Enables query hints for Loki
   * @default true
   */
