@@ -12,6 +12,7 @@ import (
 	investigationv0alpha1 "github.com/grafana/grafana/apps/investigations/pkg/apis/investigations/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // investigationsRESTStorageAdapter adapts the investigations REST API to work with GraphQL storage interface
@@ -28,6 +29,22 @@ func NewInvestigationsStorageAdapter(cfg *setting.Cfg) graphqlsubgraph.Storage {
 	return &investigationsRESTStorageAdapter{
 		namespacer: request.GetNamespaceMapper(cfg),
 		cfg:        cfg,
+	}
+}
+
+// ensureTypeMetaSet ensures that the TypeMeta is properly set on a resource object
+// This is critical for GraphQL resource handlers to be called during conversion
+func (a *investigationsRESTStorageAdapter) ensureTypeMetaSet(obj resource.Object) {
+	// Check if TypeMeta is already set
+	gvk := obj.GroupVersionKind()
+	if gvk.Kind == "" || gvk.Version == "" {
+		// Set proper TypeMeta for investigation resources
+		kind := investigationv0alpha1.InvestigationKind()
+		obj.SetGroupVersionKind(schema.GroupVersionKind{
+			Group:   kind.Group(),
+			Version: kind.Version(),
+			Kind:    kind.Kind(),
+		})
 	}
 }
 
@@ -78,6 +95,9 @@ func (a *investigationsRESTStorageAdapter) Get(ctx context.Context, namespace, n
 		return nil, fmt.Errorf("failed to unmarshal investigation: %w", err)
 	}
 
+	// CRITICAL: Ensure TypeMeta is set for GraphQL resource handlers to work
+	a.ensureTypeMetaSet(&investigation)
+
 	return &investigation, nil
 }
 
@@ -122,6 +142,12 @@ func (a *investigationsRESTStorageAdapter) List(ctx context.Context, namespace s
 	var investigationList investigationv0alpha1.InvestigationList
 	if err := json.Unmarshal(body, &investigationList); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal investigation list: %w", err)
+	}
+
+	// CRITICAL: Ensure TypeMeta is set on all items for GraphQL resource handlers to work
+	items := investigationList.GetItems()
+	for _, item := range items {
+		a.ensureTypeMetaSet(item)
 	}
 
 	return &investigationList, nil

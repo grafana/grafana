@@ -2,6 +2,7 @@ package appregistry
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -75,7 +76,20 @@ func ProvideRegistryServiceSink(
 	if err != nil {
 		return nil, err
 	}
-	return &Service{runner: apiGroupRunner, log: logger, providers: providers}, nil
+
+	service := &Service{runner: apiGroupRunner, log: logger, providers: providers}
+
+	// Register GraphQL providers with the global registry
+	graphqlProviders := service.GetGraphQLProviders()
+	if len(graphqlProviders) > 0 {
+		apiserver.RegisterGraphQLProviders(graphqlProviders)
+		for _, provider := range graphqlProviders {
+			logger.Debug("Registered GraphQL provider", "provider", fmt.Sprintf("%T", provider))
+		}
+		logger.Info("GraphQL providers registered with apiserver", "count", len(graphqlProviders))
+	}
+
+	return service, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
