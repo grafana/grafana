@@ -419,6 +419,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, ".git")
 			r.Spec.GitHub.URL = strings.TrimSuffix(r.Spec.GitHub.URL, "/")
 		}
+
+		// Populate the URL field in the spec for GitHub repositories
+		if r.Spec.GitHub.URL != "" {
+			r.Spec.URL = r.Spec.GitHub.URL
+		}
 	}
 	if r.Spec.Type == provisioning.GitRepositoryType {
 		if r.Spec.Git == nil {
@@ -440,6 +445,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 			if !strings.HasSuffix(r.Spec.Git.URL, ".git") {
 				r.Spec.Git.URL = r.Spec.Git.URL + ".git"
 			}
+		}
+
+		// Populate the URL field in the spec for Git repositories
+		if r.Spec.Git.URL != "" {
+			r.Spec.URL = r.Spec.Git.URL
 		}
 	}
 

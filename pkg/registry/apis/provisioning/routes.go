@@ -163,8 +163,14 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, val := range all {
 		branch := ""
+		url := ""
 		if val.Spec.GitHub != nil {
 			branch = val.Spec.GitHub.Branch
+			url = val.Spec.GitHub.URL
+		}
+		// Use the URL from the spec if it's populated, otherwise use the GitHub URL
+		if val.Spec.URL != "" {
+			url = val.Spec.URL
 		}
 		settings.Items[i] = provisioning.RepositoryView{
 			Name:      val.Name,
@@ -172,6 +178,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			Type:      val.Spec.Type,
 			Target:    val.Spec.Sync.Target,
 			Branch:    branch,
+			URL:       url,
 			Workflows: val.Spec.Workflows,
 		}
 	}

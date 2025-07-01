@@ -19,6 +19,7 @@ type RepositorySpecApplyConfiguration struct {
 	Local       *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
 	GitHub      *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
 	Git         *GitRepositoryConfigApplyConfiguration    `json:"git,omitempty"`
+	URL         *string                                   `json:"url,omitempty"`
 }
 
 // RepositorySpecApplyConfiguration constructs a declarative configuration of the RepositorySpec type for use with
@@ -90,5 +91,13 @@ func (b *RepositorySpecApplyConfiguration) WithGitHub(value *GitHubRepositoryCon
 // If called multiple times, the Git field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithGit(value *GitRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.Git = value
+	return b
+}
+
+// WithURL sets the URL field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the URL field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithURL(value string) *RepositorySpecApplyConfiguration {
+	b.URL = &value
 	return b
 }

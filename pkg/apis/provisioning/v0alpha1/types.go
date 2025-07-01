@@ -122,6 +122,9 @@ type RepositorySpec struct {
 	// The repository on Git.
 	// Mutually exclusive with local | github | git.
 	Git *GitRepositoryConfig `json:"git,omitempty"`
+
+	// The URL of the repository (if available)
+	URL string `json:"url,omitempty"`
 }
 
 // SyncTargetType defines where we want all values to resolve

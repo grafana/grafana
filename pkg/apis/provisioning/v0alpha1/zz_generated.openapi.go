@@ -1316,6 +1316,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitRepositoryConfig"),
 						},
 					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The URL of the repository (if available)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"title", "workflows", "sync", "type"},
 			},
@@ -1431,6 +1438,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					"branch": {
 						SchemaProps: spec.SchemaProps{
 							Description: "For git, this is the target branch",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository URL (if available)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
