@@ -1,8 +1,12 @@
-import { ReactElement } from 'react';
+import { ReactElement, useState } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
+import { ToolbarButton } from '@grafana/ui';
+
+import { ConfirmNavigationModal } from './ConfirmationNavigationModal';
 
 type Props = {
   extensionsToShow: 'queryless';
@@ -18,9 +22,8 @@ const QUERYLESS_APPS = [
 
 export function AlertingRuleQueryExtentionPoint(props: Props): ReactElement | null {
   const { extensionsToShow, query } = props;
-  // for opeining the modal
-  // const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
-  // const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
   const context = { targets: [query] };
 
   const { links } = usePluginLinks({
@@ -32,18 +35,39 @@ export function AlertingRuleQueryExtentionPoint(props: Props): ReactElement | nu
   // Filter queryless links if needed
   const querylessLinks = links.filter((link) => QUERYLESS_APPS.includes(link.pluginId));
 
+  // Use the first available queryless link
+  const selectedQuerylessLink = querylessLinks[0];
+
+  const handleGoQuerylessClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalDismiss = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <>
-      {extensionsToShow === 'queryless' && querylessLinks.length > 0 && (
+      {extensionsToShow === 'queryless' && (
         <div>
-          {/* Render queryless extensions here */}
-          {querylessLinks.map((link) => (
-            // the links should be html links
-            <a key={link.id} href={link.path}>
-              {link.title}
-            </a>
-          ))}
+          <ToolbarButton
+            aria-label={t('alerting.rule-editor.go-queryless.aria-label', 'Go queryless')}
+            disabled={querylessLinks.length === 0}
+            variant="canvas"
+            isOpen={isModalOpen}
+            onClick={handleGoQuerylessClick}
+          >
+            <Trans i18nKey="alerting.rule-editor.go-queryless">Go queryless</Trans>
+          </ToolbarButton>
         </div>
+      )}
+
+      {isModalOpen && selectedQuerylessLink && selectedQuerylessLink.path && selectedQuerylessLink.title && (
+        <ConfirmNavigationModal
+          onDismiss={handleModalDismiss}
+          path={selectedQuerylessLink.path}
+          title={selectedQuerylessLink.title}
+        />
       )}
     </>
   );
