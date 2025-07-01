@@ -142,7 +142,82 @@ These examples use HTTP Basic Authentication with `admin:admin`. In production e
 
 ## GraphQL API (Read-Only)
 
-### List all playlists via GraphQL
+**Note**: The GraphQL API currently only supports **read operations** (queries). Create, update, and delete operations via GraphQL are not yet implemented. For write operations, use the REST API endpoints above.
+
+### GraphQL Queries
+
+#### List All Playlists (Full Details)
+
+```graphql
+query GetPlaylists {
+  playlist_playlists(namespace: "default") {
+    items {
+      metadata {
+        name
+        namespace
+        creationTimestamp
+      }
+      uid
+      name
+      interval
+      items {
+        id
+        playlistUid
+        type
+        value
+        order
+        title
+      }
+    }
+  }
+}
+```
+
+#### List All Playlists (Basic Info Only)
+
+```graphql
+query GetPlaylists {
+  playlist_playlists(namespace: "default") {
+    items {
+      metadata {
+        name
+      }
+      uid
+      name
+      interval
+    }
+  }
+}
+```
+
+#### Get Single Playlist
+
+```graphql
+query GetPlaylist {
+  playlist_playlist(namespace: "default", name: "my-playlist") {
+    metadata {
+      name
+    }
+    uid
+    name
+    interval
+  }
+}
+```
+
+### Available GraphQL Fields
+
+You can query these fields on a playlist:
+
+- `metadata` (standard Kubernetes metadata)
+- `uid` (playlist unique identifier)
+- `name` (playlist title/name)
+- `interval` (time between dashboard switches)
+- `items` (array of playlist items with: `id`, `playlistUid`, `type`, `value`, `order`, `title`)
+
+### GraphQL via curl
+
+#### List all playlists via GraphQL
 
 ```bash
 curl -X POST http://localhost:3000/api/graphql \
@@ -153,7 +228,7 @@ curl -X POST http://localhost:3000/api/graphql \
   }'
 ```
 
-### Get specific playlist information via GraphQL (simplified)
+#### Get specific playlist information via GraphQL
 
 ```bash
 curl -X POST http://localhost:3000/api/graphql \
@@ -164,7 +239,7 @@ curl -X POST http://localhost:3000/api/graphql \
   }'
 ```
 
-### Basic playlist query
+#### Basic playlist query
 
 ```bash
 curl -X POST http://localhost:3000/api/graphql \
@@ -174,8 +249,6 @@ curl -X POST http://localhost:3000/api/graphql \
     "query": "query GetPlaylists { playlist_playlists(namespace: \"default\") { items { metadata { name } uid name interval } } }"
   }'
 ```
-
-**Note**: The GraphQL API currently only supports **read operations** (queries). Create, update, and delete operations via GraphQL are not yet implemented. For write operations, use the REST API endpoints above.
 
 ## Response Format
 
