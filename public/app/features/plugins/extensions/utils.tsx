@@ -231,12 +231,12 @@ interface ProxyOptions {
  * @param obj The object to observe
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
-export function getMutationObserverProxy<T extends object>(obj: T, options: ProxyOptions = {}): T {
+export function getMutationObserverProxy<T extends object>(obj: T, options?: ProxyOptions): T {
   if (!obj || typeof obj !== 'object' || isMutationObserverProxy(obj)) {
     return obj;
   }
 
-  const { log = baseLog, source = 'extension', pluginId = 'unknown' } = options;
+  const { log = baseLog, source = 'extension', pluginId = 'unknown' } = options ?? {};
   const cache = new WeakMap();
   const logFunction = isGrafanaDevMode() ? log.error.bind(log) : log.warning.bind(log); // should show error during local development
 
@@ -296,14 +296,16 @@ export function getMutationObserverProxy<T extends object>(obj: T, options: Prox
   });
 }
 
-export function writableProxy<T>(value: T, options: ProxyOptions = {}): T {
+export function writableProxy<T>(value: T, options?: ProxyOptions): T {
   // Primitive types are read-only by default
   if (!value || typeof value !== 'object') {
     return value;
   }
 
+  const { log = baseLog, source = 'extension', pluginId = 'unknown' } = options ?? {};
+
   // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
-  return getMutationObserverProxy(cloneDeep(value), options);
+  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, source });
 }
 
 function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {

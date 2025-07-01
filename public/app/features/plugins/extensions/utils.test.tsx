@@ -7,7 +7,6 @@ import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { log } from './logs/log';
-import { resetLogMock } from './logs/testUtils';
 import {
   deepFreeze,
   handleErrorsInFn,
@@ -30,17 +29,17 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' } }),
 }));
 
-jest.mock('./logs/log', () => {
-  const { createLogMock } = jest.requireActual('./logs/testUtils');
-  const original = jest.requireActual('./logs/log');
-
-  return {
-    ...original,
-    log: createLogMock(),
-  };
-});
-
 describe('Plugin Extensions / Utils', () => {
+  beforeEach(() => {
+    jest.spyOn(log, 'error').mockImplementation(() => {});
+    jest.spyOn(log, 'warning').mockImplementation(() => {});
+    jest.spyOn(log, 'debug').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   describe('deepFreeze()', () => {
     test('should not fail when called with primitive values', () => {
       // Although the type system doesn't allow to call it with primitive values, it can happen that the plugin just ignores these errors.
@@ -392,14 +391,14 @@ describe('Plugin Extensions / Utils', () => {
       });
 
       it('should be possible to modify values in proxied object, but logs an error', () => {
-        const proxy = getMutationObserverProxy({ a: 'a' });
+        const proxy = getMutationObserverProxy({ a: 'a' }, { pluginId: 'myorg-cool-datasource', source: 'datasource' });
 
         expect(() => {
           proxy.a = 'b';
         }).not.toThrow();
 
         expect(log.error).toHaveBeenCalledWith(
-          `Attempted to mutate object property "a" from extension with id unknown`,
+          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource`,
           {
             stack: expect.any(String),
           }
@@ -410,7 +409,7 @@ describe('Plugin Extensions / Utils', () => {
 
       it('should be possible to call defineProperty, but logs a debug message', () => {
         const obj: { a: string; b?: string } = { a: 'a' };
-        const proxy = getMutationObserverProxy(obj);
+        const proxy = getMutationObserverProxy(obj, { pluginId: 'myorg-cool-extension' });
 
         expect(() => {
           Object.defineProperty(proxy, 'b', {
@@ -420,7 +419,7 @@ describe('Plugin Extensions / Utils', () => {
         }).not.toThrow();
 
         expect(log.debug).toHaveBeenCalledWith(
-          `Attempted to define object property "b" from extension with id unknown`,
+          `Attempted to define object property "b" from extension with id myorg-cool-extension`,
           {
             stack: expect.any(String),
           }
@@ -459,14 +458,14 @@ describe('Plugin Extensions / Utils', () => {
       });
 
       it('should be possible to modify values in proxied object, but logs a warning', () => {
-        const proxy = getMutationObserverProxy({ a: 'a' });
+        const proxy = getMutationObserverProxy({ a: 'a' }, { pluginId: 'myorg-cool-datasource', source: 'datasource' });
 
         expect(() => {
           proxy.a = 'b';
         }).not.toThrow();
 
         expect(log.warning).toHaveBeenCalledWith(
-          `Attempted to mutate object property "a" from extension with id unknown`,
+          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource`,
           {
             stack: expect.any(String),
           }
@@ -477,7 +476,7 @@ describe('Plugin Extensions / Utils', () => {
 
       it('should be possible to call defineProperty, but logs a debug message', () => {
         const obj: { a: string; b?: string } = { a: 'a' };
-        const proxy = getMutationObserverProxy(obj);
+        const proxy = getMutationObserverProxy(obj, { pluginId: 'myorg-cool-extension' });
 
         expect(() => {
           Object.defineProperty(proxy, 'b', {
@@ -487,7 +486,7 @@ describe('Plugin Extensions / Utils', () => {
         }).not.toThrow();
 
         expect(log.debug).toHaveBeenCalledWith(
-          `Attempted to define object property "b" from extension with id unknown`,
+          `Attempted to define object property "b" from extension with id myorg-cool-extension`,
           {
             stack: expect.any(String),
           }
@@ -524,13 +523,8 @@ describe('Plugin Extensions / Utils', () => {
   describe('writableProxy()', () => {
     const originalEnv = config.buildInfo.env;
 
-    beforeEach(() => {
-      jest.spyOn(console, 'warn').mockImplementation();
-    });
-
     afterEach(() => {
       config.buildInfo.env = originalEnv;
-      jest.mocked(console.warn).mockClear();
     });
 
     it('should return the same value for primitive types', () => {
@@ -546,7 +540,7 @@ describe('Plugin Extensions / Utils', () => {
       config.buildInfo.env = 'development';
 
       const obj = { a: 'a' };
-      const copy = writableProxy(obj);
+      const copy = writableProxy(obj, { source: 'datasource', pluginId: 'myorg-cool-datasource' });
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -555,8 +549,8 @@ describe('Plugin Extensions / Utils', () => {
         copy.a = 'b';
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(
-        `Attempted to mutate object property "a" from extension with id unknown`,
+      expect(log.error).toHaveBeenCalledWith(
+        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource`,
         {
           stack: expect.any(String),
         }
@@ -569,7 +563,7 @@ describe('Plugin Extensions / Utils', () => {
       config.buildInfo.env = 'production';
 
       const obj = { a: 'a' };
-      const copy = writableProxy(obj);
+      const copy = writableProxy(obj, { source: 'datasource', pluginId: 'myorg-cool-datasource' });
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -579,7 +573,7 @@ describe('Plugin Extensions / Utils', () => {
       }).not.toThrow();
 
       expect(log.warning).toHaveBeenCalledWith(
-        `Attempted to mutate object property "a" from extension with id unknown`,
+        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource`,
         {
           stack: expect.any(String),
         }
@@ -732,10 +726,6 @@ describe('Plugin Extensions / Utils', () => {
       );
     };
 
-    beforeEach(() => {
-      resetLogMock(log);
-    });
-
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
       const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
@@ -761,8 +751,6 @@ describe('Plugin Extensions / Utils', () => {
       const pluginId = 'grafana-worldmap-panel';
       const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
       const props = { a: { b: { c: 'Grafana' } } };
-
-      jest.spyOn(console, 'error').mockImplementation();
 
       render(<Component {...props} override />);
 
