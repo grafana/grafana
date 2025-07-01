@@ -561,10 +561,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         name: 'annotation-with-options',
         enable: true,
         iconColor: 'red',
-        expr: 'rate(http_requests_total[5m])',
-        queryType: 'range',
-        legendFormat: '{{method}} {{endpoint}}',
-        useValueAsTime: true,
+        customProp1: true,
+        customProp2: 'test',
       },
       name: 'layerWithOptions',
       isEnabled: true,
@@ -586,17 +584,13 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations.length).toBe(1);
     expect(result.annotations[0].spec.legacyOptions).toBeDefined();
     expect(result.annotations[0].spec.legacyOptions).toEqual({
-      expr: 'rate(http_requests_total[5m])',
-      queryType: 'range',
-      legendFormat: '{{method}} {{endpoint}}',
-      useValueAsTime: true,
+      customProp1: true,
+      customProp2: 'test',
     });
 
     // Ensure these properties are not at the root level
-    expect(result).not.toHaveProperty('annotations[0].spec.expr');
-    expect(result).not.toHaveProperty('annotations[0].spec.queryType');
-    expect(result).not.toHaveProperty('annotations[0].spec.legendFormat');
-    expect(result).not.toHaveProperty('annotations[0].spec.useValueAsTime');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp1');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp2');
   });
 });
 
