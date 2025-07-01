@@ -1,159 +1,76 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --"
-        },
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations \u0026 Alerts",
-        "type": "dashboard"
-      },
-      {
-        "datasource": {
-          "apiVersion": "1",
-          "type": "loki",
-          "uid": "non-default-test-ds-uid"
-        },
-        "enable": true,
-        "name": "Test Annotation by Name",
-        "type": "dashboard"
-      },
-      {
-        "datasource": {
-          "apiVersion": "1",
-          "type": "loki",
-          "uid": "non-default-test-ds-uid"
-        },
-        "enable": true,
-        "name": "Test Annotation by UID",
-        "type": "dashboard"
-      },
-      {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
-        "enable": true,
-        "name": "Test Default Annotation",
-        "type": "dashboard"
-      },
-      {
-        "datasource": {
-          "uid": "non-existing-ds"
-        },
-        "enable": true,
-        "name": "Test Non-existing Annotation",
-        "type": "dashboard"
-      },
-      {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
-        "dimensions": {
-          "InstanceId": "i-123456"
-        },
-        "enable": true,
-        "iconColor": "red",
-        "name": "CloudWatch Annotation Single Stat",
-        "namespace": "AWS/EC2",
-        "prefixMatching": false,
-        "region": "us-east-1",
-        "statistic": "Average"
-      },
-      {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
-        "dimensions": {
-          "InstanceId": "i-789012"
-        },
-        "enable": true,
-        "iconColor": "blue",
-        "name": "CloudWatch Annotation Multiple Stats - Maximum",
-        "namespace": "AWS/RDS",
-        "prefixMatching": false,
-        "region": "us-west-2",
-        "statistic": "Maximum"
-      },
-      {
-        "datasource": {},
-        "enable": true,
-        "name": "Test Empty String Annotation",
-        "type": "dashboard"
-      },
-      {
-        "datasource": {
-          "uid": "another-missing-ds"
-        },
-        "enable": true,
-        "name": "Test Another Non-existing Annotation",
-        "type": "dashboard"
-      },
-      {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
-        "dimensions": {
-          "InstanceId": "i-789012"
-        },
-        "enable": true,
-        "iconColor": "blue",
-        "name": "CloudWatch Annotation Multiple Stats - Minimum",
-        "namespace": "AWS/RDS",
-        "prefixMatching": false,
-        "region": "us-west-2",
-        "statistic": "Minimum"
-      },
-      {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
-        "dimensions": {
-          "InstanceId": "i-789012"
-        },
-        "enable": true,
-        "iconColor": "blue",
-        "name": "CloudWatch Annotation Multiple Stats - Sum",
-        "namespace": "AWS/RDS",
-        "prefixMatching": false,
-        "region": "us-west-2",
-        "statistic": "Sum"
-      }
-    ]
-  },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "links": [],
   "panels": [
+    {
+      "datasource": {
+        "apiVersion": "1",
+        "type": "loki",
+        "uid": "non-default-test-ds-uid"
+      },
+      "description": "Tests v33 migration behavior when panel datasource is explicitly null. Should remain null after migration (returnDefaultAsNull: true).",
+      "id": 1,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
+          },
+          "description": "Target with UID reference should migrate to full object",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Datasource: null → should stay null",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "existing-ref-uid"
+      },
+      "description": "Tests v33 migration behavior when panel datasource is already a proper object reference. Should remain unchanged.",
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "existing-target-uid"
+          },
+          "description": "Target with existing object should remain unchanged",
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Datasource: existing object → should stay unchanged",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "apiVersion": "1",
+        "type": "loki",
+        "uid": "non-default-test-ds-uid"
+      },
+      "description": "Tests v33 migration when panel datasource is a string name. Should convert to proper object with uid, type, apiVersion.",
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Panel Datasource: string name → should migrate to object",
+      "type": "table"
+    },
     {
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 1,
-      "options": {},
+      "description": "Tests v33 migration when panel has datasource string but empty targets array. Panel datasource should still migrate.",
+      "id": 4,
       "targets": [
         {
           "datasource": {
@@ -164,7 +81,54 @@
           "refId": "A"
         }
       ],
-      "title": "No Legend Config",
+      "title": "Panel Datasource: string name with empty targets → should migrate",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "apiVersion": "1",
+        "type": "loki",
+        "uid": "non-default-test-ds-uid"
+      },
+      "description": "Tests v33 target migration with various edge cases: null target (unchanged), valid string (migrated), non-existing string (preserved), missing datasource field (unchanged).",
+      "id": 5,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
+          },
+          "description": "Null target datasource should remain null",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
+          "description": "Valid string should migrate to object",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "uid": "non-existing-ds"
+          },
+          "description": "Non-existing datasource should be preserved as-is (migration returns nil)",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
+          },
+          "description": "Target without datasource field should remain unchanged",
+          "refId": "D"
+        }
+      ],
+      "title": "Target Datasources: mixed null/string/non-existing scenarios",
       "type": "graph"
     },
     {
@@ -173,420 +137,85 @@
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "legend": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Boolean Legend True"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "id": 3,
-      "options": {
-        "legend": false
-      },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Boolean Legend False"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "showLegend": false
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Hidden DisplayMode"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 16
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "showLegend": false
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "ShowLegend False"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
-      },
+      "description": "Tests v33 migration when panel datasource is null but targets have mixed reference types (object, string). Panel should stay null, targets should migrate appropriately.",
       "id": 6,
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "showLegend": true
-        }
-      },
       "targets": [
         {
           "datasource": {
-            "apiVersion": "v1",
             "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "existing-ref"
           },
+          "description": "Existing object target should remain unchanged",
           "refId": "A"
-        }
-      ],
-      "title": "Visible Legend"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 24
-      },
-      "id": 7,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
-          }
         },
         {
           "datasource": {
             "apiVersion": "1",
             "type": "loki",
             "uid": "non-default-test-ds-uid"
-          }
-        }
-      ],
-      "title": "Mixed Datasources Panel"
-    },
-    {
-      "datasource": {
-        "uid": "-- Mixed --"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      },
-      "id": 8,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
-          }
-        },
-        {
-          "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
-          }
-        }
-      ],
-      "title": "Mixed Panel with Mixed Targets"
-    },
-    {
-      "datasource": {
-        "uid": "non-existing-ds"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 32
-      },
-      "id": 9,
-      "targets": [
-        {
-          "datasource": {
-            "uid": "non-existing-ds"
-          }
-        }
-      ],
-      "title": "Non-existing Datasource Panel"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "axisPlacement": "hidden"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byType",
-              "options": "time"
-            },
-            "properties": [
-              {
-                "id": "custom.axisPlacement",
-                "value": "auto"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 40
-      },
-      "id": 10,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
           },
-          "refId": "A"
-        }
-      ],
-      "title": "Timeseries Panel with Hidden Axes",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 40
-      },
-      "id": 11,
-      "targets": [
-        {
-          "alias": "CPU Usage",
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "dimensions": {
-            "InstanceId": "i-123456"
-          },
-          "metricEditorMode": 0,
-          "metricName": "CPUUtilization",
-          "metricQueryType": 0,
-          "namespace": "AWS/EC2",
-          "period": "300",
-          "refId": "A",
-          "region": "us-east-1",
-          "statistic": "Average"
-        },
-        {
-          "alias": "CPU Usage",
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "dimensions": {
-            "InstanceId": "i-123456"
-          },
-          "metricEditorMode": 0,
-          "metricName": "CPUUtilization",
-          "metricQueryType": 0,
-          "namespace": "AWS/EC2",
-          "period": "300",
-          "refId": "B",
-          "region": "us-east-1",
-          "statistic": "Maximum"
-        },
-        {
-          "alias": "CPU Usage",
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "dimensions": {
-            "InstanceId": "i-123456"
-          },
-          "metricEditorMode": 0,
-          "metricName": "CPUUtilization",
-          "metricQueryType": 0,
-          "namespace": "AWS/EC2",
-          "period": "300",
-          "refId": "C",
-          "region": "us-east-1",
-          "statistic": "Minimum"
-        }
-      ],
-      "title": "CloudWatch Single Query Multiple Stats",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "prometheus"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 48
-      },
-      "id": 12,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "dimensions": {
-            "LoadBalancer": "my-load-balancer"
-          },
-          "metricEditorMode": 0,
-          "metricName": "RequestCount",
-          "metricQueryType": 0,
-          "namespace": "AWS/ApplicationELB",
-          "refId": "A",
-          "region": "us-west-2",
-          "statistic": "Sum"
-        },
-        {
-          "datasource": {
-            "uid": "prometheus"
-          },
-          "expr": "up",
+          "description": "String target should migrate to object",
           "refId": "B"
         },
         {
           "datasource": {
-            "uid": "prometheus"
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
-          "dimensions": {
-            "DBInstanceIdentifier": "my-db"
+          "description": "Default datasource string should migrate to object",
+          "refId": "C"
+        }
+      ],
+      "title": "Panel: null datasource with mixed target types",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
+      },
+      "description": "Tests v33 migration behavior with empty string datasource. Should migrate to empty object {} based on MigrateDatasourceNameToRef logic.",
+      "id": 7,
+      "targets": [
+        {
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
           },
-          "metricEditorMode": 0,
-          "metricName": "DatabaseConnections",
-          "metricQueryType": 0,
-          "namespace": "AWS/RDS",
-          "refId": "C",
-          "region": "us-east-1",
-          "statistic": "Maximum"
+          "description": "Empty string target should also migrate to empty object {}",
+          "refId": "A"
+        }
+      ],
+      "title": "Empty string datasource → should return empty object {}",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "completely-missing-ds"
+      },
+      "description": "Tests v33 migration with completely unknown datasource names. Since migration returns nil for unknown datasources, they should be preserved unchanged.",
+      "id": 8,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "also-missing-ds"
+          },
+          "description": "Unknown target datasource should remain unchanged (migration returns nil)",
+          "refId": "A"
         },
         {
           "datasource": {
-            "uid": "prometheus"
+            "uid": "completely-missing-ds"
           },
-          "dimensions": {
-            "LoadBalancer": "my-load-balancer"
-          },
-          "metricEditorMode": 0,
-          "metricName": "RequestCount",
-          "metricQueryType": 0,
-          "namespace": "AWS/ApplicationELB",
-          "refId": "D",
-          "region": "us-west-2",
-          "statistic": "Average"
+          "description": "Empty string target should migrate to {}",
+          "refId": "B"
         }
       ],
-      "title": "Mixed CloudWatch and Prometheus Queries",
-      "type": "timeseries"
+      "title": "Non-existing datasources → should be preserved as-is",
+      "type": "table"
     },
     {
       "collapsed": true,
@@ -595,27 +224,17 @@
         "type": "prometheus",
         "uid": "default-ds-uid"
       },
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 56
-      },
-      "id": 13,
+      "description": "Tests v33 migration handles nested panels within collapsed rows. Nested panel datasources should migrate same as top-level panels.",
+      "id": 9,
       "panels": [
         {
           "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
-          "id": 14,
+          "description": "Nested panel with string datasource should migrate to proper object reference, proving row panel recursion works.",
+          "id": 10,
           "targets": [
             {
               "datasource": {
@@ -623,53 +242,11 @@
                 "type": "prometheus",
                 "uid": "default-ds-uid"
               },
-              "dimensions": {
-                "QueueName": "my-queue"
-              },
-              "metricEditorMode": 0,
-              "metricName": "ApproximateNumberOfMessages",
-              "metricQueryType": 0,
-              "namespace": "AWS/SQS",
-              "refId": "A",
-              "region": "us-east-1",
-              "statistic": "Average"
-            },
-            {
-              "datasource": {
-                "apiVersion": "v1",
-                "type": "prometheus",
-                "uid": "default-ds-uid"
-              },
-              "dimensions": {
-                "QueueName": "my-queue"
-              },
-              "metricEditorMode": 0,
-              "metricName": "ApproximateNumberOfMessages",
-              "metricQueryType": 0,
-              "namespace": "AWS/SQS",
-              "refId": "B",
-              "region": "us-east-1",
-              "statistic": "Maximum"
-            },
-            {
-              "datasource": {
-                "apiVersion": "v1",
-                "type": "prometheus",
-                "uid": "default-ds-uid"
-              },
-              "dimensions": {
-                "QueueName": "my-queue"
-              },
-              "metricEditorMode": 0,
-              "metricName": "ApproximateNumberOfMessages",
-              "metricQueryType": 0,
-              "namespace": "AWS/SQS",
-              "refId": "C",
-              "region": "us-east-1",
-              "statistic": "Sum"
+              "description": "Nested target should also migrate from string to object",
+              "refId": "A"
             }
           ],
-          "title": "Nested CloudWatch Panel",
+          "title": "Nested Panel: string datasource → should migrate to object",
           "type": "timeseries"
         }
       ],
@@ -683,325 +260,11 @@
           "refId": "A"
         }
       ],
-      "title": "Collapsed Row with CloudWatch",
+      "title": "Row Panel: nested panels should also migrate",
       "type": "row"
-    },
-    {
-      "datasource": {
-        "apiVersion": "1",
-        "type": "loki",
-        "uid": "non-default-test-ds-uid"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 64
-      },
-      "id": 15,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "V33: Panel with Null Datasource",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "existing-ref-uid"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 64
-      },
-      "id": 16,
-      "targets": [
-        {
-          "datasource": {
-            "type": "elasticsearch",
-            "uid": "existing-target-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "V33: Panel with Existing Datasource Reference",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "apiVersion": "1",
-        "type": "loki",
-        "uid": "non-default-test-ds-uid"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 64
-      },
-      "id": 17,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "V33: Panel without Targets",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 64
-      },
-      "id": 18,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "V33: Panel with Empty Targets Array",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "apiVersion": "1",
-        "type": "loki",
-        "uid": "non-default-test-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 68
-      },
-      "id": 19,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
-          },
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "uid": "non-existing-ds"
-          },
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
-          },
-          "refId": "D"
-        }
-      ],
-      "title": "V33: Target Datasource Edge Cases",
-      "type": "graph"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 68
-      },
-      "id": 20,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "existing-ref"
-          },
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "apiVersion": "1",
-            "type": "loki",
-            "uid": "non-default-test-ds-uid"
-          },
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "C"
-        }
-      ],
-      "title": "V33: Mixed Target References",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "apiVersion": "v1",
-        "type": "prometheus",
-        "uid": "default-ds-uid"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 76
-      },
-      "id": 21,
-      "targets": [
-        {
-          "datasource": {
-            "apiVersion": "v1",
-            "type": "prometheus",
-            "uid": "default-ds-uid"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "V33: Panel with Empty String Datasource",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "uid": "completely-missing-ds"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 76
-      },
-      "id": 22,
-      "targets": [
-        {
-          "datasource": {
-            "uid": "also-missing-ds"
-          },
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "uid": "completely-missing-ds"
-          },
-          "refId": "B"
-        }
-      ],
-      "title": "V33: Panel with Another Non-existing Datasource",
-      "type": "table"
     }
   ],
-  "preload": false,
   "refresh": "",
   "schemaVersion": 41,
-  "tags": [],
-  "templating": {
-    "list": [
-      {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
-        "name": "default_var",
-        "type": "query"
-      },
-      {
-        "datasource": {
-          "apiVersion": "1",
-          "type": "loki",
-          "uid": "non-default-test-ds-uid"
-        },
-        "name": "es_var_by_name",
-        "type": "query"
-      },
-      {
-        "datasource": {
-          "apiVersion": "1",
-          "type": "loki",
-          "uid": "non-default-test-ds-uid"
-        },
-        "name": "es_var_by_uid",
-        "type": "query"
-      },
-      {
-        "datasource": {
-          "apiVersion": "v1",
-          "type": "prometheus",
-          "uid": "default-ds-uid"
-        },
-        "name": "null_var",
-        "type": "query"
-      },
-      {
-        "datasource": {
-          "uid": "non-existing-ds"
-        },
-        "name": "non_existing_var",
-        "type": "query"
-      },
-      {
-        "datasource": {},
-        "name": "empty_string_var",
-        "type": "query"
-      },
-      {
-        "datasource": {
-          "uid": "another-non-existing-ds"
-        },
-        "name": "another_non_existing_var",
-        "type": "query"
-      }
-    ]
-  },
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "timepicker": {},
-  "timezone": "utc",
-  "title": "New dashboard",
-  "version": 0,
-  "weekStart": ""
+  "title": "V33 Panel Datasource Name to Ref Test"
 }
