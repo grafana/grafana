@@ -54,29 +54,27 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
  * Note that sanitized tags will be removed, such as "<script>".
  * We don't allow form or input elements.
  */
-export function sanitize(unsanitizedString: string, allowTargetBlank = false): string {
+export function sanitize(unsanitizedString: string): string {
   try {
     let cfg: DOMPurify.Config = {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
     };
 
-    if (allowTargetBlank) {
-      // hook to handle anchor elements with target="_blank"
-      DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-        if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
-          const currentRel = node.getAttribute('rel') || '';
-          const relValues = new Set(currentRel.split(/\s+/g).filter(Boolean));
+    // hook to handle anchor elements with target="_blank"
+    DOMPurify.addHook('afterSanitizeAttributes', function (node) {
+      if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+        const currentRel = node.getAttribute('rel') || '';
+        const relValues = new Set(currentRel.split(/\s+/g).filter(Boolean));
 
-          relValues.add('noopener');
-          relValues.add('noreferrer');
+        relValues.add('noopener');
+        relValues.add('noreferrer');
 
-          node.setAttribute('rel', Array.from(relValues).join(' '));
-        }
-      });
+        node.setAttribute('rel', Array.from(relValues).join(' '));
+      }
+    });
 
-      cfg.ADD_ATTR = ['target'];
-    }
+    cfg.ADD_ATTR = ['target'];
 
     return DOMPurify.sanitize(unsanitizedString, cfg);
   } catch (error) {

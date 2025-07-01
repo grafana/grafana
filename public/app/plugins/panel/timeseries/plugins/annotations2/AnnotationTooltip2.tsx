@@ -97,7 +97,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit }: Prop
       </div>
 
       <div className={styles.body}>
-        {text && <div className={styles.text} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text, true) }} />}
+        {text && <div className={styles.text} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text) }} />}
         {alertText}
         <div>
           <HorizontalGroup spacing="xs" wrap>
