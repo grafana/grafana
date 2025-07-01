@@ -102,9 +102,17 @@ export const TimeSeriesPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
-                queryZoom={(e) => {
-                  console.log({ e });
-                  onChangeTimeRange(e);
+                queryZoom={(event: { from: number; to: number }) => {
+                  const from = new Date(event.from).toISOString();
+                  const to = new Date(event.to).toISOString();
+                  window.parent.postMessage(
+                    {
+                      source: 'grafana-dashboard-time-range-changed',
+                      payload: { from, to },
+                    },
+                    '*'
+                  );
+                  onChangeTimeRange(event);
                 }}
                 clientZoom={true}
                 syncMode={cursorSync}
