@@ -1569,12 +1569,6 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 				nonProvisionedAllowed = tt.staticConfig.AllowNonProvisionedUsers
 			}
 			assert.Equal(t, tt.expectedNonProvisionedAllowed, nonProvisionedAllowed, "Non-provisioned users allowed mismatch")
-
-			// Verify mock expectations if SCIM util was used
-			if tt.mockSCIMUtil != nil {
-				// The mock expectations would be verified here if we had access to the mock
-				// For now, we just verify the behavior is correct
-			}
 		})
 	}
 }
