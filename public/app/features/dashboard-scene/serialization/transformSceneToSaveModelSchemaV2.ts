@@ -436,7 +436,6 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
         layer,
         layerDs
       );
-      // throw new Error('Misconfigured AnnotationsDataLayer: Datasource is required for annotations');
     }
 
     const result = transformV1ToV2AnnotationQuery(layer.state.query, layerDs.type!, layerDs.uid!, {
