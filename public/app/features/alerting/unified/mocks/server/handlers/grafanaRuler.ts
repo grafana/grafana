@@ -71,15 +71,17 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
         return options.response;
       }
 
-      // This mimic API response as closely as possible.
-      // Invalid folderUid returns 403 but invalid group will return 202 with empty list of rules
-      // This should be fixed soon to return 404 instead of 202
       const namespace = rulerTestDb.getNamespace(folderUid);
       if (!namespace) {
         return new HttpResponse(null, { status: 403 });
       }
 
       const matchingGroup = rulerTestDb.getGroup(folderUid, groupName);
+
+      if (!matchingGroup) {
+        return new HttpResponse({ message: 'group does not exist' }, { status: 404 });
+      }
+
       return HttpResponse.json<RulerRuleGroupDTO>({
         name: groupName,
         interval: matchingGroup?.interval,
