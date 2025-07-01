@@ -196,6 +196,7 @@ func WithYarnInstall(d *dagger.Client, base *dagger.Container, yarnHostSrc *dagg
 		WithWorkdir("/src").
 		WithMountedCache("/.yarn", yarnCache).
 		WithEnvVariable("YARN_CACHE_FOLDER", "/.yarn").
+		WithEnvVariable("CYPRESS_INSTALL_BINARY", "0"). // Don't download Cypress binaries
 
 		// It's important to copy all files here because the whole src directory is then copied into the test runner container
 		WithDirectory("/src", yarnHostSrc).
