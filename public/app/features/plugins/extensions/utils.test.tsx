@@ -21,8 +21,7 @@ import {
   getAppPluginDependencies,
   getExtensionPointPluginMeta,
   getMutationObserverProxy,
-  readOnlyCopy,
-  isReadOnlyProxy,
+  writableProxy,
   isMutationObserverProxy,
 } from './utils';
 
@@ -401,7 +400,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(proxy.a).toBe('b');
     });
 
-    it('should be possible to set new values, but logs a warning', () => {
+    it('should be possible to set new values, but logs a debug message', () => {
       const obj: { a: string; b?: string } = { a: 'a' };
       const proxy = getMutationObserverProxy(obj);
 
@@ -412,7 +411,7 @@ describe('Plugin Extensions / Utils', () => {
         });
       }).not.toThrow();
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "b"`, {
+      expect(log.debug).toHaveBeenCalledWith(`Attempted to define object property "b"`, {
         stack: expect.any(String),
       });
 
@@ -440,12 +439,11 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe('readOnlyCopy()', () => {
+  describe('writableProxy()', () => {
     const originalEnv = config.buildInfo.env;
 
     beforeEach(() => {
       jest.spyOn(console, 'warn').mockImplementation();
-      config.featureToggles.extensionsReadOnlyProxy = false;
     });
 
     afterEach(() => {
@@ -454,34 +452,19 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return the same value for primitive types', () => {
-      expect(readOnlyCopy(1)).toBe(1);
-      expect(readOnlyCopy('a')).toBe('a');
-      expect(readOnlyCopy(true)).toBe(true);
-      expect(readOnlyCopy(false)).toBe(false);
-      expect(readOnlyCopy(null)).toBe(null);
-      expect(readOnlyCopy(undefined)).toBe(undefined);
-    });
-
-    it('should return a read-only proxy of the original object if the feature flag is enabled', () => {
-      config.featureToggles.extensionsReadOnlyProxy = true;
-
-      const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
-
-      expect(copy).not.toBe(obj);
-      expect(copy.a).toBe('a');
-      expect(isReadOnlyProxy(copy)).toBe(true);
-      expect(() => {
-        copy.a = 'b';
-      }).toThrow(TypeError);
+      expect(writableProxy(1)).toBe(1);
+      expect(writableProxy('a')).toBe('a');
+      expect(writableProxy(true)).toBe(true);
+      expect(writableProxy(false)).toBe(false);
+      expect(writableProxy(null)).toBe(null);
+      expect(writableProxy(undefined)).toBe(undefined);
     });
 
     it('should return a writable deep-copy of the original object in dev mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
       config.buildInfo.env = 'development';
 
       const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
+      const copy = writableProxy(obj);
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -498,11 +481,10 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should return a writable deep-copy of the original object in production mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
       config.buildInfo.env = 'production';
 
       const obj = { a: 'a' };
-      const copy = readOnlyCopy(obj);
+      const copy = writableProxy(obj);
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -519,11 +501,10 @@ describe('Plugin Extensions / Utils', () => {
     });
 
     it('should allow freezing the object in production mode', () => {
-      config.featureToggles.extensionsReadOnlyProxy = false;
       config.buildInfo.env = 'production';
 
       const obj = { a: 'a', b: { c: 'c' } };
-      const copy = readOnlyCopy(obj);
+      const copy = writableProxy(obj);
 
       expect(() => {
         Object.freeze(copy);
@@ -534,7 +515,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(Object.isFrozen(copy.b)).toBe(true);
       expect(copy.b).toEqual({ c: 'c' });
 
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "a"`, {
+      expect(log.debug).toHaveBeenCalledWith(`Attempted to define object property "a"`, {
         stack: expect.any(String),
       });
     });
@@ -687,7 +668,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
     });
 
-    it('should not be possible to mutate the props in development mode, but it logs a warning', async () => {
+    it('should not be possible to mutate the props in development mode, but it logs an error', async () => {
       config.buildInfo.env = 'development';
       const pluginId = 'grafana-worldmap-panel';
       const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
@@ -700,8 +681,8 @@ describe('Plugin Extensions / Utils', () => {
       expect(await screen.findByText('Hello Grafana!')).toBeVisible();
 
       // Logs a warning
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
         stack: expect.any(String),
       });
 

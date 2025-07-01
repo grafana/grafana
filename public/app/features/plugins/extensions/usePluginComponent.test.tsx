@@ -380,8 +380,8 @@ describe('usePluginComponent()', () => {
     // Should not throw an error if it mutates the props
     expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
 
-    // Should log a warning
-    expect(log.warning).toHaveBeenCalledWith('Attempted to mutate object property "c"', {
+    // Should log an error in dev mode
+    expect(log.error).toHaveBeenCalledWith('Attempted to mutate object property "c"', {
       stack: expect.any(String),
     });
   });

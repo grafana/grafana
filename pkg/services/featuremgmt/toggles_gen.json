@@ -1110,7 +1110,8 @@
       "metadata": {
         "name": "extensionsReadOnlyProxy",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-05-06T04:55:23Z"
+        "creationTimestamp": "2025-05-06T04:55:23Z",
+        "deletionTimestamp": "2025-06-30T08:24:11Z"
       },
       "spec": {
         "description": "Use proxy-based read-only objects for plugin extensions instead of deep cloning",
