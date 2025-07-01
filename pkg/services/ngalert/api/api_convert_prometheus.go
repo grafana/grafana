@@ -56,7 +56,8 @@ const (
 	mergeMatchersHeader = "X-Grafana-Alerting-Merge-Matchers"
 
 	// configIdentifierHeader is the header that specifies the identifier for imported Alertmanager config.
-	configIdentifierHeader = "X-Grafana-Alerting-Config-Identifier"
+	configIdentifierHeader  = "X-Grafana-Alerting-Config-Identifier"
+	defaultConfigIdentifier = "default"
 )
 
 var (
@@ -539,11 +540,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	identifier, err := parseConfigIdentifierHeader(c)
-	if err != nil {
-		logger.Error("Failed to parse config identifier header", "error", err, "identifier", identifier)
-		return errorToResponse(err)
-	}
+	identifier := parseConfigIdentifierHeader(c)
 
 	mergeMatchers, err := parseMergeMatchersHeader(c)
 	if err != nil {
@@ -581,11 +578,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 	logger := srv.logger.FromContext(c.Req.Context())
 	ctx := c.Req.Context()
 
-	identifier, err := parseConfigIdentifierHeader(c)
-	if err != nil {
-		logger.Error("failed to parse config identifier header", "err", err)
-		return errorToResponse(err)
-	}
+	identifier := parseConfigIdentifierHeader(c)
 
 	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false)
 	if err != nil {
@@ -605,18 +598,14 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 		return response.Error(http.StatusNotFound, "Alertmanager configuration not found", nil)
 	}
 
-	// Parse the configuration into our Gettable struct which will automatically
-	// sanitize secrets and exclude global settings when marshaled back to YAML.
-	var prometheusConfig amconfig.Config
-	if err := yaml.Unmarshal([]byte(extraCfg.AlertmanagerConfig), &prometheusConfig); err != nil {
+	sanitizedConfig, err := extraCfg.GetSanitizedAlertmanagerConfigYAML()
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid Alertmanager configuration format", err)
 	}
 
-	respBody := apimodels.GettableAlertmanagerUserConfig{
-		AlertmanagerConfig: apimodels.GettableAlertmanagerConfig{
-			Config: prometheusConfig,
-		},
-		TemplateFiles: extraCfg.TemplateFiles,
+	respBody := apimodels.AlertmanagerUserConfig{
+		AlertmanagerConfig: sanitizedConfig,
+		TemplateFiles:      extraCfg.TemplateFiles,
 	}
 
 	resp := response.YAML(http.StatusOK, respBody)
@@ -633,13 +622,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(
 
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	identifier, err := parseConfigIdentifierHeader(c)
-	if err != nil {
-		logger.Error("Failed to parse config identifier header", "error", err)
-		return errorToResponse(err)
-	}
+	identifier := parseConfigIdentifierHeader(c)
 
-	err = srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
+	err := srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
 	if err != nil {
 		logger.Error("Failed to delete alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to delete alertmanager configuration: %w", err))
@@ -816,10 +801,10 @@ func formatMergeMatchers(matchers amconfig.Matchers) string {
 	return strings.Join(pairs, ",")
 }
 
-func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
+func parseConfigIdentifierHeader(c *contextmodel.ReqContext) string {
 	identifier := strings.TrimSpace(c.Req.Header.Get(configIdentifierHeader))
 	if identifier == "" {
-		return "", errInvalidHeaderValue(configIdentifierHeader, errors.New("identifier cannot be empty"))
+		return defaultConfigIdentifier
 	}
-	return identifier, nil
+	return identifier
 }
