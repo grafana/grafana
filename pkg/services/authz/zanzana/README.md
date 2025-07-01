@@ -170,7 +170,7 @@ Then add grafana configured in client mode to be able to test requests against z
 stack_id = 11
 ```
 
-Then link it to the grafana client. Default stack id is `11` and token is `ThisIsMySecretToken`. Those values configured in `auth-signer` by default, so if you need to change it, follow instructions in [auth signer readme](/devenv/docker/blocks/auth/signer/README.md)
+Then link it to the grafana client. Default stack id is `11` and token is `ThisIsMySecretToken`. Those values configured in `auth-signer` by default, so if you need to change it, follow instructions in [auth signer readme](https://github.com/grafana/grafana-enterprise/blob/main/src/devenv/blocks/auth/signer/README.md)
 
 ```yaml
   grafana-client:
