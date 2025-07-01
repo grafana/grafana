@@ -56,11 +56,14 @@ export const StateTimelineTooltip2 = ({
       nextStateTs = xField.values[nextStateIdx!];
     }
 
-    const stateTs = xField.values[dataIdx!];
+    let stateTs = xField.values[dataIdx!];
+    stateTs = typeof stateTs === 'number' ? stateTs : new Date(stateTs).valueOf();
+
     let duration: string;
 
     if (nextStateTs) {
-      duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+      nextStateTs = typeof nextStateTs === 'number' ? nextStateTs : new Date(nextStateTs).valueOf();
+      duration = fmtDuration(nextStateTs - stateTs);
       endTime = nextStateTs;
     } else {
       const to = timeRange.to.valueOf();
