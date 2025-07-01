@@ -7,6 +7,7 @@ import {
   DataFrame,
   EventBusSrv,
   ExploreLogsPanelState,
+  LogLevel,
   LogsMetaItem,
   LogsSortOrder,
   SplitOpen,
@@ -32,6 +33,7 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
   logOptionsStorageKey?: string;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   range: TimeRange;
+  filterLevels?: LogLevel[];
 
   /** Props added for Table **/
   visualisationType: LogsVisualisationType;
@@ -45,7 +47,14 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
 
 export type LogRowsComponentProps = Omit<
   ControlledLogRowsProps,
-  'app' | 'dedupStrategy' | 'showLabels' | 'showTime' | 'logsSortOrder' | 'prettifyLogMessage' | 'wrapLogMessage'
+  | 'app'
+  | 'dedupStrategy'
+  | 'filterLevels'
+  | 'showLabels'
+  | 'showTime'
+  | 'logsSortOrder'
+  | 'prettifyLogMessage'
+  | 'wrapLogMessage'
 >;
 
 export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLogRowsProps>(
@@ -53,6 +62,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
     {
       deduplicatedRows,
       dedupStrategy,
+      filterLevels,
       hasUnescapedContent,
       showLabels,
       showTime,
@@ -72,6 +82,7 @@ export const ControlledLogRows = forwardRef<HTMLDivElement | null, ControlledLog
         displayedFields={[]}
         dedupStrategy={dedupStrategy}
         enableLogDetails={false}
+        filterLevels={filterLevels}
         fontSize="default"
         hasUnescapedContent={hasUnescapedContent}
         logOptionsStorageKey={logOptionsStorageKey}
