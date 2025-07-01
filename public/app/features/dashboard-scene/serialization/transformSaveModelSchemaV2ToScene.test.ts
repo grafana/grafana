@@ -804,16 +804,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         useValueAsTime: true,
         step: '1m',
       });
-
-      // // Verify the original legacyOptions object is also preserved
-      //  TODO: This assertion does not make sense!?
-      // expect(annotationLayer.state.query.legacyOptions).toMatchObject({
-      //   expr: 'rate(http_requests_total[5m])',
-      //   queryType: 'range',
-      //   legendFormat: '{{method}} {{endpoint}}',
-      //   useValueAsTime: true,
-      //   step: '1m',
-      // });
     });
   });
 });

@@ -1,6 +1,5 @@
 import { uniqueId } from 'lodash';
 
-import { AnnotationQuery } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,

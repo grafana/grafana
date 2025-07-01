@@ -549,7 +549,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     });
   });
 
-  it.skip('should test annotation with legacyOptions field', () => {
+  it('should test annotation with legacyOptions field', () => {
     // Create a scene with an annotation layer that has options
     const annotationWithOptions = new DashboardAnnotationsDataLayer({
       key: 'layerWithLegacyOptions',
@@ -561,18 +561,10 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         name: 'annotation-with-options',
         enable: true,
         iconColor: 'red',
-        legacyOptions: {
-          expr: 'rate(http_requests_total[5m])',
-          queryType: 'range',
-          legendFormat: '{{method}} {{endpoint}}',
-          useValueAsTime: true,
-        },
-        // Some other properties that aren't in the annotation spec
-        // and should be moved to options
-
-        // TODO: in what scenario that would be even possible?! DOESN'T make sense
-        customProp1: 'value1',
-        customProp2: 'value2',
+        expr: 'rate(http_requests_total[5m])',
+        queryType: 'range',
+        legendFormat: '{{method}} {{endpoint}}',
+        useValueAsTime: true,
       },
       name: 'layerWithOptions',
       isEnabled: true,
@@ -598,8 +590,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       queryType: 'range',
       legendFormat: '{{method}} {{endpoint}}',
       useValueAsTime: true,
-      customProp1: 'value1',
-      customProp2: 'value2',
     });
 
     // Ensure these properties are not at the root level
@@ -607,8 +597,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result).not.toHaveProperty('annotations[0].spec.queryType');
     expect(result).not.toHaveProperty('annotations[0].spec.legendFormat');
     expect(result).not.toHaveProperty('annotations[0].spec.useValueAsTime');
-    expect(result).not.toHaveProperty('annotations[0].spec.customProp1');
-    expect(result).not.toHaveProperty('annotations[0].spec.customProp2');
   });
 });
 

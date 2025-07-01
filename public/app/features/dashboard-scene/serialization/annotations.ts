@@ -100,18 +100,12 @@ export function transformV2ToV1AnnotationQuery(annotation: AnnotationQueryKind):
     annoQuerySpec.filter = annotation.spec.filter;
   }
 
-  //   THIS DOES NOT MAKE SENSE< AnnotationQuery would never have this property
   // some annotations will contain in the legacyOptions properties that need to be
-  // added to the root level annotation spec
+  // added to the root level AnnotationQuery
   if (annotationQuery.legacyOptions) {
     annoQuerySpec = {
       ...annoQuerySpec,
       ...annotationQuery.legacyOptions,
-
-      //   THIS DOES NOT MAKE SENSE< AnnotationQuery would never have this property
-      //   legacyOptions: {
-      //     ...annotationQuery.legacyOptions,
-      //   },
     };
   }
 

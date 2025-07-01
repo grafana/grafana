@@ -445,103 +445,16 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
 
     const annotationQuery = layer.state.query;
 
-    // const result: AnnotationQueryKind = {
-    //   kind: 'AnnotationQuery',
-    //   spec: {
-    //     builtIn: Boolean(annotationQuery.builtIn),
-    //     name: annotationQuery.name,
-    //     enable: Boolean(layer.state.isEnabled),
-    //     hide: Boolean(layer.state.isHidden),
-    //     iconColor: annotationQuery.iconColor,
-    //     query: {
-    //       kind: 'DataQuery',
-    //       version: defaultDataQueryKind().version,
-    //       group: layerDs.type!, // Annotation layer has a datasource type provided in runtime.
-    //       spec: {},
-    //     },
-    //   },
-    // };
-
-    // if (datasource) {
-    //   result.spec.query!.datasource = {
-    //     name: datasource.uid,
-    //   };
-    // }
-
-    // Transform v1 dashboard (using target) to v2 structure
-    // adds extra condition to prioritize query over target
-    // if query is defined, use it
-    // if (annotationQuery.target && !annotationQuery.query) {
-    //   // Handle built-in annotations
-    //   if (annotationQuery.builtIn) {
-    //     result.spec.query = {
-    //       kind: 'DataQuery',
-    //       version: defaultDataQueryKind().version,
-    //       group: 'grafana', // built-in annotations are always of type grafana
-    //       spec: {
-    //         ...annotationQuery.target,
-    //       },
-    //     };
-    //   } else {
-    //     result.spec.query = {
-    //       kind: 'DataQuery',
-    //       version: defaultDataQueryKind().version,
-    //       group: datasource?.type!,
-    //       spec: {
-    //         ...layer.state.query.target,
-    //       },
-    //     };
-
-    //     if (annotationQuery.datasource?.uid) {
-    //       result.spec.query.datasource = {
-    //         name: annotationQuery.datasource?.uid,
-    //       };
-    //     }
-    //   }
-    // }
-    // For annotations without query.query defined (e.g., grafana annotations without tags)
-    // else if (layer.state.query.query?.kind) {
-    //   result.spec.query = {
-    //     kind: 'DataQuery',
-    //     version: defaultDataQueryKind().version,
-    //     group: layer.state.query.query.group || getAnnotationQueryKind(layer.state.query),
-    //     datasource: layer.state.query.query.datasource,
-    //     spec: {
-    //       ...layer.state.query.query.spec,
-    //     },
-    //   };
-    // }
-    // Collect datasource-specific properties not in standard annotation spec
-    // let otherProps = omit(
-    //   layer.state.query,
-    //   'type',
-    //   'target',
-    //   'builtIn',
-    //   'name',
-    //   'datasource',
-    //   'iconColor',
-    //   'enable',
-    //   'hide',
-    //   'filter',
-    //   'query'
-    // );
-
-    // Store extra properties in the legacyOptions field instead of directly in the spec
-    // if (Object.keys(otherProps).length > 0) {
-    //   // // Extract options property and get the rest of the properties
-    //   const { legacyOptions, ...restProps } = otherProps;
-    //   if (legacyOptions) {
-    //     // Merge options with the rest of the properties
-    //     result.spec.legacyOptions = { ...legacyOptions, ...restProps };
-    //   }
-    //   result.spec.query!.spec = {
-    //     ...otherProps,
-    //   };
-    // }
-
     // If filter is an empty array, don't save it
     if (annotationQuery.filter?.ids?.length) {
       result.spec.filter = annotationQuery.filter;
+    }
+
+    // Finally, if the datasource references mapping did not containt data source ref,
+    // this means that the original model that was fetched did not contain it. In such scenario we don't want to save
+    // the explicit data source reference, so lets remove it from the save model.
+    if (!datasource) {
+      delete result.spec.query.datasource;
     }
 
     annotations.push(result);
