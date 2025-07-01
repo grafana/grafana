@@ -17,7 +17,7 @@ type GrafanaServiceOpts struct {
 
 func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOpts) (*dagger.Service, error) {
 	container := d.Container().From("alpine:3").
-		WithExec([]string{"apk", "add", "--no-cache", "bash", "tar", "netcat-openbsd"}).
+		WithExec([]string{"apk", "add", "--no-cache", "bash", "tar", "netcat-openbsd", "util-linux"}).
 		WithMountedFile("/src/grafana.tar.gz", opts.GrafanaTarGz).
 		WithExec([]string{"mkdir", "-p", "/src/grafana"}).
 		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
@@ -25,9 +25,10 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithDirectory("/src/grafana/e2e/test-plugins", opts.HostSrc.Directory("./e2e/test-plugins")).
 		WithDirectory("/src/grafana/scripts", opts.HostSrc.Directory("./scripts")).
 		WithWorkdir("/src/grafana").
-		WithEnvVariable("GF_APP_MODE", "development").
+		// Only set config variables here that are specific to the dagger/GHA runner.
+		// Prefer to configure scripts/grafana-server/custom.ini instead so they're also used
+		// when running locally.
 		WithEnvVariable("GF_SERVER_HTTP_PORT", fmt.Sprint(grafanaPort)).
-		WithEnvVariable("GF_SERVER_ROUTER_LOGGING", "1").
 		WithExposedPort(grafanaPort)
 
 	var licenseArg string
@@ -45,7 +46,7 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		}
 	}
 
-	svc := container.AsService(dagger.ContainerAsServiceOpts{Args: []string{"bash", "-x", "scripts/grafana-server/start-server", licenseArg}})
+	svc := container.AsService(dagger.ContainerAsServiceOpts{Args: []string{"bash", "scripts/grafana-server/start-server", licenseArg}})
 
 	return svc, nil
 }
