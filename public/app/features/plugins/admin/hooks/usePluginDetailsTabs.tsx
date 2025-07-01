@@ -74,7 +74,7 @@ export const usePluginDetailsTabs = (
       });
     }
 
-    if (isPublished && isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel) {
+    if (isPublished && isNarrowScreen) {
       navModelChildren.push({
         text: PluginTabLabels.PLUGINDETAILS,
         id: PluginTabIds.PLUGINDETAILS,
