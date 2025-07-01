@@ -9,7 +9,7 @@ import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
-import { DashboardEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/DashboardEditFormSharedFields';
+import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
@@ -145,7 +145,8 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
             </Alert>
           )}
 
-          <Field noMargin
+          <Field
+            noMargin
             label={t('browse-dashboards.new-provisioned-folder-form.label-folder-name', 'Folder name')}
             invalid={!!formState.errors.title}
             error={formState.errors.title?.message}
@@ -163,7 +164,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
             />
           </Field>
 
-          <DashboardEditFormSharedFields
+          <ResourceEditFormSharedFields
             resourceType="folder"
             isNew={false}
             workflow={workflow}

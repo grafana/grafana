@@ -17,7 +17,7 @@ interface DashboardEditFormSharedFieldsProps {
   hidePath?: boolean;
 }
 
-export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
+export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
   ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType, hidePath = false }) => {
     const {
       control,
