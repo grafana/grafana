@@ -75,7 +75,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
         isOpen={logLineOpen}
         onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
       >
-        {log.raw}
+        <div className={styles.logLineWrapper}>{log.raw}</div>
       </ControlledCollapse>
       {fieldsWithLinks.length > 0 && (
         <ControlledCollapse
@@ -133,5 +133,9 @@ function groupOptionName(group: string) {
 const getStyles = (theme: GrafanaTheme2) => ({
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
+  }),
+  logLineWrapper: css({
+    maxHeight: '50vh',
+    overflow: 'auto',
   }),
 });
