@@ -229,6 +229,10 @@ interface ProxyOptions {
  * Returns a proxy that logs any attempted mutation to the original object.
  *
  * @param obj The object to observe
+ * @param options The options for the proxy
+ * @param options.log The logger to use
+ * @param options.source The source of the mutation
+ * @param options.pluginId The id of the plugin that is mutating the object
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
 export function getMutationObserverProxy<T extends object>(obj: T, options?: ProxyOptions): T {
@@ -296,6 +300,16 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
   });
 }
 
+/**
+ * Returns a proxy that logs any attempted mutation to the original object.
+ *
+ * @param value The object to observe
+ * @param options The options for the proxy
+ * @param options.log The logger to use
+ * @param options.source The source of the mutation
+ * @param options.pluginId The id of the plugin that is mutating the object
+ * @returns A new proxy object that logs any attempted mutation to the original object
+ */
 export function writableProxy<T>(value: T, options?: ProxyOptions): T {
   // Primitive types are read-only by default
   if (!value || typeof value !== 'object') {
