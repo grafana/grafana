@@ -1,7 +1,9 @@
+import { diffLines } from 'diff';
 import { createContext, useContext, useCallback, ReactNode } from 'react';
 
 import { useLLMStream } from 'app/features/dashboard/components/GenAI/hooks';
 import { Message, Role, DEFAULT_LLM_MODEL, sanitizeReply } from 'app/features/dashboard/components/GenAI/utils';
+import { getDiffText, Diff } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DashboardChangeInfo } from '../../saving/shared';
 
@@ -21,8 +23,8 @@ interface AIContextValue {
   getBranchMessages: (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo) => Message[];
   
   // Utility functions
-  summarizeDiffs: (diffs: Record<string, any[]>) => string;
-  getChangeDetails: (changeInfo?: DashboardChangeInfo) => { changeDetails: string; diffSummary: string };
+  summarizeDiffs: (diffs: Record<string, Diff[]>) => string;
+  getChangeDetails: (changeInfo?: DashboardChangeInfo) => { changeDetails: string; diffSummary: string; jsonDiff: string };
 }
 
 const AIContext = createContext<AIContextValue | null>(null);
@@ -35,7 +37,7 @@ interface AIContextProviderProps {
 
 export function AIContextProvider({ children, setValue, setAiLoading }: AIContextProviderProps) {
   // Helper to summarize diffs for LLM prompt
-  const summarizeDiffs = useCallback((diffs: Record<string, any[]>): string => {
+  const summarizeDiffs = useCallback((diffs: Record<string, Diff[]>): string => {
     if (!diffs) {
       return '';
     }
@@ -47,17 +49,9 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
           lines.push('...and more');
           break;
         }
-        const opText = diff.op === 'add' ? 'added' : diff.op === 'remove' ? 'removed' : 'changed';
-        const path = diff.path.join('.');
-        let desc = '';
-        if (diff.op === 'replace') {
-          desc = `from "${String(diff.originalValue)}" to "${String(diff.value)}"`;
-        } else if (diff.op === 'add') {
-          desc = `set to "${String(diff.value)}"`;
-        } else if (diff.op === 'remove') {
-          desc = `was "${String(diff.originalValue)}"`;
-        }
-        lines.push(`- ${section}: ${opText} ${path}${desc ? ' ' + desc : ''}`);
+        // Use getDiffText for better formatting
+        const diffText = getDiffText(diff, true);
+        lines.push(`- ${section}: ${diffText}`);
         count++;
       }
       if (count >= 5) {
@@ -66,6 +60,25 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
     }
     return lines.length > 0 ? lines.join('\n') : '';
   }, []);
+
+  // Helper to generate a unified JSON diff string
+  function getUnifiedJsonDiffString(oldValue: any, newValue: any): string {
+    const oldJson = JSON.stringify(oldValue ?? {}, null, 2);
+    const newJson = JSON.stringify(newValue ?? {}, null, 2);
+    const diff = diffLines(oldJson, newJson);
+
+    return diff
+      .map(part => {
+        if (part.added) {
+          return part.value.split('\n').map(line => line && `+${line}`).join('\n');
+        }
+        if (part.removed) {
+          return part.value.split('\n').map(line => line && `-${line}`).join('\n');
+        }
+        return part.value;
+      })
+      .join('\n');
+  }
 
   // LLM stream hooks for each field
   const titleLLMStream = useLLMStream({
@@ -122,6 +135,7 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
   const getChangeDetails = (changeInfo?: DashboardChangeInfo) => {
     let changeDetails = '';
     let diffSummary = '';
+    let jsonDiff = '';
     
     if (changeInfo) {
       const changes = [];
@@ -161,15 +175,19 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
           changeDetails += `\n\nExample changes:\n${diffSummary}`;
         }
       }
+
+      // Add full JSON diff
+      if (changeInfo.initialSaveModel && changeInfo.changedSaveModel) {
+        jsonDiff = getUnifiedJsonDiffString(changeInfo.initialSaveModel, changeInfo.changedSaveModel);
+      }
     }
     
-    return { changeDetails, diffSummary };
+    return { changeDetails, diffSummary, jsonDiff };
   };
 
   // Message generation functions
   const getTitleMessages = (dashboardContext: any, changeInfo?: DashboardChangeInfo): Message[] => {
-    const { changeDetails } = getChangeDetails(changeInfo);
-    
+    const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
         role: Role.system,
@@ -190,6 +208,7 @@ Examples:
 
 Do not include the word "dashboard" in the title.
 Do not include quotes in your response.
+The response should contain ONLY the proposed title, no other text.
 `
       },
       {
@@ -198,19 +217,23 @@ Do not include quotes in your response.
 Current title: "${dashboardContext.title}"
 Tags: ${dashboardContext.tags.join(', ') || 'None'}
 ${dashboardContext.isNew ? 'This is a new dashboard that will contain monitoring visualizations.' : 'This is an existing dashboard being updated.'}
-These are the changes being made to the dashboard: ${changeDetails}`
+These are the changes being made to the dashboard: ${changeDetails}
+
+Here is the JSON diff of the changes:
+${'```'}
+${jsonDiff}
+${'```'}
+`
+
       }
     ];
-
     console.log('AI Title Generation - Context:', { dashboardContext, changeInfo });
     console.log('AI Title Generation - Messages:', messages);
-
     return messages;
   };
 
   const getDescriptionMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
-    const { changeDetails } = getChangeDetails(changeInfo);
-    
+    const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
         role: Role.system,
@@ -219,7 +242,9 @@ Your goal is to write a descriptive and informative dashboard description.
 The description should explain the purpose of the dashboard, what it monitors, and what insights it provides.
 It should be between 100-300 characters and be helpful for users to understand the dashboard's value.
 Do not include quotes in your response.
-Focus on the business value and monitoring capabilities.`
+Focus on the business value and monitoring capabilities.
+The response should contain ONLY the proposed description, no other text.
+`
       },
       {
         role: Role.user,
@@ -228,19 +253,22 @@ Tags: ${dashboardContext.tags.join(', ') || 'None'}
 ${dashboardContext.isNew ? 
   'This dashboard will provide comprehensive monitoring and analytics for system performance and health.' : 
   'This dashboard provides monitoring and analytics capabilities and is being updated.'}
-These are the changes being made to the dashboard: ${changeDetails}`
+These are the changes being made to the dashboard: ${changeDetails}
+
+Here is the JSON diff of the changes:
+${'```'}
+${jsonDiff}
+${'```'}
+`
       }
     ];
-
     console.log('AI Description Generation - Context:', { dashboardContext, currentTitle, changeInfo });
     console.log('AI Description Generation - Messages:', messages);
-
     return messages;
   };
 
   const getCommentMessages = (dashboardContext: any, currentTitle: string, currentDescription: string, changeInfo?: DashboardChangeInfo): Message[] => {
-    const { changeDetails } = getChangeDetails(changeInfo);
-    
+    const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
         role: Role.system,
@@ -254,17 +282,24 @@ It should not be longer than 100 words and explain what this change accomplishes
 
 Focus on the specific changes made rather than generic descriptions.
 
-Do not include quotes in your response.`
+Do not include quotes in your response.
+The response should contain ONLY the proposed comment, no other text.
+`
       },
       {
         role: Role.user,
         content: `Create a Git commit message for ${dashboardContext.isNew ? 'adding a new' : 'updating an existing'} dashboard with:
 
 ${dashboardContext.isNew ? 'This is a new dashboard being added to the repository.' : 'This is an update to an existing dashboard.'}
-These are the changes being made to the dashboard: ${changeDetails}`
+These are the changes being made to the dashboard: ${changeDetails}
+
+Here is the JSON diff of the changes:
+${'```'}
+${jsonDiff}
+${'```'}
+`
       }
     ];
-
     // Log the context and messages being sent to LLM
     console.log('AI Comment Generation - Context:', {
       dashboardContext,
@@ -283,14 +318,12 @@ These are the changes being made to the dashboard: ${changeDetails}`
       changeDetails,
     });
     console.log('AI Comment Generation - Messages:', messages);
-
     return messages;
   };
 
   const getPathMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
     const currentYear = new Date().getFullYear();
-    const { changeDetails } = getChangeDetails(changeInfo);
-    
+    const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
         role: Role.system,
@@ -300,26 +333,32 @@ The path should be organized, follow naming conventions, and include appropriate
 For dashboards, use .json extension. Use lowercase with hyphens for separation.
 Consider organizing by year, category, or purpose.
 The path should be between 20-80 characters.
-Do not include quotes in your response.`
+Do not include quotes in your response.
+Do not use the word "dashboard" in the path or the file name.
+The response should contain ONLY the proposed path, no other text.
+`
       },
       {
         role: Role.user,
         content: `Create a file path for a dashboard titled: "${currentTitle}" 
 Current year: ${currentYear}
 This should be a well-organized path within a Git repository.
-These are the changes being made to the dashboard: ${changeDetails}`
+These are the changes being made to the dashboard: ${changeDetails}
+
+Here is the JSON diff of the changes:
+${'```'}
+${jsonDiff}
+${'```'}
+`
       }
     ];
-
     console.log('AI Path Generation - Context:', { dashboardContext, currentTitle, currentYear, changeInfo });
     console.log('AI Path Generation - Messages:', messages);
-
     return messages;
   };
 
   const getBranchMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
-    const { changeDetails } = getChangeDetails(changeInfo);
-    
+    const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
         role: Role.system,
@@ -342,18 +381,24 @@ Examples:
 - If the changes are to update the dashboard refresh interval to "10 seconds" for a dashboard titled "API Performance", the branch name should look like this (example): update/api-performance-dashboard-refresh-interval
 - If the changes are to update the dashboard folder location for a dashboard titled "API Performance", the branch name should look like this (example): update/api-performance-dashboard-folder-location
 
-Do not include quotes in your response.`
+Do not include quotes in your response.
+The response should contain ONLY the proposed branch name, no other text.
+`
       },
       {
         role: Role.user,
         content: `Create a Git branch name for ${dashboardContext.isNew ? 'adding' : 'updating'} a dashboard titled: "${currentTitle}"
-These are the changes being made to the dashboard: ${changeDetails}`
+These are the changes being made to the dashboard: ${changeDetails}
+
+Here is the JSON diff of the changes:
+${'```'}
+${jsonDiff}
+${'```'}
+`
       }
     ];
-
     console.log('AI Branch Generation - Context:', { dashboardContext, currentTitle, changeInfo });
     console.log('AI Branch Generation - Messages:', messages);
-
     return messages;
   };
 
