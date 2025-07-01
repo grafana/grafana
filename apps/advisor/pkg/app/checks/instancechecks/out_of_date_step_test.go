@@ -17,17 +17,17 @@ func TestParseVersionInfo(t *testing.T) {
 		logger := &logging.NoOpLogger{}
 		step := &outOfDateVersionStep{}
 
-		current := semver.MustParse("10.4.17")
+		current := *semver.MustParse("10.4.17")
 
-		releases := []*semver.Version{
-			semver.MustParse("9.5.3"),
-			semver.MustParse("10.4.16"),
-			semver.MustParse("10.4.17+security-01"),
-			semver.MustParse("10.4.19+security-01"),
-			semver.MustParse("11.5.6"),
-			semver.MustParse("11.6.6"),
-			semver.MustParse("12.0.0"),
-			semver.MustParse("12.0.1"),
+		releases := []semver.Version{
+			*semver.MustParse("9.5.3"),
+			*semver.MustParse("10.4.16"),
+			*semver.MustParse("10.4.17+security-01"),
+			*semver.MustParse("10.4.19+security-01"),
+			*semver.MustParse("11.5.6"),
+			*semver.MustParse("11.6.6"),
+			*semver.MustParse("12.0.0"),
+			*semver.MustParse("12.0.1"),
 		}
 
 		versionInfo := step.parseVersionInfo(current, releases, logger)

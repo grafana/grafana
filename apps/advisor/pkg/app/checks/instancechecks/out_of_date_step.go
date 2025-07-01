@@ -2,14 +2,16 @@ package instancechecks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/PuerkitoBio/goquery"
 	"github.com/google/go-github/v70/github"
 	"github.com/grafana/grafana-app-sdk/logging"
 
@@ -22,6 +24,11 @@ var _ checks.Step = &outOfDateVersionStep{}
 const (
 	outOfDateVersion = "out_of_date_version"
 )
+
+type releaseDetails struct {
+	releaseDate  time.Time
+	releaseNotes string
+}
 
 type versionInfo struct {
 	latestSecurityPatch semver.Version
@@ -76,17 +83,17 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 
 	releases, err := s.fetchVersionsFromGitHub(ctx, currentVersion)
 	if err != nil {
-		var err2 error
-		releases, err2 = s.fetchVersionsFromWebsite(ctx)
-		if err2 != nil {
-			log.Error("Unable to fetch the Grafana versions", "github_error", err, "website_error", err2)
+		var gerr error
+		releases, gerr = s.fetchVersionsFromGrafanaAPI(ctx, currentVersion)
+		if gerr != nil {
+			log.Error("Unable to fetch the Grafana versions", "github_error", err, "website_error", gerr)
 			return nil, nil
 		}
 
-		log.Warn("Unable to fetch the Grafana versions from GitHub, falling back to website", "error", err)
+		log.Warn("Unable to fetch the Grafana versions from GitHub, falling back to Grafana website", "error", err)
 	}
 
-	versionInfo := s.parseVersionInfo(currentVersion, releases, log)
+	versionInfo := s.parseVersionInfo(*currentVersion, slices.Collect(maps.Keys(releases)), log)
 
 	reportFailures := make([]advisor.CheckReportFailure, 0)
 	uniqueReportedVersions := make(map[string]struct{})
@@ -96,12 +103,14 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 		versionString := latestVersionForMajor.String()
 
 		if _, ok := uniqueReportedVersions[versionString]; !ok {
+			releaseDate := releases[latestVersionForMajor].releaseDate
+
 			reportFailures = append(
 				reportFailures,
 				checks.NewCheckReportFailure(
 					advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current major is still supported
 					s.ID(),
-					fmt.Sprintf("There's a new major version available: %s", versionString),
+					fmt.Sprintf("There's a new major version %s released on %s", versionString, releaseDate.Format(time.DateOnly)),
 					outOfDateVersion,
 					[]advisor.CheckErrorLink{
 						{
@@ -121,12 +130,14 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 		versionString := versionInfo.latestMinor.String()
 
 		if _, ok := uniqueReportedVersions[versionString]; !ok {
+			releaseDate := releases[versionInfo.latestMinor].releaseDate
+
 			reportFailures = append(
 				reportFailures,
 				checks.NewCheckReportFailure(
 					advisor.CheckReportFailureSeverityHigh, // change this depending on whether the current minor is still supported
 					s.ID(),
-					fmt.Sprintf("There's a new minor version available: %s", versionString),
+					fmt.Sprintf("There's a new minor version %s released on %s", versionString, releaseDate.Format(time.DateOnly)),
 					outOfDateVersion,
 					[]advisor.CheckErrorLink{
 						{
@@ -146,12 +157,14 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 		versionString := versionInfo.latestPatch.String()
 
 		if _, ok := uniqueReportedVersions[versionString]; !ok {
+			releaseDate := releases[versionInfo.latestPatch].releaseDate
+
 			reportFailures = append(
 				reportFailures,
 				checks.NewCheckReportFailure(
 					advisor.CheckReportFailureSeverityHigh,
 					s.ID(),
-					fmt.Sprintf("New patch version available: %s", versionString),
+					fmt.Sprintf("New patch version %s released on %s", versionString, releaseDate.Format(time.DateOnly)),
 					outOfDateVersion,
 					[]advisor.CheckErrorLink{
 						{
@@ -171,12 +184,14 @@ func (s *outOfDateVersionStep) Run(ctx context.Context, log logging.Logger, _ *a
 		versionString := versionInfo.latestSecurityPatch.String()
 
 		if _, ok := uniqueReportedVersions[versionString]; !ok {
+			releaseDate := releases[versionInfo.latestSecurityPatch].releaseDate
+
 			reportFailures = append(
 				reportFailures,
 				checks.NewCheckReportFailure(
 					advisor.CheckReportFailureSeverityHigh,
 					s.ID(),
-					fmt.Sprintf("New security patch available: %s", versionString),
+					fmt.Sprintf("New security patch %s released on %s", versionString, releaseDate.Format(time.DateOnly)),
 					outOfDateVersion,
 					[]advisor.CheckErrorLink{
 						{
@@ -221,11 +236,11 @@ func parseSecurityRelease(metadata string) (int, error) {
 	return releaseNumber, nil
 }
 
-func (s *outOfDateVersionStep) parseVersionInfo(currentVersion *semver.Version, releases []*semver.Version, log logging.Logger) *versionInfo {
+func (s *outOfDateVersionStep) parseVersionInfo(currentVersion semver.Version, releases []semver.Version, log logging.Logger) *versionInfo {
 	info := &versionInfo{
-		latestSecurityPatch: *currentVersion,
-		latestPatch:         *currentVersion,
-		latestMinor:         *currentVersion,
+		latestSecurityPatch: currentVersion,
+		latestPatch:         currentVersion,
+		latestMinor:         currentVersion,
 		latestMajorVersions: make(map[uint64]semver.Version),
 	}
 
@@ -245,34 +260,34 @@ func (s *outOfDateVersionStep) parseVersionInfo(currentVersion *semver.Version, 
 			}
 
 			if upstreamSecurityRelease > currentSecurityRelease {
-				info.latestSecurityPatch = *release
+				info.latestSecurityPatch = release
 			}
 		}
 
 		// Find the latest patch version.
 		if release.Major() == info.latestPatch.Major() && release.Minor() == info.latestPatch.Minor() && release.Patch() > info.latestPatch.Patch() {
-			info.latestPatch = *release
+			info.latestPatch = release
 		}
 
 		// Find the latest minor version.
 		if release.Major() == info.latestMinor.Major() {
 			if release.Minor() > info.latestMinor.Minor() {
-				info.latestMinor = *release
+				info.latestMinor = release
 			} else if release.Minor() == info.latestMinor.Minor() && release.Patch() > info.latestMinor.Patch() {
-				info.latestMinor = *release
+				info.latestMinor = release
 			}
 		}
 
 		// Find the latest version for each major version that's newer than current.
 		if release.Major() > currentVersion.Major() {
 			if existing, exists := info.latestMajorVersions[release.Major()]; !exists {
-				info.latestMajorVersions[release.Major()] = *release
+				info.latestMajorVersions[release.Major()] = release
 			} else {
 				// Update if this release is newer than the existing one for this major
 				if release.Minor() > existing.Minor() {
-					info.latestMajorVersions[release.Major()] = *release
+					info.latestMajorVersions[release.Major()] = release
 				} else if release.Minor() == existing.Minor() && release.Patch() > existing.Patch() {
-					info.latestMajorVersions[release.Major()] = *release
+					info.latestMajorVersions[release.Major()] = release
 				}
 			}
 		}
@@ -297,8 +312,9 @@ func (s *outOfDateVersionStep) parseVersionInfo(currentVersion *semver.Version, 
 	return info
 }
 
-func (s *outOfDateVersionStep) fetchVersionsFromGitHub(ctx context.Context, currentVersion *semver.Version) ([]*semver.Version, error) {
-	releases := make([]*semver.Version, 0)
+func (s *outOfDateVersionStep) fetchVersionsFromGitHub(ctx context.Context, currentVersion *semver.Version) (map[semver.Version]*releaseDetails, error) {
+	releases := make(map[semver.Version]*releaseDetails, 0)
+
 	for page := 1; ; page++ {
 		ghReleases, _, err := s.ghClient.ListReleases(ctx, "grafana", "grafana", &github.ListOptions{
 			Page:    page,
@@ -332,15 +348,33 @@ func (s *outOfDateVersionStep) fetchVersionsFromGitHub(ctx context.Context, curr
 				continue
 			}
 
-			releases = append(releases, releaseVersion)
+			releases[*releaseVersion] = &releaseDetails{
+				releaseDate:  release.GetPublishedAt().Time.UTC(),
+				releaseNotes: release.GetHTMLURL(),
+			}
 		}
 	}
 
 	return releases, nil
 }
 
-func (s *outOfDateVersionStep) fetchVersionsFromWebsite(ctx context.Context) ([]*semver.Version, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://grafana.com/grafana/download", nil)
+func (s *outOfDateVersionStep) fetchVersionsFromGrafanaAPI(ctx context.Context, currentVersion *semver.Version) (map[semver.Version]*releaseDetails, error) {
+	type grafanaAPIResponse struct {
+		Versions []struct {
+			Channels struct {
+				Stable bool `json:"stable"`
+			} `json:"channels"`
+
+			Product     string `json:"product"`
+			ReleaseDate string `json:"releaseDate"`
+			Version     string `json:"version"`
+			WhatsNewURL string `json:"whatsNewUrl"`
+		} `json:"items"`
+	}
+
+	const product = "grafana"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://grafana.com/api/"+product+"/versions", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -356,28 +390,38 @@ func (s *outOfDateVersionStep) fetchVersionsFromWebsite(ctx context.Context) ([]
 		return nil, fmt.Errorf("failed to fetch versions: %s", res.Status)
 	}
 
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse HTML: %w", err)
+	var apiResponse grafanaAPIResponse
+	if err := json.NewDecoder(res.Body).Decode(&apiResponse); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	// very fragile, but doesn't seem to have changed in a while
-	sel := doc.Find("div.download-info-table > div > div:nth-child(1) > div.download-info-table__row_value > div > select > option")
+	releases := make(map[semver.Version]*releaseDetails, 0)
 
-	versions := make([]*semver.Version, 0)
-	for _, selection := range sel.EachIter() {
-		versionText := selection.Text()
-		if versionText == "" {
+	for _, releaseVersion := range apiResponse.Versions {
+		if !releaseVersion.Channels.Stable || releaseVersion.Product != product {
 			continue
 		}
 
-		version, err := semver.NewVersion(versionText)
+		version, err := semver.NewVersion(releaseVersion.Version)
 		if err != nil {
-			return nil, fmt.Errorf("invalid version format: %s, error: %w", versionText, err)
+			return nil, fmt.Errorf("invalid version format: %s, error: %w", releaseVersion.Version, err)
 		}
 
-		versions = append(versions, version)
+		// If we find a single version that's older than the current version, we can stop here because the API is sorted by version in descending order.
+		if version.LessThan(currentVersion) {
+			break
+		}
+
+		releaseDate, err := time.Parse(time.RFC3339, releaseVersion.ReleaseDate)
+		if err != nil {
+			return nil, fmt.Errorf("invalid release date format: %s, error: %w", releaseVersion.ReleaseDate, err)
+		}
+
+		releases[*version] = &releaseDetails{
+			releaseDate:  releaseDate,
+			releaseNotes: releaseVersion.WhatsNewURL,
+		}
 	}
 
-	return versions, nil
+	return releases, nil
 }
