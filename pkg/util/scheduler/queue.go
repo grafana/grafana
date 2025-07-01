@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -82,6 +84,8 @@ func NewNoopQueue() *NoopQueue {
 type Queue struct {
 	services.Service
 
+	logger log.Logger
+
 	enqueueChan           chan enqueueRequest
 	dequeueChan           chan dequeueRequest
 	lenChan               chan lenRequest
@@ -108,6 +112,7 @@ type Queue struct {
 type QueueOptions struct {
 	MaxSizePerTenant int
 	Registerer       prometheus.Registerer
+	Logger           log.Logger
 }
 
 // NewQueue creates a new Queue and starts its dispatcher goroutine.
@@ -116,7 +121,13 @@ func NewQueue(opts *QueueOptions) *Queue {
 		opts.MaxSizePerTenant = DefaultMaxSizePerTenant
 	}
 
+	if opts.Logger == nil {
+		opts.Logger = log.NewNopLogger()
+	}
+
 	q := &Queue{
+		logger: opts.Logger,
+
 		enqueueChan:           make(chan enqueueRequest),
 		dequeueChan:           make(chan dequeueRequest),
 		lenChan:               make(chan lenRequest),
@@ -226,6 +237,8 @@ func (q *Queue) handleLenRequest(req lenRequest) {
 func (q *Queue) dispatcherLoop(ctx context.Context) error {
 	defer close(q.dispatcherStoppedChan)
 
+	q.logger.Info("queue running", "maxSizePerTenant", q.maxSizePerTenant)
+
 	for {
 		q.scheduleRoundRobin()
 
@@ -275,7 +288,6 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 	select {
 	case q.enqueueChan <- req:
 		err = <-respChan
-		q.enqueueDuration.Observe(time.Since(start).Seconds())
 	case <-q.dispatcherStoppedChan:
 		q.discardedRequests.WithLabelValues(tenantID, "dispatcher_stopped").Inc()
 		err = ErrQueueClosed
@@ -283,6 +295,7 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 		q.discardedRequests.WithLabelValues(tenantID, "context_canceled").Inc()
 		err = ctx.Err()
 	}
+	q.enqueueDuration.Observe(time.Since(start).Seconds())
 
 	return err
 }
@@ -352,6 +365,8 @@ func (q *Queue) ActiveTenantsLen() int {
 }
 
 func (q *Queue) stopping(_ error) error {
+	q.logger.Info("queue stopping")
+
 	q.queueLength.Reset()
 	q.discardedRequests.Reset()
 	for _, tq := range q.tenantQueues {
@@ -359,5 +374,7 @@ func (q *Queue) stopping(_ error) error {
 	}
 	q.activeTenants.Init()
 	q.pendingDequeueRequests.Init()
+
+	q.logger.Info("queue stopped")
 	return nil
 }

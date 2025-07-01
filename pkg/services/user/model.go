@@ -15,6 +15,7 @@ func (f *HelpFlags1) AddFlag(flag HelpFlags1)     { *f |= flag }
 const (
 	HelpFlagGettingStartedPanelDismissed HelpFlags1 = 1 << iota
 	HelpFlagDashboardHelp1
+	HelpFlagEnterpriseAuth1
 )
 
 type UpdateEmailActionType string

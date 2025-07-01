@@ -34,7 +34,7 @@
       "metadata": {
         "name": "alertEnrichment",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-06-06T12:16:07Z"
       },
       "spec": {
         "description": "Enable configuration of alert enrichments in Grafana Cloud.",
@@ -62,7 +62,7 @@
       "metadata": {
         "name": "alertRuleUseFiredAtForStartsAt",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-04-22T11:16:38Z"
       },
       "spec": {
         "description": "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
@@ -87,7 +87,7 @@
       "metadata": {
         "name": "alertingBulkActionsInUI",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-04-24T14:49:59Z"
       },
       "spec": {
         "description": "Enables the alerting bulk actions in the UI",
@@ -143,7 +143,7 @@
       "metadata": {
         "name": "alertingImportAlertmanagerAPI",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-06-10T08:32:50Z"
       },
       "spec": {
         "description": "Enables the API to import Alertmanager configuration",
@@ -158,7 +158,7 @@
       "metadata": {
         "name": "alertingImportYAMLUI",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-05-21T15:59:41Z"
       },
       "spec": {
         "description": "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
@@ -199,7 +199,7 @@
       "metadata": {
         "name": "alertingListViewV2PreviewToggle",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-04-22T08:50:34Z"
       },
       "spec": {
         "description": "Enables the alerting list view v2 preview toggle",
@@ -392,7 +392,7 @@
         "name": "angularDeprecationUI",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-08-29T14:05:47Z",
-        "deletionTimestamp": "2025-06-27T09:59:58Z"
+        "deletionTimestamp": "2025-06-27T11:02:00Z"
       },
       "spec": {
         "description": "Display Angular warnings in dashboards and panels",
@@ -945,6 +945,22 @@
     },
     {
       "metadata": {
+        "name": "enableAppChromeExtensions",
+        "resourceVersion": "1750235111726",
+        "creationTimestamp": "2025-06-18T08:25:11Z"
+      },
+      "spec": {
+        "description": "Set this to true to enable all app chrome extensions registered by plugins.",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableDatagridEditing",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-04-24T14:46:31Z"
@@ -1094,7 +1110,8 @@
       "metadata": {
         "name": "extensionsReadOnlyProxy",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-05-06T04:55:23Z",
+        "deletionTimestamp": "2025-06-30T08:24:11Z"
       },
       "spec": {
         "description": "Use proxy-based read-only objects for plugin extensions instead of deep cloning",
@@ -1135,7 +1152,8 @@
       "metadata": {
         "name": "extraThemes",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-05-10T13:37:04Z"
+        "creationTimestamp": "2023-05-10T13:37:04Z",
+        "deletionTimestamp": "2025-05-20T08:18:08Z"
       },
       "spec": {
         "description": "Enables extra themes",
@@ -1162,7 +1180,7 @@
         "name": "failWrongDSUID",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-06-20T10:56:39Z",
-        "deletionTimestamp": "2025-06-27T12:51:00Z"
+        "deletionTimestamp": "2025-06-27T13:43:58Z"
       },
       "spec": {
         "description": "Throws an error if a data source has an invalid UIDs",
@@ -1297,7 +1315,8 @@
       "metadata": {
         "name": "grafanaManagedRecordingRules",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2024-04-22T17:53:16Z"
+        "creationTimestamp": "2024-04-22T17:53:16Z",
+        "deletionTimestamp": "2025-05-19T10:15:49Z"
       },
       "spec": {
         "description": "Enables Grafana-managed recording rules.",
@@ -1380,27 +1399,35 @@
     {
       "metadata": {
         "name": "improvedExternalSessionHandling",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2024-09-17T10:54:39Z"
+        "resourceVersion": "1751355094344",
+        "creationTimestamp": "2024-09-17T10:54:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-01 07:31:34.344238 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "improvedExternalSessionHandlingSAML",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-01-09T17:02:49Z"
+        "resourceVersion": "1751355094344",
+        "creationTimestamp": "2025-01-09T17:02:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-01 07:31:34.344238 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "allowSelfServe": true
+        "allowSelfServe": true,
+        "expression": "true"
       }
     },
     {
@@ -1563,7 +1590,7 @@
       "metadata": {
         "name": "kubernetesAggregatorCapTokenAuth",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-05-15T18:14:23Z"
       },
       "spec": {
         "description": "Enable CAP token based authentication in grafana's embedded kube-aggregator",
@@ -1576,7 +1603,7 @@
       "metadata": {
         "name": "kubernetesAuthzApis",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-06-18T07:43:01Z"
       },
       "spec": {
         "description": "Registers AuthZ /apis endpoint",
@@ -1630,7 +1657,7 @@
       "metadata": {
         "name": "kubernetesLibraryPanels",
         "resourceVersion": "1750714411267",
-        "creationTimestamp": "2025-06-23T21:33:31Z"
+        "creationTimestamp": "2025-06-25T22:21:56Z"
       },
       "spec": {
         "description": "Routes library panel requests from /api to the /apis endpoint",
@@ -1828,7 +1855,8 @@
       "metadata": {
         "name": "lokiPredefinedOperations",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-06-02T10:52:36Z"
+        "creationTimestamp": "2023-06-02T10:52:36Z",
+        "deletionTimestamp": "2025-06-27T08:08:44Z"
       },
       "spec": {
         "description": "Adds predefined query operations to Loki query editor",
@@ -1870,7 +1898,8 @@
       "metadata": {
         "name": "lokiQuerySplittingConfig",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-03-20T15:51:36Z"
+        "creationTimestamp": "2023-03-20T15:51:36Z",
+        "deletionTimestamp": "2025-06-27T09:32:43Z"
       },
       "spec": {
         "description": "Give users the option to configure split durations for Loki queries",
@@ -1908,7 +1937,8 @@
       "metadata": {
         "name": "lokiStructuredMetadata",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-11-16T16:06:14Z"
+        "creationTimestamp": "2023-11-16T16:06:14Z",
+        "deletionTimestamp": "2025-06-27T09:00:53Z"
       },
       "spec": {
         "description": "Enables the loki data source to request structured metadata from the Loki server",
@@ -1960,7 +1990,7 @@
       "metadata": {
         "name": "multiTenantFrontend",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-04-25T09:24:25Z"
       },
       "spec": {
         "description": "Register MT frontend",
@@ -1997,7 +2027,7 @@
       "metadata": {
         "name": "nanoGit",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-06-17T17:07:30Z"
       },
       "spec": {
         "description": "Use experimental git library for provisioning",
@@ -2064,7 +2094,7 @@
       "metadata": {
         "name": "newInfluxDSConfigPageDesign",
         "resourceVersion": "1750787021637",
-        "creationTimestamp": "2025-06-20T15:44:57Z",
+        "creationTimestamp": "2025-06-25T16:39:54Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-06-24 17:43:41.637607 +0000 UTC"
         }
@@ -2274,7 +2304,7 @@
       "metadata": {
         "name": "pluginsAutoUpdate",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-04-16T11:44:39Z"
       },
       "spec": {
         "description": "Enables auto-updating of users installed plugins",
@@ -2349,7 +2379,7 @@
       "metadata": {
         "name": "preferLibraryPanelTitle",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-06-17T11:21:21Z"
       },
       "spec": {
         "description": "Prefer library panel title over viz panel title.",
@@ -2662,7 +2692,7 @@
       "metadata": {
         "name": "restoreDashboards",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-05-23T14:35:54Z"
       },
       "spec": {
         "description": "Enables restore deleted dashboards feature",
@@ -2754,7 +2784,7 @@
       "metadata": {
         "name": "skipTokenRotationIfRecent",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-06-03T06:59:40Z"
       },
       "spec": {
         "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
@@ -2888,7 +2918,7 @@
       "metadata": {
         "name": "tabularNumbers",
         "resourceVersion": "1750754828442",
-        "creationTimestamp": "2025-06-20T12:08:40Z",
+        "creationTimestamp": "2025-06-24T11:52:03Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-06-24 08:47:08.442537461 +0000 UTC"
         }
@@ -2918,7 +2948,7 @@
       "metadata": {
         "name": "teamHttpHeadersTempo",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-20T15:44:57Z"
+        "creationTimestamp": "2025-05-22T19:13:31Z"
       },
       "spec": {
         "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
