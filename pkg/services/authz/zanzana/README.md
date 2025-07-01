@@ -31,6 +31,8 @@ cd devenv
 docker compose up -d
 ```
 
+or simply `make devenv sources=postgres` from repo root.
+
 Now you can run grafana (from source root directory):
 
 ```sh
