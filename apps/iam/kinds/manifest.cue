@@ -14,7 +14,5 @@ manifest: {
 		team,
 		teambinding,
 		serviceaccount,
-		// serviceaccounttoken, // TODO: this is a subresource, how to define it in CUE?
-		// userteam, // TODO: this is a subresource, how to define it in CUE?
 	]
 }
