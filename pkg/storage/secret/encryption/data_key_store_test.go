@@ -79,24 +79,6 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	require.Len(t, allKeys, 1)
 	require.Equal(t, dataKey.UID, allKeys[0].UID)
 
-	// TODO: Unskip when re-encryption is fully working
-	// Initialize some test providers
-	// providers := map[encryption.ProviderID]encryption.Provider{
-	// 	base64Provider:      &Base64EncryptionProvider{},
-	// 	passThroughProvider: &PassThroughEncryptionProvider{},
-	// }
-
-	// // Test ReEncryptDataKeys
-	// err = store.ReEncryptDataKeys(ctx, "test-namespace", providers, base64Provider)
-	// require.NoError(t, err)
-	// // Then check that the value is what we expect it to be
-	// currentKey, err = store.GetCurrentDataKey(ctx, "test-namespace", "test-label")
-	// require.NoError(t, err)
-	// dest := make([]byte, 0)
-	// _, err = base64.RawStdEncoding.Decode(dest, currentKey.EncryptedData)
-	// require.NoError(t, err)
-	// require.Equal(t, dataKey.EncryptedData, dest)
-
 	// Test DisableDataKeys
 	err = store.DisableDataKeys(ctx, "test-namespace")
 	require.NoError(t, err)

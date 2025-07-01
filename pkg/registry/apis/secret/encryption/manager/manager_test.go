@@ -242,33 +242,6 @@ func (p *fakeProvider) Decrypt(_ context.Context, _ []byte) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func TestEncryptionService_ReEncryptDataKeys(t *testing.T) {
-	t.Skip() // TODO: skipped since reencrypt is not fully working, unskip when fixed
-
-	svc := setupTestService(t)
-	ctx := context.Background()
-	namespace := "test-namespace"
-
-	// Encrypt to generate data encryption key
-	_, err := svc.Encrypt(ctx, namespace, []byte("grafana"))
-	require.NoError(t, err)
-
-	t.Run("existing key should be re-encrypted", func(t *testing.T) {
-		prevDataKeys, err := svc.store.GetAllDataKeys(ctx, namespace)
-		require.NoError(t, err)
-		require.Len(t, prevDataKeys, 1)
-
-		err = svc.ReEncryptDataKeys(ctx, namespace)
-		require.NoError(t, err)
-
-		reEncryptedDataKeys, err := svc.store.GetAllDataKeys(ctx, namespace)
-		require.NoError(t, err)
-		require.Len(t, reEncryptedDataKeys, 1)
-
-		assert.NotEqual(t, prevDataKeys[0].EncryptedData, reEncryptedDataKeys[0].EncryptedData)
-	})
-}
-
 func TestEncryptionService_Decrypt(t *testing.T) {
 	ctx := context.Background()
 	namespace := "test-namespace"

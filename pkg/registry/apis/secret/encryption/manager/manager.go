@@ -401,34 +401,3 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 func (s *EncryptionManager) GetProviders() encryption.ProviderMap {
 	return s.providers
 }
-
-func (s *EncryptionManager) RotateDataKeys(ctx context.Context, namespace string) error {
-	s.log.Info("Data keys rotation triggered, acquiring lock...")
-
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-
-	s.log.Info("Data keys rotation started")
-	err := s.store.DisableDataKeys(ctx, namespace)
-	if err != nil {
-		s.log.Error("Data keys rotation failed", "error", err)
-		return err
-	}
-
-	s.log.Info("Data keys rotation finished successfully")
-
-	return nil
-}
-
-func (s *EncryptionManager) ReEncryptDataKeys(ctx context.Context, namespace string) error {
-	s.log.Info("Data keys re-encryption triggered")
-
-	if err := s.store.ReEncryptDataKeys(ctx, namespace, s.providers, s.currentProviderID); err != nil {
-		s.log.Error("Data keys re-encryption failed", "error", err)
-		return err
-	}
-
-	s.log.Info("Data keys re-encryption finished successfully")
-
-	return nil
-}

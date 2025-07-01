@@ -32,6 +32,4 @@ type DataKeyStorage interface {
 	GetAllDataKeys(ctx context.Context, namespace string) ([]*SecretDataKey, error)
 	DisableDataKeys(ctx context.Context, namespace string) error
 	DeleteDataKey(ctx context.Context, namespace, uid string) error
-
-	ReEncryptDataKeys(ctx context.Context, namespace string, providers encryption.ProviderMap, currProvider encryption.ProviderID) error
 }
