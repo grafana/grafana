@@ -65,9 +65,9 @@ func TestUnifiedStorageClient(t *testing.T) {
 
 			client, err := newClient(
 				options.StorageOptions{
-					StorageType:        options.StorageTypeUnifiedGrpc,
-					Address:            resourceServerAddress,
-					IndexServerAddress: indexServerAddress,
+					StorageType:         options.StorageTypeUnifiedGrpc,
+					Address:             resourceServerAddress,
+					SearchServerAddress: indexServerAddress,
 				},
 				&setting.Cfg{},
 				featuremgmt.WithFeatures(),
