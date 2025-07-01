@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
@@ -36,6 +37,7 @@ var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo utils.ResourceInfo
+	dashboardService       dashboards.DashboardService
 
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same pluginid!
@@ -55,6 +57,7 @@ func RegisterAPIService(
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
+	dashboardService dashboards.DashboardService,
 ) (*DataSourceAPIBuilder, error) {
 	// We want to expose just a limited set of plugins
 	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
@@ -88,6 +91,7 @@ func RegisterAPIService(
 			contextProvider,
 			accessControl,
 			features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes),
+			dashboardService,
 		)
 		if err != nil {
 			return nil, err
@@ -113,6 +117,7 @@ func NewDataSourceAPIBuilder(
 	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl,
 	loadQueryTypes bool,
+	dashboardService dashboards.DashboardService,
 ) (*DataSourceAPIBuilder, error) {
 	ri, err := resourceFromPluginID(plugin.ID)
 	if err != nil {
@@ -126,6 +131,7 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
+		dashboardService:       dashboardService,
 		log:                    log.New("grafana-apiserver.datasource"),
 	}
 	if loadQueryTypes {
@@ -165,6 +171,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&datasource.DataSourceConnection{},
 		&datasource.DataSourceConnectionList{},
 		&datasource.HealthCheckResult{},
+		&datasource.DashboardPanelResult{},
+		&datasource.DashboardPanelResultList{},
 		&unstructured.Unstructured{},
 		// Query handler
 		&query.QueryDataRequest{},
@@ -218,6 +226,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
+	storage[conn.StoragePath("panels")] = &subDashboardPanelsREST{builder: b, dashSvc: b.dashboardService}
 
 	// TODO! only setup this endpoint if it is implemented
 	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}

@@ -42,3 +42,20 @@ type HealthCheckResult struct {
 	// Spec depends on the plugin
 	Details *common.Unstructured `json:"details,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardPanelResult struct {
+	metav1.TypeMeta `json:",inline"`
+
+	DashboardUID string `json:"dashboardUID"`
+	PanelID      int    `json:"panelID"`
+	PanelJSON    string `json:"panelJSON"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DashboardPanelResultList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []DashboardPanelResult `json:"items"`
+}
