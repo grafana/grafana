@@ -379,10 +379,6 @@ const (
 	// Enables shared crosshair in table panel
 	FlagTableSharedCrosshair = "tableSharedCrosshair"
 
-	// FlagRegressionTransformation
-	// Enables regression analysis transformation
-	FlagRegressionTransformation = "regressionTransformation"
-
 	// FlagLokiQueryHints
 	// Enables query hints for Loki
 	FlagLokiQueryHints = "lokiQueryHints"
