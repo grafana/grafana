@@ -420,7 +420,6 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
       continue;
     }
 
-    // TODO: in what scenario would we need this?
     const datasource = getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping);
 
     let layerDs = layer.state.query.datasource;
