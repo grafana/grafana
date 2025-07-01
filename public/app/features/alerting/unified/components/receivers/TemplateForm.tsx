@@ -43,7 +43,7 @@ import {
   useValidateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
 
-import { GenAITemplateButton } from './GenAITemplateButton';
+import { GenAITemplateButton } from './AIGen/templates/GenAITemplateButton';
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
 import { GlobalTemplateDataExamples } from './TemplateDataExamples';
