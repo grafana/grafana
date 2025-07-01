@@ -21,7 +21,7 @@ jobs:
     name: Verify Storybook (Playwright)
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.53.0-noble
+      image: mcr.microsoft.com/playwright:v1.52.0-noble
     permissions:
       contents: read
 
