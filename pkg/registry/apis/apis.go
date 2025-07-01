@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 )
 
@@ -28,6 +29,7 @@ func ProvideRegistryServiceSink(
 	_ *userstorage.UserStorageAPIBuilder,
 	_ *provisioning.APIBuilder,
 	_ *ofrep.APIBuilder,
+	_ *secret.DBMigratorRunner,
 ) *Service {
 	return &Service{}
 }
