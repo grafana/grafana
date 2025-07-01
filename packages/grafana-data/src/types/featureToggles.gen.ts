@@ -1021,4 +1021,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
+  /**
+  * Enables use of app platform API for folders
+  * @default false
+  */
+  foldersAppPlatformAPI?: boolean;
 }

@@ -1752,6 +1752,16 @@ var (
 			FrontendOnly:      true,
 			Expression:        "false", // extensions will be disabled by default
 		},
+		{
+			Name:              "foldersAppPlatformAPI",
+			Description:       "Enables use of app platform API for folders",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendSearchNavOrganise,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false",
+		},
 	}
 )
 

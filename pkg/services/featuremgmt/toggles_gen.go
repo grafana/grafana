@@ -922,4 +922,8 @@ const (
 	// FlagEnableAppChromeExtensions
 	// Set this to true to enable all app chrome extensions registered by plugins.
 	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
+
+	// FlagFoldersAppPlatformAPI
+	// Enables use of app platform API for folders
+	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
 )

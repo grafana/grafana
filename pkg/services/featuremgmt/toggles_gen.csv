@@ -228,3 +228,4 @@ preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,fal
 tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
 newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
+foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,false,false,true
