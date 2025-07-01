@@ -59,29 +59,30 @@ export function sanitize(unsanitizedString: string): string {
     let cfg: DOMPurify.Config = {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
+      ADD_ATTR: ['target'],
     };
 
-    // hook to handle anchor elements with target="_blank"
-    DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-      if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
-        const currentRel = node.getAttribute('rel') || '';
-        const relValues = new Set(currentRel.split(/\s+/g).filter(Boolean));
+    const sanitized = DOMPurify.sanitize(unsanitizedString, cfg);
 
-        relValues.add('noopener');
-        relValues.add('noreferrer');
+    // add security attributes to target="_blank" links
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = sanitized;
 
-        node.setAttribute('rel', Array.from(relValues).join(' '));
-      }
+    const blankTargetLinks = tempDiv.querySelectorAll('a[target="_blank"]');
+    blankTargetLinks.forEach((link) => {
+      const currentRel = link.getAttribute('rel') || '';
+      const relValues = new Set(currentRel.split(/\s+/g).filter(Boolean));
+
+      relValues.add('noopener');
+      relValues.add('noreferrer');
+
+      link.setAttribute('rel', Array.from(relValues).join(' '));
     });
 
-    cfg.ADD_ATTR = ['target'];
-
-    return DOMPurify.sanitize(unsanitizedString, cfg);
+    return tempDiv.innerHTML;
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return escapeHtml(unsanitizedString);
-  } finally {
-    DOMPurify.removeHook('afterSanitizeAttributes');
   }
 }
 
