@@ -178,14 +178,27 @@ Your goal is to write a concise, descriptive dashboard title.
 The title should be clear, professional, and indicate what the dashboard monitors or displays.
 It should be between 15-60 characters and capture the essence of the dashboard's purpose.
 Do not include quotes in your response.
-Focus on the main purpose or system being monitored.`
+Focus on the main purpose or system being monitored.
+Look at the changes being made to the dashboard and use the changes to create a descriptive title.
+Fropm the changes, try to indentify the services being monitored via the panel titles, descriptions and queries.
+
+Examples:
+- If the new dashboard contains panels for monitoring the RED metrics of a service called "api", the title may look like this: "API RED Metrics"
+- If the dashboard contains panels for monitoring the CPU and Memory usage of a service called "api", the title may look like this: "API CPU and Memory Usage"
+- If the dashboard contains penels for displaying the sales of a team, the title may look like this: "Team Sales"
+- If the dashboard contains panels for monitoring the temperature of a domotic home, the title may look like this: "Home Temperature"
+
+Do not include the word "dashboard" in the title.
+Do not include quotes in your response.
+`
       },
       {
         role: Role.user,
         content: `Create a title for a dashboard with:
 Current title: "${dashboardContext.title}"
 Tags: ${dashboardContext.tags.join(', ') || 'None'}
-${dashboardContext.isNew ? 'This is a new dashboard that will contain monitoring visualizations.' : 'This is an existing dashboard being updated.'}${changeDetails}`
+${dashboardContext.isNew ? 'This is a new dashboard that will contain monitoring visualizations.' : 'This is an existing dashboard being updated.'}
+These are the changes being made to the dashboard: ${changeDetails}`
       }
     ];
 
@@ -214,7 +227,8 @@ Focus on the business value and monitoring capabilities.`
 Tags: ${dashboardContext.tags.join(', ') || 'None'}
 ${dashboardContext.isNew ? 
   'This dashboard will provide comprehensive monitoring and analytics for system performance and health.' : 
-  'This dashboard provides monitoring and analytics capabilities and is being updated.'}${changeDetails}`
+  'This dashboard provides monitoring and analytics capabilities and is being updated.'}
+These are the changes being made to the dashboard: ${changeDetails}`
       }
     ];
 
@@ -246,7 +260,8 @@ Do not include quotes in your response.`
         role: Role.user,
         content: `Create a Git commit message for ${dashboardContext.isNew ? 'adding a new' : 'updating an existing'} dashboard with:
 
-${dashboardContext.isNew ? 'This is a new dashboard being added to the repository.' : 'This is an update to an existing dashboard.'}${changeDetails}`
+${dashboardContext.isNew ? 'This is a new dashboard being added to the repository.' : 'This is an update to an existing dashboard.'}
+These are the changes being made to the dashboard: ${changeDetails}`
       }
     ];
 
@@ -291,7 +306,8 @@ Do not include quotes in your response.`
         role: Role.user,
         content: `Create a file path for a dashboard titled: "${currentTitle}" 
 Current year: ${currentYear}
-This should be a well-organized path within a Git repository.${changeDetails}`
+This should be a well-organized path within a Git repository.
+These are the changes being made to the dashboard: ${changeDetails}`
       }
     ];
 
@@ -310,13 +326,28 @@ This should be a well-organized path within a Git repository.${changeDetails}`
         content: `You are an expert in Git branch naming conventions.
 Your goal is to create a descriptive branch name that follows Git best practices.
 The branch name should be lowercase, use hyphens to separate words, and be concise but descriptive.
-Common prefixes are: feature/, bugfix/, hotfix/, chore/, update/
-The branch name should be between 15-50 characters.
+
+- Use this prefix if the dashboard is updated: update/
+- Use this prefix if the dashboard is added: feature/
+
+Besides the prefixes, the branch name should be between 15-50 characters.
+Look at the changes being made to the dashboard and use the changes to create a descriptive branch name.
+
+Examples:
+- If the changes are to add a new panel named "CPU Usage" to a dashboard titled "API Performance", the branch name should look like this (example): feature/add-new-panel-cpu-usage-to-api-performance
+- If the changes are to update the dashboard title to "API Performance", the branch name should look like this (example): update/update-dashboard-title-to-api-performance
+- If the changes are to update the dashboard description for a dashboard titled "API Performance", the branch name should look like this (example): update/api-performance-dashboard-description
+- If the changes are to update the dashboard tags to "monitoring, analytics" for a dashboard titled "API Performance", the branch name should look like this (example): update/api-performance-dashboard-tags
+- If the changes are to update the dashboard time range to "Last 30 days" for a dashboard titled "API Performance", the branch name should look like this (example): update/api-performance-dashboard-time-range
+- If the changes are to update the dashboard refresh interval to "10 seconds" for a dashboard titled "API Performance", the branch name should look like this (example): update/api-performance-dashboard-refresh-interval
+- If the changes are to update the dashboard folder location for a dashboard titled "API Performance", the branch name should look like this (example): update/api-performance-dashboard-folder-location
+
 Do not include quotes in your response.`
       },
       {
         role: Role.user,
-        content: `Create a Git branch name for ${dashboardContext.isNew ? 'adding' : 'updating'} a dashboard titled: "${currentTitle}"${changeDetails}`
+        content: `Create a Git branch name for ${dashboardContext.isNew ? 'adding' : 'updating'} a dashboard titled: "${currentTitle}"
+These are the changes being made to the dashboard: ${changeDetails}`
       }
     ];
 
