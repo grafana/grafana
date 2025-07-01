@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -29,7 +28,6 @@ var (
 	sqlDataKeyList        = mustTemplate("data_key_list.sql")
 	sqlDataKeyDisable     = mustTemplate("data_key_disable.sql")
 	sqlDataKeyDelete      = mustTemplate("data_key_delete.sql")
-	sqlDataKeysReEncrypt  = mustTemplate("data_keys_re_encrypt.sql")
 )
 
 // TODO: Move this to a common place so that all stores can use
@@ -139,12 +137,3 @@ type deleteDataKey struct {
 }
 
 func (r deleteDataKey) Validate() error { return nil }
-
-type reEncryptDataKeys struct {
-	sqltemplate.SQLTemplate
-	SelectStatements []string
-	Provider         encryption.ProviderID
-	Updated          time.Time
-}
-
-func (r reEncryptDataKeys) Validate() error { return nil }

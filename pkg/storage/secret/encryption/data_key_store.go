@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/prometheus/client_golang/prometheus"
@@ -332,97 +331,4 @@ func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid
 	}
 
 	return nil
-}
-
-// TODO this doesn't past tests yet, do not use
-// TODO: migrate to sql template
-func (ss *encryptionStoreImpl) ReEncryptDataKeys(
-	ctx context.Context,
-	namespace string,
-	providers encryption.ProviderMap,
-	currProvider encryption.ProviderID,
-) error {
-	panic("ReEncryptDataKeys: not implemented")
-
-	// selectStatements := make([]string, len(keys))
-
-	// for i, k := range keys {
-	// 	provider, ok := providers[k.Provider]
-	// 	if !ok {
-	// 		ss.log.Warn(
-	// 			"Could not find provider to re-encrypt data encryption key",
-	// 			"id", k.UID,
-	// 			"label", k.Label,
-	// 			"provider", k.Provider,
-	// 		)
-	// 		return nil
-	// 	}
-
-	// 	decrypted, err := provider.Decrypt(ctx, k.EncryptedData)
-	// 	if err != nil {
-	// 		ss.log.Warn(
-	// 			"Error while decrypting data encryption key to re-encrypt it",
-	// 			"id", k.UID,
-	// 			"label", k.Label,
-	// 			"provider", k.Provider,
-	// 			"err", err,
-	// 		)
-	// 		return nil
-	// 	}
-
-	// 	// Updating current data key by re-encrypting it with current provider.
-	// 	// Accessing the current provider within providers map should be safe.
-	// 	encryptedData, err := providers[currProvider].Encrypt(ctx, decrypted)
-	// 	if err != nil {
-	// 		ss.log.Warn(
-	// 			"Error while re-encrypting data encryption key",
-	// 			"id", k.UID,
-	// 			"label", k.Label,
-	// 			"provider", k.Provider,
-	// 			"err", err,
-	// 		)
-	// 		return nil
-	// 	}
-
-	// 	var statement string
-	// 	// Only need to name the columns once, omit them after that for efficiency's sake
-	// 	if i == 0 {
-	// 		statement = fmt.Sprintf("SELECT '%s' AS %s, '%s' AS %s, '%s' AS %s",
-	// 			k.UID, "uid",
-	// 			encryption.KeyLabel(currProvider), "label",
-	// 			encryptedData, "encrypted_data",
-	// 		)
-	// 	} else {
-	// 		statement = fmt.Sprintf("SELECT '%s', '%s', x'%s'",
-	// 			k.UID,
-	// 			encryption.KeyLabel(currProvider),
-	// 			encryptedData,
-	// 		)
-	// 	}
-
-	// 	selectStatements[i] = statement
-	// }
-
-	// // TODO this looks different depending on which database is being used, need to handle all cases
-	// rawSql := fmt.Sprintf(`
-	// 	WITH updates AS (
-	// 		%s
-	// 	)
-	// 	UPDATE %s
-	// 	JOIN updates ON %s.uid = updates.uid
-	// 	SET %s.label = updates.label,
-	// 		%s.encrypted_data = updates.encrypted_data,
-	// 		%s.provider = '%s',
-	// 		%s.updated = '%s'
-	// `, strings.Join(selectStatements, " UNION ALL "), migrator.TableNameDataKey, migrator.TableNameDataKey, migrator.TableNameDataKey, migrator.TableNameDataKey, migrator.TableNameDataKey, currProvider, migrator.TableNameDataKey, time.Now().UTC().Format("2006-01-02 15:04:05"))
-
-	// fmt.Println(rawSql)
-	// if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-	// 	_, err := sess.Exec(rawSql)
-	// 	return err
-	// }); err != nil {
-	// 	return err
-	// }
-
-	// return nil
 }
