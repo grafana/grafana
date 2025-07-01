@@ -531,6 +531,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	features := featuremgmt.WithFeatures()
 	tracer := tracing.InitializeTracerForTest()
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	t.Cleanup(db.CleanupTestDB)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)

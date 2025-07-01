@@ -3209,6 +3209,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "已啟用",
       "text-badge-not-enabled": "未啟用"
     },
@@ -3241,6 +3243,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "管理您的驗證設定並設定單一登入。請在我們的<2>文件</2>中閱讀更多資訊。"
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3462,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。"
+    "text-this-repository-is-read-only": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3876,7 @@
   "close-button": {
     "tooltip": "關閉"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "載入選項時發生錯誤。"
@@ -9465,6 +9480,15 @@
       "view": "檢視"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "開啟可視化建議",
       "switch-to-table": "切換到表格"
     },
@@ -11557,6 +11581,12 @@
     "zone": {
       "select-aria-label": "時區選擇器",
       "select-search-input": "輸入以搜尋（國家、城市、縮寫）"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
