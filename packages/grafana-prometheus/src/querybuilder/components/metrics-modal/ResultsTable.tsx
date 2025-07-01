@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { docsTip } from '../../../configuration/ConfigEditor';
+import { docsTip } from '../../../configuration/shared/utils';
 import { PromVisualQuery } from '../../types';
 
 import { tracking } from './state/helpers';
@@ -70,7 +70,7 @@ export function ResultsTable(props: ResultsTableProps) {
           <Tooltip
             content={
               <>
-                <Trans i18nKey="querybuilder.results-table.content-descriptive-type">
+                <Trans i18nKey="grafana-prometheus.querybuilder.results-table.content-descriptive-type">
                   When creating a {{ descriptiveType }}, Prometheus exposes multiple series with the type counter.{' '}
                 </Trans>
                 {docsTip(link)}
@@ -144,15 +144,15 @@ export function ResultsTable(props: ResultsTableProps) {
       <thead className={styles.stickyHeader}>
         <tr>
           <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>
-            <Trans i18nKey="querybuilder.results-table.name">Name</Trans>
+            <Trans i18nKey="grafana-prometheus.querybuilder.results-table.name">Name</Trans>
           </th>
           {state.hasMetadata && (
             <>
               <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>
-                <Trans i18nKey="querybuilder.results-table.type">Type</Trans>
+                <Trans i18nKey="grafana-prometheus.querybuilder.results-table.type">Type</Trans>
               </th>
               <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>
-                <Trans i18nKey="querybuilder.results-table.description">Description</Trans>
+                <Trans i18nKey="grafana-prometheus.querybuilder.results-table.description">Description</Trans>
               </th>
             </>
           )}
@@ -181,7 +181,7 @@ export function ResultsTable(props: ResultsTableProps) {
                       onClick={() => selectMetric(metric)}
                       className={styles.centerButton}
                     >
-                      <Trans i18nKey="querybuilder.results-table.select">Select</Trans>
+                      <Trans i18nKey="grafana-prometheus.querybuilder.results-table.select">Select</Trans>
                     </Button>
                   </td>
                 </tr>

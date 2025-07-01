@@ -28,10 +28,10 @@ export function Preview({ rawSql, datasourceType }: PreviewProps) {
   const labelElement = (
     <div className={styles.labelWrapper}>
       <span className={styles.label}>
-        <Trans i18nKey="components.preview.label-element.preview">Preview</Trans>
+        <Trans i18nKey="grafana-sql.components.preview.label-element.preview">Preview</Trans>
       </span>
       <IconButton
-        tooltip={t('components.preview.label-element.tooltip-copy-to-clipboard', 'Copy to clipboard')}
+        tooltip={t('grafana-sql.components.preview.label-element.tooltip-copy-to-clipboard', 'Copy to clipboard')}
         onClick={() => copyPreview(rawSql)}
         name="copy"
       />

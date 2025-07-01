@@ -4,7 +4,7 @@
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
