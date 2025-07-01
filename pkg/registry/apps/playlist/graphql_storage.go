@@ -6,11 +6,13 @@ import (
 
 	graphqlsubgraph "github.com/grafana/grafana-app-sdk/graphql/subgraph"
 	"github.com/grafana/grafana-app-sdk/resource"
+	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -23,6 +25,22 @@ type playlistStorageAdapter struct {
 
 // Ensure playlistStorageAdapter implements graphqlsubgraph.Storage
 var _ graphqlsubgraph.Storage = (*playlistStorageAdapter)(nil)
+
+// ensureTypeMetaSet ensures that the TypeMeta is properly set on a resource object
+// This is critical for GraphQL resource handlers to be called during conversion
+func (a *playlistStorageAdapter) ensureTypeMetaSet(obj resource.Object) {
+	// Check if TypeMeta is already set
+	gvk := obj.GroupVersionKind()
+	if gvk.Kind == "" || gvk.Version == "" {
+		// Set proper TypeMeta for playlist resources
+		kind := playlistv0alpha1.PlaylistKind()
+		obj.SetGroupVersionKind(schema.GroupVersionKind{
+			Group:   kind.Group(),
+			Version: kind.Version(),
+			Kind:    kind.Kind(),
+		})
+	}
+}
 
 // Get retrieves a single resource by namespace and name
 func (a *playlistStorageAdapter) Get(ctx context.Context, namespace, name string) (resource.Object, error) {
@@ -43,6 +61,9 @@ func (a *playlistStorageAdapter) Get(ctx context.Context, namespace, name string
 	if !ok {
 		return nil, fmt.Errorf("storage returned object that is not a resource.Object: %T", obj)
 	}
+
+	// CRITICAL: Ensure TypeMeta is set for GraphQL resource handlers to work
+	a.ensureTypeMetaSet(resourceObj)
 
 	return resourceObj, nil
 }
@@ -82,6 +103,12 @@ func (a *playlistStorageAdapter) List(ctx context.Context, namespace string, opt
 	listObj, ok := obj.(resource.ListObject)
 	if !ok {
 		return nil, fmt.Errorf("storage returned object that is not a resource.ListObject: %T", obj)
+	}
+
+	// CRITICAL: Ensure TypeMeta is set on all items for GraphQL resource handlers to work
+	items := listObj.GetItems()
+	for _, item := range items {
+		a.ensureTypeMetaSet(item)
 	}
 
 	return listObj, nil
