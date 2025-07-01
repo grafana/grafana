@@ -3222,6 +3222,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Engedélyezve",
       "text-badge-not-enabled": "Nem engedélyezett"
     },
@@ -3254,6 +3256,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Saját hitelesítési beállítások kezelése és az egyszeri bejelentkezés konfigurálása. További információkat a <2>dokumentációnkban</2> talál."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Ha közvetlen hozzáférése van a célhoz, másolja ki a JSON-kódot, és illessze be oda."
+    "text-this-repository-is-read-only": "Ha közvetlen hozzáférése van a célhoz, másolja ki a JSON-kódot, és illessze be oda.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Bezárás"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Hiba történt az opciók betöltése során."
@@ -9494,6 +9509,15 @@
       "view": "Nézet"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Vizualizációs javaslatok megnyitása",
       "switch-to-table": "Váltás táblázatra"
     },
@@ -11592,6 +11616,12 @@
     "zone": {
       "select-aria-label": "Időzóna-választó",
       "select-search-input": "Írja be a keresendő szöveget (ország, város, rövidítés)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {

@@ -82,7 +82,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
     },
   };
 
-  const hideValue = field.config.custom?.cellOptions?.hideValue;
+  const hideValue = cellOptions.hideValue;
   let valueWidth = 0;
   let valueElement: React.ReactNode = null;
   if (!hideValue) {

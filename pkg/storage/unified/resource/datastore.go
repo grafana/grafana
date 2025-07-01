@@ -49,6 +49,10 @@ func (k DataKey) String() string {
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s", k.Namespace, k.Group, k.Resource, k.Name, k.ResourceVersion, k.Action)
 }
 
+func (k DataKey) Equals(other DataKey) bool {
+	return k.Namespace == other.Namespace && k.Group == other.Group && k.Resource == other.Resource && k.Name == other.Name && k.ResourceVersion == other.ResourceVersion && k.Action == other.Action
+}
+
 func (k DataKey) Validate() error {
 	if k.Namespace == "" {
 		if k.Group != "" || k.Resource != "" || k.Name != "" {
@@ -77,16 +81,16 @@ func (k DataKey) Validate() error {
 
 	// Validate each field against the naming rules
 	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
 	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+		return fmt.Errorf("group '%s' is invalid", k.Group)
 	}
 	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
 	if !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
 
 	switch k.Action {
@@ -118,7 +122,7 @@ func (k ListRequestKey) Validate() error {
 		}
 		// Only validate namespace if it's provided
 		if !validNameRegex.MatchString(k.Namespace) {
-			return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+			return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 		}
 		return nil
 	}
@@ -128,26 +132,26 @@ func (k ListRequestKey) Validate() error {
 		}
 		// Validate namespace and group if they're provided
 		if !validNameRegex.MatchString(k.Namespace) {
-			return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+			return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 		}
 		if !validNameRegex.MatchString(k.Group) {
-			return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+			return fmt.Errorf("group '%s' is invalid", k.Group)
 		}
 		return nil
 	}
 
 	// All fields are provided, validate each one
 	if !validNameRegex.MatchString(k.Namespace) {
-		return fmt.Errorf("namespace '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Namespace)
+		return fmt.Errorf("namespace '%s' is invalid", k.Namespace)
 	}
 	if !validNameRegex.MatchString(k.Group) {
-		return fmt.Errorf("group '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Group)
+		return fmt.Errorf("group '%s' is invalid", k.Group)
 	}
 	if !validNameRegex.MatchString(k.Resource) {
-		return fmt.Errorf("resource '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Resource)
+		return fmt.Errorf("resource '%s' is invalid", k.Resource)
 	}
 	if k.Name != "" && !validNameRegex.MatchString(k.Name) {
-		return fmt.Errorf("name '%s' is invalid: must contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character", k.Name)
+		return fmt.Errorf("name '%s' is invalid", k.Name)
 	}
 
 	return nil
@@ -205,6 +209,29 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey) iter.Seq2[Data
 			}
 		}
 	}
+}
+
+// LastResourceVersion returns the last key for a given resource
+func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey) (DataKey, error) {
+	if err := key.Validate(); err != nil {
+		return DataKey{}, fmt.Errorf("invalid data key: %w", err)
+	}
+	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
+		return DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	}
+	prefix := key.Prefix()
+	for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+		Limit:    1,
+		Sort:     SortOrderDesc,
+	}) {
+		if err != nil {
+			return DataKey{}, err
+		}
+		return ParseKey(key)
+	}
+	return DataKey{}, ErrNotFound
 }
 
 func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error) {

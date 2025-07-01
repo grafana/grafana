@@ -20,7 +20,7 @@ export { PromVariableQueryEditor } from './components/VariableQueryEditor';
 // Main export
 export { ConfigEditor } from './configuration/ConfigEditor';
 export { overhaulStyles, validateInput, docsTip } from './configuration/shared/utils';
-export { PROM_CONFIG_LABEL_WIDTH } from './constants';
+export { PROM_CONFIG_LABEL_WIDTH, InstantQueryRefIdIndex } from './constants';
 // The parts
 export { AlertingSettingsOverhaul } from './configuration/AlertingSettingsOverhaul';
 export { DataSourceHttpSettingsOverhaul } from './configuration/DataSourceHttpSettingsOverhaul';
@@ -54,7 +54,7 @@ export { MetricsModal } from './querybuilder/components/metrics-modal/MetricsMod
 
 // SRC/
 // Main export
-export { PrometheusDatasource, InstantQueryRefIdIndex } from './datasource';
+export { PrometheusDatasource } from './datasource';
 // The parts
 export { addLabelToQuery } from './add_label_to_query';
 export { type QueryEditorMode, type PromQueryFormat, type Prometheus } from './dataquery';
