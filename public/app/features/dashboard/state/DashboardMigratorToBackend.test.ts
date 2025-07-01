@@ -106,18 +106,7 @@ describe('Backend / Frontend result comparison', () => {
 
   const jsonInputs = readdirSync(inputDir);
 
-  // Set the minimum version to test (set to 0 to test all versions)
-  const MIN_VERSION_TO_TEST = [41, 40, 39, 38, 37, 36, 35, 34, 33];
-
   jsonInputs.forEach((inputFile) => {
-    // Skip test if version is below minimum
-    if (
-      MIN_VERSION_TO_TEST.length > 0 &&
-      !MIN_VERSION_TO_TEST.includes(parseInt(inputFile.split('.')[0].replace('v', ''), 10))
-    ) {
-      return;
-    }
-
     it(`should migrate ${inputFile} correctly`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
