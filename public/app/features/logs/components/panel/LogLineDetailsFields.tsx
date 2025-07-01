@@ -100,6 +100,7 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
 
 const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
+    tableLayout: 'fixed',
     '& td:not(:last-child)': {
       paddingRight: theme.spacing(1),
     },
@@ -380,7 +381,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     width: theme.spacing(11.5),
   }),
   label: css({
-    maxWidth: '40%',
+    width: '30%',
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
   }),
