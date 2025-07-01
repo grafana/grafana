@@ -776,11 +776,8 @@ export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: Ac
   return { shouldShowLink, hasMultipleLinksOrActions };
 };
 
-const shouldTriggerTooltip = (event: React.MouseEvent): boolean => {
-  const target = event.target as HTMLElement;
-  const currentTarget = event.currentTarget as HTMLElement;
-
-  return target === currentTarget;
+const shouldTriggerTooltip = (event: React.MouseEvent<HTMLElement>): boolean => {
+  return event.target === event.currentTarget;
 };
 
 /**
@@ -789,7 +786,7 @@ const shouldTriggerTooltip = (event: React.MouseEvent): boolean => {
  * @returns onClick handler
  */
 export const tooltipOnClickHandler = (setTooltipCoords: (coords: DataLinksActionsTooltipCoords) => void) => {
-  return (event: React.MouseEvent) => {
+  return (event: React.MouseEvent<HTMLElement>) => {
     if (shouldTriggerTooltip(event)) {
       const { clientX, clientY } = event;
       setTooltipCoords({ clientX, clientY });
