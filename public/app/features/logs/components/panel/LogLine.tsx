@@ -50,7 +50,7 @@ export const LogLine = ({
   wrapLogMessage,
 }: Props) => {
   return (
-    <div style={style} className={logLineStyles.virtualizedWrapper}>
+    <div style={style}>
       <LogLineComponent
         displayedFields={displayedFields}
         height={style.height}
@@ -66,12 +66,6 @@ export const LogLine = ({
       />
     </div>
   );
-};
-
-const logLineStyles = {
-  virtualizedWrapper: css({
-    overflow: 'hidden',
-  }),
 };
 
 interface LogLineComponentProps extends Omit<Props, 'style'> {
@@ -386,7 +380,7 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       lineHeight: theme.typography.body.lineHeight,
       wordBreak: 'break-all',
       '&:hover': {
-        background: theme.isDark ? `hsla(0, 0%, 0%, 0.2)` : `hsla(0, 0%, 0%, 0.1)`,
+        background: theme.isDark ? `hsla(0, 0%, 0%, 0.3)` : `hsla(0, 0%, 0%, 0.1)`,
       },
       '&.infinite-scroll': {
         '&::before': {
