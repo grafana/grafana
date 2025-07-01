@@ -6,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
@@ -17,8 +18,11 @@ interface Props {
 export const LogLineDetailsHeader = ({ log }: Props) => {
   const {
     closeDetails,
+    displayedFields,
     getRowContextQuery,
     logSupportsContext,
+    onClickHideField,
+    onClickShowField,
     onOpenContext,
     onPermalinkClick,
     onPinLine,
@@ -56,12 +60,37 @@ export const LogLineDetailsHeader = ({ log }: Props) => {
     [onOpenContext, getRowContextQuery, log]
   );
 
+  const showLogLineToggle = onClickHideField && onClickShowField && displayedFields.length > 0;
+  const logLineDisplayed = displayedFields.includes(LOG_LINE_BODY_FIELD_NAME);
+
+  const toggleLogLine = useCallback(() => {
+    if (logLineDisplayed) {
+      onClickHideField?.(LOG_LINE_BODY_FIELD_NAME);
+    } else {
+      onClickShowField?.(LOG_LINE_BODY_FIELD_NAME);
+    }
+  }, [logLineDisplayed, onClickHideField, onClickShowField]);
+
   return (
     <div className={styles.header} ref={containerRef}>
       <Input placeholder={t('logs.log-line-details.search-placeholder', 'Search field names and values')} />
+      {showLogLineToggle && (
+        <IconButton
+          tooltip={
+            logLineDisplayed
+              ? t('logs.log-line-details.hide-log-line', 'Hide log line')
+              : t('logs.log-line-details.show-log-line', 'Show log line')
+          }
+          tooltipPlacement="top"
+          size="md"
+          name="eye"
+          onClick={toggleLogLine}
+          tabIndex={0}
+          variant={logLineDisplayed ? 'primary' : undefined}
+        />
+      )}
       <IconButton
         tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
-        aria-label={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
         tooltipPlacement="top"
         size="md"
         name="copy"
@@ -71,7 +100,6 @@ export const LogLineDetailsHeader = ({ log }: Props) => {
       {onPermalinkClick && log.rowId !== undefined && log.uid && (
         <IconButton
           tooltip={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}
-          aria-label={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}
           tooltipPlacement="top"
           size="md"
           name="share-alt"
@@ -86,7 +114,6 @@ export const LogLineDetailsHeader = ({ log }: Props) => {
           onClick={togglePinning}
           tooltip={t('logs.log-line-details.unpin-line', 'Unpin log')}
           tooltipPlacement="top"
-          aria-label={t('logs.log-line-details.unpin-line', 'Unpin line')}
           tabIndex={0}
           variant="primary"
         />
@@ -98,7 +125,6 @@ export const LogLineDetailsHeader = ({ log }: Props) => {
           onClick={togglePinning}
           tooltip={t('logs.log-line-details.unpin-line', 'Pin log')}
           tooltipPlacement="top"
-          aria-label={t('logs.log-line-details.pin-line', 'Pin line')}
           tabIndex={0}
         />
       )}
@@ -109,7 +135,6 @@ export const LogLineDetailsHeader = ({ log }: Props) => {
           onClick={showContext}
           tooltip={t('logs.log-line-details.show-context', 'Show context')}
           tooltipPlacement="top"
-          aria-label={t('logs.log-line-details.show-context', 'Show context')}
           tabIndex={0}
         />
       )}
