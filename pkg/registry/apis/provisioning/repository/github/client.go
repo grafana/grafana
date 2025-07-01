@@ -102,6 +102,8 @@ type Client interface {
 
 	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
 	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
+
+	CreatePullRequest(ctx context.Context, owner, repository, title, body, head, base string) (*PullRequest, error)
 }
 
 //go:generate mockery --name RepositoryContent --structname MockRepositoryContent --inpackage --filename mock_repository_content.go --with-expecter
@@ -128,6 +130,15 @@ type RepositoryContent interface {
 type Branch struct {
 	Name string
 	Sha  string
+}
+
+type PullRequest struct {
+	Number  int
+	Title   string
+	Body    string
+	HTMLURL string
+	Head    string
+	Base    string
 }
 
 type CommitAuthor struct {

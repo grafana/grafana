@@ -15,6 +15,7 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Author":                 schema_pkg_apis_provisioning_v0alpha1_Author(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.CreatePRResponse":       schema_pkg_apis_provisioning_v0alpha1_CreatePRResponse(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ErrorDetails":           schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ExportJobOptions":       schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileItem":               schema_pkg_apis_provisioning_v0alpha1_FileItem(ref),
@@ -32,6 +33,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig":  schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats":           schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":      schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestInfo":        schema_pkg_apis_provisioning_v0alpha1_PullRequestInfo(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":  schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefItem":                schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefList":                schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
@@ -89,6 +91,55 @@ func schema_pkg_apis_provisioning_v0alpha1_Author(ref common.ReferenceCallback) 
 				Required: []string{"name", "username"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_CreatePRResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "CreatePRResponse is the response from creating a pull request",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"success": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"pullRequest": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestInfo"),
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Error message if the submission failed",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"success"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestInfo"},
 	}
 }
 
@@ -196,9 +247,8 @@ func schema_pkg_apis_provisioning_v0alpha1_FileItem(ref common.ReferenceCallback
 					},
 					"fileURL": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The URL to the file in the repository",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
@@ -914,6 +964,54 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_PullRequestInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"number": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"url": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"head": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"base": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"number", "title", "url", "head", "base"},
 			},
 		},
 	}

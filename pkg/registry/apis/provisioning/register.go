@@ -358,6 +358,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("pr")] = NewPRsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -803,6 +804,45 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
 		s := defs[defsBase+"RefList"].Schema
 		mt["*/*"].Schema = &s
+	}
+
+	// Show submit endpoint documentation
+	sub = oas.Paths.Paths[repoprefix+"/pr"]
+	if sub != nil {
+		sub.Post.Description = "Create a pull request from a branch"
+		sub.Post.Summary = "Create pull request"
+		sub.Post.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "ref",
+					In:          "query",
+					Description: "The branch name to create a pull request from",
+					Schema:      spec.StringProperty(),
+					Required:    true,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "title",
+					In:          "query",
+					Description: "The title of the pull request",
+					Schema:      spec.StringProperty(),
+					Required:    true,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "content",
+					In:          "query",
+					Description: "The description/body of the pull request",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+		sub.Get = nil
+		sub.Put = nil
+		sub.Delete = nil
 	}
 
 	// update the version with a path

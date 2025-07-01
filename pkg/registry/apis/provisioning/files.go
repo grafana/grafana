@@ -254,7 +254,9 @@ func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, r
 			}
 			owner := githubRepo.Owner()
 			repoName := githubRepo.Repo()
-			fileItem.FileURL = fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s", owner, repoName, branch, v.Path)
+			rootPath := repo.Config().Spec.GitHub.Path
+			// TODO(meher): Should we use raw url instead?
+			fileItem.FileURL = fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s/%s", owner, repoName, branch, rootPath, v.Path)
 		}
 
 		files.Items = append(files.Items, fileItem)

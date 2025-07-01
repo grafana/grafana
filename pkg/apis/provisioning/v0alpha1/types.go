@@ -473,3 +473,22 @@ type RefItem struct {
 	// The URL to the reference (branch or tag)
 	RefURL string `json:"refURL,omitempty"`
 }
+
+// CreatePRResponse is the response from creating a pull request
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type CreatePRResponse struct {
+	metav1.TypeMeta `json:",inline"`
+	Success         bool             `json:"success"`
+	PullRequest     *PullRequestInfo `json:"pullRequest,omitempty"`
+
+	// Error message if the submission failed
+	Error string `json:"error,omitempty"`
+}
+
+type PullRequestInfo struct {
+	Number int    `json:"number"`
+	Title  string `json:"title"`
+	URL    string `json:"url"`
+	Head   string `json:"head"`
+	Base   string `json:"base"`
+}

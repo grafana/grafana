@@ -306,6 +306,70 @@ func (_c *MockClient_CreateFile_Call) RunAndReturn(run func(context.Context, str
 	return _c
 }
 
+// CreatePullRequest provides a mock function with given fields: ctx, owner, repository, title, body, head, base
+func (_m *MockClient) CreatePullRequest(ctx context.Context, owner string, repository string, title string, body string, head string, base string) (*PullRequest, error) {
+	ret := _m.Called(ctx, owner, repository, title, body, head, base)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePullRequest")
+	}
+
+	var r0 *PullRequest
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string) (*PullRequest, error)); ok {
+		return rf(ctx, owner, repository, title, body, head, base)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string) *PullRequest); ok {
+		r0 = rf(ctx, owner, repository, title, body, head, base)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*PullRequest)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, title, body, head, base)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_CreatePullRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreatePullRequest'
+type MockClient_CreatePullRequest_Call struct {
+	*mock.Call
+}
+
+// CreatePullRequest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner string
+//   - repository string
+//   - title string
+//   - body string
+//   - head string
+//   - base string
+func (_e *MockClient_Expecter) CreatePullRequest(ctx interface{}, owner interface{}, repository interface{}, title interface{}, body interface{}, head interface{}, base interface{}) *MockClient_CreatePullRequest_Call {
+	return &MockClient_CreatePullRequest_Call{Call: _e.mock.On("CreatePullRequest", ctx, owner, repository, title, body, head, base)}
+}
+
+func (_c *MockClient_CreatePullRequest_Call) Run(run func(ctx context.Context, owner string, repository string, title string, body string, head string, base string)) *MockClient_CreatePullRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_CreatePullRequest_Call) Return(_a0 *PullRequest, _a1 error) *MockClient_CreatePullRequest_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_CreatePullRequest_Call) RunAndReturn(run func(context.Context, string, string, string, string, string, string) (*PullRequest, error)) *MockClient_CreatePullRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreatePullRequestComment provides a mock function with given fields: ctx, owner, repository, number, body
 func (_m *MockClient) CreatePullRequestComment(ctx context.Context, owner string, repository string, number int, body string) error {
 	ret := _m.Called(ctx, owner, repository, number, body)

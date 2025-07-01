@@ -654,6 +654,39 @@ func (r *githubClient) CreatePullRequestComment(ctx context.Context, owner, repo
 	return nil
 }
 
+func (r *githubClient) CreatePullRequest(ctx context.Context, owner, repository, title, body, head, base string) (*PullRequest, error) {
+	newPR := &github.NewPullRequest{
+		Title: &title,
+		Body:  &body,
+		Head:  &head,
+		Base:  &base,
+	}
+
+	// TODO(meher): Add label `grafana/git-sync` to the pull request
+	pr, _, err := r.gh.PullRequests.Create(ctx, owner, repository, newPR)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) {
+			if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+				return nil, ErrServiceUnavailable
+			}
+			if ghErr.Response.StatusCode == http.StatusNotFound {
+				return nil, ErrResourceNotFound
+			}
+		}
+		return nil, err
+	}
+
+	return &PullRequest{
+		Number:  pr.GetNumber(),
+		Title:   pr.GetTitle(),
+		Body:    pr.GetBody(),
+		HTMLURL: pr.GetHTMLURL(),
+		Head:    pr.GetHead().GetRef(),
+		Base:    pr.GetBase().GetRef(),
+	}, nil
+}
+
 type realRepositoryContent struct {
 	real *github.RepositoryContent
 }
