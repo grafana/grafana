@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
-import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
+import { tooltipOnClickHandler, DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { JSONCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
@@ -43,7 +43,7 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx, actions }: JSON
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
     <div
       className={styles.jsonText}
-      onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
     >
       {shouldShowLink ? (

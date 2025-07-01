@@ -775,3 +775,21 @@ export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: Ac
 
   return { shouldShowLink, hasMultipleLinksOrActions };
 };
+
+const shouldTriggerTooltip = (event: React.MouseEvent<HTMLElement>): boolean => {
+  return event.target === event.currentTarget;
+};
+
+/**
+ * Creates an onClick handler for table cells that only triggers tooltip when clicking directly on the cell
+ * @param setTooltipCoords - function to set tooltip coordinates
+ * @returns onClick handler
+ */
+export const tooltipOnClickHandler = (setTooltipCoords: (coords: DataLinksActionsTooltipCoords) => void) => {
+  return (event: React.MouseEvent<HTMLElement>) => {
+    if (shouldTriggerTooltip(event)) {
+      const { clientX, clientY } = event;
+      setTooltipCoords({ clientX, clientY });
+    }
+  };
+};

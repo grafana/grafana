@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
 import { TableCellOptions, TableCellDisplayMode } from '../../types';
-import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
+import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils, tooltipOnClickHandler } from '../../utils';
 import { AutoCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
@@ -27,7 +27,7 @@ export default function AutoCell({ value, field, justifyContent, rowIdx, cellOpt
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
     <div
       className={styles.cell}
-      onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
       data-testid={selectors.components.TablePanel.autoCell}
     >
