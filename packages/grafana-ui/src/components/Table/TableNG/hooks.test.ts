@@ -447,7 +447,7 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx,
+          typographyCtx: { ...typographyCtx, avgCharWidth: 5 },
           defaultHeight: 28,
           sortColumns: [],
         });
