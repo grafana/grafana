@@ -14,6 +14,7 @@ func (u User) AuthID() string {
 	// TODO: Workaround until we move all definitions
 	// After having all resource definitions here in the app, we can remove this
 	// and we need to change the List authorization to use the MetaAccessor and the GetDeprecatedInternalID method
+	//nolint:staticcheck
 	return fmt.Sprintf("%d", meta.GetDeprecatedInternalID())
 }
 
@@ -25,6 +26,7 @@ func (s ServiceAccount) AuthID() string {
 	// TODO: Workaround until we move all definitions
 	// After having all resource definitions here in the app, we can remove this
 	// and we need to change the List authorization to use the MetaAccessor and the GetDeprecatedInternalID method
+	//nolint:staticcheck
 	return fmt.Sprintf("%d", meta.GetDeprecatedInternalID())
 }
 
@@ -36,5 +38,6 @@ func (t Team) AuthID() string {
 	// TODO: Workaround until we move all definitions
 	// After having all resource definitions here in the app, we can remove this
 	// and we need to change the List authorization to use the MetaAccessor and the GetDeprecatedInternalID method
+	//nolint:staticcheck
 	return fmt.Sprintf("%d", meta.GetDeprecatedInternalID())
 }
