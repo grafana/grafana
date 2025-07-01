@@ -34,9 +34,9 @@ import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
 
+import { GenAITriageButton } from './AIGen/GenAITriageButton';
 import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
-import { GenAITriageButton } from './GenAITriageButton';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { useRuleHistoryRecords } from './useRuleHistoryRecords';
 
