@@ -3,26 +3,14 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/graphql/gateway"
-	graphqlsubgraph "github.com/grafana/grafana-app-sdk/graphql/subgraph"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana-app-sdk/resource"
-	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
-	playlistapp "github.com/grafana/grafana/pkg/registry/apps/playlist"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/graphql-go/graphql"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // GraphQLHandler handles GraphQL requests for the federated GraphQL API
@@ -171,7 +159,7 @@ func (hs *HTTPServer) GraphQLHandler(c *contextmodel.ReqContext) response.Respon
 	})
 }
 
-// createFederatedGateway creates a federated GraphQL gateway with the playlist subgraph registered
+// createFederatedGateway creates a federated GraphQL gateway with all GraphQL-capable app providers registered
 func (hs *HTTPServer) createFederatedGateway(ctx context.Context) (*gateway.FederatedGateway, error) {
 	// Create a new federated gateway
 	// For now, use a basic config without logger to avoid compatibility issues
@@ -179,233 +167,30 @@ func (hs *HTTPServer) createFederatedGateway(ctx context.Context) (*gateway.Fede
 		Logger: &logging.NoOpLogger{}, // Use a no-op logger for now
 	})
 
-	// Create the playlist app provider manually since we have access to the playlist service
-	playlistProvider, err := hs.createPlaylistGraphQLProvider()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create playlist GraphQL provider: %w", err)
+	if hs.appRegistryService == nil {
+		return nil, fmt.Errorf("app registry service is not available")
 	}
 
-	// Get the GraphQL subgraph from the playlist provider
-	subgraph, err := playlistProvider.GetGraphQLSubgraph()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get playlist GraphQL subgraph: %w", err)
+	// Get all GraphQL-capable app providers from the app registry
+	graphqlProviders := hs.appRegistryService.GetGraphQLProviders()
+	if len(graphqlProviders) == 0 {
+		return nil, fmt.Errorf("no GraphQL-capable app providers found")
 	}
 
-	// Register the playlist subgraph with the gateway
-	playlistGV := schema.GroupVersion{
-		Group:   playlistv0alpha1.PlaylistKind().Group(),
-		Version: playlistv0alpha1.PlaylistKind().Version(),
-	}
-	err = gw.RegisterSubgraph(playlistGV, subgraph)
-	if err != nil {
-		return nil, fmt.Errorf("failed to register playlist subgraph: %w", err)
+	// Register all GraphQL subgraphs with the gateway
+	for _, provider := range graphqlProviders {
+		subgraph, err := provider.GetGraphQLSubgraph()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get GraphQL subgraph from provider: %w", err)
+		}
+
+		// Register the subgraph with the gateway
+		gv := subgraph.GetGroupVersion()
+		err = gw.RegisterSubgraph(gv, subgraph)
+		if err != nil {
+			return nil, fmt.Errorf("failed to register subgraph for %s: %w", gv.String(), err)
+		}
 	}
 
 	return gw, nil
-}
-
-// createPlaylistGraphQLProvider creates a playlist app provider that can provide GraphQL subgraphs
-func (hs *HTTPServer) createPlaylistGraphQLProvider() (graphqlsubgraph.GraphQLSubgraphProvider, error) {
-	// Import the playlist app registration
-	// Since we have access to playlistService, we can create a provider
-	// This is a simplified approach that reuses the existing service
-	provider := &playlistGraphQLProvider{
-		playlistService: hs.playlistService,
-		cfg:             hs.Cfg,
-	}
-
-	return provider, nil
-}
-
-// playlistGraphQLProvider is a simple GraphQL provider wrapper for the playlist service
-type playlistGraphQLProvider struct {
-	playlistService playlist.Service
-	cfg             *setting.Cfg
-}
-
-// GetGraphQLSubgraph implements GraphQLSubgraphProvider interface
-func (p *playlistGraphQLProvider) GetGraphQLSubgraph() (graphqlsubgraph.GraphQLSubgraph, error) {
-
-	// Get the group version for the playlist app
-	playlistKind := playlistv0alpha1.PlaylistKind()
-	gv := schema.GroupVersion{
-		Group:   playlistKind.Group(),
-		Version: playlistKind.Version(),
-	}
-
-	// Get the managed kinds
-	kinds := []resource.Kind{
-		playlistKind,
-	}
-
-	// Create a storage adapter that bridges GraphQL storage interface
-	// to the existing playlist service
-	storageGetter := func(gvr schema.GroupVersionResource) graphqlsubgraph.Storage {
-		// Only handle playlist resources
-		expectedGVR := schema.GroupVersionResource{
-			Group:    gv.Group,
-			Version:  gv.Version,
-			Resource: playlistv0alpha1.PlaylistKind().Plural(),
-		}
-
-		if gvr != expectedGVR {
-			return nil
-		}
-
-		// Return a storage adapter that wraps the playlist service
-		return &playlistServiceStorageAdapter{
-			service:    p.playlistService,
-			namespacer: request.GetNamespaceMapper(p.cfg),
-		}
-	}
-
-	// Create resource handler registry and register the playlist handler
-	resourceHandlers := graphqlsubgraph.NewResourceHandlerRegistry()
-	playlistHandler := playlistapp.NewPlaylistGraphQLHandler()
-	resourceHandlers.RegisterHandler(playlistHandler)
-
-	// Create the subgraph using the helper function
-	return graphqlsubgraph.CreateSubgraphFromConfig(graphqlsubgraph.SubgraphProviderConfig{
-		GroupVersion:     gv,
-		Kinds:            kinds,
-		StorageGetter:    storageGetter,
-		ResourceHandlers: resourceHandlers,
-	})
-}
-
-// playlistServiceStorageAdapter adapts the playlist service to work with GraphQL storage interface
-type playlistServiceStorageAdapter struct {
-	service    playlist.Service
-	namespacer request.NamespaceMapper
-}
-
-// Ensure playlistServiceStorageAdapter implements graphqlsubgraph.Storage
-var _ graphqlsubgraph.Storage = (*playlistServiceStorageAdapter)(nil)
-
-// Get retrieves a single playlist by namespace and name
-func (a *playlistServiceStorageAdapter) Get(ctx context.Context, namespace, name string) (resource.Object, error) {
-	// Extract org ID from namespace using claims.ParseNamespace
-	info, err := claims.ParseNamespace(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse namespace %s: %v", namespace, err)
-	}
-	orgID := info.OrgID
-
-	// Call the real playlist service
-	dto, err := a.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
-		UID:   name,
-		OrgId: orgID,
-	})
-	if err != nil {
-		if errors.Is(err, playlist.ErrPlaylistNotFound) {
-			return nil, fmt.Errorf("playlist not found: %s", name)
-		}
-		return nil, fmt.Errorf("failed to get playlist %s: %v", name, err)
-	}
-
-	if dto == nil {
-		return nil, fmt.Errorf("playlist not found: %s", name)
-	}
-
-	// Convert the service result to Kubernetes resource format
-	// Note: Using direct conversion here since the function is not exported
-	// In production, this should use an exported conversion function
-
-	spec := playlistv0alpha1.PlaylistSpec{
-		Title:    dto.Name,
-		Interval: dto.Interval,
-	}
-	for _, item := range dto.Items {
-		spec.Items = append(spec.Items, playlistv0alpha1.PlaylistItem{
-			Type:  playlistv0alpha1.PlaylistItemType(item.Type),
-			Value: item.Value,
-		})
-	}
-
-	p := &playlistv0alpha1.Playlist{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: playlistv0alpha1.GroupVersion.String(),
-			Kind:       "Playlist",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              dto.Uid,
-			Namespace:         a.namespacer(dto.OrgID),
-			ResourceVersion:   fmt.Sprintf("%d", dto.UpdatedAt),
-			CreationTimestamp: metav1.NewTime(time.UnixMilli(dto.CreatedAt)),
-		},
-		Spec: spec,
-	}
-
-	return p, nil
-}
-
-// List retrieves multiple playlists with optional filtering
-func (a *playlistServiceStorageAdapter) List(ctx context.Context, namespace string, options graphqlsubgraph.ListOptions) (resource.ListObject, error) {
-	// Extract org ID from namespace using claims.ParseNamespace
-	info, err := claims.ParseNamespace(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse namespace %s: %v", namespace, err)
-	}
-	orgID := info.OrgID
-
-	// Call the real playlist service to list playlists
-	playlists, err := a.service.List(ctx, orgID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list playlists for org %d: %v", orgID, err)
-	}
-
-	// Convert the service results to Kubernetes resource format
-	list := &playlistv0alpha1.PlaylistList{
-		ListMeta: metav1.ListMeta{},
-		Items:    make([]playlistv0alpha1.Playlist, len(playlists)),
-	}
-
-	for i, dto := range playlists {
-
-		// Convert each DTO to K8s resource format
-		spec := playlistv0alpha1.PlaylistSpec{
-			Title:    dto.Name,
-			Interval: dto.Interval,
-		}
-		for _, item := range dto.Items {
-			spec.Items = append(spec.Items, playlistv0alpha1.PlaylistItem{
-				Type:  playlistv0alpha1.PlaylistItemType(item.Type),
-				Value: item.Value,
-			})
-		}
-
-		list.Items[i] = playlistv0alpha1.Playlist{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: playlistv0alpha1.GroupVersion.String(),
-				Kind:       "Playlist",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              dto.Uid,
-				Namespace:         a.namespacer(dto.OrgID),
-				ResourceVersion:   fmt.Sprintf("%d", dto.UpdatedAt),
-				CreationTimestamp: metav1.NewTime(time.UnixMilli(dto.CreatedAt)),
-			},
-			Spec: spec,
-		}
-	}
-
-	return list, nil
-}
-
-// Create creates a new playlist
-func (a *playlistServiceStorageAdapter) Create(ctx context.Context, namespace string, obj resource.Object) (resource.Object, error) {
-	// For now, return a simple error since we need to implement proper playlist-to-resource conversion
-	return nil, fmt.Errorf("playlist storage adapter Create not yet implemented")
-}
-
-// Update updates an existing playlist
-func (a *playlistServiceStorageAdapter) Update(ctx context.Context, namespace, name string, obj resource.Object) (resource.Object, error) {
-	// For now, return a simple error since we need to implement proper playlist-to-resource conversion
-	return nil, fmt.Errorf("playlist storage adapter Update not yet implemented")
-}
-
-// Delete deletes a playlist by namespace and name
-func (a *playlistServiceStorageAdapter) Delete(ctx context.Context, namespace, name string) error {
-	// For now, return a simple error since we need to implement proper playlist-to-resource conversion
-	return fmt.Errorf("playlist storage adapter Delete not yet implemented")
 }
