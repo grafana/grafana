@@ -38,10 +38,15 @@ func GetVersions(ctx context.Context, src *dagger.Directory) (Deps, error) {
 	}, nil
 }
 
+type RunTestOpts struct {
+	Shard          string
+	GrafanaService *dagger.Service
+}
+
 func RunTest(
 	ctx context.Context,
 	d *dagger.Client,
-	grafanaService *dagger.Service,
+	opts RunTestOpts,
 ) (*dagger.Container, error) {
 
 	grafanaDir := "." // TODO: arg
@@ -97,7 +102,7 @@ func RunTest(
 		WithExec([]string{"yarn", "e2e:plugin:build"}).
 		WithEnvVariable("HOST", grafanaHost).
 		WithEnvVariable("PORT", fmt.Sprint(grafanaPort)).
-		WithServiceBinding(grafanaHost, grafanaService).
+		WithServiceBinding(grafanaHost, opts.GrafanaService).
 		WithEnvVariable("PLAYWRIGHT_HTML_OPEN", "never").
 		WithExec([]string{"yarn", "e2e:playwright"}, dagger.ContainerWithExecOpts{
 			Expect: dagger.ReturnTypeAny,
