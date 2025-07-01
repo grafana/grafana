@@ -5,7 +5,7 @@ export interface Spec {
 	target_version: string;
 	state: "new" | "dismissed" | "failed" | "succeeded";
 	is_out_of_support: boolean;
-	target_release_date: string;
+	target_minor_release_date: string;
 }
 
 export const defaultSpec = (): Spec => ({
@@ -13,6 +13,6 @@ export const defaultSpec = (): Spec => ({
 	target_version: "",
 	state: "new",
 	is_out_of_support: false,
-	target_release_date: "",
+	target_minor_release_date: "",
 });
 

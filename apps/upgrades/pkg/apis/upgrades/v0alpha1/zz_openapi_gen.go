@@ -150,7 +150,7 @@ func schema_pkg_apis_upgrades_v0alpha1_UpgradeMetadataSpec(ref common.ReferenceC
 							Format:  "",
 						},
 					},
-					"target_release_date": {
+					"target_minor_release_date": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -158,7 +158,7 @@ func schema_pkg_apis_upgrades_v0alpha1_UpgradeMetadataSpec(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"starting_version", "target_version", "state", "is_out_of_support", "target_release_date"},
+				Required: []string{"starting_version", "target_version", "state", "is_out_of_support", "target_minor_release_date"},
 			},
 		},
 	}
