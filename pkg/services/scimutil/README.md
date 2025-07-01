@@ -136,7 +136,7 @@ spec:
 ## Error Handling
 
 The utility gracefully handles errors and falls back to static configuration when:
-- K8s client is not configured (`scim.ErrK8sClientNotConfigured`)
+- K8s client is not configured
 - SCIMConfig resource is not found
 - Network errors occur
 - Invalid configuration is encountered
@@ -147,16 +147,18 @@ All errors are logged for debugging purposes with appropriate log levels:
 - `Warn`: Fallback scenarios and non-critical errors
 - `Error`: Invalid configuration or unexpected errors
 
-## Constants
+## Implementation Details
 
-The utility uses the following constants from the SCIM API:
+This package is designed to work with the open-source Grafana build and does not depend on enterprise-only SCIM API types. It uses a simplified `SCIMConfigSpec` struct that contains only the essential configuration fields:
 
 ```go
-const (
-    UserSyncSetting  = "user"   // For checking user sync configuration
-    GroupSyncSetting = "group"  // For checking group sync configuration
-)
+type SCIMConfigSpec struct {
+    EnableUserSync  bool `json:"enableUserSync"`
+    EnableGroupSync bool `json:"enableGroupSync"`
+}
 ```
+
+The utility directly works with Kubernetes unstructured objects and extracts the configuration values without requiring the full SCIM API types.
 
 ## Testing
 

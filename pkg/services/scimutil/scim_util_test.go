@@ -10,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	scim "github.com/grafana/grafana/pkg/extensions/apis/scim/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -326,7 +325,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "k8s client nil",
 			k8sClient:              nil,
-			settingType:            scim.UserSyncSetting,
+			settingType:            "user",
 			expectedEnabled:        false,
 			expectedDynamicFetched: false,
 		},
@@ -345,7 +344,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "k8s client error",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.UserSyncSetting,
+			settingType:            "user",
 			expectedEnabled:        false,
 			expectedDynamicFetched: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -356,7 +355,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "user sync setting enabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.UserSyncSetting,
+			settingType:            "user",
 			expectedEnabled:        true,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -368,7 +367,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "user sync setting disabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.UserSyncSetting,
+			settingType:            "user",
 			expectedEnabled:        false,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -380,7 +379,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "group sync setting enabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.GroupSyncSetting,
+			settingType:            "group",
 			expectedEnabled:        true,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -392,7 +391,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "group sync setting disabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.GroupSyncSetting,
+			settingType:            "group",
 			expectedEnabled:        false,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -404,7 +403,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "user sync setting - both settings disabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.UserSyncSetting,
+			settingType:            "user",
 			expectedEnabled:        false,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -416,7 +415,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "user sync setting - both settings enabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.UserSyncSetting,
+			settingType:            "user",
 			expectedEnabled:        true,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -428,7 +427,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "group sync setting - both settings disabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.GroupSyncSetting,
+			settingType:            "group",
 			expectedEnabled:        false,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -440,7 +439,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 		{
 			name:                   "group sync setting - both settings enabled",
 			k8sClient:              &MockK8sHandler{},
-			settingType:            scim.GroupSyncSetting,
+			settingType:            "group",
 			expectedEnabled:        true,
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
@@ -483,7 +482,7 @@ func TestSCIMUtil_getOrgSCIMConfig(t *testing.T) {
 		{
 			name:          "k8s client nil",
 			k8sClient:     nil,
-			expectedError: scim.ErrK8sClientNotConfigured,
+			expectedError: errors.New("k8s client not configured"),
 		},
 		{
 			name:          "k8s client error",
@@ -520,8 +519,8 @@ func TestSCIMUtil_getOrgSCIMConfig(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, config)
-				assert.Equal(t, true, config.Spec.EnableUserSync)
-				assert.Equal(t, false, config.Spec.EnableGroupSync)
+				assert.Equal(t, true, config.EnableUserSync)
+				assert.Equal(t, false, config.EnableGroupSync)
 			}
 
 			if tt.k8sClient != nil {
@@ -536,7 +535,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 		name          string
 		obj           *unstructured.Unstructured
 		expectedError bool
-		expectedSpec  scim.SCIMConfigSpec
+		expectedSpec  SCIMConfigSpec
 	}{
 		{
 			name:          "nil object",
@@ -546,7 +545,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 		{
 			name: "valid object with both settings enabled",
 			obj:  createMockSCIMConfig(true, true),
-			expectedSpec: scim.SCIMConfigSpec{
+			expectedSpec: SCIMConfigSpec{
 				EnableUserSync:  true,
 				EnableGroupSync: true,
 			},
@@ -554,7 +553,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 		{
 			name: "valid object with both settings disabled",
 			obj:  createMockSCIMConfig(false, false),
-			expectedSpec: scim.SCIMConfigSpec{
+			expectedSpec: SCIMConfigSpec{
 				EnableUserSync:  false,
 				EnableGroupSync: false,
 			},
@@ -562,7 +561,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 		{
 			name: "valid object with mixed settings",
 			obj:  createMockSCIMConfig(true, false),
-			expectedSpec: scim.SCIMConfigSpec{
+			expectedSpec: SCIMConfigSpec{
 				EnableUserSync:  true,
 				EnableGroupSync: false,
 			},
@@ -594,9 +593,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, config)
-				assert.Equal(t, tt.expectedSpec, config.Spec)
-				assert.Equal(t, "test-config", config.GetStaticMetadata().Name)
-				assert.Equal(t, "default", config.GetStaticMetadata().Namespace)
+				assert.Equal(t, tt.expectedSpec, *config)
 			}
 		})
 	}

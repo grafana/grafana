@@ -2,12 +2,11 @@ package scimutil
 
 import (
 	"context"
+	"errors"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	scim "github.com/grafana/grafana/pkg/extensions/apis/scim/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
@@ -33,7 +32,7 @@ func (s *SCIMUtil) IsUserSyncEnabled(ctx context.Context, orgID int64, staticEna
 		return staticEnabled
 	}
 
-	userSyncEnabled, dynamicConfigFetched := s.fetchDynamicSCIMSetting(ctx, orgID, scim.UserSyncSetting)
+	userSyncEnabled, dynamicConfigFetched := s.fetchDynamicSCIMSetting(ctx, orgID, "user")
 
 	if dynamicConfigFetched {
 		s.logger.Debug("Using dynamic SCIM config for user sync", "orgID", orgID, "enabled", userSyncEnabled)
@@ -60,7 +59,7 @@ func (s *SCIMUtil) AreNonProvisionedUsersAllowed(ctx context.Context, orgID int6
 
 	// In dynamic configuration, we consider non-provisioned users allowed if user sync is enabled
 	// This matches the behavior in the EnterpriseSCIMSettings implementation
-	dynamicAllowed := scimConfig.Spec.EnableUserSync
+	dynamicAllowed := scimConfig.EnableUserSync
 	s.logger.Debug("Using dynamic SCIM config for non-provisioned users", "orgID", orgID, "allowed", dynamicAllowed)
 	return dynamicAllowed
 }
@@ -80,10 +79,10 @@ func (s *SCIMUtil) fetchDynamicSCIMSetting(ctx context.Context, orgID int64, set
 
 	var enabled bool
 	switch settingType {
-	case scim.UserSyncSetting:
-		enabled = scimConfig.Spec.EnableUserSync
-	case scim.GroupSyncSetting:
-		enabled = scimConfig.Spec.EnableGroupSync
+	case "user":
+		enabled = scimConfig.EnableUserSync
+	case "group":
+		enabled = scimConfig.EnableGroupSync
 	default:
 		s.logger.Error("Invalid setting type provided to fetchDynamicSCIMSetting", "settingType", settingType)
 		return false, false
@@ -93,9 +92,9 @@ func (s *SCIMUtil) fetchDynamicSCIMSetting(ctx context.Context, orgID int64, set
 }
 
 // getOrgSCIMConfig fetches and converts the SCIMConfig for an org
-func (s *SCIMUtil) getOrgSCIMConfig(ctx context.Context, orgID int64) (*scim.SCIMConfig, error) {
+func (s *SCIMUtil) getOrgSCIMConfig(ctx context.Context, orgID int64) (*SCIMConfigSpec, error) {
 	if s.k8sClient == nil {
-		return nil, scim.ErrK8sClientNotConfigured
+		return nil, errors.New("k8s client not configured")
 	}
 
 	unstructuredObj, err := s.k8sClient.Get(ctx, "", orgID, metav1.GetOptions{})
@@ -106,20 +105,17 @@ func (s *SCIMUtil) getOrgSCIMConfig(ctx context.Context, orgID int64) (*scim.SCI
 	return s.unstructuredToSCIMConfig(unstructuredObj)
 }
 
-// unstructuredToSCIMConfig converts an unstructured object to a SCIMConfig
-func (s *SCIMUtil) unstructuredToSCIMConfig(obj *unstructured.Unstructured) (*scim.SCIMConfig, error) {
-	if obj == nil {
-		return nil, scim.ErrK8sClientNotConfigured
-	}
+// SCIMConfigSpec represents the spec part of a SCIMConfig resource
+type SCIMConfigSpec struct {
+	EnableUserSync  bool `json:"enableUserSync"`
+	EnableGroupSync bool `json:"enableGroupSync"`
+}
 
-	scimConfig := &scim.SCIMConfig{}
-	scimConfig.SetStaticMetadata(resource.StaticMetadata{
-		Name:      obj.GetName(),
-		Namespace: obj.GetNamespace(),
-		Group:     obj.GetAPIVersion(),
-		Version:   obj.GetAPIVersion(),
-		Kind:      obj.GetKind(),
-	})
+// unstructuredToSCIMConfig converts an unstructured object to a SCIMConfigSpec
+func (s *SCIMUtil) unstructuredToSCIMConfig(obj *unstructured.Unstructured) (*SCIMConfigSpec, error) {
+	if obj == nil {
+		return nil, errors.New("nil unstructured object")
+	}
 
 	// Convert spec
 	spec, found, err := unstructured.NestedMap(obj.Object, "spec")
@@ -127,16 +123,14 @@ func (s *SCIMUtil) unstructuredToSCIMConfig(obj *unstructured.Unstructured) (*sc
 		return nil, err
 	}
 	if !found {
-		return nil, scim.ErrK8sClientNotConfigured
+		return nil, errors.New("spec not found in SCIMConfig")
 	}
 
 	enableUserSync, _, _ := unstructured.NestedBool(spec, "enableUserSync")
 	enableGroupSync, _, _ := unstructured.NestedBool(spec, "enableGroupSync")
 
-	scimConfig.Spec = scim.SCIMConfigSpec{
+	return &SCIMConfigSpec{
 		EnableUserSync:  enableUserSync,
 		EnableGroupSync: enableGroupSync,
-	}
-
-	return scimConfig, nil
+	}, nil
 }
