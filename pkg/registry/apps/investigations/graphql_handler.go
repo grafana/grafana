@@ -215,12 +215,6 @@ func (h *investigationGraphQLHandler) ConvertResourceToGraphQL(obj resource.Obje
 	return result
 }
 
-// CreateDemoData creates demo data for investigation resources
-func (h *investigationGraphQLHandler) CreateDemoData() interface{} {
-	// Return nil to disable demo data creation
-	return nil
-}
-
 // investigationIndexGraphQLHandler implements ResourceGraphQLHandler for investigation index resources
 type investigationIndexGraphQLHandler struct{}
 
@@ -239,27 +233,49 @@ func (h *investigationIndexGraphQLHandler) GetResourceKind() resource.Kind {
 
 // GetGraphQLFields returns investigation index-specific GraphQL fields
 func (h *investigationIndexGraphQLHandler) GetGraphQLFields() graphql.Fields {
-	// Return investigation index-specific fields
 	return graphql.Fields{
-		"investigations": &graphql.Field{Type: graphql.NewList(graphql.String)},
-		"totalCount":     &graphql.Field{Type: graphql.Int},
+		"title":       &graphql.Field{Type: graphql.String},
+		"description": &graphql.Field{Type: graphql.String},
+		"tags":        &graphql.Field{Type: graphql.NewList(graphql.String)},
+		"status":      &graphql.Field{Type: graphql.String},
+		"created":     &graphql.Field{Type: graphql.String},
+		"url":         &graphql.Field{Type: graphql.String},
 	}
 }
 
 // ConvertResourceToGraphQL converts an investigation index resource to GraphQL format
 func (h *investigationIndexGraphQLHandler) ConvertResourceToGraphQL(obj resource.Object) map[string]interface{} {
+	metadata := obj.GetStaticMetadata()
+	commonMetadata := obj.GetCommonMetadata()
 	result := map[string]interface{}{
-		"investigations": []interface{}{},
-		"totalCount":     0,
+		"title":       metadata.Name,
+		"description": "Investigation index resource",
+		"tags":        []string{},
+		"status":      "active",
+		"created":     commonMetadata.CreationTimestamp.Format("2006-01-02T15:04:05Z"),
+		"url":         fmt.Sprintf("/investigations/%s", metadata.Name),
 	}
 
-	// The investigation index would typically contain references to investigations
-	// For now, return empty structure
-	return result
-}
+	// Try to extract investigation index-specific data from spec
+	if spec := obj.GetSpec(); spec != nil {
+		if specMap, ok := spec.(map[string]interface{}); ok {
+			if title, exists := specMap["title"]; exists {
+				result["title"] = title
+			}
+			if description, exists := specMap["description"]; exists {
+				result["description"] = description
+			}
+			if tags, exists := specMap["tags"]; exists {
+				result["tags"] = tags
+			}
+			if status, exists := specMap["status"]; exists {
+				result["status"] = status
+			}
+			if url, exists := specMap["url"]; exists {
+				result["url"] = url
+			}
+		}
+	}
 
-// CreateDemoData creates demo data for investigation index resources
-func (h *investigationIndexGraphQLHandler) CreateDemoData() interface{} {
-	// Return nil to disable demo data creation
-	return nil
+	return result
 }
