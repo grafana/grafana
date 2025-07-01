@@ -39,10 +39,14 @@ export const GenAITemplateButton = ({ onTemplateGenerated, disabled, className }
 
   // Extract template content from LLM response, handling markdown code blocks and other formatting
   const extractTemplateFromLLMResponse = (response: string): string => {
-    // Remove leading/trailing quotes (original sanitizeReply behavior)
+    // Remove leading/trailing quotes
     let cleaned = response.replace(/^"|"$/g, '');
 
-    // Try to extract from markdown code blocks first
+    // Extract from markdown code blocks: ```go...``` or ```json...```, sometimes the LLM response is formatted like this
+    // example: ```go
+    // {{ range .Alerts }}
+    // {{ end }}
+    // ```
     const codeBlockMatch = cleaned.match(/```(?:go|text|template)?\s*([\s\S]*?)\s*```/);
     if (codeBlockMatch) {
       cleaned = codeBlockMatch[1];
@@ -52,7 +56,8 @@ export const GenAITemplateButton = ({ onTemplateGenerated, disabled, className }
     return cleaned.trim();
   };
 
-  // Handle direct LLM call without tools
+  // Handle direct LLM call , in this case we are not using tools
+  // We are injecting directly the templates examples into the prompt (see createUserPrompt)
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
       return;

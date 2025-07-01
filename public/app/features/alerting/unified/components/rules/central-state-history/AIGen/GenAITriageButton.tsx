@@ -52,7 +52,7 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
 
   const systemPrompt = createSystemPrompt();
 
-  // Handle LLM call without tools
+  // Handle LLM call without tools: we inject the log records into the prompt instead of using tools
   const handleAnalyze = useCallback(async () => {
     if (logRecords.length === 0) {
       setError('No alert events available to analyze');
@@ -69,10 +69,12 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
         throw new Error('LLM service is not configured or enabled');
       }
 
+      // Create the user prompt with the log records and the custom question
       const userPrompt = createUserPrompt(logRecords, timeRange, customQuestion.trim() || undefined);
 
       const messages: llm.Message[] = [systemPrompt, userPrompt];
 
+      // Call the LLM with the system prompt and the user prompt
       const response = await llm.chatCompletions({
         model: llm.Model.LARGE, // Use LARGE model for better analysis
         messages,

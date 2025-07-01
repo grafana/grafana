@@ -119,10 +119,17 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
 
   // Extract JSON from LLM response, handling markdown code blocks and other formatting
   const extractJsonFromLLMResponse = (response: string): string => {
-    // Remove leading/trailing quotes (original sanitizeReply behavior)
+    // Remove leading/trailing quotes
     let cleaned = response.replace(/^"|"$/g, '');
 
-    // Try to extract JSON from markdown code blocks
+    // Try to extract JSON from markdown code blocks, sometimes the LLM response is formatted like this
+    // example: ```json
+    // {
+    //   "name": "Alert Rule",
+    //   "description": "Alert when CPU usage is above 80% for more than 5 minutes",
+    //   "query": "cpu_usage > 80",
+    // }
+    // ```
     const codeBlockMatch = cleaned.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
     if (codeBlockMatch) {
       cleaned = codeBlockMatch[1];
@@ -138,7 +145,7 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
     return cleaned.trim();
   };
 
-  // Handle LLM call with tools
+  // Handle LLM call with tools: in this case we are using tools to get contact points and data sources
   const handleGenerateWithTools = useCallback(
     async (messages: llm.Message[]) => {
       setIsGenerating(true);
