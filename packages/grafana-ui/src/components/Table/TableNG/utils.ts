@@ -65,6 +65,59 @@ export function shouldTextWrap(field: Field): boolean {
   return ('wrapText' in cellOptions && cellOptions.wrapText) ?? false;
 }
 
+// matches characters which CSS
+const spaceRegex = /[\s-]/;
+
+export interface GetMaxWrapCellOptions {
+  colWidths: number[];
+  avgCharWidth: number;
+  wrappedColIdxs: boolean[];
+}
+
+/**
+ * @internal
+ * loop through the fields and their values, determine which cell is going to determine the
+ * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
+ */
+export function getMaxWrapCell(
+  fields: Field[],
+  rowIdx: number,
+  { colWidths, avgCharWidth, wrappedColIdxs }: GetMaxWrapCellOptions
+): {
+  text: string;
+  idx: number;
+  numLines: number;
+} {
+  let maxLines = 1;
+  let maxLinesIdx = -1;
+  let maxLinesText = '';
+
+  for (let i = 0; i < colWidths.length; i++) {
+    if (wrappedColIdxs[i]) {
+      const field = fields[i];
+      // special case: for the header, provide `-1` as the row index.
+      const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
+
+      if (cellTextRaw != null) {
+        const cellText = String(cellTextRaw);
+
+        if (spaceRegex.test(cellText)) {
+          const charsPerLine = colWidths[i] / avgCharWidth;
+          const approxLines = cellText.length / charsPerLine;
+
+          if (approxLines > maxLines) {
+            maxLines = approxLines;
+            maxLinesIdx = i;
+            maxLinesText = cellText;
+          }
+        }
+      }
+    }
+  }
+
+  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
+}
+
 /**
  * @internal
  * Returns true if text overflow handling should be applied to the cell.

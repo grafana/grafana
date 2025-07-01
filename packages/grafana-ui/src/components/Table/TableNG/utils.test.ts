@@ -28,6 +28,7 @@ import {
   getTextAlign,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
+  getMaxWrapCell,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -1000,5 +1001,118 @@ describe('TableNG utils', () => {
 
       expect(result).toBe(expected);
     });
+  });
+
+  describe('getMaxWrapCell', () => {
+    it('should return the maximum wrap cell length from field state', () => {
+      const field1: Field = {
+        name: 'field1',
+        type: FieldType.string,
+        config: {},
+        values: ['beep boop', 'foo bar baz', 'lorem ipsum dolor sit amet'],
+      };
+
+      const field2: Field = {
+        name: 'field2',
+        type: FieldType.string,
+        config: {},
+        values: ['asdfasdf asdfasdf asdfasdf', 'asdf asdf asdf asdf asdf', ''],
+      };
+
+      const field3: Field = {
+        name: 'field3',
+        type: FieldType.string,
+        config: {},
+        values: ['foo', 'bar', 'baz'],
+        // No alignmentFactors in state
+      };
+
+      const fields = [field1, field2, field3];
+
+      const result = getMaxWrapCell(fields, 0, {
+        colWidths: [30, 50, 100],
+        avgCharWidth: 5,
+        wrappedColIdxs: [true, true, true],
+      });
+      expect(result).toEqual({
+        text: 'asdfasdf asdfasdf asdfasdf',
+        idx: 1,
+        numLines: 2.6,
+      });
+    });
+
+    it('should take colWidths into account when calculating max wrap cell', () => {
+      const fields: Field[] = [
+        {
+          name: 'field',
+          type: FieldType.string,
+          config: {},
+          values: ['short', 'a bit longer text'],
+        },
+        {
+          name: 'field',
+          type: FieldType.string,
+          config: {},
+          values: ['short', 'quite a bit longer text'],
+        },
+        {
+          name: 'field',
+          type: FieldType.string,
+          config: {},
+          values: ['short', 'less text'],
+        },
+      ];
+
+      // Simulate a narrow column width that would cause wrapping
+      const colWidths = [50, 1000, 30]; // 50px width
+      const avgCharWidth = 5; // Assume average character width is 5px
+
+      const result = getMaxWrapCell(fields, 1, { colWidths, avgCharWidth, wrappedColIdxs: [true, true, true] });
+
+      // With a 50px width and 5px per character, we can fit 10 characters per line
+      // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
+      expect(result).toEqual({
+        idx: 0,
+        numLines: 1.7,
+        text: 'a bit longer text',
+      });
+    });
+
+    it('should use the display name if the rowIdx is -1 (which is used to calc header height in wrapped rows)', () => {
+      const fields: Field[] = [
+        {
+          name: 'Field with a very long name',
+          type: FieldType.string,
+          config: {},
+          values: ['short', 'a bit longer text'],
+        },
+        {
+          name: 'Name',
+          type: FieldType.string,
+          config: {},
+          values: ['short', 'quite a bit longer text'],
+        },
+        {
+          name: 'Another field',
+          type: FieldType.string,
+          config: {},
+          values: ['short', 'less text'],
+        },
+      ];
+
+      // Simulate a narrow column width that would cause wrapping
+      const colWidths = [50, 1000, 30]; // 50px width
+      const avgCharWidth = 5; // Assume average character width is 5px
+
+      const result = getMaxWrapCell(fields, -1, { colWidths, avgCharWidth, wrappedColIdxs: [true, true, true] });
+
+      // With a 50px width and 5px per character, we can fit 10 characters per line
+      // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
+      expect(result).toEqual({ idx: 0, numLines: 2.7, text: 'Field with a very long name' });
+    });
+
+    it.todo('should ignore columns which are not wrapped');
+
+    it.todo('should only apply wrapping on idiomatic break characters (space, -, etc)');
   });
 });

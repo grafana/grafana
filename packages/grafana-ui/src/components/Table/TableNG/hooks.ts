@@ -9,7 +9,15 @@ import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types'
 
 import { TABLE } from './constants';
 import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
-import { getDisplayName, processNestedTableRows, applySort, getCellOptions, getColumnTypes } from './utils';
+import {
+  getDisplayName,
+  processNestedTableRows,
+  applySort,
+  getCellOptions,
+  getColumnTypes,
+  GetMaxWrapCellOptions,
+  getMaxWrapCell,
+} from './utils';
 
 // Helper function to get displayed value
 const getDisplayedValue = (row: TableRow, key: string, fields: Field[]) => {
@@ -318,6 +326,9 @@ export function useTypographyCtx(): TypographyCtx {
     const avgCharWidth = txtWidth / txt.length + letterSpacing;
     const { count } = varPreLine(ctx);
     const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
+      if (!text) {
+        return defaultHeight;
+      }
       const numLines = count(text, cellWidth);
       const totalHeight = numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING;
       return Math.max(totalHeight, defaultHeight);
@@ -331,53 +342,6 @@ export function useTypographyCtx(): TypographyCtx {
     };
   }, [theme.typography.fontSize, theme.typography.fontFamily]);
   return typographyCtx;
-}
-
-interface GetMaxWrapCell {
-  fields: Field[];
-  wrapWidths: number[];
-  avgCharWidth: number;
-  wrappedColIdxs: boolean[];
-  getText: (field: Field) => string | null | undefined;
-}
-
-const spaceRegex = /\s/;
-
-/**
- * loop through the fields and their values, determine which cell is going to determine the
- * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
- */
-function getMaxWrapCell({ fields, wrapWidths, avgCharWidth, wrappedColIdxs, getText }: GetMaxWrapCell): {
-  text: string;
-  idx: number;
-  numLines: number;
-} {
-  let maxLines = 1;
-  let maxLinesIdx = -1;
-  let maxLinesText = '';
-
-  for (let i = 0; i < wrapWidths.length; i++) {
-    if (wrappedColIdxs[i]) {
-      const cellTextRaw = getText(fields[i]);
-
-      if (cellTextRaw != null) {
-        const cellText = String(cellTextRaw);
-
-        if (spaceRegex.test(cellText)) {
-          const charsPerLine = wrapWidths[i] / avgCharWidth;
-          const approxLines = cellText.length / charsPerLine;
-
-          if (approxLines > maxLines) {
-            maxLines = approxLines;
-            maxLinesIdx = i;
-            maxLinesText = cellText;
-          }
-        }
-      }
-    }
-  }
-
-  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
 }
 
 const ICON_WIDTH = 16;
@@ -437,7 +401,16 @@ export function useHeaderHeight({
     ];
   }, [fields]);
 
-  const maxHeaderHeight = useMemo(() => {
+  const maxWrapCellOptions = useMemo<GetMaxWrapCellOptions>(
+    () => ({
+      colWidths: columnAvailableWidths,
+      avgCharWidth,
+      wrappedColIdxs: wrappedColHeaderIdxs,
+    }),
+    [columnAvailableWidths, avgCharWidth, wrappedColHeaderIdxs]
+  );
+
+  const headerHeight = useMemo(() => {
     if (!enabled) {
       return 0;
     }
@@ -445,27 +418,11 @@ export function useHeaderHeight({
       return defaultHeight;
     }
 
-    const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell({
-      fields,
-      wrapWidths: columnAvailableWidths,
-      avgCharWidth,
-      wrappedColIdxs: wrappedColHeaderIdxs,
-      getText: getDisplayName,
-    });
-
+    const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
     return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight);
-  }, [
-    avgCharWidth,
-    calcRowHeight,
-    columnAvailableWidths,
-    defaultHeight,
-    fields,
-    enabled,
-    hasWrappedColHeaders,
-    wrappedColHeaderIdxs,
-  ]);
+  }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
 
-  return maxHeaderHeight;
+  return headerHeight;
 }
 
 interface UseRowHeightOptions {
@@ -508,13 +465,25 @@ export function useRowHeight({
     ];
   }, [fields]);
 
+  const colWidths = useMemo(
+    () => columnWidths.map((c) => c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT),
+    [columnWidths]
+  );
+
+  const maxWrapCellOptions = useMemo<GetMaxWrapCellOptions>(
+    () => ({
+      colWidths,
+      avgCharWidth,
+      wrappedColIdxs,
+    }),
+    [colWidths, avgCharWidth, wrappedColIdxs]
+  );
+
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
     if (!hasNestedFrames && !hasWrappedCols) {
       return defaultHeight;
     }
-
-    const wrapWidths = columnWidths.map((c) => c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT);
 
     return (row: TableRow) => {
       // nested rows
@@ -530,31 +499,19 @@ export function useRowHeight({
       }
 
       // regular rows
-      const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell({
-        fields,
-        wrapWidths,
-        avgCharWidth,
-        wrappedColIdxs: wrappedColIdxs,
-        getText: (field) => field.values[row.__index],
-      });
-
-      if (!maxLinesText) {
-        return defaultHeight;
-      }
-
-      return calcRowHeight(maxLinesText, wrapWidths[maxLinesIdx], defaultHeight);
+      const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
+      return calcRowHeight(maxLinesText, colWidths[maxLinesIdx], defaultHeight);
     };
   }, [
-    avgCharWidth,
     calcRowHeight,
-    columnWidths,
     defaultHeight,
     expandedRows,
     fields,
     hasNestedFrames,
     hasWrappedCols,
     headerHeight,
-    wrappedColIdxs,
+    maxWrapCellOptions,
+    colWidths,
   ]);
 
   return rowHeight;
