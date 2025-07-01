@@ -12,7 +12,10 @@ export default defineConfig<PluginOptions>({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [
+    ['list'], // for terminal
+    ['html'], // pretty
+  ],
   use: {
     baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
     trace: 'retain-on-failure',
