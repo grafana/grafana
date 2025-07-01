@@ -72,7 +72,10 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
       <div>
         <div>Data outside time range</div>
         <Button
-          onClick={(v) => onChangeTimeRange({ from: first, to: last })}
+          onClick={(v) => {
+            console.log({ first, last });
+            onChangeTimeRange({ from: first, to: last });
+          }}
           variant="secondary"
           data-testid="time-series-zoom-to-data"
         >
