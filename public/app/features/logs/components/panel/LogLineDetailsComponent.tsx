@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy } from 'lodash';
+import { camelCase, groupBy } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
@@ -55,12 +55,10 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
   const logLineOpen = logOptionsStorageKey
     ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
     : false;
-  const linksOpen = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.log-details.linksOpen`, false)
-    : false;
+  const linksOpen = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.log-details.linksOpen`, true) : true;
   const fieldsOpen = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.log-details.fieldsOpen`, false)
-    : false;
+    ? store.getBool(`${logOptionsStorageKey}.log-details.fieldsOpen`, true)
+    : true;
 
   const handleToggle = useCallback(
     (option: string, isOpen: boolean) => {
@@ -102,7 +100,13 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
             <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
           </ControlledCollapse>
         ) : (
-          <ControlledCollapse key={group} label={group} collapsible isOpen={true}>
+          <ControlledCollapse
+            key={group}
+            label={group}
+            collapsible
+            isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName}`, true)}
+            onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
+          >
             <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
           </ControlledCollapse>
         )
@@ -121,6 +125,10 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
     </div>
   );
 };
+
+function groupOptionName(group: string) {
+  return `${camelCase(group)}Open`;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   componentWrapper: css({
