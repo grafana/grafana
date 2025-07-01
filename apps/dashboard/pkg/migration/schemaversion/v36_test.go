@@ -387,6 +387,21 @@ func TestV36(t *testing.T) {
 				"panels": []interface{}{
 					map[string]interface{}{
 						"type": "row",
+						"datasource": map[string]interface{}{
+							"type":       "prometheus",
+							"uid":        "default-ds-uid",
+							"apiVersion": "v1",
+						},
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId": "A",
+								"datasource": map[string]interface{}{
+									"type":       "prometheus",
+									"uid":        "default-ds-uid",
+									"apiVersion": "v1",
+								},
+							},
+						},
 						"panels": []interface{}{
 							map[string]interface{}{
 								"datasource": map[string]interface{}{

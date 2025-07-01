@@ -159,23 +159,26 @@ func migratePanels(dashboard map[string]interface{}, datasources []DataSourceInf
 
 		// Handle nested panels in collapsed rows
 		nestedPanels, hasNested := panelMap["panels"].([]interface{})
-		if hasNested {
-			for _, nestedPanel := range nestedPanels {
-				np, ok := nestedPanel.(map[string]interface{})
-				if ok {
-					migratePanelDatasources(np, datasources)
-				}
+		if !hasNested {
+			continue
+		}
+
+		for _, nestedPanel := range nestedPanels {
+			np, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
 			}
+			migratePanelDatasources(np, datasources)
 		}
 	}
 }
 
 // migratePanelDatasources updates datasource references in a single panel and its targets
 func migratePanelDatasources(panelMap map[string]interface{}, datasources []DataSourceInfo) {
-	// Skip datasource migration for row panels - they don't have datasources or targets
-	if panelType, ok := panelMap["type"].(string); ok && panelType == "row" {
-		return
-	}
+	// NOTE: Even though row panels don't technically need datasource or targets fields,
+	// we process them anyway to exactly match frontend behavior and avoid inconsistencies
+	// between frontend and backend migrations. The frontend DashboardMigrator processes
+	// all panels uniformly without special row panel handling.
 
 	defaultDS := GetDefaultDSInstanceSettings(datasources)
 	panelDataSourceWasDefault := false
