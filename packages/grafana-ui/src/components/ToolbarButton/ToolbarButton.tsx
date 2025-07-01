@@ -9,7 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles, mediaUp } from '../../themes/mixins';
 import { IconSize } from '../../types/icon';
 import { addTransformTransition } from '../../utils/transitions';
-import { getPropertiesForVariant } from '../Button/Button';
+import { getActiveTransformStyle, getPropertiesForVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -127,6 +127,9 @@ function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
   return icon;
 }
 
+// @todo move somewhere centralized
+const activeAlpha = 0.12;
+
 const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
@@ -176,8 +179,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
       '&:active, &:focus:active': {
-        transform: 'scale(0.95)',
-        background: colorManipulator.alpha(theme.colors.secondary.main, 0.12),
+        ...getActiveTransformStyle(),
+        background: colorManipulator.alpha(theme.colors.secondary.main, activeAlpha),
       },
 
       '&[disabled], &:disabled': {
@@ -203,7 +206,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.action.hover,
       },
       '&:active, &:focus:active': {
-        background: colorManipulator.alpha(theme.colors.action.hover, 0.12),
+        background: colorManipulator.alpha(theme.colors.action.hover, activeAlpha),
       },
     }),
     canvas: defaultOld,

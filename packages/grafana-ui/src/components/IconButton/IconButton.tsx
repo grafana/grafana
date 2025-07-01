@@ -7,7 +7,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { ComponentSize } from '../../types/size';
-import { IconRenderer } from '../Button/Button';
+import { getActiveTransformStyle, IconRenderer } from '../Button/Button';
 import { getSvgSize } from '../Icon/utils';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { PopoverContent, TooltipPlacement } from '../Tooltip/types';
@@ -103,6 +103,10 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
 
 IconButton.displayName = 'IconButton';
 
+// @todo move somewhere centralized
+const hoverAlpha = 0.12;
+const activeAlpha = 0.12 * 2;
+
 const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVariant) => {
   // overall size of the IconButton on hover
   // theme.spacing.gridSize originates from 2*4px for padding and letting the IconSize generally decide on the hoverSize
@@ -168,12 +172,12 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       '&:hover': {
         '&:before': {
           backgroundColor:
-            variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, 0.12),
+            variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, hoverAlpha),
           opacity: 1,
         },
       },
       '&:active, &:active:hover': {
-        transform: 'scale(0.95)',
+        ...getActiveTransformStyle(),
         '&:before': {
           backgroundColor: getActiveColor(iconColor, variant, theme),
           opacity: 1,
@@ -188,6 +192,6 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
 
 function getActiveColor(iconColor: string, variant: string, theme: GrafanaTheme2) {
   return variant === 'secondary'
-    ? colorManipulator.alpha(theme.colors.action.hover, 0.24)
-    : colorManipulator.alpha(iconColor, 0.24);
+    ? colorManipulator.alpha(theme.colors.action.hover, activeAlpha)
+    : colorManipulator.alpha(iconColor, activeAlpha);
 }

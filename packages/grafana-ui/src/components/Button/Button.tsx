@@ -398,6 +398,12 @@ export function getActiveButtonStyles(color: ThemeRichColor, theme: GrafanaTheme
 
   return {
     background,
+    ...getActiveTransformStyle(),
+  };
+}
+
+export function getActiveTransformStyle() {
+  return {
     transform: 'scale(0.95)',
   };
 }
