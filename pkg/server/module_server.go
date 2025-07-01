@@ -53,7 +53,16 @@ func NewModule(opts Options,
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics, reg prometheus.Registerer, promGatherer prometheus.Gatherer, license licensing.Licensing) (*ModuleServer, error) {
+func newModuleServer(opts Options,
+	apiOpts api.ServerOptions,
+	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+	reg prometheus.Registerer,
+	promGatherer prometheus.Gatherer,
+	license licensing.Licensing,
+) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{

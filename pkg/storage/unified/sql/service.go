@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 var (
@@ -49,6 +50,11 @@ type UnifiedStorageGrpcService interface {
 
 type service struct {
 	*services.BasicService
+
+	// Subservices manager
+	subservices        *services.Manager
+	subservicesWatcher *services.FailureWatcher
+	hasSubservices     bool
 
 	cfg       *setting.Cfg
 	features  featuremgmt.FeatureToggles
@@ -71,6 +77,9 @@ type service struct {
 
 	storageRing *ring.Ring
 	lifecycler  *ring.BasicLifecycler
+
+	queue     QOSEnqueueDequeuer
+	scheduler *scheduler.Scheduler
 }
 
 func ProvideUnifiedStorageGrpcService(
@@ -85,6 +94,7 @@ func ProvideUnifiedStorageGrpcService(
 	storageRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 ) (UnifiedStorageGrpcService, error) {
+	var err error
 	tracer := otel.Tracer("unified-storage")
 
 	// FIXME: This is a temporary solution while we are migrating to the new authn interceptor
@@ -95,20 +105,22 @@ func ProvideUnifiedStorageGrpcService(
 	})
 
 	s := &service{
-		cfg:            cfg,
-		features:       features,
-		stopCh:         make(chan struct{}),
-		authenticator:  authn,
-		tracing:        tracer,
-		db:             db,
-		log:            log,
-		reg:            reg,
-		docBuilders:    docBuilders,
-		storageMetrics: storageMetrics,
-		indexMetrics:   indexMetrics,
-		storageRing:    storageRing,
+		cfg:                cfg,
+		features:           features,
+		stopCh:             make(chan struct{}),
+		authenticator:      authn,
+		tracing:            tracer,
+		db:                 db,
+		log:                log,
+		reg:                reg,
+		docBuilders:        docBuilders,
+		storageMetrics:     storageMetrics,
+		indexMetrics:       indexMetrics,
+		storageRing:        storageRing,
+		subservicesWatcher: services.NewFailureWatcher(),
 	}
 
+	subservices := []services.Service{}
 	if cfg.EnableSharding {
 		ringStore, err := kv.NewClient(
 			memberlistKVConfig,
@@ -143,15 +155,50 @@ func ProvideUnifiedStorageGrpcService(
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
 		}
+		subservices = append(subservices, s.lifecycler)
+	}
+
+	if cfg.QOSEnabled {
+		qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
+		queue := scheduler.NewQueue(&scheduler.QueueOptions{
+			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
+			Registerer:       qosReg,
+		})
+		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+			NumWorkers: cfg.QOSNumberWorker,
+			Logger:     log,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create qos scheduler: %s", err)
+		}
+
+		s.queue = queue
+		s.scheduler = scheduler
+		subservices = append(subservices, s.queue, s.scheduler)
+	}
+
+	if len(subservices) > 0 {
+		s.hasSubservices = true
+		s.subservices, err = services.NewManager(subservices...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create subservices manager: %w", err)
+		}
 	}
 
 	// This will be used when running as a dskit service
-	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName(modules.StorageServer)
+	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
 
 	return s, nil
 }
 
-func (s *service) start(ctx context.Context) error {
+func (s *service) starting(ctx context.Context) error {
+	if s.hasSubservices {
+		s.subservicesWatcher.WatchManager(s.subservices)
+		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservices); err != nil {
+			return fmt.Errorf("failed to start subservices: %w", err)
+		}
+	}
+
 	authzClient, err := authz.ProvideStandaloneAuthZClient(s.cfg, s.features, s.tracing)
 	if err != nil {
 		return err
@@ -162,7 +209,19 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	server, err := NewResourceServer(s.db, s.cfg, s.tracing, s.reg, authzClient, searchOptions, s.storageMetrics, s.indexMetrics, s.features)
+	serverOptions := ServerOptions{
+		DB:             s.db,
+		Cfg:            s.cfg,
+		Tracer:         s.tracing,
+		Reg:            s.reg,
+		AccessClient:   authzClient,
+		SearchOptions:  searchOptions,
+		StorageMetrics: s.storageMetrics,
+		IndexMetrics:   s.indexMetrics,
+		Features:       s.features,
+		QOSQueue:       s.queue,
+	}
+	server, err := NewResourceServer(serverOptions)
 	if err != nil {
 		return err
 	}
@@ -192,11 +251,6 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	if s.cfg.EnableSharding {
-		err = s.lifecycler.StartAsync(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to start the lifecycler: %s", err)
-		}
-
 		s.log.Info("waiting until resource server is JOINING in the ring")
 		lfcCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
@@ -231,11 +285,23 @@ func (s *service) GetAddress() string {
 func (s *service) running(ctx context.Context) error {
 	select {
 	case err := <-s.stoppedCh:
-		if err != nil {
+		if err != nil && !errors.Is(err, context.Canceled) {
 			return err
 		}
+	case err := <-s.subservicesWatcher.Chan():
+		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
 		close(s.stopCh)
+	}
+	return nil
+}
+
+func (s *service) stopping(_ error) error {
+	if s.hasSubservices {
+		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservices)
+		if err != nil {
+			return fmt.Errorf("failed to stop subservices: %w", err)
+		}
 	}
 	return nil
 }
@@ -307,14 +373,6 @@ func NewAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, t
 		}
 		return a.Authenticate(ctx)
 	}
-}
-
-func (s *service) stopping(err error) error {
-	if err != nil && !errors.Is(err, context.Canceled) {
-		s.log.Error("stopping unified storage grpc service", "error", err)
-		return err
-	}
-	return nil
 }
 
 func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
