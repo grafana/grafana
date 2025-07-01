@@ -145,7 +145,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
             </Alert>
           )}
 
-          <Field
+          <Field noMargin
             label={t('browse-dashboards.new-provisioned-folder-form.label-folder-name', 'Folder name')}
             invalid={!!formState.errors.title}
             error={formState.errors.title?.message}
