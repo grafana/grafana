@@ -15,5 +15,5 @@ export function useFoldersQuery(
 
   // Running the hooks themselves don't have any side effects, so we can just conditionally use one or the other
   // requestNextPage function from the result
-  return config.featureToggles.foldersNewApi ? resultv2 : resultv1;
+  return config.featureToggles.foldersAppPlatformAPI ? resultv2 : resultv1;
 }

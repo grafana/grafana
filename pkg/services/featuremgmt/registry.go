@@ -1765,8 +1765,8 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "foldersNewApi",
-			Description:       "Enables new API for folders",
+			Name:              "foldersAppPlatformAPI",
+			Description:       "Enables use of app platform API for folders",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaFrontendSearchNavOrganise,
 			HideFromAdminPage: true,

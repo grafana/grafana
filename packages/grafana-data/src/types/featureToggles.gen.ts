@@ -1026,8 +1026,8 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Enables new API for folders
+  * Enables use of app platform API for folders
   * @default false
   */
-  foldersNewApi?: boolean;
+  foldersAppPlatformAPI?: boolean;
 }
