@@ -33,8 +33,8 @@ jest.mock('./BrowseActions/DescendantCount', () => ({
   DescendantCount: () => <div data-testid="descendant-count">2 folders, 5 dashboards</div>,
 }));
 
-jest.mock('app/features/dashboard-scene/components/Provisioned/DashboardEditFormSharedFields', () => ({
-  DashboardEditFormSharedFields: () => <div data-testid="shared-fields" />,
+jest.mock('app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields', () => ({
+  ResourceEditFormSharedFields: () => <div data-testid="shared-fields" />,
 }));
 
 const mockUseDeleteRepositoryFilesMutation = useDeleteRepositoryFilesWithPathMutation as jest.MockedFunction<
