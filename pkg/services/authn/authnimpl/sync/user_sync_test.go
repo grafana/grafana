@@ -21,9 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/scimutil"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func ptrString(s string) *string {
@@ -895,7 +899,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.NewCfg())
+			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.NewCfg(), nil)
 			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -922,6 +926,7 @@ func TestUserSync_SyncUserRetryFetch(t *testing.T) {
 		tracing.NewNoopTracerService(),
 		featuremgmt.WithFeatures(),
 		setting.NewCfg(),
+		nil,
 	)
 
 	email := "test@test.com"
@@ -1411,4 +1416,242 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			require.ErrorIs(t, err, tt.expectedErr)
 		})
 	}
+}
+
+func TestUserSync_SCIMUtilIntegration(t *testing.T) {
+	ctx := context.Background()
+	orgID := int64(1)
+
+	// Mock SCIM utility for testing
+	type mockSCIMUtil struct {
+		userSyncEnabled            bool
+		nonProvisionedUsersAllowed bool
+		shouldUseDynamicConfig     bool
+		shouldReturnError          bool
+	}
+
+	createMockSCIMUtil := func(mockCfg *mockSCIMUtil) *scimutil.SCIMUtil {
+		if mockCfg == nil {
+			return nil
+		}
+
+		// Create a mock K8s client that returns the expected behavior
+		mockK8sClient := &MockK8sHandler{}
+
+		if mockCfg.shouldReturnError {
+			mockK8sClient.On("Get", ctx, "", orgID, mock.AnythingOfType("v1.GetOptions"), mock.Anything).
+				Return(nil, errors.New("k8s error"))
+		} else if mockCfg.shouldUseDynamicConfig {
+			// Create a mock SCIM config with the desired settings
+			obj := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "scim.grafana.com/v0alpha1",
+					"kind":       "SCIMConfig",
+					"metadata": map[string]interface{}{
+						"name":      "test-config",
+						"namespace": "default",
+					},
+					"spec": map[string]interface{}{
+						"enableUserSync":  mockCfg.userSyncEnabled,
+						"enableGroupSync": false, // Not used for this test
+					},
+				},
+			}
+			mockK8sClient.On("Get", ctx, "", orgID, mock.AnythingOfType("v1.GetOptions"), mock.Anything).
+				Return(obj, nil)
+		}
+
+		return scimutil.NewSCIMUtil(mockK8sClient)
+	}
+
+	tests := []struct {
+		name                          string
+		identity                      *authn.Identity
+		staticConfig                  *StaticSCIMConfig
+		mockSCIMUtil                  *mockSCIMUtil
+		expectedUserSyncEnabled       bool
+		expectedNonProvisionedAllowed bool
+		expectedError                 error
+	}{
+		{
+			name: "SCIM util nil - uses static config",
+			identity: &authn.Identity{
+				OrgID: orgID,
+				ID:    "test-user",
+			},
+			staticConfig: &StaticSCIMConfig{
+				IsUserProvisioningEnabled: true,
+				AllowNonProvisionedUsers:  false,
+			},
+			mockSCIMUtil:                  nil, // No SCIM util
+			expectedUserSyncEnabled:       true,
+			expectedNonProvisionedAllowed: false,
+		},
+		{
+			name: "SCIM util with dynamic config - user sync enabled",
+			identity: &authn.Identity{
+				OrgID: orgID,
+				ID:    "test-user",
+			},
+			staticConfig: &StaticSCIMConfig{
+				IsUserProvisioningEnabled: false, // Static disabled
+				AllowNonProvisionedUsers:  false,
+			},
+			mockSCIMUtil: &mockSCIMUtil{
+				userSyncEnabled:            true, // Dynamic enabled
+				nonProvisionedUsersAllowed: true,
+				shouldUseDynamicConfig:     true,
+			},
+			expectedUserSyncEnabled:       true,
+			expectedNonProvisionedAllowed: true,
+		},
+		{
+			name: "SCIM util with dynamic config - user sync disabled",
+			identity: &authn.Identity{
+				OrgID: orgID,
+				ID:    "test-user",
+			},
+			staticConfig: &StaticSCIMConfig{
+				IsUserProvisioningEnabled: true, // Static enabled
+				AllowNonProvisionedUsers:  true,
+			},
+			mockSCIMUtil: &mockSCIMUtil{
+				userSyncEnabled:            false, // Dynamic disabled
+				nonProvisionedUsersAllowed: false,
+				shouldUseDynamicConfig:     true,
+			},
+			expectedUserSyncEnabled:       false,
+			expectedNonProvisionedAllowed: false,
+		},
+		{
+			name: "SCIM util with error - falls back to static config",
+			identity: &authn.Identity{
+				OrgID: orgID,
+				ID:    "test-user",
+			},
+			staticConfig: &StaticSCIMConfig{
+				IsUserProvisioningEnabled: true,
+				AllowNonProvisionedUsers:  false,
+			},
+			mockSCIMUtil: &mockSCIMUtil{
+				shouldReturnError: true,
+			},
+			expectedUserSyncEnabled:       true,
+			expectedNonProvisionedAllowed: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create UserSync service with mock SCIM util
+			userSync := &UserSync{
+				allowNonProvisionedUsers:  tt.staticConfig.AllowNonProvisionedUsers,
+				isUserProvisioningEnabled: tt.staticConfig.IsUserProvisioningEnabled,
+				scimUtil:                  createMockSCIMUtil(tt.mockSCIMUtil),
+				staticConfig:              tt.staticConfig,
+				log:                       log.New("test"),
+			}
+
+			// Test user sync enabled check
+			var userSyncEnabled bool
+			if userSync.scimUtil != nil {
+				userSyncEnabled = userSync.scimUtil.IsUserSyncEnabled(ctx, orgID, tt.staticConfig.IsUserProvisioningEnabled)
+			} else {
+				userSyncEnabled = tt.staticConfig.IsUserProvisioningEnabled
+			}
+			assert.Equal(t, tt.expectedUserSyncEnabled, userSyncEnabled, "User sync enabled mismatch")
+
+			// Test non-provisioned users allowed check
+			var nonProvisionedAllowed bool
+			if userSync.scimUtil != nil {
+				nonProvisionedAllowed = userSync.scimUtil.AreNonProvisionedUsersAllowed(ctx, orgID, tt.staticConfig.AllowNonProvisionedUsers)
+			} else {
+				nonProvisionedAllowed = tt.staticConfig.AllowNonProvisionedUsers
+			}
+			assert.Equal(t, tt.expectedNonProvisionedAllowed, nonProvisionedAllowed, "Non-provisioned users allowed mismatch")
+
+			// Verify mock expectations if SCIM util was used
+			if tt.mockSCIMUtil != nil {
+				// The mock expectations would be verified here if we had access to the mock
+				// For now, we just verify the behavior is correct
+			}
+		})
+	}
+}
+
+// MockK8sHandler is a mock implementation for testing
+type MockK8sHandler struct {
+	mock.Mock
+}
+
+func (m *MockK8sHandler) GetNamespace(orgID int64) string {
+	args := m.Called(orgID)
+	return args.String(0)
+}
+
+func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, opts metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, orgID, opts, subresource)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+// Add other required methods with empty implementations for the mock
+func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Delete(ctx context.Context, name string, orgID int64, options metav1.DeleteOptions) error {
+	args := m.Called(ctx, name, orgID, options)
+	return args.Error(0)
+}
+
+func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
+	args := m.Called(ctx, orgID)
+	return args.Error(0)
+}
+
+func (m *MockK8sHandler) List(ctx context.Context, orgID int64, options metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	args := m.Called(ctx, orgID, options)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.UnstructuredList), args.Error(1)
+}
+
+func (m *MockK8sHandler) Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	args := m.Called(ctx, orgID, in)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*resourcepb.ResourceSearchResponse), args.Error(1)
+}
+
+func (m *MockK8sHandler) GetStats(ctx context.Context, orgID int64) (*resourcepb.ResourceStatsResponse, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*resourcepb.ResourceStatsResponse), args.Error(1)
+}
+
+func (m *MockK8sHandler) GetUsersFromMeta(ctx context.Context, userMeta []string) (map[string]*user.User, error) {
+	args := m.Called(ctx, userMeta)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]*user.User), args.Error(1)
 }

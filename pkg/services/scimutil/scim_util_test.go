@@ -1,0 +1,664 @@
+package scimutil
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	scim "github.com/grafana/grafana/pkg/extensions/apis/scim/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
+
+// MockK8sHandler is a mock implementation of client.K8sHandler for testing
+type MockK8sHandler struct {
+	mock.Mock
+}
+
+func (m *MockK8sHandler) GetNamespace(orgID int64) string {
+	args := m.Called(orgID)
+	return args.String(0)
+}
+
+func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, opts metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, orgID, opts, subresource)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Delete(ctx context.Context, name string, orgID int64, options metav1.DeleteOptions) error {
+	args := m.Called(ctx, name, orgID, options)
+	return args.Error(0)
+}
+
+func (m *MockK8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
+	args := m.Called(ctx, orgID)
+	return args.Error(0)
+}
+
+func (m *MockK8sHandler) List(ctx context.Context, orgID int64, options metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	args := m.Called(ctx, orgID, options)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.UnstructuredList), args.Error(1)
+}
+
+func (m *MockK8sHandler) Search(ctx context.Context, orgID int64, in *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	args := m.Called(ctx, orgID, in)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*resourcepb.ResourceSearchResponse), args.Error(1)
+}
+
+func (m *MockK8sHandler) GetStats(ctx context.Context, orgID int64) (*resourcepb.ResourceStatsResponse, error) {
+	args := m.Called(ctx, orgID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*resourcepb.ResourceStatsResponse), args.Error(1)
+}
+
+func (m *MockK8sHandler) GetUsersFromMeta(ctx context.Context, userMeta []string) (map[string]*user.User, error) {
+	args := m.Called(ctx, userMeta)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]*user.User), args.Error(1)
+}
+
+func TestNewSCIMUtil(t *testing.T) {
+	tests := []struct {
+		name      string
+		k8sClient client.K8sHandler
+	}{
+		{
+			name:      "with k8s client",
+			k8sClient: &MockK8sHandler{},
+		},
+		{
+			name:      "without k8s client",
+			k8sClient: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			util := NewSCIMUtil(tt.k8sClient)
+			assert.NotNil(t, util)
+			assert.Equal(t, tt.k8sClient, util.k8sClient)
+			assert.NotNil(t, util.logger)
+		})
+	}
+}
+
+func TestSCIMUtil_IsUserSyncEnabled(t *testing.T) {
+	ctx := context.Background()
+	orgID := int64(1)
+
+	tests := []struct {
+		name           string
+		k8sClient      client.K8sHandler
+		staticEnabled  bool
+		expectedResult bool
+		setupMock      func(*MockK8sHandler)
+	}{
+		{
+			name:           "k8s client nil - returns static config",
+			k8sClient:      nil,
+			staticEnabled:  true,
+			expectedResult: true,
+		},
+		{
+			name:           "k8s client nil - returns static config false",
+			k8sClient:      nil,
+			staticEnabled:  false,
+			expectedResult: false,
+		},
+		{
+			name:          "k8s client error - falls back to static config",
+			k8sClient:     &MockK8sHandler{},
+			staticEnabled: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(nil, errors.New("k8s error"))
+			},
+			expectedResult: true,
+		},
+		{
+			name:          "dynamic config user sync enabled",
+			k8sClient:     &MockK8sHandler{},
+			staticEnabled: false,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+			expectedResult: true,
+		},
+		{
+			name:          "dynamic config user sync disabled",
+			k8sClient:     &MockK8sHandler{},
+			staticEnabled: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(false, true)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+			expectedResult: false,
+		},
+		{
+			name:          "dynamic config both settings disabled",
+			k8sClient:     &MockK8sHandler{},
+			staticEnabled: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(false, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+			expectedResult: false,
+		},
+		{
+			name:          "dynamic config both settings enabled",
+			k8sClient:     &MockK8sHandler{},
+			staticEnabled: false,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, true)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+			expectedResult: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupMock != nil {
+				tt.setupMock(tt.k8sClient.(*MockK8sHandler))
+			}
+
+			util := NewSCIMUtil(tt.k8sClient)
+			result := util.IsUserSyncEnabled(ctx, orgID, tt.staticEnabled)
+
+			assert.Equal(t, tt.expectedResult, result)
+
+			if tt.k8sClient != nil {
+				tt.k8sClient.(*MockK8sHandler).AssertExpectations(t)
+			}
+		})
+	}
+}
+
+func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
+	ctx := context.Background()
+	orgID := int64(1)
+
+	tests := []struct {
+		name           string
+		k8sClient      client.K8sHandler
+		staticAllowed  bool
+		expectedResult bool
+		setupMock      func(*MockK8sHandler)
+	}{
+		{
+			name:           "k8s client nil - returns static config",
+			k8sClient:      nil,
+			staticAllowed:  true,
+			expectedResult: true,
+		},
+		{
+			name:           "k8s client nil - returns static config false",
+			k8sClient:      nil,
+			staticAllowed:  false,
+			expectedResult: false,
+		},
+		{
+			name:          "k8s client error - falls back to static config",
+			k8sClient:     &MockK8sHandler{},
+			staticAllowed: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(nil, errors.New("k8s error"))
+			},
+			expectedResult: true,
+		},
+		{
+			name:          "dynamic config user sync enabled - non-provisioned users allowed",
+			k8sClient:     &MockK8sHandler{},
+			staticAllowed: false,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+			expectedResult: true,
+		},
+		{
+			name:          "dynamic config user sync disabled - non-provisioned users not allowed",
+			k8sClient:     &MockK8sHandler{},
+			staticAllowed: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(false, true)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+			expectedResult: false,
+		},
+		{
+			name:          "dynamic config both settings disabled - non-provisioned users not allowed",
+			k8sClient:     &MockK8sHandler{},
+			staticAllowed: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(false, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+			expectedResult: false,
+		},
+		{
+			name:          "dynamic config both settings enabled - non-provisioned users allowed",
+			k8sClient:     &MockK8sHandler{},
+			staticAllowed: false,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, true)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+			expectedResult: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupMock != nil {
+				tt.setupMock(tt.k8sClient.(*MockK8sHandler))
+			}
+
+			util := NewSCIMUtil(tt.k8sClient)
+			result := util.AreNonProvisionedUsersAllowed(ctx, orgID, tt.staticAllowed)
+
+			assert.Equal(t, tt.expectedResult, result)
+
+			if tt.k8sClient != nil {
+				tt.k8sClient.(*MockK8sHandler).AssertExpectations(t)
+			}
+		})
+	}
+}
+
+func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
+	ctx := context.Background()
+	orgID := int64(1)
+
+	tests := []struct {
+		name                   string
+		k8sClient              client.K8sHandler
+		settingType            string
+		expectedEnabled        bool
+		expectedDynamicFetched bool
+		setupMock              func(*MockK8sHandler)
+	}{
+		{
+			name:                   "k8s client nil",
+			k8sClient:              nil,
+			settingType:            scim.UserSyncSetting,
+			expectedEnabled:        false,
+			expectedDynamicFetched: false,
+		},
+		{
+			name:                   "invalid setting type",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            "invalid",
+			expectedEnabled:        false,
+			expectedDynamicFetched: false,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+		{
+			name:                   "k8s client error",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.UserSyncSetting,
+			expectedEnabled:        false,
+			expectedDynamicFetched: false,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(nil, errors.New("k8s error"))
+			},
+		},
+		{
+			name:                   "user sync setting enabled",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.UserSyncSetting,
+			expectedEnabled:        true,
+			expectedDynamicFetched: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+		{
+			name:                   "user sync setting disabled",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.UserSyncSetting,
+			expectedEnabled:        false,
+			expectedDynamicFetched: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(false, true)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+		{
+			name:                   "group sync setting enabled",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.GroupSyncSetting,
+			expectedEnabled:        true,
+			expectedDynamicFetched: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(false, true)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+		{
+			name:                   "group sync setting disabled",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.GroupSyncSetting,
+			expectedEnabled:        false,
+			expectedDynamicFetched: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+		{
+			name:                   "user sync setting - both settings disabled",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.UserSyncSetting,
+			expectedEnabled:        false,
+			expectedDynamicFetched: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(false, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+		{
+			name:                   "user sync setting - both settings enabled",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.UserSyncSetting,
+			expectedEnabled:        true,
+			expectedDynamicFetched: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, true)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+		{
+			name:                   "group sync setting - both settings disabled",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.GroupSyncSetting,
+			expectedEnabled:        false,
+			expectedDynamicFetched: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(false, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+		{
+			name:                   "group sync setting - both settings enabled",
+			k8sClient:              &MockK8sHandler{},
+			settingType:            scim.GroupSyncSetting,
+			expectedEnabled:        true,
+			expectedDynamicFetched: true,
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, true)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupMock != nil {
+				tt.setupMock(tt.k8sClient.(*MockK8sHandler))
+			}
+
+			util := NewSCIMUtil(tt.k8sClient)
+			enabled, dynamicFetched := util.fetchDynamicSCIMSetting(ctx, orgID, tt.settingType)
+
+			assert.Equal(t, tt.expectedEnabled, enabled)
+			assert.Equal(t, tt.expectedDynamicFetched, dynamicFetched)
+
+			if tt.k8sClient != nil {
+				tt.k8sClient.(*MockK8sHandler).AssertExpectations(t)
+			}
+		})
+	}
+}
+
+func TestSCIMUtil_getOrgSCIMConfig(t *testing.T) {
+	ctx := context.Background()
+	orgID := int64(1)
+
+	tests := []struct {
+		name          string
+		k8sClient     client.K8sHandler
+		expectedError error
+		setupMock     func(*MockK8sHandler)
+	}{
+		{
+			name:          "k8s client nil",
+			k8sClient:     nil,
+			expectedError: scim.ErrK8sClientNotConfigured,
+		},
+		{
+			name:          "k8s client error",
+			k8sClient:     &MockK8sHandler{},
+			expectedError: errors.New("k8s error"),
+			setupMock: func(mockHandler *MockK8sHandler) {
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(nil, errors.New("k8s error"))
+			},
+		},
+		{
+			name:      "successful fetch",
+			k8sClient: &MockK8sHandler{},
+			setupMock: func(mockHandler *MockK8sHandler) {
+				obj := createMockSCIMConfig(true, false)
+				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+					Return(obj, nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupMock != nil {
+				tt.setupMock(tt.k8sClient.(*MockK8sHandler))
+			}
+
+			util := NewSCIMUtil(tt.k8sClient)
+			config, err := util.getOrgSCIMConfig(ctx, orgID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Nil(t, config)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, config)
+				assert.Equal(t, true, config.Spec.EnableUserSync)
+				assert.Equal(t, false, config.Spec.EnableGroupSync)
+			}
+
+			if tt.k8sClient != nil {
+				tt.k8sClient.(*MockK8sHandler).AssertExpectations(t)
+			}
+		})
+	}
+}
+
+func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
+	tests := []struct {
+		name          string
+		obj           *unstructured.Unstructured
+		expectedError bool
+		expectedSpec  scim.SCIMConfigSpec
+	}{
+		{
+			name:          "nil object",
+			obj:           nil,
+			expectedError: true,
+		},
+		{
+			name: "valid object with both settings enabled",
+			obj:  createMockSCIMConfig(true, true),
+			expectedSpec: scim.SCIMConfigSpec{
+				EnableUserSync:  true,
+				EnableGroupSync: true,
+			},
+		},
+		{
+			name: "valid object with both settings disabled",
+			obj:  createMockSCIMConfig(false, false),
+			expectedSpec: scim.SCIMConfigSpec{
+				EnableUserSync:  false,
+				EnableGroupSync: false,
+			},
+		},
+		{
+			name: "valid object with mixed settings",
+			obj:  createMockSCIMConfig(true, false),
+			expectedSpec: scim.SCIMConfigSpec{
+				EnableUserSync:  true,
+				EnableGroupSync: false,
+			},
+		},
+		{
+			name: "object with missing spec",
+			obj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "scim.grafana.com/v0alpha1",
+					"kind":       "SCIMConfig",
+					"metadata": map[string]interface{}{
+						"name":      "test-config",
+						"namespace": "default",
+					},
+				},
+			},
+			expectedError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			util := NewSCIMUtil(nil)
+			config, err := util.unstructuredToSCIMConfig(tt.obj)
+
+			if tt.expectedError {
+				assert.Error(t, err)
+				assert.Nil(t, config)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, config)
+				assert.Equal(t, tt.expectedSpec, config.Spec)
+				assert.Equal(t, "test-config", config.GetStaticMetadata().Name)
+				assert.Equal(t, "default", config.GetStaticMetadata().Namespace)
+			}
+		})
+	}
+}
+
+// Helper function to create a mock SCIMConfig unstructured object
+func createMockSCIMConfig(userSyncEnabled, groupSyncEnabled bool) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "scim.grafana.com/v0alpha1",
+			"kind":       "SCIMConfig",
+			"metadata": map[string]interface{}{
+				"name":      "test-config",
+				"namespace": "default",
+			},
+			"spec": map[string]interface{}{
+				"enableUserSync":  userSyncEnabled,
+				"enableGroupSync": groupSyncEnabled,
+			},
+		},
+	}
+}
+
+// Test integration scenarios
+func TestSCIMUtil_Integration(t *testing.T) {
+	ctx := context.Background()
+	orgID := int64(1)
+
+	t.Run("full workflow with dynamic config", func(t *testing.T) {
+		mockClient := &MockK8sHandler{}
+		obj := createMockSCIMConfig(true, false)
+		mockClient.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+			Return(obj, nil)
+
+		util := NewSCIMUtil(mockClient)
+
+		// Test user sync enabled
+		userSyncEnabled := util.IsUserSyncEnabled(ctx, orgID, false)
+		assert.True(t, userSyncEnabled)
+
+		// Test non-provisioned users allowed
+		nonProvisionedAllowed := util.AreNonProvisionedUsersAllowed(ctx, orgID, false)
+		assert.True(t, nonProvisionedAllowed)
+
+		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("full workflow with static fallback", func(t *testing.T) {
+		mockClient := &MockK8sHandler{}
+		mockClient.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+			Return(nil, errors.New("k8s error"))
+
+		util := NewSCIMUtil(mockClient)
+
+		// Test user sync falls back to static config
+		userSyncEnabled := util.IsUserSyncEnabled(ctx, orgID, true)
+		assert.True(t, userSyncEnabled)
+
+		// Test non-provisioned users falls back to static config
+		nonProvisionedAllowed := util.AreNonProvisionedUsersAllowed(ctx, orgID, true)
+		assert.True(t, nonProvisionedAllowed)
+
+		mockClient.AssertExpectations(t)
+	})
+}
