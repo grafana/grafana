@@ -36,7 +36,7 @@ func NewApp() *cli.Command {
 				Name:      "grafana-dir",
 				Usage:     "Path to the grafana/grafana clone directory",
 				Value:     ".",
-				Validator: mustBeDir("grafana-dir"),
+				Validator: mustBeDir("grafana-dir", false, false),
 				TakesFile: true,
 			},
 			&cli.StringFlag{
@@ -56,23 +56,21 @@ func NewApp() *cli.Command {
 				Name:  "shard",
 				Usage: "Test shard to run. See Playwright docs",
 			},
-			// &cli.StringFlag{
-			// 	Name:      "config",
-			// 	Usage:     "Path to the pa11y config file to use",
-			// 	Value:     "e2e/pa11yci.conf.js",
-			// 	Validator: mustBeFile("config", true),
-			// 	TakesFile: true,
-			// },
-			// &cli.StringFlag{
-			// 	Name:      "results",
-			// 	Usage:     "Path to the pa11y results file to export",
-			// 	TakesFile: true,
-			// },
-			// &cli.BoolFlag{
-			// 	Name:  "no-threshold-fail",
-			// 	Usage: "Don't fail the task if any of the tests fail. Use this in combination with --results to list all violations even if they're within thresholds",
-			// 	Value: false,
-			// },
+			&cli.StringFlag{
+				Name:      "results-dir",
+				Usage:     "Path to the directory to export the playwright test results to (optional)",
+				Validator: mustBeDir("results-dir", true, true),
+			},
+			&cli.StringFlag{
+				Name:      "html-dir",
+				Usage:     "Enables the HTML reporter, exported to this directory (optional)",
+				Validator: mustBeDir("html-dir", true, true),
+			},
+			&cli.StringFlag{
+				Name:      "blob-dir",
+				Usage:     "Enables the blob reporter, exported to this directory. Useful with --shard (optional)",
+				Validator: mustBeDir("blob-dir", true, true),
+			},
 		},
 		Action: run,
 	}
@@ -83,6 +81,9 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	targzPath := cmd.String("package")
 	licensePath := cmd.String("license")
 	pwShard := cmd.String("shard")
+	resultsDir := cmd.String("results-dir")
+	htmlDir := cmd.String("html-dir")
+	blobDir := cmd.String("blob-dir")
 	// pa11yConfigPath := cmd.String("config")
 	// pa11yResultsPath := cmd.String("results")
 	// noThresholdFail := cmd.Bool("no-threshold-fail")
@@ -122,8 +123,11 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	runOpts := RunTestOpts{
-		GrafanaService: svc,
-		Shard:          pwShard,
+		GrafanaService:       svc,
+		Shard:                pwShard,
+		TestResultsExportDir: resultsDir,
+		HTMLReportExportDir:  htmlDir,
+		BlobReportExportDir:  blobDir,
 	}
 
 	c, runErr := RunTest(ctx, d, runOpts)
@@ -170,13 +174,19 @@ func mustBeFile(arg string, emptyOk bool) func(string) error {
 	}
 }
 
-func mustBeDir(arg string) func(string) error {
+func mustBeDir(arg string, emptyOk bool, notExistOk bool) func(string) error {
 	return func(s string) error {
 		if s == "" {
+			if emptyOk {
+				return nil
+			}
 			return cli.Exit(arg+" cannot be empty", 1)
 		}
 		stat, err := os.Stat(s)
 		if err != nil {
+			if notExistOk {
+				return nil
+			}
 			return cli.Exit(arg+" does not exist or cannot be read: "+s, 1)
 		}
 		if !stat.IsDir() {
