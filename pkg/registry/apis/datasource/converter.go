@@ -136,6 +136,8 @@ func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasource
 		WithCredentials: ds.Spec.WithCredentials,
 		IsDefault:       ds.Spec.IsDefault,
 		ReadOnly:        ds.Spec.ReadOnly,
+		OrgID:           1, // TODO: I don't understand this. It's 1 for all of cloud.
+		Version:         int(ds.Generation),
 	}
 
 	if len(ds.Spec.JsonData.Object) > 0 {

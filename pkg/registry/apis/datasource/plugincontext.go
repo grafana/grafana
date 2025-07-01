@@ -160,10 +160,23 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *v0a
 
 // UpdateDataSource implements PluginDatasourceProvider.
 func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error) {
+	// We don't have, or want, a numeric ID in the new world.
+	// Instead, we have a k8s name, which maps to UID.
+	// Existing code needs ID though, so fetch it from UID and orgID.
+	query := &datasources.GetDataSourceQuery{
+		UID:   ds.Name,
+		OrgID: 1,
+	}
+	existingDS, err := q.dsService.GetDataSource(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
 	cmd, err := q.converter.toUpdateCommand(ds)
 	if err != nil {
 		return nil, err
 	}
+	cmd.ID = existingDS.ID
 	out, err := q.dsService.UpdateDataSource(ctx, cmd)
 	if err != nil {
 		return nil, err
