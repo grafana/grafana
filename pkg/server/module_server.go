@@ -162,7 +162,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
-	m.RegisterModule(modules.StorageRing, s.initIndexServerRing)
+	m.RegisterModule(modules.IndexServerRing, s.initIndexServerRing)
 	m.RegisterModule(modules.IndexServerDistributor, s.initIndexServerDistributor)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {

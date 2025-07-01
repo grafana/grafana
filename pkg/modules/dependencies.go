@@ -7,7 +7,7 @@ const (
 	Core                   string = "core"
 	MemberlistKV           string = "memberlistkv"
 	GrafanaAPIServer       string = "grafana-apiserver"
-	StorageRing            string = "storage-ring"
+	IndexServerRing        string = "index-server-ring"
 	IndexServerDistributor string = "index-server-distributor"
 	StorageServer          string = "storage-server"
 	ZanzanaServer          string = "zanzana-server"
@@ -17,11 +17,11 @@ const (
 
 var dependencyMap = map[string][]string{
 	MemberlistKV:           {InstrumentationServer},
-	StorageRing:            {InstrumentationServer, MemberlistKV},
+	IndexServerRing:        {InstrumentationServer, MemberlistKV},
 	GrafanaAPIServer:       {InstrumentationServer},
-	StorageServer:          {InstrumentationServer, StorageRing},
+	StorageServer:          {InstrumentationServer, IndexServerRing},
 	ZanzanaServer:          {InstrumentationServer},
-	IndexServerDistributor: {InstrumentationServer, MemberlistKV, StorageRing},
+	IndexServerDistributor: {InstrumentationServer, MemberlistKV, IndexServerRing},
 	Core:                   {},
 	All:                    {Core},
 	FrontendServer:         {},
