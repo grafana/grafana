@@ -16,13 +16,13 @@ import { FieldDef } from '../logParser';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
-interface LogDetailsFieldsProps {
+interface LogLineDetailsFieldsProps {
   log: LogListModel;
   logs: LogListModel[];
   fields: FieldDef[];
 }
 
-export const LogDetailsFields = ({ log, logs, fields }: LogDetailsFieldsProps) => {
+export const LogLineDetailsFields = ({ log, logs, fields }: LogLineDetailsFieldsProps) => {
   if (!fields.length) {
     return null;
   }
@@ -32,7 +32,7 @@ export const LogDetailsFields = ({ log, logs, fields }: LogDetailsFieldsProps) =
     <table className={styles.fieldsTable}>
       <tbody>
         {fields.map((field, i) => (
-          <LogDetailsField
+          <LogLineDetailsField
             key={`${field.keys[0]}=${field.values[0]}-${i}`}
             getLogs={getLogs}
             fieldIndex={field.fieldIndex}
@@ -57,13 +57,13 @@ export interface LabelWithLinks {
   links?: LinkModelWithIcon[];
 }
 
-interface LogDetailsLabelFieldsProps {
+interface LogLineDetailsLabelFieldsProps {
   log: LogListModel;
   logs: LogListModel[];
   fields: LabelWithLinks[];
 }
 
-export const LogDetailsLabelFields = ({ log, logs, fields }: LogDetailsLabelFieldsProps) => {
+export const LogLineDetailsLabelFields = ({ log, logs, fields }: LogLineDetailsLabelFieldsProps) => {
   if (!fields.length) {
     return null;
   }
@@ -73,7 +73,7 @@ export const LogDetailsLabelFields = ({ log, logs, fields }: LogDetailsLabelFiel
     <table className={styles.fieldsTable}>
       <tbody>
         {fields.map((field, i) => (
-          <LogDetailsField
+          <LogLineDetailsField
             key={`${field.key}=${field.value}-${i}`}
             getLogs={getLogs}
             isLabel
@@ -96,7 +96,7 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-interface LogDetailsFieldProps {
+interface LogLineDetailsFieldProps {
   keys: string[];
   values: string[];
   disableActions?: boolean;
@@ -107,7 +107,7 @@ interface LogDetailsFieldProps {
   log: LogListModel;
 }
 
-export const LogDetailsField = ({
+export const LogLineDetailsField = ({
   disableActions = false,
   fieldIndex,
   getLogs,
@@ -116,7 +116,7 @@ export const LogDetailsField = ({
   log,
   keys,
   values,
-}: LogDetailsFieldProps) => {
+}: LogLineDetailsFieldProps) => {
   const [showFieldsStats, setShowFieldStats] = useState(false);
   const [fieldCount, setFieldCount] = useState(0);
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);

@@ -1,17 +1,12 @@
 import { css } from '@emotion/css';
-import { groupBy } from 'lodash';
 import { Resizable } from 're-resizable';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
-import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { ClipboardButton, ControlledCollapse, getDragStyles, IconButton, Input, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { getDragStyles, useStyles2 } from '@grafana/ui';
 
-import { getLabelTypeFromRow } from '../../utils';
-import { useAttributesExtensionLinks } from '../LogDetails';
-import { createLogLineLinks } from '../logParser';
-
-import { LabelWithLinks, LogDetailsFields, LogDetailsLabelFields } from './LogLineDetailsFields';
+import { LogLineDetailsComponent } from './LogLineDetailsComponent';
+import { LogLineDetailsHeader } from './LogLineDetailsHeader';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
@@ -24,7 +19,7 @@ interface Props {
 }
 
 export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, onResize }: Props) => {
-  const { closeDetails, detailsWidth, onPermalinkClick, setDetailsWidth, showDetails } = useLogListContext();
+  const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -35,14 +30,6 @@ export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, o
     }
     onResize();
   }, [onResize, setDetailsWidth]);
-
-  const getLogLine = useCallback(() => {
-    return logs[0].entry;
-  }, [logs]);
-
-  const copyLinkToLogLine = useCallback(() => {
-    onPermalinkClick?.(logs[0]);
-  }, [logs, onPermalinkClick]);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
@@ -58,158 +45,14 @@ export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, o
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>
-          <div className={styles.header}>
-            <Input />
-            {onPermalinkClick && logs[0].rowId !== undefined && logs[0].uid && (
-              <IconButton
-                tooltip={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}
-                aria-label={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}
-                tooltipPlacement="top"
-                size="md"
-                name="share-alt"
-                onClick={copyLinkToLogLine}
-                tabIndex={0}
-              />
-            )}
-            <ClipboardButton
-              className={styles.copyLogButton}
-              icon="copy"
-              variant="secondary"
-              fill="text"
-              size="md"
-              getText={getLogLine}
-              tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
-              tooltipPlacement="top"
-              tabIndex={0}
-            />
-            <IconButton
-              name="times"
-              aria-label={t('logs.log-details.close', 'Close log details')}
-              onClick={closeDetails}
-            />
-          </div>
-          <LogDetailsComponent
-            log={showDetails[0]}
-            logOptionsStorageKey={logOptionsStorageKey}
-            logs={logs}
-            styles={styles}
-          />
+          <LogLineDetailsHeader log={showDetails[0]} />
+          <LogLineDetailsComponent log={showDetails[0]} logOptionsStorageKey={logOptionsStorageKey} logs={logs} />
         </div>
       </div>
     </Resizable>
   );
 };
 
-interface LogDetailsComponentProps {
-  log: LogListModel;
-  logOptionsStorageKey?: string;
-  logs: LogListModel[];
-  styles: LogLineDetailsStyles;
-}
-
-const LogDetailsComponent = ({ log, logOptionsStorageKey, logs, styles }: LogDetailsComponentProps) => {
-  const extensionLinks = useAttributesExtensionLinks(log);
-  const fieldsWithLinks = useMemo(() => {
-    const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
-    const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex).sort();
-    const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex).sort();
-    const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
-    return [...displayedFieldsWithLinks, ...fieldsWithLinksFromVariableMap];
-  }, [log.entryFieldIndex, log.fields]);
-  const fieldsWithoutLinks =
-    log.dataFrame.meta?.type === DataFrameType.LogLines
-      ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-        []
-      : // for other frames, do not show the log message unless there is a link attached
-        log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort();
-  const labelsWithLinks: LabelWithLinks[] = useMemo(
-    () =>
-      Object.keys(log.labels)
-        .sort()
-        .map((label) => ({
-          key: label,
-          value: log.labels[label],
-          link: extensionLinks?.[label],
-        })),
-    [extensionLinks, log.labels]
-  );
-  const groupedLabels = useMemo(
-    () => groupBy(labelsWithLinks, (label) => getLabelTypeFromRow(label.key, log, true) ?? ''),
-    [labelsWithLinks, log]
-  );
-  const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
-
-  const logLineOpen = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
-    : false;
-  const linksOpen = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.log-details.linksOpen`, false)
-    : false;
-  const fieldsOpen = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.log-details.fieldsOpen`, false)
-    : false;
-
-  const handleToggle = useCallback(
-    (option: string, isOpen: boolean) => {
-      store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
-    },
-    [logOptionsStorageKey]
-  );
-
-  return (
-    <div className={styles.componentWrapper}>
-      <ControlledCollapse
-        label={t('logs.log-line-details.log-line-section', 'Log line')}
-        collapsible
-        isOpen={logLineOpen}
-        onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
-      >
-        {log.raw}
-      </ControlledCollapse>
-      {fieldsWithLinks.length > 0 && (
-        <ControlledCollapse
-          label={t('logs.log-line-details.links-section', 'Links')}
-          collapsible
-          isOpen={linksOpen}
-          onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
-        >
-          <LogDetailsFields log={log} logs={logs} fields={fieldsWithLinks} />
-        </ControlledCollapse>
-      )}
-      {labelGroups.map((group) =>
-        group === '' ? (
-          <ControlledCollapse
-            key={'fields'}
-            label={t('logs.log-line-details.fields-section', 'Fields')}
-            collapsible
-            isOpen={fieldsOpen}
-            onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
-          >
-            <LogDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
-            <LogDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
-          </ControlledCollapse>
-        ) : (
-          <ControlledCollapse key={group} label={group} collapsible isOpen={true}>
-            <LogDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} />
-          </ControlledCollapse>
-        )
-      )}
-      {!labelGroups.length && (
-        <ControlledCollapse
-          key={'fields'}
-          label={t('logs.log-line-details.fields-section', 'Fields')}
-          collapsible
-          isOpen={fieldsOpen}
-          onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
-        >
-          <LogDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} />
-        </ControlledCollapse>
-      )}
-    </div>
-  );
-};
-
-export type LogLineDetailsStyles = ReturnType<typeof getStyles>;
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     overflow: 'auto',
@@ -218,23 +61,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   scrollContainer: css({
     overflow: 'auto',
     height: '100%',
-  }),
-  header: css({
-    display: 'flex',
-    flexDirection: 'row',
-    gap: theme.spacing(0.5),
-    zIndex: theme.zIndex.modal,
-    height: theme.spacing(5),
-    marginBottom: theme.spacing(0.5),
-    padding: theme.spacing(0.5, 1),
-    position: 'sticky',
-    top: 0,
-  }),
-  copyLogButton: css({
-    padding: 0,
-    height: theme.spacing(4),
-    width: theme.spacing(2.5),
-    overflow: 'hidden',
   }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
