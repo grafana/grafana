@@ -107,7 +107,7 @@ describe('Backend / Frontend result comparison', () => {
   const jsonInputs = readdirSync(inputDir);
 
   // Set the minimum version to test (set to 0 to test all versions)
-  const MIN_VERSION_TO_TEST = [41, 40, 39, 38, 37, 36, 35, 34];
+  const MIN_VERSION_TO_TEST = [41, 40, 39, 38, 37, 36, 35, 34, 33];
 
   jsonInputs.forEach((inputFile) => {
     // Skip test if version is below minimum

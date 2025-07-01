@@ -14,7 +14,7 @@
         "type": "dashboard"
       },
       {
-        "datasource": "Non Default Test Datasource",
+        "datasource": "Non Default Test Datasource Name",
         "enable": true,
         "name": "Test Annotation by Name",
         "type": "dashboard"
@@ -26,7 +26,7 @@
         "type": "dashboard"
       },
       {
-        "datasource": "default",
+        "datasource": "Default Test Datasource Name",
         "enable": true,
         "name": "Test Default Annotation",
         "type": "dashboard"
@@ -164,7 +164,7 @@
       }
     },
     {
-    "datasource": "default",
+    "datasource": "Default Test Datasource Name",
       "title": "Mixed Datasources Panel",
       "id": 7,
       "gridPos": {
@@ -178,7 +178,7 @@
           "datasource": "non-default-test-ds-uid"
         },
         {
-          "datasource": "Non Default Test Datasource"
+          "datasource": "Non Default Test Datasource Name"
         }
       ]
     },
@@ -199,7 +199,7 @@
           "datasource": "non-default-test-ds-uid"
         },
         {
-          "datasource": "Non Default Test Datasource"
+          "datasource": "Non Default Test Datasource Name"
         }
       ]
     },
@@ -384,7 +384,7 @@
       "type": "table",
       "title": "V33: Panel without Targets",
       "id": 17,
-      "datasource": "Non Default Test Datasource",
+      "datasource": "Non Default Test Datasource Name",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -396,7 +396,7 @@
       "type": "table",
       "title": "V33: Panel with Empty Targets Array", 
       "id": 18,
-      "datasource": "default",
+      "datasource": "Default Test Datasource Name",
       "gridPos": {
         "h": 4,
         "w": 6,
@@ -423,7 +423,7 @@
         },
         {
           "refId": "B",
-          "datasource": "default"
+          "datasource": "Default Test Datasource Name"
         },
         {
           "refId": "C",
@@ -455,11 +455,11 @@
         },
         {
           "refId": "B", 
-          "datasource": "Non Default Test Datasource"
+          "datasource": "Non Default Test Datasource Name"
         },
         {
           "refId": "C",
-          "datasource": "default"
+          "datasource": "Default Test Datasource Name"
         }
       ]
     },
@@ -512,12 +512,12 @@
     "list": [
       {
         "type": "query",
-        "datasource": "default",
+        "datasource": "Default Test Datasource Name",
         "name": "default_var"
       },
       {
         "type": "query",
-        "datasource": "Non Default Test Datasource",
+        "datasource": "Non Default Test Datasource Name",
         "name": "es_var_by_name"
       },
       {

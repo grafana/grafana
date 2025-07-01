@@ -15,7 +15,9 @@
       },
       {
         "datasource": {
-          "uid": "Non Default Test Datasource"
+          "apiVersion": "1",
+          "type": "loki",
+          "uid": "non-default-test-ds-uid"
         },
         "enable": true,
         "name": "Test Annotation by Name",
@@ -84,7 +86,7 @@
         "statistic": "Maximum"
       },
       {
-        "datasource": null,
+        "datasource": {},
         "enable": true,
         "name": "Test Empty String Annotation",
         "type": "dashboard"
@@ -322,7 +324,9 @@
     },
     {
       "datasource": {
-        "uid": "Non Default Test Datasource"
+        "apiVersion": "v1",
+        "type": "prometheus",
+        "uid": "default-ds-uid"
       },
       "gridPos": {
         "h": 8,
@@ -341,7 +345,9 @@
         },
         {
           "datasource": {
-            "uid": "Non Default Test Datasource"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           }
         }
       ],
@@ -368,7 +374,9 @@
         },
         {
           "datasource": {
-            "uid": "Non Default Test Datasource"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           }
         }
       ],
@@ -736,7 +744,9 @@
     },
     {
       "datasource": {
-        "uid": "Non Default Test Datasource"
+        "apiVersion": "1",
+        "type": "loki",
+        "uid": "non-default-test-ds-uid"
       },
       "gridPos": {
         "h": 4,
@@ -748,7 +758,9 @@
       "targets": [
         {
           "datasource": {
-            "uid": "Non Default Test Datasource"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           },
           "refId": "A"
         }
@@ -853,7 +865,9 @@
         },
         {
           "datasource": {
-            "uid": "Non Default Test Datasource"
+            "apiVersion": "1",
+            "type": "loki",
+            "uid": "non-default-test-ds-uid"
           },
           "refId": "B"
         },
@@ -884,7 +898,11 @@
       "id": 21,
       "targets": [
         {
-          "datasource": null,
+          "datasource": {
+            "apiVersion": "v1",
+            "type": "prometheus",
+            "uid": "default-ds-uid"
+          },
           "refId": "A"
         }
       ],
@@ -910,7 +928,9 @@
           "refId": "A"
         },
         {
-          "datasource": null,
+          "datasource": {
+            "uid": "completely-missing-ds"
+          },
           "refId": "B"
         }
       ],
@@ -935,7 +955,9 @@
       },
       {
         "datasource": {
-          "uid": "Non Default Test Datasource"
+          "apiVersion": "1",
+          "type": "loki",
+          "uid": "non-default-test-ds-uid"
         },
         "name": "es_var_by_name",
         "type": "query"
@@ -966,7 +988,7 @@
         "type": "query"
       },
       {
-        "datasource": null,
+        "datasource": {},
         "name": "empty_string_var",
         "type": "query"
       },
