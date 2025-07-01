@@ -116,8 +116,8 @@ type ModuleServer struct {
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
 
-	MemberlistKVConfig        kv.Config
-	httpServerRouter          *mux.Router
+	MemberlistKVConfig         kv.Config
+	httpServerRouter           *mux.Router
 	searchServerRing           *ring.Ring
 	searchServerRingClientPool *ringclient.Pool
 }
