@@ -95,7 +95,7 @@ This document provides instructions for configuring the Microsoft SQL Server dat
 
 ## Add the MSSQL data source
 
-To add the MSSQL data source complete the following steps:
+To add the MSSQL data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Click **Add new connection**

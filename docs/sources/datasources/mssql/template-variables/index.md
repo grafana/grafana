@@ -43,13 +43,13 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana displays these variables in drop-down select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as **template variables**.
 
-For general information on using variable in Grafana, refer to [Add variables](ref:add-template-variables)
+For general information on using variables in Grafana, refer to [Add variables](ref:add-template-variables).
 
 For an introduction to templating and template variables, refer to [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables).
 
 ## Query variable
 
-A query variable in Grafana is a type of template variable that dynamically retrieves values from your data source using a query. With a query variable, you can write a SQL query that returns values such as measurement names, key names or key values that are shown as a drop-down select box.
+A query variable in Grafana dynamically retrieves values from your data source using a query. With a query variable, you can write a SQL query that returns values such as measurement names, key names, or key values that are shown in a drop-down select box.
 
 For example, the following query returns all values from the `hostname` column:
 
@@ -71,13 +71,13 @@ You can also create a key/value variable using a query that returns two columns 
 
 This is useful when you want to display a user-friendly label (like a hostname) but use a different underlying value (like an ID).
 
-Note that the values in the _`_text` column should be unique. If there are duplicates, Grafana only uses only the first matching entry.
+Note that the values in the _`_text` column should be unique. If there are duplicates, Grafana uses only the first matching entry.
 
 ```sql
 SELECT hostname __text, id __value FROM host
 ```
 
-You can also create nested variables, where one variable depends on the value of another. For example, if you have a variable named `region`, you can configure a `hosts` variable to only show hosts from the selected region. If region is a multi-value variable, use the `IN` operator instead of `=` to match against multiple selected values.
+You can also create nested variables, where one variable depends on the value of another. For example, if you have a variable named `region`, you can configure a `hosts` variable to only show hosts from the selected region. If `region` is a multi-value variable, use the `IN` operator instead of `=` to match against multiple selected values.
 
 ```sql
 SELECT hostname FROM host WHERE region IN ($region)
@@ -85,13 +85,13 @@ SELECT hostname FROM host WHERE region IN ($region)
 
 ## Use variables in queries
 
-Template variable values are automatically quoted only when the template variable is `multi-value`.
+Grafana automatically quotes template variable values only when the template variable is a `multi-value`.
 
 When using a multi-value variable, use the `IN` comparison operator instead of `=` to match against multiple values.
 
 Grafana supports two syntaxes for using variables in queries:
 
-- **`$<varname>` syntax** 
+- **`$<varname>` syntax**
 
 Example with a template variable named `hostname`:
 
@@ -104,7 +104,7 @@ WHERE $__timeFilter(atimestamp) and hostname in($hostname)
 ORDER BY atimestamp
 ```
 
-- **`[[varname]]` syntax** 
+- **`[[varname]]` syntax**
 
 Example with a template variable named `hostname`:
 
