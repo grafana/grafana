@@ -343,7 +343,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
     let pointsFilter: uPlot.Series.Points.Filter = () => null;
 
-    if (customConfig.spanNulls !== true) {
+    if (customConfig.spanNulls !== true && showPoints === VisibilityMode.Auto) {
       pointsFilter = (u, seriesIdx, show, gaps) => {
         let filtered = [];
 
