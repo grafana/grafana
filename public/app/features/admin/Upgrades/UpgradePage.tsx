@@ -15,7 +15,7 @@ const mockDetails = {
     { version: '10.0.0', releaseDate: '2024-04-01', notes: 'Major release.' },
   ],
   installedVersion: '10.2.0',
-  changelog: '10.2.0: Bug fixes and improvements',
+  changelog: '<h2>10.2.0</h2><p>Bug fixes and improvements</p>',
 };
 
 const TABS = [
@@ -30,9 +30,21 @@ enum TabView {
 }
 const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
   [TabView.OVERVIEW]: <Overview />,
-  [TabView.CHANGELOG]: <Changelog changelog={mockDetails.changelog}/>,
+  [TabView.CHANGELOG]: <Changelog sanitizedHTML={mockDetails.changelog}/>,
   [TabView.VERSIONS]: <VersionList versions={mockDetails.versions} installedVersion={mockDetails.installedVersion}/>,
 };
+
+// TODO: get versions from API
+// const getVersions = () => {
+// };
+
+//TODO: get changelog
+// const getChangelog = () => {
+// }
+
+// TODO: get current Grafana version
+// const getCurrentGrafanaVersion = () => {
+// }
 
 function Overview() {
   return (<div><Trans i18nKey="upgrades.overveiw.header">Overview of grafana version.</Trans></div>);
