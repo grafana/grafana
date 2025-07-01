@@ -266,7 +266,7 @@ describe('usePluginComponents()', () => {
 
     // Should also render the component if it wants to change the props
     expect(() => render(<Component foo={originalFoo} override />)).not.toThrow();
-    expect(log.warning).toHaveBeenCalledWith(
+    expect(log.error).toHaveBeenCalledWith(
       `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app`,
       {
         stack: expect.any(String),
