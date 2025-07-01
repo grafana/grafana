@@ -7,9 +7,10 @@ on:
       - main
       - release-*.*.*
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+# TODO: re-enable this before merging
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions: {}
 
@@ -29,6 +30,7 @@ jobs:
       - uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
+          cloud-token: ${{ secrets.TEMP_DAGGER_TOKEN_JOSH }} # TODO: remove before merging
           args: go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
       - run: mv "$(cat out.txt)" grafana.tar.gz
       - run: echo "artifact=grafana-e2e-${{github.run_number}}" >> "$GITHUB_OUTPUT"
@@ -137,6 +139,86 @@ jobs:
           path: videos
           retention-days: 1
 
+  run-playwright-tests:
+    needs:
+      - build-grafana
+    name: Playwright E2E tests (${{ matrix.shard }}/${{ matrix.shardTotal }})
+    runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+        shardTotal: [4]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-grafana.outputs.artifact }}
+      - name: Run E2E tests
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+        with:
+          verb: run
+          cloud-token: ${{ secrets.TEMP_DAGGER_TOKEN_JOSH }} # TODO: remove before merging
+          args: go run ./pkg/build/e2e-playwright --package=grafana.tar.gz --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --blob-dir=./blob-report
+      - uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: playwright-blob-${{ github.run_number }}-${{ matrix.shard }}
+          path: ./blob-report
+          retention-days: 1
+
+  required-playwright-tests:
+    needs:
+      - run-playwright-tests
+    if: ${{ !cancelled() }}
+    name: All Playwright tests complete
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Download blob reports from GitHub Actions Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: playwright-blob-*
+          merge-multiple: true
+
+      - name: Merge into HTML Report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-${{ github.run_number }}
+          path: playwright-report
+          retention-days: 7
+
+      - name: Show test results
+        run: npx playwright merge-reports --reporter list ./all-blob-reports
+
+      - name: Check test suites
+        uses: ./.github/actions/check-jobs
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more E2E test suites have failed"
+          success-message: "All E2E test suites completed successfully"
+
   run-a11y-test:
     needs:
       - build-grafana
@@ -182,12 +264,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check test suites
-        env:
-          NEEDS: ${{ toJson(needs) }}
-        run: |
-          FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
-          echo "$FAILURES"
-          if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
-            exit 1
-          fi
-          echo "All OK!"
+        uses: ./.github/actions/check-test-suites
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more E2E test suites have failed"
+          success-message: "All E2E test suites completed successfully"

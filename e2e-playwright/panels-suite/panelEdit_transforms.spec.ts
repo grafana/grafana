@@ -3,7 +3,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.describe(
   'Panels test: Transformations',
   {
-    tag: '@panels',
+    tag: ['@panels'],
   },
   () => {
     test('Tests transformations editor', async ({ selectors, gotoDashboardPage, dashboardPage }) => {
@@ -33,7 +33,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.disableTransformationButton).click();
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.PanelDataErrorMessage)
-      ).not.toBeVisible();
+      ).toBeHidden();
     });
   }
 );

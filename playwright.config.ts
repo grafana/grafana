@@ -12,7 +12,9 @@ export default defineConfig<PluginOptions>({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [
+    ['html'], // pretty
+  ],
   use: {
     baseURL: `http://${process.env.HOST || 'localhost'}:${process.env.PORT || 3000}`,
     trace: 'retain-on-failure',
@@ -20,6 +22,8 @@ export default defineConfig<PluginOptions>({
       username: 'admin',
       password: 'admin',
     },
+    screenshot: 'only-on-failure',
+    permissions: ['clipboard-read', 'clipboard-write'],
     provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
   },
   projects: [
@@ -207,6 +211,51 @@ export default defineConfig<PluginOptions>({
     {
       name: 'panels',
       testDir: path.join(testDirRoot, '/panels-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'smoke',
+      testDir: path.join(testDirRoot, '/smoke-tests-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'dashboards',
+      testDir: path.join(testDirRoot, '/dashboards-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'loki',
+      testDir: path.join(testDirRoot, '/loki'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'cloud-plugins',
+      testDir: path.join(testDirRoot, '/cloud-plugins-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
+      name: 'dashboard-new-layouts',
+      testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
