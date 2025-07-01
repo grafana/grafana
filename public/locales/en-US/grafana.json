@@ -110,6 +110,12 @@
       "update-button": "Update",
       "users-heading": "Organization users"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "Dismiss",
+      "heading": "Enterprise authentication",
+      "learn-more-link": "Learn more",
+      "text": "Manage users, teams, and permissions automatically with <1>SAML</1>, <3>SCIM</3>, <6>LDAP</6>, and <8>RBAC</8> — available in Grafana Cloud and Enterprise."
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Custom branding",
@@ -3256,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "No numeric fields found",
+      "missing-series": "Bar charts require a string or time field"
+    }
   },
   "barchart": {
     "config": {
@@ -9503,6 +9515,15 @@
       "view": "View"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "Data is missing a number field",
+        "string": "Data is missing a string field",
+        "time": "Data is missing a time field",
+        "unknown": "Cannot visualize data"
+      },
+      "no-value": {
+        "default": "No data"
+      },
       "open-visualization-suggestions": "Open visualization suggestions",
       "switch-to-table": "Switch to table"
     },
@@ -11603,6 +11624,12 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "No graphable fields",
+      "time": "Data does not have a time field"
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Add annotation",
@@ -12052,6 +12079,7 @@
           "polynomial": "Polynomial"
         }
       },
+      "regression": "regression",
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer-editor": {
