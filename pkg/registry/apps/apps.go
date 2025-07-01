@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	graphqlsubgraph "github.com/grafana/grafana-app-sdk/graphql/subgraph"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,8 +26,9 @@ var (
 )
 
 type Service struct {
-	runner *runner.APIGroupRunner
-	log    log.Logger
+	runner    *runner.APIGroupRunner
+	log       log.Logger
+	providers []app.Provider
 }
 
 // ProvideRegistryServiceSink is an entry point for each service that will force initialization
@@ -73,7 +75,7 @@ func ProvideRegistryServiceSink(
 	if err != nil {
 		return nil, err
 	}
-	return &Service{runner: apiGroupRunner, log: logger}, nil
+	return &Service{runner: apiGroupRunner, log: logger, providers: providers}, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -83,4 +85,17 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 	s.log.Info("app registry initialized")
 	return s.runner.Run(ctx)
+}
+
+// GetGraphQLProviders returns all app providers that implement GraphQLSubgraphProvider
+// This enables the GraphQL federation system to automatically discover and integrate
+// GraphQL-capable apps without hardcoding them in the main GraphQL handler.
+func (s *Service) GetGraphQLProviders() []graphqlsubgraph.GraphQLSubgraphProvider {
+	var graphqlProviders []graphqlsubgraph.GraphQLSubgraphProvider
+	for _, provider := range s.providers {
+		if graphqlProvider, ok := provider.(graphqlsubgraph.GraphQLSubgraphProvider); ok {
+			graphqlProviders = append(graphqlProviders, graphqlProvider)
+		}
+	}
+	return graphqlProviders
 }
