@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Badge, LinkButton, useStyles2 } from '@grafana/ui';
 
 interface Version {
   version: string;
@@ -24,8 +26,10 @@ export function VersionList({ versions, installedVersion }: Props) {
       <thead>
         <tr>
           <th>Version</th>
+          <th></th>
           <th>Release Date</th>
           <th>Notes</th>
+          <th>More Info</th> 
         </tr>
       </thead>
       <tbody>
@@ -33,9 +37,36 @@ export function VersionList({ versions, installedVersion }: Props) {
           const isInstalled = v.version === installedVersion;
           return (
             <tr key={v.version}>
-              <td>{v.version}{isInstalled && ' (installed)'}</td>
+              <td>{v.version}</td>
+              <td>
+                {isInstalled ? (
+                  <Badge text="Installed" icon="check" color="green" className={styles.badge} />
+                ) : (
+                  <LinkButton
+                    fill="solid"
+                    variant="secondary"
+                    icon="download-alt"
+                    fullWidth
+                    size="sm"
+                    className={styles.badge}
+                    href={`https://grafana.com/grafana/download/${v.version}`}
+                    tooltip="Install"
+                  >
+                    Install
+                  </LinkButton>
+                )}
+              </td>
               <td>{v.releaseDate}</td>
               <td>{v.notes || '-'}</td>
+              <td>
+                <a
+                  href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <LinkButton type="button" variant="secondary" icon="info-circle" href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`} target="_blank" rel="noopener noreferrer">Release Notes</LinkButton>
+                </a>
+              </td>
             </tr>
           );
         })}
@@ -56,6 +87,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   table: css({
     tableLayout: 'fixed',
+    marginTop: theme.spacing(2),
     width: '100%',
     'td, th': {
       padding: `${theme.spacing()} 0`,
@@ -69,6 +101,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'tbody tr:nth-child(odd)': {
       background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
     },
+  }),
+  badge: css({
+    height: 24,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '50%',
   }),
 });
 

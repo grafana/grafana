@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
-import { Trans } from '@grafana/i18n';
-import { TabsBar, Tab } from '@grafana/ui';
+import { TabsBar, Tab, Alert, Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
+import { Overview } from './Overview';
 import { Changelog } from './Changelog';
 import { VersionList } from './VersionList';
 
@@ -29,7 +29,7 @@ enum TabView {
   VERSIONS = 'VERSIONS',
 }
 const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
-  [TabView.OVERVIEW]: <Overview />,
+  [TabView.OVERVIEW]: <Overview installedVersion={mockDetails.installedVersion} versions={mockDetails.versions} />,
   [TabView.CHANGELOG]: <Changelog sanitizedHTML={mockDetails.changelog}/>,
   [TabView.VERSIONS]: <VersionList versions={mockDetails.versions} installedVersion={mockDetails.installedVersion}/>,
 };
@@ -44,17 +44,21 @@ const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
 
 // TODO: get current Grafana version
 // const getCurrentGrafanaVersion = () => {
-// }
 
-function Overview() {
-  return (<div><Trans i18nKey="upgrades.overveiw.header">Overview of grafana version.</Trans></div>);
-}
 
 function UpgradePage() {
   const [activeTab, setActiveTab] = useState('OVERVIEW');
+
+
   return (
     <Page navId="upgrade-grafana">
     <Page.Contents>
+    <Alert title="New version available" severity="info">
+      <Stack direction="column" justifyContent="space-between" gap={2} alignItems="flex-start">
+        <div>Upgrade Grafana to the latest version.</div>
+        <Button variant="primary">Upgrade</Button>
+      </Stack>
+    </Alert>
     <div>
       <TabsBar>
         {TABS.map((tab) => (
@@ -67,7 +71,7 @@ function UpgradePage() {
         ))}
       </TabsBar>
 
-      {activeTab ? TAB_PAGE_MAP[activeTab as TabView] : <Overview />}
+      {activeTab ? TAB_PAGE_MAP[activeTab as TabView] : <Overview installedVersion={mockDetails.installedVersion} versions={mockDetails.versions} />}
     </div>
   </Page.Contents>
 </Page>
