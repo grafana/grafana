@@ -971,6 +971,11 @@ describe('graphiteDatasource', () => {
       expect(functionDate.toDate()).toEqual(date);
       expect(updatedDate).not.toEqual(date.getTime());
     });
+    it('returns the input if the input is invalid', async () => {
+      const updatedDate = ctx.ds.translateTime('', true);
+
+      expect(updatedDate).toBe('');
+    });
   });
 });
 
