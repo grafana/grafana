@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"net/http"
@@ -18,6 +17,9 @@ type subChildrenREST struct {
 
 var _ = rest.Connecter(&subChildrenREST{})
 var _ = rest.StorageMetadata(&subChildrenREST{})
+
+// RootFolderName Hardcoded magic const to get root folders without parent.
+var RootFolderName = "general"
 
 func (r *subChildrenREST) New() runtime.Object {
 	return &folders.FolderList{}
@@ -39,28 +41,11 @@ func (r *subChildrenREST) ConnectMethods() []string {
 }
 
 func (r *subChildrenREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return &metav1.ListOptions{}, false, "" // true means you can use the trailing path as a variable
+	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
 func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	options, ok := opts.(*metav1.ListOptions)
-	if !ok {
-		return nil, fmt.Errorf("opts is not a metav1.GetOptions")
-	}
-
-	obj, err := r.lister.List(ctx, &internalversion.ListOptions{
-		TypeMeta:             options.TypeMeta,
-		LabelSelector:        nil,
-		FieldSelector:        nil,
-		Watch:                options.Watch,
-		AllowWatchBookmarks:  options.AllowWatchBookmarks,
-		ResourceVersion:      options.ResourceVersion,
-		ResourceVersionMatch: options.ResourceVersionMatch,
-		TimeoutSeconds:       options.TimeoutSeconds,
-		Limit:                0,
-		Continue:             options.Continue,
-		SendInitialEvents:    options.SendInitialEvents,
-	})
+	obj, err := r.lister.List(ctx, &internalversion.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +58,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime
 		children := &folders.FolderList{}
 		parentName := ""
 
-		// Hardcoded magic const to get root folders without parent.
-		if name != "general" {
+		if name != RootFolderName {
 			parentName = name
 		}
 		for _, folder := range allFolders.Items {
