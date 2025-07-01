@@ -5,7 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { ProvisionedDashboardFormData } from '../../saving/shared';
 
-import { DashboardEditFormSharedFields } from './DashboardEditFormSharedFields';
+import { ResourceEditFormSharedFields } from './ResourceEditFormSharedFields';
 
 // Mock the i18n hook since it's used in the component
 jest.mock('@grafana/i18n', () => ({
@@ -65,13 +65,13 @@ function setup(options: SetupOptions = {}) {
     user,
     ...render(
       <FormWrapper>
-        <DashboardEditFormSharedFields {...componentProps} resourceType="dashboard" />
+        <ResourceEditFormSharedFields {...componentProps} resourceType="dashboard" />
       </FormWrapper>
     ),
   };
 }
 
-describe('DashboardEditFormSharedFields', () => {
+describe('ResourceEditFormSharedFields', () => {
   describe('Basic Rendering', () => {
     it('should render path and comment fields by default', () => {
       setup();
@@ -186,7 +186,7 @@ describe('DashboardEditFormSharedFields', () => {
 
         return (
           <FormProvider {...methods}>
-            <DashboardEditFormSharedFields
+            <ResourceEditFormSharedFields
               workflowOptions={[
                 { label: 'Write directly', value: 'write' },
                 { label: 'Create branch', value: 'branch' },

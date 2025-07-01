@@ -8,7 +8,7 @@ import { Box, Button, Stack } from '@grafana/ui';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DashboardEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/DashboardEditFormSharedFields';
+import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
 import { FolderDTO } from 'app/types';
 
@@ -121,7 +121,7 @@ function FormContent({
             />
           </Box>
 
-          <DashboardEditFormSharedFields
+          <ResourceEditFormSharedFields
             resourceType="folder"
             isNew={false}
             workflow={workflow}
