@@ -61,7 +61,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		StorageType:        options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
 		DataPath:           apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:            apiserverCfg.Key("address").MustString(""),
-		IndexServerAddress: apiserverCfg.Key("index_server_address").MustString(""),
+		SearchServerAddress: apiserverCfg.Key("search_server_address").MustString(""),
 		BlobStoreURL:       apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes: apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
@@ -135,8 +135,8 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		if opts.IndexServerAddress != "" {
-			indexConn, err = newGrpcConn(opts.IndexServerAddress, metrics, features)
+		if opts.SearchServerAddress != "" {
+			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features)
 
 			if err != nil {
 				return nil, err

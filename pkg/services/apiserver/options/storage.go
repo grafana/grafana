@@ -43,7 +43,7 @@ type StorageOptions struct {
 
 	// For unified-grpc
 	Address                                  string
-	IndexServerAddress                       string
+	SearchServerAddress                       string
 	GrpcClientAuthenticationToken            string
 	GrpcClientAuthenticationTokenExchangeURL string
 	GrpcClientAuthenticationTokenNamespace   string
@@ -138,8 +138,8 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 		return err
 	}
 	var indexConn *grpc.ClientConn
-	if o.IndexServerAddress != "" {
-		indexConn, err = grpc.NewClient(o.IndexServerAddress,
+	if o.SearchServerAddress != "" {
+		indexConn, err = grpc.NewClient(o.SearchServerAddress,
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
