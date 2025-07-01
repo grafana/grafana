@@ -688,6 +688,68 @@ func (_c *MockClient_GetBranch_Call) RunAndReturn(run func(context.Context, stri
 	return _c
 }
 
+// GetCommitsBetweenRefs provides a mock function with given fields: ctx, owner, repository, base, head
+func (_m *MockClient) GetCommitsBetweenRefs(ctx context.Context, owner string, repository string, base string, head string) ([]CommitInfo, error) {
+	ret := _m.Called(ctx, owner, repository, base, head)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCommitsBetweenRefs")
+	}
+
+	var r0 []CommitInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) ([]CommitInfo, error)); ok {
+		return rf(ctx, owner, repository, base, head)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) []CommitInfo); ok {
+		r0 = rf(ctx, owner, repository, base, head)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]CommitInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, base, head)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_GetCommitsBetweenRefs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCommitsBetweenRefs'
+type MockClient_GetCommitsBetweenRefs_Call struct {
+	*mock.Call
+}
+
+// GetCommitsBetweenRefs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner string
+//   - repository string
+//   - base string
+//   - head string
+func (_e *MockClient_Expecter) GetCommitsBetweenRefs(ctx interface{}, owner interface{}, repository interface{}, base interface{}, head interface{}) *MockClient_GetCommitsBetweenRefs_Call {
+	return &MockClient_GetCommitsBetweenRefs_Call{Call: _e.mock.On("GetCommitsBetweenRefs", ctx, owner, repository, base, head)}
+}
+
+func (_c *MockClient_GetCommitsBetweenRefs_Call) Run(run func(ctx context.Context, owner string, repository string, base string, head string)) *MockClient_GetCommitsBetweenRefs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_GetCommitsBetweenRefs_Call) Return(_a0 []CommitInfo, _a1 error) *MockClient_GetCommitsBetweenRefs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_GetCommitsBetweenRefs_Call) RunAndReturn(run func(context.Context, string, string, string, string) ([]CommitInfo, error)) *MockClient_GetCommitsBetweenRefs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetContents provides a mock function with given fields: ctx, owner, repository, path, ref
 func (_m *MockClient) GetContents(ctx context.Context, owner string, repository string, path string, ref string) (RepositoryContent, []RepositoryContent, error) {
 	ret := _m.Called(ctx, owner, repository, path, ref)
@@ -755,6 +817,68 @@ func (_c *MockClient_GetContents_Call) Return(fileContents RepositoryContent, di
 }
 
 func (_c *MockClient_GetContents_Call) RunAndReturn(run func(context.Context, string, string, string, string) (RepositoryContent, []RepositoryContent, error)) *MockClient_GetContents_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetDiff provides a mock function with given fields: ctx, owner, repository, base, head
+func (_m *MockClient) GetDiff(ctx context.Context, owner string, repository string, base string, head string) (*Diff, error) {
+	ret := _m.Called(ctx, owner, repository, base, head)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDiff")
+	}
+
+	var r0 *Diff
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (*Diff, error)); ok {
+		return rf(ctx, owner, repository, base, head)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) *Diff); ok {
+		r0 = rf(ctx, owner, repository, base, head)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*Diff)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, base, head)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_GetDiff_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDiff'
+type MockClient_GetDiff_Call struct {
+	*mock.Call
+}
+
+// GetDiff is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner string
+//   - repository string
+//   - base string
+//   - head string
+func (_e *MockClient_Expecter) GetDiff(ctx interface{}, owner interface{}, repository interface{}, base interface{}, head interface{}) *MockClient_GetDiff_Call {
+	return &MockClient_GetDiff_Call{Call: _e.mock.On("GetDiff", ctx, owner, repository, base, head)}
+}
+
+func (_c *MockClient_GetDiff_Call) Run(run func(ctx context.Context, owner string, repository string, base string, head string)) *MockClient_GetDiff_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_GetDiff_Call) Return(_a0 *Diff, _a1 error) *MockClient_GetDiff_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_GetDiff_Call) RunAndReturn(run func(context.Context, string, string, string, string) (*Diff, error)) *MockClient_GetDiff_Call {
 	_c.Call.Return(run)
 	return _c
 }

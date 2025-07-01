@@ -495,3 +495,42 @@ type PullRequestInfo struct {
 	Head   string `json:"head"`
 	Base   string `json:"base"`
 }
+
+// RefDiffResponse is the response from getting a diff between refs
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type RefDiffResponse struct {
+	metav1.TypeMeta `json:",inline"`
+	Diff            *DiffInfo `json:"diff,omitempty"`
+
+	// Error message if the diff request failed
+	Error string `json:"error,omitempty"`
+}
+
+type DiffInfo struct {
+	Head string `json:"head"`
+	Base string `json:"base"`
+	// List of changed files
+	Files []FileChange `json:"files"`
+	// List of commits between base and head
+	Commits []CommitInfo `json:"commits"`
+
+	DiffURL string `json:"diffURL,omitempty"`
+}
+
+type CommitInfo struct {
+	SHA       string `json:"sha"`
+	Message   string `json:"message"`
+	Author    string `json:"author"`
+	Timestamp int64  `json:"timestamp"`
+	CommitURL string `json:"commitURL,omitempty"`
+}
+
+type FileChange struct {
+	Path string `json:"path"`
+	// Type of change: added, modified, deleted, renamed
+	Status       string `json:"status"`
+	PreviousPath string `json:"previousPath,omitempty"` // On rename
+	FileURL      string `json:"fileURL,omitempty"`
+	// The patch/diff content for this file
+	Patch string `json:"patch,omitempty"`
+}

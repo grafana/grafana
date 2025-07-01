@@ -359,6 +359,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("pr")] = NewPRsConnector(b)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("diff")] = NewDiffConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -851,6 +852,36 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 			},
 		}
 		sub.Get = nil
+		sub.Put = nil
+		sub.Delete = nil
+	}
+
+	// Show diff endpoint documentation
+	sub = oas.Paths.Paths[repoprefix+"/diff"]
+	if sub != nil {
+		sub.Get.Description = "Get diff between two refs (branches/commits)"
+		sub.Get.Summary = "Get repository diff"
+		sub.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "ref",
+					In:          "query",
+					Description: "The source ref (branch/commit) to compare",
+					Schema:      spec.StringProperty(),
+					Required:    true,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "base",
+					In:          "query",
+					Description: "The base ref (branch/commit) to compare against. Defaults to repository's default branch",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+		sub.Post = nil
 		sub.Put = nil
 		sub.Delete = nil
 	}

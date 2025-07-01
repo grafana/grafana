@@ -104,6 +104,9 @@ type Client interface {
 	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
 
 	CreatePullRequest(ctx context.Context, owner, repository, title, body, head, base string) (*PullRequest, error)
+
+	GetDiff(ctx context.Context, owner, repository, base, head string) (*Diff, error)
+	GetCommitsBetweenRefs(ctx context.Context, owner, repository, base, head string) ([]CommitInfo, error)
 }
 
 //go:generate mockery --name RepositoryContent --structname MockRepositoryContent --inpackage --filename mock_repository_content.go --with-expecter
@@ -193,4 +196,22 @@ type WebhookConfig struct {
 	// The secret to use when sending events to the URL.
 	// If fetched from GitHub, this is empty as it contains no useful information.
 	Secret string
+}
+
+type Diff struct {
+	Files []DiffFile
+}
+
+type DiffFile struct {
+	Filename     string
+	Status       string
+	PreviousName string
+	Patch        string
+}
+
+type CommitInfo struct {
+	SHA       string
+	Message   string
+	Author    string
+	Timestamp int64
 }

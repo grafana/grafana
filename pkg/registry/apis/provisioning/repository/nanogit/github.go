@@ -127,3 +127,11 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 func (r *githubRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 	return r.nanogitRepo.Clone(ctx, opts)
 }
+
+func (r *githubRepository) GetDiff(ctx context.Context, base, ref string) (*pgh.Diff, error) {
+	return r.apiRepo.GetDiff(ctx, base, ref)
+}
+
+func (r *githubRepository) GetCommitsBetweenRefs(ctx context.Context, base, ref string) ([]pgh.CommitInfo, error) {
+	return r.apiRepo.GetCommitsBetweenRefs(ctx, base, ref)
+}
