@@ -44,7 +44,7 @@ function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undef
 /**
  * Returns a loaded folder hierarchy as a flat list and a function to load more pages.
  */
-export function useFoldersQueryV1(
+export function useFoldersQueryLegacy(
   isBrowsing: boolean,
   openFolders: Record<string, boolean>,
   permission?: PermissionLevelString
