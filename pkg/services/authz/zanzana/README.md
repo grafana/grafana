@@ -273,14 +273,14 @@ And then run grafana server target:
 
 ### Using OpenFGA CLI
 
-useful info on how to setup and use https://openfga.dev/docs/getting-started/cli
-Once the server is running, you can interact with it using the OpenFGA CLI:
+There's useful info on how to setup and use [OpenFGA CLI](https://openfga.dev/docs/getting-started/cli). Once the server is running, you can interact with it using the CLI:
 
 ```bash
 # List all stores
 fga store list
 
 # Other commands
-fga model read
-fga tuple list
+fga model list --store-id <store_id>
+fga tuple read --store-id <store_id>
+fga query check
 ```
