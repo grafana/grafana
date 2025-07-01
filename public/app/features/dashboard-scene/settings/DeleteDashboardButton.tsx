@@ -6,7 +6,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { DeleteProvisionedDashboardDrawer } from './DeleteProvisionedDashboardDrawer';
@@ -50,11 +49,6 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
       });
     }
     await dashboard.onDashboardDelete();
-    const pageStateManager = getDashboardScenePageStateManager();
-    pageStateManager.clearDashboardCache();
-    if (dashboard.state.uid) {
-      pageStateManager.removeSceneCache(dashboard.state.uid);
-    }
   }, [dashboard, toggleModal]);
 
   // Git managed dashboard
