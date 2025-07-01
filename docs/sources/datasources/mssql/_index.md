@@ -109,9 +109,9 @@ You can query and visualize data from any Microsoft SQL Server 2005 or newer, in
 
 Use this data source to create dashboards, explore SQL data, and monitor MSSQL-based workloads in real time.
 
-The following documentation will help you get started working with the Microsoft SQL Server (MSSQL) data source:
+The following documentation helps you get started working with the Microsoft SQL Server (MSSQL) data source:
 
-- [Configure the  Microsoft SQL Server data source](ref:configure-mssql-data-source)
+- [Configure the Microsoft SQL Server data source](ref:configure-mssql-data-source)
 - [Microsoft SQL Server query editor](ref:mssql-query-editor)
 - [Microsoft SQL Server template variables](ref:mssql-template-variables)
 
