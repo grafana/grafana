@@ -1,7 +1,7 @@
 import { TemplateSrv } from '@grafana/runtime';
 
-import { getMockDSInstanceSettings, mockBackendService } from '../__mocks__/datasource';
-import { mockInfluxSQLVariableFetchResponse } from '../__mocks__/response';
+import { getMockDSInstanceSettings, mockBackendService } from '../mocks/datasource';
+import { mockInfluxSQLVariableFetchResponse } from '../mocks/response';
 
 import { FlightSQLDatasource } from './datasource.flightsql';
 
