@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func ProvideIndexDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
+func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer trace.Tracer, ring *ring.Ring, ringClientPool *ringclient.Pool) (grpcserver.Provider, error) {
 	var err error
 	grpcHandler, err := grpcserver.ProvideService(cfg, features, nil, tracer, registerer)
 	if err != nil {
@@ -73,8 +73,8 @@ func (c *RingClient) RemoteAddress() string {
 	return c.Conn.Target()
 }
 
-const RingKey = "index-server-ring"
-const RingName = "index_server_ring"
+const RingKey = "search-server-ring"
+const RingName = "search_server_ring"
 const RingHeartbeatTimeout = time.Minute
 const RingNumTokens = 128
 

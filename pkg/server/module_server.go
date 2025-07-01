@@ -118,8 +118,8 @@ type ModuleServer struct {
 
 	MemberlistKVConfig        kv.Config
 	httpServerRouter          *mux.Router
-	indexServerRing           *ring.Ring
-	indexServerRingClientPool *ringclient.Pool
+	searchServerRing           *ring.Ring
+	searchServerRingClientPool *ringclient.Pool
 }
 
 // init initializes the server and its services.
@@ -162,8 +162,8 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
-	m.RegisterModule(modules.IndexServerRing, s.initIndexServerRing)
-	m.RegisterModule(modules.IndexServerDistributor, s.initIndexServerDistributor)
+	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
+	m.RegisterModule(modules.SearchServerDistributor, s.initSearchServerDistributor)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)
@@ -183,7 +183,7 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
-		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.indexServerRing, s.MemberlistKVConfig)
+		return sql.ProvideUnifiedStorageGrpcService(s.cfg, s.features, nil, s.log, s.registerer, docBuilders, s.storageMetrics, s.indexMetrics, s.searchServerRing, s.MemberlistKVConfig)
 	})
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {

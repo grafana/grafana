@@ -25,7 +25,7 @@ import (
 
 var metricsPrefix = resource.RingName + "_"
 
-func (ms *ModuleServer) initIndexServerRing() (services.Service, error) {
+func (ms *ModuleServer) initSearchServerRing() (services.Service, error) {
 	if !ms.cfg.EnableSharding {
 		return nil, nil
 	}
@@ -48,7 +48,7 @@ func (ms *ModuleServer) initIndexServerRing() (services.Service, error) {
 		return nil, fmt.Errorf("failed to create KV store client: %s", err)
 	}
 
-	indexServerRing, err := ring.NewWithStoreClientAndStrategy(
+	searchServerRing, err := ring.NewWithStoreClientAndStrategy(
 		toRingConfig(ms.cfg, ms.MemberlistKVConfig),
 		resource.RingName,
 		resource.RingKey,
@@ -62,7 +62,7 @@ func (ms *ModuleServer) initIndexServerRing() (services.Service, error) {
 	}
 
 	startFn := func(ctx context.Context) error {
-		err = indexServerRing.StartAsync(ctx)
+		err = searchServerRing.StartAsync(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to start the ring: %s", err)
 		}
@@ -74,10 +74,10 @@ func (ms *ModuleServer) initIndexServerRing() (services.Service, error) {
 		return nil
 	}
 
-	ms.indexServerRing = indexServerRing
-	ms.indexServerRingClientPool = pool
+	ms.searchServerRing = searchServerRing
+	ms.searchServerRingClientPool = pool
 
-	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(indexServerRing)
+	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(searchServerRing)
 
 	svc := services.NewIdleService(startFn, nil)
 
