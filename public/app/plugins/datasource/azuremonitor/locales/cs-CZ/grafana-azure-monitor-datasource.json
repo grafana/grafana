@@ -222,6 +222,9 @@
       "text-no-resources": "Nebyly nalezeny žádné zdroje",
       "title-error-occurred": "Při požadování zdrojů ze služby Azure Monitor došlo k chybě"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Vyhledávání zdrojů",
       "placeholder-resource-search": "Hledat zdroj"
