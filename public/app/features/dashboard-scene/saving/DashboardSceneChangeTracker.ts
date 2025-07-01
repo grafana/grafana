@@ -175,14 +175,14 @@ export class DashboardSceneChangeTracker {
           const eventPayload = (event as any)?.payload?.partialUpdate;
           if (eventPayload?.from && eventPayload?.to) {
             console.log({ eventPayload });
-            const { from, to } = eventPayload;
-            window.parent.postMessage(
-              {
-                source: 'grafana-dashboard-time-range-changed',
-                payload: { from, to },
-              },
-              '*'
-            );
+            // const { from, to } = eventPayload;
+            // window.parent.postMessage(
+            //   {
+            //     source: 'grafana-dashboard-time-range-changed',
+            //     payload: { from, to },
+            //   },
+            //   '*'
+            // );
           }
           performSaveModelDiff();
         }
