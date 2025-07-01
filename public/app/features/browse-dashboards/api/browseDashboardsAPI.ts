@@ -2,13 +2,14 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { folderAPI } from 'app/api/clients/folder';
+import { folderAPIv1beta1 as folderAPI } from 'app/api/clients/folder/v1beta1';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { Resource, ResourceList } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -53,12 +54,7 @@ interface ImportOptions {
 }
 
 interface RestoreDashboardArgs {
-  dashboardUID: string;
-  targetFolderUID: string;
-}
-
-interface HardDeleteDashboardArgs {
-  dashboardUID: string;
+  dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
 
 export interface ListFolderQueryArgs {
@@ -405,56 +401,86 @@ export const browseDashboardsAPI = createApi({
           folderUid,
         },
       }),
-      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async ({ dashboard, folderUid }, { queryFulfilled, dispatch }) => {
+        // Check if a dashboard with this UID already exists to find its current folder
+        let currentFolderUid: string | undefined;
+        if (dashboard.uid) {
+          try {
+            const existingDashboard = await getDashboardAPI().getDashboardDTO(dashboard.uid);
+            currentFolderUid = isDashboardV2Resource(existingDashboard)
+              ? existingDashboard.metadata?.name
+              : existingDashboard.meta?.folderUid;
+          } catch (error) {
+            if (isFetchError(error)) {
+              if (error.status !== 404) {
+                console.error('Error fetching dashboard', error);
+              } else {
+                // Do not show the error alert if the dashboard does not exist
+                // this is expected when importing a new dashboard
+                error.isHandled = true;
+              }
+            }
+          }
+        }
+
         queryFulfilled.then(async (response) => {
+          // Refresh destination folder
           dispatch(
             refetchChildren({
               parentUID: folderUid,
               pageSize: PAGE_SIZE,
             })
           );
+
+          // If the dashboard was moved from a different folder, refresh the source folder too
+          if (currentFolderUid && currentFolderUid !== folderUid) {
+            dispatch(
+              refetchChildren({
+                parentUID: currentFolderUid,
+                pageSize: PAGE_SIZE,
+              })
+            );
+          }
+
           const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
           locationService.push(dashboardUrl);
         });
       },
     }),
 
-    // restore a dashboard that got soft deleted
-    restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      query: ({ dashboardUID, targetFolderUID }) => ({
-        url: `/dashboards/uid/${dashboardUID}/trash`,
-        body: {
-          folderUid: targetFolderUID,
-        },
-        method: 'PATCH',
-      }),
+    // RTK wrapper for the dashboard API
+    listDeletedDashboards: builder.query<ResourceList<Dashboard | DashboardV2Spec>, void>({
+      queryFn: async () => {
+        try {
+          const api = getDashboardAPI();
+          const response = await api.listDeletedDashboards({});
+
+          return { data: response };
+        } catch (error) {
+          return handleRequestError(error);
+        }
+      },
     }),
 
-    // permanently delete a dashboard. used in PermanentlyDeleteModal.
-    hardDeleteDashboard: builder.mutation<void, HardDeleteDashboardArgs>({
-      queryFn: async ({ dashboardUID }, _api, _extraOptions, baseQuery) => {
-        const response = await baseQuery({
-          url: `/dashboards/uid/${dashboardUID}/trash`,
-          method: 'DELETE',
-          showSuccessAlert: false,
-        });
+    // restore a dashboard that got deleted
+    restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
+      queryFn: async ({ dashboard }) => {
+        try {
+          const api = getDashboardAPI();
+          const response = await api.restoreDashboard(dashboard);
+          const name = response.spec.title;
 
-        // @ts-expect-error
-        const name = response?.data?.title;
+          if (name) {
+            appEvents.publish({
+              type: AppEvents.alertSuccess.name,
+              payload: [t('browse-dashboards.restore.success', 'Dashboard {{name}} restored', { name })],
+            });
+          }
 
-        if (name) {
-          appEvents.publish({
-            type: AppEvents.alertSuccess.name,
-            payload: [t('browse-dashboards.hard-delete.success', 'Dashboard {{name}} deleted', { name })],
-          });
+          return { data: undefined };
+        } catch (error) {
+          return handleRequestError(error);
         }
-
-        return { data: undefined };
-      },
-      onQueryStarted: ({ dashboardUID }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(() => {
-          dispatch(refreshParents([dashboardUID]));
-        });
       },
     }),
   }),
@@ -473,5 +499,5 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
-  useHardDeleteDashboardMutation,
+  useListDeletedDashboardsQuery,
 } = browseDashboardsAPI;

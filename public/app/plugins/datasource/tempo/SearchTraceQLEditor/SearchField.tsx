@@ -127,12 +127,27 @@ const SearchField = ({
       return;
     }
 
+    let currentOptions = options;
+
+    // Add custom value if it exists and isn't already in options
+    if (filter.isCustomValue && filter.value) {
+      const customValue = Array.isArray(filter.value) ? filter.value : [filter.value];
+
+      const newCustomOptions = customValue
+        .filter((val) => !options.some((opt) => opt.value === val))
+        .map((val) => ({ label: val, value: val, type: filter.valueType }));
+
+      if (newCustomOptions.length > 0) {
+        currentOptions = [...options, ...newCustomOptions];
+      }
+    }
+
     if (tagValuesQuery.length === 0) {
-      return options.slice(0, OPTIONS_LIMIT);
+      return currentOptions.slice(0, OPTIONS_LIMIT);
     }
 
     const queryLowerCase = tagValuesQuery.toLowerCase();
-    return options
+    return currentOptions
       .filter((tag) => {
         if (tag.value && tag.value.length > 0) {
           return tag.value.toLowerCase().includes(queryLowerCase);
@@ -140,7 +155,7 @@ const SearchField = ({
         return false;
       })
       .slice(0, OPTIONS_LIMIT);
-  }, [tagValuesQuery, options]);
+  }, [tagValuesQuery, options, filter.isCustomValue, filter.value, filter.valueType]);
 
   return (
     <>
@@ -218,10 +233,24 @@ const SearchField = ({
                   ...filter,
                   value: val.map((v) => v.value),
                   valueType: val[0]?.type || uniqueOptionType,
+                  isCustomValue: false,
                 });
               } else {
-                updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
+                updateFilter({
+                  ...filter,
+                  value: val?.value,
+                  valueType: val?.type || uniqueOptionType,
+                  isCustomValue: false,
+                });
               }
+            }}
+            onCreateOption={(val) => {
+              updateFilter({
+                ...filter,
+                value: Array.isArray(filter.value) ? filter.value?.concat(val) : val,
+                valueType: uniqueOptionType,
+                isCustomValue: true,
+              });
             }}
             placeholder="Select value"
             isClearable={true}

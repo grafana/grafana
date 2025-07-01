@@ -566,6 +566,10 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			}
 
 			staleStatesCount++
+		} else if s.State == eval.Alerting {
+			// We need to update EndsAt for the state so that it will not be resolved by the
+			// Alertmanager automatically.
+			s.Maintain(alertRule.IntervalSeconds, evaluatedAt)
 		}
 
 		record := StateTransition{

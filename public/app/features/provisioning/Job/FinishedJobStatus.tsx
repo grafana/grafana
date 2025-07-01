@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Spinner, Stack, Text } from '@grafana/ui';
-import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning';
+import { useGetRepositoryJobsWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useStepStatus } from '../Wizard/StepStatusContext';
 
@@ -35,7 +35,7 @@ export function FinishedJobStatus({ jobUid, repositoryName }: FinishedJobProps) 
       }, 1000);
     }
 
-    if (finishedQuery.isSuccess) {
+    if (finishedQuery.isSuccess && job?.status?.state !== 'error') {
       setStepStatusInfo({ status: 'success' });
     }
 

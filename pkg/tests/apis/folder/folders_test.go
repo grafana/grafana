@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -175,6 +174,38 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				featuremgmt.FlagNestedFolders,
 			},
 		}))
+	})
+
+	// This is a general test for the unified storage list operation. We don't have a common test
+	// directory for now, so we (search and storage) keep it here as we own this part of the tests.
+	t.Run("make sure list works with continue tokens", func(t *testing.T) {
+		modes := []grafanarest.DualWriterMode{
+			grafanarest.Mode1,
+			grafanarest.Mode2,
+			grafanarest.Mode3,
+			grafanarest.Mode4,
+			grafanarest.Mode5,
+		}
+		for _, mode := range modes {
+			t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
+				doListFoldersTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+					AppModeProduction:    true,
+					DisableAnonymous:     true,
+					APIServerStorageType: "unified",
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						folders.RESOURCEGROUP: {
+							DualWriterMode: mode,
+						},
+					},
+					// We set it to 1 here, so we always get forced pagination based on the response size.
+					UnifiedStorageMaxPageSizeBytes: 1,
+					EnableFeatureToggles: []string{
+						featuremgmt.FlagKubernetesClientDashboardsFolders,
+						featuremgmt.FlagNestedFolders,
+					},
+				}), mode)
+			})
+		}
 	})
 
 	t.Run("when creating a folder it should trim leading and trailing spaces", func(t *testing.T) {
@@ -488,11 +519,69 @@ func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelpe
 	require.Equal(t, 400, create.Response.StatusCode)
 }
 
+func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	foldersCount := 3
+	for i := 0; i < foldersCount; i++ {
+		payload, err := json.Marshal(map[string]interface{}{
+			"title": fmt.Sprintf("Test-%d", i),
+			"uid":   fmt.Sprintf("uid-%d", i),
+		})
+		require.NoError(t, err)
+		parentCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   payload,
+		}, &folder.Folder{})
+		require.NotNil(t, parentCreate.Result)
+		require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
+	}
+	fetchedFolders, fetchItemsPerCall := checkListRequest(t, 1, client)
+	require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
+	require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
+
+	// Now let's see if the iterator also works when we are limited by the page size, which should be set
+	// to 1 byte for this test. We only need to check that if we test unified storage as the primary storage,
+	// as legacy doesn't have such a page size limit.
+	if mode == grafanarest.Mode3 || mode == grafanarest.Mode4 || mode == grafanarest.Mode5 {
+		t.Run("check page size iterator", func(t *testing.T) {
+			fetchedFolders, fetchItemsPerCall := checkListRequest(t, 3, client)
+			require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
+			require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
+		})
+	}
+}
+
+func checkListRequest(t *testing.T, limit int64, client *apis.K8sResourceClient) ([]string, []int) {
+	fetchedFolders := make([]string, 0, 3)
+	fetchItemsPerCall := make([]int, 0, 3)
+	continueToken := ""
+	for {
+		res, err := client.Resource.List(context.Background(), metav1.ListOptions{
+			Limit:    limit,
+			Continue: continueToken,
+		})
+		require.NoError(t, err)
+		fetchItemsPerCall = append(fetchItemsPerCall, len(res.Items))
+		for _, item := range res.Items {
+			fetchedFolders = append(fetchedFolders, item.GetName())
+		}
+		continueToken = res.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+	return fetchedFolders, fetchItemsPerCall
+}
+
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("not working yet")
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 	folderWithParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
@@ -617,7 +706,6 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("not yet working")
 
 	type testCase struct {
 		description          string
@@ -644,10 +732,10 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			checkAccessControl: true,
 		},
 		{
-			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
+			description:          "get folder by UID should not return parent folders if nested folder are enabled and user does not have read access to parent folders",
 			expectedCode:         http.StatusOK,
-			expectedParentUIDs:   []string{api.REDACTED},
-			expectedParentTitles: []string{api.REDACTED},
+			expectedParentUIDs:   []string{},
+			expectedParentTitles: []string{},
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
 					Actions:           []string{dashboards.ActionFoldersRead},
