@@ -87,7 +87,7 @@ func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
-	engine.SetMaxOpenConns(getter.Int("max_open_conns", 0))
+	engine.SetMaxOpenConns(getter.Int("max_open_conn", 0))
 	engine.SetMaxIdleConns(getter.Int("max_idle_conn", 4))
 	maxLifetime := time.Duration(getter.Int("conn_max_lifetime", 14400)) * time.Second
 	engine.SetConnMaxLifetime(maxLifetime)
@@ -189,7 +189,7 @@ func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
-	engine.SetMaxOpenConns(getter.Int("max_open_conns", 0))
+	engine.SetMaxOpenConns(getter.Int("max_open_conn", 0))
 	engine.SetMaxIdleConns(getter.Int("max_idle_conn", 4))
 	maxLifetime := time.Duration(getter.Int("conn_max_lifetime", 14400)) * time.Second
 	engine.SetConnMaxLifetime(maxLifetime)
