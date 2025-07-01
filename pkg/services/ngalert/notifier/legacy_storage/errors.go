@@ -12,6 +12,13 @@ var (
 		"Invalid receiver: '{{ .Public.Reason }}'",
 		errutil.WithPublic("Invalid receiver: '{{ .Public.Reason }}'"),
 	)
+
+	ErrRouteNotFound      = errutil.NotFound("alerting.notifications.routes.notFound", errutil.WithPublicMessage("Route not found"))
+	ErrRouteExists        = errutil.Conflict("alerting.notifications.routes.exists", errutil.WithPublicMessage("Route with this name already exists. Use a different name or update an existing one."))
+	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
+		"Invalid format of the submitted route.",
+		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
+	)
 )
 
 func makeErrBadAlertmanagerConfiguration(err error) error {
@@ -32,4 +39,13 @@ func MakeErrReceiverInvalid(err error) error {
 		Error: err,
 	}
 	return ErrReceiverInvalid.Build(data)
+}
+
+func MakeErrRouteInvalidFormat(err error) error {
+	return ErrRouteInvalidFormat.Build(errutil.TemplateData{
+		Public: map[string]any{
+			"Error": err.Error(),
+		},
+		Error: err,
+	})
 }

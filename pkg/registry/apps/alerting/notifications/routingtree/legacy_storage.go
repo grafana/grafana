@@ -22,9 +22,11 @@ var (
 )
 
 type RouteService interface {
-	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
-	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
-	ResetPolicyTree(ctx context.Context, orgID int64, p alerting_models.Provenance) (definitions.Route, error)
+	GetPolicySubTrees(ctx context.Context, orgID int64) ([]*definitions.Route, map[string]string, error)
+	GetPolicySubTree(ctx context.Context, orgID int64, name string) (definitions.Route, string, error)
+	DeletePolicySubTree(ctx context.Context, orgID int64, name string, p alerting_models.Provenance, version string) error
+	CreatePolicySubTree(ctx context.Context, orgID int64, subtree definitions.Route, p alerting_models.Provenance) (definitions.Route, string, error)
+	UpdatePolicySubTree(ctx context.Context, orgID int64, subtree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
 }
 
 type legacyStorage struct {
@@ -55,57 +57,76 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) getUserDefinedRoutingTree(ctx context.Context) (*model.RoutingTree, error) {
+func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	res, version, err := s.service.GetPolicyTree(ctx, orgId)
+	subtrees, versions, err := s.service.GetPolicySubTrees(ctx, orgId)
 	if err != nil {
 		return nil, err
 	}
-	res.Name = model.UserDefinedRoutingTreeName
-	return ConvertToK8sResource(orgId, res, version, s.namespacer)
-}
-
-func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
-	user, err := s.getUserDefinedRoutingTree(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &model.RoutingTreeList{
-		Items: []model.RoutingTree{
-			*user,
-		},
-	}, nil
+	return ConvertToK8sResources(orgId, subtrees, versions, s.namespacer)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
-	if name != model.UserDefinedRoutingTreeName {
-		return nil, errors.NewNotFound(ResourceInfo.GroupResource(), name)
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
 	}
-	return s.getUserDefinedRoutingTree(ctx)
+	subtree, version, err := s.service.GetPolicySubTree(ctx, info.OrgID, name)
+	if err != nil {
+		return nil, err
+	}
+	return ConvertToK8sResource(info.OrgID, subtree, version, s.namespacer)
 }
 
-func (s *legacyStorage) Create(_ context.Context,
-	_ runtime.Object,
-	_ rest.ValidateObjectFunc,
+func (s *legacyStorage) Create(ctx context.Context,
+	obj runtime.Object,
+	createValidation rest.ValidateObjectFunc,
 	_ *metav1.CreateOptions,
 ) (runtime.Object, error) {
-	return nil, errors.NewMethodNotSupported(ResourceInfo.GroupResource(), "create")
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	if createValidation != nil {
+		if err := createValidation(ctx, obj.DeepCopyObject()); err != nil {
+			return nil, err
+		}
+	}
+	p, ok := obj.(*model.RoutingTree)
+	if !ok {
+		return nil, fmt.Errorf("expected %s but got %s", ResourceInfo.GroupVersionKind(), obj.GetObjectKind().GroupVersionKind())
+	}
+	domainModel, _, err := convertToDomainModel(p)
+	if err != nil {
+		return nil, err
+	}
+	created, version, err := s.service.CreatePolicySubTree(ctx, info.OrgID, domainModel, alerting_models.ProvenanceNone)
+	if err != nil {
+		return nil, err
+	}
+
+	return ConvertToK8sResource(info.OrgID, created, version, s.namespacer)
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	if name != model.UserDefinedRoutingTreeName {
-		return nil, false, errors.NewNotFound(ResourceInfo.GroupResource(), name)
-	}
+func (s *legacyStorage) Update(
+	ctx context.Context,
+	name string,
+	objInfo rest.UpdatedObjectInfo,
+	_ rest.ValidateObjectFunc,
+	updateValidation rest.ValidateObjectUpdateFunc,
+	_ bool,
+	_ *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
 	}
 
-	old, err := s.Get(ctx, model.UserDefinedRoutingTreeName, nil)
+	old, err := s.Get(ctx, name, nil)
 	if err != nil {
 		return old, false, err
 	}
@@ -123,11 +144,11 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, fmt.Errorf("expected %s but got %s", ResourceInfo.GroupVersionKind(), obj.GetObjectKind().GroupVersionKind())
 	}
 
-	model, version, err := convertToDomainModel(p)
+	domainModel, version, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, false, err
 	}
-	updated, updatedVersion, err := s.service.UpdatePolicyTree(ctx, info.OrgID, model, alerting_models.ProvenanceNone, version)
+	updated, updatedVersion, err := s.service.UpdatePolicySubTree(ctx, info.OrgID, domainModel, alerting_models.ProvenanceNone, version)
 	if err != nil {
 		return nil, false, err
 	}
@@ -137,10 +158,12 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 }
 
 // Delete implements rest.GracefulDeleter. It is needed for API server to not crash when it registers DeleteCollection method
-func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	if name != model.UserDefinedRoutingTreeName {
-		return nil, false, errors.NewNotFound(ResourceInfo.GroupResource(), name)
-	}
+func (s *legacyStorage) Delete(
+	ctx context.Context,
+	name string,
+	deleteValidation rest.ValidateObjectFunc,
+	options *metav1.DeleteOptions,
+) (runtime.Object, bool, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, false, err
@@ -156,10 +179,14 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			return nil, false, err
 		}
 	}
-	_, err = s.service.ResetPolicyTree(ctx, info.OrgID, alerting_models.ProvenanceNone) // TODO add support for dry-run option
+	version := ""
+	if options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
+		version = *options.Preconditions.ResourceVersion
+	}
+	err = s.service.DeletePolicySubTree(ctx, info.OrgID, name, alerting_models.ProvenanceNone, version) // TODO add support for dry-run option
 	return old, false, err
 }
 
 func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
+	return nil, errors.NewMethodNotSupported(ResourceInfo.GroupResource(), "deleteCollection")
 }

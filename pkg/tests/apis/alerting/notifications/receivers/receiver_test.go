@@ -814,7 +814,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Verify the default.
 	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
-	checkInUse(t, receiverListed, receiverGet, 1, 1)
+	checkInUse(t, receiverListed, receiverGet, 2, 1)
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
@@ -836,7 +836,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	checkInUse(t, receiverListed, receiverGet, 1, 1)
 
 	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
-	checkInUse(t, receiverListed, receiverGet, 1, 0)
+	checkInUse(t, receiverListed, receiverGet, 2, 0)
 
 	// Remove the remaining routes.
 	amConfig.AlertmanagerConfig.Route.Routes = nil
@@ -854,7 +854,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	checkInUse(t, receiverListed, receiverGet, 0, 0)
 
 	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
-	checkInUse(t, receiverListed, receiverGet, 1, 0)
+	checkInUse(t, receiverListed, receiverGet, 2, 0)
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
@@ -1156,9 +1156,15 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 			}
 
 			updatedRoute := legacyCli.GetRoute(t)
-			for _, route := range updatedRoute.Routes {
-				assert.Equalf(t, expectedTitle, route.Receiver, "time receiver in routes should have been renamed but it did not")
-			}
+			// Sanity check to make sure at least some titles updated.
+			assert.Error(t, updatedRoute.ValidateReceivers(map[string]struct{}{
+				"grafana-default-email": {},
+			}))
+			// Make sure all references are either to the default receiver or the renamed one.
+			assert.NoError(t, updatedRoute.ValidateReceivers(map[string]struct{}{
+				"grafana-default-email": {},
+				expectedTitle:           {},
+			}))
 
 			actual, err = adminClient.Get(ctx, actual.Name, v1.GetOptions{})
 			require.NoError(t, err)
@@ -1513,6 +1519,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 	nsMapper := func(_ int64) string { return "default" }
 
 	routeClient := test_common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	amConfig.AlertmanagerConfig.Route.Name = v0alpha1.UserDefinedRoutingTreeName
 	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.AdminServiceAccount.OrgId, *amConfig.AlertmanagerConfig.Route, "", nsMapper)
 	require.NoError(t, err)
 	_, err = routeClient.Update(ctx, v1route, v1.UpdateOptions{})

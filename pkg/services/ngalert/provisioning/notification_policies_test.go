@@ -367,6 +367,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 	}
 	baseRouteGen := func() definitions.Route {
 		return definitions.Route{
+			Name:       "BaseRoute",
 			Receiver:   "Receiver",
 			GroupByStr: []string{"GroupByStr1", "GroupByStr2"},
 			GroupBy: []model.LabelName{
@@ -398,6 +399,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 	}
 
 	completelyDifferentRoute := definitions.Route{
+		Name:       "CompletelyDifferentRoute",
 		Receiver:   "Receiver_2",
 		GroupByStr: []string{"GroupByStr1_2", "GroupByStr2_2"},
 		GroupBy: []model.LabelName{
@@ -428,7 +430,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 	}
 
 	t.Run("stable across code changes", func(t *testing.T) {
-		expectedFingerprint := "7faba12778df93b8" // If this is a valid fingerprint generation change, update the expected value.
+		expectedFingerprint := "7ecd0e4867d126c7" // If this is a valid fingerprint generation change, update the expected value.
 		assert.Equal(t, expectedFingerprint, calculateRouteFingerprint(baseRouteGen()))
 	})
 	t.Run("unstable across field modification", func(t *testing.T) {

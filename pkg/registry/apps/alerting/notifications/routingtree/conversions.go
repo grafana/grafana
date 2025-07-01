@@ -19,6 +19,24 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+func ConvertToK8sResources(orgID int64, routes []*definitions.Route, versions map[string]string, namespacer request.NamespaceMapper) (*model.RoutingTreeList, error) {
+	result := &model.RoutingTreeList{
+		Items: make([]model.RoutingTree, 0, len(routes)),
+	}
+	for _, r := range routes {
+		version, ok := versions[r.Name]
+		if !ok {
+			return nil, fmt.Errorf("version for route %q not found", r.Name)
+		}
+		k8sResource, err := ConvertToK8sResource(orgID, *r, version, namespacer)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert route %q to k8s resource: %w", r.Name, err)
+		}
+		result.Items = append(result.Items, *k8sResource)
+	}
+	return result, nil
+}
+
 func ConvertToK8sResource(orgID int64, r definitions.Route, version string, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
 	spec := model.RoutingTreeSpec{
 		Defaults: model.RoutingTreeRouteDefaults{

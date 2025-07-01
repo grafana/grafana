@@ -667,6 +667,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	}
 
 	routeClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+	amConfig.AlertmanagerConfig.Route.Name = v0alpha1.UserDefinedRoutingTreeName
 	v1route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), *amConfig.AlertmanagerConfig.Route, "", func(int64) string { return "default" })
 	require.NoError(t, err)
 	_, err = routeClient.Update(ctx, v1route, v1.UpdateOptions{})
@@ -723,10 +724,15 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 			}
 
 			updatedRoute := legacyCli.GetRoute(t)
-			for idx, route := range updatedRoute.Routes {
-				expectedTimeIntervals := replace(currentRoute.Routes[idx].MuteTimeIntervals, interval.Spec.Name, actual.Spec.Name)
-				assert.Equalf(t, expectedTimeIntervals, route.MuteTimeIntervals, "time interval in routes should have been renamed but it did not")
-			}
+			// Sanity check to make sure at least some references updated.
+			assert.Error(t, updatedRoute.ValidateTimeIntervals(map[string]struct{}{
+				"persisted-interval": {},
+			}))
+			// Make sure all references are either to the unchanged 'persisted-interval' or the renamed time interval.
+			assert.NoError(t, updatedRoute.ValidateTimeIntervals(map[string]struct{}{
+				"persisted-interval": {},
+				renamed.Spec.Name:    {},
+			}))
 
 			interval = *actual
 		})
