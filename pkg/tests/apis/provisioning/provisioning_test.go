@@ -707,8 +707,6 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		Do(ctx)
 	require.NoError(t, result.Error())
 
-	helper.SyncAndWait(t, repo, nil)
-
 	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 3, len(dashboards.Items))
@@ -741,6 +739,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
+		// nolint:errcheck
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 

@@ -418,8 +418,8 @@ func (r *DualReadWriter) getChildren(ctx context.Context, folderPath string, tre
 		}
 	}
 
-	var parsedResources []*ParsedResource
-	for _, entry := range resourcesInFolder {
+	parsedResources := make([]*ParsedResource, len(resourcesInFolder))
+	for i, entry := range resourcesInFolder {
 		fileInfo, err := r.repo.Read(ctx, entry.Path, "")
 		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, nil, fmt.Errorf("could not find resource in repository: %w", err)
@@ -430,7 +430,7 @@ func (r *DualReadWriter) getChildren(ctx context.Context, folderPath string, tre
 			return nil, nil, fmt.Errorf("could not parse resource: %w", err)
 		}
 
-		parsedResources = append(parsedResources, parsed)
+		parsedResources[i] = parsed
 	}
 
 	return parsedResources, foldersInFolder, nil
