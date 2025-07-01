@@ -50,20 +50,34 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
 
 /**
  * @internal
+ * Returns true if cell inspection (hover to see full content) is enabled for the field.
+ */
+export function isCellInspectEnabled(field: Field): boolean {
+  return field.config?.custom?.inspect ?? false;
+}
+
+/**
+ * @internal
+ * Returns true if text wrapping should be applied to the cell.
+ */
+export function shouldTextWrap(field: Field): boolean {
+  const cellOptions = getCellOptions(field);
+  return ('wrapText' in cellOptions && cellOptions.wrapText) ?? false;
+}
+
+/**
+ * @internal
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
-  const cellInspect = field.config?.custom?.inspect ?? false;
-  const cellOptions = getCellOptions(field);
-  const textWrap = ('wrapText' in cellOptions && cellOptions.wrapText) ?? false;
-
-  // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-  // so we need to ensure we don't apply overflow hover states fo type image
-  if (textWrap || cellInspect || cellOptions.type === TableCellDisplayMode.Image || field.type !== FieldType.string) {
-    return false;
-  }
-
-  return true;
+  return (
+    field.type === FieldType.string &&
+    // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
+    // so we need to ensure we don't apply overflow hover states for type image
+    getCellOptions(field).type !== TableCellDisplayMode.Image &&
+    !shouldTextWrap(field) &&
+    !isCellInspectEnabled(field)
+  );
 }
 
 /**

@@ -380,10 +380,13 @@ describe('usePluginComponent()', () => {
     // Should not throw an error if it mutates the props
     expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
 
-    // Should log a warning
-    expect(log.warning).toHaveBeenCalledWith('Attempted to mutate object property "c"', {
-      stack: expect.any(String),
-    });
+    // Should log an error in dev mode
+    expect(log.error).toHaveBeenCalledWith(
+      'Attempted to mutate object property "c" from extension with id myorg-extensions-app',
+      {
+        stack: expect.any(String),
+      }
+    );
   });
 
   it('should pass a writable copy of the props (in production mode)', async () => {
@@ -434,8 +437,11 @@ describe('usePluginComponent()', () => {
     expect(() => render(Component && <Component {...originalProps} override />)).not.toThrow();
 
     // Should log a warning
-    expect(log.warning).toHaveBeenCalledWith('Attempted to mutate object property "c"', {
-      stack: expect.any(String),
-    });
+    expect(log.warning).toHaveBeenCalledWith(
+      'Attempted to mutate object property "c" from extension with id myorg-extensions-app',
+      {
+        stack: expect.any(String),
+      }
+    );
   });
 });
