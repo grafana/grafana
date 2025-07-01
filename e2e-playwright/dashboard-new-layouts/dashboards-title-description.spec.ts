@@ -16,13 +16,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can change dashboard description and title', async ({
-      gotoDashboardPage,
-      dashboardPage,
-      selectors,
-      page,
-    }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
