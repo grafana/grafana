@@ -6,6 +6,8 @@ import { config, AppPluginConfig } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandbox_plugin_loader_registry';
+
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import {
@@ -27,7 +29,12 @@ import {
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   ...jest.requireActual('app/features/plugins/pluginSettings'),
-  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' } }),
+  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
+}));
+
+jest.mock('../sandbox/sandbox_plugin_loader_registry', () => ({
+  ...jest.requireActual('../sandbox/sandbox_plugin_loader_registry'),
+  shouldLoadPluginInFrontendSandbox: jest.fn().mockResolvedValue(false),
 }));
 
 jest.mock('./logs/log', () => {
@@ -616,6 +623,41 @@ describe('Plugin Extensions / Utils', () => {
       const modal = await screen.findByRole('dialog');
       expect(modal).toHaveTextContent('Version: 1.0.0');
     });
+
+    it('should add data-plugin-sandbox attribute to the wrapper div when sandbox is enabled', async () => {
+      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(true);
+
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+      });
+
+      expect(await screen.findByRole('dialog')).toBeVisible();
+
+      expect(screen.getByTestId('plugin-sandbox-wrapper')).toHaveAttribute(
+        'data-plugin-sandbox',
+        'grafana-worldmap-panel'
+      );
+    });
+
+    it('should add data-plugin-sandbox attribute to the wrapper div when sandbox is enabled', async () => {
+      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(false);
+
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+      });
+
+      expect(await screen.findByRole('dialog')).toBeVisible();
+
+      expect(screen.getByTestId('plugin-sandbox-wrapper')).not.toHaveAttribute('data-plugin-sandbox');
+    });
   });
 
   describe('wrapWithPluginContext()', () => {
@@ -646,6 +688,7 @@ describe('Plugin Extensions / Utils', () => {
 
     beforeEach(() => {
       resetLogMock(log);
+      jest.mocked(shouldLoadPluginInFrontendSandbox).mockClear();
     });
 
     it('should make the plugin context available for the wrapped component', async () => {

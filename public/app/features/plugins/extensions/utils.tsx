@@ -22,6 +22,8 @@ import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
+import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandbox_plugin_loader_registry';
+
 import { ExtensionsLog, log } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
@@ -46,7 +48,7 @@ export function createOpenModalFunction(pluginId: string): PluginExtensionEventH
       new ShowModalReactEvent({
         component: wrapWithPluginContext<ModalWrapperProps>(
           pluginId,
-          getModalWrapper({ title, body, width, height }),
+          getModalWrapper({ title, body, width, height, pluginId }),
           log
         ),
       })
@@ -102,13 +104,18 @@ const getModalWrapper = ({
   body: Body,
   width,
   height,
-}: PluginExtensionOpenModalOptions) => {
+  pluginId,
+}: PluginExtensionOpenModalOptions & { pluginId: string }) => {
   const className = css({ width, height });
 
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
+    const { value: isSandboxEnabled } = useAsync(() => shouldLoadPluginInFrontendSandbox({ pluginId }), [pluginId]);
+
     return (
       <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-        <Body onDismiss={onDismiss} />
+        <div {...(isSandboxEnabled && { 'data-plugin-sandbox': pluginId })} data-testid="plugin-sandbox-wrapper">
+          <Body onDismiss={onDismiss} />
+        </div>
       </Modal>
     );
   };
