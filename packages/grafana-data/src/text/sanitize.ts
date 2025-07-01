@@ -56,7 +56,7 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
  */
 export function sanitize(unsanitizedString: string): string {
   try {
-    let cfg: DOMPurify.Config = {
+    const cfg: DOMPurify.Config = {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
       ADD_ATTR: ['target'],
