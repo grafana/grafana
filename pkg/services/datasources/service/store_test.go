@@ -260,8 +260,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 	})
 
-	t.Run("DeleteDataSourceById", func(t *testing.T) {
-		t.Run("can delete datasource", func(t *testing.T) {
+	t.Run("DeleteDataSource", func(t *testing.T) {
+		t.Run("can delete datasource with ID", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}

@@ -323,9 +323,11 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
-		if cmd.ID == 0 && cmd.UID == "" {
+
+		if cmd.ID == 0 || cmd.OrgID == 0 {
 			return datasources.ErrDataSourceIdentifierNotSet
 		}
+
 		if len(cmd.UID) > 0 {
 			if err := util.ValidateUID(cmd.UID); err != nil {
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
