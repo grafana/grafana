@@ -172,6 +172,11 @@ func migratePanels(dashboard map[string]interface{}, datasources []DataSourceInf
 
 // migratePanelDatasources updates datasource references in a single panel and its targets
 func migratePanelDatasources(panelMap map[string]interface{}, datasources []DataSourceInfo) {
+	// Skip datasource migration for row panels - they don't have datasources or targets
+	if panelType, ok := panelMap["type"].(string); ok && panelType == "row" {
+		return
+	}
+
 	defaultDS := GetDefaultDSInstanceSettings(datasources)
 	panelDataSourceWasDefault := false
 
