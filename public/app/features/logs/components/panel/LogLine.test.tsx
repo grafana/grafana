@@ -6,7 +6,7 @@ import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
 
-import { getStyles, LogLine, Props } from './LogLine';
+import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
 import { LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';
 import { LogListSearchContext } from './LogListSearchContext';
@@ -36,7 +36,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
   beforeEach(() => {
     log = createLogLine(
       { labels: { place: 'luna' }, entry: `log message 1` },
-      { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+      { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
     );
     contextProps.logs = [log];
     contextProps.fontSize = fontSize;
@@ -226,7 +226,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       jest.spyOn(virtualization, 'getTruncationLength').mockReturnValue(5);
       log = createLogLine(
         { labels: { place: 'luna' }, entry: `log message 1` },
-        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization }
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
       );
     });
 
@@ -423,5 +423,91 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.queryByText('luna')).not.toBeInTheDocument();
       expect(screen.getByText('un')).toBeInTheDocument();
     });
+  });
+});
+
+describe('getGridTemplateColumns', () => {
+  test('Gets the template columns for the default visualization mode', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+        ],
+        []
+      )
+    ).toBe('23px 4px 1fr');
+  });
+
+  test('Gets the template columns when displayed fields are used', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+        ],
+        ['field']
+      )
+    ).toBe('23px 4px');
+  });
+
+  test('Gets the template columns when displayed fields are used', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+          {
+            field: 'field',
+            width: 4,
+          },
+        ],
+        ['field']
+      )
+    ).toBe('23px 4px 4px');
+  });
+
+  test('Gets the template columns when displayed fields are used', () => {
+    expect(
+      getGridTemplateColumns(
+        [
+          {
+            field: 'timestamp',
+            width: 23,
+          },
+          {
+            field: 'level',
+            width: 4,
+          },
+          {
+            field: 'field',
+            width: 4,
+          },
+          {
+            field: LOG_LINE_BODY_FIELD_NAME,
+            width: 20,
+          },
+        ],
+        ['field']
+      )
+    ).toBe('23px 4px 4px 20px');
   });
 });
