@@ -508,10 +508,7 @@ export class GraphiteDatasource
         if (date === 'now') {
           return 'now';
         } else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
-          date = date.substring(3);
-          date = date.replace('m', 'min');
-          date = date.replace('M', 'mon');
-          return date;
+          return date.substring(3).replace('m', 'min').replace('M', 'mon');
         }
         const parsedDate = dateMath.toDateTime(date, { roundUp, timezone });
 

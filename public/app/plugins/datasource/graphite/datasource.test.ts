@@ -961,7 +961,7 @@ describe('graphiteDatasource', () => {
 
   describe('translateTime', () => {
     it('does not mutate passed in date', async () => {
-      const date = new Date('2025-06-30T00:00:59Z');
+      const date = new Date('2025-06-30T00:00:59.000Z');
       const functionDate = moment(date);
       const updatedDate = ctx.ds.translateTime(
         dateMath.toDateTime(functionDate.toDate(), { roundUp: undefined, timezone: undefined })!,
@@ -970,6 +970,12 @@ describe('graphiteDatasource', () => {
 
       expect(functionDate.toDate()).toEqual(date);
       expect(updatedDate).not.toEqual(date.getTime());
+    });
+    it('does not mutate passed in relative date - string', async () => {
+      const date = 'now-1m';
+      const updatedDate = ctx.ds.translateTime(date, true);
+
+      expect(updatedDate).not.toEqual(date);
     });
     it('returns the input if the input is invalid', async () => {
       const updatedDate = ctx.ds.translateTime('', true);
