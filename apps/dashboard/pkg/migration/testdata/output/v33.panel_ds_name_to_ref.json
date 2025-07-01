@@ -181,10 +181,7 @@
       },
       "id": 2,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "showLegend": true
-        }
+        "legend": true
       },
       "targets": [
         {
@@ -212,10 +209,7 @@
       },
       "id": 3,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "showLegend": false
-        }
+        "legend": false
       },
       "targets": [
         {

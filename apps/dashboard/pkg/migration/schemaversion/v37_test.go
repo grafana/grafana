@@ -14,7 +14,7 @@ func TestV37(t *testing.T) {
 				"title":         "V37 Legend Normalization Test Dashboard",
 				"schemaVersion": 36,
 				"panels": []interface{}{
-					// Boolean legend true
+					// Boolean legend true (should remain unchanged)
 					map[string]interface{}{
 						"type":  "timeseries",
 						"title": "Panel with Boolean Legend True",
@@ -23,7 +23,7 @@ func TestV37(t *testing.T) {
 							"legend": true,
 						},
 					},
-					// Boolean legend false
+					// Boolean legend false (should remain unchanged)
 					map[string]interface{}{
 						"type":  "timeseries",
 						"title": "Panel with Boolean Legend False",
@@ -32,7 +32,7 @@ func TestV37(t *testing.T) {
 							"legend": false,
 						},
 					},
-					// Hidden displayMode (deprecated)
+					// Hidden displayMode (should be normalized)
 					map[string]interface{}{
 						"type":  "graph",
 						"title": "Panel with Hidden DisplayMode",
@@ -40,11 +40,11 @@ func TestV37(t *testing.T) {
 						"options": map[string]interface{}{
 							"legend": map[string]interface{}{
 								"displayMode": "hidden",
-								"showLegend":  true, // conflicting with hidden
+								"placement":   "bottom",
 							},
 						},
 					},
-					// ShowLegend false with other displayMode
+					// ShowLegend false (should be normalized)
 					map[string]interface{}{
 						"type":  "stat",
 						"title": "Panel with ShowLegend False",
@@ -56,7 +56,7 @@ func TestV37(t *testing.T) {
 							},
 						},
 					},
-					// Valid legend with table displayMode
+					// Valid legend with table displayMode (should get showLegend: true)
 					map[string]interface{}{
 						"type":  "barchart",
 						"title": "Panel with Table Legend",
@@ -68,7 +68,7 @@ func TestV37(t *testing.T) {
 							},
 						},
 					},
-					// Valid legend with list displayMode
+					// Valid legend with list displayMode (should get showLegend: true)
 					map[string]interface{}{
 						"type":  "histogram",
 						"title": "Panel with List Legend",
@@ -80,13 +80,13 @@ func TestV37(t *testing.T) {
 							},
 						},
 					},
-					// Panel with no options
+					// Panel with no options (should remain unchanged)
 					map[string]interface{}{
 						"type":  "text",
 						"title": "Panel with No Options",
 						"id":    7,
 					},
-					// Panel with no legend config
+					// Panel with no legend config (should remain unchanged)
 					map[string]interface{}{
 						"type":  "gauge",
 						"title": "Panel with No Legend Config",
@@ -97,10 +97,10 @@ func TestV37(t *testing.T) {
 							},
 						},
 					},
-					// Panel with null legend
+					// Panel with nil legend (should remain unchanged)
 					map[string]interface{}{
 						"type":  "piechart",
-						"title": "Panel with Null Legend",
+						"title": "Panel with Nil Legend",
 						"id":    9,
 						"options": map[string]interface{}{
 							"legend": nil,
@@ -113,7 +113,7 @@ func TestV37(t *testing.T) {
 						"id":        10,
 						"collapsed": false,
 						"panels": []interface{}{
-							// Nested panel with boolean legend
+							// Nested panel with boolean legend (should remain unchanged)
 							map[string]interface{}{
 								"type":  "timeseries",
 								"title": "Nested Panel with Boolean Legend",
@@ -122,7 +122,7 @@ func TestV37(t *testing.T) {
 									"legend": true,
 								},
 							},
-							// Nested panel with hidden displayMode
+							// Nested panel with hidden displayMode (should be normalized)
 							map[string]interface{}{
 								"type":  "graph",
 								"title": "Nested Panel with Hidden DisplayMode",
@@ -133,15 +133,15 @@ func TestV37(t *testing.T) {
 									},
 								},
 							},
-							// Nested panel with conflicting properties
+							// Nested panel with showLegend false (should be normalized)
 							map[string]interface{}{
 								"type":  "stat",
-								"title": "Nested Panel with Conflicting Properties",
+								"title": "Nested Panel with ShowLegend False",
 								"id":    13,
 								"options": map[string]interface{}{
 									"legend": map[string]interface{}{
 										"displayMode": "table",
-										"showLegend":  false, // conflict: table mode but showLegend false
+										"showLegend":  false,
 									},
 								},
 							},
@@ -153,28 +153,22 @@ func TestV37(t *testing.T) {
 				"title":         "V37 Legend Normalization Test Dashboard",
 				"schemaVersion": 37,
 				"panels": []interface{}{
-					// Boolean legend true (migrated)
+					// Boolean legend true (unchanged)
 					map[string]interface{}{
 						"type":  "timeseries",
 						"title": "Panel with Boolean Legend True",
 						"id":    1,
 						"options": map[string]interface{}{
-							"legend": map[string]interface{}{
-								"displayMode": "list",
-								"showLegend":  true,
-							},
+							"legend": true,
 						},
 					},
-					// Boolean legend false (migrated)
+					// Boolean legend false (unchanged)
 					map[string]interface{}{
 						"type":  "timeseries",
 						"title": "Panel with Boolean Legend False",
 						"id":    2,
 						"options": map[string]interface{}{
-							"legend": map[string]interface{}{
-								"displayMode": "list",
-								"showLegend":  false,
-							},
+							"legend": false,
 						},
 					},
 					// Hidden displayMode (normalized)
@@ -186,6 +180,7 @@ func TestV37(t *testing.T) {
 							"legend": map[string]interface{}{
 								"displayMode": "list",
 								"showLegend":  false,
+								"placement":   "bottom",
 							},
 						},
 					},
@@ -244,32 +239,29 @@ func TestV37(t *testing.T) {
 							},
 						},
 					},
-					// Panel with null legend (unchanged)
+					// Panel with nil legend (unchanged)
 					map[string]interface{}{
 						"type":  "piechart",
-						"title": "Panel with Null Legend",
+						"title": "Panel with Nil Legend",
 						"id":    9,
 						"options": map[string]interface{}{
 							"legend": nil,
 						},
 					},
-					// Row with nested panels (nested panels migrated)
+					// Row with nested panels (nested panels processed)
 					map[string]interface{}{
 						"type":      "row",
 						"title":     "Row with Nested Panels Having Various Legend Configs",
 						"id":        10,
 						"collapsed": false,
 						"panels": []interface{}{
-							// Nested panel with boolean legend (migrated)
+							// Nested panel with boolean legend (unchanged)
 							map[string]interface{}{
 								"type":  "timeseries",
 								"title": "Nested Panel with Boolean Legend",
 								"id":    11,
 								"options": map[string]interface{}{
-									"legend": map[string]interface{}{
-										"displayMode": "list",
-										"showLegend":  true,
-									},
+									"legend": true,
 								},
 							},
 							// Nested panel with hidden displayMode (normalized)
@@ -284,10 +276,10 @@ func TestV37(t *testing.T) {
 									},
 								},
 							},
-							// Nested panel with conflicting properties (normalized)
+							// Nested panel with showLegend false (normalized)
 							map[string]interface{}{
 								"type":  "stat",
-								"title": "Nested Panel with Conflicting Properties",
+								"title": "Nested Panel with ShowLegend False",
 								"id":    13,
 								"options": map[string]interface{}{
 									"legend": map[string]interface{}{

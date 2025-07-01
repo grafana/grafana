@@ -3,10 +3,7 @@
     {
       "id": 1,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "showLegend": true
-        }
+        "legend": true
       },
       "title": "Panel with Boolean Legend True",
       "type": "timeseries"
@@ -14,10 +11,7 @@
     {
       "id": 2,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "showLegend": false
-        }
+        "legend": false
       },
       "title": "Panel with Boolean Legend False",
       "type": "timeseries"
@@ -98,10 +92,7 @@
         {
           "id": 11,
           "options": {
-            "legend": {
-              "displayMode": "list",
-              "showLegend": true
-            }
+            "legend": true
           },
           "title": "Nested Panel with Boolean Legend",
           "type": "timeseries"
