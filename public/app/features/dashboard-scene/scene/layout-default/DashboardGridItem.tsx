@@ -57,8 +57,15 @@ export class DashboardGridItem
   public constructor(state: DashboardGridItemState) {
     super(state);
 
-    this.addActivationHandler(() => this._handleGridSizeUnsubscribe());
-    this.addActivationHandler(() => this.handleVariableName());
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    this.handleVariableName();
+
+    return () => {
+      this._handleGridSizeUnsubscribe();
+    };
   }
 
   private _handleGridSizeSubscribe() {
