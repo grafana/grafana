@@ -28,7 +28,6 @@ import {
   GraphGradientMode,
   VizOrientation,
   ScaleDistributionConfig,
-  ScaleDistribution,
 } from '@grafana/schema';
 
 // unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
@@ -187,9 +186,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       orientation: isHorizontal ? ScaleOrientation.Horizontal : ScaleOrientation.Vertical,
       direction: isHorizontal ? ScaleDirection.Right : ScaleDirection.Up,
       range: (u, dataMin, dataMax) => {
-        const min = xField.config.min ?? dataMin;
-        if (min <= 0 && scaleDistr?.type === 'log') {
-          return [null, null];
+        // value match for uPlot.Scale.LogBase
+        if (scaleDistr.type === 'log' && (scaleDistr?.log === 2 || scaleDistr?.log === 10)) {
+          return uPlot.rangeLog(xField.config.min ?? dataMin!, xField.config.max ?? dataMax!, scaleDistr.log, true);
         } else {
           return [xField.config.min ?? dataMin, xField.config.max ?? dataMax];
         }
