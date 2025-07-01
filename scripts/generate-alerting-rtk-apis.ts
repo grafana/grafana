@@ -67,8 +67,10 @@ const config: ConfigFile = {
       apiImport: 'alertingApi',
       filterEndpoints: [
         'listNamespacedRoutingTree',
+        'createNamespacedRoutingTree',
+        'readNamespacedRoutingTree',
         'replaceNamespacedRoutingTree',
-        'deleteCollectionNamespacedRoutingTree',
+        'deleteNamespacedRoutingTree',
       ],
       exportName: 'generatedRoutesApi',
       flattenArg: false,

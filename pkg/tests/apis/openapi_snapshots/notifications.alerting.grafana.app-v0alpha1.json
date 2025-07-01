@@ -3766,6 +3766,7 @@
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alerting.v0alpha1.RoutingTreeRouteDefaults": {
         "type": "object",
         "required": [
+          "name",
           "receiver"
         ],
         "properties": {
@@ -3781,6 +3782,10 @@
           },
           "group_wait": {
             "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "default": ""
           },
           "receiver": {
             "type": "string",

@@ -25,6 +25,32 @@ const injectedRtkApi = api
         }),
         providesTags: ['RoutingTree'],
       }),
+      createNamespacedRoutingTree: build.mutation<
+        CreateNamespacedRoutingTreeApiResponse,
+        CreateNamespacedRoutingTreeApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/routingtrees`,
+          method: 'POST',
+          body: queryArg.comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['RoutingTree'],
+      }),
+      readNamespacedRoutingTree: build.query<ReadNamespacedRoutingTreeApiResponse, ReadNamespacedRoutingTreeApiArg>({
+        query: (queryArg) => ({
+          url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/routingtrees/${queryArg.name}`,
+          params: {
+            pretty: queryArg.pretty,
+          },
+        }),
+        providesTags: ['RoutingTree'],
+      }),
       replaceNamespacedRoutingTree: build.mutation<
         ReplaceNamespacedRoutingTreeApiResponse,
         ReplaceNamespacedRoutingTreeApiArg
@@ -38,6 +64,24 @@ const injectedRtkApi = api
             dryRun: queryArg.dryRun,
             fieldManager: queryArg.fieldManager,
             fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['RoutingTree'],
+      }),
+      deleteNamespacedRoutingTree: build.mutation<
+        DeleteNamespacedRoutingTreeApiResponse,
+        DeleteNamespacedRoutingTreeApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/routingtrees/${queryArg.name}`,
+          method: 'DELETE',
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            gracePeriodSeconds: queryArg.gracePeriodSeconds,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            orphanDependents: queryArg.orphanDependents,
+            propagationPolicy: queryArg.propagationPolicy,
           },
         }),
         invalidatesTags: ['RoutingTree'],
@@ -94,6 +138,33 @@ export type ListNamespacedRoutingTreeApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
+export type CreateNamespacedRoutingTreeApiResponse = /** status 200 OK */
+  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
+  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
+  | /** status 202 Accepted */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
+export type CreateNamespacedRoutingTreeApiArg = {
+  /** object name and auth scope, such as for teams and projects */
+  namespace: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. */
+  fieldManager?: string;
+  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
+  fieldValidation?: string;
+  comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
+};
+export type ReadNamespacedRoutingTreeApiResponse =
+  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
+export type ReadNamespacedRoutingTreeApiArg = {
+  /** name of the RoutingTree */
+  name: string;
+  /** object name and auth scope, such as for teams and projects */
+  namespace: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+};
 export type ReplaceNamespacedRoutingTreeApiResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
@@ -111,6 +182,27 @@ export type ReplaceNamespacedRoutingTreeApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree;
+};
+export type DeleteNamespacedRoutingTreeApiResponse = /** status 200 OK */
+  | IoK8SApimachineryPkgApisMetaV1Status
+  | /** status 202 Accepted */ IoK8SApimachineryPkgApisMetaV1Status;
+export type DeleteNamespacedRoutingTreeApiArg = {
+  /** name of the RoutingTree */
+  name: string;
+  /** object name and auth scope, such as for teams and projects */
+  namespace: string;
+  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
+  pretty?: string;
+  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
+  dryRun?: string;
+  /** The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately. */
+  gracePeriodSeconds?: number;
+  /** if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it */
+  ignoreStoreReadErrorWithClusterBreakingPotential?: boolean;
+  /** Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the "orphan" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both. */
+  orphanDependents?: boolean;
+  /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
+  propagationPolicy?: string;
 };
 export type IoK8SApimachineryPkgApisMetaV1Time = string;
 export type IoK8SApimachineryPkgApisMetaV1FieldsV1 = object;
@@ -198,6 +290,7 @@ export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RouteDefa
   group_by?: string[];
   group_interval?: string;
   group_wait?: string;
+  name: string;
   receiver: string;
   repeat_interval?: string;
 };
@@ -207,6 +300,7 @@ export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Matcher =
   value: string;
 };
 export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route = {
+  active_time_intervals?: string[];
   continue?: boolean;
   group_by?: string[];
   group_interval?: string;
@@ -227,6 +321,7 @@ export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTr
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
+  /** Spec is the spec of the RoutingTree */
   spec: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec;
 };
 export type IoK8SApimachineryPkgApisMetaV1ListMeta = {
@@ -246,4 +341,48 @@ export type ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTr
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: IoK8SApimachineryPkgApisMetaV1ListMeta;
+};
+export type IoK8SApimachineryPkgApisMetaV1StatusCause = {
+  /** The field of the resource that has caused this error, as named by its JSON serialization. May include dot and postfix notation for nested attributes. Arrays are zero-indexed.  Fields may appear more than once in an array of causes due to fields having multiple errors. Optional.
+    
+    Examples:
+      "name" - the field "name" on the current resource
+      "items[0].name" - the field "name" on the first array entry in "items" */
+  field?: string;
+  /** A human-readable description of the cause of the error.  This field may be presented as-is to a reader. */
+  message?: string;
+  /** A machine-readable description of the cause of the error. If this value is empty there is no information available. */
+  reason?: string;
+};
+export type IoK8SApimachineryPkgApisMetaV1StatusDetails = {
+  /** The Causes array includes more details associated with the StatusReason failure. Not all StatusReasons may provide detailed causes. */
+  causes?: IoK8SApimachineryPkgApisMetaV1StatusCause[];
+  /** The group attribute of the resource associated with the status StatusReason. */
+  group?: string;
+  /** The kind attribute of the resource associated with the status StatusReason. On some operations may differ from the requested resource Kind. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** The name attribute of the resource associated with the status StatusReason (when there is a single name which can be described). */
+  name?: string;
+  /** If specified, the time in seconds before the operation should be retried. Some errors may indicate the client must take an alternate action - for those errors this field may indicate how long to wait before taking the alternate action. */
+  retryAfterSeconds?: number;
+  /** UID of the resource. (when there is a single resource which can be described). More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
+  uid?: string;
+};
+export type IoK8SApimachineryPkgApisMetaV1Status = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Suggested HTTP return code for this status, 0 if not set. */
+  code?: number;
+  /** Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type. */
+  details?: IoK8SApimachineryPkgApisMetaV1StatusDetails;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  /** A human-readable description of the status of this operation. */
+  message?: string;
+  /** Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  metadata?: IoK8SApimachineryPkgApisMetaV1ListMeta;
+  /** A machine-readable description of why this operation is in the "Failure" status. If this value is empty there is no information available. A Reason clarifies an HTTP status code but does not override it. */
+  reason?: string;
+  /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
+  status?: string;
 };
