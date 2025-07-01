@@ -89,7 +89,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
         <Portal>
           <div
             ref={refCallback}
-            {...getReferenceProps({ onClick: (e) => e.stopPropagation() })}
+            {...getReferenceProps()}
             {...getFloatingProps()}
             style={floatingStyles}
             className={styles.tooltipWrapper}
