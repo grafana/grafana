@@ -101,6 +101,7 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
 const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     tableLayout: 'fixed',
+    width: '100%',
     '& td:not(:last-child)': {
       paddingRight: theme.spacing(1),
     },
@@ -312,24 +313,27 @@ export const LogLineDetailsField = ({
             {singleValue && <ClipboardButtonWrapper value={values[0]} />}
           </div>
         </td>
-        <td>
-          <div>
-            <div>
-              {links?.map((link, i) => {
-                if (link.onClick && onPinLine) {
-                  const originalOnClick = link.onClick;
-                  link.onClick = (e, origin) => {
-                    // Pin the line
-                    onPinLine(log);
+      </tr>
+      {links?.map((link, i) => {
+        if (link.onClick && onPinLine) {
+          const originalOnClick = link.onClick;
+          link.onClick = (e, origin) => {
+            // Pin the line
+            onPinLine(log);
 
-                    // Execute the link onClick function
-                    originalOnClick(e, origin);
+            // Execute the link onClick function
+            originalOnClick(e, origin);
 
-                    closeDetails();
-                  };
-                }
-                return (
-                  <span key={`${link.title}-${i}`}>
+            closeDetails();
+          };
+        }
+        return (
+          <tr>
+            <td colSpan={2}></td>
+            <td>
+              <div>
+                <div>
+                  <div key={`${link.title}-${i}`} className={styles.link}>
                     <DataLinkButton
                       buttonProps={{
                         // Show tooltip message if max number of pinned lines has been reached
@@ -343,13 +347,13 @@ export const LogLineDetailsField = ({
                       }}
                       link={link}
                     />
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        </td>
-      </tr>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        );
+      })}
       {showFieldsStats && fieldStats && (
         <tr>
           <td>
@@ -397,6 +401,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
       },
     },
   }),
+  link: css({}),
   valueContainer: css({
     display: 'flex',
     alignItems: 'center',
