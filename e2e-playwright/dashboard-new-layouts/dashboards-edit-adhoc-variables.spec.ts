@@ -1,4 +1,6 @@
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect } from '@grafana/plugin-e2e';
+
+import { flows, type Variable } from './utils';
 
 test.use({
   featureToggles: {
@@ -10,14 +12,6 @@ test.use({
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
-
-interface Variable {
-  type: string;
-  name: string;
-  label?: string;
-  description?: string;
-  value: string;
-}
 
 test.describe(
   'Dashboard edit - Ad hoc variables',
@@ -36,8 +30,9 @@ test.describe(
         label: 'VariableUnderTest',
       };
 
-      // Navigate to variables settings to add new variable
-      await addNewAdHocVariable(dashboardPage, selectors, variable);
+      // common steps to add a new variable
+      flows.newEditPaneVariableClick(dashboardPage, selectors);
+      flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
 
       // Select datasource for the ad hoc variable
       const dataSource = 'gdev-loki';
@@ -94,25 +89,3 @@ test.describe(
     });
   }
 );
-
-// Helper function to add a new ad hoc variable
-async function addNewAdHocVariable(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, variable: Variable) {
-  // Enter edit mode and navigate to variables
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.section).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
-
-  // Add new variable
-  await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton).click();
-  await dashboardPage
-    .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
-    .click();
-  await dashboardPage
-    .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableNameInput)
-    .fill(variable.name);
-  if (variable.label) {
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableLabelInput)
-      .fill(variable.label);
-  }
-}

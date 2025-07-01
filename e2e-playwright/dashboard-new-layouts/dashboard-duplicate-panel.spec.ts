@@ -2,6 +2,8 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
+import { flows } from './utils';
+
 test.use({
   featureToggles: {
     kubernetesDashboards: true,
@@ -26,14 +28,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       const oldPanelTitle = 'New panel';
       const panelTitle = 'Unique';
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-        .filter({ hasText: oldPanelTitle })
-        .first()
-        .click();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-        .fill(panelTitle);
+      await flows.changePanelTitle(dashboardPage, selectors, oldPanelTitle, panelTitle);
 
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))
