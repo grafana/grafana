@@ -1092,6 +1092,75 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/diff": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "summary": "Get repository diff",
+        "description": "Get diff between two refs (branches/commits)",
+        "operationId": "getRepositoryDiff",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "The source ref (branch/commit) to compare",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "base",
+            "in": "query",
+            "description": "The base ref (branch/commit) to compare against. Defaults to repository's default branch",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RefDiffResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "RefDiffResponse"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the RefDiffResponse",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/files/": {
       "get": {
         "tags": [
@@ -2650,6 +2719,37 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.CommitInfo": {
+        "type": "object",
+        "required": [
+          "sha",
+          "message",
+          "author",
+          "timestamp"
+        ],
+        "properties": {
+          "author": {
+            "type": "string",
+            "default": ""
+          },
+          "commitURL": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "default": ""
+          },
+          "sha": {
+            "type": "string",
+            "default": ""
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.CreatePRResponse": {
         "description": "CreatePRResponse is the response from creating a pull request",
         "type": "object",
@@ -2690,6 +2790,52 @@
           }
         ]
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.DiffInfo": {
+        "type": "object",
+        "required": [
+          "head",
+          "base",
+          "files",
+          "commits"
+        ],
+        "properties": {
+          "base": {
+            "type": "string",
+            "default": ""
+          },
+          "commits": {
+            "description": "List of commits between base and head",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.CommitInfo"
+                }
+              ]
+            }
+          },
+          "diffURL": {
+            "type": "string"
+          },
+          "files": {
+            "description": "List of changed files",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileChange"
+                }
+              ]
+            }
+          },
+          "head": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails": {
         "type": "object",
         "required": [
@@ -2722,6 +2868,35 @@
           "path": {
             "description": "Prefix in target file system",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.FileChange": {
+        "type": "object",
+        "required": [
+          "path",
+          "status"
+        ],
+        "properties": {
+          "fileURL": {
+            "description": "On rename",
+            "type": "string"
+          },
+          "patch": {
+            "description": "The patch/diff content for this file",
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "default": ""
+          },
+          "previousPath": {
+            "type": "string"
+          },
+          "status": {
+            "description": "Type of change: added, modified, deleted, renamed",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -3273,6 +3448,39 @@
             "type": "string"
           }
         }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RefDiffResponse": {
+        "description": "RefDiffResponse is the response from getting a diff between refs",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "diff": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.DiffInfo"
+          },
+          "error": {
+            "description": "Error message if the diff request failed",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RefDiffResponse",
+            "version": "__internal"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RefDiffResponse",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.RefItem": {
         "type": "object",

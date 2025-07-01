@@ -131,6 +131,16 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
+      getRepositoryDiff: build.query<GetRepositoryDiffApiResponse, GetRepositoryDiffApiArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/diff`,
+          params: {
+            ref: queryArg.ref,
+            base: queryArg.base,
+          },
+        }),
+        providesTags: ['Repository'],
+      }),
       getRepositoryFiles: build.query<GetRepositoryFilesApiResponse, GetRepositoryFilesApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/`,
@@ -227,6 +237,22 @@ const injectedRtkApi = api
       }),
       getRepositoryJobsWithPath: build.query<GetRepositoryJobsWithPathApiResponse, GetRepositoryJobsWithPathApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs/${queryArg.uid}` }),
+        providesTags: ['Repository'],
+      }),
+      createRepositoryPr: build.mutation<CreateRepositoryPrApiResponse, CreateRepositoryPrApiArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/pr`,
+          method: 'POST',
+          params: {
+            ref: queryArg.ref,
+            title: queryArg.title,
+            content: queryArg.content,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
+      getRepositoryRefs: build.query<GetRepositoryRefsApiResponse, GetRepositoryRefsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/refs` }),
         providesTags: ['Repository'],
       }),
       getRepositoryRenderWithPath: build.query<
@@ -488,6 +514,15 @@ export type DeleteRepositoryApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
+export type GetRepositoryDiffApiResponse = /** status 200 OK */ RefDiffResponse;
+export type GetRepositoryDiffApiArg = {
+  /** name of the RefDiffResponse */
+  name: string;
+  /** The source ref (branch/commit) to compare */
+  ref: string;
+  /** The base ref (branch/commit) to compare against. Defaults to repository's default branch */
+  base?: string;
+};
 export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -589,6 +624,29 @@ export type GetRepositoryJobsWithPathApiArg = {
   name: string;
   /** Original Job UID */
   uid: string;
+};
+export type CreateRepositoryPrApiResponse = /** status 200 OK */ CreatePrResponse;
+export type CreateRepositoryPrApiArg = {
+  /** name of the CreatePRResponse */
+  name: string;
+  /** The branch name to create a pull request from */
+  ref: string;
+  /** The title of the pull request */
+  title: string;
+  /** The description/body of the pull request */
+  content?: string;
+};
+export type GetRepositoryRefsApiResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
+export type GetRepositoryRefsApiArg = {
+  /** name of the RefList */
+  name: string;
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
@@ -900,6 +958,8 @@ export type RepositorySpec = {
      - `"github"`
      - `"local"` */
   type: 'git' | 'github' | 'local';
+  /** The URL of the repository (if available) */
+  url?: string;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
@@ -1021,6 +1081,41 @@ export type Status = {
   /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
   status?: string;
 };
+export type CommitInfo = {
+  author: string;
+  commitURL?: string;
+  message: string;
+  sha: string;
+  timestamp: number;
+};
+export type FileChange = {
+  /** On rename */
+  fileURL?: string;
+  /** The patch/diff content for this file */
+  patch?: string;
+  path: string;
+  previousPath?: string;
+  /** Type of change: added, modified, deleted, renamed */
+  status: string;
+};
+export type DiffInfo = {
+  base: string;
+  /** List of commits between base and head */
+  commits: CommitInfo[];
+  diffURL?: string;
+  /** List of changed files */
+  files: FileChange[];
+  head: string;
+};
+export type RefDiffResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  diff?: DiffInfo;
+  /** Error message if the diff request failed */
+  error?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+};
 export type ResourceRepositoryInfo = {
   /** The name (identifier) */
   name: string;
@@ -1104,6 +1199,23 @@ export type ResourceWrapper = {
   /** Typed links for this file (only supported by external systems, github etc) */
   urls?: ResourceUrLs;
 };
+export type PullRequestInfo = {
+  base: string;
+  head: string;
+  number: number;
+  title: string;
+  url: string;
+};
+export type CreatePrResponse = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Error message if the submission failed */
+  error?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  pullRequest?: PullRequestInfo;
+  success: boolean;
+};
 export type ResourceListItem = {
   folder?: string;
   group: string;
@@ -1172,6 +1284,8 @@ export type RepositoryView = {
      - `"github"`
      - `"local"` */
   type: 'git' | 'github' | 'local';
+  /** The repository URL (if available) */
+  url?: string;
   /** The supported workflows */
   workflows: ('branch' | 'write')[];
 };
@@ -1212,6 +1326,7 @@ export const {
   useGetRepositoryQuery,
   useReplaceRepositoryMutation,
   useDeleteRepositoryMutation,
+  useGetRepositoryDiffQuery,
   useGetRepositoryFilesQuery,
   useGetRepositoryFilesWithPathQuery,
   useReplaceRepositoryFilesWithPathMutation,
@@ -1222,6 +1337,8 @@ export const {
   useGetRepositoryJobsQuery,
   useCreateRepositoryJobsMutation,
   useGetRepositoryJobsWithPathQuery,
+  useCreateRepositoryPrMutation,
+  useGetRepositoryRefsQuery,
   useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
