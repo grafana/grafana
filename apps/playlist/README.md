@@ -150,7 +150,7 @@ These examples use HTTP Basic Authentication with `admin:admin`. In production e
 
 ```graphql
 query GetPlaylists {
-  playlist_playlists(namespace: "default") {
+  playlists(namespace: "default") {
     items {
       metadata {
         name
@@ -177,7 +177,7 @@ query GetPlaylists {
 
 ```graphql
 query GetPlaylists {
-  playlist_playlists(namespace: "default") {
+  playlists(namespace: "default") {
     items {
       metadata {
         name
@@ -194,7 +194,7 @@ query GetPlaylists {
 
 ```graphql
 query GetPlaylist {
-  playlist_playlist(namespace: "default", name: "my-playlist") {
+  playlist(namespace: "default", name: "my-playlist") {
     metadata {
       name
     }
@@ -224,7 +224,7 @@ curl -X POST http://localhost:3000/api/graphql \
   -u admin:admin \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query GetPlaylists { playlist_playlists(namespace: \"default\") { items { metadata { name namespace creationTimestamp } uid name interval items { id playlistUid type value order title } } } }"
+    "query": "query GetPlaylists { playlists(namespace: \"default\") { items { metadata { name namespace creationTimestamp } uid name interval items { id playlistUid type value order title } } } }"
   }'
 ```
 
@@ -235,7 +235,7 @@ curl -X POST http://localhost:3000/api/graphql \
   -u admin:admin \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query GetPlaylist { playlist_playlist(namespace: \"default\", name: \"my-playlist\") { metadata { name } uid name interval } }"
+    "query": "query GetPlaylist { playlist(namespace: \"default\", name: \"my-playlist\") { metadata { name } uid name interval } }"
   }'
 ```
 
@@ -246,7 +246,7 @@ curl -X POST http://localhost:3000/api/graphql \
   -u admin:admin \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query GetPlaylists { playlist_playlists(namespace: \"default\") { items { metadata { name } uid name interval } } }"
+    "query": "query GetPlaylists { playlists(namespace: \"default\") { items { metadata { name } uid name interval } } }"
   }'
 ```
 
