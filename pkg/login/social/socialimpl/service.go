@@ -25,11 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	allOauthes = []string{social.GitHubProviderName, social.GitlabProviderName, social.GoogleProviderName, social.GenericOAuthProviderName, social.GrafanaNetProviderName,
-		social.GrafanaComProviderName, social.AzureADProviderName, social.OktaProviderName}
-)
-
 type SocialService struct {
 	cfg *setting.Cfg
 
