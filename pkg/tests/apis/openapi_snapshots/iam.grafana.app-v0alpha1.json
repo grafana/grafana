@@ -2361,7 +2361,6 @@
           "email",
           "emailVerified",
           "grafanaAdmin",
-          "lastSeenAt",
           "login",
           "name",
           "provisioned"
@@ -2382,10 +2381,6 @@
           "grafanaAdmin": {
             "type": "boolean",
             "default": false
-          },
-          "lastSeenAt": {
-            "type": "string",
-            "format": "date-time"
           },
           "login": {
             "type": "string",
@@ -4343,7 +4338,6 @@
           "email",
           "emailVerified",
           "grafanaAdmin",
-          "lastSeenAt",
           "login",
           "name",
           "provisioned"
@@ -4364,10 +4358,6 @@
           "grafanaAdmin": {
             "type": "boolean",
             "default": false
-          },
-          "lastSeenAt": {
-            "type": "string",
-            "format": "date-time"
           },
           "login": {
             "type": "string",
