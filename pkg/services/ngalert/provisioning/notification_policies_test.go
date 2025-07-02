@@ -428,13 +428,14 @@ func TestRoute_Fingerprint(t *testing.T) {
 	}
 
 	t.Run("stable across code changes", func(t *testing.T) {
-		expectedFingerprint := "7faba12778df93b8" // If this is a valid fingerprint generation change, update the expected value.
+		expectedFingerprint := "450c06a7f4a66675" // If this is a valid fingerprint generation change, update the expected value.
 		assert.Equal(t, expectedFingerprint, calculateRouteFingerprint(baseRouteGen()))
 	})
 	t.Run("unstable across field modification", func(t *testing.T) {
 		fingerprint := calculateRouteFingerprint(baseRouteGen())
 		excludedFields := map[string]struct{}{
 			"Routes": {},
+			"Provenance": {},
 		}
 
 		reflectVal := reflect.ValueOf(&completelyDifferentRoute).Elem()
