@@ -22,17 +22,16 @@ import (
 type VersionChecker struct {
 	log            logging.Logger
 	client         resource.Client
-	currentVersion string
 	ghClient       ghReleaseLister
+	currentVersion string
 }
 
-func NewVersionChecker(log logging.Logger, client resource.Client, currentVersion string) *VersionChecker {
-	ghClient := github.NewClient(nil).Repositories
+func NewVersionChecker(log logging.Logger, client resource.Client, ghClient ghReleaseLister, currentVersion string) *VersionChecker {
 	return &VersionChecker{
 		log:            log,
 		client:         client,
-		currentVersion: currentVersion,
 		ghClient:       ghClient,
+		currentVersion: currentVersion,
 	}
 }
 
@@ -415,7 +414,7 @@ func (v *VersionChecker) fetchVersionsFromGrafanaAPI(ctx context.Context, curren
 		return nil, fmt.Errorf("failed to fetch versions: %w", err)
 	}
 
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch versions: %s", res.Status)
@@ -554,7 +553,7 @@ func (v *VersionChecker) fetchVersionsFromGitHub(ctx context.Context, currentVer
 			}
 
 			releases[*releaseVersion] = &releaseDetails{
-				releaseDate:  release.GetPublishedAt().Time.UTC(),
+				releaseDate:  release.GetPublishedAt().UTC(),
 				releaseNotes: release.GetHTMLURL(),
 			}
 		}

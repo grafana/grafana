@@ -7,6 +7,7 @@ import (
 	"io"
 	"sort"
 
+	"github.com/google/go-github/v70/github"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -88,7 +89,7 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
-	a.AddRunnable(NewVersionChecker(log, client, upgradesConfig.CurrentVersion))
+	a.AddRunnable(NewVersionChecker(log, client, github.NewClient(nil).Repositories, upgradesConfig.CurrentVersion))
 
 	return a, nil
 }
