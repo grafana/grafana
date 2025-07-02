@@ -116,7 +116,7 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
       formState: { errors },
     } = useFormContext();
 
-    const workflow = watch('workflow');
+    const workflow = watch('workflow') || 'branch';
     const currentTitle = watch('title') || '';
     const currentDescription = watch('description') || '';
     const comment = watch('comment');

@@ -655,6 +655,44 @@ func (r *githubClient) CreatePullRequestComment(ctx context.Context, owner, repo
 	return nil
 }
 
+func (r *githubClient) ListPullRequests(ctx context.Context, owner, repository, head, base string) ([]PullRequest, error) {
+	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.PullRequest, *github.Response, error) {
+		return r.gh.PullRequests.List(ctx, owner, repository, &github.PullRequestListOptions{
+			Head:        head,
+			Base:        base,
+			State:       "open",
+			ListOptions: *opts,
+		})
+	}
+
+	prs, err := paginatedList(
+		ctx,
+		listFn,
+		defaultListOptions(maxPRs),
+	)
+	if errors.Is(err, ErrTooManyItems) {
+		return nil, fmt.Errorf("too many pull requests to fetch (more than %d)", maxPRs)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to the interface type
+	ret := make([]PullRequest, 0, len(prs))
+	for _, pr := range prs {
+		ret = append(ret, PullRequest{
+			Number:  pr.GetNumber(),
+			Title:   pr.GetTitle(),
+			Body:    pr.GetBody(),
+			HTMLURL: pr.GetHTMLURL(),
+			Head:    pr.GetHead().GetRef(),
+			Base:    pr.GetBase().GetRef(),
+		})
+	}
+
+	return ret, nil
+}
+
 func (r *githubClient) CreatePullRequest(ctx context.Context, owner, repository, title, body, head, base string) (*PullRequest, error) {
 	newPR := &github.NewPullRequest{
 		Title: &title,

@@ -5,6 +5,10 @@ export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: stri
   if (loadedFromRef && loadedFromRef !== config?.branch) {
     return 'write'; // use write when the value targets an explicit ref
   }
+  // Default to 'branch' workflow if available, otherwise fall back to the first workflow
+  if (config?.workflows?.includes('branch')) {
+    return 'branch';
+  }
   return config?.workflows?.[0];
 }
 
