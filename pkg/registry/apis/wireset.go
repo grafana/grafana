@@ -46,6 +46,9 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
 
+	// Secrets
+	secret.RegisterDependencies,
+
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
 	dashboardsnapshot.RegisterAPIService,
@@ -58,7 +61,6 @@ var WireSet = wire.NewSet(
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
-	secret.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	ofrep.RegisterAPIService,
 )

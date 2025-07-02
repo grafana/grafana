@@ -732,20 +732,6 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	databaseDatabase := database5.ProvideDatabase(sqlStore)
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, featureToggles)
-	if err != nil {
-		return nil, err
-	}
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, featureToggles)
-	if err != nil {
-		return nil, err
-	}
-	secretDBMigrator := migrator2.NewWithEngine(sqlStore)
-	secretAPIBuilder, err := secret.RegisterAPIService(featureToggles, cfg, apiserverService, tracingService, secureValueMetadataStorage, keeperMetadataStorage, accessClient, acimplService, secretDBMigrator)
-	if err != nil {
-		return nil, err
-	}
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, factory, renderingService, resourceClient, eventualRestConfigProvider)
@@ -759,7 +745,12 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	ofrepAPIBuilder := ofrep.RegisterAPIService(apiserverService, cfg, staticFlagEvaluator)
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, secretAPIBuilder, apiBuilder, ofrepAPIBuilder)
+	secretDBMigrator := migrator2.NewWithEngine(sqlStore)
+	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	if err != nil {
+		return nil, err
+	}
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
@@ -1254,20 +1245,6 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
-	databaseDatabase := database5.ProvideDatabase(sqlStore)
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(databaseDatabase, featureToggles)
-	if err != nil {
-		return nil, err
-	}
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(databaseDatabase, featureToggles)
-	if err != nil {
-		return nil, err
-	}
-	secretDBMigrator := migrator2.NewWithEngine(sqlStore)
-	secretAPIBuilder, err := secret.RegisterAPIService(featureToggles, cfg, apiserverService, tracingService, secureValueMetadataStorage, keeperMetadataStorage, accessClient, acimplService, secretDBMigrator)
-	if err != nil {
-		return nil, err
-	}
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, factory, renderingService, resourceClient, eventualRestConfigProvider)
@@ -1281,7 +1258,12 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	ofrepAPIBuilder := ofrep.RegisterAPIService(apiserverService, cfg, staticFlagEvaluator)
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, secretAPIBuilder, apiBuilder, ofrepAPIBuilder)
+	secretDBMigrator := migrator2.NewWithEngine(sqlStore)
+	dependencyRegisterer, err := secret.RegisterDependencies(featureToggles, cfg, secretDBMigrator, acimplService)
+	if err != nil {
+		return nil, err
+	}
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, snapshotsAPIBuilder, featureFlagAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, ofrepAPIBuilder, dependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, acimplService, teamService, userService, actionSetService)
 	if err != nil {
 		return nil, err
