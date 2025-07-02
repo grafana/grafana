@@ -102,7 +102,7 @@ test.describe(
       // Create shared dashboard
       const createResponse = page.waitForResponse(
         (response) =>
-          response.url().includes(`/api/dashboards/uid/${DASHBOARD_UID}/public-dashboards`) &&
+          response.url().includes(`/api/dashboards/uid/${DASHBOARD_UID_2}/public-dashboards`) &&
           response.request().method() === 'POST'
       );
 
@@ -165,7 +165,7 @@ test.describe(
       // Switch off enabling toggle
       const updateResponse = page.waitForResponse(
         (response) =>
-          response.url().includes(`/api/dashboards/uid/${DASHBOARD_UID}/public-dashboards/`) &&
+          response.url().includes(`/api/dashboards/uid/${DASHBOARD_UID_2}/public-dashboards/`) &&
           response.request().method() === 'PATCH'
       );
 
