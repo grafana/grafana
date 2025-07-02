@@ -94,6 +94,17 @@ export {
   defaultRowPanel
 } from './veneer/dashboard.types';
 
+// The following exported declarations correspond to types in the datasource@0.0 kind's
+// schema with attribute @grafana(TSVeneer="type").
+//
+// The handwritten file for these type and default veneers is expected to be at
+// packages/grafana-schema/src/veneer/datasource.types.ts.
+// This re-export declaration enforces that the handwritten veneer file exists,
+// and exports all the symbols in the list.
+//
+// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
+export type { Datasource } from './veneer/datasource.types';
+
 // Raw generated types from LibraryPanel kind.
 export type {
   LibraryElementDTOMetaUser,

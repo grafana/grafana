@@ -2,7 +2,17 @@ package datasource
 
 import (
 	"context"
+	_ "embed"
+	"encoding/json"
 	"fmt"
+	"strings"
+	"sync"
+
+	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
+	"cuelang.org/go/cue/errors"
+	cuejson "cuelang.org/go/encoding/json"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -160,6 +170,15 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *v0a
 
 // UpdateDataSource implements PluginDatasourceProvider.
 func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error) {
+	errs := ValidateDatasourceSpec(ds)
+	if len(errs) > 0 {
+		errStrings := []string{}
+		for _, e := range errs {
+			errStrings = append(errStrings, e.Error())
+		}
+		return nil, fmt.Errorf("validate errors: %s", strings.Join(errStrings, ", "))
+	}
+
 	// We don't have, or want, a numeric ID in the new world.
 	// Instead, we have a k8s name, which maps to UID.
 	// Existing code needs ID though, so fetch it from UID and orgID.
@@ -247,4 +266,50 @@ func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*v0alpha
 		result.Items = append(result.Items, *v)
 	}
 	return result, nil
+}
+
+//go:embed datasource_kind.cue
+var schemaSource string
+var (
+	compiledSchema cue.Value
+	getSchemaOnce  sync.Once
+)
+
+func getCueSchema() cue.Value {
+	getSchemaOnce.Do(func() {
+		cueCtx := cuecontext.New()
+		compiledSchema = cueCtx.CompileString(schemaSource).LookupPath(
+			cue.ParsePath("lineage.schemas[0].schema.spec"),
+		)
+		if compiledSchema.Err() != nil {
+			backend.Logger.Error("Error compiling cue schema", compiledSchema.Err().Error())
+			backend.Logger.Info(schemaSource)
+		}
+	})
+
+	return compiledSchema
+}
+
+func ValidateDatasourceSpec(obj *v0alpha1.GenericDataSource) field.ErrorList {
+	data, err := json.Marshal(obj.Spec)
+	if err != nil {
+		return field.ErrorList{
+			field.Invalid(field.NewPath("spec"), field.OmitValueType{}, err.Error()),
+		}
+	}
+	backend.Logger.Info(fmt.Sprintf("json obj: %s", string(data)))
+
+	errs := field.ErrorList{}
+	if err := cuejson.Validate(data, getCueSchema()); err != nil {
+		for _, e := range errors.Errors(err) {
+			format, args := e.Msg()
+			errs = append(errs, field.Invalid(
+				field.NewPath(strings.Join(e.Path(), "->")),
+				field.OmitValueType{},
+				fmt.Sprintf(format, args...),
+			))
+		}
+	}
+
+	return errs
 }
