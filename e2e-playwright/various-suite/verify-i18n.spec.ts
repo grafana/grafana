@@ -1,39 +1,23 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-// TODO: the test sometimes causes others to fail with labels changing w/ languages.
+const I18N_USER = 'i18n-test';
+const I18N_PASSWORD = 'i18n-test';
+
+// Separate user to isolate changes from other tests
+test.use({
+  user: {
+    user: I18N_USER,
+    password: I18N_PASSWORD,
+  },
+  storageState: `playwright/.auth/${I18N_USER}.json`,
+});
+
 test.describe(
   'Verify i18n',
   {
     tag: ['@various'],
   },
   () => {
-    const I18N_USER = 'i18n-test';
-    const I18N_PASSWORD = 'i18n-test';
-    let userId: string;
-
-    // Create a new user to isolate the language changes from other tests
-    test.beforeAll(async ({ request }) => {
-      // Create the test user
-      const createUserResponse = await request.post('/api/admin/users', {
-        data: {
-          email: I18N_USER,
-          login: I18N_USER,
-          name: I18N_USER,
-          password: I18N_PASSWORD,
-        },
-      });
-
-      const userData = await createUserResponse.json();
-      userId = userData.uid;
-    });
-
-    // Remove the user created in the beforeAll hook
-    test.afterAll(async ({ request }) => {
-      if (userId) {
-        await request.delete(`/api/admin/users/${userId}`);
-      }
-    });
-
     // Map between languages in the language picker and the corresponding translation of the 'Language' label
     const languageMap: Record<string, string> = {
       Deutsch: 'Sprache',
@@ -46,7 +30,9 @@ test.describe(
 
     // Basic test which loops through the defined languages in the picker
     // and verifies that the corresponding label is translated correctly
-    test('loads all the languages correctly', async ({ page, selectors }) => {
+    test('loads all the languages correctly', async ({ page, selectors, createUser, login }) => {
+      await createUser();
+      await login();
       // Navigate to profile page
       await page.goto('/profile');
 
