@@ -185,6 +185,9 @@ func loadCueFiles(ctx *cue.Context, dirs []os.DirEntry) ([]codegen.SchemaForGen,
 		}
 
 		v := ctx.CompileBytes(cueFile)
+		if err := v.Err(); err != nil {
+			return nil, err
+		}
 		name, err := getSchemaName(v)
 		if err != nil {
 			return nil, err
