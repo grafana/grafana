@@ -118,6 +118,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	}
 
 	p.registerMetrics = true
+	p.logQueries = databaseGetter.Bool("log_queries")
 	p.engine, err = getEngine(cfg)
 	return p, err
 }
