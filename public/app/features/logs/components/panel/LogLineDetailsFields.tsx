@@ -17,13 +17,14 @@ import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsFieldsProps {
+  disableActions?: boolean;
   fields: FieldDef[];
   log: LogListModel;
   logs: LogListModel[];
   search?: string;
 }
 
-export const LogLineDetailsFields = ({ fields, log, logs, search }: LogLineDetailsFieldsProps) => {
+export const LogLineDetailsFields = ({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
   if (!fields.length) {
     return null;
   }
@@ -32,10 +33,11 @@ export const LogLineDetailsFields = ({ fields, log, logs, search }: LogLineDetai
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
   return (
-    <div className={styles.fieldsTable}>
+    <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
       {filteredFields.map((field, i) => (
         <LogLineDetailsField
           key={`${field.keys[0]}=${field.values[0]}-${i}`}
+          disableActions={disableActions}
           getLogs={getLogs}
           fieldIndex={field.fieldIndex}
           keys={field.keys}
@@ -99,6 +101,11 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gap: theme.spacing(1),
     gridTemplateColumns: `${theme.spacing(11.5)} minmax(20%, 30%) 1fr`,
+  }),
+  fieldsTableNoActions: css({
+    display: 'grid',
+    gap: theme.spacing(1),
+    gridTemplateColumns: `minmax(20%, 30%) 1fr`,
   }),
 });
 
@@ -259,10 +266,10 @@ export const LogLineDetailsField = ({
                 name="search-minus"
                 tooltip={
                   app === CoreApp.Explore && log.dataFrame?.refId
-                    ? t('logs.log-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
+                    ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
                         query: log.dataFrame?.refId,
                       })
-                    : t('logs.log-details.fields.filter-out', 'Filter out value')
+                    : t('logs.log-line-details.fields.filter-out', 'Filter out value')
                 }
                 onClick={filterOutLabel}
               />
@@ -270,7 +277,7 @@ export const LogLineDetailsField = ({
             {singleKey && displayedFields.includes(keys[0]) && (
               <IconButton
                 variant="primary"
-                tooltip={t('logs.log-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
+                tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
                 name="eye"
                 onClick={hideField}
               />
@@ -278,7 +285,7 @@ export const LogLineDetailsField = ({
             {singleKey && !displayedFields.includes(keys[0]) && (
               <IconButton
                 tooltip={t(
-                  'logs.log-details.fields.toggle-field-button.field-instead-message',
+                  'logs.log-line-details.fields.toggle-field-button.field-instead-message',
                   'Show this field instead of the message'
                 )}
                 name="eye"
@@ -288,7 +295,7 @@ export const LogLineDetailsField = ({
             <IconButton
               variant={showFieldsStats ? 'primary' : 'secondary'}
               name="signal"
-              tooltip={t('logs.log-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
+              tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
               className="stats-button"
               disabled={!singleKey}
               onClick={showStats}
@@ -349,7 +356,7 @@ export const LogLineDetailsField = ({
             <IconButton
               variant={showFieldsStats ? 'primary' : 'secondary'}
               name="signal"
-              tooltip={t('logs.log-details.fields.hide-adhoc-statistics', 'Hide ad-hoc statistics')}
+              tooltip={t('logs.log-line-details.fields.hide-adhoc-statistics', 'Hide ad-hoc statistics')}
               onClick={showStats}
             />
           </td>
@@ -407,7 +414,7 @@ const ClipboardButtonWrapper = ({ value }: { value: string }) => {
     <div className={styles.button}>
       <ClipboardButton
         getText={() => value}
-        title={t('logs.log-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
+        title={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
         fill="text"
         variant="secondary"
         icon="copy"

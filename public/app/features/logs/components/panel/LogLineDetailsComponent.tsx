@@ -30,7 +30,10 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
     const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex).sort();
     const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex).sort();
     const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
-    return [...displayedFieldsWithLinks, ...fieldsWithLinksFromVariableMap];
+    return {
+      links: displayedFieldsWithLinks,
+      linksFromVariableMap: fieldsWithLinksFromVariableMap,
+    };
   }, [log.entryFieldIndex, log.fields]);
   const fieldsWithoutLinks =
     log.dataFrame.meta?.type === DataFrameType.LogLines
@@ -94,14 +97,21 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
         >
           <div className={styles.logLineWrapper}>{log.raw}</div>
         </ControlledCollapse>
-        {fieldsWithLinks.length > 0 && (
+        {fieldsWithLinks.links.length > 0 && (
           <ControlledCollapse
             label={t('logs.log-line-details.links-section', 'Links')}
             collapsible
             isOpen={linksOpen}
             onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
           >
-            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks} search={search} />
+            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks.links} search={search} />
+            <LogLineDetailsFields
+              disableActions
+              log={log}
+              logs={logs}
+              fields={fieldsWithLinks.linksFromVariableMap}
+              search={search}
+            />
           </ControlledCollapse>
         )}
         {labelGroups.map((group) =>
