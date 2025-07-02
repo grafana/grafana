@@ -379,7 +379,6 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					},
 				},
 			},
-
 			sqlSecureValueOutboxFetchMessageIDs: {
 				{
 					Name: "basic",
@@ -389,7 +388,6 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					},
 				},
 			},
-
 			sqlSecureValueOutboxReceiveN: {
 				{
 					Name: "basic",
@@ -399,7 +397,6 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					},
 				},
 			},
-
 			sqlSecureValueOutboxDelete: {
 				{
 					Name: "basic",

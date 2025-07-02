@@ -38,6 +38,7 @@ var (
 	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
 	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")
 	sqlSecureValueOutboxUpdateReceiveCount = mustTemplate("secure_value_outbox_update_receive_count.sql")
+	sqlSecureValueOutboxQueryTimestamp     = mustTemplate("secure_value_outbox_query_timestamp.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -259,6 +260,13 @@ type deleteSecureValueOutbox struct {
 }
 
 func (deleteSecureValueOutbox) Validate() error { return nil }
+
+type getOutboxMessageTimestamp struct {
+	sqltemplate.SQLTemplate
+	MessageID int64
+}
+
+func (getOutboxMessageTimestamp) Validate() error { return nil }
 
 type incrementReceiveCountOutbox struct {
 	sqltemplate.SQLTemplate
