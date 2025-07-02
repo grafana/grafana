@@ -756,7 +756,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
     });
 
-    it('should not show an error alert in the modal IN PRODUCTION MODE if the extension throws an error', async () => {
+    it('should also show an error alert in the modal IN PRODUCTION MODE if the extension throws an error', async () => {
       config.buildInfo.env = 'production';
       jest.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -786,7 +786,7 @@ describe('Plugin Extensions / Utils', () => {
         digest: expect.any(String),
       });
 
-      expect(screen.queryByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).not.toBeInTheDocument();
+      expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
     });
   });
 

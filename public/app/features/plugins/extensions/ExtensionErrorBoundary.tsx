@@ -11,11 +11,13 @@ export const ExtensionErrorBoundary = ({
   pluginId,
   extensionTitle,
   log = baseLog,
+  fallbackAlwaysVisible = false,
 }: {
   children: React.ReactNode;
   pluginId: string;
   extensionTitle: string;
   log?: ExtensionsLog;
+  fallbackAlwaysVisible?: boolean;
 }) => {
   return (
     <PluginErrorBoundary
@@ -27,7 +29,7 @@ export const ExtensionErrorBoundary = ({
         });
       }}
       fallback={() => {
-        if (isGrafanaDevMode()) {
+        if (isGrafanaDevMode() || fallbackAlwaysVisible) {
           return <ExtensionErrorAlert pluginId={pluginId} extensionTitle={extensionTitle} />;
         }
 

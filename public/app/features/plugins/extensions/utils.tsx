@@ -122,7 +122,12 @@ const getModalWrapper = ({
           We also add an error boundary here (apart from the one in the `wrapWithPluginContext`) 
           so the error appears inside the modal (and not at the bottom of the page.)
         */}
-        <ExtensionErrorBoundary pluginId={config.pluginId} extensionTitle={config.title} log={baseLog}>
+        <ExtensionErrorBoundary
+          pluginId={config.pluginId}
+          extensionTitle={config.title}
+          fallbackAlwaysVisible={true}
+          log={baseLog}
+        >
           <Body onDismiss={onDismiss} />
         </ExtensionErrorBoundary>
       </Modal>
