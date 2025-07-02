@@ -8421,6 +8421,17 @@
       "close": "Close log details",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
+      "fields": {
+        "adhoc-statistics": "Ad-hoc statistics",
+        "copy-value-to-clipboard": "Copy value to clipboard",
+        "filter-out": "Filter out value",
+        "filter-out-query": "Filter out value in query {{query}}",
+        "hide-adhoc-statistics": "Hide ad-hoc statistics",
+        "toggle-field-button": {
+          "field-instead-message": "Show this field instead of the message",
+          "hide-this-field": "Hide this field"
+        }
+      },
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "links-section": "Links",
@@ -8563,17 +8574,6 @@
       "aria-label-line": "Log line",
       "aria-label-log-level": "Log level",
       "aria-label-no-details": "No details"
-    },
-    "un-themed-log-details-log": {
-      "filter-out": "Filter out value",
-      "filter-out-query": "Filter out value in query {{query}}",
-      "title-copy-value-to-clipboard": "Copy value to clipboard",
-      "toggle-field-button": {
-        "tooltip-field-instead-message": "Show this field instead of the message",
-        "tooltip-hide-this-field": "Hide this field"
-      },
-      "tooltip-adhoc-statistics": "Ad-hoc statistics",
-      "tooltip-hide-adhoc-statistics": "Hide ad-hoc statistics"
     },
     "un-themed-log-details-row": {
       "filter-out": "Filter out value",
