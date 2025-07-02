@@ -110,6 +110,12 @@
       "update-button": "Perbarui",
       "users-heading": "Pengguna organisasi"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Audit",
       "title-custom-branding": "Branding kustom",
@@ -3449,18 +3455,12 @@
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
-      "description-branch-name-in-git-hub": "Nama cabang di GitHub",
       "error-invalid-folder-name": "Nama folder tidak valid",
       "error-required": "Nama folder wajib diisi",
-      "folder-comment-input-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
       "folder-name-input-placeholder-enter-folder-name": "Masukkan nama folder",
-      "label-branch": "Cabang",
-      "label-comment": "Komentar",
       "label-folder-name": "Nama folder",
-      "label-workflow": "Alur kerja",
       "text-pull-request-created": "Permintaan pull telah dibuat dengan perubahan pada folder ini:",
       "title-pull-request-created": "Permintaan pull dibuat",
-      "title-repository-not-found": "Repositori tidak ditemukan",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
     "no-results": {
@@ -12038,6 +12038,7 @@
           "polynomial": "Polinomial"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Jumlah poin X,Y untuk diprediksi"
     },
     "rename-by-regex-transformer-editor": {

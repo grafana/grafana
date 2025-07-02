@@ -110,6 +110,12 @@
       "update-button": "Aggiorna",
       "users-heading": "Utenti dell'organizzazione"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Verifiche",
       "title-custom-branding": "Marchio personalizzato",
@@ -3467,18 +3473,12 @@
       "button-create": "Crea",
       "button-creating": "Creazione in corso...",
       "cancel": "Annulla",
-      "description-branch-name-in-git-hub": "Nome del ramo in GitHub",
       "error-invalid-folder-name": "Nome cartella non valido",
       "error-required": "Il nome della cartella è obbligatorio",
-      "folder-comment-input-placeholder-describe-changes-optional": "Aggiungi una nota per descrivere le modifiche (facoltativo)",
       "folder-name-input-placeholder-enter-folder-name": "Inserisci nome cartella",
-      "label-branch": "Ramo",
-      "label-comment": "Commento",
       "label-folder-name": "Nome cartella",
-      "label-workflow": "Flusso di lavoro",
       "text-pull-request-created": "È stata creata una richiesta di pull con modifiche a questa cartella:",
       "title-pull-request-created": "Richiesta di pull creata",
-      "title-repository-not-found": "Repository non trovato",
       "title-this-repository-is-read-only": "Questo repository è di sola lettura"
     },
     "no-results": {
@@ -12073,6 +12073,7 @@
           "polynomial": ""
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Numero di punti X, Y da prevedere"
     },
     "rename-by-regex-transformer-editor": {

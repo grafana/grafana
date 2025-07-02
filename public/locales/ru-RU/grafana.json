@@ -110,6 +110,12 @@
       "update-button": "Обновить",
       "users-heading": "Пользователи организации"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Проверка",
       "title-custom-branding": "Пользовательский брендинг",
@@ -3503,18 +3509,12 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
-      "description-branch-name-in-git-hub": "Имя ветви в GitHub",
       "error-invalid-folder-name": "Недопустимое имя папки",
       "error-required": "Требуется имя папки",
-      "folder-comment-input-placeholder-describe-changes-optional": "Добавьте примечание с описанием изменений (необязательно)",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
-      "label-branch": "Ветвь",
-      "label-comment": "Комментарий",
       "label-folder-name": "Имя папки",
-      "label-workflow": "Рабочий процесс",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
       "title-pull-request-created": "Создан запрос на включение изменений",
-      "title-repository-not-found": "Репозиторий не найден",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
     "no-results": {
@@ -12143,6 +12143,7 @@
           "polynomial": "Полиномиальная"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Количество точек X, Y для прогнозирования"
     },
     "rename-by-regex-transformer-editor": {

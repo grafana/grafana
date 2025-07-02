@@ -110,6 +110,12 @@
       "update-button": "Aktualizovat",
       "users-heading": "Uživatelé organizace"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Provádění auditu",
       "title-custom-branding": "Vlastní branding",
@@ -3503,18 +3509,12 @@
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
-      "description-branch-name-in-git-hub": "Název větvě v GitHubu",
       "error-invalid-folder-name": "Neplatný název složky",
       "error-required": "Název složky je povinný",
-      "folder-comment-input-placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné)",
       "folder-name-input-placeholder-enter-folder-name": "Zadejte název složky",
-      "label-branch": "Větev",
-      "label-comment": "Komentář",
       "label-folder-name": "Název složky",
-      "label-workflow": "Pracovní tok",
       "text-pull-request-created": "Byl vytvořen pull request se změnami v této složce:",
       "title-pull-request-created": "Pull request byl vytvořen",
-      "title-repository-not-found": "Úložiště nebylo nalezeno",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
     "no-results": {
@@ -12143,6 +12143,7 @@
           "polynomial": "Polynomický"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Počet bodů X, Y k předpovědi"
     },
     "rename-by-regex-transformer-editor": {
