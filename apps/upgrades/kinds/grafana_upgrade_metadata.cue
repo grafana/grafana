@@ -20,6 +20,7 @@ grafana_upgrade_metadata: {
 					state: *"new" | "dismissed" | "failed" | "succeeded"
 					is_out_of_support:  bool
 					target_minor_release_date: string
+					type:	string
 				}
 			}
 			customRoutes: {
