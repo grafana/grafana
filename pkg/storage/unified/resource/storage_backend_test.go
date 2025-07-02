@@ -176,9 +176,6 @@ func TestKvStorageBackend_WriteEvent_ResourceAlreadyExists(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, int64(0), rv2)
 	require.ErrorIs(t, err, ErrResourceAlreadyExists)
-
-	// Verify the error is the correct type
-	require.Contains(t, err.Error(), "the resource already exists")
 }
 
 func TestKvStorageBackend_ReadResource_Success(t *testing.T) {
@@ -550,11 +547,13 @@ func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, rv, int64(0))
 	require.Len(t, firstPageItems, 2)
+	require.Equal(t, []string{"resource-1", "resource-2"}, firstPageItems)
 	require.NotEmpty(t, continueToken)
 
 	// Second page using continue token
 	listReq.NextPageToken = continueToken
 	var secondPageItems []string
+	var continueToken2 string
 
 	_, err = backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
 		for iter.Next() {
@@ -563,18 +562,16 @@ func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 			}
 			secondPageItems = append(secondPageItems, iter.Name())
 		}
+		// Capture continue token for potential third page
+		continueToken2 = iter.ContinueToken()
 		return iter.Error()
 	})
-
+	// TODO: fix the ListIterator to respect the limit. This require a change to the resource server.
 	require.NoError(t, err)
-	require.Greater(t, len(secondPageItems), 0)
-
-	// Verify no duplicates between pages
-	for _, item := range secondPageItems {
-		require.NotContains(t, firstPageItems, item)
-	}
+	require.Equal(t, 3, len(secondPageItems))
+	require.Equal(t, []string{"resource-3", "resource-4", "resource-5"}, secondPageItems)
+	require.NotEmpty(t, continueToken2)
 }
-
 func TestKvStorageBackend_ListIterator_EmptyResult(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()

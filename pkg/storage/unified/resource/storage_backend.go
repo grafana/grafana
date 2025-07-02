@@ -237,6 +237,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		ctx:          ctx,
 		listRV:       listRV,
 		offset:       offset,
+		limit:        req.Limit + 1, // TODO: for now we need at least one more item. Fix the caller
 		dataStore:    k.dataStore,
 	}
 	err := cb(&iter)
@@ -255,6 +256,7 @@ type kvListIterator struct {
 	dataStore    *dataStore
 	listRV       int64
 	offset       int64
+	limit        int64
 
 	// current
 	rv    int64
@@ -266,6 +268,10 @@ func (i *kvListIterator) Next() bool {
 	i.currentIndex++
 
 	if i.currentIndex >= len(i.keys) {
+		return false
+	}
+
+	if int64(i.currentIndex) >= i.limit {
 		return false
 	}
 
