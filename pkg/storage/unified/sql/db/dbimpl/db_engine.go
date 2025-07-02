@@ -20,8 +20,9 @@ import (
 // driver.
 const tlsConfigName = "db_engine_tls"
 
-func getEngine(cfg *setting.Cfg, getter confGetter) (*xorm.Engine, error) {
-	dbType := getter.String("type")
+func getEngine(cfg *setting.Cfg) (*xorm.Engine, error) {
+	dbSection := cfg.SectionWithEnvOverrides("database")
+	dbType := dbSection.Key("type").String()
 	if dbType == "" {
 		return nil, fmt.Errorf("no database type specified")
 	}
@@ -38,9 +39,9 @@ func getEngine(cfg *setting.Cfg, getter confGetter) (*xorm.Engine, error) {
 			return nil, fmt.Errorf("open database: %w", err)
 		}
 
-		engine.SetMaxOpenConns(getter.Int("max_open_conn", 0))
-		engine.SetMaxIdleConns(getter.Int("max_idle_conn", 4))
-		maxLifetime := time.Duration(getter.Int("conn_max_lifetime", 14400)) * time.Second
+		engine.SetMaxOpenConns(dbSection.Key("max_open_conn").MustInt(0))
+		engine.SetMaxIdleConns(dbSection.Key("max_idle_conn").MustInt(4))
+		maxLifetime := time.Duration(dbSection.Key("conn_max_lifetime").MustInt(14400)) * time.Second
 		engine.SetConnMaxLifetime(maxLifetime)
 
 		return engine, nil

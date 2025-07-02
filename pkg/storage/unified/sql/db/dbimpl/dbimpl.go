@@ -118,7 +118,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	}
 
 	p.registerMetrics = true
-	p.engine, err = getEngine(cfg, databaseGetter)
+	p.engine, err = getEngine(cfg)
 	return p, err
 }
 
