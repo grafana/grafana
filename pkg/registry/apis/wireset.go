@@ -47,7 +47,7 @@ var WireSet = wire.NewSet(
 	datasource.ProvideDefaultPluginConfigs,
 
 	// Secrets
-	secret.RunDBMigrations,
+	secret.RegisterDependencies,
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
