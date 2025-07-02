@@ -45,7 +45,6 @@ export const GET_DATA_SOURCES_TOOL = {
     },
   },
 };
-
 export const SYSTEM_PROMPT_CONTENT = `You are an expert in creating Grafana alert rules. Based on the user's description, generate a properly structured alert rule configuration.
 
 You have access to tools that can help you:
@@ -62,8 +61,8 @@ Return a JSON object that matches the RuleFormValues interface with these key fi
 - execErrState: What to do on execution error (usually "Alerting")
 - annotations: Array of key-value pairs for additional information
 - labels: Array of key-value pairs for categorization
-- folder: Object with title and uid for organization (find the folder in the user's organization, if it doesn't exist, create it)
-- group: The group name for the alert rule (find a group inside the folder, if it doesn't exist, create it)
+- folder: do not set this field
+- group: do not set this field
 - contactPoints: Use actual contact point names from the get_contact_points tool when available. Include all required routing settings:
   - selectedContactPoint: The contact point name
   - overrideGrouping: false (unless specifically requested)
