@@ -9,6 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+type crypto interface {
+	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+}
+
 type amConfigStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
@@ -32,11 +37,12 @@ type ConfigRevision struct {
 	Version          string
 }
 type alertmanagerConfigStoreImpl struct {
-	store amConfigStore
+	store  amConfigStore
+	crypto crypto
 }
 
-func NewAlertmanagerConfigStore(store amConfigStore) *alertmanagerConfigStoreImpl {
-	return &alertmanagerConfigStoreImpl{store: store}
+func NewAlertmanagerConfigStore(store amConfigStore, crypto crypto) *alertmanagerConfigStoreImpl {
+	return &alertmanagerConfigStoreImpl{store: store, crypto: crypto}
 }
 
 func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {
@@ -55,6 +61,11 @@ func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*Con
 		return nil, err
 	}
 
+	err = a.crypto.DecryptExtraConfigs(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt extra configurations: %w", err)
+	}
+
 	return &ConfigRevision{
 		Config:           cfg,
 		ConcurrencyToken: concurrencyToken,
@@ -63,6 +74,11 @@ func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*Con
 }
 
 func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigRevision, orgID int64) error {
+	err := a.crypto.EncryptExtraConfigs(ctx, revision.Config)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt extra configurations: %w", err)
+	}
+
 	serialized, err := SerializeAlertmanagerConfig(*revision.Config)
 	if err != nil {
 		return err
