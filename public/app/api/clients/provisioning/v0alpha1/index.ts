@@ -1,13 +1,8 @@
-import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
-
 import { t } from '@grafana/i18n';
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { AppNotificationSeverity } from 'app/types';
 
 import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
-import { PullRequestLink } from '../../../../features/dashboard-scene/saving/provisioned/PullRequestLink';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
 import {
@@ -23,11 +18,6 @@ import {
 function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {
   return typeof error === 'object' && error != null && 'error' in error;
 }
-
-function createPRLinkComponent(url: string) {
-  return React.createElement(PullRequestLink, { url });
-}
-
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
     listJob: {
