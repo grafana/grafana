@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-import { multiLineFullQuery } from '../../../__mocks__/cloudwatch-ppl-test-data/multilineQueries';
+import { multiLineFullQuery } from '../../../mocks/cloudwatch-ppl-test-data/multilineQueries';
 import {
   dedupQueryWithOptionalArgs,
   dedupQueryWithoutOptionalArgs,
@@ -19,9 +19,9 @@ import {
   statsQuery,
   topQuery,
   whereQuery,
-} from '../../../__mocks__/cloudwatch-ppl-test-data/singleLineQueries';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
+} from '../../../mocks/cloudwatch-ppl-test-data/singleLineQueries';
+import MonacoMock from '../../../mocks/monarch/Monaco';
+import TextModel from '../../../mocks/monarch/TextModel';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
 import { StatementPosition } from '../../monarch/types';
 import cloudWatchLogsPPLLanguageDefinition from '../definition';

@@ -3,15 +3,15 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { getMockDataSources } from 'app/features/datasources/__mocks__';
 import * as api from 'app/features/datasources/api';
+import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
 import { configureStore } from 'app/store/configureStore';
 
-import { getPluginsStateMock } from '../plugins/admin/__mocks__';
+import { getPluginsStateMock } from '../plugins/admin/mocks/mockHelpers';
 
 import Connections from './Connections';
-import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTES } from './constants';
+import { navIndex } from './mocks/store.navIndex.mock';
 
 jest.mock('app/core/services/context_srv');
 jest.mock('app/features/datasources/api');

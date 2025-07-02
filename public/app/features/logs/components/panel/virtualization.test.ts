@@ -1,7 +1,7 @@
 import { createTheme, LogsSortOrder } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
 import { LogListModel, PreProcessOptions } from './processing';
 import { LogLineVirtualization, getLogLineSize, DisplayOptions } from './virtualization';

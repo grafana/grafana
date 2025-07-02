@@ -1,6 +1,6 @@
 import { LogRowModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { createLogRow } from 'app/features/logs/components/__mocks__/logRow';
+import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
 import { createShortLink, createAndCopyShortLink, getLogsPermalinkRange } from './shortLinks';
 

@@ -1,8 +1,8 @@
 import { monacoTypes } from '@grafana/ui';
 
-import * as MetricMathTestQueries from '../../../__mocks__/metric-math-test-data';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
+import * as MetricMathTestQueries from '../../../mocks/metric-math-test-data';
+import MonacoMock from '../../../mocks/monarch/Monaco';
+import TextModel from '../../../mocks/monarch/TextModel';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
 import { StatementPosition } from '../../monarch/types';
 import cloudWatchSqlLanguageDefinition from '../definition';

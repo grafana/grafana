@@ -6,11 +6,11 @@ import config from 'app/core/config';
 
 import { queryBuilder } from '../../../features/variables/shared/testing/builders';
 
-import { getMockDSInstanceSettings, getMockInfluxDS, mockBackendService, replaceMock } from './__mocks__/datasource';
-import { mockInfluxQueryRequest } from './__mocks__/request';
-import { mockInfluxFetchResponse, mockMetricFindQueryResponse } from './__mocks__/response';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxDatasource from './datasource';
+import { getMockDSInstanceSettings, getMockInfluxDS, mockBackendService, replaceMock } from './mocks/datasource';
+import { mockInfluxQueryRequest } from './mocks/request';
+import { mockInfluxFetchResponse, mockMetricFindQueryResponse } from './mocks/response';
 import { InfluxQuery, InfluxVersion } from './types';
 
 const fetchMock = mockBackendService(mockInfluxFetchResponse());

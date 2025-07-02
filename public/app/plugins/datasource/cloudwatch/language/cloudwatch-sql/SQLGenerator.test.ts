@@ -1,10 +1,11 @@
+import { QueryEditorExpressionType } from '../../expressions';
 import {
   aggregationvariable,
   labelsVariable,
   metricVariable,
   namespaceVariable,
   setupMockedTemplateService,
-} from '../../__mocks__/CloudWatchDataSource';
+} from '../../mocks/CloudWatchDataSource';
 import {
   createFunctionWithParameter,
   createArray,
@@ -12,8 +13,7 @@ import {
   createGroupBy,
   createFunction,
   createProperty,
-} from '../../__mocks__/sqlUtils';
-import { QueryEditorExpressionType } from '../../expressions';
+} from '../../mocks/sqlUtils';
 import { SQLExpression } from '../../types';
 
 import SQLGenerator from './SQLGenerator';

@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { getMockDataSources } from '../__mocks__';
+import { getMockDataSources } from '../mocks/dataSourcesMocks';
 
 import { DataSourcesListView } from './DataSourcesList';
 

@@ -6,8 +6,8 @@ import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 
 import { LogRowMessage, MAX_CHARACTERS } from './LogRowMessage';
-import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
 
 const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();

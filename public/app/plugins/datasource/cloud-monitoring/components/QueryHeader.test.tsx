@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { openMenu, select } from 'react-select-event';
 
-import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
+import { createMockQuery } from '../mocks/cloudMonitoringQuery';
 import { QueryType } from '../types/query';
 
 import { QueryHeader } from './QueryHeader';

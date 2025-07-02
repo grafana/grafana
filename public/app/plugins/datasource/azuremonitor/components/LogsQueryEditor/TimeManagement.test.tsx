@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockQuery from '../../__mocks__/query';
-import FakeSchemaData from '../../azure_log_analytics/__mocks__/schema';
+import FakeSchemaData from '../../azure_log_analytics/mocks/schema';
+import createMockDatasource from '../../mocks/datasource';
+import createMockQuery from '../../mocks/query';
 
 import { TimeManagement } from './TimeManagement';
 

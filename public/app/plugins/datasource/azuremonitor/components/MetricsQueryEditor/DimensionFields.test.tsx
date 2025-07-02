@@ -4,9 +4,9 @@ import { openMenu } from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockPanelData from '../../__mocks__/panelData';
-import createMockQuery from '../../__mocks__/query';
+import createMockDatasource from '../../mocks/datasource';
+import createMockPanelData from '../../mocks/panelData';
+import createMockQuery from '../../mocks/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import DimensionFields from './DimensionFields';

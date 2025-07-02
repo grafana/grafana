@@ -11,10 +11,10 @@ import {
   dimensionVariable,
   periodIntervalVariable,
   accountIdVariable,
-} from '../__mocks__/CloudWatchDataSource';
-import { initialVariableModelState } from '../__mocks__/CloudWatchVariables';
-import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
-import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../__mocks__/queries';
+} from '../mocks/CloudWatchDataSource';
+import { initialVariableModelState } from '../mocks/CloudWatchVariables';
+import { setupMockedMetricsQueryRunner } from '../mocks/MetricsQueryRunner';
+import { validMetricSearchBuilderQuery, validMetricSearchCodeQuery } from '../mocks/queries';
 import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({

@@ -2,9 +2,9 @@ import { of } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, LoadingState } from '@grafana/data';
 
-import { createLokiDatasource } from './__mocks__/datasource';
-import { getMockFrames } from './__mocks__/frames';
 import { LokiDatasource } from './datasource';
+import { createLokiDatasource } from './mocks/datasource';
+import { getMockFrames } from './mocks/frames';
 import { runShardSplitQuery } from './shardQuerySplitting';
 import { LokiQuery, LokiQueryDirection } from './types';
 

@@ -17,11 +17,11 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasourc
 
 import { ContactPoint } from './ContactPoint';
 import { ContactPointsPageContents } from './ContactPoints';
-import setupMimirFlavoredServer from './__mocks__/mimirFlavoredServer';
+import { RECEIVER_META_KEY } from './constants';
+import setupMimirFlavoredServer from './mocks/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
-} from './__mocks__/vanillaAlertmanagerServer';
-import { RECEIVER_META_KEY } from './constants';
+} from './mocks/vanillaAlertmanagerServer';
 import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
 
 /**

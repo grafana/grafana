@@ -1,14 +1,14 @@
 import { CustomVariableModel } from '@grafana/data';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { setupMockedTemplateService, logGroupNamesVariable } from '../../../__mocks__/CloudWatchDataSource';
-import { multiLineFullQuery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/multiLineFullQuery';
-import { multiLineFullQueryWithCaseClause } from '../../../__mocks__/cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause';
-import { partialQueryWithSubquery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/partialQueryWithSubquery';
-import { singleLineFullQuery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/singleLineFullQuery';
-import { whitespaceQuery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/whitespaceQuery';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
+import { setupMockedTemplateService, logGroupNamesVariable } from '../../../mocks/CloudWatchDataSource';
+import { multiLineFullQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQuery';
+import { multiLineFullQueryWithCaseClause } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause';
+import { partialQueryWithSubquery } from '../../../mocks/cloudwatch-logs-sql-test-data/partialQueryWithSubquery';
+import { singleLineFullQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/singleLineFullQuery';
+import { whitespaceQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/whitespaceQuery';
+import MonacoMock from '../../../mocks/monarch/Monaco';
+import TextModel from '../../../mocks/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
 import { LogGroup, LogGroupField } from '../../../types';

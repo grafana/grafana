@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 
 import { dateTime, LoadingState } from '@grafana/data';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockQuery from '../../__mocks__/query';
 import { ResultFormat } from '../../dataquery.gen';
+import createMockDatasource from '../../mocks/datasource';
+import createMockQuery from '../../mocks/query';
 
 import LogsQueryEditor from './LogsQueryEditor';
 import { createMockResourcePickerData } from './mocks';

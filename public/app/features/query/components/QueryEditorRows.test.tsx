@@ -3,7 +3,7 @@ import { fireEvent, queryByLabelText, render, screen } from '@testing-library/re
 import { DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
-import createMockPanelData from 'app/plugins/datasource/azuremonitor/__mocks__/panelData';
+import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 
 import { QueryEditorRows, Props } from './QueryEditorRows';
 

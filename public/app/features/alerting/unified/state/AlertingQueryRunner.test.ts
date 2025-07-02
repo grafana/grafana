@@ -20,7 +20,7 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import {
   EXTERNAL_VANILLA_ALERTMANAGER_UID,
   mockDataSources,
-} from 'app/features/alerting/unified/components/settings/__mocks__/server';
+} from 'app/features/alerting/unified/components/settings/mocks/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';

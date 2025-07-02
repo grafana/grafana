@@ -7,7 +7,7 @@ import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data'
 import { PrometheusDatasource } from '../../../datasource';
 import { PrometheusLanguageProviderInterface } from '../../../language_provider';
 import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
-import { getMockTimeRange } from '../../../test/__mocks__/datasource';
+import { getMockTimeRange } from '../../../test/mocks/datasource';
 import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 

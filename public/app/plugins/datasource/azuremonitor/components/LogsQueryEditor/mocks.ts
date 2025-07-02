@@ -1,10 +1,10 @@
-import createMockDatasource from '../../__mocks__/datasource';
-import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
+import createMockDatasource from '../../mocks/datasource';
+import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 import {
   createMockSubscriptions,
   createMockResourceGroupsBySubscription,
   mockResourcesByResourceGroup,
-} from '../../__mocks__/resourcePickerRows';
+} from '../../mocks/resourcePickerRows';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 
 export function createMockResourcePickerData() {
