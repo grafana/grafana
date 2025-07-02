@@ -432,7 +432,7 @@ describe('LogLineDetails', () => {
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
     });
 
-    test.only('Should allow to search within fields', async () => {
+    test('Should allow to search within fields', async () => {
       setup(undefined, {
         entry,
         dataFrame,
