@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 
 import { TabsBar, Tab, Alert, Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-
-import { Overview } from './Overview';
-import { Changelog } from './Changelog';
-import { VersionList } from './VersionList';
-
 import { getUpgradesAPI } from 'app/features/admin/Upgrades/api';
+
+import { Changelog } from './Changelog';
+import { Overview } from './Overview';
+import { VersionList } from './VersionList';
 
 const upgradesApi = getUpgradesAPI();
 

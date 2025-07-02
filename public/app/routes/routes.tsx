@@ -392,6 +392,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "GrafanaDetailsPage" */ 'app/features/admin/Upgrades/UpgradePage')
       ),
     },
+    {
+      path: '/admin/pluginpanels',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "GrafanaDetailsPage" */ 'app/features/admin/Upgrades/PluginPanels')
+      ),
+    },
     // LOGIN / SIGNUP
     {
       path: '/login',
