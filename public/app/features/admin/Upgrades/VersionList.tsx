@@ -4,7 +4,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 interface Version {
-  startingVersion: string;
   version: string;
   releaseDate: string;
   notes?: string;
@@ -19,15 +18,12 @@ interface Props {
 
 export function VersionList({ versions, installedVersion }: Props) {
   const styles = useStyles2(getStyles);
-
-  if (!versions || versions.length === 0) {
-    return <p>No recommended upgrades found.</p>;
-  }
-
   return (
     <Stack direction="column" gap={2}>
     <br></br>
     <h1>Current Grafana Version: {installedVersion}</h1>
+    {versions.length === 0 ? (<p>No recommended upgrades found.</p>) : (
+    <>
     <h2>Recommended Upgrades</h2>
     <p>The following upgrades are recommended to ensure you are running the latest version of Grafana.</p>
     <table className={styles.table}>
@@ -63,7 +59,7 @@ export function VersionList({ versions, installedVersion }: Props) {
                   </LinkButton>
               </td>
               <td>{v.releaseDate}</td>
-              <td>{v.type || '-'} version</td>
+              <td>{v.type.toUpperCase()}</td>
               <td>{v.isOutOfSupport ? 'Out of Support' : 'In Support'}</td>
               <td>
                 <a
@@ -88,6 +84,8 @@ export function VersionList({ versions, installedVersion }: Props) {
         })}
         </tbody>
       </table>
+    </>
+    )}
     </Stack>
   );
 }

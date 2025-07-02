@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { TabsBar, Tab, Alert, Button, Stack } from '@grafana/ui';
+import { TabsBar, Tab, Alert, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getUpgradesAPI } from 'app/features/admin/Upgrades/api';
 
@@ -31,9 +31,9 @@ const getVersions = () => {
 
 const apiVersions = await getVersions();
 
-const currentVersion = apiVersions ? apiVersions[0].startingVersion : config.buildInfo.version;
+const currentVersion = apiVersions[0]?.startingVersion || config.buildInfo.version;
 const TABS = [
-  { id: 'VERSIONS', label: 'Version History' },
+  { id: 'VERSIONS', label: 'Version' },
   { id: 'CHANGELOG', label: 'Changelog' },
 ];
 
@@ -52,8 +52,8 @@ function UpgradePage() {
         </Stack>
       </Alert>
     ) : (
-      <Alert title=":)" severity="success">
-        <div>You are running the latest version of Grafana {currentVersion}</div>
+      <Alert title="Up to date" severity="success">
+        <div>You are running the latest version of Grafana {currentVersion} :)</div>
       </Alert>
     )}
         <div>
