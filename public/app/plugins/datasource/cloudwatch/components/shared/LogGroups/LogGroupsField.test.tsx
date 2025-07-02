@@ -8,7 +8,7 @@ import {
   logGroupNamesVariable,
   setupMockedDataSource,
   setupMockedTemplateService,
-} from '../../../__mocks__/CloudWatchDataSource';
+} from '../../../mocks/CloudWatchDataSource';
 
 import { LogGroupsField } from './LogGroupsField';
 

@@ -15,7 +15,10 @@ import VectorSource from 'ol/source/Vector';
 
 import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
+import { getColorDimension } from 'app/features/dimensions/color';
+import { getScalarDimension } from 'app/features/dimensions/scalar';
+import { getScaledDimension } from 'app/features/dimensions/scale';
+import { getTextDimension } from 'app/features/dimensions/text';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
 import { GeomapPanel } from '../GeomapPanel';

@@ -1,4 +1,4 @@
-import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
+import { getPublicOrAbsoluteUrl } from 'app/features/dimensions/resource';
 
 import { getWebGLStyle } from './markers';
 
