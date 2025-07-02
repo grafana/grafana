@@ -32,6 +32,10 @@ export const LogLineDetailsFields = ({ disableActions, fields, log, logs, search
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
+  if (filteredFields.length === 0) {
+    return t('logs.log-line-details.search.no-results', 'No results to display.');
+  }
+
   return (
     <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
       {filteredFields.map((field, i) => (

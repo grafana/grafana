@@ -31,10 +31,12 @@ jest.mock('@grafana/runtime', () => {
 });
 jest.mock('./LogListContext');
 
-const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>, contextOverrides?: Partial<LogListContextData>) => {
-  const logs = [
-    createLogLine({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides })
-  ];
+const setup = (
+  propOverrides?: Partial<Props>,
+  rowOverrides?: Partial<LogRowModel>,
+  contextOverrides?: Partial<LogListContextData>
+) => {
+  const logs = [createLogLine({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides })];
 
   const props: Props = {
     containerElement: document.createElement('div'),
@@ -42,7 +44,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     onResize: jest.fn(),
     ...(propOverrides || {}),
   };
-  
+
   const contextData: LogListContextData = {
     ...defaultValue,
     showDetails: logs,
@@ -73,7 +75,11 @@ describe('LogLineDetails', () => {
     test('should show an option to display the log line when displayed fields are used', async () => {
       const onClickShowField = jest.fn();
 
-      setup(undefined, { labels: { key1: 'label1' } }, { displayedFields: ['key1'], onClickShowField, onClickHideField: jest.fn() });
+      setup(
+        undefined,
+        { labels: { key1: 'label1' } },
+        { displayedFields: ['key1'], onClickShowField, onClickHideField: jest.fn() }
+      );
       expect(screen.getByText('key1')).toBeInTheDocument();
       expect(screen.getByLabelText('Show log line')).toBeInTheDocument();
 
@@ -84,7 +90,11 @@ describe('LogLineDetails', () => {
     test('should show an active option to display the log line when displayed fields are used', async () => {
       const onClickHideField = jest.fn();
 
-      setup(undefined, { labels: { key1: 'label1' } }, { displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField, onClickShowField: jest.fn() });
+      setup(
+        undefined,
+        { labels: { key1: 'label1' } },
+        { displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField, onClickShowField: jest.fn() }
+      );
       expect(screen.getByText('key1')).toBeInTheDocument();
       expect(screen.getByLabelText('Hide log line')).toBeInTheDocument();
 
@@ -104,7 +114,7 @@ describe('LogLineDetails', () => {
         {
           onClickFilterLabel: () => {},
           onClickFilterOutLabel: () => {},
-        },
+        }
       );
       expect(screen.getByLabelText('Filter for value in query A')).toBeInTheDocument();
       expect(screen.getByLabelText('Filter out value in query A')).toBeInTheDocument();
@@ -120,14 +130,18 @@ describe('LogLineDetails', () => {
           labels: { key1: 'label1' },
         });
 
-        setup({
-          logs: [log]
-        }, undefined, {
-          onClickFilterLabel: onClickFilterLabelMock,
-          onClickFilterOutLabel: onClickFilterOutLabelMock,
-          isLabelFilterActive: isLabelFilterActiveMock,
-          showDetails: [log]
-        });
+        setup(
+          {
+            logs: [log],
+          },
+          undefined,
+          {
+            onClickFilterLabel: onClickFilterLabelMock,
+            onClickFilterOutLabel: onClickFilterOutLabelMock,
+            isLabelFilterActive: isLabelFilterActiveMock,
+            showDetails: [log],
+          }
+        );
 
         expect(isLabelFilterActiveMock).toHaveBeenCalledWith('key1', 'label1', log.dataFrame.refId);
 
@@ -169,7 +183,7 @@ describe('LogLineDetails', () => {
         {
           onClickFilterLabel: undefined,
           onClickFilterOutLabel: undefined,
-        },
+        }
       );
       expect(screen.queryByLabelText('Filter for value')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
@@ -204,18 +218,15 @@ describe('LogLineDetails', () => {
         { name: 'userId', values: ['5678'] },
       ],
     });
-    const log = createLogLine({ entry, dataFrame, entryFieldIndex: 0, rowIndex: 0 }, {
-      escape: false,
-      order: LogsSortOrder.Descending,
-      timeZone: 'browser',
-      virtualization: undefined,
-      wrapLogMessage: true,
-      getFieldLinks: (
-        field: Field,
-        rowIndex: number,
-        dataFrame: DataFrame,
-        vars: ScopedVars
-      ) => {
+    const log = createLogLine(
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0 },
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        virtualization: undefined,
+        wrapLogMessage: true,
+        getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame, vars: ScopedVars) => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
@@ -227,14 +238,11 @@ describe('LogLineDetails', () => {
             });
           }
           return [];
-        }
-    });
-
-    setup(
-      { logs: [log]},
-      undefined,
-      { showDetails: [log]}
+        },
+      }
     );
+
+    setup({ logs: [log] }, undefined, { showDetails: [log] });
 
     expect(screen.getByText('Fields')).toBeInTheDocument();
     expect(screen.getByText('Links')).toBeInTheDocument();
@@ -275,18 +283,15 @@ describe('LogLineDetails', () => {
       },
     });
 
-    const log = createLogLine({ entry, dataFrame, entryFieldIndex: 0, rowIndex: 0, labels: { label1: 'value1' } }, {
-      escape: false,
-      order: LogsSortOrder.Descending,
-      timeZone: 'browser',
-      virtualization: undefined,
-      wrapLogMessage: true,
-      getFieldLinks: (
-        field: Field,
-        rowIndex: number,
-        dataFrame: DataFrame,
-        vars: ScopedVars
-      ) => {
+    const log = createLogLine(
+      { entry, dataFrame, entryFieldIndex: 0, rowIndex: 0, labels: { label1: 'value1' } },
+      {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        virtualization: undefined,
+        wrapLogMessage: true,
+        getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame, vars: ScopedVars) => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
@@ -298,14 +303,11 @@ describe('LogLineDetails', () => {
             });
           }
           return [];
-        }
-    });
-
-    setup(
-      { logs: [log]},
-      undefined,
-      { showDetails: [log]}
+        },
+      }
     );
+
+    setup({ logs: [log] }, undefined, { showDetails: [log] });
 
     expect(screen.getByText('Log line')).toBeInTheDocument();
     expect(screen.getByText('Fields')).toBeInTheDocument();
@@ -381,18 +383,15 @@ describe('LogLineDetails', () => {
       },
     });
     test('should show label types if they are available and supported', () => {
-      setup(
-        undefined,
-        {
-          entry,
-          dataFrame,
-          entryFieldIndex: 0,
-          rowIndex: 0,
-          labels,
-          datasourceType: 'loki',
-          rowId: '1',
-        }
-      );
+      setup(undefined, {
+        entry,
+        dataFrame,
+        entryFieldIndex: 0,
+        rowIndex: 0,
+        labels,
+        datasourceType: 'loki',
+        rowId: '1',
+      });
 
       // Show labels and links
       expect(screen.getByText('label1')).toBeInTheDocument();
@@ -431,6 +430,31 @@ describe('LogLineDetails', () => {
       expect(screen.queryByText('Indexed labels')).not.toBeInTheDocument();
       expect(screen.queryByText('Parsed fields')).not.toBeInTheDocument();
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
+    });
+
+    test.only('Should allow to search within fields', async () => {
+      setup(undefined, {
+        entry,
+        dataFrame,
+        entryFieldIndex: 0,
+        rowIndex: 0,
+        labels,
+        datasourceType: 'loki',
+        rowId: '1',
+      });
+
+      expect(screen.getByText('label1')).toBeInTheDocument();
+      expect(screen.getByText('value1')).toBeInTheDocument();
+      expect(screen.getByText('label2')).toBeInTheDocument();
+      expect(screen.getByText('value2')).toBeInTheDocument();
+      expect(screen.getByText('label3')).toBeInTheDocument();
+      expect(screen.getByText('value3')).toBeInTheDocument();
+
+      const input = screen.getByPlaceholderText('Search field names and values');
+
+      await userEvent.type(input, 'something else');
+
+      expect(screen.getAllByText('No results to display.')).toHaveLength(3);
     });
   });
 });
