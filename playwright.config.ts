@@ -200,6 +200,15 @@ export default defineConfig<PluginOptions>({
       },
     },
     {
+      name: 'various',
+      testDir: path.join(testDirRoot, '/various-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'panels',
       testDir: path.join(testDirRoot, '/panels-suite'),
       use: {
