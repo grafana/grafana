@@ -355,6 +355,8 @@ func schema_pkg_apis_secret_v0alpha1_InlineSecureValue(ref common.ReferenceCallb
 					"create": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Create a secure value",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](24576),
 							Type:        []string{"string"},
 							Format:      "",
 						},
