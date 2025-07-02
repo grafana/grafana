@@ -29,7 +29,7 @@ func ProvideRegistryServiceSink(
 	_ *userstorage.UserStorageAPIBuilder,
 	_ *provisioning.APIBuilder,
 	_ *ofrep.APIBuilder,
-	_ *secret.DBMigratorRunner,
+	_ *secret.DependencyRegisterer,
 ) *Service {
 	return &Service{}
 }
