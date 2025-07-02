@@ -25,6 +25,8 @@ var (
 	_ rest.Storage              = (*connectionAccess)(nil)
 )
 
+// Get all datasource connections -- this will be backed by search or duplicated resource in unified storage
+// TODO: name vs uid?  name accross all groups not unique!  must be different... use labels?
 type DataSourceConnectionProvider interface {
 	// Get gets a specific datasource (that the user in context can see)
 	GetConnection(ctx context.Context, namespace string, name string) (*queryV0.DataSourceConnection, error)
