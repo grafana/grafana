@@ -53,7 +53,11 @@ export function getCellHeightCalculator(
  * @internal
  * Returns the default row height based on the theme and cell height setting.
  */
-export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCellHeight): number {
+export function getDefaultRowHeight(
+  theme: GrafanaTheme2,
+  cellHeight?: TableCellHeight,
+  customCellHeight?: number
+): number {
   const bodyFontSize = theme.typography.fontSize;
   const lineHeight = theme.typography.body.lineHeight;
 
@@ -64,6 +68,8 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
       return 42;
     case TableCellHeight.Lg:
       return TABLE.MAX_CELL_HEIGHT;
+    case TableCellHeight.Custom:
+      return customCellHeight ?? 36;
   }
 
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
@@ -81,7 +87,13 @@ export function shouldTextOverflow(
 ): boolean {
   // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
   // so we need to ensure we don't apply overflow hover states fo type image
-  return fieldType === FieldType.string && cellType !== TableCellDisplayMode.Image && !textWrap && !cellInspect;
+  return (
+    fieldType === FieldType.string &&
+    cellType !== TableCellDisplayMode.Image &&
+    cellType !== TableCellDisplayMode.Markdown &&
+    !textWrap &&
+    !cellInspect
+  );
 }
 
 /**

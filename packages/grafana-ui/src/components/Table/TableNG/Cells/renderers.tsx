@@ -12,6 +12,7 @@ import { DataLinksCell } from './DataLinksCell';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
+import { MarkdownCell } from './MarkdownCell';
 import { SparklineCell } from './SparklineCell';
 
 export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
@@ -93,6 +94,18 @@ const CUSTOM_RENDERER: TableCellRenderer = (props) => {
   return <CustomCellComponent field={props.field} rowIndex={props.rowIdx} frame={props.frame} value={props.value} />;
 };
 
+const MARKDOWN_RENDERER: TableCellRenderer = (props) => (
+  <MarkdownCell
+    value={props.value}
+    field={props.field}
+    justifyContent={props.justifyContent}
+    rowIdx={props.rowIdx}
+    cellOptions={props.cellOptions}
+    actions={props.actions}
+    height={props.height}
+  />
+);
+
 const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.Sparkline]: SPARKLINE_RENDERER,
   [TableCellDisplayMode.Gauge]: GAUGE_RENDERER,
@@ -104,6 +117,7 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.ColorText]: AUTO_RENDERER,
   [TableCellDisplayMode.ColorBackground]: AUTO_RENDERER,
   [TableCellDisplayMode.Auto]: AUTO_RENDERER,
+  [TableCellDisplayMode.Markdown]: MARKDOWN_RENDERER,
 };
 
 /** @internal */

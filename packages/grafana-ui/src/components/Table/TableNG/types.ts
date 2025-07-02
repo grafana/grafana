@@ -134,6 +134,7 @@ export interface BaseTableProps {
   footerValues?: FooterItem[];
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  cellHeightCustom?: number;
   structureRev?: number;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
@@ -252,6 +253,15 @@ export interface CellColors {
 }
 
 export interface AutoCellProps extends ActionCellProps {
+  value: TableCellValue;
+  field: Field;
+  justifyContent: Property.JustifyContent;
+  rowIdx: number;
+  cellOptions: TableCellOptions;
+}
+
+export interface MarkdownCellProps extends ActionCellProps {
+  height: number;
   value: TableCellValue;
   field: Field;
   justifyContent: Property.JustifyContent;

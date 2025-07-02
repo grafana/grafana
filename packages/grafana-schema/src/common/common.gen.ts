@@ -708,6 +708,7 @@ export enum TableCellDisplayMode {
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  Markdown = 'markdown',
   Sparkline = 'sparkline',
 }
 
@@ -825,10 +826,18 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 /**
+ * Markdown options
+ */
+export interface TableMarkdownCellOptions {
+  type: TableCellDisplayMode.Markdown;
+}
+
+/**
  * Height of a table cell
  */
 export enum TableCellHeight {
   Auto = 'auto',
+  Custom = 'custom',
   Lg = 'lg',
   Md = 'md',
   Sm = 'sm',
@@ -838,7 +847,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
 
 /**
  * Use UTC/GMT timezone

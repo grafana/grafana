@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { merge } from 'lodash';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
@@ -26,9 +27,60 @@ interface Props {
 }
 
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
+  const cellDisplayModes: Record<TableCellOptions['type'], SelectableValue<TableCellOptions>> = useMemo(
+    () => ({
+      [TableCellDisplayMode.Auto]: {
+        value: { type: TableCellDisplayMode.Auto },
+        label: t('grafana-ui.table.cell-type.auto', 'Auto'),
+      },
+      [TableCellDisplayMode.Sparkline]: {
+        value: { type: TableCellDisplayMode.Sparkline },
+        label: t('grafana-ui.table.cell-type.sparkline', 'Sparkline'),
+      },
+      [TableCellDisplayMode.ColorText]: {
+        value: { type: TableCellDisplayMode.ColorText },
+        label: t('grafana-ui.table.cell-type.color-text', 'Colored text'),
+      },
+      [TableCellDisplayMode.ColorBackground]: {
+        value: { type: TableCellDisplayMode.ColorBackground },
+        label: t('grafana-ui.table.cell-type.color-background', 'Colored background'),
+      },
+      [TableCellDisplayMode.Gauge]: {
+        value: { type: TableCellDisplayMode.Gauge },
+        label: t('grafana-ui.table.cell-type.gauge', 'Gauge'),
+      },
+      [TableCellDisplayMode.DataLinks]: {
+        value: { type: TableCellDisplayMode.DataLinks },
+        label: t('grafana-ui.table.cell-type.data-links', 'Data links'),
+      },
+      [TableCellDisplayMode.JSONView]: {
+        value: { type: TableCellDisplayMode.JSONView },
+        label: t('grafana-ui.table.cell-type.json', 'JSON View'),
+      },
+      [TableCellDisplayMode.Image]: {
+        value: { type: TableCellDisplayMode.Image },
+        label: t('grafana-ui.table.cell-type.image', 'Image'),
+      },
+      [TableCellDisplayMode.Actions]: {
+        value: { type: TableCellDisplayMode.Actions },
+        label: t('grafana-ui.table.cell-type.actions', 'Actions'),
+      },
+      [TableCellDisplayMode.Markdown]: {
+        value: { type: TableCellDisplayMode.Markdown },
+        label: t('grafana-ui.table.cell-type.markdown', 'Markdown'),
+      },
+    }),
+    []
+  );
+
+  const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = useMemo(
+    () => Object.values(cellDisplayModes),
+    [cellDisplayModes]
+  );
+
   const cellType = value.type;
   const styles = useStyles2(getStyles);
-  const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
+  const currentMode = cellDisplayModes[cellType];
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
   // Update display mode on change
@@ -80,18 +132,6 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
     </div>
   );
 };
-
-let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
-  { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
-  { value: { type: TableCellDisplayMode.Sparkline }, label: 'Sparkline' },
-  { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
-  { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
-  { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
-  { value: { type: TableCellDisplayMode.DataLinks }, label: 'Data links' },
-  { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
-  { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
-  { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
-];
 
 const getStyles = (theme: GrafanaTheme2) => ({
   fixBottomMargin: css({
