@@ -241,8 +241,18 @@ func (c *alertmanagerCrypto) Decrypt(ctx context.Context, payload []byte) ([]byt
 	return c.secrets.Decrypt(ctx, payload)
 }
 
+func isBase64(s string) bool {
+	_, err := base64.StdEncoding.DecodeString(s)
+	return err == nil
+}
+
 func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
 	for i := range config.ExtraConfigs {
+		// Skip if empty or already encrypted (just check that it's base64 encoded)
+		if config.ExtraConfigs[i].AlertmanagerConfig == "" || isBase64(config.ExtraConfigs[i].AlertmanagerConfig) {
+			continue
+		}
+
 		encryptedValue, err := c.secrets.Encrypt(ctx, []byte(config.ExtraConfigs[i].AlertmanagerConfig), secrets.WithoutScope())
 		if err != nil {
 			return fmt.Errorf("failed to encrypt extra configuration: %w", err)
@@ -256,6 +266,10 @@ func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *de
 
 func (c *alertmanagerCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
 	for i := range config.ExtraConfigs {
+		if config.ExtraConfigs[i].AlertmanagerConfig == "" {
+			continue
+		}
+
 		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig)
 		if err != nil {
 			return fmt.Errorf("failed to base64 decode extra configuration: %w", err)
