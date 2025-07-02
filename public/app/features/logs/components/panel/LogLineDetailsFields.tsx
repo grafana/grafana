@@ -348,6 +348,7 @@ export const LogLineDetailsField = ({
           <div />
           <div className={disableActions ? undefined : styles.statsColumn}>
             <LogLabelStats
+              className={styles.stats}
               stats={fieldStats}
               label={keys[0]}
               value={values[0]}
@@ -390,7 +391,12 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   linkNoActions: css({
     gridColumn: 'span 2',
   }),
-  statsActionsColumn: css({}),
+  stats: css({
+    paddingRight: theme.spacing(1),
+    wordBreak: 'break-all',
+    width: '100%',
+    maxWidth: '50vh',
+  }),
   statsColumn: css({
     gridColumn: 'span 2',
   }),
