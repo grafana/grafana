@@ -79,7 +79,7 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
       const matchingGroup = rulerTestDb.getGroup(folderUid, groupName);
 
       if (!matchingGroup) {
-        return new HttpResponse({ message: 'group does not exist' }, { status: 404 });
+        return HttpResponse.json({ message: 'group does not exist' }, { status: 404 });
       }
 
       return HttpResponse.json<RulerRuleGroupDTO>({
