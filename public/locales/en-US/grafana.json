@@ -8426,7 +8426,6 @@
         "copy-value-to-clipboard": "Copy value to clipboard",
         "filter-out": "Filter out value",
         "filter-out-query": "Filter out value in query {{query}}",
-        "hide-adhoc-statistics": "Hide ad-hoc statistics",
         "toggle-field-button": {
           "field-instead-message": "Show this field instead of the message",
           "hide-this-field": "Hide this field"
@@ -8436,6 +8435,7 @@
       "hide-log-line": "Hide log line",
       "links-section": "Links",
       "log-line-section": "Log line",
+      "no-details": "No fields to display.",
       "pin-line": "Pin log",
       "search": {
         "no-results": "No results to display."

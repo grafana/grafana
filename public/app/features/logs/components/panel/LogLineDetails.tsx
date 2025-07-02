@@ -10,7 +10,7 @@ import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
-interface Props {
+export interface Props {
   containerElement: HTMLDivElement;
   logOptionsStorageKey?: string;
   logs: LogListModel[];
@@ -31,6 +31,10 @@ export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, o
   }, [onResize, setDetailsWidth]);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+
+  if (!showDetails.length) {
+    return null;
+  }
 
   return (
     <Resizable

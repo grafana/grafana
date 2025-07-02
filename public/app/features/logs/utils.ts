@@ -417,8 +417,8 @@ function getDataSourceLabelType(labelType: string, datasourceType: string, plura
             : t('logs.fields.type.loki.structured-metadata', 'Structured metadata');
         case 'P':
           return plural
-            ? t('logs.fields.type.loki.parsed-label-plural', 'Parsed labels')
-            : t('logs.fields.type.loki.parsedl-label', 'Parsed label');
+            ? t('logs.fields.type.loki.parsed-label-plural', 'Parsed fields')
+            : t('logs.fields.type.loki.parsedl-label', 'Parsed field');
         default:
           return null;
       }

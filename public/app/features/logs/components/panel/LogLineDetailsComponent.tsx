@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { ChangeEvent, startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -80,6 +80,12 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
     });
   }, []);
 
+  const noDetails =
+    !fieldsWithLinks.links.length &&
+    !fieldsWithLinks.linksFromVariableMap.length &&
+    !labelGroups.length &&
+    !fieldsWithoutLinks.length;
+
   return (
     <>
       <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
@@ -133,7 +139,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
             </ControlledCollapse>
           )
         )}
-        {!labelGroups.length && (
+        {!labelGroups.length && fieldsWithoutLinks.length > 0 && (
           <ControlledCollapse
             key={'fields'}
             label={t('logs.log-line-details.fields-section', 'Fields')}
@@ -144,6 +150,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
             <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
           </ControlledCollapse>
         )}
+        {noDetails && <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>}
       </div>
     </>
   );
