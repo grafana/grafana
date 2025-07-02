@@ -130,7 +130,7 @@ const CreatePullRequestModal = ({
 
   const [
     createPullRequest,
-    { isLoading: isCreatingPullRequest, isSuccess: isCreatePullRequestSuccess, data: createPullRequestData },
+    { isLoading: isCreatingPullRequest },
   ] = useCreateRepositoryPrMutation();
 
   const onSubmit = async (data: GitHubPRForm) => {
@@ -188,137 +188,118 @@ ${JSON.stringify(diffData?.diff?.commits)}
       title={t('dashboard-scene.dashboard-preview-banner.create-pull-request', 'Create pull request')}
       onDismiss={onDismiss}
     >
-      {isCreatePullRequestSuccess ? (
-        <Alert
-          severity="success"
-          title={t(
-            'dashboard-scene.dashboard-preview-banner.pull-request-created',
-            'Pull request successfully created'
-          )}
-          buttonContent={
-            <Stack alignItems="center">
-              <Trans i18nKey="dashboard-scene.dashboard-preview-banner.view-pull-request-in-git-hub">
-                View pull request in GitHub
-              </Trans>
-              <Icon name="external-link-alt" />
-            </Stack>
-          }
-          onRemove={() => window.open(createPullRequestData?.pullRequest?.url, '_blank')}
-        />
-      ) : (
-        <fieldset disabled={isCreatingPullRequest}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Stack direction="column" gap={2}>
-              <Field
-                noMargin
-                invalid={!!errors.title}
-                error={errors.title?.message}
-                label={
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
-                    <Label>{t('dashboard-scene.dashboard-preview-banner.title', 'Title')}</Label>
-                    <Stack direction="row" alignItems="center" gap={0.5}>
-                      {/* {isDiffLoading && <Spinner />} */}
-                      <div id="title-ai-button-container"> 
+      <fieldset disabled={isCreatingPullRequest}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack direction="column" gap={2}>
+            <Field
+              noMargin
+              invalid={!!errors.title}
+              error={errors.title?.message}
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <Label>{t('dashboard-scene.dashboard-preview-banner.title', 'Title')}</Label>
+                  <Stack direction="row" alignItems="center" gap={0.5}>
+                    {/* {isDiffLoading && <Spinner />} */}
+                    <div id="title-ai-button-container"> 
+                    <GenAIButton
+                      tooltip={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-path',
+                        'AI autofill title'
+                      )}
+                      messages={titleMessage}
+                      disabled={isDiffLoading}
+                      onGenerate={(response) => setValue('title', response, { shouldDirty: true })}
+                      eventTrackingSrc={EventTrackingSrc.unknown}
+                    />
+                    </div>
+                  </Stack>
+                </Stack>
+              }
+            >
+              <Input
+                {...register('title', {
+                  required: t('dashboard-scene.dashboard-preview-banner.title-required', 'Title is required'),
+                })}
+              />
+            </Field>
+            <Field
+              noMargin
+              invalid={!!errors.description}
+              error={errors.description?.message}
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <Label>{t('dashboard-scene.dashboard-preview-banner.description', 'Description')}</Label>
+                  <Stack direction="row" alignItems="center" gap={0.5}>
+                    {/* {isDiffLoading && <Spinner />} */}
+                    <div id="description-ai-button-container">
                       <GenAIButton
                         tooltip={t(
-                          'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-path',
-                          'AI autofill title'
+                          'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-description',
+                          'AI autofill description'
                         )}
-                        messages={titleMessage}
+                        messages={descriptionMessage}
                         disabled={isDiffLoading}
-                        onGenerate={(response) => setValue('title', response, { shouldDirty: true })}
+                        onGenerate={(response) => setValue('description', response, { shouldDirty: true })}
                         eventTrackingSrc={EventTrackingSrc.unknown}
                       />
-                      </div>
-                    </Stack>
+                    </div>
                   </Stack>
-                }
+                </Stack>
+              }
+            >
+              <TextArea
+                {...register('description', {
+                  required: t(
+                    'dashboard-scene.dashboard-preview-banner.description-required',
+                    'Description is required'
+                  ),
+                })}
+                rows={10}
+              />
+            </Field>
+            <Stack gap={2} direction="row" justifyContent="flex-start">
+              <Button
+                variant="secondary"
+                icon={isDiffLoading ? 'spinner' : 'ai-sparkle'}
+                onClick={autoGenerateAll}
+                disabled={isDiffLoading || hasAutoGeneratedAll}
+                tooltip={t(
+                  'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
+                  'Auto-generate all fields'
+                )}
               >
-                <Input
-                  {...register('title', {
-                    required: t('dashboard-scene.dashboard-preview-banner.title-required', 'Title is required'),
-                  })}
-                />
-              </Field>
-              <Field
-                noMargin
-                invalid={!!errors.description}
-                error={errors.description?.message}
-                label={
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
-                    <Label>{t('dashboard-scene.dashboard-preview-banner.description', 'Description')}</Label>
-                    <Stack direction="row" alignItems="center" gap={0.5}>
-                      {/* {isDiffLoading && <Spinner />} */}
-                      <div id="description-ai-button-container">
-                        <GenAIButton
-                          tooltip={t(
-                            'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-description',
-                            'AI autofill description'
-                          )}
-                          messages={descriptionMessage}
-                          disabled={isDiffLoading}
-                          onGenerate={(response) => setValue('description', response, { shouldDirty: true })}
-                          eventTrackingSrc={EventTrackingSrc.unknown}
-                        />
-                      </div>
-                    </Stack>
-                  </Stack>
-                }
+                {isDiffLoading
+                  ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Auto-generating...')
+                  : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Auto generate all')}
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                icon={isCreatingPullRequest ? 'spinner' : undefined}
+                disabled={isDiffLoading}
               >
-                <TextArea
-                  {...register('description', {
-                    required: t(
-                      'dashboard-scene.dashboard-preview-banner.description-required',
-                      'Description is required'
-                    ),
-                  })}
-                  rows={10}
-                />
-              </Field>
-              <Stack gap={2} direction="row" justifyContent="flex-start">
-                <Button
-                  variant="secondary"
-                  icon={isDiffLoading ? 'spinner' : 'ai-sparkle'}
-                  onClick={autoGenerateAll}
-                  disabled={isDiffLoading || hasAutoGeneratedAll}
-                  tooltip={t(
-                    'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
-                    'Auto-generate all fields'
-                  )}
-                >
-                  {isDiffLoading
-                    ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Auto-generating...')
-                    : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Auto generate all')}
-                </Button>
-                <Button
-                  variant="primary"
-                  type="submit"
-                  icon={isCreatingPullRequest ? 'spinner' : undefined}
-                  disabled={isDiffLoading}
-                >
-                  {isCreatingPullRequest
-                    ? t('dashboard-scene.dashboard-preview-banner.creating-pull-request', 'Creating pull request')
-                    : t('dashboard-scene.dashboard-preview-banner.create-pull-request', 'Create pull request')}
-                </Button>
-              </Stack>
-              {showAutoGenCheckbox && (
-                <label style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
-                  <input
-                    type="checkbox"
-                    checked={alwaysAutoGenAll}
-                    onChange={handleAutoGenCheckboxChange}
-                    style={{ marginRight: 8 }}
-                  />
-                  {t(
-                    'dashboard-scene.save-provisioned-dashboard-form.always-autogen-checkbox',
-                    'Always auto-generate all fields when opening this dialog'
-                  )}
-                </label>
-              )}
+                {isCreatingPullRequest
+                  ? t('dashboard-scene.dashboard-preview-banner.creating-pull-request', 'Creating pull request')
+                  : t('dashboard-scene.dashboard-preview-banner.create-pull-request', 'Create pull request')}
+              </Button>
             </Stack>
-          </form>
-        </fieldset>
-      )}
+            {showAutoGenCheckbox && (
+              <label style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={alwaysAutoGenAll}
+                  onChange={handleAutoGenCheckboxChange}
+                  style={{ marginRight: 8 }}
+                />
+                {t(
+                  'dashboard-scene.save-provisioned-dashboard-form.always-autogen-checkbox',
+                  'Always auto-generate all fields when opening this dialog'
+                )}
+              </label>
+            )}
+          </Stack>
+        </form>
+      </fieldset>
     </Modal>
   );
 };
@@ -408,7 +389,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
             The value is not yet saved in the Grafana database
           </Trans>
         </Alert>
-        {showPRModal && !existingPullRequestURL && (
+        {showPRModal && (
           <CreatePullRequestModal
             slug={slug}
             branch={queryParams.ref ?? 'master'}
