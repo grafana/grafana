@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -18,23 +18,17 @@ import (
 // Authorization checks will happen within each function, and the user in ctx will
 // limit which namespace/tenant/org we are talking to
 type PluginDatasourceProvider interface {
-	// Get gets a specific datasource (that the user in context can see)
-	GetConnection(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error)
-
-	// List lists all data sources the user in context can see
-	ListConnections(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error)
-
 	// Get a single datasurce
-	GetDataSource(ctx context.Context, uid string) (*v0alpha1.DataSource, error)
+	GetDataSource(ctx context.Context, uid string) (*datasourceV0.DataSource, error)
 
 	// List all datasources
-	ListDataSource(ctx context.Context) (*v0alpha1.DataSourceList, error)
+	ListDataSource(ctx context.Context) (*datasourceV0.DataSourceList, error)
 
 	// Create a data source
-	CreateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error)
+	CreateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error)
 
 	// Update a data source
-	UpdateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error)
+	UpdateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error)
 
 	// Delete datasurce
 	Delete(ctx context.Context, uid string) error
@@ -102,42 +96,6 @@ var (
 	_ ScopedPluginDatasourceProvider = (*cachingDatasourceProvider)(nil)
 )
 
-func (q *scopedDatasourceProvider) GetConnection(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, err
-	}
-	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
-	if err != nil {
-		return nil, err
-	}
-	return q.converter.asConnection(ds)
-}
-
-func (q *scopedDatasourceProvider) ListConnections(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	dss, err := q.dsService.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
-		OrgID:    info.OrgID,
-		Type:     q.plugin.ID,
-		AliasIDs: q.plugin.AliasIDs,
-	})
-	if err != nil {
-		return nil, err
-	}
-	result := &v0alpha1.DataSourceConnectionList{
-		Items: []v0alpha1.DataSourceConnection{},
-	}
-	for _, ds := range dss {
-		v, _ := q.converter.asConnection(ds)
-		result.Items = append(result.Items, *v)
-	}
-	return result, nil
-}
-
 func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid string) (*backend.DataSourceInstanceSettings, error) {
 	if q.contextProvider == nil {
 		return nil, fmt.Errorf("missing contextProvider")
@@ -146,7 +104,7 @@ func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid 
 }
 
 // CreateDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
+func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
 	cmd, err := q.converter.toAddCommand(ds)
 	if err != nil {
 		return nil, err
@@ -159,7 +117,7 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *v0a
 }
 
 // UpdateDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
+func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
 	cmd, err := q.converter.toUpdateCommand(ds)
 	if err != nil {
 		return nil, err
@@ -193,7 +151,7 @@ func (q *scopedDatasourceProvider) Delete(ctx context.Context, uid string) error
 }
 
 // GetDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string) (*v0alpha1.DataSource, error) {
+func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string) (*datasourceV0.DataSource, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -206,7 +164,7 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 }
 
 // ListDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*v0alpha1.DataSourceList, error) {
+func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*datasourceV0.DataSourceList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -220,8 +178,8 @@ func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*v0alpha
 	if err != nil {
 		return nil, err
 	}
-	result := &v0alpha1.DataSourceList{
-		Items: []v0alpha1.DataSource{},
+	result := &datasourceV0.DataSourceList{
+		Items: []datasourceV0.DataSource{},
 	}
 	for _, ds := range dss {
 		v, _ := q.converter.asDataSource(ds)

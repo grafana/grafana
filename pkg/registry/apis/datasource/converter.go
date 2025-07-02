@@ -10,7 +10,8 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	secretV0 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -23,31 +24,8 @@ type converter struct {
 	dstype string // the expected pluginId
 }
 
-func asConnection(ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceConnection, error) {
-	v := &v0alpha1.DataSourceConnection{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              ds.UID,
-			Namespace:         ns,
-			CreationTimestamp: metav1.NewTime(ds.Created),
-			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
-			Generation:        int64(ds.Version),
-		},
-		Title: ds.Name,
-	}
-	v.UID = gapiutil.CalculateClusterWideUID(v) // indicates if the value changed on the server
-	meta, err := utils.MetaAccessor(v)
-	if err != nil {
-		meta.SetUpdatedTimestamp(&ds.Updated)
-	}
-	return v, err
-}
-
-func (r *converter) asConnection(ds *datasources.DataSource) (*v0alpha1.DataSourceConnection, error) {
-	return asConnection(ds, r.mapper(ds.OrgID))
-}
-
-func (r *converter) asDataSource(ds *datasources.DataSource) (*v0alpha1.DataSource, error) {
-	cfg := &v0alpha1.DataSource{
+func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.DataSource, error) {
+	cfg := &datasourceV0.DataSource{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              ds.UID,
 			Namespace:         r.mapper(ds.OrgID),
@@ -55,7 +33,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*v0alpha1.DataSour
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
 			Generation:        int64(ds.Version),
 		},
-		Spec: v0alpha1.DataSourceSpec{
+		Spec: datasourceV0.DataSourceSpec{
 			Title:           ds.Name,
 			Access:          v0alpha1.DsAccess(ds.Access),
 			URL:             ds.URL,
@@ -85,9 +63,9 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*v0alpha1.DataSour
 	}
 
 	if ds.SecureJsonData != nil {
-		cfg.Secure = make(secret.InlineSecureValues)
+		cfg.Secure = make(secretV0.InlineSecureValues)
 		for k := range ds.SecureJsonData {
-			cfg.Secure[k] = secret.InlineSecureValue{
+			cfg.Secure[k] = secretV0.InlineSecureValue{
 				UID: "????", // ????
 			}
 		}
@@ -96,7 +74,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*v0alpha1.DataSour
 	return cfg, nil
 }
 
-func (r *converter) toAddCommand(ds *v0alpha1.DataSource) (*datasources.AddDataSourceCommand, error) {
+func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddDataSourceCommand, error) {
 	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
@@ -131,7 +109,7 @@ func (r *converter) toAddCommand(ds *v0alpha1.DataSource) (*datasources.AddDataS
 	return cmd, nil
 }
 
-func (r *converter) toUpdateCommand(ds *v0alpha1.DataSource) (*datasources.UpdateDataSourceCommand, error) {
+func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
 	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
@@ -167,7 +145,7 @@ func (r *converter) toUpdateCommand(ds *v0alpha1.DataSource) (*datasources.Updat
 	return cmd, nil
 }
 
-func toSecureJsonData(ds *v0alpha1.DataSource) map[string]string {
+func toSecureJsonData(ds *datasourceV0.DataSource) map[string]string {
 	if ds == nil || len(ds.Secure) < 1 {
 		return nil
 	}

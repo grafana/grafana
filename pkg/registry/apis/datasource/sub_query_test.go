@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -147,12 +148,12 @@ func (m mockDatasources) ListDataSource(ctx context.Context) (*v0alpha1.DataSour
 }
 
 // Get gets a specific datasource (that the user in context can see)
-func (m mockDatasources) GetConnection(ctx context.Context, uid string) (*v0alpha1.DataSourceConnection, error) {
+func (m mockDatasources) GetConnection(ctx context.Context, uid string) (*queryV0.DataSourceConnection, error) {
 	return nil, nil
 }
 
 // List lists all data sources the user in context can see
-func (m mockDatasources) ListConnections(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
+func (m mockDatasources) ListConnections(ctx context.Context) (*queryV0.DataSourceConnectionList, error) {
 	return nil, nil
 }
 

@@ -7,6 +7,28 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// Connection to a datasource instance
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DataSourceConnection struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// The display name
+	Title string `json:"title"`
+
+	// Optional description for the data source (does not exist yet)
+	Description string `json:"description,omitempty"`
+}
+
+// List of all datasource instances across all datasource apiservers
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DataSourceConnectionList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []DataSourceConnection `json:"items"`
+}
+
 type DataSourceApiServerRegistry interface {
 	// Get the group and preferred version for a plugin
 	GetDatasourceGroupVersion(pluginId string) (schema.GroupVersion, error)

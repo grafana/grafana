@@ -18,8 +18,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -36,7 +36,6 @@ var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
-	connectionResourceInfo utils.ResourceInfo
 	datasourceResourceInfo utils.ResourceInfo
 
 	pluginJSON      plugins.JSONData
@@ -44,7 +43,7 @@ type DataSourceAPIBuilder struct {
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
-	queryTypes      *query.QueryTypeDefinitionList
+	queryTypes      *queryV0.QueryTypeDefinitionList
 	log             log.Logger
 }
 
@@ -122,8 +121,7 @@ func NewDataSourceAPIBuilder(
 	}
 
 	builder := &DataSourceAPIBuilder{
-		connectionResourceInfo: datasource.ConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
-		datasourceResourceInfo: datasource.DataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
+		datasourceResourceInfo: datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
 		pluginJSON:             plugin,
 		client:                 client,
 		datasources:            datasources,
@@ -139,7 +137,7 @@ func NewDataSourceAPIBuilder(
 }
 
 // TODO -- somehow get the list from the plugin -- not hardcoded
-func getHardcodedQueryTypes(group string) (*query.QueryTypeDefinitionList, error) {
+func getHardcodedQueryTypes(group string) (*queryV0.QueryTypeDefinitionList, error) {
 	var err error
 	var raw json.RawMessage
 	switch group {
@@ -152,7 +150,7 @@ func getHardcodedQueryTypes(group string) (*query.QueryTypeDefinitionList, error
 		return nil, err
 	}
 	if raw != nil {
-		types := &query.QueryTypeDefinitionList{}
+		types := &queryV0.QueryTypeDefinitionList{}
 		err = json.Unmarshal(raw, types)
 		return types, err
 	}
@@ -160,29 +158,27 @@ func getHardcodedQueryTypes(group string) (*query.QueryTypeDefinitionList, error
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.connectionResourceInfo.GroupVersion()
+	return b.datasourceResourceInfo.GroupVersion()
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&datasource.DataSourceConnection{},
-		&datasource.DataSourceConnectionList{},
-		&datasource.DataSource{},
-		&datasource.DataSourceList{},
-		&datasource.HealthCheckResult{},
+		&datasourceV0.DataSource{}, // or AddKnownTypeWithName?
+		&datasourceV0.DataSourceList{},
+		&datasourceV0.HealthCheckResult{},
 		&unstructured.Unstructured{},
 
 		// Query handler
-		&query.QueryDataRequest{},
-		&query.QueryDataResponse{},
-		&query.QueryTypeDefinition{},
-		&query.QueryTypeDefinitionList{},
+		&queryV0.QueryDataRequest{},
+		&queryV0.QueryDataResponse{},
+		&queryV0.QueryTypeDefinition{},
+		&queryV0.QueryTypeDefinitionList{},
 		&metav1.Status{},
 	)
 }
 
 func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gv := b.connectionResourceInfo.GroupVersion()
+	gv := b.datasourceResourceInfo.GroupVersion()
 	addKnownTypes(scheme, gv)
 
 	// Link this version to the internal representation.
@@ -223,22 +219,15 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	// Register the "connection" view for a datasource (no access to raw settings)
-	conn := b.connectionResourceInfo
-	storage[conn.StoragePath()] = &connectionAccess{
-		datasources:    b.datasources,
-		resourceInfo:   conn,
-		tableConverter: conn.TableConverter(),
-	}
-	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
-	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
+	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
+	storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
 
 	// TODO! only setup this endpoint if it is implemented
-	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
+	storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
 
 	// Frontend proxy
 	if len(b.pluginJSON.Routes) > 0 {
-		storage[conn.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
+		storage[ds.StoragePath("proxy")] = &subProxyREST{pluginJSON: b.pluginJSON}
 	}
 
 	// Register hardcoded query schemas
@@ -249,7 +238,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	registerQueryConvert(b.client, b.contextProvider, storage)
 
-	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[ds.GroupVersion().Version] = storage
 	return err
 }
 
@@ -263,8 +252,8 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
 	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
-		defs := query.GetOpenAPIDefinitions(ref) // required when running standalone
-		for k, v := range datasource.GetOpenAPIDefinitions(ref) {
+		defs := queryV0.GetOpenAPIDefinitions(ref) // required when running standalone
+		for k, v := range datasourceV0.GetOpenAPIDefinitions(ref) {
 			defs[k] = v
 		}
 		return defs
@@ -276,7 +265,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	oas.Info.Description = b.pluginJSON.Info.Description
 
 	// The root api URL
-	root := "/apis/" + b.connectionResourceInfo.GroupVersion().String() + "/"
+	root := "/apis/" + b.datasourceResourceInfo.GroupVersion().String() + "/"
 
 	// Add queries to the request properties
 	// Add queries to the request properties

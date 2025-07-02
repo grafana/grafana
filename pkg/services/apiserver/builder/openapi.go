@@ -119,8 +119,29 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 
 					// Remove the growing list of kinds
 					for k, v := range copy.Components.Schemas {
-						if strings.HasPrefix(k, "io.k8s.apimachinery.pkg.apis.meta.v1") && v.Extensions != nil {
+						if v.Extensions == nil {
+							continue
+						}
+						if strings.HasPrefix(k, "io.k8s.apimachinery.pkg.apis.meta.v1") {
 							delete(v.Extensions, "x-kubernetes-group-version-kind") // a growing list of everything
+							continue
+						}
+
+						// Remove the internal annotations
+						val, ok := v.Extensions["x-kubernetes-group-version-kind"]
+						if ok {
+							gvks, ok := val.([]any)
+							if ok {
+								keep := make([]map[string]any, 0, len(gvks))
+								for _, val := range gvks {
+									gvk, ok := val.(map[string]any)
+									if ok && gvk["version"] == "__internal" {
+										continue
+									}
+									keep = append(keep, gvk)
+								}
+								v.Extensions["x-kubernetes-group-version-kind"] = keep
+							}
 						}
 					}
 
