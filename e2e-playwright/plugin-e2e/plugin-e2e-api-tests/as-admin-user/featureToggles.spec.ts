@@ -11,7 +11,15 @@ test.use({
   },
 });
 
-test('should set and check feature toggles correctly', async ({ isFeatureToggleEnabled }) => {
-  expect(await isFeatureToggleEnabled(TRUTHY_CUSTOM_TOGGLE)).toBeTruthy();
-  expect(await isFeatureToggleEnabled(FALSY_CUSTOM_TOGGLE)).toBeFalsy();
-});
+test.describe(
+  'plugin-e2e-api-tests admin',
+  {
+    tag: ['@plugins'],
+  },
+  () => {
+    test('should set and check feature toggles correctly', async ({ isFeatureToggleEnabled }) => {
+      expect(await isFeatureToggleEnabled(TRUTHY_CUSTOM_TOGGLE)).toBeTruthy();
+      expect(await isFeatureToggleEnabled(FALSY_CUSTOM_TOGGLE)).toBeFalsy();
+    });
+  }
+);
