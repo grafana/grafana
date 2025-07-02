@@ -9,17 +9,21 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // keeperMetadataStorage is the actual implementation of the keeper metadata storage.
 type keeperMetadataStorage struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
+	tracer  trace.Tracer
 }
 
 var _ contracts.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
 
-func ProvideKeeperMetadataStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.KeeperMetadataStorage, error) {
+func ProvideKeeperMetadataStorage(db contracts.Database, tracer trace.Tracer, features featuremgmt.FeatureToggles) (contracts.KeeperMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &keeperMetadataStorage{}, nil
@@ -28,10 +32,18 @@ func ProvideKeeperMetadataStorage(db contracts.Database, features featuremgmt.Fe
 	return &keeperMetadataStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:  tracer,
 	}, nil
 }
 
 func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error) {
+	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Create", trace.WithAttributes(
+		attribute.String("name", keeper.GetName()),
+		attribute.String("namespace", keeper.GetNamespace()),
+		attribute.String("actorUID", actorUID),
+	))
+	defer span.End()
+
 	row, err := toKeeperCreateRow(keeper, actorUID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create row: %w", err)
@@ -82,6 +94,13 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 }
 
 func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.Keeper, error) {
+	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Read", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+		attribute.Bool("isForUpdate", opts.ForUpdate),
+	))
+	defer span.End()
+
 	keeperDB, err := s.read(ctx, namespace.String(), name, opts)
 	if err != nil {
 		return nil, err
@@ -134,6 +153,13 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 }
 
 func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error) {
+	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Update", trace.WithAttributes(
+		attribute.String("name", newKeeper.GetName()),
+		attribute.String("namespace", newKeeper.GetNamespace()),
+		attribute.String("actorUID", actorUID),
+	))
+	defer span.End()
+
 	var newRow *keeperDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
@@ -195,6 +221,12 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 }
 
 func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Delete", trace.WithAttributes(
+		attribute.String("name", name),
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
 	req := deleteKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -224,7 +256,16 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 	return nil
 }
 
-func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.Keeper, error) {
+func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (keeperList []secretv0alpha1.Keeper, err error) {
+	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.List", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
+	defer func() {
+		span.SetAttributes(attribute.Int("returnedList.count", len(keeperList)))
+	}()
+
 	req := listKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -270,7 +311,20 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 
 // validateSecureValueReferences checks that all secure values referenced by the keeper exist and are not referenced by other third-party keepers.
 // It is used by other methods inside a transaction.
-func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, keeper *secretv0alpha1.Keeper) error {
+func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, keeper *secretv0alpha1.Keeper) (err error) {
+	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.ValidateSecureValueReferences", trace.WithAttributes(
+		attribute.String("name", keeper.GetName()),
+		attribute.String("namespace", keeper.GetNamespace()),
+	))
+	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, "failed to validate secure value references")
+			span.RecordError(err)
+		}
+	}()
+
 	usedSecureValues := extractSecureValues(keeper)
 
 	// No secure values are referenced, return early.
@@ -405,10 +459,18 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 }
 
 func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string, opts contracts.ReadOpts) (secretv0alpha1.KeeperConfig, error) {
+	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.GetKeeperConfig", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.Bool("isForUpdate", opts.ForUpdate),
+	))
+	defer span.End()
+
 	// Check if keeper is the systemwide one.
 	if name == nil {
 		return nil, nil
 	}
+
+	span.SetAttributes(attribute.String("name", *name))
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
 	kp, err := s.read(ctx, namespace, *name, opts)
