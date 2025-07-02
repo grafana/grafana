@@ -76,125 +76,40 @@ export const GET_DATASOURCE_METRICS_TOOL = {
     },
   },
 };
-export const SYSTEM_PROMPT_CONTENT = `You are an expert in creating Grafana alert rules. Based on the user's description, generate a properly structured alert rule configuration.
+export const SYSTEM_PROMPT_CONTENT = `You are an expert in creating Grafana alert rules. Generate properly structured alert rule configurations using available tools.
 
-You have access to tools that can help you:
-- get_contact_points: Use this to retrieve available contact points when the user asks about notifications or wants to see what contact points are available
-- get_data_sources: Use this to see what data sources are available for querying (Prometheus, Loki, etc.) - use this to set proper datasourceUid values. If the user doesn't specify a particular data source, use the one marked with "isDefault": true
-- get_datasource_metrics: Use this to get available metrics from a specific datasource. Always use this tool when you need to know what metrics are available for a particular datasource to ensure you use actual metrics that exist
+Available tools:
+- get_contact_points: Retrieve available contact points
+- get_data_sources: Get available datasources for querying
+- get_datasource_metrics: Get actual metrics from specific datasources
 
-**Important workflow:**
-1. If the user mentions specific metrics (e.g., "cpu_usage", "memory_usage"), first use get_data_sources to identify the appropriate datasource
-2. Then use get_datasource_metrics with the datasource UID to get the actual available metrics
-3. Use only metrics that are confirmed to exist in the datasource
-4. For contact points, use get_contact_points to see what's actually configured
+Workflow:
+1. Use get_data_sources to see available datasources
+2. Select appropriate datasource based on user question:
+   - Log-based alerts → Loki/Elasticsearch
+   - Infrastructure metrics → Prometheus/InfluxDB  
+   - Application metrics → Prometheus/InfluxDB
+   - AWS/cloud metrics → CloudWatch
+   - Container/K8s metrics → Prometheus
+   - Default: use datasource marked "isDefault": true
+3. Use get_datasource_metrics to get actual available metrics
+4. Use get_contact_points for setting the contactPoints.grafana.selectedContactPoint:
+  4.1: if user mentions a specific contact point, use that contact point if it exists in the get_contact_points tool
+  4.2: if user mentions a type of contact point, use the first contact point that matches that type
+  4.3: or default to the default contact point if nothing of the above is mentioned
 
-**CRITICAL: Query Construction Guidelines**
-When constructing queries using metrics from get_datasource_metrics, you MUST create proper query expressions, not just bare metric names:
+Critical requirements:
+- Always create proper query expressions with functions, operators, and thresholds
+- Never use bare metric names without proper syntax (use PromQL for Prometheus, LogQL for Loki, InfluxQL for InfluxDB, CloudWatch for CloudWatch)
+- Use actual datasource UIDs and metric names from tools
+- Return only valid JSON matching RuleFormValues interface
 
-For Prometheus datasources:
-- Counter metrics: use rate() function, e.g., "rate(http_requests_total[5m])" not just "http_requests_total"
-- Gauge metrics: can be used directly with comparisons, e.g., "cpu_usage_active" or "memory_usage_bytes / 1024 / 1024 / 1024"
-- Histogram metrics: use rate() for _count/_sum, e.g., "rate(http_request_duration_seconds_count[5m])"
-- Examples:
-  - "rate(http_requests_total[5m]) > 100" (for request rate alerts)
-  - "cpu_usage_active > 0.8" (for CPU percentage alerts)
-  - "memory_usage_bytes / memory_total_bytes > 0.9" (for memory percentage alerts)
-  - "up == 0" (for service down alerts)
+Response structure:
+- name, type: "grafana-alerting", queries, condition, evaluateFor, noDataState, execErrState
+- annotations, labels, contactPoints (when specified)
+- Do not set folder or group fields
 
-For InfluxDB datasources:
-- Use proper InfluxQL syntax with measurements and fields
-- Examples:
-  - 'SELECT mean("usage_active") FROM "cpu" WHERE time >= now() - 5m' (for CPU alerts)
-  - 'SELECT mean("usage_percent") FROM "mem" WHERE time >= now() - 5m > 90' (for memory alerts)
-
-For Loki datasources:
-- Use LogQL expressions for log-based metrics
-- Examples:
-  - 'rate({job="app"}[5m]) > 10' (for log rate alerts)
-  - 'count_over_time({job="app", level="error"}[5m]) > 5' (for error count alerts)
-
-Return a JSON object that matches the RuleFormValues interface with these key fields:
-- name: A descriptive name for the alert rule
-- type: Always use "grafana-alerting"
-- queries: An array of alert queries with proper datasource configuration (use actual datasource UIDs from get_data_sources), 
-in this queries, construct proper query expressions using the metrics from get_datasource_metrics. DO NOT use bare metric names - always create proper expressions with operators, functions, and thresholds.
-- condition: The refId of the query condition (usually "C")
-- evaluateFor: How long the condition must be true (e.g., "5m")
-- noDataState: What to do when no data (usually "NoData")
-- execErrState: What to do on execution error (usually "Alerting")
-- annotations: Array of key-value pairs for additional information
-- labels: Array of key-value pairs for categorization
-- folder: do not set this field
-- group: do not set this field
-- contactPoints: Use actual contact point names from the get_contact_points tool when available. Include all required routing settings:
-  - selectedContactPoint: The contact point name
-  - overrideGrouping: false (unless specifically requested)
-  - groupBy: [] (empty array unless custom grouping requested)
-  - overrideTimings: false (unless custom timing requested)
-  - groupWaitValue: "" (empty unless overrideTimings is true)
-  - groupIntervalValue: "" (empty unless overrideTimings is true)
-  - repeatIntervalValue: "" (empty unless overrideTimings is true)
-  - muteTimeIntervals: [] (array of mute timing names)
-  - activeTimeIntervals: [] (array of active timing names)
-
-For queries, include:
-- A data query (refId: "A") from appropriate datasource (use actual datasourceUid from get_data_sources tool)
-- A condition query (refId: "C") that evaluates the data
-
-When the user mentions specific metrics or data sources, always use the get_data_sources tool first to see what's available and get the correct UIDs, then use get_datasource_metrics to get the actual metrics for that datasource.
-If the user doesn't specify a data source, use the default one (isDefault: true) from the available data sources.
-When the user mentions notifications or asks about contact points, always use the get_contact_points tool first to see what's available.
-
-Example structure:
-{
-  "name": "High CPU Usage Alert",
-  "type": "grafana-alerting",
-  "queries": [
-    {
-      "refId": "A",
-      "model": {"expr": "cpu_usage_active > 0.8", "refId": "A"},
-      "datasourceUid": "actual-prometheus-uid-from-tool",
-      "queryType": "",
-      "relativeTimeRange": {"from": 600, "to": 0}
-    },
-    {
-      "refId": "C",
-      "model": {"expression": "A", "type": "threshold", "refId": "C"},
-      "datasourceUid": "__expr__",
-      "queryType": "",
-      "relativeTimeRange": {"from": 0, "to": 0}
-    }
-  ],
-  "condition": "C",
-  "evaluateFor": "5m",
-  "noDataState": "NoData",
-  "execErrState": "Alerting",
-  "annotations": [
-    {"key": "description", "value": "CPU usage is above 80%"},
-    {"key": "summary", "value": "High CPU usage detected"}
-  ],
-  "labels": [
-    {"key": "severity", "value": "warning"},
-    {"key": "team", "value": "infrastructure"}
-  ],
-  "folder": {"title": "Generated Alerts", "uid": "generated-alerts"},
-  "contactPoints": {
-    "grafana": {
-      "selectedContactPoint": "actual-contact-point-name",
-      "overrideGrouping": false,
-      "groupBy": [],
-      "overrideTimings": false,
-      "groupWaitValue": "",
-      "groupIntervalValue": "",
-      "repeatIntervalValue": "",
-      "muteTimeIntervals": [],
-      "activeTimeIntervals": []
-    }
-  }
-}
-
-Respond only with the JSON object, no additional text.`;
+Respond only with JSON, no additional text.`;
 
 // Tool handler for getting contact points (now receives data as parameter)
 export const handleGetContactPoints = async (
@@ -543,10 +458,269 @@ export const createSystemPrompt = (): llm.Message => ({
   content: SYSTEM_PROMPT_CONTENT,
 });
 
-//  Contains the actual user request/query
+//  Contains the actual user request/query with examples
 export const createUserPrompt = (userInput: string): llm.Message => ({
   role: 'user',
   content: `Create an alert rule for: ${userInput}
 
-Please generate a complete alert rule configuration that monitors for this condition and includes appropriate thresholds, evaluation periods, and notification details.`,
+FOR THE QUERY ARRAY:
+- use the datasourceuid from the get_data_sources tool: 
+  - 1- if user mentions a specific datasource, use that uid if you can find it, 
+  - 2- if the user mentions a type of datasource, use the first data source that matches that type
+  - 3- or default to the default datasource if nothing of the above is mentioned
+- use the metric names from the get_datasource_metrics tool: 
+  - 1- only use metrics that are confirmed to exist in the datasource, or the first 100 metrics if the user doesn't specify a metric
+  - 2- if the user mentions a specific metric, and it exists in the datasource, use that metric
+  - 3- or use a similar metric that exists in the datasource
+- use the proper query syntax in the queries array based on datasource type:
+- refId "A": Data query from datasource using proper syntax above
+- refId "B": Reduce expression that reduces the data to a single value
+- refId "C": Condition expression that evaluates the data
+
+SUPER IMPORTANT: NEVER use bare metric names without proper syntax (use PromQL for Prometheus, LogQL for Loki, InfluxQL for InfluxDB, CloudWatch for CloudWatch)
+For example, for prometheus, use "rate(http_requests_total[5m])" not just "http_requests_total"
+THIS IS WRONG:
+sum(rate(go_cpu_classes_total_cpu_seconds_total[5m])) by (instance) > 0.8
+THIS IS CORRECT:
+sum(rate(go_cpu_classes_total_cpu_seconds_total{job="grafana"}[5m])) by (instance) > 0.8
+this is also correct:
+sum(rate(go_cpu_classes_total_cpu_seconds_total{}[5m])) by (instance) > 0.8
+
+IMPORTANT: Use proper query syntax in the queries array based on datasource type:
+
+For Prometheus datasources:
+- Always use proper PromQL syntax with label selectors when needed
+- Counter metrics: use rate() function, e.g., "rate(http_requests_total[5m])" not just "http_requests_total"
+- Gauge metrics: use with proper label selectors, e.g., "cpu_usage_active{instance=~\\".*\\"}" or "memory_usage_bytes / memory_total_bytes"
+- Service availability: use "up{job=\\"service-name\\"}" not bare metrics
+- NEVER create bare metric comparisons like "METRIC_NAME < value" (or any other comparison). Always include proper context.
+
+Valid PromQL Examples:
+- "rate(http_requests_total[5m]) > 100" (for request rate alerts)
+- "cpu_usage_active{instance=~\\".*\\"} > 0.8" (for CPU percentage alerts)
+- "(memory_usage_bytes / memory_total_bytes) * 100 > 90" (for memory percentage alerts)
+- "up{job=\\"grafana\\"} == 0" (for service down alerts)
+- "increase(error_count_total[5m]) > 10" (for error count alerts)
+- "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5" (for latency alerts)
+
+For Loki datasources:
+- Use LogQL expressions for log-based metrics
+- Examples:
+  - "rate({job=\\"app\\"}[5m]) > 10" (for log rate alerts)
+  - "count_over_time({job=\\"app\\", level=\\"error\\"}[5m]) > 5" (for error count alerts)
+  - "sum(rate({job=\\"app\\"}[5m])) > 10" (for aggregated log rates)
+
+For InfluxDB datasources:
+- Use proper InfluxQL syntax with measurements and fields
+- Examples:
+  - "SELECT mean(\\"usage_active\\") FROM \\"cpu\\" WHERE time >= now() - 5m" (for CPU alerts)
+  - "SELECT mean(\\"usage_percent\\") FROM \\"mem\\" WHERE time >= now() - 5m > 90" (for memory alerts)
+
+Query structure requirements:
+- refId "A": Data query from datasource using proper syntax above
+- refId "B": Reduce expression that reduces the data to a single value
+- refId "C": Condition expression that evaluates the data
+- Use actual datasource UIDs from get_data_sources tool
+- Use actual metric names from get_datasource_metrics tool
+
+When returning the JSON object, return a JSON object that matches the RuleFormValues interface with these key fields:
+- name: A descriptive name for the alert rule
+- type: Always use "grafana-alerting"
+- queries: An array of alert queries with proper datasource configuration (use actual datasource UIDs from get_data_sources), 
+in this queries, construct proper query expressions using the metrics from get_datasource_metrics. DO NOT use bare metric names - always create proper expressions with operators, functions, and thresholds.
+- condition: The refId of the query condition (usually "C")
+- evaluateFor: How long the condition must be true (e.g., "5m")
+- noDataState: What to do when no data (usually "NoData")
+- execErrState: What to do on execution error (usually "Alerting")
+- annotations: Array of key-value pairs for additional information
+- labels: Array of key-value pairs for categorization
+- folder: do not set this field
+- group: do not set this field
+- contactPoints: Use actual contact point names from the get_contact_points tool when available. Include all required routing settings:
+  - selectedContactPoint: The contact point name
+  - overrideGrouping: false (unless specifically requested)
+  - groupBy: [] (empty array unless custom grouping requested)
+  - overrideTimings: false (unless custom timing requested)
+  - groupWaitValue: "" (empty unless overrideTimings is true)
+  - groupIntervalValue: "" (empty unless overrideTimings is true)
+  - repeatIntervalValue: "" (empty unless overrideTimings is true)
+  - muteTimeIntervals: [] (array of mute timing names)
+  - activeTimeIntervals: [] (array of active timing names)
+
+Example JSON structure:
+{
+    "name": "lots of instances rule",
+    "uid": "",
+    "labels": [
+        {
+            "key": "",
+            "value": ""
+        }
+    ],
+    "annotations": [
+        {
+            "key": "summary",
+            "value": "this is the summary"
+        },
+        {
+            "key": "description",
+            "value": "and this is the description"
+        },
+        {
+            "key": "runbook_url",
+            "value": "http://localhost:3000/d/d0c2e22f-1e6c-47fb-b534-601788d2d866/test-dashboard-with-alert?orgId=1"
+        }
+    ],
+    "dataSourceName": "grafana",
+    "type": "grafana-alerting",
+    "group": "gr1",
+    "folder": {
+        "title": "adpcguv93h62od",
+        "uid": "adpcguv93h62od"
+    },
+    "queries": [
+        {
+            "refId": "A",
+            "queryType": "",
+            "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+            },
+            "datasourceUid": "gdev-prometheus",
+            "model": {
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "gdev-prometheus"
+                },
+                "editorMode": "code",
+                "expr": "rate(grafana_http_request_duration_seconds_bucket{}[1m])",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "A"
+            }
+        },
+        {
+            "refId": "B",
+            "queryType": "",
+            "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+                "conditions": [
+                    {
+                        "evaluator": {
+                            "params": [],
+                            "type": "gt"
+                        },
+                        "operator": {
+                            "type": "and"
+                        },
+                        "query": {
+                            "params": [
+                                "B"
+                            ]
+                        },
+                        "reducer": {
+                            "params": [],
+                            "type": "last"
+                        },
+                        "type": "query"
+                    }
+                ],
+                "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__"
+                },
+                "expression": "A",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "reducer": "last",
+                "refId": "B",
+                "type": "reduce"
+            }
+        },
+        {
+            "refId": "C",
+            "queryType": "",
+            "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+            },
+            "datasourceUid": "__expr__",
+            "model": {
+                "conditions": [
+                    {
+                        "evaluator": {
+                            "params": [
+                                0
+                            ],
+                            "type": "gt"
+                        },
+                        "operator": {
+                            "type": "and"
+                        },
+                        "query": {
+                            "params": [
+                                "C"
+                            ]
+                        },
+                        "reducer": {
+                            "params": [],
+                            "type": "last"
+                        },
+                        "type": "query"
+                    }
+                ],
+                "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__"
+                },
+                "expression": "B",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "C",
+                "type": "threshold"
+            }
+        }
+    ],
+    "recordingRulesQueries": [],
+    "condition": "C",
+    "noDataState": "NoData",
+    "execErrState": "Error",
+    "evaluateFor": "1m",
+    "keepFiringFor": "0s",
+    "evaluateEvery": "10s",
+    "manualRouting": true,
+    "contactPoints": {
+        "grafana": {
+            "selectedContactPoint": "cp1",
+            "muteTimeIntervals": [],
+            "activeTimeIntervals": [],
+            "overrideGrouping": false,
+            "overrideTimings": false,
+            "groupBy": [],
+            "groupWaitValue": "",
+            "groupIntervalValue": "",
+            "repeatIntervalValue": ""
+        }
+    },
+    "overrideGrouping": false,
+    "overrideTimings": false,
+    "muteTimeIntervals": [],
+    "editorSettings": {
+        "simplifiedQueryEditor": true,
+        "simplifiedNotificationEditor": false
+    },
+    "namespace": "",
+    "expression": "",
+    "forTime": 1,
+    "forTimeUnit": "m",
+    "isPaused": false
+}
+Generate a complete alert rule configuration using the available tools to get actual datasources, metrics, and contact points.`,
 });
