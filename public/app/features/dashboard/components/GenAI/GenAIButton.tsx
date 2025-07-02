@@ -36,6 +36,8 @@ export interface GenAIButtonProps {
     toggletip will be enabled.
   */
   tooltip?: string;
+  onStopGeneration?: () => void;
+  onError?: () => void;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
 
@@ -50,6 +52,8 @@ export const GenAIButton = ({
   eventTrackingSrc,
   disabled,
   tooltip,
+  onStopGeneration,
+  onError,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
@@ -71,6 +75,7 @@ export const GenAIButton = ({
     model,
     temperature,
     onResponse,
+    onError,
   });
 
   const [showHistory, setShowHistory] = useState(false);
@@ -92,6 +97,7 @@ export const GenAIButton = ({
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (streamStatus === StreamStatus.GENERATING) {
       stopGeneration();
+      onStopGeneration?.();
     } else {
       if (!hasHistory) {
         onClickProp?.(e);

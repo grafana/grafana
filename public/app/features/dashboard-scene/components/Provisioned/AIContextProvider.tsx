@@ -14,17 +14,26 @@ interface AIContextValue {
   commentLLMStream: ReturnType<typeof useLLMStream>;
   pathLLMStream: ReturnType<typeof useLLMStream>;
   branchLLMStream: ReturnType<typeof useLLMStream>;
-  
+
   // Message generation functions
   getTitleMessages: (dashboardContext: any, changeInfo?: DashboardChangeInfo) => Message[];
   getDescriptionMessages: (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo) => Message[];
-  getCommentMessages: (dashboardContext: any, currentTitle: string, currentDescription: string, changeInfo?: DashboardChangeInfo) => Message[];
+  getCommentMessages: (
+    dashboardContext: any,
+    currentTitle: string,
+    currentDescription: string,
+    changeInfo?: DashboardChangeInfo
+  ) => Message[];
   getPathMessages: (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo) => Message[];
   getBranchMessages: (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo) => Message[];
-  
+
   // Utility functions
   summarizeDiffs: (diffs: Record<string, Diff[]>) => string;
-  getChangeDetails: (changeInfo?: DashboardChangeInfo) => { changeDetails: string; diffSummary: string; jsonDiff: string };
+  getChangeDetails: (changeInfo?: DashboardChangeInfo) => {
+    changeDetails: string;
+    diffSummary: string;
+    jsonDiff: string;
+  };
 }
 
 const AIContext = createContext<AIContextValue | null>(null);
@@ -68,12 +77,18 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
     const diff = diffLines(oldJson, newJson);
 
     return diff
-      .map(part => {
+      .map((part) => {
         if (part.added) {
-          return part.value.split('\n').map(line => line && `+${line}`).join('\n');
+          return part.value
+            .split('\n')
+            .map((line) => line && `+${line}`)
+            .join('\n');
         }
         if (part.removed) {
-          return part.value.split('\n').map(line => line && `-${line}`).join('\n');
+          return part.value
+            .split('\n')
+            .map((line) => line && `-${line}`)
+            .join('\n');
         }
         return part.value;
       })
@@ -84,51 +99,66 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
   const titleLLMStream = useLLMStream({
     model: DEFAULT_LLM_MODEL,
     temperature: 0.7,
-    onResponse: useCallback((response: string) => {
-      const sanitized = sanitizeReply(response);
-      setValue('title', sanitized);
-      setAiLoading && setAiLoading(prev => ({ ...prev, title: false }));
-    }, [setValue, setAiLoading])
+    onResponse: useCallback(
+      (response: string) => {
+        const sanitized = sanitizeReply(response);
+        setValue('title', sanitized);
+        setAiLoading && setAiLoading((prev) => ({ ...prev, title: false }));
+      },
+      [setValue, setAiLoading]
+    ),
   });
 
   const descriptionLLMStream = useLLMStream({
     model: DEFAULT_LLM_MODEL,
     temperature: 0.8,
-    onResponse: useCallback((response: string) => {
-      const sanitized = sanitizeReply(response);
-      setValue('description', sanitized);
-      setAiLoading && setAiLoading(prev => ({ ...prev, description: false }));
-    }, [setValue, setAiLoading])
+    onResponse: useCallback(
+      (response: string) => {
+        const sanitized = sanitizeReply(response);
+        setValue('description', sanitized);
+        setAiLoading && setAiLoading((prev) => ({ ...prev, description: false }));
+      },
+      [setValue, setAiLoading]
+    ),
   });
 
   const commentLLMStream = useLLMStream({
     model: DEFAULT_LLM_MODEL,
     temperature: 0.8,
-    onResponse: useCallback((response: string) => {
-      const sanitized = sanitizeReply(response);
-      setValue('comment', sanitized);
-      setAiLoading && setAiLoading(prev => ({ ...prev, comment: false }));
-    }, [setValue, setAiLoading])
+    onResponse: useCallback(
+      (response: string) => {
+        const sanitized = sanitizeReply(response);
+        setValue('comment', sanitized);
+        setAiLoading && setAiLoading((prev) => ({ ...prev, comment: false }));
+      },
+      [setValue, setAiLoading]
+    ),
   });
 
   const pathLLMStream = useLLMStream({
     model: DEFAULT_LLM_MODEL,
     temperature: 0.6,
-    onResponse: useCallback((response: string) => {
-      const sanitized = sanitizeReply(response);
-      setValue('path', sanitized);
-      setAiLoading && setAiLoading(prev => ({ ...prev, path: false }));
-    }, [setValue, setAiLoading])
+    onResponse: useCallback(
+      (response: string) => {
+        const sanitized = sanitizeReply(response);
+        setValue('path', sanitized);
+        setAiLoading && setAiLoading((prev) => ({ ...prev, path: false }));
+      },
+      [setValue, setAiLoading]
+    ),
   });
 
   const branchLLMStream = useLLMStream({
     model: DEFAULT_LLM_MODEL,
     temperature: 0.7,
-    onResponse: useCallback((response: string) => {
-      const sanitized = sanitizeReply(response);
-      setValue('ref', sanitized);
-      setAiLoading && setAiLoading(prev => ({ ...prev, branch: false }));
-    }, [setValue, setAiLoading])
+    onResponse: useCallback(
+      (response: string) => {
+        const sanitized = sanitizeReply(response);
+        setValue('ref', sanitized);
+        setAiLoading && setAiLoading((prev) => ({ ...prev, branch: false }));
+      },
+      [setValue, setAiLoading]
+    ),
   });
 
   // Utility function to extract change details and diff summary from changeInfo
@@ -136,10 +166,10 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
     let changeDetails = '';
     let diffSummary = '';
     let jsonDiff = '';
-    
+
     if (changeInfo) {
       const changes = [];
-      
+
       if (changeInfo.hasTimeChanges) {
         changes.push('time range');
       }
@@ -155,19 +185,19 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
       if (changeInfo.hasMigratedToV2) {
         changes.push('dashboard format migration');
       }
-      
+
       // Add general changes if specific changes aren't detected
       if (changes.length === 0 && changeInfo.hasChanges) {
         changes.push('dashboard configuration');
       }
-      
+
       if (changes.length > 0) {
         changeDetails = `\n\nChanges detected: ${changes.join(', ')}`;
         if (changeInfo.diffCount > 0) {
           changeDetails += ` (${changeInfo.diffCount} total changes)`;
         }
       }
-      
+
       // Add diff summary
       if (changeInfo.diffs) {
         diffSummary = summarizeDiffs(changeInfo.diffs);
@@ -181,7 +211,7 @@ export function AIContextProvider({ children, setValue, setAiLoading }: AIContex
         jsonDiff = getUnifiedJsonDiffString(changeInfo.initialSaveModel, changeInfo.changedSaveModel);
       }
     }
-    
+
     return { changeDetails, diffSummary, jsonDiff };
   };
 
@@ -209,7 +239,7 @@ Examples:
 Do not include the word "dashboard" in the title.
 Do not include quotes in your response.
 The response should contain ONLY the proposed title, no other text.
-`
+`,
       },
       {
         role: Role.user,
@@ -223,16 +253,19 @@ Here is the JSON diff of the changes:
 ${'```'}
 ${jsonDiff}
 ${'```'}
-`
-
-      }
+`,
+      },
     ];
     console.log('AI Title Generation - Context:', { dashboardContext, changeInfo });
     console.log('AI Title Generation - Messages:', messages);
     return messages;
   };
 
-  const getDescriptionMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
+  const getDescriptionMessages = (
+    dashboardContext: any,
+    currentTitle: string,
+    changeInfo?: DashboardChangeInfo
+  ): Message[] => {
     const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
@@ -244,30 +277,37 @@ It should be between 100-300 characters and be helpful for users to understand t
 Do not include quotes in your response.
 Focus on the business value and monitoring capabilities.
 The response should contain ONLY the proposed description, no other text.
-`
+`,
       },
       {
         role: Role.user,
         content: `Create a description for a dashboard titled: "${currentTitle}"
 Tags: ${dashboardContext.tags.join(', ') || 'None'}
-${dashboardContext.isNew ? 
-  'This dashboard will provide comprehensive monitoring and analytics for system performance and health.' : 
-  'This dashboard provides monitoring and analytics capabilities and is being updated.'}
+${
+  dashboardContext.isNew
+    ? 'This dashboard will provide comprehensive monitoring and analytics for system performance and health.'
+    : 'This dashboard provides monitoring and analytics capabilities and is being updated.'
+}
 These are the changes being made to the dashboard: ${changeDetails}
 
 Here is the JSON diff of the changes:
 ${'```'}
 ${jsonDiff}
 ${'```'}
-`
-      }
+`,
+      },
     ];
     console.log('AI Description Generation - Context:', { dashboardContext, currentTitle, changeInfo });
     console.log('AI Description Generation - Messages:', messages);
     return messages;
   };
 
-  const getCommentMessages = (dashboardContext: any, currentTitle: string, currentDescription: string, changeInfo?: DashboardChangeInfo): Message[] => {
+  const getCommentMessages = (
+    dashboardContext: any,
+    currentTitle: string,
+    currentDescription: string,
+    changeInfo?: DashboardChangeInfo
+  ): Message[] => {
     const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
@@ -284,7 +324,7 @@ Focus on the specific changes made rather than generic descriptions.
 
 Do not include quotes in your response.
 The response should contain ONLY the proposed comment, no other text.
-`
+`,
       },
       {
         role: Role.user,
@@ -297,32 +337,39 @@ Here is the JSON diff of the changes:
 ${'```'}
 ${jsonDiff}
 ${'```'}
-`
-      }
+`,
+      },
     ];
     // Log the context and messages being sent to LLM
     console.log('AI Comment Generation - Context:', {
       dashboardContext,
       currentTitle,
       currentDescription,
-      changeInfo: changeInfo ? {
-        hasChanges: changeInfo.hasChanges,
-        hasTimeChanges: changeInfo.hasTimeChanges,
-        hasVariableValueChanges: changeInfo.hasVariableValueChanges,
-        hasRefreshChange: changeInfo.hasRefreshChange,
-        hasFolderChanges: changeInfo.hasFolderChanges,
-        hasMigratedToV2: changeInfo.hasMigratedToV2,
-        diffCount: changeInfo.diffCount,
-        diffs: changeInfo.diffs ? Object.keys(changeInfo.diffs) : null,
-      } : null,
+      changeInfo: changeInfo
+        ? {
+            hasChanges: changeInfo.hasChanges,
+            hasTimeChanges: changeInfo.hasTimeChanges,
+            hasVariableValueChanges: changeInfo.hasVariableValueChanges,
+            hasRefreshChange: changeInfo.hasRefreshChange,
+            hasFolderChanges: changeInfo.hasFolderChanges,
+            hasMigratedToV2: changeInfo.hasMigratedToV2,
+            diffCount: changeInfo.diffCount,
+            diffs: changeInfo.diffs ? Object.keys(changeInfo.diffs) : null,
+          }
+        : null,
       changeDetails,
     });
     console.log('AI Comment Generation - Messages:', messages);
     return messages;
   };
 
-  const getPathMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
+  const getPathMessages = (
+    dashboardContext: any,
+    currentTitle: string,
+    changeInfo?: DashboardChangeInfo
+  ): Message[] => {
     const currentYear = new Date().getFullYear();
+    console.log('dashboardContext', dashboardContext);
     const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
@@ -330,13 +377,15 @@ ${'```'}
         content: `You are an expert in file organization and naming conventions.
 Your goal is to create a logical file path for storing a dashboard in a repository.
 The path should be organized, follow naming conventions, and include appropriate subdirectories.
+The path should be relative to the path where the dashboard is located, which is ${dashboardContext.folder} now. You have to include it as the first path.
+You should not change the relative path where the dashboard is located. At most, add a subpath to the existing path.
 For dashboards, use .json extension. Use lowercase with hyphens for separation.
-Consider organizing by year, category, or purpose.
+Consider organizing by category, or purpose.
 The path should be between 20-80 characters.
 Do not include quotes in your response.
 Do not use the word "dashboard" in the path or the file name.
 The response should contain ONLY the proposed path, no other text.
-`
+`,
       },
       {
         role: Role.user,
@@ -349,15 +398,19 @@ Here is the JSON diff of the changes:
 ${'```'}
 ${jsonDiff}
 ${'```'}
-`
-      }
+`,
+      },
     ];
     console.log('AI Path Generation - Context:', { dashboardContext, currentTitle, currentYear, changeInfo });
     console.log('AI Path Generation - Messages:', messages);
     return messages;
   };
 
-  const getBranchMessages = (dashboardContext: any, currentTitle: string, changeInfo?: DashboardChangeInfo): Message[] => {
+  const getBranchMessages = (
+    dashboardContext: any,
+    currentTitle: string,
+    changeInfo?: DashboardChangeInfo
+  ): Message[] => {
     const { changeDetails, jsonDiff } = getChangeDetails(changeInfo);
     const messages = [
       {
@@ -383,7 +436,7 @@ Examples:
 
 Do not include quotes in your response.
 The response should contain ONLY the proposed branch name, no other text.
-`
+`,
       },
       {
         role: Role.user,
@@ -394,8 +447,8 @@ Here is the JSON diff of the changes:
 ${'```'}
 ${jsonDiff}
 ${'```'}
-`
-      }
+`,
+      },
     ];
     console.log('AI Branch Generation - Context:', { dashboardContext, currentTitle, changeInfo });
     console.log('AI Branch Generation - Messages:', messages);
@@ -417,11 +470,7 @@ ${'```'}
     getChangeDetails,
   };
 
-  return (
-    <AIContext.Provider value={value}>
-      {children}
-    </AIContext.Provider>
-  );
+  return <AIContext.Provider value={value}>{children}</AIContext.Provider>;
 }
 
 export function useAIContext() {
@@ -430,4 +479,4 @@ export function useAIContext() {
     throw new Error('useAIContext must be used within an AIContextProvider');
   }
   return context;
-} 
+}
