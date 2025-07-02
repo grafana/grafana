@@ -180,7 +180,6 @@
 /pkg/tests/apis/query @grafana/grafana-datasources-core-services
 /pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/tests/api/correlations/ @grafana/datapro
-/pkg/tests/apis/secret/ @grafana/grafana-operator-experience-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
 /pkg/util/ @grafana/grafana-backend-group
