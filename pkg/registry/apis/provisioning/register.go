@@ -26,6 +26,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -241,7 +242,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					// Access to files is controlled by the AccessClient
 					return authorizer.DecisionAllow, "", nil
 
-				case "resources", "sync", "history":
+				case "resources", "sync", "history", "pr":
 					// These are strictly read operations.
 					// Sync can also be somewhat destructive, but it's expected to be fine to import changes.
 					if id.GetOrgRole().Includes(identity.RoleEditor) {
@@ -1062,7 +1063,7 @@ spec:
 	}
 
 	// Add any missing definitions
-	//-----------------------------
+	// -----------------------------
 	for k, v := range defs {
 		clean := strings.Replace(k, defsBase, "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.", 1)
 		if oas.Components.Schemas[clean] == nil {
