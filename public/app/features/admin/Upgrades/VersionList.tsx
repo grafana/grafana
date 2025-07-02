@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 interface Version {
   version: string;
@@ -21,11 +21,15 @@ export function VersionList({ versions, installedVersion }: Props) {
   return (
     <Stack direction="column" gap={2}>
     <br></br>
-    <h1>Current Grafana Version: {installedVersion}</h1>
+    <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <img src="/public/img/grafana_icon.svg" alt="Grafana Logo" style={{ height: 32, width: 32 }} />
+      <span>Grafana Version: {installedVersion}</span>
+      <Badge text="Installed" color="green" icon="check" />
+    </h1>
     {versions.length === 0 ? (<p>No recommended upgrades found.</p>) : (
     <>
     <h2>Recommended Upgrades</h2>
-    <p>The following upgrades are recommended to ensure you are running the latest version of Grafana.</p>
+    <p>The following upgrades are recommended for your Grafana instance to ensure you are running the latest supported version of Grafana.</p>
     <table className={styles.table}>
       <thead>
         <tr>
