@@ -1868,8 +1868,9 @@
     {
       "metadata": {
         "name": "lokiQueryHints",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-12-18T20:43:16Z"
+        "resourceVersion": "1743693517832",
+        "creationTimestamp": "2023-12-18T20:43:16Z",
+        "deletionTimestamp": "2025-06-12T12:14:47Z"
       },
       "spec": {
         "description": "Enables query hints for Loki",
