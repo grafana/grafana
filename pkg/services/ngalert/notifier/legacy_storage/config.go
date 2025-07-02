@@ -90,14 +90,9 @@ func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigR
 		Default:                   false,
 		OrgID:                     orgID,
 	}
-	return a.PersistConfig(ctx, &cmd)
-}
-
-// PersistConfig validates to config before eventually persisting it if no error occurs
-func (a alertmanagerConfigStoreImpl) PersistConfig(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	cfg := &definitions.PostableUserConfig{}
 	if err := json.Unmarshal([]byte(cmd.AlertmanagerConfiguration), cfg); err != nil {
 		return fmt.Errorf("change would result in an invalid configuration state: %w", err)
 	}
-	return a.store.UpdateAlertmanagerConfiguration(ctx, cmd)
+	return a.store.UpdateAlertmanagerConfiguration(ctx, &cmd)
 }
