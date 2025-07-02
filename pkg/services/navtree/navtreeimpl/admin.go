@@ -66,7 +66,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 			Text:     "Upgrade Grafana",
 			Id:       "upgrade-grafana",
-			SubTitle: "Upgrade Grafana to the latest version",
+			SubTitle: "Upgrade made easy. Check for recommended patch, minor, and major upgrades to your Grafana instance.",
 			Url:      s.cfg.AppSubURL + "/admin/upgrades",
 		})
 	}

@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+
+import GrafanaLogo from '/public/img/grafana_icon.svg';
 
 interface Version {
   version: string;
   releaseDate: string;
-  notes?: string;
+  state: string;
   isOutOfSupport: boolean;
   type: string;
 }
@@ -21,11 +23,15 @@ export function VersionList({ versions, installedVersion }: Props) {
   return (
     <Stack direction="column" gap={2}>
     <br></br>
-    <h1>Current Grafana Version: {installedVersion}</h1>
+    <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <img src={GrafanaLogo} alt="Grafana Logo" style={{ height: 32, width: 32 }} />
+      <span>Grafana Version: {installedVersion}</span>
+      <Badge text="Installed" color="green" icon="check" />
+    </h1>
     {versions.length === 0 ? (<p>No recommended upgrades found.</p>) : (
     <>
     <h2>Recommended Upgrades</h2>
-    <p>The following upgrades are recommended to ensure you are running the latest version of Grafana.</p>
+    <p>The following upgrades are recommended for your Grafana instance to ensure you are running the latest supported version of Grafana.</p>
     <table className={styles.table}>
       <thead>
         <tr>
@@ -34,11 +40,11 @@ export function VersionList({ versions, installedVersion }: Props) {
           <th>Release Date</th>
           <th>Upgrade Type</th>
           <th>Support Status</th>
-          <th>More Info</th>
+          <th>Changelog</th>
+          <th>Upgrade Guide</th>
         </tr>
       </thead>
       <tbody>
-        <tr></tr>
         {versions.map((v) => {
           return (
             <tr key={v.version}>
@@ -46,10 +52,10 @@ export function VersionList({ versions, installedVersion }: Props) {
               <td>
                   <LinkButton
                     fill="solid"
-                    variant="secondary"
+                    variant="primary"
                     icon="download-alt"
                     size="sm"
-                    className={styles.badge}
+                    // className={styles.button}
                     href={`https://grafana.com/grafana/download/${v.version}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -62,23 +68,30 @@ export function VersionList({ versions, installedVersion }: Props) {
               <td>{v.type.toUpperCase()}</td>
               <td>{v.isOutOfSupport ? 'Out of Support' : 'In Support'}</td>
               <td>
-                <a
-                  href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
                   <LinkButton
                     type="button"
                     variant="secondary"
                     icon="info-circle"
+                    size="sm"
                     href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     Release Notes
                   </LinkButton>
-                </a>
+              
               </td>
+              <td>
+                  <LinkButton
+                    type="button"
+                    variant="secondary"
+                    icon="external-link-alt"
+                    size="sm"
+                    href={`https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v${v.version}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >Upgrade Guide</LinkButton>
+            </td>
             </tr>
           );
         })}
@@ -112,12 +125,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'tbody tr:nth-child(odd)': {
       background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
     },
-  }),
-  badge: css({
-    height: 24,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '50%',
   }),
 });
