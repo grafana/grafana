@@ -38,6 +38,8 @@ Checks if non-provisioned users are allowed using dynamic configuration with sta
 func (s *SCIMUtil) AreNonProvisionedUsersAllowed(ctx context.Context, orgID int64, staticAllowed bool) bool
 ```
 
+**Note**: This field defaults to `false` when not present in the dynamic configuration.
+
 ## Usage
 
 ### Basic Usage
@@ -129,8 +131,9 @@ metadata:
   name: default
   namespace: <org-namespace>
 spec:
-  enableUserSync: true    # Controls user provisioning
-  enableGroupSync: false  # Controls group/team provisioning
+  enableUserSync: true              # Controls user provisioning
+  enableGroupSync: false            # Controls group/team provisioning
+  allowNonProvisionedUsers: false   # Controls whether non-provisioned users are allowed (optional)
 ```
 
 ## Error Handling
@@ -153,20 +156,24 @@ This package is designed to work with the open-source Grafana build and does not
 
 ```go
 type SCIMConfigSpec struct {
-    EnableUserSync  bool `json:"enableUserSync"`
-    EnableGroupSync bool `json:"enableGroupSync"`
+    EnableUserSync           bool  `json:"enableUserSync"`
+    EnableGroupSync          bool  `json:"enableGroupSync"`
+    AllowNonProvisionedUsers *bool `json:"allowNonProvisionedUsers,omitempty"`
 }
 ```
+
+The `AllowNonProvisionedUsers` field is optional and defaults to `false` when not present in the configuration.
 
 The utility directly works with Kubernetes unstructured objects and extracts the configuration values without requiring the full SCIM API types.
 
 ## Testing
 
 The package includes comprehensive tests covering:
-- All combinations of user sync and group sync settings (true/false, false/true, true/true, false/false)
+- All combinations of user sync, group sync, and non-provisioned users settings
 - Error scenarios and fallback behavior
 - Integration scenarios with both dynamic and static configurations
 - Mock implementations for the K8s client interface
+- Optional field handling for `allowNonProvisionedUsers`
 
 Run tests with:
 ```bash
