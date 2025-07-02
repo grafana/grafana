@@ -48,7 +48,7 @@ interface LogsQueryBuilderProps {
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
-  const { query, onQueryChange, schema, datasource, timeRange, isLoadingSchema } = props;
+  const { query, onQueryChange, schema, datasource, timeRange } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
