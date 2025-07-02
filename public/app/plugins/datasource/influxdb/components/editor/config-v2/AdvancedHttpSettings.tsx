@@ -38,7 +38,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
             data-testid="influxdb-v2-config-advanced-http-settings-toggle"
             value={advancedHttpSettingsIsOpen}
             onChange={() => setAdvancedHttpSettingsIsOpen(!advancedHttpSettingsIsOpen)}
-            onBlur={() => trackInfluxDBConfigV2AdvancedHTTPSettingsToggleClicked()}
+            onBlur={trackInfluxDBConfigV2AdvancedHTTPSettingsToggleClicked}
           />
         </InlineField>
       </Box>
@@ -103,7 +103,7 @@ export const AdvancedHttpSettings = ({ options, onOptionsChange }: Props) => {
                       },
                     });
                   }}
-                  onBlur={() => trackInfluxDBConfigV2AdvancedHTTPSettingsTimeoutField()}
+                  onBlur={trackInfluxDBConfigV2AdvancedHTTPSettingsTimeoutField}
                 />
               </Field>
             </Box>

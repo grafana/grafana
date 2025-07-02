@@ -71,7 +71,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
               },
             });
           }}
-          onBlur={() => trackInfluxDBConfigV1InfluxQLDatabaseInputField()}
+          onBlur={trackInfluxDBConfigV1InfluxQLDatabaseInputField}
         />
       </Field>
       <Field
@@ -86,7 +86,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           className="width-20"
           value={options.user || ''}
           onChange={onUpdateDatasourceOption(props, 'user')}
-          onBlur={() => trackInfluxDBConfigV1InfluxQLUserInputField()}
+          onBlur={trackInfluxDBConfigV1InfluxQLUserInputField}
         />
       </Field>
       <Field
@@ -103,7 +103,7 @@ export const InfluxInfluxQLConfig = (props: Props) => {
           className="width-20"
           onReset={() => updateDatasourcePluginResetOption(props, 'password')}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
-          onBlur={() => trackInfluxDBConfigV1InfluxQLPasswordInputField()}
+          onBlur={trackInfluxDBConfigV1InfluxQLPasswordInputField}
         />
       </Field>
       <Field

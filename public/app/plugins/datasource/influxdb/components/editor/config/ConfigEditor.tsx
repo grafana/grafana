@@ -68,6 +68,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
     const { options, onOptionsChange } = this.props;
 
+    if (selected.value) {
+      trackInfluxDBConfigV1QueryLanguageSelection({ version: selected.value })
+    };
+
     const copy: DataSourceSettings<InfluxOptionsV1, {}> = {
       ...options,
       jsonData: {
@@ -118,9 +122,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
               options={versions}
               defaultValue={versionMap[InfluxVersion.InfluxQL]}
               onChange={this.onVersionChanged}
-              onBlur={() =>
-                trackInfluxDBConfigV1QueryLanguageSelection({ version: this.props.options.jsonData.version || '' })
-              }
             />
           </Field>
         </FieldSet>

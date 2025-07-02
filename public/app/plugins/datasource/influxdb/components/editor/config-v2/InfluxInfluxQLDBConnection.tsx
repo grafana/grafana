@@ -25,7 +25,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
             placeholder="mydb"
             value={options.jsonData.dbName}
             onChange={onUpdateDatasourceJsonDataOption(props, 'dbName')}
-            onBlur={() => trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField()}
+            onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsDatabaseInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -36,7 +36,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
             placeholder="myuser"
             value={options.user || ''}
             onChange={onUpdateDatasourceOption(props, 'user')}
-            onBlur={() => trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField()}
+            onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsUserInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -48,7 +48,7 @@ export const InfluxInfluxQLDBConnection = (props: Props) => {
             value={options.secureJsonData?.password || ''}
             onReset={() => updateDatasourcePluginResetOption(props, 'password')}
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
-            onBlur={() => trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField()}
+            onBlur={trackInfluxDBConfigV2InfluxQLDBDetailsPasswordInputField}
           />
         </InlineField>
       </InlineFieldRow>

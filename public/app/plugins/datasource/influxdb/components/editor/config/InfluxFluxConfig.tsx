@@ -34,7 +34,7 @@ export const InfluxFluxConfig = (props: Props) => {
             className="width-20"
             value={jsonData.organization || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
-            onBlur={() => trackInfluxDBConfigV1FluxOrgInputField()}
+            onBlur={trackInfluxDBConfigV1FluxOrgInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -48,7 +48,7 @@ export const InfluxFluxConfig = (props: Props) => {
             className="width-20"
             onReset={() => updateDatasourcePluginResetOption(props, 'token')}
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
-            onBlur={() => trackInfluxDBConfigV1FluxTokenInputField()}
+            onBlur={trackInfluxDBConfigV1FluxTokenInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -59,7 +59,7 @@ export const InfluxFluxConfig = (props: Props) => {
             placeholder="default bucket"
             value={jsonData.defaultBucket || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'defaultBucket')}
-            onBlur={() => trackInfluxDBConfigV1FluxDefaultBucketInputField()}
+            onBlur={trackInfluxDBConfigV1FluxDefaultBucketInputField}
           />
         </InlineField>
       </InlineFieldRow>

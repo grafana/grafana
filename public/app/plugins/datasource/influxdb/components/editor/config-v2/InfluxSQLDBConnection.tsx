@@ -24,7 +24,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
             placeholder="mydb"
             value={options.jsonData.dbName}
             onChange={onUpdateDatasourceJsonDataOption(props, 'dbName')}
-            onBlur={() => trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField()}
+            onBlur={trackInfluxDBConfigV2SQLDBDetailsDatabaseInputField}
           />
         </InlineField>
       </InlineFieldRow>
@@ -33,7 +33,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
-            onBlur={() => trackInfluxDBConfigV2SQLDBDetailsTokenInputField()}
+            onBlur={trackInfluxDBConfigV2SQLDBDetailsTokenInputField}
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
             onReset={() => updateDatasourcePluginResetOption(props, 'token')}
             value={secureJsonData?.token || ''}

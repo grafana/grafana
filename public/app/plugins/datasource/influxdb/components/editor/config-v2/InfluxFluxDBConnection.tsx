@@ -24,7 +24,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
           <Input
             id="organization"
             placeholder="myorg"
-            onBlur={() => trackInfluxDBConfigV2FluxDBDetailsOrgInputField()}
+            onBlur={trackInfluxDBConfigV2FluxDBDetailsOrgInputField}
             onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
             value={jsonData.organization || ''}
           />
@@ -34,7 +34,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
         <InlineField labelWidth={30} label="Default Bucket" grow>
           <Input
             id="default-bucket"
-            onBlur={() => trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField()}
+            onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
             onChange={onUpdateDatasourceJsonDataOption(props, 'defaultBucket')}
             placeholder="mybucket"
             value={jsonData.defaultBucket || ''}
@@ -46,7 +46,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
           <SecretInput
             id="token"
             isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
-            onBlur={() => trackInfluxDBConfigV2FluxDBDetailsTokenInputField()}
+            onBlur={trackInfluxDBConfigV2FluxDBDetailsTokenInputField}
             onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
             onReset={() => updateDatasourcePluginResetOption(props, 'token')}
             value={secureJsonData?.token || ''}

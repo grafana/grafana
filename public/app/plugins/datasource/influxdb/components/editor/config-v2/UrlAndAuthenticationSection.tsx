@@ -82,7 +82,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
               placeholder="http://localhost:3000/"
               onChange={onUrlChange}
               value={options.url || ''}
-              onBlur={() => trackInfluxDBConfigV2URLInputField()}
+              onBlur={trackInfluxDBConfigV2URLInputField}
             />
           </Field>
 

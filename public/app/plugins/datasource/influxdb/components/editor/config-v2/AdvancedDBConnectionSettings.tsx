@@ -35,7 +35,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
           data-testid="influxdb-v2-config-toggle-switch"
           value={advancedDbConnectionSettingsIsOpen}
           onChange={() => setAdvancedDbConnectionSettingsIsOpen(!advancedDbConnectionSettingsIsOpen)}
-          onBlur={() => trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked()}
+          onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsToggleClicked}
         />
       </InlineField>
 
@@ -55,7 +55,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                   value={HTTP_MODES.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
                   options={HTTP_MODES}
                   onChange={onUpdateDatasourceJsonDataOptionSelect(props, 'httpMode')}
-                  onBlur={() => trackInfluxDBConfigV2AdvancedDbConnectionSettingsHTTPMethodClicked()}
+                  onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsHTTPMethodClicked}
                   data-testid="influxdb-v2-config-http-method-select"
                 />
               </InlineField>
@@ -69,7 +69,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                   data-testid="influxdb-v2-config-insecure-switch"
                   value={options.jsonData.insecureGrpc ?? false}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'insecureGrpc')}
-                  onBlur={() => trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked()}
+                  onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsInsecureConnectClicked}
                 />
               </InlineField>
             </InlineFieldRow>
@@ -85,7 +85,7 @@ export const AdvancedDbConnectionSettings = (props: Props) => {
                 <Input
                   className="width-15"
                   data-testid="influxdb-v2-config-time-interval"
-                  onBlur={() => trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked()}
+                  onBlur={trackInfluxDBConfigV2AdvancedDbConnectionSettingsMinTimeClicked}
                   onChange={onUpdateDatasourceJsonDataOption(props, 'timeInterval')}
                   placeholder="10s"
                   value={options.jsonData.timeInterval || ''}
