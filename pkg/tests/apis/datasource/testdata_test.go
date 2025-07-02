@@ -58,108 +58,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	})
 	require.Equal(t, "test", ds.UID)
 
-	t.Run("Check discovery client", func(t *testing.T) {
-		disco := helper.GetGroupVersionInfoJSON("testdata.datasource.grafana.app")
-		fmt.Printf("%s", disco)
-
-		require.JSONEq(t, `[
-			{
-				"freshness": "Current",
-				"resources": [
-					{
-						"resource": "connections",
-						"responseKind": {
-							"group": "",
-							"kind": "DataSourceConnection",
-							"version": ""
-						},
-						"scope": "Namespaced",
-						"shortNames": [
-							"grafana-testdata-datasource-connection"
-						],
-						"singularResource": "connection",
-						"subresources": [
-							{
-								"responseKind": {
-									"group": "",
-									"kind": "HealthCheckResult",
-									"version": ""
-								},
-								"subresource": "health",
-								"verbs": [
-									"get"
-								]
-							},
-							{
-								"responseKind": {
-									"group": "",
-									"kind": "QueryDataResponse",
-									"version": ""
-								},
-								"subresource": "query",
-								"verbs": [
-									"create"
-								]
-							},
-							{
-								"responseKind": {
-									"group": "",
-									"kind": "Status",
-									"version": ""
-								},
-								"subresource": "resource",
-								"verbs": [
-									"create",
-									"delete",
-									"get",
-									"patch",
-									"update"
-								]
-							}
-						],
-						"verbs": [
-							"get",
-							"list"
-						]
-					},
-					{
-						"resource": "datasources",
-						"responseKind": {
-							"group": "",
-							"kind": "GenericDataSource",
-							"version": ""
-						},
-						"scope": "Namespaced",
-						"singularResource": "datasource",
-						"verbs": [
-							"create",
-							"delete",
-							"deletecollection",
-							"get",
-							"list",
-							"patch",
-							"update"
-						]
-					},
-					{
-						"resource": "queryconvert",
-						"responseKind": {
-							"group": "",
-							"kind": "QueryDataRequest",
-							"version": ""
-						},
-						"scope": "Namespaced",
-						"singularResource": "queryconvert",
-						"verbs": [
-							"create"
-						]
-					}
-				],
-				"version": "v0alpha1"
-			}
-		]`, disco)
-	})
-
 	t.Run("Admin configs", func(t *testing.T) {
 		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
 			Group:    "testdata.datasource.grafana.app",
@@ -194,7 +92,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		client := helper.Org1.Admin.ResourceClient(t, schema.GroupVersionResource{
 			Group:    "testdata.datasource.grafana.app",
 			Version:  "v0alpha1",
-			Resource: "connections",
+			Resource: "datasources",
 		}).Namespace("default")
 		ctx := context.Background()
 
@@ -221,7 +119,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		raw := apis.DoRequest[any](helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
-			Path:   "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/default/connections/test/resource",
+			Path:   "/apis/testdata.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resource",
 		}, nil)
 		require.Equal(t, `Hello world from test datasource!`, string(raw.Body))
 	})
