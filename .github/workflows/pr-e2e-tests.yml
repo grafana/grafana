@@ -219,17 +219,17 @@ jobs:
     name: All Playwright tests complete
     runs-on: ubuntu-latest
     steps:
-      - name: Check test suites
-        uses: ./.github/actions/check-jobs
-        with:
-          needs: ${{ toJson(needs) }}
-          fail-step: false
-          failure-message: "One or more E2E test suites have failed"
-          success-message: "All E2E test suites completed successfully"
-
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - name: Check test suites
+        uses: ./.github/actions/check-jobs
+        continue-on-error: true # Failure will be reported on Show test results step
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more E2E test suites have failed"
+          success-message: "All E2E test suites completed successfully"
 
       - uses: actions/setup-node@v4
         with:
@@ -310,6 +310,10 @@ jobs:
     name: All E2E tests complete
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Check test suites
         uses: ./.github/actions/check-jobs
         with:

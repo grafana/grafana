@@ -12,10 +12,6 @@ inputs:
     description: Custom message to display when all jobs pass
     required: false
     default: "All jobs passed successfully"
-  fail-step:
-    description: Fail the step if failures are found, defaults to true
-    required: false
-    default: "true"
 outputs:
   any-failed:
     description: Whether any jobs failed
@@ -31,9 +27,11 @@ runs:
         NEEDS: ${{ inputs.needs }}
         FAILURE_MSG: ${{ inputs.failure-message }}
         SUCCESS_MSG: ${{ inputs.success-message }}
-        FAIL_STEP: ${{ inputs.fail-step }}
       run: |
         set -euo pipefail
+
+        # Print the needs context, debugging
+        echo "$NEEDS" | jq
 
         # Extract failures
         FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
@@ -44,9 +42,7 @@ runs:
           echo "Failed suites:"
           echo "$FAILURES" | jq -r 'to_entries[] | "- \(.key): \(.value)"'
           echo "any-failed=true" >> "$GITHUB_OUTPUT"
-          if [ "$FAIL_STEP" = "true" ]; then
-            exit 1
-          fi
+          exit 1
         fi
 
         echo "✅ $SUCCESS_MSG"
