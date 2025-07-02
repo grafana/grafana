@@ -137,7 +137,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
       })
       .addNumberInput({
         path: 'cellHeightCustom',
-        name: t('table-new.name-cell-height', 'Custom cell height'),
+        name: t('table-new.name-cell-height-custom', 'Custom cell height'),
         category,
         settings: {
           placeholder: t('table-new.placeholder-cell-height', 'auto'),
