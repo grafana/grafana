@@ -73,13 +73,8 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
     [logOptionsStorageKey]
   );
 
-  const handleSearch = useCallback((e: ChangeEvent<HTMLInputElement> | undefined) => {
-    if (e === undefined) {
-      inputRef.current = '';
-      setSearch('');
-      return;
-    }
-    inputRef.current = e.target.value;
+  const handleSearch = useCallback((newSearch: string) => {
+    inputRef.current = newSearch;
     startTransition(() => {
       setSearch(inputRef.current);
     });
@@ -87,7 +82,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
 
   return (
     <>
-      <LogLineDetailsHeader log={log} onSearch={handleSearch} />
+      <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
       <div className={styles.componentWrapper}>
         <ControlledCollapse
           label={t('logs.log-line-details.log-line-section', 'Log line')}

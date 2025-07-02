@@ -13,10 +13,11 @@ import { LogListModel } from './processing';
 
 interface Props {
   log: LogListModel;
-  onSearch(e: ChangeEvent<HTMLInputElement> | undefined): void;
+  search: string;
+  onSearch(newSearch: string): void;
 }
 
-export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
+export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
   const {
     closeDetails,
     displayedFields,
@@ -79,7 +80,7 @@ export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
         name="times"
         size="sm"
         onClick={() => {
-          onSearch(undefined);
+          onSearch('');
           if (inputRef.current) {
             inputRef.current.value = '';
           }
@@ -92,7 +93,7 @@ export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
 
   const handleSearch = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      onSearch(e);
+      onSearch(e.target.value);
     },
     [onSearch]
   );
@@ -103,7 +104,7 @@ export const LogLineDetailsHeader = ({ log, onSearch }: Props) => {
         onChange={handleSearch}
         placeholder={t('logs.log-line-details.search-placeholder', 'Search field names and values')}
         ref={inputRef}
-        suffix={clearSearch}
+        suffix={search !== '' ? clearSearch : undefined}
       />
       {showLogLineToggle && (
         <IconButton
