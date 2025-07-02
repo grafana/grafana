@@ -698,13 +698,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "regressionTransformation",
-			Description:  "Enables regression analysis transformation",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
 			// this is mainly used as a way to quickly disable query hints as a safeguard for our infrastructure
 			Name:           "lokiQueryHints",
 			Description:    "Enables query hints for Loki",
@@ -1145,7 +1138,8 @@ var (
 		{
 			Name:           "improvedExternalSessionHandling",
 			Description:    "Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
 			Owner:          identityAccessTeam,
 			AllowSelfServe: true,
 		},
@@ -1367,7 +1361,8 @@ var (
 		{
 			Name:           "improvedExternalSessionHandlingSAML",
 			Description:    "Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.",
-			Stage:          FeatureStagePublicPreview,
+			Stage:          FeatureStageGeneralAvailability,
+			Expression:     "true", // enabled by default
 			Owner:          identityAccessTeam,
 			AllowSelfServe: true,
 		},

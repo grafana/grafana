@@ -273,7 +273,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.MemberlistAdvertisePort = memberlistPort
-	cfg.Target = []string{modules.Distributor}
+	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
@@ -352,7 +352,18 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	require.NoError(t, err)
 	searchOpts, err := search.NewSearchOptions(features, cfg, tracer, docBuilders, nil)
 	require.NoError(t, err)
-	server, err := sql.NewResourceServer(nil, cfg, tracer, nil, nil, searchOpts, nil, nil, features)
+	server, err := sql.NewResourceServer(sql.ServerOptions{
+		DB:             nil,
+		Cfg:            cfg,
+		Tracer:         tracer,
+		Reg:            nil,
+		AccessClient:   nil,
+		SearchOptions:  searchOpts,
+		StorageMetrics: nil,
+		IndexMetrics:   nil,
+		Features:       features,
+		QOSQueue:       nil,
+	})
 	require.NoError(t, err)
 
 	testUserA := &identity.StaticRequester{

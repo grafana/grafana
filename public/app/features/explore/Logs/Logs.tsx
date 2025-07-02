@@ -1035,6 +1035,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   onLogOptionsChange={onLogOptionsChange}
                   hasUnescapedContent={hasUnescapedContent}
+                  filterLevels={filterLevels}
                 />
               </div>
             )}
