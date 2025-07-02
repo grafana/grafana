@@ -364,6 +364,15 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, testAutogenFn(nil, nil, 0, &cfgWithAutogenRoutes.AlertmanagerConfig, false))
 
+	// Calculate hashes for expected configurations
+	cfgWithDecryptedSecretBytes, err := json.Marshal(cfgWithDecryptedSecret)
+	require.NoError(t, err)
+	cfgWithDecryptedSecretHash := fmt.Sprintf("%x", md5.Sum(cfgWithDecryptedSecretBytes))
+
+	cfgWithAutogenRoutesBytes, err := json.Marshal(cfgWithAutogenRoutes)
+	require.NoError(t, err)
+	cfgWithAutogenRoutesHash := fmt.Sprintf("%x", md5.Sum(cfgWithAutogenRoutesBytes))
+
 	tests := []struct {
 		name           string
 		config         string
@@ -405,6 +414,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			NoopAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithDecryptedSecret,
+				Hash:                      cfgWithDecryptedSecretHash,
 			},
 			nil,
 		},
@@ -414,6 +424,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			testAutogenFn,
 			&client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: cfgWithAutogenRoutes,
+				Hash:                      cfgWithAutogenRoutesHash,
 			},
 			nil,
 		},
@@ -643,6 +654,12 @@ receivers:
 	require.NotNil(t, extraReceiver)
 	require.Len(t, extraReceiver.EmailConfigs, 1)
 	require.Equal(t, "alerts@grafana.com", extraReceiver.EmailConfigs[0].To)
+
+	// Verify the config hash
+	expectedConfigBytes, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
+	require.NoError(t, err)
+	expectedHash := fmt.Sprintf("%x", md5.Sum(expectedConfigBytes))
+	require.Equal(t, expectedHash, configSent.Hash)
 }
 
 func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
@@ -754,6 +771,12 @@ receivers:
 		return strings.Contains(rcv.Name, "extra-receiver")
 	})
 	require.True(t, found)
+
+	// Verify the config hash
+	expectedConfigBytes, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
+	require.NoError(t, err)
+	expectedHash := fmt.Sprintf("%x", md5.Sum(expectedConfigBytes))
+	require.Equal(t, expectedHash, configSent.Hash)
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
@@ -900,7 +923,10 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 		require.NoError(t, err)
 
 		require.JSONEq(t, testGrafanaConfigWithSecret, string(got))
-		require.Equal(t, fmt.Sprintf("%x", md5.Sum(encryptedConfig)), config.Hash)
+
+		// Verify that the hash is calculated from the final configuration, including simplified routing
+		expectedHash := fmt.Sprintf("%x", md5.Sum(got))
+		require.Equal(t, expectedHash, config.Hash, "Hash should be calculated from the final processed configuration")
 		require.False(t, config.Default)
 
 		// An error while adding auto-generated rutes should be returned.

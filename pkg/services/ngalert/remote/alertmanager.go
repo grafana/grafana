@@ -304,7 +304,7 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return nil
 	}
 
-	return am.sendConfiguration(ctx, decryptedCfg, config.ConfigurationHash, config.CreatedAt, am.isDefaultConfiguration(configHash))
+	return am.sendConfiguration(ctx, decryptedCfg, fmt.Sprintf("%x", configHash), config.CreatedAt, am.isDefaultConfiguration(configHash))
 }
 
 func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
@@ -408,13 +408,6 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	// Get the hash for the encrypted configuration.
-	rawCfg, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
-
 	// Add auto-generated routes and decrypt before sending.
 	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig, false); err != nil {
 		return err
@@ -427,6 +420,12 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	if err := am.mergeExtraConfigs(ctx, decryptedCfg); err != nil {
 		return fmt.Errorf("unable to merge extra configurations: %w", err)
 	}
+
+	rawCfg, err := json.Marshal(decryptedCfg)
+	if err != nil {
+		return err
+	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
 	return am.sendConfiguration(ctx, decryptedCfg, hash, time.Now().Unix(), false)
 }
