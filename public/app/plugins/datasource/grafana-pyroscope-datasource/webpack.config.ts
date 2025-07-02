@@ -1,4 +1,4 @@
-import config from '@grafana/plugin-configs/webpack.config';
+import config from '@grafana/plugin-configs/webpack.config.ts';
 
 const configWithFallback = async (env: Record<string, unknown>) => {
   const response = await config(env);
