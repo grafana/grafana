@@ -144,7 +144,7 @@ func TestSCIMUtil_IsUserSyncEnabled(t *testing.T) {
 			k8sClient:     &MockK8sHandler{},
 			staticEnabled: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(nil, errors.New("k8s error"))
 			},
 			expectedResult: true,
@@ -155,7 +155,7 @@ func TestSCIMUtil_IsUserSyncEnabled(t *testing.T) {
 			staticEnabled: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 			expectedResult: true,
@@ -166,7 +166,7 @@ func TestSCIMUtil_IsUserSyncEnabled(t *testing.T) {
 			staticEnabled: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(false, true)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 			expectedResult: false,
@@ -177,7 +177,7 @@ func TestSCIMUtil_IsUserSyncEnabled(t *testing.T) {
 			staticEnabled: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(false, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 			expectedResult: false,
@@ -188,7 +188,7 @@ func TestSCIMUtil_IsUserSyncEnabled(t *testing.T) {
 			staticEnabled: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, true)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 			expectedResult: true,
@@ -241,7 +241,7 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			k8sClient:     &MockK8sHandler{},
 			staticAllowed: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(nil, errors.New("k8s error"))
 			},
 			expectedResult: true,
@@ -252,7 +252,7 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			staticAllowed: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 			expectedResult: true,
@@ -263,7 +263,7 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			staticAllowed: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(false, true)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 			expectedResult: false,
@@ -274,7 +274,7 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			staticAllowed: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(false, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 			expectedResult: false,
@@ -285,7 +285,7 @@ func TestSCIMUtil_AreNonProvisionedUsersAllowed(t *testing.T) {
 			staticAllowed: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, true)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 			expectedResult: true,
@@ -337,7 +337,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -348,7 +348,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedEnabled:        false,
 			expectedDynamicFetched: false,
 			setupMock: func(mockHandler *MockK8sHandler) {
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(nil, errors.New("k8s error"))
 			},
 		},
@@ -360,7 +360,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -372,7 +372,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(false, true)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -384,7 +384,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(false, true)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -396,7 +396,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -408,7 +408,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(false, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -420,7 +420,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, true)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -432,7 +432,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(false, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -444,7 +444,7 @@ func TestSCIMUtil_fetchDynamicSCIMSetting(t *testing.T) {
 			expectedDynamicFetched: true,
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, true)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -489,7 +489,7 @@ func TestSCIMUtil_getOrgSCIMConfig(t *testing.T) {
 			k8sClient:     &MockK8sHandler{},
 			expectedError: errors.New("k8s error"),
 			setupMock: func(mockHandler *MockK8sHandler) {
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(nil, errors.New("k8s error"))
 			},
 		},
@@ -498,7 +498,7 @@ func TestSCIMUtil_getOrgSCIMConfig(t *testing.T) {
 			k8sClient: &MockK8sHandler{},
 			setupMock: func(mockHandler *MockK8sHandler) {
 				obj := createMockSCIMConfig(true, false)
-				mockHandler.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+				mockHandler.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 					Return(obj, nil)
 			},
 		},
@@ -625,7 +625,7 @@ func TestSCIMUtil_Integration(t *testing.T) {
 	t.Run("full workflow with dynamic config", func(t *testing.T) {
 		mockClient := &MockK8sHandler{}
 		obj := createMockSCIMConfig(true, false)
-		mockClient.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+		mockClient.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 			Return(obj, nil)
 
 		util := NewSCIMUtil(mockClient)
@@ -643,7 +643,7 @@ func TestSCIMUtil_Integration(t *testing.T) {
 
 	t.Run("full workflow with static fallback", func(t *testing.T) {
 		mockClient := &MockK8sHandler{}
-		mockClient.On("Get", ctx, "", orgID, metav1.GetOptions{}, mock.Anything).
+		mockClient.On("Get", ctx, "default", orgID, metav1.GetOptions{}, mock.Anything).
 			Return(nil, errors.New("k8s error"))
 
 		util := NewSCIMUtil(mockClient)

@@ -97,7 +97,7 @@ func (s *SCIMUtil) getOrgSCIMConfig(ctx context.Context, orgID int64) (*SCIMConf
 		return nil, errors.New("k8s client not configured")
 	}
 
-	unstructuredObj, err := s.k8sClient.Get(ctx, "", orgID, metav1.GetOptions{})
+	unstructuredObj, err := s.k8sClient.Get(ctx, "default", orgID, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
