@@ -4,12 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { AwsAuthType } from '@grafana/aws-sdk';
 import { PluginContextProvider, PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 
+import { CloudWatchDatasource } from '../../datasource';
 import {
   CloudWatchSettings,
   setupMockedDataSource,
   setupMockedTemplateService,
-} from '../../__mocks__/CloudWatchDataSource';
-import { CloudWatchDatasource } from '../../datasource';
+} from '../../mocks/CloudWatchDataSource';
 
 import {
   ConfigEditor,

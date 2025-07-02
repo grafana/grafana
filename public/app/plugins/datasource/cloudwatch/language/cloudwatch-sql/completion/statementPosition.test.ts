@@ -5,9 +5,9 @@ import {
   singleLineFullQuery,
   singleLineEmptyQuery,
   singleLineTwoQueries,
-} from '../../../__mocks__/cloudwatch-sql-test-data';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
+} from '../../../mocks/cloudwatch-sql-test-data';
+import MonacoMock from '../../../mocks/monarch/Monaco';
+import TextModel from '../../../mocks/monarch/TextModel';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
 import { StatementPosition } from '../../monarch/types';
 import cloudWatchSqlLanguageDefinition from '../definition';
