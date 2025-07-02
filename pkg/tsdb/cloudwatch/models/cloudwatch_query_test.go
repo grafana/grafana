@@ -370,7 +370,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "CPUUtilization", res.MetricName)
 		assert.Equal(t, "queryref1", res.Id)
 		assert.Empty(t, res.Expression)
-		assert.Equal(t, 600, res.Period)
+		assert.Equal(t, int32(600), res.Period)
 		assert.True(t, res.ReturnData)
 		assert.Len(t, res.Dimensions, 2)
 		assert.Len(t, res.Dimensions["InstanceId"], 1)
@@ -413,7 +413,7 @@ func TestRequestParser(t *testing.T) {
 		assert.Equal(t, "CPUUtilization", res.MetricName)
 		assert.Equal(t, "queryref1", res.Id)
 		assert.Empty(t, res.Expression)
-		assert.Equal(t, 600, res.Period)
+		assert.Equal(t, int32(600), res.Period)
 		assert.True(t, res.ReturnData)
 		assert.Len(t, res.Dimensions, 2)
 		assert.Len(t, res.Dimensions["InstanceId"], 1)
@@ -468,7 +468,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		assert.NoError(t, err)
 		require.Len(t, res, 1)
 		require.NotNil(t, res[0])
-		assert.Equal(t, 900, res[0].Period)
+		assert.Equal(t, int32(900), res[0].Period)
 	})
 
 	t.Run("Period is parsed correctly if not defined by user", func(t *testing.T) {
@@ -499,7 +499,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 60, res[0].Period)
+			assert.Equal(t, int32(60), res[0].Period)
 		})
 
 		t.Run("Time range is 1 day", func(t *testing.T) {
@@ -509,7 +509,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 60, res[0].Period)
+			assert.Equal(t, int32(60), res[0].Period)
 		})
 
 		t.Run("Time range is 2 days", func(t *testing.T) {
@@ -518,7 +518,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 300, res[0].Period)
+			assert.Equal(t, int32(300), res[0].Period)
 		})
 
 		t.Run("Time range is 7 days", func(t *testing.T) {
@@ -528,7 +528,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 900, res[0].Period)
+			assert.Equal(t, int32(900), res[0].Period)
 		})
 
 		t.Run("Time range is 30 days", func(t *testing.T) {
@@ -538,7 +538,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 3600, res[0].Period)
+			assert.Equal(t, int32(3600), res[0].Period)
 		})
 
 		t.Run("Time range is 90 days", func(t *testing.T) {
@@ -548,7 +548,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 21600, res[0].Period)
+			assert.Equal(t, int32(21600), res[0].Period)
 		})
 
 		t.Run("Time range is 1 year", func(t *testing.T) {
@@ -558,7 +558,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.Nil(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 21600, res[0].Period)
+			assert.Equal(t, int32(21600), res[0].Period)
 		})
 
 		t.Run("Time range is 2 years", func(t *testing.T) {
@@ -568,7 +568,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 86400, res[0].Period)
+			assert.Equal(t, int32(86400), res[0].Period)
 		})
 
 		t.Run("Time range is 2 days, but 16 days ago", func(t *testing.T) {
@@ -577,7 +577,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 300, res[0].Period)
+			assert.Equal(t, int32(300), res[0].Period)
 		})
 
 		t.Run("Time range is 2 days, but 90 days ago", func(t *testing.T) {
@@ -586,7 +586,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 3600, res[0].Period)
+			assert.Equal(t, int32(3600), res[0].Period)
 		})
 
 		t.Run("Time range is 2 days, but 456 days ago", func(t *testing.T) {
@@ -595,7 +595,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 			res, err := ParseMetricDataQueries(query, from, to, "us-east-2", logger, false)
 			require.NoError(t, err)
 			require.Len(t, res, 1)
-			assert.Equal(t, 21600, res[0].Period)
+			assert.Equal(t, int32(21600), res[0].Period)
 		})
 	})
 	t.Run("returns error if period is invalid duration", func(t *testing.T) {
@@ -626,7 +626,7 @@ func Test_ParseMetricDataQueries_periods(t *testing.T) {
 		assert.NoError(t, err)
 
 		require.Len(t, res, 1)
-		assert.Equal(t, 9900, res[0].Period)
+		assert.Equal(t, int32(9900), res[0].Period)
 	})
 }
 
@@ -983,7 +983,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		assert.Equal(t, true, res[0].ReturnData)
 		assert.Equal(t, "CPUUtilization", res[0].MetricName)
 		assert.Equal(t, "ec2", res[0].Namespace)
-		assert.Equal(t, 600, res[0].Period)
+		assert.Equal(t, int32(600), res[0].Period)
 		assert.Equal(t, "us-east-1", res[0].Region)
 		assert.Equal(t, "Average", res[0].Statistic)
 	})
@@ -1032,7 +1032,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		assert.Equal(t, true, res[0].ReturnData)
 		assert.Equal(t, "CPUUtilization", res[0].MetricName)
 		assert.Equal(t, "ec2", res[0].Namespace)
-		assert.Equal(t, 600, res[0].Period)
+		assert.Equal(t, int32(600), res[0].Period)
 		assert.Equal(t, "us-east-1", res[0].Region)
 		assert.Equal(t, "Average", res[0].Statistic)
 
@@ -1042,7 +1042,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 		assert.Equal(t, true, res[1].ReturnData)
 		assert.Equal(t, "CPUUtilization", res[1].MetricName)
 		assert.Equal(t, "ec2", res[1].Namespace)
-		assert.Equal(t, 600, res[1].Period)
+		assert.Equal(t, int32(600), res[1].Period)
 		assert.Equal(t, "us-east-1", res[1].Region)
 		assert.Equal(t, "Average", res[1].Statistic)
 	})
@@ -1088,7 +1088,7 @@ func Test_ParseMetricDataQueries_migrate_alias_to_label(t *testing.T) {
 				assert.Equal(t, true, res[0].ReturnData)
 				assert.Equal(t, "CPUUtilization", res[0].MetricName)
 				assert.Equal(t, "ec2", res[0].Namespace)
-				assert.Equal(t, 600, res[0].Period)
+				assert.Equal(t, int32(600), res[0].Period)
 				assert.Equal(t, "us-east-1", res[0].Region)
 				assert.Equal(t, "Average", res[0].Statistic)
 			})

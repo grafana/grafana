@@ -354,6 +354,7 @@ describe('QueryEditorRow', () => {
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
     onRemoveQuery: jest.fn(),
+    onReplace: jest.fn(),
     index: 0,
     range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   });

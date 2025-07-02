@@ -6,9 +6,9 @@ import { appEvents } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
-import { getMockDataSource } from '../__mocks__';
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
+import { getMockDataSource } from '../mocks/dataSourcesMocks';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { GenericDataSourcePlugin } from '../types';
 
@@ -394,7 +394,7 @@ describe('addDataSource', () => {
       plugin_version: '1.2.3',
       datasource_uid: 'azure23',
       grafana_version: '1.0',
-      path: location.pathname,
+      path: window.location.pathname,
     });
   });
 });

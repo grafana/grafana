@@ -15,14 +15,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	resourcegroupstaggingapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -215,32 +210,6 @@ func (c fakeCheckHealthClient) DescribeLogGroups(ctx context.Context, input *clo
 
 func (c fakeCheckHealthClient) GetLogGroupFields(_ context.Context, _ *cloudwatchlogs.GetLogGroupFieldsInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return nil, nil
-}
-
-func testInstanceManagerWithSettings(settings models.CloudWatchSettings, awsAuthShouldFail bool) instancemgmt.InstanceManager {
-	return datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{
-			Settings:          settings,
-			AWSConfigProvider: awsauth.NewFakeConfigProvider(awsAuthShouldFail),
-			tagValueCache:     cache.New(0, 0),
-		}, nil
-	})
-}
-
-func testInstanceManager(pageLimit int, getAWSConfigShouldFail bool) instancemgmt.InstanceManager {
-	return testInstanceManagerWithSettings(models.CloudWatchSettings{
-		AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-			Region:    "us-east-1",
-			AuthType:  awsds.AuthTypeKeys,
-			AccessKey: "nothing",
-			SecretKey: "nowhere",
-		},
-		GrafanaSettings: awsds.AuthSettings{ListMetricsPageLimit: pageLimit},
-	}, getAWSConfigShouldFail)
-}
-
-func defaultTestInstanceManager() instancemgmt.InstanceManager {
-	return testInstanceManager(1000, false)
 }
 
 type FakeCredentialsProvider struct {

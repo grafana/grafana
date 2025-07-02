@@ -11,18 +11,16 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { Button, Checkbox, Field, FieldSet, Input, MultiSelect, Select, useStyles2, Stack, Alert } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
-import { Trans, t } from 'app/core/internationalization';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { getPanelIdForVizPanel } from '../../utils/utils';
-
-import { AngularEditorLoader } from './AngularEditorLoader';
 
 type Props = {
   annotation: AnnotationQuery;
@@ -217,7 +215,10 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
         </Field>
         <Field
           label={t('dashboard-scene.annotation-settings-edit.label-hidden', 'Hidden')}
-          description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
+          description={t(
+            'dashboard-scene.annotation-settings-edit.description-hidden',
+            'Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.'
+          )}
         >
           <Checkbox
             name="hide"
@@ -273,13 +274,6 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           <StandardAnnotationQueryEditor
             datasource={ds}
             datasourceInstanceSettings={dsi}
-            annotation={annotation}
-            onChange={(annotation) => onUpdate(annotation, editIndex)}
-          />
-        )}
-        {ds && !ds.annotations && (
-          <AngularEditorLoader
-            datasource={ds}
             annotation={annotation}
             onChange={(annotation) => onUpdate(annotation, editIndex)}
           />

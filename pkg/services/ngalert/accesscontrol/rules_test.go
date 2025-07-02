@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 func createAllCombinationsOfPermissions(permissions map[string][]string) []map[string][]string {
@@ -108,6 +110,30 @@ func createUserWithPermissions(permissions map[string][]string) identity.Request
 	}}
 }
 
+func getShallowQueryDiffs(queries []models.AlertQuery) []cmputil.Diff {
+	result := make([]cmputil.Diff, 0, len(queries))
+	for i := range queries {
+		result = append(result, []cmputil.Diff{
+			{
+				Path: fmt.Sprintf("Data[%d].DatasourceUID", i),
+			},
+			{
+				Path: fmt.Sprintf("Data[%d].Model", i),
+			},
+			{
+				Path: fmt.Sprintf("Data[%d].RelativeTimeRange", i),
+			},
+			{
+				Path: fmt.Sprintf("Data[%d].RefID", i),
+			},
+			{
+				Path: fmt.Sprintf("Data[%d].QueryType", i),
+			},
+		}...)
+	}
+	return result
+}
+
 func TestAuthorizeRuleChanges(t *testing.T) {
 	groupKey := models.GenerateGroupKey(rand.Int63())
 	namespaceIdScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(groupKey.NamespaceUID)
@@ -146,7 +172,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "if there are rules to delete it should check delete action and query for datasource",
+			name: "if there are rules to delete it should check delete action and NOT query for datasource",
 			changes: func() *store.GroupDelta {
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
 				rules2 := genWithGroupKey.GenerateManyRef(1, 5)
@@ -171,12 +197,11 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleDelete: {
 						namespaceIdScope,
 					},
-					datasources.ActionQuery: getDatasourceScopesForRules(c.Delete),
 				}
 			},
 		},
 		{
-			name: "if there are rules to update within the same namespace it should check update action and access to datasource",
+			name: "if there are rules with query updates within the same namespace it should check update action and access to datasource",
 			changes: func() *store.GroupDelta {
 				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
 				rules := genWithGroupKey.GenerateManyRef(1, 5)
@@ -188,7 +213,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
 						New:      cp,
-						Diff:     nil,
+						Diff:     getShallowQueryDiffs(cp.Data),
 					})
 				}
 
@@ -221,6 +246,55 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 			},
 		},
 		{
+			name: "if there are rules w/o query updates to update within the same namespace it should check update action",
+			changes: func() *store.GroupDelta {
+				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
+				rules := genWithGroupKey.GenerateManyRef(1, 5)
+				updates := make([]store.RuleDelta, 0, len(rules))
+
+				for _, rule := range rules {
+					cp := models.CopyRule(rule)
+					cp.IsPaused = !rule.IsPaused
+					cp.Title = rule.Title + " updated"
+					updates = append(updates, store.RuleDelta{
+						Existing: rule,
+						New:      cp,
+						Diff: []cmputil.Diff{
+							{
+								Path: "IsPaused",
+							},
+							{
+								Path: "Title",
+							},
+						},
+					})
+				}
+
+				return &store.GroupDelta{
+					GroupKey: groupKey,
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+						groupKey: append(rules, rules1...),
+					},
+					New:    nil,
+					Update: updates,
+					Delete: nil,
+				}
+			},
+			permissions: func(c *store.GroupDelta) map[string][]string {
+				return map[string][]string{
+					ruleRead: {
+						namespaceIdScope,
+					},
+					dashboards.ActionFoldersRead: {
+						namespaceIdScope,
+					},
+					ruleUpdate: {
+						namespaceIdScope,
+					},
+				}
+			},
+		},
+		{
 			name: "if there are rules that are moved between namespaces it should check delete+add action and access to group where rules come from",
 			changes: func() *store.GroupDelta {
 				rules1 := genWithGroupKey.GenerateManyRef(1, 5)
@@ -230,11 +304,22 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 
 				updates := make([]store.RuleDelta, 0, len(rules))
 				for _, rule := range rules {
-					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(gen.GenerateQuery()))
+					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
 
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
 						New:      cp,
+						Diff: []cmputil.Diff{
+							{
+								Path: "OrgID",
+							},
+							{
+								Path: "NamespaceUID",
+							},
+							{
+								Path: "RuleGroup",
+							},
+						},
 					})
 				}
 
@@ -249,12 +334,6 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 			},
 			permissions: func(c *store.GroupDelta) map[string][]string {
-				dsScopes := getDatasourceScopesForRules(
-					mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
-						return update.New
-					}),
-				)
-
 				var deleteScopes []string
 				for key := range c.AffectedGroups {
 					deleteScopes = append(deleteScopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(key.NamespaceUID))
@@ -265,7 +344,6 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleCreate: {
 						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
-					datasources.ActionQuery: dsScopes,
 				}
 			},
 		},
@@ -287,11 +365,87 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				}
 				for i := 0; i < toCopy; i++ {
 					rule := sourceGroup[0]
+					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey))
+
+					updates = append(updates, store.RuleDelta{
+						Existing: rule,
+						New:      cp,
+						Diff: []cmputil.Diff{
+							{
+								Path: "OrgID",
+							},
+							{
+								Path: "NamespaceUID",
+							},
+							{
+								Path: "RuleGroup",
+							},
+						},
+					})
+				}
+
+				return &store.GroupDelta{
+					GroupKey: targetGroupKey,
+					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
+						groupKey:       sourceGroup,
+						targetGroupKey: targetGroup,
+					},
+					New:    nil,
+					Update: updates,
+					Delete: nil,
+				}
+			},
+			permissions: func(c *store.GroupDelta) map[string][]string {
+				return map[string][]string{
+					ruleRead: {
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+					},
+					dashboards.ActionFoldersRead: {
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+					},
+					ruleUpdate: {
+						dashboards.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
+					},
+				}
+			},
+		},
+		{
+			name: "if there are rules that are moved between groups in the same namespace AND the query is changed it should check update action and access to all groups (source+target) and datasources",
+			changes: func() *store.GroupDelta {
+				targetGroupKey := models.AlertRuleGroupKey{
+					OrgID:        groupKey.OrgID,
+					NamespaceUID: groupKey.NamespaceUID,
+					RuleGroup:    util.GenerateShortUID(),
+				}
+				sourceGroup := genWithGroupKey.GenerateManyRef(1, 5)
+				targetGroup := gen.With(gen.WithGroupKey(targetGroupKey)).GenerateManyRef(1, 5)
+
+				updates := make([]store.RuleDelta, 0, len(sourceGroup))
+				toCopy := len(sourceGroup)
+				if toCopy > 1 {
+					toCopy = rand.Intn(toCopy-1) + 1
+				}
+				for i := 0; i < toCopy; i++ {
+					rule := sourceGroup[0]
 					cp := models.CopyRule(rule, gen.WithGroupKey(targetGroupKey), gen.WithQuery(models.GenerateAlertQuery()))
 
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
 						New:      cp,
+						Diff: append(
+							[]cmputil.Diff{
+								{
+									Path: "OrgID",
+								},
+								{
+									Path: "NamespaceUID",
+								},
+								{
+									Path: "RuleGroup",
+								},
+							},
+							getShallowQueryDiffs(cp.Data)...,
+						),
 					})
 				}
 
@@ -372,7 +526,11 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					updates = append(updates, store.RuleDelta{
 						Existing: rule,
 						New:      cp,
-						Diff:     nil,
+						Diff: []cmputil.Diff{
+							{
+								Path: "NotificationSettings[0].Receiver",
+							},
+						},
 					})
 				}
 
@@ -397,9 +555,6 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					ruleUpdate: {
 						namespaceIdScope,
 					},
-					datasources.ActionQuery: getDatasourceScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
-						return update.New
-					})),
 					accesscontrol.ActionAlertingReceiversRead: getReceiverScopesForRules(mapUpdates(c.Update, func(update store.RuleDelta) *models.AlertRule {
 						return update.New
 					})),

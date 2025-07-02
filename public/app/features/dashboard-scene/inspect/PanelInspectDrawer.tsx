@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   SceneComponentProps,
@@ -11,7 +12,6 @@ import {
   SceneObjectRef,
 } from '@grafana/scenes';
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { InspectTab } from 'app/features/inspector/types';
@@ -100,6 +100,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
   const { tabs, pluginNotLoaded, panelRef } = model.useState();
   const location = useLocation();
+
   const queryParams = new URLSearchParams(location.search);
 
   if (!tabs) {
@@ -139,7 +140,9 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
         <Alert
           title={t('dashboard-scene.panel-inspect-renderer.title-panel-plugin-not-loaded', 'Panel plugin not loaded')}
         >
-          Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
+          <Trans i18nKey="dashboard-scene.panel-inspect-renderer.body-panel-plugin-not-loaded">
+            Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
+          </Trans>
         </Alert>
       )}
       {currentTab && currentTab.Component && <currentTab.Component model={currentTab} />}

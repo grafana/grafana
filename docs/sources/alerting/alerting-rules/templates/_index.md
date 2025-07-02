@@ -18,6 +18,11 @@ labels:
 title: Template annotations and labels
 weight: 500
 refs:
+  shared-dynamic-label-example:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/dynamic-labels/
   reference-labels:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
@@ -106,7 +111,7 @@ Both types of templates are written in the Go templating system. However, it's i
 
 Annotations are key-value pairs defined in the alert rule. They can contain plain text or template code that is evaluated when the alert fires.
 
-Grafana includes several optional annotations, such as `description`, `summary`, `runbook_url`, `dashboardUId` and `panelId`, which can be edited in the alert rule. You can also create your custom annotations. For example, you might create a new annotation named `location` to report the location of the system that triggered the alert.
+Grafana includes several optional annotations, such as `description`, `summary`, and `runbook_url`, which can be edited in the alert rule. You can also create your custom annotations. For example, you might create a new annotation named `location` to report the location of the system that triggered the alert.
 
 Here’s an example of a `summary` annotation explaining why the alert was triggered, using plain text.
 
@@ -190,7 +195,12 @@ low
 
 In this example, the value of the `severity` label is determined by the query value, and the possible options are `critical`, `high`, `medium`, or `low`. You can then use the `severity` label to change their notifications—for instance, sending `critical` alerts immediately or routing `low` alerts to a specific team for further review.
 
-{{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+> **Note:** An alert instance is uniquely identified by its set of labels.
+>
+> - Avoid displaying query values in labels, as this can create numerous alert instances—one for each distinct label set. Instead, use annotations for query values.
+> - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered **stale**. Learn all the details in this [example using dynamic labels](ref:shared-dynamic-label-example).
+
+[//]: <> ({{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ### How to template a label
 

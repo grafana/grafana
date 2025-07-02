@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 
 import { PanelPlugin, PanelProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { sceneUtils } from '@grafana/scenes';
 import { Box, Button, ButtonGroup, Dropdown, Menu, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -62,7 +62,10 @@ function UnconfiguredPanelComp(props: PanelProps) {
             <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
           </Button>
           <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
-            <Button aria-label="dashboard.new-panel.configure-button-menu" icon={isOpen ? 'angle-up' : 'angle-down'} />
+            <Button
+              aria-label={t('dashboard.new-panel.configure-button-menu', 'Toggle menu')}
+              icon={isOpen ? 'angle-up' : 'angle-down'}
+            />
           </Dropdown>
         </ButtonGroup>
       </Box>

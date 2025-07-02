@@ -15,26 +15,26 @@ title: What's new in Grafana v11.6
 posts:
   - title: Dashboards and visualizations
     items:
-      - docs/grafana-cloud/whats-new/2025-02-11-canvas-one-click-data-links-and-actions.md
-      - docs/grafana-cloud/whats-new/2025-02-11-one-click-data-links-and-actions-in-visualizations.md
-      - docs/grafana-cloud/whats-new/2025-02-14-actions-added-to-visualizations.md
-      - docs/grafana-cloud/whats-new/2025-02-26-new-actionscell-for-table-visualization.md
-      - docs/grafana-cloud/whats-new/2025-02-19-better-time-region-control-with-cron-syntax.md
-      - docs/grafana-cloud/whats-new/2025-03-06-improved-performance-in-geomap-visualizations.md
-      - docs/grafana-cloud/whats-new/2025-03-06-variables-supported-for-all-transformations.md
+      - whats-new/2025-02-11-canvas-one-click-data-links-and-actions.md
+      - whats-new/2025-02-11-one-click-data-links-and-actions-in-visualizations.md
+      - whats-new/2025-02-14-actions-added-to-visualizations.md
+      - whats-new/2025-02-26-new-actionscell-for-table-visualization.md
+      - whats-new/2025-02-19-better-time-region-control-with-cron-syntax.md
+      - whats-new/2025-03-06-improved-performance-in-geomap-visualizations.md
+      - whats-new/2025-03-06-variables-supported-for-all-transformations.md
   - title: Alerting
     items:
-      - docs/grafana-cloud/whats-new/2025-03-05-alert-rule-version-history.md
-      - docs/grafana-cloud/whats-new/2025-03-05-alerting-support-for-jira-service-management-contact-point.md
+      - whats-new/2025-03-05-alert-rule-version-history.md
+      - whats-new/2025-03-05-alerting-support-for-jira-service-management-contact-point.md
   - title: Data sources
     items:
-      - docs/grafana-cloud/whats-new/2025-02-28-lbac-for-datasources-metrics.md
+      - whats-new/2025-02-28-lbac-for-datasources-metrics.md
   - title: Plugins
     items:
-      - docs/grafana-cloud/whats-new/2025-03-12-plugin-details-links-improvements.md
+      - whats-new/2025-03-12-plugin-details-links-improvements.md
   - title: Security
     items:
-      - docs/grafana-cloud/whats-new/2025-02-10-auto-migration-of-api-keys-to-service-accounts.md
+      - whats-new/2025-02-10-auto-migration-of-api-keys-to-service-accounts.md
 whats_new_grafana_version: 11.6
 weight: -48
 ---

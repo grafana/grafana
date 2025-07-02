@@ -2,11 +2,7 @@
   "kind": "Playlist",
   "apiVersion": "playlist.grafana.app/v0alpha1",
   "metadata": {
-    "name": "adcmdrw",
-    "namespace": "default",
-    "uid": "8a2b984d-4663-4182-861b-edec2f987dff",
-    "resourceVersion": "1731336353828005",
-    "creationTimestamp": "2024-11-11T14:45:53Z"
+    "name": "sample-palylist"
   },
   "spec": {
     "title": "Playlist from provisioning",

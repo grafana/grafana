@@ -104,7 +104,12 @@ func (u *StaticRequester) GetExtra() map[string][]string {
 	if u.IDToken != "" {
 		return map[string][]string{"id-token": {u.IDToken}}
 	}
-	return map[string][]string{}
+
+	result := map[string][]string{}
+	if u.AccessTokenClaims.Rest.ServiceIdentity != "" {
+		result[authnlib.ServiceIdentityKey] = []string{u.AccessTokenClaims.Rest.ServiceIdentity}
+	}
+	return result
 }
 
 func (u *StaticRequester) GetGroups() []string {

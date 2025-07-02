@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -14,9 +15,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -26,11 +25,15 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("invalid config type")
 	}
 	checkRegistry := specificConfig.CheckRegistry
-	log := log.New("advisor.app")
+	log := logging.DefaultLogger.With("app", "advisor.app")
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
 	client, err := clientGenerator.ClientFor(advisorv0alpha1.CheckKind())
+	if err != nil {
+		return nil, err
+	}
+	typesClient, err := clientGenerator.ClientFor(advisorv0alpha1.CheckTypeKind())
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +49,7 @@ func New(cfg app.Config) (app.App, error) {
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
+				log.WithContext(ctx).Error("Informer processing error", "error", err)
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{
@@ -61,16 +64,33 @@ func New(cfg app.Config) (app.App, error) {
 							}
 							if req.Action == resource.AdmissionActionCreate {
 								go func() {
-									log.Debug("Processing check", "namespace", req.Object.GetNamespace())
+									logger := log.WithContext(ctx).With("check", check.ID())
+									logger.Debug("Processing check", "namespace", req.Object.GetNamespace())
 									requester, err := identity.GetRequester(ctx)
 									if err != nil {
-										log.Error("Error getting requester", "error", err)
+										logger.Error("Error getting requester", "error", err)
 										return
 									}
-									ctx = identity.WithRequester(context.Background(), requester)
-									err = processCheck(ctx, client, req.Object, check)
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									err = processCheck(ctx, logger, client, typesClient, req.Object, check)
 									if err != nil {
-										log.Error("Error processing check", "error", err)
+										logger.Error("Error processing check", "error", err)
+									}
+								}()
+							}
+							if req.Action == resource.AdmissionActionUpdate {
+								go func() {
+									logger := log.WithContext(ctx).With("check", check.ID())
+									logger.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
+									requester, err := identity.GetRequester(ctx)
+									if err != nil {
+										logger.Error("Error getting requester", "error", err)
+										return
+									}
+									ctx = identity.WithServiceIdentityContext(context.WithoutCancel(ctx), requester.GetOrgID())
+									err = processCheckRetry(ctx, logger, client, typesClient, req.Object, check)
+									if err != nil {
+										logger.Error("Error processing check retry", "error", err)
 									}
 								}()
 							}
@@ -96,14 +116,14 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	// Save check types as resources
-	ctr, err := checktyperegisterer.New(cfg)
+	ctr, err := checktyperegisterer.New(cfg, log)
 	if err != nil {
 		return nil, err
 	}
 	a.AddRunnable(ctr)
 
 	// Start scheduler
-	csch, err := checkscheduler.New(cfg)
+	csch, err := checkscheduler.New(cfg, log)
 	if err != nil {
 		return nil, err
 	}

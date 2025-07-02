@@ -75,7 +75,7 @@ type CloudWatchQuery struct {
 	SqlExpression     string
 	ReturnData        bool
 	Dimensions        map[string][]string
-	Period            int
+	Period            int32
 	Label             string
 	MatchExact        bool
 	UsedExpression    string
@@ -206,19 +206,19 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 	if err != nil {
 		return "", err
 	}
-	url, err := url.Parse(fmt.Sprintf(`https://%s/cloudwatch/deeplink.js`, endpoint))
+	consoleURL, err := url.Parse(fmt.Sprintf(`https://%s/cloudwatch/deeplink.js`, endpoint))
 	if err != nil {
 		return "", fmt.Errorf("unable to parse CloudWatch console deep link")
 	}
 
-	fragment := url.Query()
+	fragment := consoleURL.Query()
 	fragment.Set("graph", string(linkProps))
 
-	query := url.Query()
+	query := consoleURL.Query()
 	query.Set("region", q.Region)
-	url.RawQuery = query.Encode()
+	consoleURL.RawQuery = query.Encode()
 
-	return fmt.Sprintf(`%s#metricsV2:%s`, url.String(), fragment.Encode()), nil
+	return fmt.Sprintf(`%s#metricsV2:%s`, consoleURL.String(), fragment.Encode()), nil
 }
 
 const timeSeriesQuery = "timeSeriesQuery"
@@ -322,10 +322,14 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 	}
 
 	var err error
-	q.Period, err = getPeriod(metricsDataQuery, startTime, endTime)
+	parsedPeriod, err := getPeriod(metricsDataQuery, startTime, endTime)
 	if err != nil {
 		return err
 	}
+	if parsedPeriod < math.MinInt32 || parsedPeriod > math.MaxInt32 {
+		return fmt.Errorf("query period doesn't fit int32: %d", parsedPeriod)
+	}
+	q.Period = int32(parsedPeriod)
 
 	q.Dimensions = map[string][]string{}
 	if metricsDataQuery.Dimensions != nil {

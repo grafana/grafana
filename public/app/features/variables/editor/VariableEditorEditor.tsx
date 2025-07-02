@@ -5,9 +5,9 @@ import { bindActionCreators } from 'redux';
 
 import { GrafanaTheme2, LoadingState, SelectableValue, VariableHide, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, Themeable2, withTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
@@ -37,7 +37,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   return {
     ...bindActionCreators({ variableEditorMount, variableEditorUnMount, changeVariableName, updateOptions }, dispatch),
-    changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: any) =>
+    changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: unknown) =>
       dispatch(
         toKeyedAction(
           identifier.rootStateKey,
@@ -229,7 +229,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
                 disabled={loading}
                 variant="secondary"
               >
-                Run query
+                <Trans i18nKey="variables.variable-editor-editor-un-connected.run-query">Run query</Trans>
                 {loading && (
                   <Icon
                     className={styles.spin}

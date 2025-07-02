@@ -17,7 +17,7 @@ type ListMetricsService struct {
 	models.MetricsClientProvider
 }
 
-func NewListMetricsService(metricsClient models.MetricsClientProvider) models.ListMetricsProvider {
+var NewListMetricsService = func(metricsClient models.MetricsClientProvider) models.ListMetricsProvider {
 	return &ListMetricsService{metricsClient}
 }
 

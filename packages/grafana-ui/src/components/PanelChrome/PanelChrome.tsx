@@ -5,16 +5,17 @@ import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
+import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { HoverWidget } from './HoverWidget';
 import { PanelDescription } from './PanelDescription';
@@ -70,6 +71,10 @@ interface BaseProps {
    */
   onMouseMove?: () => void;
   onMouseEnter?: () => void;
+  /**
+   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
+   */
+  showMenuAlways?: boolean;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -87,10 +92,6 @@ interface AutoSize extends BaseProps {
 interface Collapsible {
   collapsible: boolean;
   collapsed?: boolean;
-  /**
-   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
-   */
-  showMenuAlways?: boolean;
   /**
    * callback when collapsing or expanding the panel
    */
@@ -275,7 +276,9 @@ export function PanelChrome({
               <Icon
                 name={!collapsed ? 'angle-down' : 'angle-right'}
                 aria-hidden={!!title}
-                aria-label={!title ? 'toggle collapse panel' : undefined}
+                aria-label={
+                  !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
+                }
               />
               <Text variant="h6" truncate id={panelTitleId}>
                 {title}
@@ -290,7 +293,13 @@ export function PanelChrome({
         {titleItems}
       </div>
       {loadingState === LoadingState.Streaming && (
-        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+        <Tooltip
+          content={
+            onCancelQuery
+              ? t('grafana-ui.panel-chrome.tooltip-stop-streaming', 'Stop streaming')
+              : t('grafana-ui.panel-chrome.tooltip-streaming', 'Streaming')
+          }
+        >
           <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
             <Icon name="circle-mono" size="md" className={styles.streaming} />
           </TitleItem>
@@ -298,7 +307,7 @@ export function PanelChrome({
       )}
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
-          <Tooltip content="Cancel query">
+          <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
             <TitleItem
               className={cx(dragClassCancel, styles.pointer)}
               data-testid="panel-cancel-query"
@@ -363,7 +372,7 @@ export function PanelChrome({
         <div
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
-          data-testid="header-container"
+          data-testid={selectors.components.Panels.Panel.headerContainer}
           onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}

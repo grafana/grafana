@@ -18,7 +18,7 @@ type RegionsService struct {
 	log.Logger
 }
 
-func NewRegionsService(ec2client models.EC2APIProvider, logger log.Logger) models.RegionsAPIProvider {
+var NewRegionsService = func(ec2client models.EC2APIProvider, logger log.Logger) models.RegionsAPIProvider {
 	return &RegionsService{
 		ec2client,
 		logger,

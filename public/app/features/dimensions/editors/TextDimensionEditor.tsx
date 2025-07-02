@@ -6,19 +6,13 @@ import {
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
-import { t } from 'app/core/internationalization';
 
 import { TextDimensionOptions } from '../types';
-
-const textOptions = [
-  { label: 'Fixed', value: TextDimensionMode.Fixed, description: 'Fixed value' },
-  { label: 'Field', value: TextDimensionMode.Field, description: 'Display field value' },
-  //  { label: 'Template', value: TextDimensionMode.Template, description: 'use template text' },
-];
 
 const dummyFieldSettings = {
   settings: {},
@@ -31,6 +25,19 @@ const dummyStringSettings = {
 type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions>;
 
 export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
+  const textOptions = [
+    {
+      label: t('dimensions.text-dimension-editor.label-fixed', 'Fixed'),
+      value: TextDimensionMode.Fixed,
+      description: t('dimensions.text-dimension-editor.description-fixed', 'Fixed value'),
+    },
+    {
+      label: t('dimensions.text-dimension-editor.label-field', 'Field'),
+      value: TextDimensionMode.Field,
+      description: t('dimensions.text-dimension-editor.description-field', 'Display field value'),
+    },
+    //  { label: 'Template', value: TextDimensionMode.Template, description: 'use template text' },
+  ];
   const labelWidth = 9;
 
   const onModeChange = useCallback(
@@ -97,7 +104,11 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
       )}
       {mode === TextDimensionMode.Fixed && (
         <InlineFieldRow key={value?.fixed}>
-          <InlineField label={'Value'} labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.text-dimension-editor.label-value', 'Value')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <StringValueEditor
               context={context}
               value={value?.fixed}

@@ -140,7 +140,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		require.JSONEq(t, `{
 			"results": {
 				"A": {
-					"error": "[sse.dependencyError] did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
+					"error": "[sse.dependencyError] did not execute expression [Y] due to a failure of the dependent expression or query [X]",
 					"status": 400,
 					"errorSource": ""
 				}
@@ -149,7 +149,7 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		// require.JSONEq(t, `{
 		// 	"status": "Failure",
 		// 	"metadata": {},
-		// 	"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
+		// 	"message": "did not execute expression [Y] due to a failure of the dependent expression or query [X]",
 		// 	"reason": "BadRequest",
 		// 	"details": { "group": "query.grafana.app" },
 		// 	"code": 400,

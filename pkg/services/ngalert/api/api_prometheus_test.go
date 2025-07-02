@@ -311,6 +311,13 @@ func withErrorState() forEachState {
 	}
 }
 
+func withNoDataState() forEachState {
+	return func(s *state.State) *state.State {
+		s.SetNoData("no data returned", timeNow(), timeNow().Add(5*time.Minute))
+		return s
+	}
+}
+
 func withLabels(labels data.Labels) forEachState {
 	return func(s *state.State) *state.State {
 		for k, v := range labels {
@@ -321,8 +328,6 @@ func withLabels(labels data.Labels) forEachState {
 }
 
 func TestRouteGetRuleStatuses(t *testing.T) {
-	//	t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
-
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
 	gen := ngmodels.RuleGen
@@ -349,7 +354,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("with a rule that only has one query", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		r := api.RouteGetRuleStatuses(c)
@@ -368,6 +373,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -389,6 +395,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
@@ -410,9 +417,91 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 `, folder.Fullpath), string(r.Body()))
 	})
 
+	t.Run("with a rule that is paused", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(true))
+		folder := fakeStore.Folders[orgID][0]
+
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		require.JSONEq(t, fmt.Sprintf(`
+{
+	"status": "success",
+	"data": {
+		"groups": [{
+			"name": "rule-group",
+			"file": "%s",
+			"folderUid": "namespaceUID",
+			"rules": [{
+				"state": "inactive",
+				"name": "AlwaysFiring",
+				"folderUid": "namespaceUID",
+				"uid": "RuleUID",
+				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
+				"alerts": [{
+					"labels": {
+						"job": "prometheus"
+					},
+					"annotations": {
+						"severity": "critical"
+					},
+					"state": "Normal",
+					"activeAt": "0001-01-01T00:00:00Z",
+					"value": ""
+				}],
+				"totals": {
+					"normal": 1
+				},
+				"totalsFiltered": {
+					"normal": 1
+				},
+				"labels": {
+					"__a_private_label_on_the_rule__": "a_value"
+				},
+				"health": "ok",
+				"isPaused": true,
+				"type": "alerting",
+				"lastEvaluation": "2022-03-10T14:01:00Z",
+				"duration": 180,
+				"keepFiringFor": 10,
+				"evaluationTime": 60
+			}],
+			"totals": {
+				"inactive": 1
+			},
+			"interval": 60,
+			"lastEvaluation": "2022-03-10T14:01:00Z",
+			"evaluationTime": 60
+		}],
+		"totals": {
+			"inactive": 1
+		}
+	}
+}
+`, folder.Fullpath), string(r.Body()))
+	})
+
+	t.Run("with a rule that has notification settings", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+		notificationSettings := ngmodels.NotificationSettings{
+			Receiver: "test-receiver",
+			GroupBy:  []string{"job"},
+		}
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNotificationSettings(notificationSettings), gen.WithIsPaused(false))
+		r := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, r.Status())
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(r.Body(), &res))
+		require.Len(t, res.Data.RuleGroups, 1)
+		require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+		require.NotNil(t, res.Data.RuleGroups[0].Rules[0].NotificationSettings)
+		require.Equal(t, notificationSettings.Receiver, res.Data.RuleGroups[0].Rules[0].NotificationSettings.Receiver)
+	})
+
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
@@ -433,6 +522,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"queriedDatasourceUIDs": ["AUID"],
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"alerts": [{
@@ -459,6 +549,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__alert_rule_uid__": "RuleUID"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
@@ -482,7 +573,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
 		fakeStore, fakeAIM, api := setupAPI(t)
-		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery())
+		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery(), gen.WithNoNotificationSettings(), gen.WithIsPaused(false))
 		folder := fakeStore.Folders[orgID][0]
 
 		r := api.RouteGetRuleStatuses(c)
@@ -499,6 +590,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
+				"queriedDatasourceUIDs": ["AUID", "BUID"],
 				"folderUid": "namespaceUID",
 				"uid": "RuleUID",
 				"alerts": [{
@@ -522,6 +614,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
 				"health": "ok",
+				"isPaused": false,
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
@@ -656,6 +749,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				fakeSch,
 				ruleStore,
 				&fakeRuleAccessControlService{},
+				fakes.NewFakeProvisioningStore(),
 			)
 
 			response := api.RouteGetRuleStatuses(c)
@@ -718,6 +812,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			newFakeSchedulerReader(t).setupStates(fakeAIM),
 			ruleStore,
 			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+			fakes.NewFakeProvisioningStore(),
 		)
 
 		permissions := createPermissionsForRules(slices.Concat(rulesInGroup1, rulesInGroup2, rulesInGroup3), orgID)
@@ -844,6 +939,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			newFakeSchedulerReader(t).setupStates(fakeAIM),
 			ruleStore,
 			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+			fakes.NewFakeProvisioningStore(),
 		)
 
 		permissions := createPermissionsForRules(allRules, orgID)
@@ -988,6 +1084,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				newFakeSchedulerReader(t).setupStates(fakeAIM),
 				ruleStore,
 				accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
+				fakes.NewFakeProvisioningStore(),
 			)
 
 			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}
@@ -1330,15 +1427,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("test with filters on state", func(t *testing.T) {
-		t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
-
 		fakeStore, fakeAIM, api := setupAPI(t)
-		// create two rules in the same Rule Group to keep assertions simple
+		// create rules in the same Rule Group to keep assertions simple
 		rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
 			NamespaceUID: "Folder-1",
 			RuleGroup:    "Rule-Group-1",
 			OrgID:        orgID,
-		})).GenerateManyRef(2)
+		})).GenerateManyRef(3)
 		// Need to sort these so we add alerts to the rules as ordered in the response
 		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(rules)
 		// The last two rules will have errors, however the first will be alerting
@@ -1487,6 +1582,182 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Empty(t, rg.Rules[2].TotalsFiltered)
 			// The error alert has been removed as the filters are inactive and firing
 			require.Len(t, rg.Rules[2].Alerts, 0)
+		})
+
+		t.Run("then with all rules filtered out, no groups returned", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?health=unknown", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 0)
+		})
+	})
+
+	t.Run("test with filters on health", func(t *testing.T) {
+		fakeStore, fakeAIM, api := setupAPI(t)
+		rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			NamespaceUID: "Folder-1",
+			RuleGroup:    "Rule-Group-1",
+			OrgID:        orgID,
+		})).GenerateManyRef(4)
+		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(rules)
+		// Set health states
+		fakeStore.PutRule(context.Background(), rules...)
+
+		// create alert instances for each rule
+		fakeAIM.GenerateAlertInstances(orgID, rules[0].UID, 1)
+		fakeAIM.GenerateAlertInstances(orgID, rules[1].UID, 1, withAlertingErrorState())
+		fakeAIM.GenerateAlertInstances(orgID, rules[2].UID, 1, withErrorState())
+		fakeAIM.GenerateAlertInstances(orgID, rules[3].UID, 1, withNoDataState())
+
+		t.Run("invalid health returns 400 Bad Request", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?health=blah", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusBadRequest, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Contains(t, res.Error, "unknown health")
+		})
+
+		t.Run("first without filters", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 4)
+		})
+
+		t.Run("then with filter for ok health", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?health=ok", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Equal(t, "ok", rg.Rules[0].Health)
+		})
+
+		t.Run("then with filter for error health", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?health=error", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 2)
+			require.Equal(t, "error", rg.Rules[0].Health)
+		})
+
+		t.Run("then with filter for nodata health", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?health=nodata", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Equal(t, "nodata", rg.Rules[0].Health)
+		})
+
+		t.Run("then with multiple health filters", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?health=ok&health=error", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 3)
+			healths := []string{rg.Rules[0].Health, rg.Rules[1].Health}
+			require.ElementsMatch(t, healths, []string{"ok", "error"})
+		})
+
+		t.Run("then with all rules filtered out, no groups returned", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?health=unknown", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+			require.Len(t, res.Data.RuleGroups, 0)
 		})
 	})
 
@@ -1662,13 +1933,124 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, map[string]int64{"normal": 1}, rg.Rules[0].TotalsFiltered)
 		})
 	})
+
+	t.Run("test with a contact point filter", func(t *testing.T) {
+		fakeStore, _, api := setupAPI(t)
+		rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+			NamespaceUID: "Folder-1",
+			RuleGroup:    "Rule-Group-1",
+			OrgID:        orgID,
+		}), gen.WithNotificationSettings(
+			ngmodels.NotificationSettings{
+				Receiver: "webhook-a",
+				GroupBy:  []string{"alertname"},
+			},
+		)).GenerateManyRef(1)
+		fakeStore.PutRule(context.Background(), rules...)
+
+		t.Run("unknown receiver_name returns empty list", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?receiver_name=webhook-b", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Len(t, res.Data.RuleGroups, 0)
+		})
+		t.Run("known receiver_name returns rules with that receiver", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?receiver_name=webhook-a", nil)
+			require.NoError(t, err)
+			c := &contextmodel.ReqContext{
+				Context: &web.Context{Req: r},
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: queryPermissions,
+				},
+			}
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			var res apimodels.RuleResponse
+			require.NoError(t, json.Unmarshal(resp.Body(), &res))
+			require.Len(t, res.Data.RuleGroups, 1)
+			rg := res.Data.RuleGroups[0]
+			require.Len(t, rg.Rules, 1)
+			require.Equal(t, "webhook-a", rg.Rules[0].NotificationSettings.Receiver)
+		})
+	})
+
+	t.Run("provenance as expected", func(t *testing.T) {
+		fakeStore, fakeAIM, api, provStore := setupAPIFull(t)
+		// Rule without provenance
+		ruleNoProv := gen.With(gen.WithOrgID(orgID), asFixture(), withClassicConditionSingleQuery()).GenerateRef()
+		fakeAIM.GenerateAlertInstances(orgID, ruleNoProv.UID, 1)
+		fakeStore.PutRule(context.Background(), ruleNoProv)
+
+		// Rule with provenance
+		ruleWithProv := gen.With(gen.WithOrgID(orgID), asFixture(), withClassicConditionSingleQuery()).GenerateRef()
+		ruleWithProv.UID = "provRuleUID"
+		ruleWithProv.Title = "ProvisionedRule"
+		fakeAIM.GenerateAlertInstances(orgID, ruleWithProv.UID, 1)
+		fakeStore.PutRule(context.Background(), ruleWithProv)
+
+		// Add provenance for ruleWithProv
+		err := provStore.SetProvenance(context.Background(), ruleWithProv, orgID, ngmodels.ProvenanceAPI)
+		require.NoError(t, err)
+
+		req, err := http.NewRequest("GET", "/api/v1/rules", nil)
+		require.NoError(t, err)
+		c := &contextmodel.ReqContext{
+			Context: &web.Context{Req: req},
+			SignedInUser: &user.SignedInUser{
+				OrgID:       orgID,
+				Permissions: map[int64]map[string][]string{orgID: {datasources.ActionQuery: {datasources.ScopeAll}}},
+			},
+		}
+
+		resp := api.RouteGetRuleStatuses(c)
+		require.Equal(t, http.StatusOK, resp.Status())
+		var res apimodels.RuleResponse
+		require.NoError(t, json.Unmarshal(resp.Body(), &res))
+
+		// Should have two rules in one group
+		require.Len(t, res.Data.RuleGroups, 1)
+		rg := res.Data.RuleGroups[0]
+		require.Len(t, rg.Rules, 2)
+
+		// Find rules by UID
+		var foundNoProv, foundWithProv bool
+		for _, rule := range rg.Rules {
+			switch rule.UID {
+			case ruleNoProv.UID:
+				foundNoProv = true
+				require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), rule.Provenance, "non-provisioned rule should have empty provenance")
+			case ruleWithProv.UID:
+				foundWithProv = true
+				require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), rule.Provenance, "provisioned rule should have provenance set")
+			}
+		}
+		require.True(t, foundNoProv, "should find rule without provenance")
+		require.True(t, foundWithProv, "should find rule with provenance")
+	})
 }
 
 func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, PrometheusSrv) {
+	fakeStore, fakeAIM, api, _ := setupAPIFull(t)
+	return fakeStore, fakeAIM, api
+}
+
+func setupAPIFull(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, PrometheusSrv, *fakes.FakeProvisioningStore) {
 	fakeStore := fakes.NewRuleStore(t)
 	fakeAIM := NewFakeAlertInstanceManager(t)
 	fakeSch := newFakeSchedulerReader(t).setupStates(fakeAIM)
 	fakeAuthz := &fakeRuleAccessControlService{}
+	fakeProvisioning := fakes.NewFakeProvisioningStore()
 
 	api := *NewPrometheusSrv(
 		log.NewNopLogger(),
@@ -1676,16 +2058,17 @@ func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Promet
 		fakeSch,
 		fakeStore,
 		fakeAuthz,
+		fakeProvisioning,
 	)
 
-	return fakeStore, fakeAIM, api
+	return fakeStore, fakeAIM, api, fakeProvisioning
 }
 
-func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator) {
+func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query ngmodels.AlertRuleMutator, additionalMutators ...ngmodels.AlertRuleMutator) {
 	t.Helper()
 
 	gen := ngmodels.RuleGen
-	r := gen.With(gen.WithOrgID(orgID), asFixture(), query).GenerateRef()
+	r := gen.With(append([]ngmodels.AlertRuleMutator{gen.WithOrgID(orgID), asFixture(), query}, additionalMutators...)...).GenerateRef()
 
 	fakeAIM.GenerateAlertInstances(orgID, r.UID, 1, func(s *state.State) *state.State {
 		s.Labels = data.Labels{

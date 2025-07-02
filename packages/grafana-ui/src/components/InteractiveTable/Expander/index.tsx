@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { CellProps, HeaderProps } from 'react-table';
 
-import { t } from '../../../utils/i18n';
+import { t } from '@grafana/i18n';
+
 import { IconButton } from '../../IconButton/IconButton';
 
 const expanderContainerStyles = css({
@@ -32,11 +33,19 @@ export function ExpanderHeader<K extends object>({ isAllRowsExpanded, toggleAllR
   return (
     <div className={expanderContainerStyles}>
       <IconButton
-        aria-label={!isAllRowsExpanded ? 'Expand all rows' : 'Collapse all rows'}
+        aria-label={
+          !isAllRowsExpanded
+            ? t('grafana-ui.interactive-table.aria-label-expand-all', 'Expand all rows')
+            : t('grafana-ui.interactive-table.aria-label-collapse-all', 'Collapse all rows')
+        }
         name={!isAllRowsExpanded ? 'table-expand-all' : 'table-collapse-all'}
         onClick={() => toggleAllRowsExpanded()}
         size={'lg'}
-        tooltip={!isAllRowsExpanded ? 'Expand all rows' : 'Collapse all rows'}
+        tooltip={
+          !isAllRowsExpanded
+            ? t('grafana-ui.interactive-table.tooltip-expand-all', 'Expand all rows')
+            : t('grafana-ui.interactive-table.tooltip-collapse-all', 'Collapse all rows')
+        }
         variant={'secondary'}
       />
     </div>

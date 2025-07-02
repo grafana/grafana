@@ -204,6 +204,8 @@ func TestMetaAccessor(t *testing.T) {
 				"sloth": "🦥",
 			},
 		}
+		require.Equal(t, "", meta.GetFolder())
+		require.Equal(t, "", meta.GetAnnotation("missing annotation"))
 
 		meta.SetManagerProperties(repoInfo)
 		meta.SetFolder("folderUID")

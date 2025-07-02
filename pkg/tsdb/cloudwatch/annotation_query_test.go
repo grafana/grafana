@@ -9,14 +9,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQuery_AnnotationQuery(t *testing.T) {
+	ds := newTestDatasource()
 	origNewCWClient := NewCWClient
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
@@ -29,10 +28,8 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 
 	t.Run("DescribeAlarmsForMetric is called with minimum parameters", func(t *testing.T) {
 		client = fakeCWAnnotationsClient{describeAlarmsForMetricOutput: &cloudwatch.DescribeAlarmsForMetricOutput{}}
-		im := defaultTestInstanceManager()
 
-		executor := newExecutor(im, log.NewNullLogger())
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
@@ -61,10 +58,8 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 
 	t.Run("DescribeAlarms is called when prefixMatching is true", func(t *testing.T) {
 		client = fakeCWAnnotationsClient{describeAlarmsOutput: &cloudwatch.DescribeAlarmsOutput{}}
-		im := defaultTestInstanceManager()
 
-		executor := newExecutor(im, log.NewNullLogger())
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},

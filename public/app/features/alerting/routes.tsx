@@ -225,6 +225,18 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         : () => <Navigate replace to="/alerting/list" />,
     },
     {
+      path: '/alerting/import-datasource-managed-rules',
+      roles: () => ['Admin'],
+      component: config.featureToggles.alertingMigrationUI
+        ? importAlertingComponent(
+            () =>
+              import(
+                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
+              )
+          )
+        : () => <Navigate replace to="/alerting/list" />,
+    },
+    {
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),

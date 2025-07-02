@@ -10,9 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
@@ -84,9 +82,8 @@ func TestQuery_handleGetLogEvents_passes_nil_start_and_end_times_to_GetLogEvents
 	for name, test := range testCases {
 		t.Run(name, func(t *testing.T) {
 			cli = fakeCWLogsClient{}
-			im := defaultTestInstanceManager()
-			executor := newExecutor(im, log.NewNullLogger())
-			_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			ds := newTestDatasource()
+			_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{
 					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 				},
@@ -115,8 +112,7 @@ func TestQuery_GetLogEvents_returns_response_from_GetLogEvents_to_data_frame_fie
 	NewCWLogsClient = func(cfg aws.Config) models.CWLogsClient {
 		return cli
 	}
-	im := defaultTestInstanceManager()
-	executor := newExecutor(im, log.NewNullLogger())
+	ds := newTestDatasource()
 
 	cli = &mocks.MockLogEvents{}
 	cli.On("GetLogEvents", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetLogEventsOutput{
@@ -125,7 +121,7 @@ func TestQuery_GetLogEvents_returns_response_from_GetLogEvents_to_data_frame_fie
 			Timestamp: utils.Pointer(int64(15)),
 		}}}, nil)
 
-	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		},
@@ -195,14 +191,10 @@ func TestQuery_StartQuery(t *testing.T) {
 			To:   time.Unix(1584700643, 0),
 		}
 
-		im := testInstanceManagerWithSettings(models.CloudWatchSettings{
-			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-				Region: "us-east-2",
-			},
-		}, false)
-
-		executor := newExecutor(im, log.NewNullLogger())
-		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Region = "us-east-2"
+		})
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
@@ -251,14 +243,10 @@ func TestQuery_StartQuery(t *testing.T) {
 			To:   time.Unix(1584873443000, 0),
 		}
 
-		im := testInstanceManagerWithSettings(models.CloudWatchSettings{
-			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-				Region: "us-east-2",
-			},
-		}, false)
-
-		executor := newExecutor(im, log.NewNullLogger())
-		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Region = "us-east-2"
+		})
+		resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
@@ -420,10 +408,8 @@ func Test_executeStartQuery(t *testing.T) {
 		for name, test := range testCases {
 			t.Run(name, func(t *testing.T) {
 				cli = fakeCWLogsClient{}
-				im := defaultTestInstanceManager()
-				executor := newExecutor(im, log.NewNullLogger())
-
-				_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+				ds := newTestDatasource()
+				_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 					PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 					Queries:       test.queries,
 				})
@@ -436,10 +422,9 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -460,10 +445,9 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("attaches logGroupIdentifiers if the crossAccount feature is enabled", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
-		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -496,10 +480,9 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("attaches logGroupIdentifiers if the crossAccount feature is enabled and strips out trailing *", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
-		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -531,9 +514,8 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("uses LogGroupNames if the cross account feature flag is not enabled, and log group names is present", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		ds := newTestDatasource()
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -565,9 +547,8 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("ignores logGroups if feature flag is disabled even if logGroupNames is not present", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		ds := newTestDatasource()
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -598,9 +579,8 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("it always uses logGroups when feature flag is enabled and ignores log group names", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
-		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		ds := newTestDatasource()
+		_, err := ds.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -662,15 +642,13 @@ func TestQuery_StopQuery(t *testing.T) {
 		},
 	}
 
-	im := defaultTestInstanceManager()
-
 	timeRange := backend.TimeRange{
 		From: time.Unix(1584873443, 0),
 		To:   time.Unix(1584700643, 0),
 	}
 
-	executor := newExecutor(im, log.NewNullLogger())
-	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+	ds := newTestDatasource()
+	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		},
@@ -755,10 +733,8 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		},
 	}
 
-	im := defaultTestInstanceManager()
-
-	executor := newExecutor(im, log.NewNullLogger())
-	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+	ds := newTestDatasource()
+	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		},

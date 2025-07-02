@@ -7,23 +7,26 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import { getCredentials } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
 import {
+  AzureAPIResponse,
+  AzureMetricQuery,
   AzureMonitorDataSourceInstanceSettings,
   AzureMonitorDataSourceJsonData,
+  AzureMonitorLocations,
   AzureMonitorMetricsMetadataResponse,
+  AzureMonitorProvidersResponse,
   AzureMonitorQuery,
   AzureQueryType,
   DatasourceValidationResult,
+  GetLogAnalyticsTableResponse,
+  GetMetricMetadataQuery,
   GetMetricNamespacesQuery,
   GetMetricNamesQuery,
-  GetMetricMetadataQuery,
-  AzureMetricQuery,
-  AzureMonitorLocations,
-  AzureMonitorProvidersResponse,
-  AzureAPIResponse,
-  Subscription,
+  instanceOfLogAnalyticsTableError,
   Location,
   Metric,
   MetricNamespace,
+  Subscription,
+  TablePlan,
 } from '../types';
 import { replaceTemplateVariables, routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -272,6 +275,36 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
     }
 
     return undefined;
+  }
+
+  async getWorkspaceTablePlan(resources: string[], tableName: string): Promise<TablePlan> {
+    let workspaceUri = '';
+
+    if (resources) {
+      workspaceUri = resources[0];
+    }
+
+    if (!workspaceUri) {
+      return TablePlan.Analytics;
+    }
+
+    if (workspaceUri && !workspaceUri.toLowerCase().includes('microsoft.operationalinsights/workspaces')) {
+      // Not a Log Analytics workspace so default to Analytics
+      return TablePlan.Analytics;
+    }
+
+    const url = UrlBuilder.buildAzureMonitorGetLogsTableUrl(
+      this.resourcePath,
+      this.templateSrv.replace(workspaceUri),
+      this.templateSrv.replace(tableName)
+    );
+    const tableResult = await this.getResource<GetLogAnalyticsTableResponse>(url);
+
+    if (!tableResult || instanceOfLogAnalyticsTableError(tableResult)) {
+      return TablePlan.Analytics;
+    }
+
+    return tableResult.properties.plan || TablePlan.Analytics;
   }
 
   private isValidConfigField(field?: string): boolean {

@@ -34,8 +34,11 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ builder.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
-var _ builder.OpenAPIPostProcessor = (*SnapshotsAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder       = (*SnapshotsAPIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor  = (*SnapshotsAPIBuilder)(nil)
+	_ builder.APIGroupRouteProvider = (*SnapshotsAPIBuilder)(nil)
+)
 
 var resourceInfo = dashboardsnapshot.DashboardSnapshotResourceInfo
 
@@ -117,6 +120,10 @@ func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func (b *SnapshotsAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return nil
+}
+
 func (b *SnapshotsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
@@ -146,7 +153,7 @@ func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 }
 
 // Register additional routes with the server
-func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *SnapshotsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	prefix := dashboardsnapshot.DashboardSnapshotResourceInfo.GroupResource().Resource
 	defs := dashboardsnapshot.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	createCmd := defs["github.com/grafana/grafana/apps/dashboard/pkg/apissnapshot/v0alpha1.DashboardCreateCommand"].Schema
@@ -346,9 +353,6 @@ func (b *SnapshotsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 		sub.Get.Summary = "Full dashboard"
 		sub.Get.Description = "Read the full dashboard body"
 	}
-
-	// Hide the invalid endpoint to list all snapshots for all orgs
-	delete(oas.Paths.Paths, "/apis/dashboardsnapshot.grafana.app/v0alpha1/dashboardsnapshots")
 
 	return oas, nil
 }

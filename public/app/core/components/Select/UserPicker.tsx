@@ -3,6 +3,7 @@ import { isNil } from 'lodash';
 import { Component } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
 import { OrgUser } from 'app/types';
@@ -65,9 +66,9 @@ export class UserPicker extends Component<Props, State> {
           defaultOptions={true}
           loadOptions={this.search}
           onChange={onSelected}
-          placeholder="Start typing to search for user"
+          placeholder={t('user-picker.select-placeholder', 'Start typing to search for user')}
           noOptionsMessage="No users found"
-          aria-label="User picker"
+          aria-label={t('user-picker.select-aria-label', 'User picker')}
         />
       </div>
     );

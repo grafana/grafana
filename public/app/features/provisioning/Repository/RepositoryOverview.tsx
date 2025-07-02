@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning';
-import { Trans } from 'app/core/internationalization';
+import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { formatTimestamp } from '../utils/time';
@@ -20,6 +20,7 @@ function getColumnCount(hasWebhook: boolean): 3 | 4 {
 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
+
   const status = repo.status;
   const webhookURL = getWebhookURL(repo);
   const columns = getColumnCount(Boolean(repo.status?.webhook));
@@ -85,7 +86,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </Text>
                     </div>
                     <div className={styles.valueColumn}>
-                      <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
+                      <Text variant="body">
+                        {status?.health?.healthy
+                          ? t('provisioning.repository-overview.healthy', 'Healthy')
+                          : t('provisioning.repository-overview.unhealthy', 'Unhealthy')}
+                      </Text>
                     </div>
 
                     <div className={styles.labelColumn}>
@@ -154,7 +159,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     </Text>
                   </div>
                   <div className={styles.valueColumn}>
-                    <Text variant="body">{status?.sync.lastRef ? status.sync.lastRef.substring(0, 7) : 'N/A'}</Text>
+                    <Text variant="body">
+                      {status?.sync.lastRef
+                        ? status.sync.lastRef.substring(0, 7)
+                        : t('provisioning.repository-overview.not-available', 'N/A')}
+                    </Text>
                   </div>
 
                   <div className={styles.labelColumn}>

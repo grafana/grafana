@@ -13,11 +13,17 @@ XSSWL.iframe = ['src', 'width', 'height'];
 
 const sanitizeTextPanelWhitelist = new xss.FilterXSS({
   // Add sandbox attribute to iframe tags if an attribute is allowed.
-  onTagAttr: function (tag, name, value, isWhiteAttr) {
+  onTagAttr(tag, name, value, isWhiteAttr) {
     if (tag === 'iframe') {
       return isWhiteAttr
         ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless referrerpolicy=no-referrer`
         : '';
+    }
+    return;
+  },
+  onTag(tag, html, options) {
+    if (html === '<input disabled="" type="checkbox">' || html === '<input checked="" disabled="" type="checkbox">') {
+      return html;
     }
     return;
   },
@@ -112,6 +118,54 @@ export function escapeHtml(str: string): string {
     .replace(/>/g, '&gt;')
     .replace(/'/g, '&#39;')
     .replace(/"/g, '&quot;');
+}
+
+export class PathValidationError extends Error {
+  constructor(message = 'Invalid request path') {
+    super(message);
+    this.name = 'PathValidationError';
+    // Maintains proper stack trace for where error was thrown (only available on V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PathValidationError);
+    }
+  }
+}
+
+/**
+ * Validates a path or URL, protecting against path traversal attacks.
+ * Returns the original input if safe, or throw an error
+ */
+export function validatePath<OriginalPath extends string>(path: OriginalPath): OriginalPath {
+  try {
+    let originalDecoded: string = path; // down-cast to a string to indicate this can't be returned
+    while (true) {
+      const nextDecode = decodeURIComponent(originalDecoded);
+      if (nextDecode === originalDecoded) {
+        break; // String is fully decoded.
+      }
+      originalDecoded = nextDecode;
+    }
+
+    // Remove query params and fragments to check only the path portion
+    const cleaned = originalDecoded.split(/[\?&#]/)[0];
+    originalDecoded = cleaned;
+
+    // If the original string contains traversal attempts, block it
+    if (originalDecoded.includes('..') || originalDecoded.includes('/\\')) {
+      throw new PathValidationError();
+    }
+
+    return path;
+  } catch (err) {
+    // Rethrow the original InvalidPathError to preserve the stack trace
+    if (err instanceof PathValidationError) {
+      throw err;
+    }
+
+    // A decoding error can happen with malformed URIs (e.g., % not followed by hex).
+    // These are suspicious, so we treat them as traversal attempts.
+    throw new PathValidationError('Error validating request path');
+  }
 }
 
 export const textUtil = {

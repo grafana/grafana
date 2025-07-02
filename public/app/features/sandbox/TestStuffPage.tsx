@@ -1,9 +1,9 @@
+/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { NavModelItem } from '@grafana/data';
-import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
+import { usePluginLinks } from '@grafana/runtime';
 import { Button, LinkButton, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans } from 'app/core/internationalization';
 
 export const TestStuffPage = () => {
   const node: NavModelItem = {
@@ -19,26 +19,22 @@ export const TestStuffPage = () => {
   return (
     <Page navModel={{ node: node, main: node }}>
       <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
-      <Text variant="h5">
-        <Trans i18nKey="sandbox.test-stuff-page.application-notifications-toasts-testing">
-          Application notifications (toasts) testing
-        </Trans>
-      </Text>
+      <Text variant="h5">Application notifications (toasts) testing</Text>
       <Stack>
         <Button onClick={() => notifyApp.success('Success toast', 'some more text goes here')} variant="primary">
-          <Trans i18nKey="sandbox.test-stuff-page.success">Success</Trans>
+          Success
         </Button>
         <Button
           onClick={() => notifyApp.warning('Warning toast', 'some more text goes here', 'bogus-trace-99999')}
           variant="secondary"
         >
-          <Trans i18nKey="sandbox.test-stuff-page.warning">Warning</Trans>
+          Warning
         </Button>
         <Button
           onClick={() => notifyApp.error('Error toast', 'some more text goes here', 'bogus-trace-fdsfdfsfds')}
           variant="destructive"
         >
-          <Trans i18nKey="sandbox.test-stuff-page.error">Error</Trans>
+          Error
         </Button>
       </Stack>
     </Page>
@@ -46,21 +42,18 @@ export const TestStuffPage = () => {
 };
 
 function LinkToBasicApp({ extensionPointId }: { extensionPointId: string }) {
-  const { extensions } = getPluginExtensions({ extensionPointId });
+  const { links } = usePluginLinks({ extensionPointId });
 
-  if (extensions.length === 0) {
+  if (links.length === 0) {
     return null;
   }
 
   return (
     <div>
-      {extensions.map((extension, i) => {
-        if (!isPluginExtensionLink(extension)) {
-          return null;
-        }
+      {links.map((link, i) => {
         return (
-          <LinkButton href={extension.path} title={extension.description} key={extension.id}>
-            {extension.title}
+          <LinkButton href={link.path} title={link.description} key={link.id}>
+            {link.title}
           </LinkButton>
         );
       })}

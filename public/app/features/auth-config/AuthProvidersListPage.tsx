@@ -2,16 +2,16 @@ import { JSX, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaEdition } from '@grafana/data/internal';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Grid, TextLink, ToolbarButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import AuthDrawer from './AuthDrawer';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
-import { ProviderCard } from './components/ProviderCard';
+import { ProviderCard, ProviderSAMLCard, ProviderSCIMCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
 
 import { getRegisteredAuthProviders } from './index';
@@ -82,7 +82,7 @@ export const AuthConfigPageUnconnected = ({
     <Page
       navId="authentication"
       subTitle={
-        <>
+        <Trans i18nKey="auth-config-auth-config-page-unconnected.subtitle">
           Manage your auth settings and configure single sign-on. Find out more in our{' '}
           <TextLink
             external={true}
@@ -91,7 +91,7 @@ export const AuthConfigPageUnconnected = ({
             documentation
           </TextLink>
           .
-        </>
+        </Trans>
       }
       actions={
         config.buildInfo.edition !== GrafanaEdition.OpenSource && (
@@ -120,6 +120,12 @@ export const AuthConfigPageUnconnected = ({
                   configPath={settings.configPath}
                 />
               ))}
+            {config.buildInfo.edition === GrafanaEdition.OpenSource && (
+              <>
+                <ProviderSAMLCard />
+                <ProviderSCIMCard />
+              </>
+            )}
             {showDrawer && <AuthDrawer onClose={() => setShowDrawer(false)}></AuthDrawer>}
           </Grid>
         )}

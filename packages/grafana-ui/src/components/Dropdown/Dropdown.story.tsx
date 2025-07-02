@@ -1,7 +1,7 @@
 import { Meta } from '@storybook/react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { Button } from '../Button';
+import { Button } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { Menu } from '../Menu/Menu';

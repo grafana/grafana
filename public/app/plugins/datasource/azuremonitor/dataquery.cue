@@ -59,6 +59,9 @@ composableKinds: DataQuery: {
 
 					// Used only for exemplar queries from Prometheus
 					query?: string
+
+					// Used to configure the HTTP request timeout
+					timeout?: number
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
@@ -164,12 +167,12 @@ composableKinds: DataQuery: {
 					filters: [...string]
 				} @cuetsy(kind="interface")
 
-				#ResultFormat: "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
-				#LogsEditorMode: "builder" | "raw" @cuetsy(kind="enum", memberNames="Builder|Raw")
+				#ResultFormat:   "table" | "time_series" | "trace" | "logs" @cuetsy(kind="enum", memberNames="Table|TimeSeries|Trace|Logs")
+				#LogsEditorMode: "builder" | "raw"                          @cuetsy(kind="enum", memberNames="Builder|Raw")
 
 				#BuilderQueryEditorExpressionType: "property" | "operator" | "reduce" | "function_parameter" | "group_by" | "or" | "and" | "order_by" @cuetsy(kind="enum", memberNames:"Property|Operator|Reduce|FunctionParameter|GroupBy|Or|And|OrderBy")
-				#BuilderQueryEditorPropertyType: "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval" @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
-				#BuilderQueryEditorOrderByOptions: "asc" | "desc" @cuetsy(kind="enum", memberNames:"Asc|Desc")
+				#BuilderQueryEditorPropertyType:   "number" | "string" | "boolean" | "datetime" | "time_span" | "function" | "interval"               @cuetsy(kind="enum", memberNames:"Number|String|Boolean|Datetime|TimeSpan|Function|Interval")
+				#BuilderQueryEditorOrderByOptions: "asc" | "desc"                                                                                     @cuetsy(kind="enum", memberNames:"Asc|Desc")
 
 				#BuilderQueryEditorProperty: {
 					type: #BuilderQueryEditorPropertyType
@@ -178,7 +181,7 @@ composableKinds: DataQuery: {
 
 				#BuilderQueryEditorPropertyExpression: {
 					property: #BuilderQueryEditorProperty
-					type: #BuilderQueryEditorExpressionType
+					type:     #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorColumnsExpression: {
@@ -194,15 +197,15 @@ composableKinds: DataQuery: {
 				#BuilderQueryEditorOperatorType: string | bool | number | #SelectableValue @cuetsy(kind="type")
 
 				#BuilderQueryEditorOperator: {
-					name: string
-					value: string
+					name:        string
+					value:       string
 					labelValue?: string
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorWhereExpressionItems: {
 					property: #BuilderQueryEditorProperty
 					operator: #BuilderQueryEditorOperator
-					type: #BuilderQueryEditorExpressionType
+					type:     #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorWhereExpression: {
@@ -216,14 +219,14 @@ composableKinds: DataQuery: {
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorFunctionParameterExpression: {
-					value: string
+					value:     string
 					fieldType: #BuilderQueryEditorPropertyType
-					type: #BuilderQueryEditorExpressionType
+					type:      #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorReduceExpression: {
 					property?: #BuilderQueryEditorProperty
-					reduce?: #BuilderQueryEditorProperty
+					reduce?:   #BuilderQueryEditorProperty
 					parameters?: [...#BuilderQueryEditorFunctionParameterExpression]
 					focus?: bool
 				} @cuetsy(kind="interface")
@@ -236,8 +239,8 @@ composableKinds: DataQuery: {
 				#BuilderQueryEditorGroupByExpression: {
 					property?: #BuilderQueryEditorProperty
 					interval?: #BuilderQueryEditorProperty
-					focus?: bool
-					type?: #BuilderQueryEditorExpressionType
+					focus?:    bool
+					type?:     #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryEditorGroupByExpressionArray: {
@@ -247,32 +250,35 @@ composableKinds: DataQuery: {
 
 				#BuilderQueryEditorOrderByExpression: {
 					property: #BuilderQueryEditorProperty
-					order: #BuilderQueryEditorOrderByOptions
-					type: #BuilderQueryEditorExpressionType
+					order:    #BuilderQueryEditorOrderByOptions
+					type:     #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
-				
+
 				#BuilderQueryEditorOrderByExpressionArray: {
 					expressions: [...#BuilderQueryEditorOrderByExpression]
 					type: #BuilderQueryEditorExpressionType
 				} @cuetsy(kind="interface")
 
 				#BuilderQueryExpression: {
-					from?: #BuilderQueryEditorPropertyExpression
-					columns?: #BuilderQueryEditorColumnsExpression
-					where?: #BuilderQueryEditorWhereExpressionArray
-					reduce?: #BuilderQueryEditorReduceExpressionArray
-					groupBy?: #BuilderQueryEditorGroupByExpressionArray
-					limit?: int
-					orderBy?: #BuilderQueryEditorOrderByExpressionArray
+					from?:        #BuilderQueryEditorPropertyExpression
+					columns?:     #BuilderQueryEditorColumnsExpression
+					where?:       #BuilderQueryEditorWhereExpressionArray
+					reduce?:      #BuilderQueryEditorReduceExpressionArray
+					groupBy?:     #BuilderQueryEditorGroupByExpressionArray
+					limit?:       int
+					orderBy?:     #BuilderQueryEditorOrderByExpressionArray
 					fuzzySearch?: #BuilderQueryEditorWhereExpressionArray
-					timeFilter?: #BuilderQueryEditorWhereExpressionArray
+					timeFilter?:  #BuilderQueryEditorWhereExpressionArray
 				} @cuetsy(kind="interface")
 
+				#ARGScope:   "subscription" | "directory" @cuetsy(kind="enum", memberNames="Subscription|Directory")
 				#AzureResourceGraphQuery: {
 					// Azure Resource Graph KQL query to be executed.
 					query?: string
 					// Specifies the format results should be returned as. Defaults to table.
 					resultFormat?: string
+					// Specifies the scope of the query. Defaults to subscription.
+					scope?: #ARGScope
 				} @cuetsy(kind="interface")
 
 				#AzureMonitorResource: {

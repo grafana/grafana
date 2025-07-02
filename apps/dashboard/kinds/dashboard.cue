@@ -1,9 +1,9 @@
 package kinds
 
 import (
-	"github.com/grafana/grafana/sdkkinds/dashboard/v0alpha1"
-	"github.com/grafana/grafana/sdkkinds/dashboard/v1alpha1"
-	"github.com/grafana/grafana/sdkkinds/dashboard/v2alpha1"
+	v0 "github.com/grafana/grafana/sdkkinds/dashboard/v0alpha1"
+	v1 "github.com/grafana/grafana/sdkkinds/dashboard/v1beta1"
+	v2 "github.com/grafana/grafana/sdkkinds/dashboard/v2alpha1"
 )
 
 // Status is the shared status of all dashboard versions.
@@ -31,7 +31,7 @@ ConversionStatus: {
 dashboard: {
 	kind:       "Dashboard"
 	pluralName: "Dashboards"
-	current:    "v0alpha1"
+	current:    "v1beta1"
 
 	codegen: {
 		ts: {
@@ -51,19 +51,19 @@ dashboard: {
 	versions: {
 		"v0alpha1": {
 			schema: {
-				spec:   v0alpha1.DashboardSpec
+				spec:   v0.DashboardSpec
 				status: DashboardStatus
 			}
 		}
-		"v1alpha1": {
+		"v1beta1": {
 			schema: {
-				spec:   v1alpha1.DashboardSpec
+				spec:   v1.DashboardSpec
 				status: DashboardStatus
 			}
 		}
 		"v2alpha1": {
 			schema: {
-				spec:   v2alpha1.DashboardSpec
+				spec:   v2.DashboardSpec
 				status: DashboardStatus
 			}
 		}

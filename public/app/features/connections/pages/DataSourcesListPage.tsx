@@ -1,4 +1,5 @@
 import { Page } from 'app/core/components/Page/Page';
+import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 import { DataSourceAddButton } from 'app/features/datasources/components/DataSourceAddButton';
 import { DataSourcesList } from 'app/features/datasources/components/DataSourcesList';
 import { getDataSourcesCount } from 'app/features/datasources/state';
@@ -11,6 +12,7 @@ export function DataSourcesListPage() {
   return (
     <Page navId={'connections-datasources'} actions={actions}>
       <Page.Contents>
+        <AdvisorRedirectNotice />
         <DataSourcesList />
       </Page.Contents>
     </Page>

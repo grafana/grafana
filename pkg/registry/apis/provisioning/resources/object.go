@@ -7,30 +7,33 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Get repository stats
+//
+//go:generate mockery --name ResourceLister --structname MockResourceLister --inpackage --filename resource_lister_mock.go --with-expecter
 type ResourceLister interface {
 	List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error)
 	Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error)
 }
 
 type ResourceListerFromSearch struct {
-	managed        resource.ManagedObjectIndexClient
-	index          resource.ResourceIndexClient
+	managed        resourcepb.ManagedObjectIndexClient
+	index          resourcepb.ResourceIndexClient
 	legacyMigrator legacy.LegacyMigrator
 	storageStatus  dualwrite.Service
 }
 
 func NewResourceLister(
-	managed resource.ManagedObjectIndexClient,
-	index resource.ResourceIndexClient,
+	managed resourcepb.ManagedObjectIndexClient,
+	index resourcepb.ResourceIndexClient,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 ) ResourceLister {
@@ -44,7 +47,7 @@ func NewResourceLister(
 
 // List implements ResourceLister.
 func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, repository string) (*provisioning.ResourceList, error) {
-	objects, err := o.managed.ListManagedObjects(ctx, &resource.ListManagedObjectsRequest{
+	objects, err := o.managed.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
 		Namespace: namespace,
 		Kind:      string(utils.ManagerKindRepo),
 		Id:        repository,
@@ -74,7 +77,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 
 // Stats implements ResourceLister.
 func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, repository string) (*provisioning.ResourceStats, error) {
-	req := &resource.CountManagedObjectsRequest{
+	req := &resourcepb.CountManagedObjectsRequest{
 		Namespace: namespace,
 	}
 	if repository != "" {
@@ -148,7 +151,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	}
 
 	// Get full instance stats
-	info, err := o.index.GetStats(ctx, &resource.ResourceStatsRequest{
+	info, err := o.index.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 		Namespace: namespace,
 	})
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-	"xorm.io/xorm"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -78,9 +78,10 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	getter := newConfGetter(cfg.SectionWithEnvOverrides("resource_api"), "db_")
 	fallbackGetter := newConfGetter(cfg.SectionWithEnvOverrides("database"), "")
 
+	logger := log.New("entity-db")
 	p = &resourceDBProvider{
 		cfg:         cfg,
-		log:         log.New("entity-db"),
+		log:         logger,
 		logQueries:  getter.Bool("log_queries"),
 		migrateFunc: migrations.MigrateResourceStore,
 		tracer:      tracer,
@@ -91,11 +92,13 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	switch {
 	// Deprecated: First try with the config in the "resource_api" section, which is specific to Unified Storage
 	case dbType == dbTypePostgres:
+		logger.Info("Using resource_api section", "db_type", dbType)
 		p.registerMetrics = true
 		p.engine, err = getEnginePostgres(getter)
 		return p, err
 
 	case dbType == dbTypeMySQL:
+		logger.Info("Using resource_api section", "db_type", dbType)
 		p.registerMetrics = true
 		p.engine, err = getEngineMySQL(getter)
 		return p, err
@@ -105,6 +108,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 
 	// If we have an empty Resource API db config, try with the core Grafana database config
 	case grafanaDBType != "":
+		logger.Info("Using database section", "db_type", grafanaDBType)
 		p.registerMetrics = true
 		p.engine, err = getEngine(cfg)
 		return p, err
@@ -121,6 +125,19 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 }
 
 func (p *resourceDBProvider) init(ctx context.Context) (db.DB, error) {
+	p.log.Info("Initializing Resource DB",
+		"db_type",
+		p.engine.Dialect().DriverName(),
+		"open_conn",
+		p.engine.DB().DB.Stats().OpenConnections,
+		"in_use_conn",
+		p.engine.DB().DB.Stats().InUse,
+		"idle_conn",
+		p.engine.DB().DB.Stats().Idle,
+		"max_open_conn",
+		p.engine.DB().DB.Stats().MaxOpenConnections,
+	)
+
 	if p.registerMetrics {
 		err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", p.engine.DB().DB))
 		if err != nil {

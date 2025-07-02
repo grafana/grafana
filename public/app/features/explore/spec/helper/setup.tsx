@@ -34,7 +34,6 @@ import {
 import { DataSourceRef } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
@@ -293,7 +292,7 @@ export function makeDatasourceSetup({
           return (
             <div>
               <input
-                aria-label={t('explore.make-datasource-setup.aria-label-query', 'query')}
+                aria-label="query"
                 defaultValue={props.query.expr}
                 onChange={(event) => {
                   props.onChange({ ...props.query, expr: event.target.value });
@@ -335,7 +334,8 @@ export const withinQueryHistory = () => {
 };
 
 export const withinQueryLibrary = () => {
-  const container = screen.getByRole('dialog', { name: 'Drawer title Query library' });
+  const container = screen.getByRole('dialog', { name: /Drawer title/ });
+  within(container).getByText('Query library');
   return within(container);
 };
 

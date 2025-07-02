@@ -1,9 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
@@ -22,7 +22,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
 
   return (
     <div className={styles.margin}>
-      <table className="filter-table">
+      <table className={cx('filter-table', styles.table)}>
         <thead>
           <tr>
             <th className="width-4"></th>
@@ -46,7 +46,11 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
             <tr key={version.id}>
               <td>
                 <Checkbox
-                  aria-label={`Toggle selection of version ${version.version}`}
+                  aria-label={t(
+                    'dashboard-scene.version-history-table.aria-label-toggle-selection',
+                    'Toggle selection of version {{version}}',
+                    { version: version.version }
+                  )}
                   className={css({
                     display: 'inline',
                   })}
@@ -101,6 +105,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     margin: css({
       marginBottom: theme.spacing(4),
+    }),
+    table: css({
+      td: {
+        whiteSpace: 'normal !important',
+      },
     }),
   };
 }

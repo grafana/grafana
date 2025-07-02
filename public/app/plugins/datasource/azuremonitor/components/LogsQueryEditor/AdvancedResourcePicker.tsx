@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import { Icon, Input, Tooltip, Label, Button, useStyles2 } from '@grafana/ui';
+import { Icon, Input, Tooltip, Label, Button, useStyles2, TextLink } from '@grafana/ui';
 
 export interface ResourcePickerProps<T> {
   resources: T[];
@@ -44,20 +45,19 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
     <>
       <Label>
         <h6>
-          Resource URI(s){' '}
+          <Trans i18nKey="components.advanced-resource-picker.label-resource-uri">Resource URI(s) </Trans>
           <Tooltip
             content={
-              <>
+              <Trans i18nKey="components.advanced-resource-picker.tooltip-resource-uri">
                 Manually edit the{' '}
-                <a
+                <TextLink
                   href="https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-standard-columns#_resourceid"
-                  rel="noopener noreferrer"
-                  target="_blank"
+                  external
                 >
                   resource uri
-                </a>
+                </TextLink>
                 . Supports the use of multiple template variables (ex: /subscriptions/$subId/resourceGroups/$rg)
-              </>
+              </Trans>
             }
             placement="right"
             interactive={true}
@@ -73,11 +73,12 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
               id={`input-advanced-resource-picker-${index + 1}`}
               value={resource}
               onChange={(event) => onResourceChange(index, event.currentTarget.value)}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="ex: /subscriptions/$subId"
               data-testid={`input-advanced-resource-picker-${index + 1}`}
             />
             <AccessoryButton
-              aria-label="remove"
+              aria-label={t('components.advanced-resource-picker.aria-label-remove', 'Remove')}
               icon="times"
               variant="secondary"
               onClick={() => removeResource(index)}
@@ -87,8 +88,14 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
           </div>
         </div>
       ))}
-      <Button aria-label="Add" icon="plus" variant="secondary" onClick={addResource} type="button">
-        Add resource URI
+      <Button
+        aria-label={t('components.advanced-resource-picker.aria-label-add', 'Add')}
+        icon="plus"
+        variant="secondary"
+        onClick={addResource}
+        type="button"
+      >
+        <Trans i18nKey="components.advanced-resource-picker.button-add-resource-uri">Add resource URI</Trans>
       </Button>
     </>
   );

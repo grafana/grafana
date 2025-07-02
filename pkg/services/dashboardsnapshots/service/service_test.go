@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -39,7 +38,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestDashboardSnapshotsService(t *testing.T) {
+func TestIntegrationDashboardSnapshotsService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
@@ -98,7 +97,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	})
 }
 
-func TestValidateDashboardExists(t *testing.T) {
+func TestIntegrationValidateDashboardExists(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
@@ -112,9 +111,9 @@ func TestValidateDashboardExists(t *testing.T) {
 		folderimpl.ProvideDashboardFolderStore(sqlStore),
 		feats,
 		nil,
-		acmock.New(),
+		actest.FakeAccessControl{},
+		actest.FakeService{},
 		foldertest.NewFakeService(),
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,

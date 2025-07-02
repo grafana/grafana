@@ -1,8 +1,8 @@
 import { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { t } from '@grafana/i18n';
 import { Button, ClipboardButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { Invitee } from 'app/types';
 
 import { revokeInvite } from './state/actions';

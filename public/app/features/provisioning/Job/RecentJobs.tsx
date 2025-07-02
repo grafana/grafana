@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { intervalToAbbreviatedDurationString, TraceKeyValuePair } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Box, Card, Icon, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
-import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
+import { Job, Repository, SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
 import KeyValuesTable from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/KeyValuesTable';
 
 import { useRepositoryAllJobs } from '../hooks/useRepositoryAllJobs';
@@ -201,7 +201,7 @@ export function RecentJobs({ repo }: Props) {
       <InteractiveTable
         data={jobs}
         columns={jobColumns}
-        getRowId={(item) => `${item.metadata?.name}`}
+        getRowId={(item) => `${item.metadata?.uid}`}
         renderExpandedRow={(row) => <ExpandedRow row={row} />}
         pageSize={10}
       />

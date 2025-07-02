@@ -32,9 +32,8 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
-import { AngularDeprecation } from '../../scene/angular/AngularDeprecation';
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
-import { AutoGridItem } from '../../scene/layout-responsive-grid/ResponsiveGridItem';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
@@ -44,10 +43,6 @@ import { transformDataTopic } from '../transformToV2TypesUtils';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
-
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
 
   titleItems.push(
     new VizPanelLinks({
@@ -72,6 +67,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
+    seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
     $behaviors: [],
@@ -99,10 +95,6 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
 export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
 
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
-
   titleItems.push(
     new VizPanelLinks({
       rawLinks: [],
@@ -115,6 +107,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
+    seriesLimit: config.panelSeriesLimit,
     $behaviors: [
       new LibraryPanelBehavior({
         uid: panel.spec.libraryPanel.uid,
@@ -193,11 +186,7 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
       if (!query.spec.datasource?.uid) {
-        const defaultDatasource = config.bootData.settings.defaultDatasource;
-        const dsList = config.bootData.settings.datasources;
-        // this is look up by type
-        const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === query.spec.query.kind);
-        datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
+        datasource = getRuntimePanelDataSource(query);
       } else {
         datasource = query.spec.datasource;
       }
@@ -210,26 +199,68 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 }
 
 export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
-  let datasource: DataSourceRef | undefined = undefined;
+  return getDataSourceForQuery(variable.spec.datasource, variable.spec.query.kind);
+}
 
-  if (!datasource) {
-    if (!variable.spec.datasource?.uid) {
-      const defaultDatasource = config.bootData.settings.defaultDatasource;
-      const dsList = config.bootData.settings.datasources;
-      // this is look up by type
-      const bestGuess = Object.values(dsList).find((ds) => ds.meta.id === variable.spec.query.kind);
-      datasource = bestGuess ? { uid: bestGuess.uid, type: bestGuess.meta.id } : dsList[defaultDatasource];
-    } else {
-      datasource = variable.spec.datasource;
-    }
+export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef | undefined {
+  return getDataSourceForQuery(query.spec.datasource, query.spec.query.kind);
+}
+
+/**
+ * @param querySpecDS - The datasource specified in the query
+ * @param queryKind - The kind of query being performed
+ * @returns The resolved DataSourceRef
+ */
+function getDataSourceForQuery(
+  querySpecDS: DataSourceRef | undefined | null,
+  queryKind: string
+): DataSourceRef | undefined {
+  // If datasource is specified and has a uid, use it
+  if (querySpecDS?.uid) {
+    return querySpecDS;
   }
-  return datasource;
+
+  // Otherwise try to infer datasource based on query kind (kind = ds type)
+  const defaultDatasource = config.bootData.settings.defaultDatasource;
+  const dsList = config.bootData.settings.datasources;
+
+  // First check if the default datasource matches the query type
+  if (dsList && dsList[defaultDatasource] && dsList[defaultDatasource].meta.id === queryKind) {
+    // In the datasource list from bootData "id" is the type and the uid could be uid or the name
+    // in cases like grafana, dashboard or mixed datasource
+    return {
+      uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
+      type: dsList[defaultDatasource].meta.id,
+    };
+  }
+
+  // Look up by query type/kind from all available datasources
+  const bestGuess = dsList && Object.values(dsList).find((ds) => ds.meta.id === queryKind);
+
+  if (bestGuess) {
+    return { uid: bestGuess.uid, type: bestGuess.meta.id };
+  } else if (dsList && dsList[defaultDatasource]) {
+    // Fallback to default datasource even if type doesn't match
+    // In the datasource list from bootData "id" is the type and the uid could be uid or the name
+    // in cases like grafana, dashboard or mixed datasource
+
+    console.warn(
+      `Could not find datasource for query kind ${queryKind}, defaulting to ${dsList[defaultDatasource].meta.id}`
+    );
+    return {
+      uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
+      type: dsList[defaultDatasource].meta.id,
+    };
+  }
+
+  // If we don't find a default datasource, return undefined
+  return undefined;
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   return {
     refId: query.spec.refId,
-    datasource: query.spec.datasource,
+    datasource: getRuntimePanelDataSource(query),
     hide: query.spec.hidden,
     ...query.spec.query.spec,
   };

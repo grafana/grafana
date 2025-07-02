@@ -41,7 +41,10 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
-  getEscapedSpanNames,
+  getEscapedRegexValues,
+  getEscapedValues,
+  makeHistogramLink,
+  makePromServiceMapRequest,
 } from './datasource';
 import mockJson from './test/mockJsonResponse.json';
 import mockServiceGraph from './test/mockServiceGraph.json';
@@ -68,7 +71,6 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   describe('runs correctly', () => {
-    config.featureToggles.traceQLStreaming = true;
     jest.spyOn(TempoDatasource.prototype, 'isFeatureAvailable').mockImplementation(() => true);
     const handleStreamingQuery = jest.spyOn(TempoDatasource.prototype, 'handleStreamingQuery');
     const request = jest.spyOn(TempoDatasource.prototype, '_request');
@@ -304,7 +306,7 @@ describe('Tempo data source', () => {
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
-    expect(field.values[0]).toBe('60ba2abb44f13eae');
+    expect(field.values[0]).toBe('000000000000000060ba2abb44f13eae');
     expect(field.values.length).toBe(6);
   });
 
@@ -749,6 +751,20 @@ describe('Tempo service graph view', () => {
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="${app}",service="$app"}[$__range])) by (span_name))'
     );
+
+    targets = {
+      targets: [
+        { queryType: 'serviceMap', serviceMapQuery: '{client="app",client_deployment_environment="production"}' },
+      ],
+    } as DataQueryRequest<TempoQuery>;
+    builtQuery = buildExpr(
+      { expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)', params: [], topk: 5 },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",deployment_environment="production"}[$__range])) by (span_name))'
+    );
   });
 
   it('should build link expr correctly', () => {
@@ -763,12 +779,12 @@ describe('Tempo service graph view', () => {
       'server.cluster.local:9090^/sample.test(.*)?',
       'test\\path',
     ];
-    let escaped = getEscapedSpanNames(spanNames);
+    let escaped = getEscapedRegexValues(getEscapedValues(spanNames));
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
-      'test\\\\\\\\path',
+      'test\\\\path',
     ]);
   });
 
@@ -799,7 +815,7 @@ describe('Tempo service graph view', () => {
         },
         {
           url: '',
-          title: 'Request histogram',
+          title: 'Request classic histogram',
           internal: {
             query: {
               expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))',
@@ -851,7 +867,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.name',
-          value: 'my-service',
+          value: 'my-target-service',
           valueType: 'string',
         },
       ],
@@ -896,7 +912,7 @@ describe('Tempo service graph view', () => {
         },
         {
           url: '',
-          title: 'Request histogram',
+          title: 'Request classic histogram',
           internal: {
             query: {
               expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.sourceName}",client_service_namespace="${__data.fields.sourceNamespace}",server="${__data.fields.targetName}",server_service_namespace="${__data.fields.targetNamespace}"}[$__rate_interval])) by (le, client, server, server_service_namespace, client_service_namespace))',
@@ -948,7 +964,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.namespace',
-          value: 'my-namespace',
+          value: 'my-target-namespace-service',
           valueType: 'string',
         },
         {
@@ -956,7 +972,7 @@ describe('Tempo service graph view', () => {
           operator: '=',
           scope: 'resource',
           tag: 'service.name',
-          value: 'my-service',
+          value: 'my-target-name-service',
           valueType: 'string',
         },
       ],
@@ -1234,6 +1250,98 @@ describe('should provide functionality for ad-hoc filters', () => {
   });
 });
 
+describe('histogram type functionality', () => {
+  it('should create correct histogram links for classic histogram type', () => {
+    const datasourceUid = 'prom';
+    const source = 'client="${__data.fields.source}",';
+    const target = 'server="${__data.fields.target}"';
+    const serverSumBy = 'server';
+
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy);
+    expect(links).toHaveLength(1);
+    expect(links[0].title).toBe('Request classic histogram');
+    expect(links[0].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+  });
+
+  it('should create correct histogram links for native histogram type', () => {
+    const datasourceUid = 'prom';
+    const source = 'client="${__data.fields.source}",';
+    const target = 'server="${__data.fields.target}"';
+    const serverSumBy = 'server';
+
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, 'native');
+    expect(links).toHaveLength(1);
+    expect(links[0].title).toBe('Request native histogram');
+    expect(links[0].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+  });
+
+  it('should create correct histogram links for both histogram types', () => {
+    const datasourceUid = 'prom';
+    const source = 'client="${__data.fields.source}",';
+    const target = 'server="${__data.fields.target}"';
+    const serverSumBy = 'server';
+
+    const links = makeHistogramLink(datasourceUid, source, target, serverSumBy, 'both');
+    expect(links).toHaveLength(2);
+    expect(links[0].title).toBe('Request classic histogram');
+    expect(links[1].title).toBe('Request native histogram');
+    expect(links[0].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+    expect(links[1].internal.query.expr).toBe(
+      'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+    );
+  });
+
+  it('should include histogram type in field config', () => {
+    const datasourceUid = 'prom';
+    const tempoDatasourceUid = 'tempo';
+    const targetField = '__data.fields.target';
+    const tempoField = '__data.fields.target';
+    const sourceField = '__data.fields.source';
+
+    const fieldConfig = getFieldConfig(
+      datasourceUid,
+      tempoDatasourceUid,
+      targetField,
+      tempoField,
+      sourceField,
+      undefined,
+      'native'
+    );
+    const histogramLink = fieldConfig.links.find((link) => link.title === 'Request native histogram');
+    expect(histogramLink).toBeDefined();
+    expect(histogramLink?.internal?.query).toBeDefined();
+    if (histogramLink?.internal?.query && 'expr' in histogramLink.internal.query) {
+      expect(histogramLink.internal.query.expr).toBe(
+        'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds{client="${__data.fields.source}",server="${__data.fields.target}"}[$__rate_interval])) by (le, client, server))'
+      );
+    }
+  });
+
+  it('should handle histogram type in service map query', () => {
+    const request = makePromServiceMapRequest(
+      {
+        targets: [{ serviceMapQuery: '{service="test"}' }],
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest<TempoQuery>,
+      'native'
+    );
+
+    const bucketMetric = request.targets.find((t: PromQuery) => t.expr.includes('_bucket'));
+    expect(bucketMetric).toBeUndefined();
+
+    const nativeMetric = request.targets.find((t: PromQuery) =>
+      t.expr.includes('traces_service_graph_request_server_seconds')
+    );
+    expect(nativeMetric).toBeDefined();
+  });
+});
+
 const prometheusMock = (): DataSourceApi => {
   return {
     query: jest.fn(() =>
@@ -1443,7 +1551,7 @@ const serviceGraphLinks = [
   },
   {
     url: '',
-    title: 'Request histogram',
+    title: 'Request classic histogram',
     internal: {
       query: {
         expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{server="${__data.fields.id}"}[$__rate_interval])) by (le, client, server))',
@@ -1482,7 +1590,10 @@ const serviceGraphLinks = [
 
 const replaceVariablesInstrumented = (variable: string): string => {
   const variables: Record<string, string> = {
-    [`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.target}}`]: 'my-target-service',
+    [`\${__data.fields.targetName}`]: 'my-target-name-service',
+    [`\${__data.fields.targetNamespace}`]: 'my-target-namespace-service',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'true',
   };
@@ -1491,7 +1602,7 @@ const replaceVariablesInstrumented = (variable: string): string => {
 
 const replaceVariablesUninstrumented = (variable: string): string => {
   const variables: Record<string, string> = {
-    [`\${__data.fields.${NodeGraphDataFrameFieldNames.title}}`]: 'my-service',
+    [`\${__data.fields.${NodeGraphDataFrameFieldNames.id}}`]: 'my-service',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.subTitle}}`]: 'my-namespace',
     [`\${__data.fields.${NodeGraphDataFrameFieldNames.isInstrumented}}`]: 'false',
   };

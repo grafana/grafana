@@ -33,7 +33,6 @@ area/dashboard/variable
 area/dashboards/panel
 area/data/export
 area/explore
-area/exploremetrics
 area/expressions
 area/field/overrides
 area/frontend/library-panels
@@ -42,6 +41,7 @@ area/image-rendering
 area/internationalization
 area/legend
 area/library-panel
+area/metricsdrilldown
 area/navigation
 area/panel/annotation-list
 area/panel/barchart

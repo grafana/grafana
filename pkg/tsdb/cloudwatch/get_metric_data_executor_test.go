@@ -18,7 +18,7 @@ import (
 
 func TestGetMetricDataExecutorTestRequest(t *testing.T) {
 	t.Run("Should round up end time if cloudWatchRoundUpEndTime is enabled", func(t *testing.T) {
-		executor := &cloudWatchExecutor{}
+		executor := &DataSource{}
 		queryEndTime, _ := time.Parse("2006-01-02T15:04:05Z07:00", "2024-05-01T01:45:04Z")
 		inputs := &cloudwatch.GetMetricDataInput{EndTime: &queryEndTime, MetricDataQueries: []cloudwatchtypes.MetricDataQuery{}}
 		mockMetricClient := &mocks.MetricsAPI{}
@@ -35,7 +35,7 @@ func TestGetMetricDataExecutorTestRequest(t *testing.T) {
 }
 
 func TestGetMetricDataExecutorTestResponse(t *testing.T) {
-	executor := &cloudWatchExecutor{}
+	executor := &DataSource{}
 	inputs := &cloudwatch.GetMetricDataInput{EndTime: aws.Time(time.Now()), MetricDataQueries: []cloudwatchtypes.MetricDataQuery{}}
 	mockMetricClient := &mocks.MetricsAPI{}
 	mockMetricClient.On("GetMetricData", mock.Anything, mock.Anything, mock.Anything).Return(

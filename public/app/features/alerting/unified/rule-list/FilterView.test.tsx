@@ -40,17 +40,18 @@ beforeEach(() => {
 const io = mockIntersectionObserver();
 
 describe('RuleList - FilterView', () => {
-  jest.setTimeout(60 * 1000);
-  jest.retryTimes(2);
-
   it('should render multiple pages of results', async () => {
     render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
 
     await loadMoreResults();
-    expect(await screen.findAllByRole('treeitem')).toHaveLength(100);
+    const onePageResults = await screen.findAllByRole('treeitem');
+    // FilterView loads rules in batches so it can load more than 100 rules for one page
+    expect(onePageResults.length).toBeGreaterThanOrEqual(100);
 
     await loadMoreResults();
-    expect(await screen.findAllByRole('treeitem')).toHaveLength(200);
+    const twoPageResults = await screen.findAllByRole('treeitem');
+    expect(twoPageResults.length).toBeGreaterThanOrEqual(200);
+    expect(twoPageResults.length).toBeGreaterThan(onePageResults.length);
   });
 
   it('should filter results by group and rule name ', async () => {
@@ -89,7 +90,7 @@ describe('RuleList - FilterView', () => {
     expect(matchingPrometheusRule).toBeInTheDocument();
 
     expect(await screen.findByText(/No more results/)).toBeInTheDocument();
-  }, 90000);
+  });
 
   it('should display empty state when no rules are found', async () => {
     render(<FilterView filterState={getFilter({ groupName: 'non-existing-group' })} />);
@@ -104,7 +105,7 @@ async function loadMoreResults() {
   act(() => {
     io.enterNode(screen.getByTestId('load-more-helper'));
   });
-  await waitForElementToBeRemoved(screen.queryAllByTestId('alert-rule-list-item-loader'), { timeout: 80000 });
+  await waitForElementToBeRemoved(screen.queryAllByTestId('alert-rule-list-item-loader'));
 }
 
 function getFilter(overrides: Partial<RulesFilter> = {}): RulesFilter {

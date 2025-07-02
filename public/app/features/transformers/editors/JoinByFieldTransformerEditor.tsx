@@ -9,10 +9,10 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -88,7 +88,7 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
             value={options.byField}
             onChange={onSelectField}
             /* don't translate here as this references a field name */
-            /* eslint-disable-next-line @grafana/no-untranslated-strings */
+            /* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */
             placeholder="time"
             isClearable
           />

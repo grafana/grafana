@@ -15,7 +15,7 @@ import (
 
 const keySeparator = "|&|"
 
-func (e *cloudWatchExecutor) buildMetricDataQuery(ctx context.Context, query *models.CloudWatchQuery) (cloudwatchtypes.MetricDataQuery, error) {
+func (ds *DataSource) buildMetricDataQuery(ctx context.Context, query *models.CloudWatchQuery) (cloudwatchtypes.MetricDataQuery, error) {
 	mdq := cloudwatchtypes.MetricDataQuery{
 		Id:         aws.String(query.Id),
 		ReturnData: aws.Bool(query.ReturnData),
@@ -27,10 +27,10 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(ctx context.Context, query *mo
 
 	switch query.GetGetMetricDataAPIMode() {
 	case models.GMDApiModeMathExpression:
-		mdq.Period = aws.Int32(int32(query.Period))
+		mdq.Period = &query.Period
 		mdq.Expression = aws.String(query.Expression)
 	case models.GMDApiModeSQLExpression:
-		mdq.Period = aws.Int32(int32(query.Period))
+		mdq.Period = &query.Period
 		mdq.Expression = aws.String(query.SqlExpression)
 	case models.GMDApiModeInferredSearchExpression:
 		mdq.Expression = aws.String(buildSearchExpression(query, query.Statistic))
@@ -44,7 +44,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(ctx context.Context, query *mo
 				MetricName: aws.String(query.MetricName),
 				Dimensions: make([]cloudwatchtypes.Dimension, 0),
 			},
-			Period: aws.Int32(int32(query.Period)),
+			Period: &query.Period,
 		}
 		for key, values := range query.Dimensions {
 			mdq.MetricStat.Metric.Dimensions = append(mdq.MetricStat.Metric.Dimensions,

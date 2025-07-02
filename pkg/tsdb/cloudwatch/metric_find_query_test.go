@@ -11,8 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	resourcegroupstaggingapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,20 +48,16 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			},
 		}
 
-		im := defaultTestInstanceManager()
-
 		filterMap := map[string][]string{
 			"tag:Environment": {"production"},
 		}
 		filterJson, err := json.Marshal(filterMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, log.NewNullLogger())
-		resp, err := executor.handleGetEc2InstanceAttribute(
+		ds := newTestDatasource()
+		resp, err := ds.handleGetEc2InstanceAttribute(
 			context.Background(),
-			backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			}, url.Values{
+			url.Values{
 				"region":        []string{"us-east-1"},
 				"attributeName": []string{"InstanceId"},
 				"filters":       []string{string(filterJson)},
@@ -97,9 +91,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			},
 		}
 
-		im := defaultTestInstanceManager()
-
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
 		testcases := []struct {
 			name          string
@@ -139,11 +131,9 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 				filterJson, err := json.Marshal(filterMap)
 				require.NoError(t, err)
 
-				resp, err := executor.handleGetEc2InstanceAttribute(
+				resp, err := ds.handleGetEc2InstanceAttribute(
 					context.Background(),
-					backend.PluginContext{
-						DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-					}, url.Values{
+					url.Values{
 						"region":        []string{"us-east-1"},
 						"attributeName": []string{tc.attributeName},
 						"filters":       []string{string(filterJson)},
@@ -210,14 +200,10 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 			},
 		}
 
-		im := defaultTestInstanceManager()
-
-		executor := newExecutor(im, log.NewNullLogger())
-		resp, err := executor.handleGetEbsVolumeIds(
+		ds := newTestDatasource()
+		resp, err := ds.handleGetEbsVolumeIds(
 			context.Background(),
-			backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			}, url.Values{
+			url.Values{
 				"region":     []string{"us-east-1"},
 				"instanceId": []string{"{i-1, i-2, i-3}"},
 			},
@@ -269,20 +255,16 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			},
 		}
 
-		im := defaultTestInstanceManager()
-
 		tagMap := map[string][]string{
 			"Environment": {"production"},
 		}
 		tagJson, err := json.Marshal(tagMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, log.NewNullLogger())
-		resp, err := executor.handleGetResourceArns(
+		ds := newTestDatasource()
+		resp, err := ds.handleGetResourceArns(
 			context.Background(),
-			backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
-			}, url.Values{
+			url.Values{
 				"region":       []string{"us-east-1"},
 				"resourceType": []string{"ec2:instance"},
 				"tags":         []string{string(tagJson)},

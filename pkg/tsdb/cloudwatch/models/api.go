@@ -9,14 +9,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/oam"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
-type RequestContextFactoryFunc func(ctx context.Context, pluginCtx backend.PluginContext, region string) (reqCtx RequestContext, err error)
+type RequestContextFactoryFunc func(ctx context.Context, region string) (reqCtx RequestContext, err error)
 
-type RouteHandlerFunc func(ctx context.Context, pluginCtx backend.PluginContext, reqContextFactory RequestContextFactoryFunc, parameters url.Values) ([]byte, *HttpError)
+type RouteHandlerFunc func(ctx context.Context, parameters url.Values) ([]byte, *HttpError)
 
 type RequestContext struct {
 	MetricsClientProvider  MetricsClientProvider
@@ -28,7 +27,6 @@ type RequestContext struct {
 	Logger                 log.Logger
 }
 
-// Services
 type ListMetricsProvider interface {
 	GetDimensionKeysByDimensionFilter(ctx context.Context, r resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error)
 	GetDimensionValuesByDimensionFilter(ctx context.Context, r resources.DimensionValuesRequest) ([]resources.ResourceResponse[string], error)
@@ -48,12 +46,10 @@ type RegionsAPIProvider interface {
 	GetRegions(ctx context.Context) ([]resources.ResourceResponse[resources.Region], error)
 }
 
-// Clients
 type MetricsClientProvider interface {
 	ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error)
 }
 
-// APIs - instead of using the API defined in the services within the aws-sdk-go directly, specify a subset of the API with methods that are actually used in a service or a client
 type CloudWatchMetricsAPIProvider interface {
 	ListMetrics(ctx context.Context, in *cloudwatch.ListMetricsInput, optFns ...func(*cloudwatch.Options)) error
 }
@@ -64,8 +60,8 @@ type CloudWatchLogsAPIProvider interface {
 }
 
 type OAMAPIProvider interface {
-	ListSinks(ctx context.Context, in *oam.ListSinksInput, optFns ...func(options *oam.Options)) (*oam.ListSinksOutput, error)
-	ListAttachedLinks(ctx context.Context, in *oam.ListAttachedLinksInput, optFns ...func(options *oam.Options)) (*oam.ListAttachedLinksOutput, error)
+	oam.ListSinksAPIClient
+	oam.ListAttachedLinksAPIClient
 }
 
 type EC2APIProvider interface {

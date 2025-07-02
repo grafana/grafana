@@ -3,8 +3,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineSwitch, Input, Badge, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface Props {
   dataSourceName: string;
@@ -29,8 +29,10 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
           <div className="gf-form max-width-30">
             <InlineField
               label={t('datasources.basic-settings.label-name', 'Name')}
-              tooltip="The name is used when you select the data source in panels. The default data source is
-              'preselected in new panels."
+              tooltip={t(
+                'datasources.basic-serttings.tooltip-name',
+                'The name is used when you select the data source in panels. The default data source is preselected in new panels.'
+              )}
               grow
               disabled={disabled}
               labelWidth={14}
@@ -69,6 +71,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
 
 export function AlertingEnabled({ enabled }: { enabled: boolean }) {
   const styles = useStyles2(getStyles);
+
   return (
     <div className={styles.badge}>
       {enabled ? (

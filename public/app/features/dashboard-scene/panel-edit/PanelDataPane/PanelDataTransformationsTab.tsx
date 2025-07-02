@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -14,7 +15,6 @@ import {
   SceneObjectState,
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 
 import { getQueryRunnerFor } from '../../utils/utils';
@@ -35,7 +35,7 @@ export class PanelDataTransformationsTab
   tabId = TabId.Transformations;
 
   getTabLabel() {
-    return 'Transformations';
+    return t('dashboard-scene.panel-data-transformations-tab.tab-label', 'Transformations');
   }
 
   public renderTab(props: PanelDataTabHeaderProps) {

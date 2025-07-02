@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -33,7 +33,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     // we need to set the uid here in order to save the dashboard
     // in schema v2 we don't have the uid in the spec
     k8s: {
-      ...dashboard.state.meta.k8s,
+      ...dashboard.serializer.getK8SMetadata(),
     },
   });
 
@@ -110,7 +110,10 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           severity="error"
         >
           <p>
-            Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom version.
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.body-plugin-dashboard">
+              Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom
+              version.
+            </Trans>
           </p>
           <Box paddingTop={2}>
             <Stack alignItems="center">
@@ -157,14 +160,17 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         <Alert
           title={t(
             'dashboard-scene.save-dashboard-form.title-dashboard-drastically-changed',
-            'Dashboard drastically changed'
+            'Dashboard irreversibly changed'
           )}
           severity="warning"
         >
           <p>
-            Because you're using new dashboards features only supported on new Grafana dashboard schema format, the
-            dashboard will be saved in the new format. Please make sure you want to perform this action or you prefer to
-            save the dashboard as a new copy.
+            <Trans i18nKey="dashboard-scene.save-dashboard-form.body-dashboard-drastically-changed">
+              The dashboard will be saved using the new experimental Grafana dashboard schema. This action can’t be
+              reverted and could result in the irreversible loss of data. We recommend that you save this dashboard as a
+              copy instead. If you’re seeing this message in a production environment, contact Support to have the
+              feature disabled.
+            </Trans>
           </p>
         </Alert>
       )}
@@ -211,7 +217,10 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
             'dashboard-scene.save-dashboard-form-common-options.save-timerange-label-update-default-time-range',
             'Update default time range'
           )}
-          description={'Will make current time range the new default'}
+          description={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-timerange-description-current-range-default',
+            'Will make current time range the new default'
+          )}
           data-testid={selectors.pages.SaveDashboardModal.saveTimerange}
         />
       )}

@@ -47,7 +47,7 @@ func setIfNotEmptyString(paramValue string) *string {
 
 func getLimit(limit string) int32 {
 	logGroupLimit := defaultLogGroupLimit
-	intLimit, err := strconv.ParseInt(limit, 10, 64)
+	intLimit, err := strconv.ParseInt(limit, 10, 32)
 	if err == nil && intLimit > 0 {
 		logGroupLimit = int32(intLimit)
 	}

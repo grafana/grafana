@@ -10,7 +10,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 )
 
 func TestAuthzLimitedClient_Check(t *testing.T) {
@@ -195,7 +194,7 @@ func TestNamespaceMatchingFallback(t *testing.T) {
 				Verb:      utils.VerbGet,
 				Namespace: tt.reqNamespace,
 			}
-			ctx = grpcutils.WithFallback(ctx)
+			ctx = WithFallback(ctx)
 			// Create a mock auth info with the specified namespace
 			// Test Check method
 			user := &identity.StaticRequester{Namespace: tt.authNamespace}

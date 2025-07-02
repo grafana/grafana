@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Combobox, ComboboxOption, Field, Input, SecretInput, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
+import { Field, Input, SecretInput, Stack } from '@grafana/ui';
 
-import { getWorkflowOptions } from '../Config/ConfigForm';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 
 import { WizardFormData } from './types';
@@ -13,53 +12,24 @@ export function ConnectStep() {
   const {
     register,
     control,
-    watch,
     setValue,
     formState: { errors },
+    getValues,
   } = useFormContext<WizardFormData>();
 
-  const type = watch('repository.type');
   const [tokenConfigured, setTokenConfigured] = useState(false);
 
-  const typeOptions = useMemo<Array<ComboboxOption<'github' | 'local'>>>(
-    () => [
-      { label: t('provisioning.connect-step.storage-type-github', 'GitHub'), value: 'github' },
-      { label: t('provisioning.connect-step.storage-type-local', 'Local'), value: 'local' },
-    ],
-    []
-  );
-
+  const type = getValues('repository.type');
   const isGithub = type === 'github';
 
   return (
     <Stack direction="column">
-      <Field
-        label={t('provisioning.connect-step.label-storage-type', 'Storage type')}
-        required
-        description={t(
-          'provisioning.connect-step.description-choose-storage-resources',
-          'Choose the type of storage for your resources'
-        )}
-      >
-        <Combobox
-          options={typeOptions}
-          value={type}
-          onChange={(value) => {
-            const repoType = value?.value;
-            setValue('repository.type', repoType);
-            setValue(
-              'repository.workflows',
-              getWorkflowOptions(repoType).map((v) => v.value)
-            );
-          }}
-        />
-      </Field>
-
       {isGithub && (
         <>
           <TokenPermissionsInfo />
           <Field
-            label={t('provisioning.connect-step.label-access-token', 'Enter your access token')}
+            noMargin
+            label={t('provisioning.connect-step.label-access-token', 'GitHub access token')}
             required
             description={t(
               'provisioning.connect-step.description-paste-your-git-hub-personal-access-token',
@@ -93,7 +63,8 @@ export function ConnectStep() {
           </Field>
 
           <Field
-            label={t('provisioning.connect-step.label-repository-url', 'Enter your Repository URL')}
+            noMargin
+            label={t('provisioning.connect-step.label-repository-url', 'GitHub repository URL')}
             error={errors.repository?.url?.message}
             invalid={!!errors.repository?.url}
             description={t(
@@ -114,40 +85,43 @@ export function ConnectStep() {
                   ),
                 },
               })}
+              id={'repository-url'}
               placeholder={t('provisioning.connect-step.placeholder-github-url', 'https://github.com/username/repo')}
             />
           </Field>
 
           <Field
-            label={t('provisioning.connect-step.label-branch', 'Branch')}
+            noMargin
+            label={t('provisioning.connect-step.label-branch', 'Branch name')}
+            description={t('provisioning.connect-step.description-branch', 'Branch to use for the GitHub repository')}
             error={errors.repository?.branch?.message}
             invalid={!!errors.repository?.branch}
           >
             <Input
               {...register('repository.branch')}
+              id={'repository-branch'}
               placeholder={t('provisioning.connect-step.placeholder-branch', 'main')}
             />
           </Field>
 
           <Field
-            label={t('provisioning.connect-step.label-path', 'Path')}
+            noMargin
+            label={t('provisioning.connect-step.label-path', 'Path to subdirectory in repository')}
             error={errors.repository?.path?.message}
             invalid={!!errors.repository?.path}
             description={t(
               'provisioning.connect-step.description-github-path',
-              'Path to a subdirectory in the Git repository'
+              'This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from'
             )}
           >
-            <Input
-              {...register('repository.path')}
-              placeholder={t('provisioning.connect-step.placeholder-github-path', 'grafana/')}
-            />
+            <Input {...register('repository.path')} id="repository-path" />
           </Field>
         </>
       )}
 
       {type === 'local' && (
         <Field
+          noMargin
           label={t('provisioning.connect-step.label-local-path', 'Local path')}
           error={errors.repository?.path?.message}
           invalid={!!errors.repository?.path}
@@ -156,6 +130,7 @@ export function ConnectStep() {
             {...register('repository.path', {
               required: t('provisioning.connect-step.error-field-required', 'This field is required.'),
             })}
+            id="repository-local-path"
             placeholder={t('provisioning.connect-step.placeholder-local-path', '/path/to/repo')}
           />
         </Field>

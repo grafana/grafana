@@ -86,3 +86,15 @@ export function isReducerExpression(expressionModel: ExpressionQuery) {
 export function isThresholdExpression(expressionModel: ExpressionQuery) {
   return expressionModel.type === ExpressionQueryType.threshold;
 }
+
+/**
+ * Determines if the given evaluator function type is a range type (requiring two threshold values)
+ */
+export function isRangeEvaluator(evalFunction: EvalFunction): boolean {
+  return (
+    evalFunction === EvalFunction.IsWithinRange ||
+    evalFunction === EvalFunction.IsOutsideRange ||
+    evalFunction === EvalFunction.IsOutsideRangeIncluded ||
+    evalFunction === EvalFunction.IsWithinRangeIncluded
+  );
+}

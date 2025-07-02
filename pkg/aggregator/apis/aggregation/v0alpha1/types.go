@@ -1,8 +1,9 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // +genclient
@@ -43,10 +44,9 @@ type Service struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataPlaneServiceList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []DataPlaneService `json:"items,omitempty"`
+	Items []DataPlaneService `json:"items"`
 }
 
 // PluginType defines the type of plugin backing the proxied service.

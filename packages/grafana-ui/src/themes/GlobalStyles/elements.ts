@@ -2,9 +2,16 @@ import { css } from '@emotion/react';
 
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
+import { getFeatureToggle } from '../../utils/featureToggle';
 import { getFocusStyles } from '../mixins';
 
-export function getElementStyles(theme: GrafanaTheme2) {
+export function getElementStyles(theme: GrafanaTheme2, isExtensionSidebarOpen?: boolean) {
+  // in case the sidebar is closed, we want the body to scroll
+  // react select tries prevent scrolling by setting overflow/padding-right on the body
+  // Need type assertion here due to the use of !important
+  // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const bodyOverflow = isExtensionSidebarOpen ? {} : { overflowY: 'auto !important' as 'auto' };
   return css({
     '*, *::before, *::after': {
       boxSizing: 'inherit',
@@ -40,11 +47,6 @@ export function getElementStyles(theme: GrafanaTheme2) {
       position: 'unset',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
-      // react select tries prevent scrolling by setting overflow/padding-right on the body
-      // Need type assertion here due to the use of !important
-      // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      overflowY: 'auto !important' as 'auto',
       paddingRight: '0 !important',
       '@media print': {
         overflow: 'visible',
@@ -59,6 +61,8 @@ export function getElementStyles(theme: GrafanaTheme2) {
       // see https://github.com/rsms/inter/issues/222
       fontVariantLigatures: 'no-contextual',
       ...theme.typography.body,
+      ...bodyOverflow,
+      fontVariantNumeric: getFeatureToggle('tabularNumbers') ? 'tabular-nums' : 'initial',
     },
 
     'h1, .h1': getVariantStyles(theme.typography.h1),
@@ -274,6 +278,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
     // 2. Correct font properties not being inherited.
     // 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
     'button, input, optgroup, select, textarea': {
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: 0,
       color: 'inherit',
       font: 'inherit',

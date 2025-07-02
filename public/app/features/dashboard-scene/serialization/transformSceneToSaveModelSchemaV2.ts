@@ -12,7 +12,6 @@ import {
   SceneVariables,
   SceneVariableSet,
   VizPanel,
-  sceneUtils,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
@@ -107,7 +106,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF elements
 
     // annotations
-    annotations: getAnnotations(sceneDash),
+    annotations: getAnnotations(sceneDash, dsReferencesMapping),
     // EOF annotations
 
     // layout
@@ -118,7 +117,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   try {
     // validateDashboardSchemaV2 will throw an error if the dashboard is not valid
     if (validateDashboardSchemaV2(dashboardSchemaV2)) {
-      return sortedDeepCloneWithoutNulls(dashboardSchemaV2);
+      return sortedDeepCloneWithoutNulls(dashboardSchemaV2, true);
     }
     // should never reach this point, validation should throw an error
     throw new Error('Error we could transform the dashboard to schema v2: ' + dashboardSchemaV2);
@@ -201,7 +200,12 @@ export function vizPanelToSchemaV2(
       min,
       max,
       color,
-    }).filter(([_, value]) => value !== undefined)
+    }).filter(([_, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== undefined;
+    })
   );
 
   const vizFieldConfig: FieldConfigSource = {
@@ -216,6 +220,7 @@ export function vizPanelToSchemaV2(
       title: vizPanel.state.title,
       description: vizPanel.state.description ?? '',
       links: getPanelLinks(vizPanel),
+      transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {
         kind: 'QueryGroup',
         spec: {
@@ -254,7 +259,7 @@ function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferenc
     vizPanelQueries.forEach((query) => {
       const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
       const dataQuery: DataQueryKind = {
-        kind: getDataQueryKind(query),
+        kind: getDataQueryKind(query, queryRunner),
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
       const querySpec: PanelQuerySpec = {
@@ -272,12 +277,26 @@ function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferenc
   return queries;
 }
 
-export function getDataQueryKind(query: SceneDataQuery | string): string {
+export function getDataQueryKind(query: SceneDataQuery | string, queryRunner?: SceneQueryRunner): string {
+  // Query is a string - get default data source type
   if (typeof query === 'string') {
-    return getDefaultDataSourceRef()?.type ?? '';
+    const defaultDS = getDefaultDataSourceRef();
+    return defaultDS?.type || '';
   }
 
-  return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
+  // Query has explicit datasource with type
+  if (query.datasource?.type) {
+    return query.datasource.type;
+  }
+
+  // Get type from query runner's datasource
+  if (queryRunner?.state.datasource?.type) {
+    return queryRunner.state.datasource.type;
+  }
+
+  // Fall back to default datasource
+  const defaultDS = getDefaultDataSourceRef();
+  return defaultDS?.type || '';
 }
 
 export function getDataQuerySpec(query: SceneDataQuery): DataQueryKind['spec'] {
@@ -378,7 +397,7 @@ function getVariables(oldDash: DashboardSceneState, dsReferencesMapping?: DSRefe
   return variables;
 }
 
-function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
+function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSReferencesMapping): AnnotationQueryKind[] {
   const data = state.$data;
   if (!(data instanceof DashboardDataLayerSet)) {
     return [];
@@ -393,20 +412,64 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       spec: {
         builtIn: Boolean(layer.state.query.builtIn),
         name: layer.state.query.name,
-        datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
+        datasource: getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping),
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
         iconColor: layer.state.query.iconColor,
       },
     };
 
-    // Check if DataQueryKind exists
-    const queryKind = getAnnotationQueryKind(layer.state.query);
-    if (layer.state.query.query?.kind === queryKind) {
+    // Transform v1 dashboard (using target) to v2 structure
+    // adds extra condition to prioritize query over target
+    // if query is defined, use it
+    if (layer.state.query.target && !layer.state.query.query) {
+      // Handle built-in annotations
+      if (layer.state.query.builtIn) {
+        result.spec.query = {
+          kind: 'grafana', // built-in annotations are always of type grafana
+          spec: {
+            ...layer.state.query.target,
+          },
+        };
+      } else {
+        result.spec.query = {
+          kind: getAnnotationQueryKind(layer.state.query),
+          spec: {
+            ...layer.state.query.target,
+          },
+        };
+      }
+    }
+    // For annotations without query.query defined (e.g., grafana annotations without tags)
+    else if (layer.state.query.query?.kind) {
       result.spec.query = {
-        kind: queryKind,
-        spec: layer.state.query.query.spec,
+        kind: layer.state.query.query.kind,
+        spec: {
+          ...layer.state.query.query.spec,
+        },
       };
+    }
+    // Collect datasource-specific properties not in standard annotation spec
+    let otherProps = omit(
+      layer.state.query,
+      'type',
+      'target',
+      'builtIn',
+      'name',
+      'datasource',
+      'iconColor',
+      'enable',
+      'hide',
+      'filter',
+      'query'
+    );
+
+    // Store extra properties in the legacyOptions field instead of directly in the spec
+    if (Object.keys(otherProps).length > 0) {
+      // Extract options property and get the rest of the properties
+      const { legacyOptions, ...restProps } = otherProps;
+      // Merge options with the rest of the properties
+      result.spec.legacyOptions = { ...legacyOptions, ...restProps };
     }
 
     // If filter is an empty array, don't save it
@@ -600,9 +663,9 @@ function validateRowsLayout(layout: unknown) {
   }
 }
 
-function getAutoAssignedDSRef(
-  element: VizPanel | SceneVariables,
-  type: 'panels' | 'variables',
+export function getAutoAssignedDSRef(
+  element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer,
+  type: 'panels' | 'variables' | 'annotations',
   elementMapReferences?: DSReferencesMapping
 ): Set<string> {
   if (!elementMapReferences) {
@@ -613,16 +676,25 @@ function getAutoAssignedDSRef(
     return elementMapReferences.panels.get(elementKey) || new Set();
   }
 
-  return elementMapReferences.variables;
+  if (type === 'variables') {
+    return elementMapReferences.variables;
+  }
+
+  if (type === 'annotations') {
+    return elementMapReferences.annotations;
+  }
+
+  // if type is not panels, annotations, or variables, throw error
+  throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
 }
 
 /**
  * Determines if a data source reference should be persisted for a query or variable
  */
-export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable>(
+export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | AnnotationQuery>(
   element: T,
   autoAssignedDsRef: Set<string>,
-  type: 'query' | 'variable',
+  type: 'query' | 'variable' | 'annotation',
   context?: SceneQueryRunner
 ): DataSourceRef | undefined {
   // Get the element identifier - refId for queries, name for variables
@@ -648,6 +720,10 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable>(
     return element.state.datasource || {};
   }
 
+  if (type === 'annotation' && 'datasource' in element) {
+    return element.datasource || {};
+  }
+
   return undefined;
 }
 
@@ -656,30 +732,50 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable>(
  * @returns refId for queries, name for variables
  * TODO: we will add annotations in the future
  */
-function getElementIdentifier<T extends SceneDataQuery | QueryVariable>(
+function getElementIdentifier<T extends SceneDataQuery | QueryVariable | AnnotationQuery>(
   element: T,
-  type: 'query' | 'variable'
+  type: 'query' | 'variable' | 'annotation'
 ): string {
   // when is type query look for refId
   if (type === 'query') {
     return 'refId' in element ? element.refId : '';
   }
-  // when is type variable look for the name of the variable
-  return 'state' in element && 'name' in element.state ? element.state.name : '';
+
+  if (type === 'variable') {
+    // when is type variable look for the name of the variable
+    return 'state' in element && 'name' in element.state ? element.state.name : '';
+  }
+
+  // when is type annotation look for annotation name
+  if (type === 'annotation') {
+    return 'name' in element ? element.name : '';
+  }
+
+  throw new Error(`Invalid type ${type} for getElementIdentifier`);
 }
 
-function isVizPanel(element: VizPanel | SceneVariables): element is VizPanel {
+function isVizPanel(element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer): element is VizPanel {
   // FIXME: is there another way to do this?
   return 'pluginId' in element.state;
 }
 
-function isSceneVariables(element: VizPanel | SceneVariables): element is SceneVariables {
+function isSceneVariables(
+  element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer
+): element is SceneVariables {
   // Check for properties unique to SceneVariables but not in VizPanel
   return !('pluginId' in element.state) && ('variables' in element.state || 'getValue' in element);
 }
 
-function isSceneDataQuery(query: SceneDataQuery | QueryVariable): query is SceneDataQuery {
+function isSceneDataQuery(query: SceneDataQuery | QueryVariable | AnnotationQuery): query is SceneDataQuery {
   return 'refId' in query && !('state' in query);
+}
+
+function isAnnotationQuery(query: SceneDataQuery | QueryVariable | AnnotationQuery): query is AnnotationQuery {
+  return 'datasource' in query && 'name' in query;
+}
+
+function isQueryVariable(query: SceneDataQuery | QueryVariable | AnnotationQuery): query is QueryVariable {
+  return 'state' in query && 'name' in query.state;
 }
 
 /**
@@ -690,35 +786,41 @@ function isSceneDataQuery(query: SceneDataQuery | QueryVariable): query is Scene
  *
  */
 export function getElementDatasource(
-  element: VizPanel | SceneVariables,
-  queryElement: SceneDataQuery | QueryVariable,
-  type: 'panel' | 'variable',
+  element: VizPanel | SceneVariables | dataLayers.AnnotationsDataLayer,
+  queryElement: SceneDataQuery | QueryVariable | AnnotationQuery,
+  type: 'panel' | 'variable' | 'annotation',
   queryRunner?: SceneQueryRunner,
   dsReferencesMapping?: DSReferencesMapping
 ): DataSourceRef | undefined {
+  let result: DataSourceRef | undefined;
   if (type === 'panel') {
     if (!queryRunner || !isVizPanel(element) || !isSceneDataQuery(queryElement)) {
       return undefined;
     }
     // Get datasource for panel query
     const autoAssignedRefs = getAutoAssignedDSRef(element, 'panels', dsReferencesMapping);
-    return getPersistedDSFor(queryElement, autoAssignedRefs, 'query', queryRunner);
+    result = getPersistedDSFor(queryElement, autoAssignedRefs, 'query', queryRunner);
   }
 
   if (type === 'variable') {
-    if (!isSceneVariables(element) || isSceneDataQuery(queryElement)) {
+    if (!isSceneVariables(element) || !isQueryVariable(queryElement)) {
       return undefined;
     }
     // Get datasource for variable
-    if (!sceneUtils.isQueryVariable(queryElement)) {
-      return undefined;
-    }
     const autoAssignedRefs = getAutoAssignedDSRef(element, 'variables', dsReferencesMapping);
-    // Important: Only return the datasource if it's not in auto-assigned refs
-    // and if the result would not be an empty object
-    const result = getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
-    return Object.keys(result || {}).length > 0 ? result : undefined;
+
+    result = getPersistedDSFor(queryElement, autoAssignedRefs, 'variable');
   }
 
-  return undefined;
+  if (type === 'annotation') {
+    if (!isAnnotationQuery(queryElement)) {
+      return undefined;
+    }
+    // Get datasource for annotation
+    const autoAssignedRefs = getAutoAssignedDSRef(element, 'annotations', dsReferencesMapping);
+    result = getPersistedDSFor(queryElement, autoAssignedRefs, 'annotation');
+  }
+  // Important: Only return the datasource if it's not in auto-assigned refs
+  // and if the result would not be an empty object
+  return Object.keys(result || {}).length > 0 ? result : undefined;
 }

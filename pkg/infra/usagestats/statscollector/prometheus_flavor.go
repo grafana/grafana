@@ -46,12 +46,26 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 		s.log.Error("Failed to read all Prometheus data sources", "error", err)
 		return nil, err
 	}
+	dsAmazonProm := &datasources.GetDataSourcesByTypeQuery{Type: "grafana-amazonprometheus-datasource"}
+	dataSourcesAmazonProm, err := s.datasources.GetDataSourcesByType(ctx, dsAmazonProm)
+	if err != nil {
+		s.log.Error("Failed to read all Amazon Prometheus data sources", "error", err)
+		return nil, err
+	}
+	dsAzureProm := &datasources.GetDataSourcesByTypeQuery{Type: "grafana-azureprometheus-datasource"}
+	dataSourcesAzureProm, err := s.datasources.GetDataSourcesByType(ctx, dsAzureProm)
+	if err != nil {
+		s.log.Error("Failed to read all Azure Prometheus data sources", "error", err)
+		return nil, err
+	}
+
+	allPromDataSources := append(append(dataSources, dataSourcesAmazonProm...), dataSourcesAzureProm...)
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 	flavors := sync.Map{}
 
-	for _, ds := range dataSources {
+	for _, ds := range allPromDataSources {
 		ds := ds
 		g.Go(func() error {
 			variant, err := s.detectPrometheusVariant(ctx, ds)

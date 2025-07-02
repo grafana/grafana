@@ -18,7 +18,7 @@ type AccountsService struct {
 	models.OAMAPIProvider
 }
 
-func NewAccountsService(oamClient models.OAMAPIProvider) models.AccountsProvider {
+var NewAccountsService = func(oamClient models.OAMAPIProvider) models.AccountsProvider {
 	return &AccountsService{oamClient}
 }
 
@@ -81,5 +81,5 @@ func (a *AccountsService) GetAccountsForCurrentUserOrRole(ctx context.Context) (
 		nextToken = links.NextToken
 	}
 
-	return valuesToListMetricRespone(response), nil
+	return valuesToListMetricResponse(response), nil
 }

@@ -10,7 +10,6 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
-  SceneGridRow,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -20,6 +19,7 @@ import {
   SceneDataQuery,
   SceneQueryRunner,
   sceneUtils,
+  dataLayers,
 } from '@grafana/scenes';
 import {
   DashboardCursorSync as DashboardCursorSyncV1,
@@ -39,12 +39,11 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { AutoGridLayout } from '../scene/layout-responsive-grid/ResponsiveGridLayout';
-import { AutoGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -56,6 +55,8 @@ import {
   getElementDatasource,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
+  getDataQueryKind,
+  getAutoAssignedDSRef,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -68,6 +69,15 @@ jest.mock('../utils/dashboardSceneGraph', () => {
       getElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
         // Return the panel key if it exists, otherwise use panel-1 as default
         return panel?.state?.key || 'panel-1';
+      }),
+      getPanelLinks: jest.fn().mockImplementation(() => {
+        return new VizPanelLinks({
+          rawLinks: [
+            { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+            { title: 'Test Link 2', url: 'http://test2.com' },
+          ],
+          menu: new VizPanelLinksMenu({}),
+        });
       }),
     },
   };
@@ -113,7 +123,14 @@ jest.mock('@grafana/runtime', () => ({
           },
           loki: {
             name: 'Loki',
-            meta: { id: 'loki' },
+            meta: {
+              id: 'loki',
+              name: 'Loki',
+              type: 'datasource',
+              info: { version: '1.0.0' },
+              module: 'app/plugins/datasource/loki/module',
+              baseUrl: '/plugins/loki',
+            },
             type: 'datasource',
           },
         },
@@ -213,7 +230,13 @@ describe('transformSceneToSaveModelSchemaV2', () => {
                 description: 'Test Description',
                 hoverHeader: true,
                 hoverHeaderOffset: 10,
-                fieldConfig: { defaults: {}, overrides: [] },
+                fieldConfig: {
+                  defaults: {
+                    mappings: [],
+                    max: undefined,
+                  },
+                  overrides: [],
+                },
                 displayMode: 'transparent',
                 pluginVersion: '7.0.0',
                 $timeRange: new SceneTimeRange({
@@ -228,31 +251,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // itemHeight?: number,
               // repeatDirection?: RepeatDirection,
               // maxPerRow?: number,
-            }),
-            new SceneGridRow({
-              key: 'panel-4',
-              title: 'Test Row',
-              y: 10,
-              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
-              children: [
-                new DashboardGridItem({
-                  y: 11,
-                  body: new VizPanel({
-                    key: 'panel-2',
-                    pluginId: 'graph',
-                    title: 'Test Panel 2',
-                    description: 'Test Description 2',
-                    fieldConfig: { defaults: {}, overrides: [] },
-                    displayMode: 'transparent',
-                    pluginVersion: '7.0.0',
-                    $timeRange: new SceneTimeRange({
-                      timeZone: 'UTC',
-                      from: 'now-3h',
-                      to: 'now',
-                    }),
-                  }),
-                }),
-              ],
             }),
           ],
         }),
@@ -413,8 +411,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(3);
-    // check annotation layer 3 with no datasource has the default datasource defined as type
-    expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
+    // Check annotation layer 3 without initial data source isn't updated with runtime default
+    expect(result.annotations?.[2].spec.datasource?.type).toBe(undefined);
   });
 
   it('should transform the minimum scene to save model schema v2', () => {
@@ -497,6 +495,119 @@ describe('transformSceneToSaveModelSchemaV2', () => {
       const resultC = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
       expect(resultC).toEqual({});
     });
+  });
+
+  describe('getDataQueryKind', () => {
+    it('should preserve original query datasource type when available', () => {
+      // 1. Test with a query that has its own datasource type
+      const queryWithDS: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // Create a query runner with a different datasource type
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'default-ds', type: 'loki' },
+        queries: [],
+      });
+
+      // Should use the query's own datasource type (prometheus)
+      expect(getDataQueryKind(queryWithDS, queryRunner)).toBe('prometheus');
+    });
+
+    it('should use queryRunner datasource type as fallback when query has no datasource', () => {
+      // 2. Test with a query that has no datasource
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with a datasource
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'influxdb-1', type: 'influxdb' },
+        queries: [],
+      });
+
+      // Should fall back to queryRunner's datasource type
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('influxdb');
+    });
+
+    it('should fall back to default datasource when neither query nor queryRunner has datasource type', () => {
+      // 3. Test with neither query nor queryRunner having a datasource type
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with no datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [],
+      });
+
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('loki');
+
+      // Also verify the function's behavior by checking the args
+      expect(queryWithoutDS.datasource?.type).toBeUndefined(); // No query datasource
+      expect(queryRunner.state.datasource?.type).toBeUndefined(); // No queryRunner datasource
+    });
+  });
+
+  it('should test annotation with legacyOptions field', () => {
+    // Create a scene with an annotation layer that has options
+    const annotationWithOptions = new DashboardAnnotationsDataLayer({
+      key: 'layerWithLegacyOptions',
+      query: {
+        datasource: {
+          type: 'prometheus',
+          uid: 'abc123',
+        },
+        name: 'annotation-with-options',
+        enable: true,
+        iconColor: 'red',
+        legacyOptions: {
+          expr: 'rate(http_requests_total[5m])',
+          queryType: 'range',
+          legendFormat: '{{method}} {{endpoint}}',
+          useValueAsTime: true,
+        },
+        // Some other properties that aren't in the annotation spec
+        // and should be moved to options
+        customProp1: 'value1',
+        customProp2: 'value2',
+      },
+      name: 'layerWithOptions',
+      isEnabled: true,
+      isHidden: false,
+    });
+
+    const scene = setupDashboardScene({
+      $data: new DashboardDataLayerSet({
+        annotationLayers: [annotationWithOptions],
+      }),
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [] }),
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+
+    // Verify the annotation options are properly serialized
+    expect(result.annotations.length).toBe(1);
+    expect(result.annotations[0].spec.legacyOptions).toBeDefined();
+    expect(result.annotations[0].spec.legacyOptions).toEqual({
+      expr: 'rate(http_requests_total[5m])',
+      queryType: 'range',
+      legendFormat: '{{method}} {{endpoint}}',
+      useValueAsTime: true,
+      customProp1: 'value1',
+      customProp2: 'value2',
+    });
+
+    // Ensure these properties are not at the root level
+    expect(result).not.toHaveProperty('annotations[0].spec.expr');
+    expect(result).not.toHaveProperty('annotations[0].spec.queryType');
+    expect(result).not.toHaveProperty('annotations[0].spec.legendFormat');
+    expect(result).not.toHaveProperty('annotations[0].spec.useValueAsTime');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp1');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp2');
   });
 });
 
@@ -627,6 +738,58 @@ describe('getElementDatasource', () => {
     expect(result).toBeUndefined();
   });
 
+  it('should handle annotation datasources correctly', () => {
+    // Use the dataLayers.AnnotationsDataLayer directly
+    const annotationLayer = new dataLayers.AnnotationsDataLayer({
+      key: 'annotation-1',
+      name: 'Test Annotation',
+      isEnabled: true,
+      isHidden: false,
+      query: {
+        name: 'Test Annotation',
+        enable: true,
+        hide: false,
+        iconColor: 'red',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      },
+    });
+
+    // Create an annotation query without datasource
+    const annotationWithoutDS = {
+      name: 'No DS Annotation',
+      enable: true,
+      hide: false,
+      iconColor: 'blue',
+    };
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map([['panel-1', new Set(['A'])]]),
+      variables: new Set<string>(),
+      annotations: new Set<string>(['No DS Annotation']),
+    };
+
+    // Test with annotation that has datasource defined
+    const resultWithDS = getElementDatasource(
+      annotationLayer,
+      annotationLayer.state.query,
+      'annotation',
+      undefined,
+      dsReferencesMapping
+    );
+    expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+    // Test with annotation that has no datasource defined
+    const resultWithoutDS = getElementDatasource(
+      annotationLayer,
+      annotationWithoutDS,
+      'annotation',
+      undefined,
+      dsReferencesMapping
+    );
+    expect(resultWithoutDS).toBeUndefined();
+  });
+
   it('should handle invalid input combinations', () => {
     const vizPanel = new VizPanel({
       key: 'panel-1',
@@ -650,6 +813,24 @@ describe('getElementDatasource', () => {
     }
     // Variable set with query
     expect(getElementDatasource(variableSet, query, 'variable')).toBeUndefined();
+  });
+
+  it('should throw error when invalid type is passed to getAutoAssignedDSRef', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const dsReferencesMapping = {
+      panels: new Map([['panel-1', new Set(['A'])]]),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    expect(() => {
+      // @ts-expect-error - intentionally passing invalid type to test error handling
+      getAutoAssignedDSRef(vizPanel, 'invalid-type', dsReferencesMapping);
+    }).toThrow('Invalid type invalid-type for getAutoAssignedDSRef');
   });
 });
 

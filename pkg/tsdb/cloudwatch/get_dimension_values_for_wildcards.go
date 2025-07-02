@@ -27,7 +27,7 @@ func shouldSkipFetchingWildcards(ctx context.Context, q *models.CloudWatchQuery)
 }
 
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
-func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
+func (ds *DataSource) getDimensionValuesForWildcards(
 	ctx context.Context,
 	region string,
 	client models.CWClient,
@@ -58,12 +58,12 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
 			cacheKey := fmt.Sprintf("%s-%s-%s-%s-%s", region, accountID, query.Namespace, query.MetricName, dimensionKey)
 			cachedDimensions, found := tagValueCache.Get(cacheKey)
 			if found {
-				e.logger.FromContext(ctx).Debug("Fetching dimension values from cache")
+				ds.logger.FromContext(ctx).Debug("Fetching dimension values from cache")
 				query.Dimensions[dimensionKey] = cachedDimensions.([]string)
 				continue
 			}
 
-			e.logger.FromContext(ctx).Debug("Cache miss, fetching dimension values from AWS")
+			ds.logger.FromContext(ctx).Debug("Cache miss, fetching dimension values from AWS")
 			request := resources.DimensionValuesRequest{
 				ResourceRequest: &resources.ResourceRequest{
 					Region:    region,

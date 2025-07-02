@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
   const [showScrollTopIndicator, setShowTopScrollIndicator] = useState(false);
@@ -38,6 +38,7 @@ export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
         className={cx(styles.scrollIndicator, styles.scrollTopIndicator, {
           [styles.scrollIndicatorVisible]: showScrollTopIndicator,
         })}
+        role="presentation"
       />
       <div className={styles.scrollContent}>
         <div ref={scrollTopMarker} className={cx(styles.scrollMarker, styles.scrollTopMarker)} />
@@ -48,6 +49,7 @@ export const ScrollIndicators = ({ children }: React.PropsWithChildren<{}>) => {
         className={cx(styles.scrollIndicator, styles.scrollBottomIndicator, {
           [styles.scrollIndicatorVisible]: showScrollBottomIndicator,
         })}
+        role="presentation"
       />
     </>
   );

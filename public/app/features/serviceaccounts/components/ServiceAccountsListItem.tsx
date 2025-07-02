@@ -3,11 +3,11 @@ import { memo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { OrgRolePicker } from 'app/features/admin/OrgRolePicker';
 import { AccessControlAction, Role, ServiceAccountDTO } from 'app/types';
 
@@ -37,6 +37,7 @@ const ServiceAccountListItemComponent = memo(
   }: ServiceAccountListItemProps) => {
     const editUrl = `org/serviceaccounts/${serviceAccount.id}`;
     const styles = useStyles2(getStyles);
+
     const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
     const displayRolePicker =
       contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
@@ -142,7 +143,11 @@ const ServiceAccountListItemComponent = memo(
                   name="trash-alt"
                   size="md"
                   onClick={() => onRemoveButtonClick(serviceAccount)}
-                  tooltip={`Delete service account ${serviceAccount.name}`}
+                  tooltip={t(
+                    'serviceaccounts.service-account-list-item.tooltip-delete-button',
+                    'Delete service account {{serviceAccountName}}',
+                    { serviceAccountName: serviceAccount.name }
+                  )}
                 />
               )}
             </Stack>
@@ -153,7 +158,10 @@ const ServiceAccountListItemComponent = memo(
                 disabled={true}
                 name="lock"
                 size="md"
-                tooltip={`This is a managed service account and cannot be modified.`}
+                tooltip={t(
+                  'serviceaccounts.service-account-list-item.tooltip-managed-service-account-cannot-modified',
+                  'This is a managed service account and cannot be modified'
+                )}
               />
             </Stack>
           )}

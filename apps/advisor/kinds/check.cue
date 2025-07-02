@@ -7,8 +7,10 @@ check: {
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				frontend: true
 				backend:  true
+				// Frontend code is generated following the instructions from
+				// https://github.com/grafana/grafana/blob/main/public/app/api/README.md
+				frontend: false
 			}
 			validation: {
 				operations: [
@@ -34,8 +36,12 @@ check: {
 					stepID: string
 					// Human readable identifier of the item that failed
 					item: string
+					// ID of the item that failed
+					itemID: string
 					// Links to actions that can be taken to resolve the failure
 					links: [...#ErrorLink]
+					// More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.
+					moreInfo?: string
 				}	
 				#Report: {
 						// Number of elements analyzed

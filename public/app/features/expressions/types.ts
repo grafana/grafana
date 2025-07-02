@@ -66,11 +66,11 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   {
     value: ExpressionQueryType.sql,
     label: 'SQL',
-    description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
+    description: 'Transform data using SQL. Supports MySQL syntax.',
   },
 ].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
-    return config.featureToggles?.sqlExpressions;
+    return config?.featureToggles?.sqlExpressions;
   }
   return true;
 });

@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { dateTime, LoadingState } from '@grafana/data';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockQuery from '../../__mocks__/query';
 import { ResultFormat } from '../../dataquery.gen';
-import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
+import createMockDatasource from '../../mocks/datasource';
+import createMockQuery from '../../mocks/query';
 
 import LogsQueryEditor from './LogsQueryEditor';
+import { createMockResourcePickerData } from './mocks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -423,6 +423,46 @@ describe('LogsQueryEditor', () => {
       });
 
       expect(await screen.queryByLabelText('Basic')).not.toBeInTheDocument();
+    });
+
+    it('should disable other resources with a basic logs query when one resource is selected', async () => {
+      const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+        },
+      });
+      const basicLogsEnabled = true;
+      const onChange = jest.fn();
+      const onQueryChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={onQueryChange}
+          setError={() => {}}
+          basicLogsEnabled={basicLogsEnabled}
+        />
+      );
+
+      expect(await screen.findByLabelText('Basic')).toBeInTheDocument();
+
+      const resourcePickerButton = await screen.findByRole('button', { name: 'la-workspace' });
+      await userEvent.click(resourcePickerButton);
+
+      const checkbox = await screen.findByLabelText('la-workspace');
+      expect(checkbox).toBeChecked();
+
+      expect(await screen.findByLabelText('la-workspace-1')).toBeDisabled();
+      expect(
+        await screen.findByText('When using Basic Logs, you may only select one resource at a time.')
+      ).toBeInTheDocument();
     });
   });
 

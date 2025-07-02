@@ -4,10 +4,10 @@ import { ReactElement, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { Button, ConfirmModal, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
 import { UsagesToNetwork, VariableUsageTree, getVariableUsages } from '../../variables/utils';
@@ -35,6 +35,7 @@ export function VariableEditorListRow({
 }: VariableEditorListRowProps): ReactElement {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
   const definition = getDefinition(variable);
   const variableState = variable.state;
   const identifier = variableState.name;
@@ -144,9 +145,15 @@ interface VariableCheckIndicatorProps {
 
 function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactElement {
   const styles = useStyles2(getStyles);
+
   if (passed) {
     return (
-      <Tooltip content="This variable is referenced by other variables or dashboard.">
+      <Tooltip
+        content={t(
+          'dashboard-scene.variable-check-indicator.content-variable-referenced-other-variables-dashboard',
+          'This variable is referenced by other variables or dashboard.'
+        )}
+      >
         <Icon
           name="check"
           className={styles.iconPassed}
@@ -160,7 +167,12 @@ function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactE
   }
 
   return (
-    <Tooltip content="This variable is not referenced by other variables or dashboard.">
+    <Tooltip
+      content={t(
+        'dashboard-scene.variable-check-indicator.content-variable-not-referenced-other-variables-dashboard',
+        'This variable is not referenced by other variables or dashboard.'
+      )}
+    >
       <Icon
         name="exclamation-triangle"
         className={styles.iconFailed}

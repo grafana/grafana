@@ -117,6 +117,13 @@ describe('inspector download', () => {
       expect(text).toEqual(expected);
       expect(filename).toEqual(`${title}-logs-${dateTimeFormat(1400000000000)}.txt`);
     });
+
+    it('should, when title is empty, resolve in %s', async () => {
+      downloadLogsModelAsTxt({ meta: [], rows: [] });
+      const call = (saveAs as unknown as jest.Mock).mock.calls[0];
+      const filename = call[1];
+      expect(filename).toEqual(`Logs-${dateTimeFormat(1400000000000)}.txt`);
+    });
   });
 });
 

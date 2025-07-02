@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select } from '@grafana/ui';
 
@@ -10,6 +11,7 @@ import {
   AzureLogAnalyticsMetadataColumn,
   AzureLogAnalyticsMetadataTable,
   AzureMonitorOption,
+  TablePlan,
 } from '../../types';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
@@ -71,6 +73,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       groupBy: [],
       orderBy: [],
       columns: [],
+      basicLogsQuery: selectedTable.plan === TablePlan.Basic,
     });
   };
 
@@ -133,26 +136,26 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Table">
+        <EditorField label={t('components.table-section.label-table', 'Table')}>
           <Select
-            aria-label="Table"
+            aria-label={t('components.table-section.aria-label-table', 'Table')}
             value={builderQuery?.from?.property.name}
             options={tableOptions}
-            placeholder="Select a table"
+            placeholder={t('components.table-section.placeholder-select-table', 'Select a table')}
             onChange={handleTableChange}
             width={inputFieldSize}
           />
         </EditorField>
-        <EditorField label="Columns">
+        <EditorField label={t('components.table-section.label-columns', 'Columns')}>
           <InputGroup>
             <Select
-              aria-label="Columns"
+              aria-label={t('components.table-section.aria-label-columns', 'Columns')}
               isMulti
               isClearable
               closeMenuOnSelect={false}
               value={columnSelectValue}
               options={selectableOptions}
-              placeholder="Select columns"
+              placeholder={t('components.table-section.placeholder-select-columns', 'Select columns')}
               isDisabled={!builderQuery?.from?.property.name}
               onChange={(e) => {
                 handleColumnsChange(e);

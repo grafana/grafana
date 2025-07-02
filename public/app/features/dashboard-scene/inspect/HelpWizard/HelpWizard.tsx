@@ -3,6 +3,7 @@ import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, FeatureState } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import {
@@ -19,10 +20,9 @@ import {
   FeatureBadge,
   Select,
   ClipboardButton,
-  Icon,
   Stack,
+  TextLink,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
@@ -61,8 +61,8 @@ export function HelpWizard({ panel, onClose }: Props) {
   }
 
   const tabs = [
-    { label: 'Snapshot', value: SnapshotTab.Support },
-    { label: 'Data', value: SnapshotTab.Data },
+    { label: t('dashboard-scene.help-wizard.tabs.label.snapshot', 'Snapshot'), value: SnapshotTab.Support },
+    { label: t('dashboard-scene.help-wizard.tabs.label.data', 'Data'), value: SnapshotTab.Data },
   ];
 
   const hasSupportBundleAccess =
@@ -77,23 +77,22 @@ export function HelpWizard({ panel, onClose }: Props) {
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
             <FeatureBadge featureState={FeatureState.beta} />
-            <a
-              href="https://grafana.com/docs/grafana/latest/troubleshooting/"
-              target="blank"
-              className="external-link"
-              rel="noopener noreferrer"
-            >
-              Troubleshooting docs <Icon name="external-link-alt" />
-            </a>
+            <TextLink href="https://grafana.com/docs/grafana/latest/troubleshooting/" external>
+              <Trans i18nKey="dashboard-scene.help-wizard.troubleshooting-docs">Troubleshooting docs</Trans>
+            </TextLink>
           </Stack>
           <span className="muted">
-            To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
-            snapshot contains query response data and panel settings.
+            <Trans i18nKey="dashboard-scene.help-wizard.troubleshooting-request-help">
+              To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
+              snapshot contains query response data and panel settings.
+            </Trans>
           </span>
           {hasSupportBundleAccess && (
             <span className="muted">
-              You can also retrieve a support bundle containing information concerning your Grafana instance and
-              configured datasources in the <a href="/support-bundles">support bundles section</a>.
+              <Trans i18nKey="dashboard-scene-help-wizard.support-bundle">
+                You can also retrieve a support bundle containing information concerning your Grafana instance and
+                configured datasources in the <TextLink href="/support-bundles">support bundles section</TextLink>.
+              </Trans>
             </span>
           )}
         </Stack>
@@ -127,7 +126,7 @@ export function HelpWizard({ panel, onClose }: Props) {
               </ClipboardButton>
             ) : (
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Download ({snapshotSize})
+                <Trans i18nKey="dashboard-scene.help-wizard.download-snapshot">Download ({{ snapshotSize }})</Trans>
               </Button>
             )}
           </div>
@@ -151,7 +150,10 @@ export function HelpWizard({ panel, onClose }: Props) {
         <>
           <Field
             label={t('dashboard-scene.help-wizard.label-randomize-data', 'Randomize data')}
-            description="Modify the original data to hide sensitive information.  Note the lengths will stay the same, and duplicate values will be equal."
+            description={t(
+              'dashboard-scene.help-wizard.description-randomize-data',
+              'Modify the original data to hide sensitive information. Note the lengths will stay the same, and duplicate values will be equal.'
+            )}
           >
             <Stack>
               <InlineSwitch
@@ -180,11 +182,13 @@ export function HelpWizard({ panel, onClose }: Props) {
 
           <Field
             label={t('dashboard-scene.help-wizard.label-support-snapshot', 'Support snapshot')}
-            description={`Panel: ${panelTitle}`}
+            description={t('dashboard-scene.help-wizard.description-support-snapshot', 'Panel: {{panelTitle}}', {
+              panelTitle,
+            })}
           >
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Dashboard ({snapshotSize})
+                <Trans i18nKey="dashboard-scene.help-wizard.download-dashboard">Dashboard ({{ snapshotSize }})</Trans>
               </Button>
               <ClipboardButton
                 icon="github"

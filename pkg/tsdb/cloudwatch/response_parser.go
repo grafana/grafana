@@ -19,7 +19,7 @@ import (
 // matches a dynamic label
 var dynamicLabel = regexp.MustCompile(`\$\{.+\}`)
 
-func (e *cloudWatchExecutor) parseResponse(ctx context.Context, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
+func (ds *DataSource) parseResponse(ctx context.Context, metricDataOutputs []*cloudwatch.GetMetricDataOutput,
 	queries []*models.CloudWatchQuery) ([]*responseWrapper, error) {
 	aggregatedResponse := aggregateResponse(metricDataOutputs)
 	queriesById := map[string]*models.CloudWatchQuery{}
@@ -248,6 +248,7 @@ func buildDataFrames(ctx context.Context, aggregatedResponse models.QueryRowResp
 			RefID: query.RefId,
 			Meta:  createMeta(query),
 		}
+		frame.Meta.Type = data.FrameTypeTimeSeriesMulti
 
 		for code := range aggregatedResponse.ErrorCodes {
 			if aggregatedResponse.ErrorCodes[code] {

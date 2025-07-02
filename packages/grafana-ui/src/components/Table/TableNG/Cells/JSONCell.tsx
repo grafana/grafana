@@ -1,17 +1,17 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { Property } from 'csstype';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../../../themes';
-import { Button, clearLinkButtonStyles } from '../../../Button';
-import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
+import { useStyles2 } from '../../../../themes/ThemeContext';
+import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
+import { tooltipOnClickHandler, DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { JSONCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
-export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps) => {
+export const JSONCell = ({ value, justifyContent, field, rowIdx, actions }: JSONCellProps) => {
   const styles = useStyles2(getStyles, justifyContent);
-  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   let displayValue = value;
 
@@ -33,25 +33,29 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps
     }
   }
 
-  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
+  const links = getCellLinks(field, rowIdx) || [];
 
-  // TODO: Implement actions
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
+
   return (
-    <div className={styles.jsonText}>
-      {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
-          {(api) => {
-            if (api.openMenu) {
-              return (
-                <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
-                  {displayValue}
-                </Button>
-              );
-            } else {
-              return <>{displayValue}</>;
-            }
-          }}
-        </DataLinksContextMenu>
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
+    <div
+      className={styles.jsonText}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
+      style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
+    >
+      {shouldShowLink ? (
+        renderSingleLink(links[0], displayValue)
+      ) : shouldShowTooltip ? (
+        <DataLinksActionsTooltip
+          links={links}
+          actions={actions}
+          value={displayValue}
+          coords={tooltipCoords}
+          onTooltipClose={() => setTooltipCoords(undefined)}
+        />
       ) : (
         displayValue
       )}

@@ -2,8 +2,9 @@ import { css, cx, keyframes } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -27,7 +28,7 @@ export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) =
   }
 
   return (
-    <Tooltip content="Cancel query">
+    <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel-loading', 'Cancel query')}>
       <Icon
         className={cx(styles.spin, { [styles.clickable]: !!onCancel })}
         name={prefersReducedMotion ? 'hourglass' : 'sync'}

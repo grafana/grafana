@@ -31,14 +31,15 @@ type simpleAuthService struct {
 func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID int64, user *user.SignedInUser) (ResourceFilter, error) {
 	canReadDashboard, canReadFolder := accesscontrol.Checker(user, dashboards.ActionDashboardsRead), accesscontrol.Checker(user, dashboards.ActionFoldersRead)
 	return func(kind entityKind, uid, parent string) bool {
-		if kind == entityKindFolder {
+		switch kind {
+		case entityKindFolder:
 			scopes, err := dashboards.GetInheritedScopes(ctx, orgID, uid, a.folderService)
 			if err != nil {
 				a.logger.Debug("Could not retrieve inherited folder scopes:", "err", err)
 			}
 			scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid))
 			return canReadFolder(scopes...)
-		} else if kind == entityKindDashboard {
+		case entityKindDashboard:
 			scopes, err := dashboards.GetInheritedScopes(ctx, orgID, parent, a.folderService)
 			if err != nil {
 				a.logger.Debug("Could not retrieve inherited folder scopes:", "err", err)
@@ -46,7 +47,12 @@ func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID in
 			scopes = append(scopes, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid))
 			scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parent))
 			return canReadDashboard(scopes...)
+
+		case entityKindPanel, entityKindDatasource, entityKindQuery:
+			// Not a dashboard or folder. Assume no access.
+			fallthrough
+		default:
+			return false
 		}
-		return false
 	}, nil
 }

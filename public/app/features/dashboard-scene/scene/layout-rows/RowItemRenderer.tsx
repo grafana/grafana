@@ -4,9 +4,9 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useIsClone } from '../../utils/clone';
@@ -58,8 +58,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             styles.wrapper,
             !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
-            isEditing && !isCollapsed && styles.wrapperEditing,
-            isEditing && isCollapsed && styles.wrapperEditingCollapsed,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
@@ -112,8 +110,14 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                     !isTopLevel && styles.rowTitleNested,
                     isCollapsed && styles.rowTitleCollapsed
                   )}
-                  role="heading"
                 >
+                  {!model.hasUniqueTitle() && (
+                    <Tooltip
+                      content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}
+                    >
+                      <Icon name="exclamation-triangle" />
+                    </Tooltip>
+                  )}
                   {title}
                   {isHeaderHidden && (
                     <Tooltip
@@ -124,7 +128,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                   )}
                 </span>
               </button>
-              {isDraggable && <Icon name="draggabledots" />}
+              {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
           {!isCollapsed && <layout.Component model={layout} />}
@@ -138,13 +142,26 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     rowHeader: css({
-      width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
       justifyContent: 'space-between',
       marginBottom: theme.spacing(1),
+
+      '& .dashboard-row-header-drag-handle': css({
+        opacity: 0,
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'opacity 0.25s',
+        },
+      }),
+
+      '&:hover': css({
+        '& .dashboard-row-header-drag-handle': css({
+          opacity: 1,
+        }),
+      }),
     }),
     rowTitleButton: css({
       display: 'flex',
@@ -159,7 +176,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(2),
-      fontSize: theme.typography.h5.fontSize,
+      ...theme.typography.h5,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
       overflow: 'hidden',
@@ -186,13 +203,16 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      width: '100%',
-      minHeight: '100px',
+      // Without this min height, the custom grid (SceneGridLayout) wont render
+      // should be 1px more than row header + padding + margin
+      // consist of lineHeight + paddingBlock + margin + 0.125 = 39px
+      minHeight: theme.spacing(2.75 + 1 + 1 + 0.125),
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
         marginLeft: theme.spacing(3),
         position: 'relative',
+        width: 'auto',
 
         '&:before': {
           content: '""',
@@ -207,21 +227,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     dragging: css({
       cursor: 'move',
-    }),
-    wrapperEditing: css({
-      padding: theme.spacing(0.5),
-
-      '.dashboard-row-header': {
-        padding: 0,
-      },
-    }),
-    wrapperEditingCollapsed: css({
-      padding: theme.spacing(0.5),
-
-      '.dashboard-row-header': {
-        marginBottom: theme.spacing(0),
-        padding: 0,
-      },
     }),
     wrapperGrow: css({
       flexGrow: 1,

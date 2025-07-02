@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { InputGroup, AccessoryButton } from '@grafana/plugin-ui';
 import { Select, Label, Input } from '@grafana/ui';
 
@@ -101,7 +102,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
   return (
     <InputGroup>
       <Select
-        aria-label="aggregate function"
+        aria-label={t('components.aggregate-item.aria-label-aggregate-function', 'Aggregate function')}
         width={inputFieldSize}
         value={aggregate.reduce?.name ? { label: aggregate.reduce.name, value: aggregate.reduce.name } : null}
         options={aggregateOptions}
@@ -124,7 +125,9 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
               }
             }}
           />
-          <Label style={{ margin: '9px 9px 0 9px' }}>OF</Label>
+          <Label style={{ margin: '9px 9px 0 9px' }}>
+            <Trans i18nKey="components.aggregate-item.label-percentile">OF</Trans>
+          </Label>
         </>
       ) : (
         <></>
@@ -132,7 +135,7 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
 
       {!isCountAggregate ? (
         <Select
-          aria-label="column"
+          aria-label={t('components.aggregate-item.aria-label-column', 'Column')}
           width={inputFieldSize}
           value={columnValue ? { label: columnValue, value: columnValue } : null}
           options={selectableOptions}
@@ -142,7 +145,12 @@ const AggregateItem: React.FC<AggregateItemProps> = ({
         <></>
       )}
 
-      <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
+      <AccessoryButton
+        aria-label={t('components.aggregate-item.aria-label-remove', 'Remove')}
+        icon="times"
+        variant="secondary"
+        onClick={onDelete}
+      />
     </InputGroup>
   );
 };

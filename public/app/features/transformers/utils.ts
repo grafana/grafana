@@ -9,14 +9,33 @@ import {
   VariableOrigin,
   VariableSuggestion,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
+
+import { variableRegex } from '../variables/utils';
 
 export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
   // get full names
   let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
 
   if (withBaseFieldNames) {
-    let baseNames = frames.flatMap((frame) => frame.fields.map((field) => field.name));
+    // only add base names of fields that have same field.name
+    let baseNameCounts = new Map<string, number>();
+
+    frames.forEach((frame) =>
+      frame.fields.forEach((field) => {
+        let count = baseNameCounts.get(field.name) ?? 0;
+        baseNameCounts.set(field.name, count + 1);
+      })
+    );
+
+    let baseNames: string[] = [];
+
+    baseNameCounts.forEach((count, name) => {
+      if (count > 1) {
+        baseNames.push(name);
+      }
+    });
 
     // prepend base names + uniquify
     names = [...new Set(baseNames.concat(names))];
@@ -60,7 +79,9 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
+  const variableFound = variableRegex.test(value);
+  variableRegex.lastIndex = 0;
+  if (variableFound) {
     return true;
   }
   return false;
@@ -73,8 +94,8 @@ export function getTimezoneOptions(includeInternal: boolean) {
   // Browser and UTC. We add the manually to avoid
   // funky string manipulation.
   if (includeInternal) {
-    timeZoneOptions.push({ label: 'Browser', value: 'browser' });
-    timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.browser', 'Browser'), value: 'browser' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.utc', 'UTC'), value: 'utc' });
   }
 
   // Add all other timezones

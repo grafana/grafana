@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
 import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
@@ -68,7 +69,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
       datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,
-      isExpanded: !open,
+      isExpanded: !collapsed,
     });
   };
 
@@ -82,16 +83,22 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       setTop(top);
     }
   }, [containerRef]);
+
   const height = windowHeight - top - 32;
 
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
-      <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
+      <span className={styles.warningText}>
+        {' '}
+        <Trans i18nKey="explore.unconnected-node-graph-container.count-warning" values={{ numNodes: nodes[0].length }}>
+          ({'{{numNodes}}'} nodes, can be slow to load)
+        </Trans>
+      </span>
     ) : null;
 
   return (
     <PanelChrome
-      title={`Node graph`}
+      title={t('explore.unconnected-node-graph-container.title-node-graph', 'Node graph')}
       titleItems={countWarning}
       // We allow collapsing this only when it is shown together with trace view.
       collapsible={!!withTraceView}

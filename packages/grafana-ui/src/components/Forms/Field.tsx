@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getChildId } from '../../utils/reactUtils';
 
 import { FieldValidationMessage } from './FieldValidationMessage';
@@ -15,8 +15,6 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactElement;
   /** Label for the field */
   label?: React.ReactNode;
-  /** Forcibly use a Label, despite passing a non-string node. */
-  useLabel?: boolean;
   /** Description of the field */
   description?: React.ReactNode;
   /** Indicates if field is in invalid state */
@@ -41,13 +39,14 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
    *  https://developer.mozilla.org/en-US/docs/Web/HTML/Element/label#attr-for
    */
   htmlFor?: string;
+  /** Remove the bottom margin */
+  noMargin?: boolean;
 }
 
 export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   (
     {
       label,
-      useLabel,
       description,
       horizontal,
       invalid,
@@ -59,32 +58,22 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       className,
       validationMessageHorizontalOverflow,
       htmlFor,
+      noMargin,
       ...otherProps
     }: FieldProps,
     ref
   ) => {
-    const styles = useStyles2(getFieldStyles);
+    const styles = useStyles2(getFieldStyles, noMargin);
     const inputId = htmlFor ?? getChildId(children);
 
-    let labelElement: React.ReactNode;
-    if (typeof label === 'string') {
-      labelElement = (
+    const labelElement =
+      typeof label === 'string' ? (
         <Label htmlFor={inputId} description={description}>
-          {label + (required ? ' *' : '')}
+          {`${label}${required ? ' *' : ''}`}
         </Label>
+      ) : (
+        label
       );
-    } else if (useLabel) {
-      labelElement = (
-        <Label htmlFor={inputId} description={description}>
-          <span>
-            {label}
-            {required ? ' *' : ''}
-          </span>
-        </Label>
-      );
-    } else {
-      labelElement = label;
-    }
 
     const childProps = deleteUndefinedProps({ invalid, disabled, loading });
     return (
@@ -129,11 +118,11 @@ function deleteUndefinedProps<T extends Object>(obj: T): Partial<T> {
   return obj;
 }
 
-export const getFieldStyles = (theme: GrafanaTheme2) => ({
+export const getFieldStyles = (theme: GrafanaTheme2, noMargin?: boolean) => ({
   field: css({
     display: 'flex',
     flexDirection: 'column',
-    marginBottom: theme.spacing(2),
+    marginBottom: theme.spacing(noMargin ? 0 : 2),
   }),
   fieldHorizontal: css({
     flexDirection: 'row',

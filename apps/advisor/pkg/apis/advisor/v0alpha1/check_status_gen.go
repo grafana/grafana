@@ -23,8 +23,12 @@ type CheckReportFailure struct {
 	StepID string `json:"stepID"`
 	// Human readable identifier of the item that failed
 	Item string `json:"item"`
+	// ID of the item that failed
+	ItemID string `json:"itemID"`
 	// Links to actions that can be taken to resolve the failure
 	Links []CheckErrorLink `json:"links"`
+	// More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.
+	MoreInfo *string `json:"moreInfo,omitempty"`
 }
 
 // NewCheckReportFailure creates a new CheckReportFailure object.

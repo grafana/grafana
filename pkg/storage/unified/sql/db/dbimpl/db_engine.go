@@ -9,7 +9,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/dskit/crypto/tls"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,6 +38,12 @@ func getEngine(cfg *setting.Cfg) (*xorm.Engine, error) {
 		if err != nil {
 			return nil, fmt.Errorf("open database: %w", err)
 		}
+
+		engine.SetMaxOpenConns(dbSection.Key("max_open_conn").MustInt(0))
+		engine.SetMaxIdleConns(dbSection.Key("max_idle_conn").MustInt(4))
+		maxLifetime := time.Duration(dbSection.Key("conn_max_lifetime").MustInt(14400)) * time.Second
+		engine.SetConnMaxLifetime(maxLifetime)
+
 		return engine, nil
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
@@ -87,9 +93,10 @@ func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
-	engine.SetMaxOpenConns(0)
-	engine.SetMaxIdleConns(2)
-	engine.SetConnMaxLifetime(4 * time.Hour)
+	engine.SetMaxOpenConns(getter.Int("max_open_conn", 0))
+	engine.SetMaxIdleConns(getter.Int("max_idle_conn", 4))
+	maxLifetime := time.Duration(getter.Int("conn_max_lifetime", 14400)) * time.Second
+	engine.SetConnMaxLifetime(maxLifetime)
 
 	return engine, nil
 }
@@ -187,6 +194,11 @@ func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
+
+	engine.SetMaxOpenConns(getter.Int("max_open_conn", 0))
+	engine.SetMaxIdleConns(getter.Int("max_idle_conn", 4))
+	maxLifetime := time.Duration(getter.Int("conn_max_lifetime", 14400)) * time.Second
+	engine.SetConnMaxLifetime(maxLifetime)
 
 	return engine, nil
 }

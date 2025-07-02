@@ -41,19 +41,24 @@ To download your Grafana Enterprise license:
 
 1. Sign in to your [Grafana Cloud](/) account.
 1. Go to **My Account** and select an organization from the drop-down menu at the top left of the page. On the Overview page for each organization, you can see a section for Grafana Enterprise licenses. Click **Details** next to a license.
+1. If the license shows "License not configured" or if the URL is listed as "-", you need to update the details. This requires the Admin role.
+   1. Click **Update** next to License Details. _If the **Update** button isn't visible, contact the Grafana account team._
+   1. Enter the URL. It must match the effective [`root_url`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#root_url) configuration setting (including the trailing slash) of the Grafana Enterprise instance. It should be the URL that users type in their browsers to access the frontend, not the node hostname. The URL must start with "https://", and it can't be `localhost` or contain wildcards.
+   1. (Optional) Edit the license name. This name is only used for display purposes.
+   1. Click **Save**.
 1. At the bottom of the license details page, select **Download token** to download the `license.jwt` file that contains your license.
 
 ### Step 2. Add your license to a Grafana instance
 
 You must install a Grafana Enterprise build to use the enterprise features, which you can [download](https://grafana.com/grafana/download?edition=enterprise).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If you already use Grafana OSS, you can replace it with the same version of Grafana Enterprise.
 Ensure that you back up the configuration and database before proceeding.
 For more information, refer to [Back up Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/back-up-grafana/).
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 There is more than one way to add the license to a Grafana instance:
 
@@ -168,9 +173,9 @@ SAML authentication is not affected by an expired license.
 
 Enterprise plugins might stop working.
 
-#### White labeling
+#### Custom branding
 
-The white labeling feature is turned off, meaning that any white labeling options will not have any effect.
+The custom branding feature is turned off, meaning that any custom branding options will not have any effect.
 
 #### Usage insights
 

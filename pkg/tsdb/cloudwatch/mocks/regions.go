@@ -14,7 +14,7 @@ type RegionsService struct {
 
 func (r *RegionsService) GetRegions(_ context.Context) (in []resources.ResourceResponse[resources.Region], e error) {
 	args := r.Called()
-	return args.Get(0).(([]resources.ResourceResponse[resources.Region])), args.Error(1)
+	return args.Get(0).([]resources.ResourceResponse[resources.Region]), args.Error(1)
 }
 
 type EC2Mock struct {

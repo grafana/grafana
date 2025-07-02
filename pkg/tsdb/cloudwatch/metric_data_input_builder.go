@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-func (e *cloudWatchExecutor) buildMetricDataInput(ctx context.Context, startTime time.Time, endTime time.Time,
+func (ds *DataSource) buildMetricDataInput(ctx context.Context, startTime time.Time, endTime time.Time,
 	queries []*models.CloudWatchQuery) (*cloudwatch.GetMetricDataInput, error) {
 	metricDataInput := &cloudwatch.GetMetricDataInput{
 		StartTime: aws.Time(startTime),
@@ -28,7 +28,7 @@ func (e *cloudWatchExecutor) buildMetricDataInput(ctx context.Context, startTime
 	}
 
 	for _, query := range queries {
-		metricDataQuery, err := e.buildMetricDataQuery(ctx, query)
+		metricDataQuery, err := ds.buildMetricDataQuery(ctx, query)
 		if err != nil {
 			return nil, &models.QueryError{Err: err, RefID: query.RefId}
 		}

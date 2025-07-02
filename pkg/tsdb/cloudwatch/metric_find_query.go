@@ -19,8 +19,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
 	resourcegroupstaggingapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 type suggestData struct {
@@ -43,12 +41,12 @@ func parseMultiSelectValue(input string) []string {
 	return []string{trimmedInput}
 }
 
-func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (ds *DataSource) handleGetEbsVolumeIds(ctx context.Context, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	instanceId := parameters.Get("instanceId")
 
 	instanceIds := parseMultiSelectValue(instanceId)
-	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, nil, instanceIds)
+	instances, err := ds.ec2DescribeInstances(ctx, region, nil, instanceIds)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +63,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCt
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (ds *DataSource) handleGetEc2InstanceAttribute(ctx context.Context, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	attributeName := parameters.Get("attributeName")
 	filterJson := parameters.Get("filters")
@@ -92,7 +90,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 		}
 	}
 
-	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, filters, nil)
+	instances, err := ds.ec2DescribeInstances(ctx, region, filters, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +175,7 @@ func getInstanceAttributeValue(attributeName string, instance ec2types.Instance)
 	return data, true, nil
 }
 
-func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (ds *DataSource) handleGetResourceArns(ctx context.Context, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	resourceType := parameters.Get("resourceType")
 	tagsJson := parameters.Get("tags")
@@ -206,7 +204,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCt
 
 	resourceTypes := []string{resourceType}
 
-	resources, err := e.resourceGroupsGetResources(ctx, pluginCtx, region, filters, resourceTypes)
+	resources, err := ds.resourceGroupsGetResources(ctx, region, filters, resourceTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -220,13 +218,13 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCt
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) ec2DescribeInstances(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []ec2types.Filter, instanceIds []string) (*ec2.DescribeInstancesOutput, error) {
+func (ds *DataSource) ec2DescribeInstances(ctx context.Context, region string, filters []ec2types.Filter, instanceIds []string) (*ec2.DescribeInstancesOutput, error) {
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.getEC2Client(ctx, pluginCtx, region)
+	client, err := ds.getEC2Client(ctx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -243,14 +241,14 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(ctx context.Context, pluginCtx
 	return resp, nil
 }
 
-func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []resourcegroupstaggingapitypes.TagFilter,
+func (ds *DataSource) resourceGroupsGetResources(ctx context.Context, region string, filters []resourcegroupstaggingapitypes.TagFilter,
 	resourceTypes []string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
 	}
 
-	client, err := e.getRGTAClient(ctx, pluginCtx, region)
+	client, err := ds.getRGTAClient(ctx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -269,12 +267,12 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, plu
 }
 
 // legacy route, will be removed once GovCloud supports Cross Account Observability
-func (e *cloudWatchExecutor) handleGetLogGroups(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (ds *DataSource) handleGetLogGroups(ctx context.Context, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	limit := parameters.Get("limit")
 	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
 
-	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
+	logsClient, err := ds.getCWLogsClient(ctx, region)
 	if err != nil {
 		return nil, err
 	}

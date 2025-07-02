@@ -3,6 +3,7 @@ import { memo, ReactNode, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import {
   Badge,
@@ -11,7 +12,6 @@ import {
   Dropdown,
   Icon,
   Menu,
-  Stack,
   ToolbarButton,
   ToolbarButtonRow,
   useStyles2,
@@ -21,7 +21,6 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import grafanaConfig from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { useSelector } from 'app/types';
@@ -38,7 +37,8 @@ import { isLibraryPanel } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
-import { ToolbarActionsNew } from './new-toolbar/ToolbarActionsNew';
+import { LeftActions } from './new-toolbar/LeftActions';
+import { RightActions } from './new-toolbar/RightActions';
 
 interface Props {
   dashboard: DashboardScene;
@@ -47,12 +47,14 @@ interface Props {
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts && config.featureToggles.newDashboardSharingComponent;
 
-  const actions = hasNewToolbar ? (
-    <ToolbarActionsNew dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions-new`} />
+  return hasNewToolbar ? (
+    <AppChromeUpdate
+      breadcrumbActions={<LeftActions dashboard={dashboard} />}
+      actions={<RightActions dashboard={dashboard} />}
+    />
   ) : (
-    <ToolbarActions dashboard={dashboard} key={`${dashboard.state.key}-toolbar-actions`} />
+    <AppChromeUpdate actions={<ToolbarActions dashboard={dashboard} />} />
   );
-  return <AppChromeUpdate actions={actions} />;
 });
 
 NavToolbarActions.displayName = 'NavToolbarActions';
@@ -68,11 +70,11 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
-  const leftActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
+
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNew = !Boolean(uid || dashboard.isManaged());
 
@@ -144,23 +146,6 @@ export function ToolbarActions({ dashboard }: Props) {
       },
     });
   }
-
-  const isDevEnv = config.buildInfo.env === 'development';
-
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isDevEnv && uid && isShowingDashboard && !isEditing,
-    render: () => (
-      <ToolbarButton
-        key="view-in-old-dashboard-button"
-        tooltip={t('dashboard.toolbar.switch-old-dashboard', 'Switch to old dashboard page')}
-        icon="apps"
-        onClick={() => {
-          locationService.partial({ scenes: false });
-        }}
-      />
-    ),
-  });
 
   toolbarActions.push({
     group: 'icon-actions',
@@ -610,16 +595,7 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  const rightActionsElements: ReactNode[] = renderActionElements(toolbarActions);
-  const leftActionsElements: ReactNode[] = renderActionElements(leftActions);
-  const hasActionsToLeftAndRight = leftActionsElements.length > 0;
-
-  return (
-    <Stack flex={1} minWidth={0} justifyContent={hasActionsToLeftAndRight ? 'space-between' : 'flex-end'}>
-      {leftActionsElements.length > 0 && <ToolbarButtonRow alignment="left">{leftActionsElements}</ToolbarButtonRow>}
-      <ToolbarButtonRow alignment="right">{rightActionsElements}</ToolbarButtonRow>
-    </Stack>
-  );
+  return <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>;
 }
 
 function renderActionElements(toolbarActions: ToolbarAction[]) {

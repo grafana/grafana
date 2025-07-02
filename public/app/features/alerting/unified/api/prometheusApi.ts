@@ -1,4 +1,13 @@
-import { GrafanaPromRuleGroupDTO, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { useCallback } from 'react';
+
+import { useDispatch } from 'app/types';
+import { RuleHealth } from 'app/types/unified-alerting';
+import {
+  GrafanaPromRuleGroupDTO,
+  PromAlertingRuleState,
+  PromRuleDTO,
+  PromRuleGroupDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -25,10 +34,14 @@ type PromRulesOptions = WithNotificationOptions<{
   groupNextToken?: string;
 }>;
 
-type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'> & {
+type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace' | 'excludeAlerts'> & {
   folderUid?: string;
   dashboardUid?: string;
   panelId?: number;
+  limitAlerts?: number;
+  contactPoint?: string;
+  health?: RuleHealth[];
+  state?: PromAlertingRuleState[];
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -68,17 +81,55 @@ export const prometheusApi = alertingApi.injectEndpoints({
       },
     }),
     getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
-      query: ({ folderUid, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
+      query: ({
+        folderUid,
+        groupName,
+        ruleName,
+        contactPoint,
+        health,
+        state,
+        groupLimit,
+        limitAlerts,
+        groupNextToken,
+      }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
           folder_uid: folderUid,
           rule_group: groupName,
           rule_name: ruleName,
-          exclude_alerts: excludeAlerts?.toString(),
+          receiver_name: contactPoint,
+          health: health,
+          state: state,
+          limit_alerts: limitAlerts,
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,
         },
       }),
+      providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {
+        const folderKey = folderUid ?? '__any__';
+        const groupKey = groupName ?? '__any__';
+        const ruleKey = ruleName ?? '__any__';
+        return [{ type: 'GrafanaPrometheusGroups', id: `grafana/${folderKey}/${groupKey}/${ruleKey}` }];
+      },
     }),
   }),
 });
+
+export function usePopulateGrafanaPrometheusApiCache() {
+  const dispatch = useDispatch();
+
+  const populateGroupResponseCache = useCallback(
+    (group: GrafanaPromRuleGroupDTO) => {
+      dispatch(
+        prometheusApi.util.upsertQueryData(
+          'getGrafanaGroups',
+          { folderUid: group.folderUid, groupName: group.name },
+          { data: { groups: [group] }, status: 'success' }
+        )
+      );
+    },
+    [dispatch]
+  );
+
+  return { populateGroupResponseCache };
+}

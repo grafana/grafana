@@ -3,9 +3,9 @@ import React from 'react';
 import { useMount } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Select, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { randomId, SearchProps, Tag } from '../../../useSearch';
 import { getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';

@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
-func (e *cloudWatchExecutor) executeRequest(ctx context.Context, client models.CWClient,
+func (ds *DataSource) executeRequest(ctx context.Context, client models.CWClient,
 	metricDataInput *cloudwatch.GetMetricDataInput) ([]*cloudwatch.GetMetricDataOutput, error) {
 	mdo := make([]*cloudwatch.GetMetricDataOutput, 0)
 

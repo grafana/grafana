@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { Button, DeleteButton, EmptyState, Icon, IconButton, Stack, TagList, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface DashboardLinkListProps {
   links: DashboardLink[];
@@ -23,6 +23,7 @@ export function DashboardLinkList({
   onDelete,
 }: DashboardLinkListProps) {
   const styles = useStyles2(getStyles);
+
   const isEmptyList = links.length === 0;
 
   if (isEmptyList) {
@@ -106,7 +107,11 @@ export function DashboardLinkList({
               </td>
               <td style={{ width: '1%' }} role="gridcell">
                 <DeleteButton
-                  aria-label={`Delete link with title "${link.title}"`}
+                  aria-label={t(
+                    'dashboard-scene.dashboard-link-list.delete-aria-label',
+                    'Delete link with title "{{title}}"',
+                    { title: link.title }
+                  )}
                   size="sm"
                   onConfirm={() => onDelete(idx)}
                 />

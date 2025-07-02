@@ -17,9 +17,9 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := v0alpha1.GetOpenAPIDefinitions(ref) // common grafana apis
 		maps.Copy(defs, data.GetOpenAPIDefinitions(ref))
-		// TODO: remove when https://github.com/grafana/grafana-plugin-sdk-go/pull/1062 is merged
+		// TODO: add timerange to upstream SDK setup
 		maps.Copy(defs, map[string]common.OpenAPIDefinition{
-			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.DataSourceRef": {
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.TimeRange": {
 				Schema: spec.Schema{
 					SchemaProps: spec.SchemaProps{
 						Type:                 []string{"object"},
@@ -86,7 +86,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 
 						// Delete has all parameters in the query string already
 						if v.Delete != nil {
-							action, ok := v.Delete.VendorExtensible.Extensions.GetString("x-kubernetes-action")
+							action, ok := v.Delete.Extensions.GetString("x-kubernetes-action")
 							if ok && (action == "deletecollection" || action == "delete") {
 								v.Delete.RequestBody = nil // duplicates all the parameters
 							}
@@ -125,7 +125,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder) func(*s
 					// Optionally include raw http handlers
 					provider, ok := b.(APIGroupRouteProvider)
 					if ok && provider != nil {
-						routes := provider.GetAPIRoutes()
+						routes := provider.GetAPIRoutes(gv)
 						if routes != nil {
 							for _, route := range routes.Root {
 								copy.Paths.Paths[prefix+route.Path] = &spec3.Path{

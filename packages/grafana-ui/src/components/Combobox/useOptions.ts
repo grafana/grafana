@@ -4,7 +4,7 @@
 import { debounce } from 'lodash';
 import { useState, useCallback, useMemo } from 'react';
 
-import { t } from '../../utils/i18n';
+import { t } from '@grafana/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
 import { ComboboxOption } from './types';
@@ -65,10 +65,12 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     (opts: Array<ComboboxOption<T>>) => {
       let currentOptions: Array<ComboboxOption<T>> = opts;
       if (createCustomValue && userTypedSearch) {
-        //Since the label of a normal option does not have to match its value and a custom option has the same value and label,
-        //we just focus on the value to check if the option already exists
+        // Since the label of a normal option does not have to match its value and a custom option has the same value and label,
+        // we just focus on the value to check if the option already exists
         const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
+          // Make sure to clone the array first to avoid mutating the original array!
+          currentOptions = currentOptions.slice();
           currentOptions.unshift({
             label: userTypedSearch,
             value: userTypedSearch as T,

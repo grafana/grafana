@@ -1,4 +1,5 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
@@ -12,7 +13,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
+import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -328,6 +329,7 @@ export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: newPanelTitle,
     pluginId: defaultPluginId,
+    seriesLimit: config.panelSeriesLimit,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
     $behaviors: [],
@@ -467,3 +469,5 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
 }
+
+export const dashboardLog = createLogger('Dashboard');

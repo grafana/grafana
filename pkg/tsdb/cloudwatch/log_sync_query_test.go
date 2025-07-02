@@ -11,9 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -35,10 +33,9 @@ func Test_executeSyncLogQuery(t *testing.T) {
 
 	t.Run("getCWLogsClient is called with region from input JSON", func(t *testing.T) {
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: "Complete"}}
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
@@ -58,10 +55,10 @@ func Test_executeSyncLogQuery(t *testing.T) {
 
 	t.Run("getCWLogsClient is called with region from instance manager when region is default", func(t *testing.T) {
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: "Complete"}}
-		im := testInstanceManagerWithSettings(models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, false)
-
-		executor := newExecutor(im, log.NewNullLogger())
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Region = "instance manager's region"
+		})
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
@@ -103,7 +100,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		}
 		origExecuteSyncLogQuery := executeSyncLogQuery
 		var syncCalled bool
-		executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		executeSyncLogQuery = func(ctx context.Context, e *DataSource, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			syncCalled = true
 			return nil, nil
 		}
@@ -112,10 +109,10 @@ func Test_executeSyncLogQuery(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				syncCalled = false
 				cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: "Complete"}}
-				im := testInstanceManagerWithSettings(models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, false)
-
-				executor := newExecutor(im, log.NewNullLogger())
-				_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+				ds := newTestDatasource(func(ds *DataSource) {
+					ds.Settings.Region = "instance manager's region"
+				})
+				_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 					Headers:       tc.headers,
 					PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 					Queries: []backend.DataQuery{
@@ -143,7 +140,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 	t.Run("when query mode is 'Logs' and does not include type or subtype", func(t *testing.T) {
 		origExecuteSyncLogQuery := executeSyncLogQuery
 		syncCalled := false
-		executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		executeSyncLogQuery = func(ctx context.Context, e *DataSource, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			syncCalled = true
 			return nil, nil
 		}
@@ -152,10 +149,11 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		})
 
 		cli = fakeCWLogsClient{queryResults: cloudwatchlogs.GetQueryResultsOutput{Status: "Complete"}}
-		im := testInstanceManagerWithSettings(models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "instance manager's region"}}, false)
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.Region = "instance manager's region"
+		})
 
-		executor := newExecutor(im, log.NewNullLogger())
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -190,10 +188,9 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			QueryId: aws.String("abcd-efgh-ijkl-mnop"),
 		}, nil)
 		cli.On("GetQueryResults", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: "Complete"}, nil)
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
-		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		res, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
@@ -217,10 +214,9 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			QueryId: aws.String("abcd-efgh-ijkl-mnop"),
 		}, nil)
 		cli.On("GetQueryResults", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: "Complete"}, nil)
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
-		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		res, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
@@ -284,10 +280,9 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			}}},
 			Status: "Complete"}, nil)
 
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
-		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		res, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
@@ -327,11 +322,12 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			QueryId: aws.String("abcd-efgh-ijkl-mnop"),
 		}, nil)
 		cli.On("GetQueryResults", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: "Running"}, nil)
-		im := testInstanceManagerWithSettings(models.CloudWatchSettings{LogsTimeout: models.Duration{Duration: time.Millisecond}}, false)
 
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource(func(ds *DataSource) {
+			ds.Settings.LogsTimeout = models.Duration{Duration: time.Millisecond}
+		})
 
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		_, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
@@ -358,10 +354,9 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			&cloudwatchlogs.GetQueryResultsOutput{Status: "Complete"},
 			&fakeSmithyError{code: "foo", message: "bar"},
 		)
-		im := defaultTestInstanceManager()
-		executor := newExecutor(im, log.NewNullLogger())
+		ds := newTestDatasource()
 
-		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		res, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{

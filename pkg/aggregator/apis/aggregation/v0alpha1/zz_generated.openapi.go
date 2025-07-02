@@ -162,6 +162,7 @@ func schema_aggregator_apis_aggregation_v0alpha1_DataPlaneServiceList(ref common
 						},
 					},
 				},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
