@@ -14,6 +14,9 @@ on:
 
 permissions: {}
 
+env:
+  ACTIONS_STEP_DEBUG: true
+  RUNNER_DEBUG: 1
 
 jobs:
   build-grafana:
@@ -35,9 +38,13 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "x_build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', '/public/*',  '/packages/*', '/pkg/**/*.go', '**/go.mod', '**/go.sum') }}"
+          key: "xx_build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', '/public/*',  '/packages/*', '/pkg/**/*.go', '**/go.mod', '**/go.sum') }}"
           path: |
-            dist
+            build-dir
+
+      - name: Debug build-dir
+        run: |
+          ls -lah build-dir
 
       # If no cache hit, build Grafana
       - name: Build Grafana
@@ -52,28 +59,22 @@ jobs:
         run: cat out.txt
       - name: Move built artifact
         if: steps.cache.outputs.cache-hit != 'true'
-        run: mv "$(cat out.txt)" grafana.tar.gz
+        run: |
+          mkdir -p build-dir
+          mv "$(cat out.txt)" build-dir/grafana.tar.gz
 
-      # If cache hit, move the artifact to the correct location
-      - name: Move artifact
+      # If cache hit, validate the artifact is present
+      - name: Validate artifact
         if: steps.cache.outputs.cache-hit == 'true'
         run: |
-          # Check number of files in dist directory
-          file_count=$(ls -1 ./dist | wc -l)
-          if [ "$file_count" -ne 1 ]; then
-            echo "Error: Expected exactly one file in dist directory, found $file_count"
+          if [ ! -f build-dir/grafana.tar.gz ]; then
+            echo "Error: build-dir/grafana.tar.gz not found in cache"
             exit 1
           fi
 
-          # Check if the file is a .tar.gz
-          file=$(ls ./dist)
-          if [[ $file != *.tar.gz ]]; then
-            echo "Error: File in dist directory is not a .tar.gz file"
-            exit 1
-          fi
-
-          # Move the file
-          mv "./dist/$file" ./grafana.tar.gz
+      - name: Debug build-dir
+        run: |
+          ls -lah build-dir
 
       - name: Set artifact name
         run: echo "artifact=grafana-e2e-${{github.run_number}}" >> "$GITHUB_OUTPUT"
@@ -85,7 +86,7 @@ jobs:
         with:
           retention-days: 1
           name: ${{ steps.artifact.outputs.artifact }}
-          path: grafana.tar.gz
+          path: build-dir/grafana.tar.gz
 
   build-e2e-runner:
     name: Build E2E test runner
