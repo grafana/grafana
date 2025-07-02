@@ -171,6 +171,9 @@ func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *v0a
 	if err != nil {
 		return nil, err
 	}
+	if existingDS == nil || q.plugin.ID != existingDS.Type {
+		return nil, fmt.Errorf("not found")
+	}
 
 	cmd, err := q.converter.toUpdateCommand(ds)
 	if err != nil {
@@ -194,7 +197,7 @@ func (q *scopedDatasourceProvider) Delete(ctx context.Context, uid string) error
 	if err != nil {
 		return err
 	}
-	if ds == nil {
+	if ds == nil || q.plugin.ID != ds.Type {
 		return fmt.Errorf("not found")
 	}
 	return q.dsService.DeleteDataSource(ctx, &datasources.DeleteDataSourceCommand{
@@ -214,6 +217,9 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 	ds, err := q.dsCache.GetDatasourceByUID(ctx, uid, user, false)
 	if err != nil {
 		return nil, err
+	}
+	if ds == nil || q.plugin.ID != ds.Type {
+		return nil, fmt.Errorf("not found")
 	}
 	return q.converter.asGenericDataSource(ds)
 }
