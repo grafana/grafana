@@ -46,8 +46,8 @@ func (r *converter) asConnection(ds *datasources.DataSource) (*v0alpha1.DataSour
 	return asConnection(ds, r.mapper(ds.OrgID))
 }
 
-func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.GenericDataSource, error) {
-	cfg := &v0alpha1.GenericDataSource{
+func (r *converter) asDataSource(ds *datasources.DataSource) (*v0alpha1.DataSource, error) {
+	cfg := &v0alpha1.DataSource{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              ds.UID,
 			Namespace:         r.mapper(ds.OrgID),
@@ -55,7 +55,7 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
 			Generation:        int64(ds.Version),
 		},
-		Spec: v0alpha1.GenericDataSourceSpec{
+		Spec: v0alpha1.DataSourceSpec{
 			Title:           ds.Name,
 			Access:          v0alpha1.DsAccess(ds.Access),
 			URL:             ds.URL,
@@ -96,7 +96,7 @@ func (r *converter) asGenericDataSource(ds *datasources.DataSource) (*v0alpha1.G
 	return cfg, nil
 }
 
-func (r *converter) toAddCommand(ds *v0alpha1.GenericDataSource) (*datasources.AddDataSourceCommand, error) {
+func (r *converter) toAddCommand(ds *v0alpha1.DataSource) (*datasources.AddDataSourceCommand, error) {
 	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
@@ -131,7 +131,7 @@ func (r *converter) toAddCommand(ds *v0alpha1.GenericDataSource) (*datasources.A
 	return cmd, nil
 }
 
-func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasources.UpdateDataSourceCommand, error) {
+func (r *converter) toUpdateCommand(ds *v0alpha1.DataSource) (*datasources.UpdateDataSourceCommand, error) {
 	if r.group != "" && !strings.HasPrefix(ds.APIVersion, r.group) {
 		return nil, fmt.Errorf("expecting APIGroup: %s", r.group)
 	}
@@ -167,7 +167,7 @@ func (r *converter) toUpdateCommand(ds *v0alpha1.GenericDataSource) (*datasource
 	return cmd, nil
 }
 
-func toSecureJsonData(ds *v0alpha1.GenericDataSource) map[string]string {
+func toSecureJsonData(ds *v0alpha1.DataSource) map[string]string {
 	if ds == nil || len(ds.Secure) < 1 {
 		return nil
 	}

@@ -122,8 +122,8 @@ func NewDataSourceAPIBuilder(
 	}
 
 	builder := &DataSourceAPIBuilder{
-		connectionResourceInfo: datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
-		datasourceResourceInfo: datasource.GenericDataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
+		connectionResourceInfo: datasource.ConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
+		datasourceResourceInfo: datasource.DataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
 		pluginJSON:             plugin,
 		client:                 client,
 		datasources:            datasources,
@@ -167,8 +167,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&datasource.DataSourceConnection{},
 		&datasource.DataSourceConnectionList{},
-		&datasource.GenericDataSource{},
-		&datasource.GenericDataSourceList{},
+		&datasource.DataSource{},
+		&datasource.DataSourceList{},
 		&datasource.HealthCheckResult{},
 		&unstructured.Unstructured{},
 

@@ -62,7 +62,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 
 // Create implements rest.Creater.
 func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	ds, ok := obj.(*v0alpha1.GenericDataSource)
+	ds, ok := obj.(*v0alpha1.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("expected a datasource object")
 	}
@@ -81,12 +81,12 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, err
 	}
 
-	ds, ok := obj.(*v0alpha1.GenericDataSource)
+	ds, ok := obj.(*v0alpha1.DataSource)
 	if !ok {
 		return nil, false, fmt.Errorf("expected a datasource object")
 	}
 
-	oldDS, ok := obj.(*v0alpha1.GenericDataSource)
+	oldDS, ok := obj.(*v0alpha1.DataSource)
 	if !ok {
 		return nil, false, fmt.Errorf("expected a datasource object (old)")
 	}

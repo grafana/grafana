@@ -25,16 +25,16 @@ type PluginDatasourceProvider interface {
 	ListConnections(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error)
 
 	// Get a single datasurce
-	GetDataSource(ctx context.Context, uid string) (*v0alpha1.GenericDataSource, error)
+	GetDataSource(ctx context.Context, uid string) (*v0alpha1.DataSource, error)
 
 	// List all datasources
-	ListDataSource(ctx context.Context) (*v0alpha1.GenericDataSourceList, error)
+	ListDataSource(ctx context.Context) (*v0alpha1.DataSourceList, error)
 
 	// Create a data source
-	CreateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error)
+	CreateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error)
 
 	// Update a data source
-	UpdateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error)
+	UpdateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error)
 
 	// Delete datasurce
 	Delete(ctx context.Context, uid string) error
@@ -146,7 +146,7 @@ func (q *scopedDatasourceProvider) GetInstanceSettings(ctx context.Context, uid 
 }
 
 // CreateDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error) {
+func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
 	cmd, err := q.converter.toAddCommand(ds)
 	if err != nil {
 		return nil, err
@@ -155,11 +155,11 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *v0a
 	if err != nil {
 		return nil, err
 	}
-	return q.converter.asGenericDataSource(out)
+	return q.converter.asDataSource(out)
 }
 
 // UpdateDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error) {
+func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
 	cmd, err := q.converter.toUpdateCommand(ds)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (q *scopedDatasourceProvider) UpdateDataSource(ctx context.Context, ds *v0a
 	if err != nil {
 		return nil, err
 	}
-	return q.converter.asGenericDataSource(out)
+	return q.converter.asDataSource(out)
 }
 
 // Delete implements PluginDatasourceProvider.
@@ -193,7 +193,7 @@ func (q *scopedDatasourceProvider) Delete(ctx context.Context, uid string) error
 }
 
 // GetDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string) (*v0alpha1.GenericDataSource, error) {
+func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string) (*v0alpha1.DataSource, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -202,11 +202,11 @@ func (q *scopedDatasourceProvider) GetDataSource(ctx context.Context, uid string
 	if err != nil {
 		return nil, err
 	}
-	return q.converter.asGenericDataSource(ds)
+	return q.converter.asDataSource(ds)
 }
 
 // ListDataSource implements PluginDatasourceProvider.
-func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*v0alpha1.GenericDataSourceList, error) {
+func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*v0alpha1.DataSourceList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -220,11 +220,11 @@ func (q *scopedDatasourceProvider) ListDataSource(ctx context.Context) (*v0alpha
 	if err != nil {
 		return nil, err
 	}
-	result := &v0alpha1.GenericDataSourceList{
-		Items: []v0alpha1.GenericDataSource{},
+	result := &v0alpha1.DataSourceList{
+		Items: []v0alpha1.DataSource{},
 	}
 	for _, ds := range dss {
-		v, _ := q.converter.asGenericDataSource(ds)
+		v, _ := q.converter.asDataSource(ds)
 		result.Items = append(result.Items, *v)
 	}
 	return result, nil

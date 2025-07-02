@@ -122,12 +122,12 @@ type mockDatasources struct {
 }
 
 // CreateDataSource implements PluginDatasourceProvider.
-func (m mockDatasources) CreateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error) {
+func (m mockDatasources) CreateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
 	return nil, nil
 }
 
 // UpdateDataSource implements PluginDatasourceProvider.
-func (m mockDatasources) UpdateDataSource(ctx context.Context, ds *v0alpha1.GenericDataSource) (*v0alpha1.GenericDataSource, error) {
+func (m mockDatasources) UpdateDataSource(ctx context.Context, ds *v0alpha1.DataSource) (*v0alpha1.DataSource, error) {
 	return nil, nil
 }
 
@@ -137,12 +137,12 @@ func (m mockDatasources) Delete(ctx context.Context, uid string) error {
 }
 
 // GetDataSource implements PluginDatasourceProvider.
-func (m mockDatasources) GetDataSource(ctx context.Context, uid string) (*v0alpha1.GenericDataSource, error) {
+func (m mockDatasources) GetDataSource(ctx context.Context, uid string) (*v0alpha1.DataSource, error) {
 	return nil, nil
 }
 
 // ListDataSource implements PluginDatasourceProvider.
-func (m mockDatasources) ListDataSource(ctx context.Context) (*v0alpha1.GenericDataSourceList, error) {
+func (m mockDatasources) ListDataSource(ctx context.Context) (*v0alpha1.DataSourceList, error) {
 	return nil, nil
 }
 

@@ -15,7 +15,7 @@ import (
 
 func TestConverter(t *testing.T) {
 	t.Run("resource to command", func(t *testing.T) {
-		obj := &v0alpha1.GenericDataSource{}
+		obj := &v0alpha1.DataSource{}
 		converter := converter{
 			mapper: types.OrgNamespaceFormatter,
 			dstype: "test-datasource",

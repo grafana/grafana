@@ -8,12 +8,12 @@ import (
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type GenericDataSource struct {
+type DataSource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
 
 	// generic config
-	Spec GenericDataSourceSpec `json:"spec"`
+	Spec DataSourceSpec `json:"spec"`
 
 	// Secure values placeholder (true for fields that exist)
 	Secure secret.InlineSecureValues `json:"secure,omitempty"`
@@ -36,7 +36,7 @@ func (dsa DsAccess) String() string {
 	return string(dsa)
 }
 
-type GenericDataSourceSpec struct {
+type DataSourceSpec struct {
 	// The diplay name (previously saved as the "name" property)
 	Title string `json:"title"`
 
@@ -58,9 +58,9 @@ type GenericDataSourceSpec struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type GenericDataSourceList struct {
+type DataSourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []GenericDataSource `json:"items"`
+	Items []DataSource `json:"items"`
 }
