@@ -225,7 +225,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     const unlisten = locationService.getHistory().listen((a) => {
-      if (a.pathname.includes(this.state.uid ?? '')) {
+      if (this.state.uid && a.pathname.includes(this.state.uid)) {
         this._currentQueryParams = a.search;
       }
     });
