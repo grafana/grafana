@@ -110,6 +110,12 @@
       "update-button": "Aktualizuj",
       "users-heading": "Użytkownicy organizacji"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Audyty",
       "title-custom-branding": "Własny branding",
@@ -3503,18 +3509,12 @@
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
-      "description-branch-name-in-git-hub": "Nazwa gałęzi w GitHub",
       "error-invalid-folder-name": "Nieprawidłowa nazwa folderu",
       "error-required": "Wymagana jest nazwa folderu",
-      "folder-comment-input-placeholder-describe-changes-optional": "Dodaj notatkę, aby opisać zmiany (opcjonalnie)",
       "folder-name-input-placeholder-enter-folder-name": "Podaj nazwę folderu",
-      "label-branch": "Gałąź",
-      "label-comment": "Uwagi",
       "label-folder-name": "Nazwa folderu",
-      "label-workflow": "Przepływ pracy",
       "text-pull-request-created": "Utworzono żądanie pull ze zmianami w tym folderze:",
       "title-pull-request-created": "Utworzono żądanie pull",
-      "title-repository-not-found": "Nie znaleziono repozytorium",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
     "no-results": {
@@ -12143,6 +12143,7 @@
           "polynomial": "Wielomian"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Liczba punktów X,Y do prognozowania"
     },
     "rename-by-regex-transformer-editor": {

@@ -110,6 +110,12 @@
       "update-button": "Aktualisieren",
       "users-heading": "Benutzer in der Organisation"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Individuelles Branding",
@@ -3467,18 +3473,12 @@
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
-      "description-branch-name-in-git-hub": "Branch-Name in GitHub",
       "error-invalid-folder-name": "Ungültiger Ordnername",
       "error-required": "Ordnername erforderlich",
-      "folder-comment-input-placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional)",
       "folder-name-input-placeholder-enter-folder-name": "Ordnernamen eingeben",
-      "label-branch": "Branch",
-      "label-comment": "Kommentar",
       "label-folder-name": "Ordnername",
-      "label-workflow": "Workflow",
       "text-pull-request-created": "Ein Pull-Request wurde erstellt, mit Änderungen an diesem Ordner:",
       "title-pull-request-created": "Pull-Request erstellt",
-      "title-repository-not-found": "Repository nicht gefunden",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
     "no-results": {
@@ -12073,6 +12073,7 @@
           "polynomial": "Polynom"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Anzahl der zu prognostizierenden X-, Y-Punkte"
     },
     "rename-by-regex-transformer-editor": {

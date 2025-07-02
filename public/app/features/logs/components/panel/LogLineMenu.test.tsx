@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
 import { getStyles } from './LogLine';
 import { LogLineMenu, LogLineMenuCustomItem } from './LogLineMenu';
