@@ -86,7 +86,7 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
   const styles = useStyles2(getStyles);
   const location = useLocation();
 
-  // Call the React hook at component level
+  // get contact points data for injecting into the prompt
   const { data: contactPointsData, isLoading: contactPointsLoading } = useListContactPointsv0alpha1();
 
   const [showModal, setShowModal] = useState(false);
@@ -270,11 +270,11 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
   return (
     <>
       <Button
-        variant="secondary"
         icon="ai"
+        fill="text"
         onClick={() => setShowModal(true)}
-        className={className}
         data-testid="generate-alert-rule-button"
+        variant="primary"
       >
         <Trans i18nKey="alerting.generate-ai-rule.button">Generate with AI</Trans>
       </Button>

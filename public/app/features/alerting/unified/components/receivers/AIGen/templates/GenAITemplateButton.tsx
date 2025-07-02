@@ -104,12 +104,12 @@ export const GenAITemplateButton = ({ onTemplateGenerated, disabled, className }
   return (
     <>
       <Button
-        variant="secondary"
+        variant="primary"
         size="sm"
         icon="ai"
+        fill="text"
         onClick={() => setShowModal(true)}
         disabled={disabled}
-        className={className}
         data-testid="generate-template-button"
       >
         <Trans i18nKey="alerting.templates.editor.generate-with-ai">Generate with AI</Trans>

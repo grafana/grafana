@@ -105,10 +105,10 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
   return (
     <>
       <Button
-        variant="secondary"
+        variant="primary"
         icon="ai"
+        fill="text"
         onClick={() => setShowModal(true)}
-        className={className}
         data-testid="triage-ai-button"
         disabled={logRecords.length === 0}
       >
