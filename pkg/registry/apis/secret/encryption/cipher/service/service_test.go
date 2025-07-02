@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,7 +29,7 @@ func newGcmService(t *testing.T) *Service {
 		},
 	}
 
-	svc, err := NewEncryptionService(tracing.InitializeTracerForTest(), usageStats, settings)
+	svc, err := NewEncryptionService(noop.NewTracerProvider().Tracer("test"), usageStats, settings)
 	require.NoError(t, err, "failed to set up encryption service")
 	return svc
 }
