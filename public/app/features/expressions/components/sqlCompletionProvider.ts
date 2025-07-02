@@ -2,6 +2,8 @@ import { SelectableValue } from '@grafana/data';
 import { ColumnDefinition, LanguageCompletionProvider, TableDefinition, TableIdentifier } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 
+import { ALLOWED_FUNCTIONS } from '../utils/metaSqlExpr';
+
 interface CompletionProviderGetterArgs {
   getFields: (t: TableIdentifier) => Promise<ColumnDefinition[]>;
   refIds: Array<SelectableValue<string>>;
@@ -31,5 +33,10 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
           return Promise.resolve([]);
         }
       },
+    },
+    supportedFunctions: () => {
+      return ALLOWED_FUNCTIONS.map((func) => {
+        return { id: func, name: func };
+      });
     },
   });

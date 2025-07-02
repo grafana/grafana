@@ -6,8 +6,8 @@ import { SQLEditor, CompletionItemKind, LanguageDefinition, TableIdentifier } fr
 import { DataQuery } from '@grafana/schema/dist/esm/index';
 import { useStyles2 } from '@grafana/ui';
 
-import { dataSource } from '../ExpressionDatasource';
 import { SqlExpressionQuery } from '../types';
+import { fetchSQLFields } from '../utils/metaSqlExpr';
 
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 
@@ -104,7 +104,6 @@ const getStyles = () => ({
 });
 
 async function fetchFields(identifier: TableIdentifier, queries: DataQuery[]) {
-  const datasource = dataSource;
-  const fields = await datasource.fetchSQLFields({ table: identifier.table }, queries);
+  const fields = await fetchSQLFields({ table: identifier.table }, queries);
   return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
 }

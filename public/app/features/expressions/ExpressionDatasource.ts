@@ -1,19 +1,16 @@
 import { from, lastValueFrom, map, mergeMap, Observable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   DataFrame,
-  DataFrameView,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
-  getDefaultTimeRange,
   PluginType,
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { QueryFormat, SQLQuery } from '@grafana/plugin-ui';
+import { SQLQuery } from '@grafana/plugin-ui';
 import {
   BackendDataSourceResponse,
   DataSourceWithBackend,
@@ -25,8 +22,6 @@ import {
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema/dist/esm/index';
-import { mapFieldsToTypes } from 'app/plugins/datasource/mysql/fields';
-import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
@@ -77,36 +72,9 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     };
   }
 
-  async fetchSQLFields(query: Partial<SQLQuery>, queries: DataQuery[]) {
-    if (!query.table) {
-      return [];
-    }
-
-    const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
-
-    const queryResponse = await this.runMetaSQLQuery(
-      { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
-      getDefaultTimeRange(),
-      queries.filter((q) => q.refId === query.table)
-    );
-    const frame = new DataFrameView<string[]>(queryResponse);
-
-    const fields = Object.entries(frame.fields).map((field) => {
-      return {
-        name: field[1].name,
-        text: field[1].name,
-        label: field[1].name,
-        value: quoteIdentifierIfNecessary(field[1].name),
-        type: field[1].type,
-      };
-    });
-
-    return mapFieldsToTypes(fields);
-  }
-
-  private runMetaSQLQuery(request: Partial<SQLQuery>, range: TimeRange, queries: DataQuery[]): Promise<DataFrame> {
+  runMetaSQLExprQuery(request: Partial<SQLQuery>, range: TimeRange, queries: DataQuery[]): Promise<DataFrame> {
     const refId = request.refId || 'meta';
-    const metaExpressionQuery: ExpressionQuery = {
+    const metaSqlExpressionQuery: ExpressionQuery = {
       window: '',
       hide: false,
       expression: request.rawSql,
@@ -123,7 +91,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
           data: {
             from: range.from.valueOf().toString(),
             to: range.to.valueOf().toString(),
-            queries: [...queries, metaExpressionQuery],
+            queries: [...queries, metaSqlExpressionQuery],
           },
           requestId: refId,
         })
