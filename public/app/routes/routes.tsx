@@ -320,8 +320,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/authentication/:provider',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component: SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
-          ),
+        () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
+      ),
     },
     {
       path: '/admin/settings',

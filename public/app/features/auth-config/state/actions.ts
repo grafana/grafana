@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Settings, ThunkResult, UpdateSettingsQuery } from 'app/types';
 
