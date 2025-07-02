@@ -83,16 +83,11 @@ func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigR
 	if err != nil {
 		return err
 	}
-	cmd := models.SaveAlertmanagerConfigurationCmd{
+	return a.store.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
 		ConfigurationVersion:      revision.Version,
 		FetchedConfigurationHash:  revision.ConcurrencyToken,
 		Default:                   false,
 		OrgID:                     orgID,
-	}
-	cfg := &definitions.PostableUserConfig{}
-	if err := json.Unmarshal([]byte(cmd.AlertmanagerConfiguration), cfg); err != nil {
-		return fmt.Errorf("change would result in an invalid configuration state: %w", err)
-	}
-	return a.store.UpdateAlertmanagerConfiguration(ctx, &cmd)
+	})
 }
