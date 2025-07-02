@@ -2,10 +2,15 @@ import { css } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
-import { useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { useStyles2, Stack, Button, Text } from '@grafana/ui';
 
 import { SqlExpressionQuery } from '../types';
+
+import { AISuggestionsDrawer } from './AISuggestionsDrawer';
+import { GenAISQLSuggestionsButton } from './GenAISQLSuggestionsButton';
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
@@ -39,6 +44,8 @@ LIMIT 10`;
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -46,6 +53,19 @@ LIMIT 10`;
       expression,
       format: alerting ? 'alerting' : undefined,
     });
+  };
+
+  const onHistoryUpdate = (history: string[]) => {
+    setSuggestions(history);
+    // Auto-open drawer when first suggestion is generated
+    if (history.length === 1) {
+      setIsDrawerOpen(true);
+    }
+  };
+
+  const onApplySuggestion = (suggestion: string) => {
+    onEditorChange(suggestion);
+    setIsDrawerOpen(false);
   };
 
   // Set up resize observer to handle container resizing
@@ -73,14 +93,46 @@ LIMIT 10`;
   }, []);
 
   return (
-    <div ref={containerRef} className={styles.editorContainer}>
-      <SQLEditor
-        query={query.expression || initialQuery}
-        onChange={onEditorChange}
-        height={dimensions.height - EDITOR_BORDER_ADJUSTMENT}
-        language={EDITOR_LANGUAGE_DEFINITION}
+    <Stack direction="column" gap={1}>
+      {config.featureToggles.dashgpt && (
+        <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+          <GenAISQLSuggestionsButton
+            currentQuery={query.expression || ''}
+            onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
+            onHistoryUpdate={onHistoryUpdate}
+            refIds={vars}
+          />
+          {suggestions.length > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => setIsDrawerOpen(true)} icon="list-ul">
+              <Stack direction="row" gap={1} alignItems="center">
+                <Trans i18nKey="sql-expressions.show-suggestions">AI Suggestions</Trans>
+                {suggestions.length > 0 && (
+                  <Text variant="bodySmall" weight="bold">
+                    {suggestions.length}
+                  </Text>
+                )}
+              </Stack>
+            </Button>
+          )}
+        </Stack>
+      )}
+
+      <div ref={containerRef} className={styles.editorContainer}>
+        <SQLEditor
+          query={query.expression || initialQuery}
+          onChange={onEditorChange}
+          height={dimensions.height - EDITOR_BORDER_ADJUSTMENT}
+          language={EDITOR_LANGUAGE_DEFINITION}
+        />
+      </div>
+
+      <AISuggestionsDrawer
+        isOpen={isDrawerOpen}
+        onApplySuggestion={onApplySuggestion}
+        onClose={() => setIsDrawerOpen(false)}
+        suggestions={suggestions}
       />
-    </div>
+    </Stack>
   );
 };
 

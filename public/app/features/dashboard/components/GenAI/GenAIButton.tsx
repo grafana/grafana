@@ -36,6 +36,8 @@ export interface GenAIButtonProps {
     toggletip will be enabled.
   */
   tooltip?: string;
+  // Optional callback to receive history updates
+  onHistoryChange?: (history: string[]) => void;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
 
@@ -50,13 +52,21 @@ export const GenAIButton = ({
   eventTrackingSrc,
   disabled,
   tooltip,
+  onHistoryChange,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
   const [history, setHistory] = useState<string[]>([]);
-  const unshiftHistoryEntry = useCallback((historyEntry: string) => {
-    setHistory((h) => [historyEntry, ...h]);
-  }, []);
+  const unshiftHistoryEntry = useCallback(
+    (historyEntry: string) => {
+      setHistory((h) => {
+        const newHistory = [historyEntry, ...h];
+        onHistoryChange?.(newHistory);
+        return newHistory;
+      });
+    },
+    [onHistoryChange]
+  );
 
   const onResponse = useCallback(
     (reply: string) => {
