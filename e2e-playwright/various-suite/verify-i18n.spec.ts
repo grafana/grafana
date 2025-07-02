@@ -1,5 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+// TODO: the test sometimes causes others to fail with labels changing w/ languages.
 test.describe(
   'Verify i18n',
   {

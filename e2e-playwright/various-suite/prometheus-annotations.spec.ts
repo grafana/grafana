@@ -60,7 +60,7 @@ test.describe(
 
       // Check for other parts of the annotations
       // Min step
-      const minStepInput = page.locator(`#${selectors.components.DataSource.Prometheus.annotations.minStep}`);
+      const minStepInput = page.getByTestId(selectors.components.DataSource.Prometheus.annotations.minStep);
       await expect(minStepInput).toBeVisible();
 
       // Title

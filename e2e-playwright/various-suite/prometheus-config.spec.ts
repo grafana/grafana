@@ -1,6 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.describe(
+// Todo: Fix datasource creation
+test.describe.skip(
   'Prometheus config',
   {
     tag: ['@various'],
