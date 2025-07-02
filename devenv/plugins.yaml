@@ -21,3 +21,9 @@ apps:
     org_id: 1
     org_name: Main Org.
     disabled: false
+  - type: 'grafana-llm-app'
+    disabled: false
+    jsonData:
+      provider: anthropic
+    secureJsonData:
+      anthropicKey: $ANTHROPIC_API_KEY

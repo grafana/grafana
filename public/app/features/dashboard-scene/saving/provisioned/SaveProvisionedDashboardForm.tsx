@@ -1,20 +1,24 @@
 import { css } from '@emotion/css';
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { Controller, useForm, FormProvider } from 'react-hook-form';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { Controller, useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Alert, Button, Field, Input, Stack, TextArea, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, TextArea, useStyles2, useTheme2 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
+import { GenAIButton } from 'app/features/dashboard/components/GenAI/GenAIButton';
+import { EventTrackingSrc } from 'app/features/dashboard/components/GenAI/tracking';
+import { isLLMPluginEnabled } from 'app/features/dashboard/components/GenAI/utils';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
+import { AIContextProvider, useAIContext } from '../../components/Provisioned/AIContextProvider';
 import { DashboardEditFormSharedFields } from '../../components/Provisioned/DashboardEditFormSharedFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
@@ -38,10 +42,12 @@ interface TextAreaWithSuffixProps extends React.ComponentProps<typeof TextArea> 
   suffix?: React.ReactNode;
 }
 
+const LOCAL_STORAGE_ALWAYS_AUTOGEN_KEY = 'grafana-dashboard-always-autogen-all';
+
 const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuffixProps) => {
   const theme = useTheme2();
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const styles = useStyles2(() => ({
     wrapper: css({
       position: 'relative',
@@ -88,8 +94,8 @@ const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuf
 
   return (
     <div className={styles.wrapper}>
-      <TextArea 
-        {...textAreaProps} 
+      <TextArea
+        {...textAreaProps}
         ref={textAreaRef}
         value={value}
         className={styles.textArea}
@@ -100,7 +106,7 @@ const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuf
   );
 };
 
-export function SaveProvisionedDashboardForm({
+const SaveProvisionedDashboardFormInner = ({
   defaultValues,
   dashboard,
   drawer,
@@ -110,118 +116,80 @@ export function SaveProvisionedDashboardForm({
   isGitHub,
   workflowOptions,
   readOnly,
-}: Props) {
+}: Props) => {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
   const { isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
-  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { handleSubmit, watch, control, reset, register, setValue } = methods;
-  const [workflow, description] = watch(['workflow', 'description']);
+  const { handleSubmit, watch, control, reset, register, setValue, formState } =
+    useFormContext<ProvisionedDashboardFormData>();
 
-  // AI loading states
-  const [aiLoading, setAiLoading] = useState({
+  const [_, setAiLoading] = useState({
     title: false,
     description: false,
     path: false,
     comment: false,
-    branch: false,
-    magicSave: false,
+    ref: false,
+  });
+  const [showAutoGenCheckbox, setShowAutoGenCheckbox] = useState(false);
+  const [alwaysAutoGenAll, setAlwaysAutoGenAll] = useState(() => {
+    return localStorage.getItem(LOCAL_STORAGE_ALWAYS_AUTOGEN_KEY) === 'true';
   });
 
-  // Track which save mode was last used and current session preferences
-  const [lastUsedSaveMode, setLastUsedSaveMode] = useState<'traditional' | 'magic'>(() => {
-    try {
-      return (localStorage.getItem('grafana-dashboard-last-save-mode') as 'traditional' | 'magic') || 'magic';
-    } catch {
-      return 'magic';
+  const workflow = watch('workflow');
+
+  const fieldsWithAIAutofill = useMemo(() => {
+    const fields = ['comment'];
+
+    if (isNew) {
+      fields.push('title', 'description', 'path');
     }
-  });
 
-  // Track if autofill is disabled for this session (when traditional save is used)
-  const [autofillDisabledThisSession, setAutofillDisabledThisSession] = useState(false);
+    if (workflow === 'branch') {
+      fields.push('ref');
+    }
 
-  // Track if fields were auto-filled to hide AI buttons
-  const [fieldsAutoFilled, setFieldsAutoFilled] = useState(false);
+    return fields;
+  }, [isNew, workflow]);
 
+  // LLM state
+  const [isLLMEnabled, setIsLLMEnabled] = useState(false);
 
+  // Check if LLM is enabled
+  useEffect(() => {
+    isLLMPluginEnabled().then(setIsLLMEnabled);
+  }, []);
+
+  // Get AI context
+  const aiContext = useAIContext();
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  // Save the last used save mode to localStorage
-  const saveLastUsedMode = (mode: 'traditional' | 'magic') => {
-    setLastUsedSaveMode(mode);
-    try {
-      localStorage.setItem('grafana-dashboard-last-save-mode', mode);
-    } catch (error) {
-      console.warn('Failed to save last used save mode:', error);
-    }
-  };
-
-  // Typing effect function
-  const typeText = async (text: string, setValue: (value: string) => void, delay = 20) => {
-    setValue(''); // Clear the field first
-    for (let i = 0; i <= text.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, delay));
-      setValue(text.slice(0, i));
-    }
-  };
-
-  // Sample AI generated content
-  const generateSampleContent = useCallback(() => ({
-    title: `${dashboard.state.title || 'Dashboard'} - Enhanced Analytics`,
-    description: `This dashboard provides comprehensive monitoring and analytics for ${dashboard.state.title || 'your system'}. It includes real-time metrics, performance indicators, and actionable insights to help you monitor system health, track key performance metrics, and identify potential issues before they impact your operations.`,
-  }), [dashboard.state.title]);
-
-  // Instant auto-fill function (no typing effect)
-  const instantAutoFill = useCallback(() => {
-    const content = generateSampleContent();
-    
-    // Generate shared fields content
-    const sharedContent = {
-      path: `dashboards/${new Date().getFullYear()}/optimized-dashboard-${Date.now()}.json`,
-      comment: `Add enhanced dashboard with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
-      branch: `feature/enhanced-dashboard-${new Date().toISOString().slice(0, 7)}`,
+  // Helper function to get dashboard context for AI generation
+  const getDashboardContext = useCallback(() => {
+    const dashboardModel = {
+      title: dashboard.state.title || 'Untitled Dashboard',
+      tags: dashboard.state.tags || [],
+      isNew: isNew,
+      changeInfo: changeInfo
+        ? {
+            hasChanges: changeInfo.hasChanges,
+            hasTimeChanges: changeInfo.hasTimeChanges,
+            hasVariableValueChanges: changeInfo.hasVariableValueChanges,
+            hasRefreshChange: changeInfo.hasRefreshChange,
+            hasFolderChanges: changeInfo.hasFolderChanges,
+            hasMigratedToV2: changeInfo.hasMigratedToV2,
+            diffCount: changeInfo.diffCount,
+          }
+        : null,
     };
-
-    // Fill all fields instantly
-    setValue('title', content.title);
-    setValue('description', content.description);
-    
-    // Fill path if it's a new dashboard
-    if (isNew) {
-      setValue('path', sharedContent.path);
-    }
-    
-    // Fill comment if not read-only
-    if (!readOnly) {
-      setValue('comment', sharedContent.comment);
-    }
-    
-    // Fill branch if workflow is set to branch
-    if (workflow === 'branch') {
-      setValue('ref', sharedContent.branch);
-    }
-  }, [setValue, generateSampleContent, isNew, readOnly, workflow]);
-
-  // Auto-fill on mount if last used mode was magic and autofill not disabled this session
-  useEffect(() => {
-    if (lastUsedSaveMode === 'magic' && !autofillDisabledThisSession && isNew && !readOnly) {
-      // Small delay to ensure form is ready after reset
-      const timer = setTimeout(() => {
-        instantAutoFill();
-        setFieldsAutoFilled(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-    // Return undefined when condition is not met
-    return undefined;
-  }, [lastUsedSaveMode, autofillDisabledThisSession, isNew, readOnly, defaultValues, instantAutoFill]);
+    return dashboardModel;
+  }, [dashboard.state, isNew, changeInfo]);
 
   const onRequestError = (error: unknown) => {
     appEvents.publish({
@@ -272,375 +240,312 @@ export function SaveProvisionedDashboardForm({
     isNew,
   });
 
-  // AI handler functions with loading and typing effects
-  const handleAIFillTitle = async () => {
-    setAiLoading(prev => ({ ...prev, title: true }));
-    
-    try {
-      // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const content = generateSampleContent();
-      await typeText(content.title, (value) => setValue('title', value));
-    } catch (error) {
-      console.error('AI autofill title error:', error);
-    } finally {
-      setAiLoading(prev => ({ ...prev, title: false }));
-    }
-  };
-
-  const handleAIFillDescription = async () => {
-    setAiLoading(prev => ({ ...prev, description: true }));
-    
-    try {
-      // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      const content = generateSampleContent();
-      await typeText(content.description, (value) => setValue('description', value), 30);
-    } catch (error) {
-      console.error('AI autofill description error:', error);
-    } finally {
-      setAiLoading(prev => ({ ...prev, description: false }));
-    }
-  };
-
-  const handleAIFillAllInternal = async (isParallel = false) => {
-    setAiLoading(prev => ({ ...prev, all: true }));
-    
-    try {
-      // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const content = generateSampleContent();
-      
-      // Generate shared fields content
-      const sharedContent = {
-        path: `dashboards/${new Date().getFullYear()}/optimized-dashboard-${Date.now()}.json`,
-        comment: `Add enhanced dashboard with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
-        branch: `feature/enhanced-dashboard-${new Date().toISOString().slice(0, 7)}`,
-      };
-
-      if (isParallel) {
-        // Parallel mode - fill all fields simultaneously with faster typing
-        const fillPromises = [];
-        
-        // Always fill title and description for new dashboards (faster delays)
-        fillPromises.push(typeText(content.title, (value) => setValue('title', value), 10));
-        fillPromises.push(typeText(content.description, (value) => setValue('description', value), 15));
-        
-        // Fill path if it's a new dashboard
-        if (isNew) {
-          fillPromises.push(typeText(sharedContent.path, (value) => setValue('path', value), 10));
-        }
-        
-        // Fill comment if not read-only
-        if (!readOnly) {
-          fillPromises.push(typeText(sharedContent.comment, (value) => setValue('comment', value), 20));
-        }
-        
-        // Fill branch if workflow is set to branch
-        if (workflow === 'branch') {
-          fillPromises.push(typeText(sharedContent.branch, (value) => setValue('ref', value), 10));
-        }
-        
-        // Wait for all fields to complete simultaneously
-        await Promise.all(fillPromises);
-      } else {
-        // Serial mode - fill fields one by one (original behavior)
-        // Fill title first
-        await typeText(content.title, (value) => setValue('title', value));
-        
-        // Small delay between fields
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Then fill description
-        await typeText(content.description, (value) => setValue('description', value), 30);
-        
-        // Small delay before shared fields
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Fill path if it's a new dashboard
-        if (isNew) {
-          await typeText(sharedContent.path, (value) => setValue('path', value));
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        
-        // Fill comment if not read-only
-        if (!readOnly) {
-          await typeText(sharedContent.comment, (value) => setValue('comment', value), 40);
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-        
-        // Fill branch if workflow is set to branch
-        if (workflow === 'branch') {
-          await typeText(sharedContent.branch, (value) => setValue('ref', value));
-        }
-      }
-    } catch (error) {
-      console.error('AI autofill all error:', error);
-    } finally {
-      setAiLoading(prev => ({ ...prev, all: false }));
-    }
-  };
-
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
-    // Validate required fields
-    if (!repo || !path) {
-      console.error('Missing required fields for saving:', { repo, path });
-      return;
-    }
+  const handleFormSubmit = useCallback(
+    async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
+      console.log('handleFormSubmit', { title, description, repo, path, comment, ref });
 
-    // If user is writing to the original branch, override ref with whatever we loaded from
-    if (workflow === 'write') {
-      ref = loadedFromRef;
-    }
-
-    const body = dashboard.getSaveResource({
-      isNew,
-      title,
-      description,
-    });
-
-    createOrUpdateFile({
-      ref,
-      name: repo,
-      path,
-      message: comment,
-      body,
-    });
-  };
-
-  // Traditional save handler (disables autofill for this session)
-  const handleTraditionalSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Mark traditional mode as used
-    saveLastUsedMode('traditional');
-    
-    try {
-      // Execute the normal form submit
-      const formData = methods.getValues();
-      await handleFormSubmit(formData);
-      
-      // Only disable autofill after successful save
-      setAutofillDisabledThisSession(true);
-    } catch (error) {
-      // Don't disable autofill if save failed
-      console.error('Traditional save failed:', error);
-    }
-  };
-
-  // Magic save handler that combines AI autofill and save
-  const handleMagicSave = async () => {
-    if (readOnly) {return;}
-    
-    setAiLoading(prev => ({ ...prev, magicSave: true }));
-    
-    try {
-      // Mark magic mode as used
-      saveLastUsedMode('magic');
-      
-      // First fill all fields with AI in parallel mode for faster execution
-      await handleAIFillAllInternal(true);
-      
-      // Shorter wait for form to update since parallel is faster
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Then trigger the save using the form's submit handler
-      const formData = methods.getValues();
-      
-      // Validate that we have the required fields
-      if (!formData.title || !formData.path) {
-        throw new Error('Required fields are missing after AI autofill');
+      // Validate required fields
+      if (!repo || !path) {
+        console.error('Missing required fields for saving:', { repo, path });
+        return;
       }
-      
-      await handleFormSubmit(formData);
-    } catch (error) {
-      console.error('Magic save error:', error);
-      // Show error to user
-      appEvents.publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('dashboard-scene.save-provisioned-dashboard-form.magic-save-error', 'Magic save failed'), 
-          error
-        ],
+
+      // If user is writing to the original branch, override ref with whatever we loaded from
+      if (workflow === 'write') {
+        ref = loadedFromRef;
+      }
+
+      const body = dashboard.getSaveResource({
+        isNew,
+        title,
+        description,
       });
-    } finally {
-      setAiLoading(prev => ({ ...prev, magicSave: false }));
+
+      await createOrUpdateFile({
+        ref,
+        name: repo,
+        path,
+        message: comment,
+        body,
+      }).unwrap();
+    },
+    [workflow, loadedFromRef, dashboard, isNew, createOrUpdateFile]
+  );
+
+  const handleFormSubmitDebug = async (formData: any) => {
+    console.log('handleFormSubmitDebug', formData);
+    await handleFormSubmit(formData);
+  };
+
+  const nonDirtyAIFields = useMemo(() => {
+    return Object.keys(watch()).filter(
+      (fieldName) =>
+        fieldsWithAIAutofill.includes(fieldName) &&
+        !formState.dirtyFields[fieldName as keyof ProvisionedDashboardFormData]
+    );
+  }, [watch, fieldsWithAIAutofill, formState.dirtyFields]);
+
+  // Auto-generate all fields (trigger all GenAIButtons)
+  const [hasAutoGeneratedAll, setHasAutoGeneratedAll] = useState(false);
+  const autoGenerateAll = useCallback(() => {
+    nonDirtyAIFields.forEach((fieldName) => {
+      setAiLoading((prev) => ({ ...prev, [fieldName]: true }));
+      const button = document.getElementById(`${fieldName}-ai-button-container`)?.querySelector('button');
+      if (button) {
+        button.click();
+      }
+    });
+    setShowAutoGenCheckbox(true);
+    setHasAutoGeneratedAll(true);
+  }, [nonDirtyAIFields, setAiLoading]);
+
+  // Reset when drawer is opened
+  useEffect(() => {
+    if (drawer.isActive && alwaysAutoGenAll && !hasAutoGeneratedAll) {
+      autoGenerateAll();
+      setHasAutoGeneratedAll(true);
     }
+  }, [drawer.isActive, alwaysAutoGenAll, hasAutoGeneratedAll, autoGenerateAll]);
+
+  // Per-field effect for autofill (title and description in main form)
+  useEffect(() => {
+    if (drawer.isActive && alwaysAutoGenAll && !hasAutoGeneratedAll && isNew) {
+      let retries = 0;
+      const maxRetries = 5;
+      const retryDelay = 120; // ms
+
+      function tryClick(id: string) {
+        const btn = document.getElementById(id)?.querySelector('button');
+        if (btn) {
+          btn.click();
+          return true;
+        }
+        return false;
+      }
+
+      function clickWithRetry(id: string) {
+        if (tryClick(id)) {
+          return;
+        }
+        if (retries < maxRetries) {
+          retries++;
+          setTimeout(() => clickWithRetry(id), retryDelay);
+        } else {
+          console.warn(`GenAIButton for ${id} not found after ${maxRetries} retries`);
+        }
+      }
+
+      // Click title and description buttons for new dashboards
+      clickWithRetry('title-ai-button-container');
+      clickWithRetry('description-ai-button-container');
+    }
+  }, [drawer.isActive, alwaysAutoGenAll, hasAutoGeneratedAll, isNew]);
+
+  useEffect(() => {
+    if (!drawer.isActive) {
+      setHasAutoGeneratedAll(false);
+    }
+  }, [drawer.isActive]);
+
+  // Handler for the checkbox
+  const handleAutoGenCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAlwaysAutoGenAll(e.target.checked);
+    localStorage.setItem(LOCAL_STORAGE_ALWAYS_AUTOGEN_KEY, e.target.checked ? 'true' : 'false');
   };
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
-        <Stack direction="column" gap={2}>
-          {readOnly && (
-            <Alert
-              title={t(
-                'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
-                'This repository is read only'
-              )}
-            >
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
-                If you have direct access to the target, copy the JSON and paste it there.
-              </Trans>
-            </Alert>
-          )}
+    <form onSubmit={handleSubmit(handleFormSubmitDebug)} name="save-provisioned-form">
+      <Stack direction="column" gap={2}>
+        {readOnly && (
+          <Alert
+            title={t(
+              'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
+              'This repository is read only'
+            )}
+          >
+            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
+              If you have direct access to the target, copy the JSON and paste it there.
+            </Trans>
+          </Alert>
+        )}
 
-          {isNew && (
-            <>
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
-                invalid={!!methods.formState.errors.title}
-                error={methods.formState.errors.title?.message}
-              >
-                <Input
-                  id="dashboard-title"
-                  suffix={
-                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
-                      <IconButton
-                        name={aiLoading.title ? "spinner" : "ai-sparkle"}
+        {isNew && (
+          <>
+            <Field
+              noMargin
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <span>{t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}</span>
+                  {isLLMEnabled && (
+                    <div id="title-ai-button-container">
+                      <GenAIButton
                         tooltip={t(
                           'dashboard-scene.save-provisioned-dashboard-form.ai-fill-title',
                           'AI autofill title'
                         )}
-                        onClick={handleAIFillTitle}
-                        variant="secondary"
-                        size="sm"
-                        disabled={aiLoading.title}
+                        messages={aiContext.getTitleMessages(getDashboardContext(), changeInfo)}
+                        onGenerate={(response) => {
+                          setValue('title', response, { shouldDirty: true });
+                          setAiLoading((prev) => ({ ...prev, title: false }));
+                        }}
+                        eventTrackingSrc={EventTrackingSrc.dashboardTitle}
                       />
-                    ) : undefined
-                  }
-                  {...register('title', {
-                    required: t(
-                      'dashboard-scene.save-provisioned-dashboard-form.title-required',
-                      'Dashboard title is required'
-                    ),
-                    validate: validateTitle,
-                  })}
-                />
-              </Field>
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
-                invalid={!!methods.formState.errors.description}
-                error={methods.formState.errors.description?.message}
-              >
-                <TextAreaWithSuffix
-                  id="dashboard-description"
-                  value={description || ''}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue('description', e.target.value)}
-                  suffix={
-                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
-                      <IconButton
-                        name={aiLoading.description ? "spinner" : "ai-sparkle"}
+                    </div>
+                  )}
+                </Stack>
+              }
+              invalid={!!formState.errors.title}
+              error={formState.errors.title?.message}
+            >
+              <Input
+                id="dashboard-title"
+                {...register('title', {
+                  required: t(
+                    'dashboard-scene.save-provisioned-dashboard-form.title-required',
+                    'Dashboard title is required'
+                  ),
+                  validate: validateTitle,
+                })}
+              />
+            </Field>
+            <Field
+              noMargin
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <span>{t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}</span>
+                  {isLLMEnabled && (
+                    <div id="description-ai-button-container">
+                      <GenAIButton
                         tooltip={t(
                           'dashboard-scene.save-provisioned-dashboard-form.ai-fill-description',
                           'AI autofill description'
                         )}
-                        onClick={handleAIFillDescription}
-                        variant="secondary"
-                        size="sm"
-                        disabled={aiLoading.description}
-                      />
-                    ) : undefined
-                  }
-                />
-              </Field>
-
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
-              >
-                <Controller
-                  control={control}
-                  name={'folder'}
-                  render={({ field: { ref, value, onChange, ...field } }) => {
-                    return (
-                      <FolderPicker
-                        onChange={async (uid?: string, title?: string) => {
-                          onChange({ uid, title });
-                          // Update folderUid URL param
-                          updateURLParams('folderUid', uid);
-                          const meta = await getProvisionedMeta(uid);
-                          dashboard.setState({
-                            meta: {
-                              ...meta,
-                              folderUid: uid,
-                            },
-                          });
+                        messages={aiContext.getDescriptionMessages(
+                          getDashboardContext(),
+                          watch('title') || getDashboardContext().title,
+                          changeInfo
+                        )}
+                        onGenerate={(response) => {
+                          setValue('description', response, { shouldDirty: true });
+                          setAiLoading((prev) => ({ ...prev, description: false }));
                         }}
-                        value={value.uid}
-                        {...field}
+                        eventTrackingSrc={EventTrackingSrc.dashboardDescription}
                       />
-                    );
-                  }}
-                />
-              </Field>
-            </>
-          )}
-
-          {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
-
-          <DashboardEditFormSharedFields
-            resourceType="dashboard"
-            readOnly={readOnly}
-            workflow={workflow}
-            workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
-            isNew={isNew}
-            aiLoading={aiLoading}
-            setAiLoading={setAiLoading}
-            fieldsAutoFilled={fieldsAutoFilled}
-            autofillDisabledThisSession={autofillDisabledThisSession}
-          />
-
-          <Stack gap={2}>
-            <Stack direction="row" gap={2}>
-              {/* Always show both buttons in consistent positions */}
-              {/* Primary button (left) - changes based on last used mode */}
-              <Button 
-                variant={lastUsedSaveMode === 'traditional' ? 'primary' : 'secondary'}
-                onClick={handleTraditionalSave}
-                disabled={request.isLoading || !isDirty || readOnly}
-                tooltip={t(
-                  'dashboard-scene.save-provisioned-dashboard-form.traditional-save-tooltip',
-                  'Save dashboard without AI assistance'
-                )}
-              >
-                {request.isLoading && !aiLoading.magicSave
-                  ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-                  : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
-              </Button>
-              
-              {/* Quick Save button (right) - always visible unless disabled for session */}
-              {!autofillDisabledThisSession && (
-                <Button 
-                  variant={lastUsedSaveMode === 'magic' ? 'primary' : 'secondary'}
-                  icon={aiLoading.magicSave ? "spinner" : "ai-sparkle"}
-                  onClick={handleMagicSave}
-                  disabled={aiLoading.magicSave || request.isLoading || readOnly || Object.values(aiLoading).some(loading => loading)}
-                  tooltip={t(
-                    'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
-                    'AI autofill all fields and save automatically'
+                    </div>
                   )}
-                >
-                  {aiLoading.magicSave 
-                    ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Saving...')
-                    : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Quick Save')
-                  }
-                </Button>
-              )}
-            </Stack>
-            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
-            </Button>
-          </Stack>
+                </Stack>
+              }
+              invalid={!!formState.errors.description}
+              error={formState.errors.description?.message}
+            >
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => <TextAreaWithSuffix {...field} />}
+              />
+            </Field>
+
+            <Field
+              noMargin
+              label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
+            >
+              <Controller
+                control={control}
+                name={'folder'}
+                render={({ field: { ref, value, onChange, ...field } }) => {
+                  return (
+                    <FolderPicker
+                      onChange={async (uid?: string, title?: string) => {
+                        onChange({ uid, title });
+                        // Update folderUid URL param
+                        updateURLParams('folderUid', uid);
+                        const meta = await getProvisionedMeta(uid);
+                        dashboard.setState({
+                          meta: {
+                            ...meta,
+                            folderUid: uid,
+                          },
+                        });
+                      }}
+                      value={value.uid}
+                      {...field}
+                    />
+                  );
+                }}
+              />
+            </Field>
+          </>
+        )}
+
+        {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+
+        <DashboardEditFormSharedFields
+          resourceType="dashboard"
+          readOnly={readOnly}
+          workflow={workflow}
+          workflowOptions={workflowOptions}
+          isGitHub={isGitHub}
+          isNew={isNew}
+          changeInfo={changeInfo}
+          setAiLoading={setAiLoading}
+          shouldAutoGenerateAll={drawer.isActive && alwaysAutoGenAll && !hasAutoGeneratedAll}
+        />
+
+        <Stack gap={2} direction="row" justifyContent="flex-start">
+          <Button
+            variant="secondary"
+            icon={request.isLoading ? 'spinner' : 'ai-sparkle'}
+            onClick={autoGenerateAll}
+            disabled={request.isLoading || !isDirty || readOnly || hasAutoGeneratedAll}
+            tooltip={t(
+              'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
+              'Auto-generate all fields'
+            )}
+          >
+            {request.isLoading
+              ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Auto-generating...')
+              : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Auto generate all')}
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={request.isLoading || !isDirty || readOnly}
+            tooltip={t(
+              'dashboard-scene.save-provisioned-dashboard-form.traditional-save-tooltip',
+              'Save dashboard'
+            )}
+          >
+            {request.isLoading
+              ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+              : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+          </Button>
         </Stack>
-      </form>
+        {showAutoGenCheckbox && (
+          <label style={{ display: 'flex', alignItems: 'center'}}>
+            <input
+              type="checkbox"
+              checked={alwaysAutoGenAll}
+              onChange={handleAutoGenCheckboxChange}
+              style={{ marginRight: 8 }}
+            />
+            {t('dashboard-scene.save-provisioned-dashboard-form.always-autogen-checkbox', 'Always auto-generate all fields when saving')}
+          </label>
+        )}
+      </Stack>
+    </form>
+  );
+};
+
+export function SaveProvisionedDashboardForm(props: Props) {
+  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues: props.defaultValues });
+  const { setValue } = methods;
+
+  return (
+    <FormProvider {...methods}>
+      <AIContextProvider setValue={setValue}>
+        <SaveProvisionedDashboardFormInner {...props} />
+      </AIContextProvider>
     </FormProvider>
   );
 }

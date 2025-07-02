@@ -1,12 +1,18 @@
 import { css } from '@emotion/css';
-import { memo, useState, useEffect, useRef, useCallback } from 'react';
+import { memo, useEffect, useRef, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { Field, TextArea, Input, RadioButtonGroup, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Field, TextArea, Input, RadioButtonGroup, useStyles2, useTheme2, Stack } from '@grafana/ui';
+import { GenAIButton } from 'app/features/dashboard/components/GenAI/GenAIButton';
+import { EventTrackingSrc } from 'app/features/dashboard/components/GenAI/tracking';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
+
+import { DashboardChangeInfo } from '../../saving/shared';
+
+import { AIContextProvider, useAIContext } from './AIContextProvider';
 
 // Custom TextArea with suffix support
 interface TextAreaWithSuffixProps extends React.ComponentProps<typeof TextArea> {
@@ -16,7 +22,7 @@ interface TextAreaWithSuffixProps extends React.ComponentProps<typeof TextArea> 
 const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuffixProps) => {
   const theme = useTheme2();
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  
+
   const styles = useStyles2(() => ({
     wrapper: css({
       position: 'relative',
@@ -63,8 +69,8 @@ const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuf
 
   return (
     <div className={styles.wrapper}>
-      <TextArea 
-        {...textAreaProps} 
+      <TextArea
+        {...textAreaProps}
         ref={textAreaRef}
         value={value}
         className={styles.textArea}
@@ -84,26 +90,24 @@ interface DashboardEditFormSharedFieldsProps {
   isGitHub?: boolean;
   fieldsAutoFilled?: boolean;
   autofillDisabledThisSession?: boolean;
-  aiLoading?: {
-    title: boolean;
-    description: boolean;
-    path: boolean;
-    comment: boolean;
-    branch: boolean;
-    magicSave: boolean;
-  };
-  setAiLoading?: React.Dispatch<React.SetStateAction<{
-    title: boolean;
-    description: boolean;
-    path: boolean;
-    comment: boolean;
-    branch: boolean;
-    magicSave: boolean;
-  }>>;
+  changeInfo?: DashboardChangeInfo;
+  setAiLoading: (updater: (prev: any) => any) => void;
+  shouldAutoGenerateAll?: boolean;
 }
 
-export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType, fieldsAutoFilled = false, autofillDisabledThisSession = false, aiLoading, setAiLoading }) => {
+const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsProps>(
+  ({
+    readOnly = false,
+    workflowOptions,
+    isGitHub,
+    isNew,
+    resourceType,
+    fieldsAutoFilled = false,
+    autofillDisabledThisSession = false,
+    changeInfo,
+    setAiLoading,
+    shouldAutoGenerateAll,
+  }) => {
     const {
       control,
       register,
@@ -112,6 +116,9 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
       formState: { errors },
     } = useFormContext();
 
+    const workflow = watch('workflow');
+    const currentTitle = watch('title') || '';
+    const currentDescription = watch('description') || '';
     const comment = watch('comment');
 
     const pathText =
@@ -119,194 +126,257 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
         ? 'File path inside the repository (.json or .yaml)'
         : 'Folder path inside the repository';
 
-    // Use external loading states if provided, otherwise create local ones
-    const [localAiLoading, setLocalAiLoading] = useState({
-      title: false,
-      description: false,
-      path: false,
-      comment: false,
-      branch: false,
-      magicSave: false,
-    });
+    // Get AI context
+    const aiContext = useAIContext();
 
-    const currentAiLoading = aiLoading || localAiLoading;
-    const currentSetAiLoading = setAiLoading || setLocalAiLoading;
+    // Create dashboard context for AI generation
+    const getDashboardContext = useCallback(() => {
+      return {
+        title: currentTitle || 'Untitled Dashboard',
+        tags: [], // Could be enhanced to get tags from dashboard state if available
+        isNew: isNew || false,
+        resourceType,
+      };
+    }, [currentTitle, isNew, resourceType]);
 
-    // Typing effect function
-    const typeText = async (text: string, setValue: (value: string) => void, delay = 20) => {
-      setValue(''); // Clear the field first
-      for (let i = 0; i <= text.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, delay));
-        setValue(text.slice(0, i));
+    // Don't show AI buttons if autofill is disabled
+    const showAIButtons = !fieldsAutoFilled && !autofillDisabledThisSession;
+
+    useEffect(() => {
+      console.log('watched comment:', comment);
+    }, [comment]);
+
+    // Autofill handlers for each field
+    // const handleAIFillPath = useCallback(() => {
+    //   setAiLoading((prev) => ({ ...prev, path: true }));
+    //   const dashboardContext = getDashboardContext();
+    //   aiContext.pathLLMStream.setMessages(aiContext.getPathMessages(dashboardContext, currentTitle));
+    // }, [aiContext, getDashboardContext, currentTitle, setAiLoading]);
+
+    // const handleAIFillComment = useCallback(() => {
+    //   setAiLoading((prev) => ({ ...prev, comment: true }));
+    //   const dashboardContext = getDashboardContext();
+    //   aiContext.commentLLMStream.setMessages(aiContext.getCommentMessages(dashboardContext, currentTitle, currentDescription, changeInfo));
+    // }, [aiContext, getDashboardContext, currentTitle, currentDescription, changeInfo, setAiLoading]);
+
+    // const handleAIFillBranch = useCallback(() => {
+    //   setAiLoading((prev) => ({ ...prev, ref: true }));
+    //   const dashboardContext = getDashboardContext();
+    //   aiContext.branchLLMStream.setMessages(aiContext.getBranchMessages(dashboardContext, currentTitle));
+    // }, [aiContext, getDashboardContext, currentTitle, setAiLoading]);
+
+    // Per-field effect for autofill
+    useEffect(() => {
+      /**
+       * We use a retry approach here because, due to React rendering and DOM timing,
+       * the GenAIButton may not be present in the DOM on the first effect run.
+       * This can happen especially when the drawer opens and the form is mounting.
+       * We retry a few times (with a short delay) to ensure the button is available before clicking.
+       * This avoids race conditions and ensures autofill is reliably triggered for all fields.
+       */
+      if (shouldAutoGenerateAll) {
+        let retries = 0;
+        const maxRetries = 5;
+        const retryDelay = 120; // ms
+
+        function tryClick(id: string) {
+          const btn = document.getElementById(id)?.querySelector('button');
+          if (btn) {
+            btn.click();
+            return true;
+          }
+          return false;
+        }
+
+        function clickWithRetry(id: string) {
+          if (tryClick(id)) {
+            return;
+          }
+          if (retries < maxRetries) {
+            retries++;
+            setTimeout(() => clickWithRetry(id), retryDelay);
+          } else {
+            console.warn(`GenAIButton for ${id} not found after ${maxRetries} retries`);
+          }
+        }
+
+        if (isNew) {
+          clickWithRetry('path-ai-button-container');
+        }
+        clickWithRetry('comment-ai-button-container');
+        if (workflow === 'branch') {
+          clickWithRetry('ref-ai-button-container');
+        }
       }
-    };
-
-    // Sample AI generated content
-    const generateSampleContent = () => ({
-      path: `${resourceType}s/${new Date().getFullYear()}/optimized-${resourceType}-${Date.now()}.json`,
-      comment: `Add enhanced ${resourceType} with improved performance monitoring and analytics capabilities. This update includes new visualizations and better data organization.`,
-      branch: `feature/enhanced-${resourceType}-${new Date().toISOString().slice(0, 7)}`,
-    });
-
-    // Handlers for AI autofill
-    const handleAIFillComment = async () => {
-      currentSetAiLoading((prev: any) => ({ ...prev, comment: true }));
-      
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const content = generateSampleContent();
-        await typeText(content.comment, (value) => setValue('comment', value), 40);
-      } catch (error) {
-        console.error('AI autofill comment error:', error);
-      } finally {
-        currentSetAiLoading((prev: any) => ({ ...prev, comment: false }));
-      }
-    };
-
-    const handleAIFillBranch = async () => {
-      currentSetAiLoading((prev: any) => ({ ...prev, branch: true }));
-      
-      try {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        const content = generateSampleContent();
-        await typeText(content.branch, (value) => setValue('ref', value));
-      } catch (error) {
-        console.error('AI autofill branch error:', error);
-      } finally {
-        currentSetAiLoading((prev: any) => ({ ...prev, branch: false }));
-      }
-    };
-
-    const handleAIFillPath = async () => {
-      currentSetAiLoading((prev: any) => ({ ...prev, path: true }));
-      
-      try {
-        await new Promise(resolve => setTimeout(resolve, 900));
-        const content = generateSampleContent();
-        await typeText(content.path, (value) => setValue('path', value));
-      } catch (error) {
-        console.error('AI autofill path error:', error);
-      } finally {
-        currentSetAiLoading((prev: any) => ({ ...prev, path: false }));
-      }
-    };
+    }, [shouldAutoGenerateAll, isNew, workflow]);
 
     return (
       <>
         {/* Path */}
         <Field
           noMargin
-          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}
+          label={
+            <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+              <span>{t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}</span>
+              {isNew && showAIButtons && (
+                <div id="path-ai-button-container">
+                  <GenAIButton
+                    tooltip={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-path',
+                      'AI autofill path'
+                    )}
+                    messages={aiContext.getPathMessages(getDashboardContext(), currentTitle, changeInfo)}
+                    onGenerate={(response) => {
+                      setValue('path', response, { shouldDirty: true });
+                      setAiLoading((prev) => ({ ...prev, path: false }));
+                    }}
+                    eventTrackingSrc={EventTrackingSrc.dashboardTitle}
+                  />
+                </div>
+              )}
+            </Stack>
+          }
           description={t(
             'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
             pathText
           )}
         >
-          <Input 
-            id="dashboard-path" 
-            type="text" 
-            {...register('path')} 
-            readOnly={!isNew}
-            suffix={
-              isNew && !fieldsAutoFilled && !autofillDisabledThisSession ? (
-                <IconButton
-                  name={currentAiLoading.path ? "spinner" : "ai-sparkle"}
-                  tooltip={t(
-                    'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-path',
-                    'AI autofill path'
-                  )}
-                  onClick={handleAIFillPath}
-                  variant="secondary"
-                  size="sm"
-                  disabled={currentAiLoading.path}
-                />
-              ) : undefined
-            }
+          <Input
+            id="dashboard-path"
+            {...register('path', {
+              required: t(
+                'provisioned-resource-form.save-or-delete-resource-shared-fields.path-required',
+                'Path is required'
+              ),
+            })}
           />
         </Field>
 
         {/* Comment */}
         <Field
           noMargin
-          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
+          label={
+            <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+              <span>
+                {t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
+              </span>
+              {!readOnly && showAIButtons && (
+                <div id="comment-ai-button-container">
+                  <GenAIButton
+                    tooltip={t(
+                      'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-comment',
+                      'AI autofill comment'
+                    )}
+                    messages={aiContext.getCommentMessages(
+                      getDashboardContext(),
+                      currentTitle,
+                      currentDescription,
+                      changeInfo
+                    )}
+                    onGenerate={(response) => {
+                      console.log('GenAIButton generated comment:', response);
+                      setValue('comment', response, { shouldDirty: true, shouldTouch: true });
+                      setAiLoading((prev) => ({ ...prev, comment: false }));
+                    }}
+                    eventTrackingSrc={EventTrackingSrc.dashboardChanges}
+                  />
+                </div>
+              )}
+            </Stack>
+          }
+          description={t(
+            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-git-commit-message',
+            'Git commit message'
+          )}
         >
-          <TextAreaWithSuffix
-            id="provisioned-resource-form-comment"
-            value={comment || ''}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setValue('comment', e.target.value)}
-            disabled={readOnly}
-            placeholder={t(
-              'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
-              'Add a note to describe your changes (optional)'
+          <Controller
+            control={control}
+            name="comment"
+            render={({ field }) => (
+              <TextAreaWithSuffix id="dashboard-comment" value={field.value || ''} onChange={field.onChange} />
             )}
-            suffix={
-              !readOnly && !fieldsAutoFilled && !autofillDisabledThisSession ? (
-                <IconButton
-                  name={currentAiLoading.comment ? "spinner" : "ai-sparkle"}
-                  tooltip={t(
-                    'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-comment',
-                    'AI autofill comment'
-                  )}
-                  onClick={handleAIFillComment}
-                  variant="secondary"
-                  size="sm"
-                  disabled={currentAiLoading.comment}
-                />
-              ) : undefined
-            }
           />
         </Field>
 
         {/* Workflow */}
-        {isGitHub && !readOnly && (
-          <>
-            <Field
-              noMargin
-              label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-workflow', 'Workflow')}
-            >
-              <Controller
-                control={control}
-                name="workflow"
-                render={({ field: { ref: _, ...field } }) => (
-                  <RadioButtonGroup id="provisioned-resource-form-workflow" {...field} options={workflowOptions} />
+        <Field
+          noMargin
+          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-workflow', 'Workflow')}
+        >
+          <Controller
+            control={control}
+            name="workflow"
+            render={({ field: { ref, value, onChange, ...field } }) => {
+              return <RadioButtonGroup {...field} value={value} onChange={onChange} options={workflowOptions} />;
+            }}
+          />
+        </Field>
+
+        {/* Branch */}
+        {workflow === 'branch' && (
+          <Field
+            noMargin
+            label={
+              <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                <span>
+                  {t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
+                </span>
+                {showAIButtons && (
+                  <div id="ref-ai-button-container">
+                    <GenAIButton
+                      tooltip={t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-branch',
+                        'AI autofill branch'
+                      )}
+                      messages={aiContext.getBranchMessages(getDashboardContext(), currentTitle, changeInfo)}
+                      onGenerate={(response) => {
+                        setValue('ref', response, { shouldDirty: true });
+                        setAiLoading((prev) => ({ ...prev, ref: false }));
+                      }}
+                      eventTrackingSrc={EventTrackingSrc.dashboardTitle}
+                    />
+                  </div>
                 )}
-              />
-            </Field>
-            {workflow === 'branch' && (
-              <Field
-                noMargin
-                label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
-                description={t(
-                  'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-name-in-git-hub',
-                  'Branch name in GitHub'
-                )}
-                invalid={!!errors.ref}
-                error={errors.ref && <BranchValidationError />}
-              >
-                <Input 
-                  id="provisioned-resource-form-branch" 
-                  {...register('ref', { validate: validateBranchName })}
-                  suffix={
-                    !fieldsAutoFilled && !autofillDisabledThisSession ? (
-                      <IconButton
-                        name={currentAiLoading.branch ? "spinner" : "ai-sparkle"}
-                        tooltip={t(
-                          'provisioned-resource-form.save-or-delete-resource-shared-fields.ai-fill-branch',
-                          'AI autofill branch name'
-                        )}
-                        onClick={handleAIFillBranch}
-                        variant="secondary"
-                        size="sm"
-                        disabled={currentAiLoading.branch}
-                      />
-                    ) : undefined
-                  }
-                />
-              </Field>
+              </Stack>
+            }
+            description={t(
+              'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-name',
+              'Branch name'
             )}
-          </>
+            invalid={!!errors.ref}
+            error={errors.ref?.message?.toString()}
+          >
+            <>
+              <Input
+                id="dashboard-branch"
+                {...register('ref', {
+                  required: t(
+                    'provisioned-resource-form.save-or-delete-resource-shared-fields.branch-required',
+                    'Branch name is required'
+                  ),
+                  validate: (value) => {
+                    if (isGitHub) {
+                      return validateBranchName(value);
+                    }
+                    return true;
+                  },
+                })}
+              />
+              {isGitHub && errors.ref && <BranchValidationError />}
+            </>
+          </Field>
         )}
       </>
     );
   }
 );
+
+export const DashboardEditFormSharedFields = (props: DashboardEditFormSharedFieldsProps) => {
+  const { setValue } = useFormContext();
+
+  return (
+    <AIContextProvider setValue={setValue}>
+      <DashboardEditFormSharedFieldsInner {...props} />
+    </AIContextProvider>
+  );
+};
