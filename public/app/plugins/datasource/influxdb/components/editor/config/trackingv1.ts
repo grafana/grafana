@@ -1,40 +1,40 @@
 import { reportInteraction } from '@grafana/runtime';
 
 export const trackInfluxDBConfigV1QueryLanguageSelection = (props: { version: string }) => {
-  reportInteraction('influxdb-configv1-query-language-dropdown', props);
+  reportInteraction('influxdb_configv1_query_language_dropdown', props);
 };
 
 // Flux Database Fields
 export const trackInfluxDBConfigV1FluxOrgInputField = () => {
-  reportInteraction('influxdb-configv1-flux-dbdetails-organization-input-field');
+  reportInteraction('influxdb_configv1_flux_dbdetails_organization_input_field');
 };
 
 export const trackInfluxDBConfigV1FluxTokenInputField = () => {
-  reportInteraction('influxdb-configv1-flux-dbdetails-token-input-field');
+  reportInteraction('influxdb_configv1_flux_dbdetails_token_input_field');
 };
 
 export const trackInfluxDBConfigV1FluxDefaultBucketInputField = () => {
-  reportInteraction('influxdb-configv1-flux-dbdetails-default-bucket-input-field');
+  reportInteraction('influxdb_configv1_flux_dbdetails_default_bucket_input_field');
 };
 
 // InfluxQL Database Fields
 export const trackInfluxDBConfigV1InfluxQLDatabaseInputField = () => {
-  reportInteraction('influxdb-configv1-influxql-dbdetails-database-input-field');
+  reportInteraction('influxdb_configv1_influxql_dbdetails_database_input_field');
 };
 
 export const trackInfluxDBConfigV1InfluxQLUserInputField = () => {
-  reportInteraction('influxdb-configv1-influxql-dbdetails-user-input-field');
+  reportInteraction('influxdb_configv1_influxql_dbdetails_user_input_field');
 };
 
 export const trackInfluxDBConfigV1InfluxQLPasswordInputField = () => {
-  reportInteraction('influxdb-configv1-influxql-dbdetails-password-input-field');
+  reportInteraction('influxdb_configv1_influxql_dbdetails_password_input_field');
 };
 
 // SQL Database Fields
 export const trackInfluxDBConfigV1SQLDatabaseInputField = () => {
-  reportInteraction('influxdb-configv1-sql-dbdetails-database-input-field');
+  reportInteraction('influxdb_configv1_sql_dbdetails_database_input_field');
 };
 
 export const trackInfluxDBConfigV1SQLTokenInputField = () => {
-  reportInteraction('influxdb-configv1-sql-dbdetails-token-input-field');
+  reportInteraction('influxdb_configv1_sql_dbdetails_token_input_field');
 };

@@ -69,8 +69,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { options, onOptionsChange } = this.props;
 
     if (selected.value) {
-      trackInfluxDBConfigV1QueryLanguageSelection({ version: selected.value })
-    };
+      trackInfluxDBConfigV1QueryLanguageSelection({ version: selected.value });
+    }
 
     const copy: DataSourceSettings<InfluxOptionsV1, {}> = {
       ...options,
