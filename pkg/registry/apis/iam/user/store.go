@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-const AnnonKeyLastSeenAt = "iam.grafana.app/last-seen-at"
+const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
 
 var (
 	_ rest.Scoper               = (*LegacyStore)(nil)
@@ -140,7 +140,7 @@ func toUserItem(u *user.User, ns string) iamv0alpha.User {
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
-	obj.SetAnnotation(AnnonKeyLastSeenAt, formatTime(&u.LastSeenAt))
+	obj.SetAnnotation(AnnoKeyLastSeenAt, formatTime(&u.LastSeenAt))
 	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
 }
