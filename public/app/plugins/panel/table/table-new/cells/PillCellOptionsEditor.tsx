@@ -9,10 +9,7 @@ const colorModeOptions: Array<{ value: 'auto' | 'fixed'; label: string }> = [
   { value: 'fixed', label: 'Fixed color' },
 ];
 
-export const PillCellOptionsEditor = ({
-  cellOptions,
-  onChange,
-}: TableCellEditorProps<TablePillCellOptions>) => {
+export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TablePillCellOptions>) => {
   const colorMode = (cellOptions.colorMode === 'mapped' ? 'auto' : cellOptions.colorMode) || 'auto';
 
   const onColorModeChange = (mode: 'auto' | 'fixed') => {
@@ -35,11 +32,7 @@ export const PillCellOptionsEditor = ({
         )}
         noMargin
       >
-        <RadioButtonGroup
-          value={colorMode}
-          onChange={onColorModeChange}
-          options={colorModeOptions}
-        />
+        <RadioButtonGroup value={colorMode} onChange={onColorModeChange} options={colorModeOptions} />
       </Field>
 
       {colorMode === 'fixed' && (
@@ -51,15 +44,9 @@ export const PillCellOptionsEditor = ({
           )}
           noMargin
         >
-          <ColorPicker
-            color={cellOptions.color || '#FF780A'}
-            onChange={onColorChange}
-            enableNamedColors={false}
-          />
+          <ColorPicker color={cellOptions.color || '#FF780A'} onChange={onColorChange} enableNamedColors={false} />
         </Field>
       )}
-
-
     </Stack>
   );
-}; 
+};

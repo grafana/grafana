@@ -82,11 +82,7 @@ const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={
 
 const ACTIONS_RENDERER: TableCellRenderer = (props) => <ActionsCell actions={props.actions} />;
 
-const PILL_RENDERER: TableCellRenderer = (props) => (
-  <PillCell
-    {...props}
-  />
-);
+const PILL_RENDERER: TableCellRenderer = (props) => <PillCell {...props} />;
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;
