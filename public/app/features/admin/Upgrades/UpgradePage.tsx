@@ -34,7 +34,7 @@ const apiVersions = await getVersions();
 const currentVersion = apiVersions[0]?.startingVersion || config.buildInfo.version;
 const TABS = [
   { id: 'VERSIONS', label: 'Version' },
-  { id: 'CHANGELOG', label: 'Changelog' },
+  // { id: 'CHANGELOG', label: 'Changelog' }, // TODO: add changelog
 ];
 
 

@@ -38,11 +38,11 @@ export function VersionList({ versions, installedVersion }: Props) {
           <th>Release Date</th>
           <th>Upgrade Type</th>
           <th>Support Status</th>
-          <th>More Info</th>
+          <th>Changelog</th>
+          <th>Upgrade Guide</th>
         </tr>
       </thead>
       <tbody>
-        <tr></tr>
         {versions.map((v) => {
           return (
             <tr key={v.version}>
@@ -50,10 +50,10 @@ export function VersionList({ versions, installedVersion }: Props) {
               <td>
                   <LinkButton
                     fill="solid"
-                    variant="secondary"
+                    variant="primary"
                     icon="download-alt"
                     size="sm"
-                    className={styles.badge}
+                    // className={styles.button}
                     href={`https://grafana.com/grafana/download/${v.version}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -66,23 +66,30 @@ export function VersionList({ versions, installedVersion }: Props) {
               <td>{v.type.toUpperCase()}</td>
               <td>{v.isOutOfSupport ? 'Out of Support' : 'In Support'}</td>
               <td>
-                <a
-                  href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
                   <LinkButton
                     type="button"
                     variant="secondary"
                     icon="info-circle"
+                    size="sm"
                     href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     Release Notes
                   </LinkButton>
-                </a>
+              
               </td>
+              <td>
+                  <LinkButton
+                    type="button"
+                    variant="secondary"
+                    icon="external-link-alt"
+                    size="sm"
+                    href={`https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v${v.version}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >Upgrade Guide</LinkButton>
+            </td>
             </tr>
           );
         })}
@@ -116,12 +123,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'tbody tr:nth-child(odd)': {
       background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
     },
-  }),
-  badge: css({
-    height: 24,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '50%',
   }),
 });
