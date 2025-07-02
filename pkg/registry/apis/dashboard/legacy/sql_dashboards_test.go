@@ -2,6 +2,8 @@ package legacy
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -220,4 +222,82 @@ func TestBuildSaveDashboardCommand(t *testing.T) {
 			require.True(t, cmd.Overwrite)
 		})
 	}
+}
+
+func TestParseLibraryPanelRow(t *testing.T) {
+	basePanel := panel{
+		ID:          1,
+		UID:         "panel-uid",
+		FolderUID:   sql.NullString{String: "folder-uid", Valid: true},
+		Created:     time.Now(),
+		CreatedBy:   "creator",
+		Updated:     time.Now(),
+		UpdatedBy:   "updator",
+		Version:     2,
+		Type:        "graph",
+		Description: "desc from db",
+	}
+
+	t.Run("type mismatch triggers warning", func(t *testing.T) {
+		p := basePanel
+		p.Name = "Test Panel"
+		p.Type = "graph"
+		model := map[string]interface{}{
+			"title":       "Test Panel",
+			"type":        "table",
+			"description": "desc from db",
+		}
+		modelBytes, err := json.Marshal(model)
+		require.NoError(t, err)
+		p.Model = modelBytes
+
+		item, err := parseLibraryPanelRow(p)
+		require.NoError(t, err)
+		require.Equal(t, "table", item.Spec.Type)
+		require.NotEmpty(t, item.Status.Warnings)
+		require.Contains(t, item.Status.Warnings[0], "type mismatch")
+	})
+
+	t.Run("metadata is set correctly", func(t *testing.T) {
+		p := basePanel
+		p.Name = "Test Panel"
+		model := map[string]interface{}{
+			"title":       "Test Panel",
+			"type":        "graph",
+			"description": "desc from db",
+		}
+		modelBytes, err := json.Marshal(model)
+		require.NoError(t, err)
+		p.Model = modelBytes
+
+		item, err := parseLibraryPanelRow(p)
+		require.NoError(t, err)
+
+		meta, err := utils.MetaAccessor(&item)
+		require.NoError(t, err)
+		require.Equal(t, p.ID, meta.GetDeprecatedInternalID()) // nolint:staticcheck
+		require.Equal(t, p.Version, meta.GetGeneration())
+		require.Equal(t, p.FolderUID.String, meta.GetFolder())
+		require.Equal(t, p.CreatedBy, meta.GetCreatedBy())
+		require.Equal(t, p.UpdatedBy, meta.GetUpdatedBy())
+	})
+
+	t.Run("panel title in dashboard vs library panel title is set correctly", func(t *testing.T) {
+		p := basePanel
+		p.Name = "Database Name"
+		model := map[string]interface{}{
+			"title":       "Model Title",
+			"type":        "graph",
+			"description": "desc from db",
+		}
+		modelBytes, err := json.Marshal(model)
+		require.NoError(t, err)
+		p.Model = modelBytes
+
+		item, err := parseLibraryPanelRow(p)
+		require.NoError(t, err)
+
+		require.Equal(t, "Model Title", item.Spec.PanelTitle)
+		require.Equal(t, "Database Name", item.Spec.Title)
+	})
 }

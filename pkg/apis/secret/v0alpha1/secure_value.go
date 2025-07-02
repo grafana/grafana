@@ -59,7 +59,9 @@ type SecureValueSpec struct {
 
 	// The raw value is only valid for write. Read/List will always be empty.
 	// There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.
+	// Minimum and maximum lengths in bytes.
 	// +k8s:validation:minLength=1
+	// +k8s:validation:maxLength=24576
 	Value ExposedSecureValue `json:"value,omitempty"`
 
 	// When using a third-party keeper, the `ref` is used to reference a value inside the remote storage.

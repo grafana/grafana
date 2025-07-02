@@ -110,6 +110,12 @@
       "update-button": "更新",
       "users-heading": "組織使用者"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "稽核",
       "title-custom-branding": "自訂品牌",
@@ -3449,18 +3455,12 @@
       "button-create": "建立",
       "button-creating": "正在建立…",
       "cancel": "取消",
-      "description-branch-name-in-git-hub": "GitHub 中的分支名稱",
       "error-invalid-folder-name": "無效的資料夾名稱",
       "error-required": "資料夾名稱為必填",
-      "folder-comment-input-placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）",
       "folder-name-input-placeholder-enter-folder-name": "輸入資料夾名稱",
-      "label-branch": "分支",
-      "label-comment": "評論",
       "label-folder-name": "資料夾名稱",
-      "label-workflow": "工作流程",
       "text-pull-request-created": "已建立拉取請求，其中包含對此資料夾的變更：",
       "title-pull-request-created": "已建立拉取請求",
-      "title-repository-not-found": "找不到儲存庫",
       "title-this-repository-is-read-only": "此存放庫為唯讀"
     },
     "no-results": {
@@ -12038,6 +12038,7 @@
           "polynomial": "多項式"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "要預測的 X、Y 點數"
     },
     "rename-by-regex-transformer-editor": {
