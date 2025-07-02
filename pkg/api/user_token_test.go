@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestUserTokenAPIEndpoint(t *testing.T) {
@@ -148,6 +150,95 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 			assert.Equal(t, "11.0", resultTwo.Get("osVersion").MustString())
 		}, mockUser)
 	})
+}
+
+func TestHTTPServer_RotateUserAuthTokenRedirect(t *testing.T) {
+	redirectTestCases := []struct {
+		name        string
+		redirectUrl string
+		expectedUrl string
+	}{
+		// Valid redirects should be preserved
+		{"valid root path", "/", "/"},
+		{"valid simple path", "/hello", "/hello"},
+		{"valid single char path", "/a", "/a"},
+		{"valid nested path", "/asd/hello", "/asd/hello"},
+
+		// Invalid redirects should be converted to root
+		{"backslash domain", `/\grafana.com`, "/"},
+		{"traversal backslash domain", `/a/../\grafana.com`, "/"},
+		{"double slash", "//grafana", "/"},
+		{"missing initial slash", "missingInitialSlash", "/"},
+		{"parent directory", "/../", "/"},
+	}
+
+	sessionTestCases := []struct {
+		name                      string
+		useSessionStorageRedirect bool
+	}{
+		{"when useSessionStorageRedirect is enabled", true},
+		{"when useSessionStorageRedirect is disabled", false},
+	}
+
+	for _, sessionCase := range sessionTestCases {
+		t.Run(sessionCase.name, func(t *testing.T) {
+			for _, redirectCase := range redirectTestCases {
+				t.Run(redirectCase.name, func(t *testing.T) {
+					server := SetupAPITestServer(t, func(hs *HTTPServer) {
+						cfg := setting.NewCfg()
+						cfg.LoginCookieName = "grafana_session"
+						cfg.LoginMaxLifetime = 10 * time.Hour
+						hs.Cfg = cfg
+						hs.log = log.New()
+						hs.AuthTokenService = &authtest.FakeUserAuthTokenService{
+							RotateTokenProvider: func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
+								return &auth.UserToken{UnhashedToken: "new"}, nil
+							},
+						}
+					})
+
+					redirectToQuery := url.QueryEscape(redirectCase.redirectUrl)
+					urlString := "/user/auth-tokens/rotate"
+
+					if sessionCase.useSessionStorageRedirect {
+						urlString = urlString + "?redirectTo=" + redirectToQuery
+					}
+
+					req := server.NewGetRequest(urlString)
+					req.AddCookie(&http.Cookie{Name: "grafana_session", Value: "123", Path: "/"})
+
+					if sessionCase.useSessionStorageRedirect {
+						req = webtest.RequestWithWebContext(req, &contextmodel.ReqContext{UseSessionStorageRedirect: true})
+					} else {
+						req.AddCookie(&http.Cookie{Name: "redirect_to", Value: redirectToQuery, Path: "/"})
+					}
+
+					var redirectStatusCode int
+					var redirectLocation string
+
+					server.HttpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+						if len(via) > 1 {
+							// Stop after first redirect
+							return http.ErrUseLastResponse
+						}
+
+						if req.Response == nil {
+							return nil
+						}
+						redirectStatusCode = req.Response.StatusCode
+						redirectLocation = req.Response.Header.Get("Location")
+						return nil
+					}
+					res, err := server.Send(req)
+					require.NoError(t, err)
+					assert.Equal(t, 302, redirectStatusCode)
+					assert.Equal(t, redirectCase.expectedUrl, redirectLocation)
+
+					require.NoError(t, res.Body.Close())
+				})
+			}
+		})
+	}
 }
 
 func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
