@@ -1,11 +1,23 @@
 import { t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
+import { FetchError, isFetchError } from '@grafana/runtime';
 
 import { notifyApp } from '../../../../core/actions';
 import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
 import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
-import { generatedAPI, JobSpec, JobStatus, RepositorySpec, RepositoryStatus, ErrorDetails } from './endpoints.gen';
+import {
+  generatedAPI,
+  JobSpec,
+  JobStatus,
+  RepositorySpec,
+  RepositoryStatus,
+  ErrorDetails,
+  GetRepositoryRefsApiResponse,
+} from './endpoints.gen';
+
+function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {
+  return typeof error === 'object' && error != null && 'error' in error;
+}
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -168,6 +180,64 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         }
+      },
+    },
+    getRepositoryDiff: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+        } catch (e) {
+          if (isFetchBaseQueryError(e)) {
+            dispatch(
+              notifyApp(
+                createErrorNotification(
+                  'Error getting repository diff',
+                  isFetchBaseQueryError(e) ? e.error.data.message : 'Unknown error'
+                )
+              )
+            );
+          } else {
+            dispatch(notifyApp(createErrorNotification('Error getting repository diff')));
+          }
+        }
+      },
+    },
+    createRepositoryPr: {
+      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+          dispatch(notifyApp(createSuccessNotification('Pull request successfully created')));
+        } catch (e) {
+          dispatch(
+            notifyApp(
+              createErrorNotification(
+                'Error creating pull request',
+                isFetchBaseQueryError(e) ? e.error.data.message : 'Unknown error'
+              )
+            )
+          );
+        }
+      },
+    },
+    getRepositoryRefs: {
+      transformResponse: async (response: GetRepositoryRefsApiResponse) => {
+        console.log('response', response);
+        const orderedList = [...response.items].sort((a, b) => {
+          // Put "master" or "main" first
+          const aIsPrimary = a.name === 'master' || a.name === 'main';
+          const bIsPrimary = b.name === 'master' || b.name === 'main';
+
+          if (aIsPrimary && !bIsPrimary) {
+            return -1;
+          }
+          if (!aIsPrimary && bIsPrimary) {
+            return 1;
+          }
+
+          return 0;
+        });
+
+        return { ...response, items: orderedList };
       },
     },
   },
