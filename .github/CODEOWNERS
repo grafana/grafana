@@ -710,6 +710,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/anonymous/ @grafana/identity-access-team
 /pkg/services/auth/ @grafana/identity-squad
 /pkg/services/authn/ @grafana/identity-squad
+/pkg/services/scimutil/ @grafana/identity-squad
 /pkg/services/authz/ @grafana/access-squad
 /pkg/services/signingkeys/ @grafana/identity-squad
 /pkg/services/dashboards/accesscontrol.go @grafana/access-squad
