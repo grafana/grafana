@@ -93,12 +93,37 @@ type Service interface {
 
 // GraphQLProviderRegistry manages GraphQL subgraph providers
 type GraphQLProviderRegistry struct {
-	providers []graphqlsubgraph.GraphQLSubgraphProvider
+	providers     []graphqlsubgraph.GraphQLSubgraphProvider
+	registeredGVs map[string]bool // Track registered group versions
 }
 
 // RegisterProvider adds a GraphQL subgraph provider to the registry
+// Includes duplicate detection to prevent registration conflicts
 func (r *GraphQLProviderRegistry) RegisterProvider(provider graphqlsubgraph.GraphQLSubgraphProvider) {
+	// Initialize the tracking map if needed
+	if r.registeredGVs == nil {
+		r.registeredGVs = make(map[string]bool)
+	}
+
+	// Get the subgraph to check its group version
+	subgraph, err := provider.GetGraphQLSubgraph()
+	if err != nil || subgraph == nil {
+		// Skip providers that don't have valid subgraphs
+		return
+	}
+
+	// Check for duplicate group version
+	gv := subgraph.GetGroupVersion()
+	gvKey := gv.String()
+
+	if r.registeredGVs[gvKey] {
+		// This group version is already registered, skip
+		return
+	}
+
+	// Register the provider and track the group version
 	r.providers = append(r.providers, provider)
+	r.registeredGVs[gvKey] = true
 }
 
 // GetProviders returns all registered GraphQL subgraph providers
@@ -328,6 +353,37 @@ func (s *service) start(ctx context.Context) error {
 				}
 			}
 		}
+	}
+
+	// Discover and register GraphQL-capable builders with the global registry
+	// This enables GraphQL federation auto-discovery
+	discovery := builder.NewGraphQLDiscovery()
+	graphqlProviders := discovery.DiscoverFromBuilders(builders)
+
+	// Track registered group versions to avoid duplicates
+	registeredGVs := make(map[string]bool)
+
+	// Only register providers that actually provide a subgraph (non-nil return)
+	for _, provider := range graphqlProviders {
+		// Test if the provider actually provides a GraphQL subgraph
+		// This filters out builders that return nil (like non-unified DataSource builders)
+		if subgraph, err := provider.GetGraphQLSubgraph(); err == nil && subgraph != nil {
+			// Get the group version to check for duplicates
+			gv := subgraph.GetGroupVersion()
+			gvKey := gv.String()
+
+			// Skip if this group version is already registered
+			if registeredGVs[gvKey] {
+				s.log.Debug("Skipping duplicate GraphQL subgraph registration", "groupVersion", gvKey)
+				continue
+			}
+
+			// Register the provider and mark this group version as registered
+			globalGraphQLRegistry.RegisterProvider(provider)
+			registeredGVs[gvKey] = true
+			s.log.Debug("Registered GraphQL subgraph", "groupVersion", gvKey)
+		}
+		// If error or nil subgraph, skip registration (no GraphQL support)
 	}
 
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
@@ -802,6 +858,11 @@ func (s *service) createFederatedGateway(ctx context.Context) (*gateway.Federate
 		subgraph, err := provider.GetGraphQLSubgraph()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get GraphQL subgraph from provider: %w", err)
+		}
+
+		// Skip providers that don't provide GraphQL support (return nil subgraph)
+		if subgraph == nil {
+			continue
 		}
 
 		// Get the group version from the subgraph
