@@ -31,9 +31,16 @@ type ConfigRevision struct {
 	ConcurrencyToken string
 	Version          string
 }
+type alertmanagerConfigStoreImpl struct {
+	store amConfigStore
+}
 
-func getLastConfiguration(ctx context.Context, orgID int64, store amConfigStore) (*ConfigRevision, error) {
-	alertManagerConfig, err := store.GetLatestAlertmanagerConfiguration(ctx, orgID)
+func NewAlertmanagerConfigStore(store amConfigStore) *alertmanagerConfigStoreImpl {
+	return &alertmanagerConfigStoreImpl{store: store}
+}
+
+func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {
+	alertManagerConfig, err := a.store.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,18 +60,6 @@ func getLastConfiguration(ctx context.Context, orgID int64, store amConfigStore)
 		ConcurrencyToken: concurrencyToken,
 		Version:          alertManagerConfig.ConfigurationVersion,
 	}, nil
-}
-
-type alertmanagerConfigStoreImpl struct {
-	store amConfigStore
-}
-
-func NewAlertmanagerConfigStore(store amConfigStore) *alertmanagerConfigStoreImpl {
-	return &alertmanagerConfigStoreImpl{store: store}
-}
-
-func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {
-	return getLastConfiguration(ctx, orgID, a.store)
 }
 
 func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigRevision, orgID int64) error {
