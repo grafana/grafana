@@ -393,11 +393,6 @@ export interface FeatureToggles {
   */
   pdfTables?: boolean;
   /**
-  * Enables the SSO settings API and the OAuth configuration UIs in Grafana
-  * @default true
-  */
-  ssoSettingsApi?: boolean;
-  /**
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;

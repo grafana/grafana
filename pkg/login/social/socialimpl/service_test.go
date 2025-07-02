@@ -44,10 +44,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 			expectedGenericOAuthSkipOrgRoleSync: false,
 		},
 		{
-			name: "should load all social connectors when ssoSettingsApi is enabled",
-			setup: func(t *testing.T, env *testEnv) {
-				env.features = featuremgmt.WithFeatures(featuremgmt.FlagSsoSettingsApi)
-			},
+			name:                                "should load all social connectors when ssoSettingsApi is enabled",
 			expectedSocialMapLength:             7,
 			expectedGenericOAuthSkipOrgRoleSync: false,
 		},

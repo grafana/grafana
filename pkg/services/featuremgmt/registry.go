@@ -652,15 +652,6 @@ var (
 			Owner:        grafanaOperatorExperienceSquad,
 		},
 		{
-			Name:           "ssoSettingsApi",
-			Description:    "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			AllowSelfServe: true,
-			FrontendOnly:   false,
-			Owner:          identityAccessTeam,
-		},
-		{
 			Name:         "canvasPanelPanZoom",
 			Description:  "Allow pan and zoom in canvas panel",
 			Stage:        FeatureStagePublicPreview,

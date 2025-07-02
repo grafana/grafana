@@ -37,9 +37,6 @@ export function loadSettings(showSpinner = true): ThunkResult<Promise<Settings>>
 
 export function loadProviders(provider = ''): ThunkResult<Promise<SSOProvider[]>> {
   return async (dispatch) => {
-    if (!config.featureToggles.ssoSettingsApi) {
-      return [];
-    }
     const result = await getBackendSrv().get(`/api/v1/sso-settings${provider ? `/${provider}` : ''}`);
     dispatch(providersLoaded(provider ? [result] : result));
     return result;

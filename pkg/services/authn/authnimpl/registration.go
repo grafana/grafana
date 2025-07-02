@@ -58,7 +58,7 @@ func ProvideRegistration(
 	var passwordClients []authn.PasswordClient
 
 	// always register LDAP if LDAP is enabled in SSO settings
-	ssoSettingsLDAP := features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) && features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP)
+	ssoSettingsLDAP := features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP)
 	if cfg.LDAPAuthEnabled || ssoSettingsLDAP {
 		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService)
 		proxyClients = append(proxyClients, ldap)
