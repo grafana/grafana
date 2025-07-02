@@ -12,7 +12,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -40,7 +39,7 @@ type connectionAccess struct {
 }
 
 func (s *connectionAccess) New() runtime.Object {
-	return query.ConnectionResourceInfo.NewFunc()
+	return queryV0.ConnectionResourceInfo.NewFunc()
 }
 
 func (s *connectionAccess) Destroy() {}
@@ -50,20 +49,20 @@ func (s *connectionAccess) NamespaceScoped() bool {
 }
 
 func (s *connectionAccess) GetSingularName() string {
-	return query.ConnectionResourceInfo.GetSingularName()
+	return queryV0.ConnectionResourceInfo.GetSingularName()
 }
 
 func (s *connectionAccess) ShortNames() []string {
-	return query.ConnectionResourceInfo.GetShortNames()
+	return queryV0.ConnectionResourceInfo.GetShortNames()
 }
 
 func (s *connectionAccess) NewList() runtime.Object {
-	return query.ConnectionResourceInfo.NewListFunc()
+	return queryV0.ConnectionResourceInfo.NewListFunc()
 }
 
 func (s *connectionAccess) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	if s.tableConverter == nil {
-		s.tableConverter = query.ConnectionResourceInfo.TableConverter()
+		s.tableConverter = queryV0.ConnectionResourceInfo.TableConverter()
 	}
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }

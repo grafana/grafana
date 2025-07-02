@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	secretV0 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -35,7 +34,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		},
 		Spec: datasourceV0.DataSourceSpec{
 			Title:           ds.Name,
-			Access:          v0alpha1.DsAccess(ds.Access),
+			Access:          datasourceV0.DsAccess(ds.Access),
 			URL:             ds.URL,
 			User:            ds.User,
 			Database:        ds.Database,
