@@ -125,7 +125,18 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 }
 
 func (p *resourceDBProvider) init(ctx context.Context) (db.DB, error) {
-	p.log.Info("Initializing Resource DB", "db_type", p.engine.Dialect().DriverName())
+	p.log.Info("Initializing Resource DB",
+		"db_type",
+		p.engine.Dialect().DriverName(),
+		"open_conn",
+		p.engine.DB().DB.Stats().OpenConnections,
+		"in_use_conn",
+		p.engine.DB().DB.Stats().InUse,
+		"idle_conn",
+		p.engine.DB().DB.Stats().Idle,
+		"max_open_conn",
+		p.engine.DB().DB.Stats().MaxOpenConnections,
+	)
 
 	if p.registerMetrics {
 		err := prometheus.Register(sqlstats.NewStatsCollector("unified_storage", p.engine.DB().DB))
