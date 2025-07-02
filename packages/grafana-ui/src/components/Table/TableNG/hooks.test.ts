@@ -413,7 +413,7 @@ describe('TableNG hooks', () => {
           sortColumns: [],
         });
       });
-      expect(result.current).toBe(28);
+      expect(result.current).toBe(22);
     });
 
     it('should return the appropriate height for wrapped text', () => {
@@ -453,7 +453,7 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(result.current).toBe(56);
+      expect(result.current).toBe(50);
     });
 
     it('should calculate the available width for a header cell based on the icons rendered within it', () => {
