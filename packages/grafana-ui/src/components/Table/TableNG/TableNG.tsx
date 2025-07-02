@@ -346,7 +346,7 @@ export function TableNG(props: TableNGProps) {
                 cellOptions,
                 frame,
                 field,
-                height,
+                height: _rowHeight,
                 justifyContent,
                 rowIdx,
                 theme,
@@ -380,7 +380,7 @@ export function TableNG(props: TableNGProps) {
           width,
           headerCellClass,
           renderCell: renderCellContent,
-          renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
+          renderHeaderCell: ({ column, sortDirection }) => (
             <HeaderCell
               column={column}
               rows={rows}
@@ -493,6 +493,7 @@ export function TableNG(props: TableNGProps) {
 
     return result;
   }, [
+    applyToRowBgFn,
     availableWidth,
     commonDataGridProps,
     crossFilterOrder,
@@ -509,8 +510,8 @@ export function TableNG(props: TableNGProps) {
     onCellFilterAdded,
     panelContext,
     replaceVariables,
-    rows,
     rowHeight,
+    rows,
     setFilter,
     showTypeIcons,
     sortColumns,
@@ -518,8 +519,6 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
-    applyToRowBgFn,
-    height,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
