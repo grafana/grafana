@@ -19,7 +19,7 @@ const getVersions = () => {
         startingVersion: item.spec.starting_version,
         version: item.spec.target_version,
         releaseDate: item.spec.target_minor_release_date,
-        notes: item.spec.state === 'new' ? 'New' : '',
+        state: item.spec.state === 'new' ? 'New' : '',
         isOutOfSupport: item.spec.is_out_of_support,
         type: item.spec.type,
       }));
@@ -52,8 +52,8 @@ function UpgradePage() {
         </Stack>
       </Alert>
     ) : (
-      <Alert title="Up to date" severity="success">
-        <div>You are running the latest version of Grafana {currentVersion} :)</div>
+      <Alert title="Hurray! You're up-to-date!" severity="success">
+        <div>You're running the latest Grafana version  <strong>{currentVersion}</strong></div>
       </Alert>
     )}
         <div>
