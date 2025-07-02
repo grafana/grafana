@@ -118,9 +118,6 @@ type HashiCorpCredentials struct {
 	Token   CredentialValue `json:"token"`
 }
 
-// Envelope encrytion details.
-type Envelope struct{}
-
 // Holds the way credentials are obtained.
 // +union
 type CredentialValue struct {
