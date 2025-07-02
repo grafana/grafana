@@ -41,7 +41,7 @@ func (e *WriteEvent) Validate() error {
 	}
 
 	if e.Type == resourcepb.WatchEvent_UNKNOWN {
-		return fmt.Errorf("type is unknown")
+		return fmt.Errorf("watch event type is unknown")
 	}
 
 	return nil
