@@ -16,10 +16,10 @@ import (
 
 func setupTestStorageBackend(t *testing.T) *kvStorageBackend {
 	kv := setupTestKV(t)
-	return NewkvStorageBackend(kv)
+	return NewKvStorageBackend(kv)
 }
 
-func TestNewkvStorageBackend(t *testing.T) {
+func TestNewKvStorageBackend(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 
 	assert.NotNil(t, backend)
@@ -104,6 +104,7 @@ func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 			require.NoError(t, err)
 			dataValue, err := io.ReadAll(dataReader)
 			require.NoError(t, err)
+			require.NoError(t, dataReader.Close())
 			assert.Equal(t, objectToJSONBytes(t, testObj), dataValue)
 
 			// Verify metadata was written to metaStore
