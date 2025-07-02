@@ -482,8 +482,7 @@ func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 		require.Greater(t, item.resourceVersion, int64(0))
 		require.NotEmpty(t, item.value)
 	}
-	require.Contains(t, names, "resource-1")
-	require.Contains(t, names, "resource-2")
+	require.Equal(t, []string{"resource-1", "resource-2"}, names)
 }
 
 func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
