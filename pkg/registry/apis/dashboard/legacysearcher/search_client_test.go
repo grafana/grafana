@@ -309,6 +309,38 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		}
 	})
 
+	t.Run("When searching for SEARCH_FIELD_TITLE_PHRASE, value should be set as title, and ExactMatch should be enabled", func(t *testing.T) {
+		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
+			Title:           "test",
+			TitleExactMatch: true,
+			SignedInUser:    user,      // user from context should be used
+			Type:            "dash-db", // should set type based off of key
+		}).Return([]dashboards.DashboardSearchProjection{
+			{UID: "uid", Title: "Test Dashboard", FolderUID: "folder1"},
+		}, nil).Once()
+
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
+						Operator: string(selection.Equals),
+						Values:   []string{"test"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+	})
+
 	t.Run("Should read labels for the dashboard ids", func(t *testing.T) {
 		mockStore.On("FindDashboards", mock.Anything, &dashboards.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{1, 2},
@@ -539,6 +571,72 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 		require.Equal(t, "views_total", resp.Results.Columns[i].Name)
 		require.Equal(t, []byte(strconv.FormatInt(100, 10)), resp.Results.Rows[0].Cells[i]) // views should be set to 100
 		mockStore.AssertExpectations(t)
+	})
+
+	t.Run("Should search dashboards based on what is connected to a library panel", func(t *testing.T) {
+		mockStore.On("GetDashboardsByLibraryPanelUID", mock.Anything, "test-library-panel", int64(2)).Return([]*dashboards.DashboardRef{
+			{UID: "dashboard1", FolderUID: "folder1", ID: 1},
+			{UID: "dashboard2", FolderUID: "folder2", ID: 2},
+		}, nil).Once()
+
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Operator: "=",
+						Values:   []string{"test-library-panel"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, int64(2), resp.TotalHits)
+		require.Len(t, resp.Results.Rows, 2)
+
+		dashboardNames := make([]string, len(resp.Results.Rows))
+		dashboardFolders := make([]string, len(resp.Results.Rows))
+		dashboardIDs := make([]string, len(resp.Results.Rows))
+
+		for i, row := range resp.Results.Rows {
+			dashboardNames[i] = row.Key.Name
+			dashboardFolders[i] = string(row.Cells[1])
+			dashboardIDs[i] = string(row.Cells[3])
+		}
+
+		require.Contains(t, dashboardNames, "dashboard1")
+		require.Contains(t, dashboardNames, "dashboard2")
+		require.Contains(t, dashboardFolders, "folder1")
+		require.Contains(t, dashboardFolders, "folder2")
+		require.Contains(t, dashboardIDs, "1")
+		require.Contains(t, dashboardIDs, "2")
+
+		mockStore.AssertExpectations(t)
+		for _, row := range resp.Results.Rows {
+			require.Equal(t, len(row.Cells), len(resp.Results.Columns))
+		}
+	})
+
+	t.Run("Only one library panel uid is supported", func(t *testing.T) {
+		req := &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: dashboardKey,
+				Fields: []*resourcepb.Requirement{
+					{
+						Key:      unisearch.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+						Operator: "=",
+						Values:   []string{"panel1", "panel2"},
+					},
+				},
+			},
+		}
+		resp, err := client.Search(ctx, req)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "only one library panel uid is supported")
+		require.Nil(t, resp)
 	})
 }
 

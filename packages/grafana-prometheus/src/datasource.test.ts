@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
-import { extractRuleMappingFromGroups, PrometheusDatasource } from './datasource';
+import { extractResourceMatcher, extractRuleMappingFromGroups, PrometheusDatasource } from './datasource';
 import { prometheusRegularEscape, prometheusSpecialRegexEscape } from './escaping';
 import { PrometheusLanguageProviderInterface } from './language_provider';
 import {
@@ -24,7 +24,7 @@ import {
   createDefaultPromResponse,
   fetchMockCalledWith,
   getMockTimeRange,
-} from './test/__mocks__/datasource';
+} from './test/mocks/datasource';
 import {
   PromApplication,
   PrometheusCacheLevel,
@@ -983,7 +983,7 @@ describe('PrometheusDatasource', () => {
         },
       ];
 
-      const result = ds.extractResourceMatcher(queries, filters);
+      const result = extractResourceMatcher(queries, filters);
       expect(result).toBe('{__name__=~"metric_name",instance="localhost"}');
     });
 
@@ -996,7 +996,7 @@ describe('PrometheusDatasource', () => {
       ];
       const filters: AdHocVariableFilter[] = [];
 
-      const result = ds.extractResourceMatcher(queries, filters);
+      const result = extractResourceMatcher(queries, filters);
       expect(result).toBe('{__name__=~"metric_name"}');
     });
 
@@ -1015,7 +1015,7 @@ describe('PrometheusDatasource', () => {
         },
       ];
 
-      const result = ds.extractResourceMatcher(queries, filters);
+      const result = extractResourceMatcher(queries, filters);
       expect(result).toBe('{__name__!="",instance="localhost"}');
     });
 
@@ -1034,7 +1034,7 @@ describe('PrometheusDatasource', () => {
         },
       ];
 
-      const result = ds.extractResourceMatcher(queries, filters);
+      const result = extractResourceMatcher(queries, filters);
       expect(result).toBe('{__name__!="",instance="localhost",job!="testjob"}');
     });
 
@@ -1042,8 +1042,21 @@ describe('PrometheusDatasource', () => {
       const queries: PromQuery[] = [];
       const filters: AdHocVariableFilter[] = [];
 
-      const result = ds.extractResourceMatcher(queries, filters);
+      const result = extractResourceMatcher(queries, filters);
       expect(result).toBe('{__name__!=""}');
+    });
+
+    it('should extract the correct matcher for queries with `... or vector(0)`', () => {
+      const queries: PromQuery[] = [
+        {
+          refId: 'A',
+          expr: `sum(increase(go_cpu_classes_idle_cpu_seconds_total[$__rate_interval])) or vector(0)`,
+        },
+      ];
+      const filters: AdHocVariableFilter[] = [];
+
+      const result = extractResourceMatcher(queries, filters);
+      expect(result).toBe('{__name__=~"go_cpu_classes_idle_cpu_seconds_total"}');
     });
   });
 });

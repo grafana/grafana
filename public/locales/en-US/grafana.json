@@ -110,6 +110,12 @@
       "update-button": "Update",
       "users-heading": "Organization users"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "Dismiss",
+      "heading": "Enterprise authentication",
+      "learn-more-link": "Learn more",
+      "text": "Manage users, teams, and permissions automatically with <1>SAML</1>, <3>SCIM</3>, <6>LDAP</6>, and <8>RBAC</8> — available in Grafana Cloud and Enterprise."
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Custom branding",
@@ -3222,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "Single sign-on (SSO) with SAML.",
+      "scim-learn-more": " Sync users and teams with SCIM.",
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
@@ -3254,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "No numeric fields found",
+      "missing-series": "Bar charts require a string or time field"
+    }
   },
   "barchart": {
     "config": {
@@ -3366,6 +3380,7 @@
       "delete-modal-restore-dashboards-text": "This action will delete the selected folders immediately but the selected dashboards will be marked for deletion in 30 days. Your organization administrator can restore the dashboards anytime before the 30 days expire. Folders cannot be restored.",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
+      "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
       "manage-permissions-button": "Manage permissions",
       "move-button": "Move",
@@ -3405,6 +3420,14 @@
       "select-all-header-checkbox": "Select all",
       "select-checkbox": "Select",
       "tags-column": "Tags"
+    },
+    "delete-provisioned-folder-form": {
+      "alert-folder-deleted-successfully": "Folder deleted successfully",
+      "api-error": "Failed to delete folder",
+      "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
+      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:"
     },
     "descendant-count": {
       "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
@@ -3450,18 +3473,12 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
       "error-invalid-folder-name": "Invalid folder name",
       "error-required": "Folder name is required",
-      "folder-comment-input-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
-      "label-branch": "Branch",
-      "label-comment": "Comment",
       "label-folder-name": "Folder name",
-      "label-workflow": "Workflow",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
       "title-pull-request-created": "Pull request created",
-      "title-repository-not-found": "Repository not found",
       "title-this-repository-is-read-only": "This repository is read only"
     },
     "no-results": {
@@ -3471,7 +3488,13 @@
     "restore": {
       "success": "Dashboard {{name}} restored"
     },
-    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
+    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3523,11 +3546,18 @@
       }
     },
     "button-item": {
+      "category-button": "Button",
       "label": {
         "center": "Center",
         "left": "Left",
         "right": "Right"
       },
+      "name-align-text": "Align text",
+      "name-api": "API",
+      "name-style": "Style",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3554,7 +3584,20 @@
         }
       }
     },
+    "category-arrow-direction": "Arrow Direction",
+    "category-background": "Background",
+    "category-border": "Border",
+    "category-canvas": "Canvas",
+    "category-color": "Color",
+    "category-data-links": "Data links and actions",
+    "category-line-style": "Line style",
+    "category-metric-value": "Metric value",
+    "category-radius": "Radius",
+    "category-selected-connection": "Selected connection",
+    "category-selected-element": "Selected element ({{element}})",
+    "category-size": "Size",
     "cloud-item": {
+      "category-cloud": "Cloud",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3563,11 +3606,48 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
     },
+    "description-experimental-types": "Enable selection of experimental element types",
+    "description-infinite-panning": "Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained",
+    "description-inline-editing": "Enable editing the panel directly",
+    "description-pan-zoom": "Enable pan and zoom",
+    "direction-options": {
+      "label-both": "Both",
+      "label-forward": "Forward",
+      "label-none": "None",
+      "label-reverse": "Reverse"
+    },
+    "drone-front-item": {
+      "category-drone-front": "Drone Front",
+      "name-roll-angle": "Roll Angle"
+    },
+    "drone-side-item": {
+      "category-drone-side": "Drone Side",
+      "name-pitch-angle": "Pitch Angle"
+    },
+    "drone-top-item": {
+      "category-drone-top": "Drone Top",
+      "name-back-left-rotor-rpm": "Back Left Rotor RPM",
+      "name-back-right-rotor-rpm": "Back Right Rotor RPM",
+      "name-front-left-rotor-rpm": "Front Left Rotor RPM",
+      "name-front-right-rotor-rpm": "Front Right Rotor RPM",
+      "name-yaw-angle": "Yaw Angle"
+    },
+    "element-editor": {
+      "category-layout": "Layout",
+      "description-unsupported": "Selected element type is not supported by current settings. Please enable advanced element types.",
+      "name-quick-placement": "Quick placement"
+    },
     "ellipse-item": {
+      "category-ellipse": "Ellipse",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3576,20 +3656,50 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "icon-item": {
+      "category-icon": "Icon",
+      "name-fill-color": "Fill color",
+      "name-svg-path": "SVG Path"
     },
     "inline-edit": {
       "canvas-inline-editor": "Canvas Inline Editor",
       "tooltip-close-inline-editor": "Close inline editor"
     },
     "inline-edit-body": {
+      "category-selected-element": "Selected element ({{element}})",
       "label-add-item": "Add item",
       "please-select-an-element": "Please select an element"
     },
+    "label-actions": "Actions",
+    "label-color": "Color",
+    "label-direction": "Direction",
+    "label-image": "Image",
+    "label-image-size": "Image size",
+    "label-line-style": "Line style",
+    "label-links": "Links",
+    "label-radius": "Radius",
+    "label-size": "Size",
+    "label-width": "Width",
+    "layer-editor": {
+      "category-layer": "Layer",
+      "category-layout": "Layout",
+      "name-constraints": "Constraints",
+      "name-elements": "Elements"
+    },
     "line-style-editor": {
       "label-animate": "Animate"
+    },
+    "line-style-options": {
+      "label-solid": "Solid"
     },
     "metric-value-item": {
       "label": {
@@ -3604,6 +3714,15 @@
         "auto": "Auto"
       }
     },
+    "name-align-text": "Align text",
+    "name-color": "Text color",
+    "name-experimental-types": "Experimental element types",
+    "name-infinite-panning": "Infinite panning",
+    "name-inline-editing": "Inline editing",
+    "name-pan-zoom": "Pan and zoom",
+    "name-text": "Text",
+    "name-text-size": "Text size",
+    "name-vertical-align": "Vertical align",
     "not-found-display": {
       "not-found": "<0>Not found: </0><config />"
     },
@@ -3616,6 +3735,7 @@
       "zoom-scroll-wheel": "Zoom: Scroll wheel"
     },
     "parallelogram-item": {
+      "category-parallelogram": "Parallelogram",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3624,6 +3744,11 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3635,9 +3760,23 @@
       "placeholder-value": "Value"
     },
     "placement-editor": {
+      "horizontal-options": {
+        "label-center": "Center",
+        "label-left": "Left",
+        "label-left-and-right": "Left & right",
+        "label-right": "Right",
+        "label-scale": "Scale"
+      },
       "label-constraints": "Constraints",
       "label-position": "Position",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "vertical-options": {
+        "label-bottom": "Bottom",
+        "label-center": "Center",
+        "label-scale": "Scale",
+        "label-top": "Top",
+        "label-top-and-bottom": "Top & bottom"
+      }
     },
     "quick-positioning": {
       "tooltip-align-bottom": "Align bottom",
@@ -3648,6 +3787,7 @@
       "tooltip-align-vertical-centers": "Align vertical centers"
     },
     "rectangle-item": {
+      "category-rectangle": "Rectangle",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3656,14 +3796,33 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
+      }
+    },
+    "server-item": {
+      "category-server": "Server",
+      "name-blink-rate": "Blink rate [hz] (0 = off)",
+      "name-bulb-color": "Bulb color",
+      "name-status-color": "Status color",
+      "name-type": "Type",
+      "type-options": {
+        "label-database": "Database",
+        "label-single": "Single",
+        "label-stack": "Stack",
+        "label-terminal": "Terminal"
       }
     },
     "text-display": {
       "double-click-to-set": "Double click to set text"
     },
     "text-item": {
+      "category-text": "Text",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3672,6 +3831,11 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
@@ -3693,6 +3857,7 @@
       "tooltip-remove": "Remove"
     },
     "triangle-item": {
+      "category-triangle": "Triangle",
       "label": {
         "bottom": "Bottom",
         "center": "Center",
@@ -3701,9 +3866,18 @@
         "right": "Right",
         "top": "Top"
       },
+      "name-align-text": "Align text",
+      "name-text": "Text",
+      "name-text-color": "Text color",
+      "name-text-size": "Text size",
+      "name-vertical-align": "Vertical align",
       "placeholder": {
         "auto": "Auto"
       }
+    },
+    "wind-turbine-item": {
+      "category-wind-turbine": "Wind Turbine",
+      "name-rpm": "RPM"
     }
   },
   "carousel": {
@@ -3720,6 +3894,7 @@
   "close-button": {
     "tooltip": "Close"
   },
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
@@ -4593,6 +4768,7 @@
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
     },
     "outline": {
+      "repeated-item": "Repeat",
       "tree-item": {
         "empty": "(empty)",
         "no-title": "<no title>"
@@ -5452,12 +5628,6 @@
       "see-docs": "See <2>documentation</2> for more information about provisioning.",
       "title-cannot-delete-provisioned-dashboard": "Cannot delete provisioned dashboard"
     },
-    "provisioned-resource-delete-modal": {
-      "file-path": "File path:",
-      "managed-by-version-control": "This resource is managed by version control and cannot be deleted. To remove it, delete it from the repository and synchronise to apply the changes.",
-      "ok": "OK",
-      "title-cannot-delete-provisioned-resource": "Cannot delete provisioned resource"
-    },
     "query-editor": {
       "query": "Query"
     },
@@ -5545,15 +5715,6 @@
       "loading-connected-dashboards": "Loading connected dashboards...",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
-    },
-    "save-or-delete-provisioned-dashboard-form": {
-      "dashboard-comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
-      "description-inside-repository": "File path inside the repository (.json or .yaml)",
-      "label-branch": "Branch",
-      "label-comment": "Comment",
-      "label-path": "Path",
-      "label-workflow": "Workflow"
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Error saving dashboard",
@@ -6078,6 +6239,18 @@
     }
   },
   "dimensions": {
+    "background-size-editor": {
+      "options": {
+        "label-contain": "Contain",
+        "label-cover": "Cover",
+        "label-fill": "Fill",
+        "label-original": "Original",
+        "label-tile": "Tile"
+      }
+    },
+    "color-dimension-editor": {
+      "label-fixed-color": "Fixed color"
+    },
     "file-dropzone-custom-children": {
       "upload": "Upload"
     },
@@ -6090,7 +6263,10 @@
       "placeholder-search": "Search"
     },
     "resource-dimension-editor": {
+      "description-field": "Use a string field result",
+      "description-fixed": "Fixed value",
       "label-field": "Field",
+      "label-fixed": "Fixed",
       "label-mappings": "Mappings",
       "label-source": "Source"
     },
@@ -6106,8 +6282,17 @@
       "url": "URL"
     },
     "scalar-dimension-editor": {
+      "fixed-value-options": {
+        "label-fixed-values": "Fixed value"
+      },
       "label-limit": "Limit",
-      "label-value": "Value"
+      "label-value": "Value",
+      "scalar-options": {
+        "description-clamped": "Use field values, clamped to max and min",
+        "description-mod": "Use field values, mod from max",
+        "label-clamped": "Clamped",
+        "label-mod": "Mod"
+      }
     },
     "scale-dimension-editor": {
       "label-max": "Max",
@@ -6115,7 +6300,10 @@
       "label-value": "Value"
     },
     "text-dimension-editor": {
+      "description-field": "Display field value",
+      "description-fixed": "Fixed value",
       "label-field": "Field",
+      "label-fixed": "Fixed",
       "label-source": "Source",
       "label-template": "Template",
       "label-value": "Value"
@@ -9321,6 +9509,15 @@
       "view": "View"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "Data is missing a number field",
+        "string": "Data is missing a string field",
+        "time": "Data is missing a time field",
+        "unknown": "Cannot visualize data"
+      },
+      "no-value": {
+        "default": "No data"
+      },
       "open-visualization-suggestions": "Open visualization suggestions",
       "switch-to-table": "Switch to table"
     },
@@ -9607,6 +9804,7 @@
     },
     "install-controls-warning": {
       "body-not-published": "This plugin is not published to <2>grafana.com/plugins</2> and can't be managed via the catalog.",
+      "enterprise-plugin-info": "This plugin is only available in Grafana Cloud and Grafana Enterprise.",
       "learn-more": "Learn more",
       "no-valid-grafana-enterprise-license-detected": "No valid Grafana Enterprise license detected.",
       "title-dev-alert": "This is a development build of the plugin and can't be uninstalled.",
@@ -9760,6 +9958,17 @@
       "name": "Name",
       "teams": "Teams",
       "text-loading-teams": "Loading teams..."
+    }
+  },
+  "provisioned-resource-form": {
+    "save-or-delete-resource-shared-fields": {
+      "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
+      "description-branch-name-in-git-hub": "Branch name in GitHub",
+      "description-inside-repository": "",
+      "label-branch": "Branch",
+      "label-comment": "Comment",
+      "label-path": "Path",
+      "label-workflow": "Workflow"
     }
   },
   "provisioning": {
@@ -11409,6 +11618,12 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "No graphable fields",
+      "time": "Data does not have a time field"
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Add annotation",
@@ -11858,6 +12073,7 @@
           "polynomial": "Polynomial"
         }
       },
+      "regression": "regression",
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer-editor": {

@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -31,8 +31,10 @@ func Test_OSSKeeperService_GetKeepers(t *testing.T) {
 }
 
 func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error) {
+	tracer := noop.NewTracerProvider().Tracer("test")
+
 	// Initialize the keeper service
-	keeperService, err := ProvideService(tracing.InitializeTracerForTest(), nil, nil)
+	keeperService, err := ProvideService(tracer, nil, nil)
 
 	return keeperService, err
 }
