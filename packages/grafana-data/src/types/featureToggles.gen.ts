@@ -744,6 +744,7 @@ export interface FeatureToggles {
   crashDetection?: boolean;
   /**
   * Enables querying the Jaeger data source without the proxy
+  * @default true
   */
   jaegerBackendMigration?: boolean;
   /**
