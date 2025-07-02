@@ -479,6 +479,10 @@ export interface FeatureToggles {
   */
   sqlExpressions?: boolean;
   /**
+  * Enables column autocomplete for SQL Expressions
+  */
+  sqlExpressionsColumnAutoComplete?: boolean;
+  /**
   * Enables the group to nested table transformation
   * @default true
   */

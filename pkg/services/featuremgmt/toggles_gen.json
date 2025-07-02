@@ -2824,6 +2824,19 @@
     },
     {
       "metadata": {
+        "name": "sqlExpressionsColumnAutoComplete",
+        "resourceVersion": "1751471729972",
+        "creationTimestamp": "2025-07-02T15:55:29Z"
+      },
+      "spec": {
+        "description": "Enables column autocomplete for SQL Expressions",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "sseGroupByDatasource",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-09-07T20:02:07Z"

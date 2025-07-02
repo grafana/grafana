@@ -1,8 +1,9 @@
 import { SelectableValue } from '@grafana/data';
 import { ColumnDefinition, LanguageCompletionProvider, TableDefinition, TableIdentifier } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 
 interface CompletionProviderGetterArgs {
-  getMeta: (t: TableIdentifier) => Promise<ColumnDefinition[]>;
+  getFields: (t: TableIdentifier) => Promise<ColumnDefinition[]>;
   refIds: Array<SelectableValue<string>>;
 }
 
@@ -24,7 +25,11 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     },
     columns: {
       resolve: async (t?: TableIdentifier) => {
-        return await args.getMeta({ table: t?.table });
+        if (config.featureToggles.sqlExpressionsColumnAutoComplete) {
+          return await args.getFields({ table: t?.table });
+        } else {
+          return Promise.resolve([]);
+        }
       },
     },
   });

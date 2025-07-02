@@ -807,6 +807,13 @@ var (
 			Owner:        grafanaDatasourcesCoreServicesSquad,
 		},
 		{
+			Name:         "sqlExpressionsColumnAutoComplete",
+			Description:  "Enables column autocomplete for SQL Expressions",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDataProSquad,
+		},
+		{
 			Name:         "groupToNestedTableTransformation",
 			Description:  "Enables the group to nested table transformation",
 			Stage:        FeatureStageGeneralAvailability,

@@ -25,14 +25,19 @@ interface Props {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries }: Props) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
+  const completionProvider = useMemo(
+    () =>
+      getSqlCompletionProvider({
+        getFields: (identifier: TableIdentifier) => fetchFields(identifier, queries || []),
+        refIds,
+      }),
+    [queries, refIds]
+  );
 
   // Define the language definition for MySQL syntax highlighting and autocomplete
   const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
     id: 'mysql',
-    completionProvider: getSqlCompletionProvider({
-      getMeta: (identifier: TableIdentifier) => fetchMeta(identifier, queries || []),
-      refIds,
-    }),
+    completionProvider,
   };
 
   const initialQuery = `-- Run MySQL-dialect SQL against the tables returned from your data sources.
@@ -98,7 +103,7 @@ const getStyles = () => ({
   }),
 });
 
-async function fetchMeta(identifier: TableIdentifier, queries: DataQuery[]) {
+async function fetchFields(identifier: TableIdentifier, queries: DataQuery[]) {
   const datasource = dataSource;
   const fields = await datasource.fetchSQLFields({ table: identifier.table }, queries);
   return fields.map((t) => ({ name: t.name, completion: t.value, kind: CompletionItemKind.Field }));
