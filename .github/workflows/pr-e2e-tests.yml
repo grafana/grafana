@@ -35,7 +35,7 @@ jobs:
       - uses: actions/cache@v4
         id: cache
         with:
-          key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', '/public/*',  '/packages/*', '/pkg/**/*.go', '**/go.mod', '**/go.sum') }}"
+          key: "x_build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', '/public/*',  '/packages/*', '/pkg/**/*.go', '**/go.mod', '**/go.sum') }}"
           path: |
             dist
 
@@ -47,6 +47,9 @@ jobs:
           verb: run
           cloud-token: ${{ secrets.TEMP_DAGGER_TOKEN_JOSH }} # TODO: remove before merging
           args: go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
+      - name: Cat built artifact
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: cat out.txt
       - name: Move built artifact
         if: steps.cache.outputs.cache-hit != 'true'
         run: mv "$(cat out.txt)" grafana.tar.gz
