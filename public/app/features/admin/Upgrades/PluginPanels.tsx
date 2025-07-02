@@ -15,7 +15,6 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { PanelRenderer } from '@grafana/runtime';
 import { Select, useStyles2, Spinner, Alert } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -39,7 +38,7 @@ interface DataSourceOption {
 function PanelWithRealData({ panel }: { panel: PanelModel }) {
   const [panelData, setPanelData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error] = useState<string>('');
 
   useEffect(() => {
     const executeQuery = async () => {
@@ -264,46 +263,46 @@ function PanelWithRealData({ panel }: { panel: PanelModel }) {
 }
 
 // Helper function to create sample panel data (only used as fallback)
-function createSamplePanelData() {
-  const now = Date.now();
-  const timeRange = {
-    from: dateTime(now - 30000),
-    to: dateTime(now),
-    raw: { from: 'now-30s', to: 'now' },
-  };
+// function createSamplePanelData() {
+//   const now = Date.now();
+//   const timeRange = {
+//     from: dateTime(now - 30000),
+//     to: dateTime(now),
+//     raw: { from: 'now-30s', to: 'now' },
+//   };
 
-  const dataPoints = [];
-  const valuePoints = [];
-  for (let i = 0; i < 30; i++) {
-    const timestamp = now - (30 - i) * 1000;
-    dataPoints.push(timestamp);
-    valuePoints.push(Math.random() * 100 + 50);
-  }
+//   const dataPoints = [];
+//   const valuePoints = [];
+//   for (let i = 0; i < 30; i++) {
+//     const timestamp = now - (30 - i) * 1000;
+//     dataPoints.push(timestamp);
+//     valuePoints.push(Math.random() * 100 + 50);
+//   }
 
-  const series = [
-    createDataFrame({
-      name: 'Sample Data',
-      fields: [
-        {
-          name: 'Time',
-          type: FieldType.time,
-          values: dataPoints,
-        },
-        {
-          name: 'Value',
-          type: FieldType.number,
-          values: valuePoints,
-        },
-      ],
-    }),
-  ];
+//   const series = [
+//     createDataFrame({
+//       name: 'Sample Data',
+//       fields: [
+//         {
+//           name: 'Time',
+//           type: FieldType.time,
+//           values: dataPoints,
+//         },
+//         {
+//           name: 'Value',
+//           type: FieldType.number,
+//           values: valuePoints,
+//         },
+//       ],
+//     }),
+//   ];
 
-  return {
-    state: LoadingState.Done,
-    series,
-    timeRange,
-  };
-}
+//   return {
+//     state: LoadingState.Done,
+//     series,
+//     timeRange,
+//   };
+// }
 
 function PluginPanels() {
   const styles = useStyles2(getStyles);
@@ -312,18 +311,6 @@ function PluginPanels() {
   const [panels, setPanels] = useState<DashboardPanelResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
-
-  // Create a minimal dashboard model for the panels
-  const dashboard = new DashboardModel({
-    title: t('plugin-panels.dashboard.title', 'Plugin Panels Preview'),
-    panels: [],
-    time: { from: 'now-30s', to: 'now' }, // Last 30 seconds
-    timezone: 'browser',
-    schemaVersion: 30,
-    version: 1,
-    editable: false,
-    graphTooltip: 0,
-  });
 
   useEffect(() => {
     // Load available data sources
