@@ -15,11 +15,13 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 
 import {
   GET_CONTACT_POINTS_TOOL,
+  GET_DATASOURCE_METRICS_TOOL,
   GET_DATA_SOURCES_TOOL,
   createSystemPrompt,
   createUserPrompt,
   handleGetContactPoints,
   handleGetDataSources,
+  handleGetDatasourceMetrics,
 } from './prompt';
 
 // TODO:
@@ -157,73 +159,80 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
         if (!enabled) {
           throw new Error('LLM service is not configured or enabled');
         }
+        // 1. Make LLM call
+        // 2. If tool calls exist → Process them → Add results to messages → Repeat step 1
+        // 3. If no tool calls → Process the content (JSON) → Done
+        // 4. If max iterations reached → Throw error
 
-        const response = await llm.chatCompletions({
-          model: llm.Model.LARGE, // Use LARGE model for better results
-          messages,
-          tools: [GET_CONTACT_POINTS_TOOL, GET_DATA_SOURCES_TOOL],
-          temperature: 0.3,
-        });
+        const currentMessages = [...messages];
+        const maxIterations = 5; // Prevent infinite loops
+        let iteration = 0;
 
-        const finalMessages = [...messages];
-
-        // Handle tool calls if present
-        if (response.choices[0]?.message?.tool_calls) {
-          // Add the assistant's response with tool calls
-          finalMessages.push({
-            role: 'assistant', // identifies the assistant's response
-            content: response.choices[0].message.content, // The actual text content of the response
-            tool_calls: response.choices[0].message.tool_calls, // the function calls the AI wants to execute
-          });
-
-          // Process each tool call
-          // This loops through each tool call that the AI assistant requested to execute.
-          for (const toolCall of response.choices[0].message.tool_calls) {
-            if (toolCall.function.name === 'get_contact_points') {
-              // If the tool call is for getting contact points
-              const args = JSON.parse(toolCall.function.arguments);
-              const result = await handleGetContactPoints(args, contactPointsData, contactPointsLoading);
-
-              // Add the tool result to the messages
-              finalMessages.push({
-                role: 'tool', //  Identifies this as a tool/function result
-                content: JSON.stringify(result), // The result of the tool call
-                tool_call_id: toolCall.id, // Links this result back to the specific tool call that generated it
-              });
-            } else if (toolCall.function.name === 'get_data_sources') {
-              // If the tool call is for getting data sources
-              const args = JSON.parse(toolCall.function.arguments);
-              const result = await handleGetDataSources(args);
-
-              // Add the tool result to the messages
-              finalMessages.push({
-                role: 'tool',
-                content: JSON.stringify(result),
-                tool_call_id: toolCall.id,
-              });
-            }
-          }
-
-          // Call LLM again with the tool results
-          // Make Second LLM Call with Tool Results to generate the final alert rule
-          const finalResponse = await llm.chatCompletions({
+        while (iteration < maxIterations) {
+          const response = await llm.chatCompletions({
             model: llm.Model.LARGE, // Use LARGE model for better results
-            messages: finalMessages,
-            tools: [GET_CONTACT_POINTS_TOOL, GET_DATA_SOURCES_TOOL],
+            messages: currentMessages,
+            tools: [GET_CONTACT_POINTS_TOOL, GET_DATA_SOURCES_TOOL, GET_DATASOURCE_METRICS_TOOL],
             temperature: 0.3,
           });
 
-          // Process the final response
-          const finalContent = finalResponse.choices[0]?.message?.content;
-          if (finalContent) {
-            handleParsedResponse(finalContent);
+          // Check if there are tool calls to process
+          if (response.choices[0]?.message?.tool_calls) {
+            // Add the assistant's response with tool calls
+            currentMessages.push({
+              role: 'assistant',
+              content: response.choices[0].message.content,
+              tool_calls: response.choices[0].message.tool_calls,
+            });
+
+            // Process each tool call
+            for (const toolCall of response.choices[0].message.tool_calls) {
+              if (toolCall.function.name === 'get_contact_points') {
+                const args = JSON.parse(toolCall.function.arguments);
+                const result = await handleGetContactPoints(args, contactPointsData, contactPointsLoading);
+
+                currentMessages.push({
+                  role: 'tool',
+                  content: JSON.stringify(result),
+                  tool_call_id: toolCall.id,
+                });
+              } else if (toolCall.function.name === 'get_data_sources') {
+                const args = JSON.parse(toolCall.function.arguments);
+                const result = await handleGetDataSources(args);
+
+                currentMessages.push({
+                  role: 'tool',
+                  content: JSON.stringify(result),
+                  tool_call_id: toolCall.id,
+                });
+              } else if (toolCall.function.name === 'get_datasource_metrics') {
+                const args = JSON.parse(toolCall.function.arguments);
+                const result = await handleGetDatasourceMetrics(args);
+
+                currentMessages.push({
+                  role: 'tool',
+                  content: JSON.stringify(result),
+                  tool_call_id: toolCall.id,
+                });
+              }
+            }
+
+            // Continue the loop to make another LLM call with the tool results
+            iteration++;
+          } else {
+            // No more tool calls, we should have the final content
+            const finalContent = response.choices[0]?.message?.content;
+            if (finalContent) {
+              handleParsedResponse(finalContent);
+            } else {
+              throw new Error('No content received from LLM');
+            }
+            break; // Exit the loop
           }
-        } else {
-          // No tool calls, process the response directly
-          const content = response.choices[0]?.message?.content;
-          if (content) {
-            handleParsedResponse(content);
-          }
+        }
+
+        if (iteration >= maxIterations) {
+          throw new Error('Maximum tool call iterations reached. The AI might be stuck in a loop.');
         }
       } catch (error) {
         console.error('Failed to generate alert rule with LLM:', error);
