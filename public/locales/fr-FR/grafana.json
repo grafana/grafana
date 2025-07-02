@@ -110,6 +110,12 @@
       "update-button": "Mettre à jour",
       "users-heading": "Utilisateurs de l'organisation"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditer",
       "title-custom-branding": "Marquage personnalisé",
@@ -3467,18 +3473,12 @@
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
-      "description-branch-name-in-git-hub": "Nom de la branche dans GitHub",
       "error-invalid-folder-name": "Nom de dossier non valide",
       "error-required": "Un nom de dossier est obligatoire",
-      "folder-comment-input-placeholder-describe-changes-optional": "Ajoutez une note pour décrire vos modifications (facultatif)",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
-      "label-branch": "Branche",
-      "label-comment": "Commentaire",
       "label-folder-name": "Nom du dossier",
-      "label-workflow": "Flux de travail",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
       "title-pull-request-created": "Demande de fusion créée",
-      "title-repository-not-found": "Référentiel introuvable",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
     "no-results": {
@@ -12073,6 +12073,7 @@
           "polynomial": "Polynomial"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Nombre de points X, Y à prédire"
     },
     "rename-by-regex-transformer-editor": {

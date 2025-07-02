@@ -110,6 +110,12 @@
       "update-button": "Bijwerken",
       "users-heading": "Gebruikers van de organisatie"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Aangepaste branding",
@@ -3467,18 +3473,12 @@
       "button-create": "Aanmaken",
       "button-creating": "Aanmaken...",
       "cancel": "Annuleren",
-      "description-branch-name-in-git-hub": "Filiaalnaam in GitHub",
       "error-invalid-folder-name": "Ongeldige mapnaam",
       "error-required": "Mapnaam is vereist",
-      "folder-comment-input-placeholder-describe-changes-optional": "Een opmerking toevoegen om je wijzigingen te beschrijven (optioneel)",
       "folder-name-input-placeholder-enter-folder-name": "Mapnaam invoeren",
-      "label-branch": "Vestiging",
-      "label-comment": "Opmerking",
       "label-folder-name": "Mapnaam",
-      "label-workflow": "Werkstroom",
       "text-pull-request-created": "Er is een pull request gemaakt met wijzigingen in deze map:",
       "title-pull-request-created": "Pull request is aangemaakt",
-      "title-repository-not-found": "Repository niet gevonden",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
     },
     "no-results": {
@@ -12073,6 +12073,7 @@
           "polynomial": "Polynoom"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Aantal X-,Y-punten om te voorspellen"
     },
     "rename-by-regex-transformer-editor": {

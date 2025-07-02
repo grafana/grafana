@@ -110,6 +110,12 @@
       "update-button": "アップデート",
       "users-heading": "組織ユーザー"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "監査",
       "title-custom-branding": "カスタムブランディング",
@@ -3449,18 +3455,12 @@
       "button-create": "作成",
       "button-creating": "作成中...",
       "cancel": "キャンセル",
-      "description-branch-name-in-git-hub": "GitHubのブランチ名",
       "error-invalid-folder-name": "無効なフォルダ名",
       "error-required": "フォルダ名は必須です",
-      "folder-comment-input-placeholder-describe-changes-optional": "変更内容を説明するメモを追加します（オプション）",
       "folder-name-input-placeholder-enter-folder-name": "フォルダ名を入力してください",
-      "label-branch": "ブランチ",
-      "label-comment": "コメント",
       "label-folder-name": "フォルダ名",
-      "label-workflow": "ワークフロー",
       "text-pull-request-created": "このフォルダへの変更を含むプルリクエストが作成されました。",
       "title-pull-request-created": "プルリクエストが作成されました",
-      "title-repository-not-found": "リポジトリが見つかりません",
       "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
     },
     "no-results": {
@@ -12038,6 +12038,7 @@
           "polynomial": "多項式"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "予測するX、Yポイント数"
     },
     "rename-by-regex-transformer-editor": {

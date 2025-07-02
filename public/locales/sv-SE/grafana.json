@@ -110,6 +110,12 @@
       "update-button": "Uppdatera",
       "users-heading": "Organisationsanvändare"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Revision",
       "title-custom-branding": "Anpassad marknadsföring",
@@ -3467,18 +3473,12 @@
       "button-create": "Skapa",
       "button-creating": "Skapar …",
       "cancel": "Avbryt",
-      "description-branch-name-in-git-hub": "Grennamn i GitHub",
       "error-invalid-folder-name": "Ogiltigt mappnamn",
       "error-required": "Mappnamn krävs",
-      "folder-comment-input-placeholder-describe-changes-optional": "Lägg till en anteckning för att beskriva dina ändringar (valfritt)",
       "folder-name-input-placeholder-enter-folder-name": "Ange mappnamn",
-      "label-branch": "Gren",
-      "label-comment": "Kommentar",
       "label-folder-name": "Mappnamn",
-      "label-workflow": "Arbetsflöde",
       "text-pull-request-created": "En pull-begäran har skapats med ändringar i den här mappen:",
       "title-pull-request-created": "Pull-begäran skapad",
-      "title-repository-not-found": "Lagringsplatsen hittades inte",
       "title-this-repository-is-read-only": "Den här databasen är skrivskyddad"
     },
     "no-results": {
@@ -12073,6 +12073,7 @@
           "polynomial": "Polynom"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Antal X,Y-poäng att förutsäga"
     },
     "rename-by-regex-transformer-editor": {

@@ -110,6 +110,12 @@
       "update-button": "更新",
       "users-heading": "组织用户"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "审计",
       "title-custom-branding": "定制品牌",
@@ -3449,18 +3455,12 @@
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
-      "description-branch-name-in-git-hub": "GitHub 中的分支名称",
       "error-invalid-folder-name": "文件夹名称无效",
       "error-required": "文件夹名称为必填项",
-      "folder-comment-input-placeholder-describe-changes-optional": "添加备注以描述您的更改（可选）",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
-      "label-branch": "分支",
-      "label-comment": "评论",
       "label-folder-name": "文件夹名称",
-      "label-workflow": "工作流程",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
       "title-pull-request-created": "拉取请求已创建",
-      "title-repository-not-found": "找不到存储库",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
     "no-results": {
@@ -12038,6 +12038,7 @@
           "polynomial": "多项式"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "要预测的 X,Y 点的数量"
     },
     "rename-by-regex-transformer-editor": {
