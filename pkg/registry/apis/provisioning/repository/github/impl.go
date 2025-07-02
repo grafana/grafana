@@ -680,6 +680,11 @@ func (r *githubClient) ListPullRequests(ctx context.Context, owner, repository, 
 	// Convert to the interface type
 	ret := make([]PullRequest, 0, len(prs))
 	for _, pr := range prs {
+		// TODO: This is a workaround to avoid returning pull requests that are not related to the current branch
+		if pr.GetHead().GetRef() != head {
+			continue
+		}
+
 		ret = append(ret, PullRequest{
 			Number:  pr.GetNumber(),
 			Title:   pr.GetTitle(),
