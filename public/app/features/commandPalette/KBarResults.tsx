@@ -71,7 +71,20 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
           return nextIndex;
         });
-      } else if (event.key === 'Enter' && !event.metaKey) {
+      } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        // Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux) - open in new tab
+        event.preventDefault();
+        const activeItem = itemsRef.current[activeIndex];
+
+        if (activeItem.url) {
+          const url = typeof activeItem.url === 'function' ? activeItem.url(search) : activeItem.url;
+          window.open(url, '_blank', 'noopener,noreferrer');
+          query.toggle(); // Close the command palette
+        } else {
+          // If no URL, execute the action normally
+          activeRef.current?.click();
+        }
+      } else if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
         event.preventDefault();
         // storing the active dom element in a ref prevents us from
         // having to calculate the current action to perform based
@@ -82,7 +95,7 @@ export const KBarResults = (props: KBarResultsProps) => {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [query]);
+  }, [query, search, activeIndex]);
 
   // destructuring here to prevent linter warning to pass
   // entire rowVirtualizer in the dependencies array.
