@@ -48,6 +48,13 @@ type secureValueMetadataStorage struct {
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	start := time.Now()
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Create", trace.WithAttributes(
+		attribute.String("name", sv.GetName()),
+		attribute.String("namespace", sv.GetNamespace()),
+		attribute.String("actorUID", actorUID),
+	))
+	defer span.End()
+
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = "Creating secure value"
 
