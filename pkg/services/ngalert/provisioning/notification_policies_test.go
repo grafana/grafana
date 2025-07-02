@@ -434,7 +434,7 @@ func TestRoute_Fingerprint(t *testing.T) {
 	t.Run("unstable across field modification", func(t *testing.T) {
 		fingerprint := calculateRouteFingerprint(baseRouteGen())
 		excludedFields := map[string]struct{}{
-			"Routes": {},
+			"Routes":     {},
 			"Provenance": {},
 		}
 
