@@ -324,30 +324,23 @@ export const LogLineDetailsField = ({
           };
         }
         return (
-          <tr>
-            <td colSpan={2}></td>
-            <td>
-              <div>
-                <div>
-                  <div key={`${link.title}-${i}`} className={styles.link}>
-                    <DataLinkButton
-                      buttonProps={{
-                        // Show tooltip message if max number of pinned lines has been reached
-                        tooltip:
-                          typeof pinLineButtonTooltipTitle === 'object' && link.onClick
-                            ? pinLineButtonTooltipTitle
-                            : undefined,
-                        variant: 'secondary',
-                        fill: 'outline',
-                        ...(link.icon && { icon: link.icon }),
-                      }}
-                      link={link}
-                    />
-                  </div>
-                </div>
-              </div>
-            </td>
-          </tr>
+          <div className={styles.row} key={`${link.title}-${i}`}>
+            <div className={disableActions ? styles.linkNoActions : styles.link}>
+              <DataLinkButton
+                buttonProps={{
+                  // Show tooltip message if max number of pinned lines has been reached
+                  tooltip:
+                    typeof pinLineButtonTooltipTitle === 'object' && link.onClick
+                      ? pinLineButtonTooltipTitle
+                      : undefined,
+                  variant: 'secondary',
+                  fill: 'outline',
+                  ...(link.icon && { icon: link.icon }),
+                }}
+                link={link}
+              />
+            </div>
+          </div>
         );
       })}
       {showFieldsStats && fieldStats && (
@@ -398,7 +391,12 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
       },
     },
   }),
-  link: css({}),
+  link: css({
+    gridColumn: 'span 3',
+  }),
+  linkNoActions: css({
+    gridColumn: 'span 2',
+  }),
   valueContainer: css({
     display: 'flex',
     alignItems: 'center',
