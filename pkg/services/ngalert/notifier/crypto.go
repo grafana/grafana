@@ -242,10 +242,10 @@ func (c *alertmanagerCrypto) Decrypt(ctx context.Context, payload []byte) ([]byt
 }
 
 type ExtraConfigsCrypto struct {
-	secrets secrets.Service
+	secrets secretService
 }
 
-func NewExtraConfigsCrypto(secrets secrets.Service) *ExtraConfigsCrypto {
+func NewExtraConfigsCrypto(secrets secretService) *ExtraConfigsCrypto {
 	return &ExtraConfigsCrypto{
 		secrets: secrets,
 	}
