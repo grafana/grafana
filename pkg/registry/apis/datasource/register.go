@@ -16,6 +16,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/utils/strings/slices"
 
+	graphqlsubgraph "github.com/grafana/grafana-app-sdk/graphql/subgraph"
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -26,12 +28,18 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
-var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder       = (*DataSourceAPIBuilder)(nil)
+	_ builder.GraphQLCapableBuilder = (*DataSourceAPIBuilder)(nil)
+)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
@@ -44,6 +52,12 @@ type DataSourceAPIBuilder struct {
 	accessControl   accesscontrol.AccessControl
 	queryTypes      *query.QueryTypeDefinitionList
 	log             log.Logger
+
+	// Unified GraphQL support - only enabled on one plugin builder to avoid conflicts
+	enableUnifiedGraphQL   bool
+	unifiedDSService       datasources.DataSourceService
+	unifiedDSCache         datasources.CacheService
+	unifiedNamespaceMapper request.NamespaceMapper
 }
 
 func RegisterAPIService(
@@ -55,6 +69,10 @@ func RegisterAPIService(
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
+	// Additional parameters for unified GraphQL support
+	cfg *setting.Cfg,
+	dsService datasources.DataSourceService,
+	dsCache datasources.CacheService,
 ) (*DataSourceAPIBuilder, error) {
 	// We want to expose just a limited set of plugins
 	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
@@ -72,6 +90,8 @@ func RegisterAPIService(
 		"prometheus",
 		"graphite",
 	}
+
+	var firstPluginForGraphQL bool = true
 
 	for _, ds := range all {
 		if explictPluginList && !slices.Contains(ids, ds.ID) {
@@ -92,8 +112,19 @@ func RegisterAPIService(
 		if err != nil {
 			return nil, err
 		}
+
+		// Enable unified GraphQL support on the first plugin only to avoid conflicts
+		if firstPluginForGraphQL {
+			builder.enableUnifiedGraphQL = true
+			builder.unifiedDSService = dsService
+			builder.unifiedDSCache = dsCache
+			builder.unifiedNamespaceMapper = request.GetNamespaceMapper(cfg)
+			firstPluginForGraphQL = false
+		}
+
 		apiRegistrar.RegisterAPI(builder)
 	}
+
 	return builder, nil // only used for wire
 }
 
@@ -276,4 +307,36 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	})
 
 	return oas, err
+}
+
+// GetGraphQLSubgraph implements builder.GraphQLCapableBuilder
+// Only the first DataSource API builder provides unified GraphQL access to all datasources
+func (b *DataSourceAPIBuilder) GetGraphQLSubgraph() (graphqlsubgraph.GraphQLSubgraph, error) {
+	// Only provide GraphQL if this builder has unified access enabled
+	// Return nil (no GraphQL support) instead of error for non-unified builders
+	// This ensures only the unified builder is registered with GraphQL federation
+	if !b.enableUnifiedGraphQL {
+		return nil, nil
+	}
+
+	// Create the unified storage adapter that provides access to ALL datasources
+	storageAdapter := NewUnifiedDataSourceStorageAdapter(
+		b.unifiedDSService,
+		b.unifiedDSCache,
+		b.unifiedNamespaceMapper,
+	)
+
+	// Create the GraphQL subgraph using the app-sdk
+	subgraph, err := graphqlsubgraph.New(graphqlsubgraph.SubgraphConfig{
+		GroupVersion: b.connectionResourceInfo.GroupVersion(),
+		Kinds:        []sdkresource.Kind{DataSourceConnectionKind()},
+		StorageGetter: func(gvr schema.GroupVersionResource) graphqlsubgraph.Storage {
+			return storageAdapter
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create unified DataSource GraphQL subgraph: %w", err)
+	}
+
+	return subgraph, nil
 }
