@@ -821,10 +821,18 @@ func TestKvStorageBackend_ListHistory_Success(t *testing.T) {
 	require.Equal(t, rv2, historyItems[1].resourceVersion)
 	require.Equal(t, rv1, historyItems[2].resourceVersion)
 
-	// Verify the content matches expectations
+	// Verify the content matches expectations for all versions
 	finalObj, err := createTestObjectWithName("test-resource", "apps", "final-data")
 	require.NoError(t, err)
 	require.Equal(t, objectToJSONBytes(t, finalObj), historyItems[0].value)
+
+	updatedObj, err := createTestObjectWithName("test-resource", "apps", "updated-data")
+	require.NoError(t, err)
+	require.Equal(t, objectToJSONBytes(t, updatedObj), historyItems[1].value)
+
+	initialObj, err := createTestObjectWithName("test-resource", "apps", "initial-data")
+	require.NoError(t, err)
+	require.Equal(t, objectToJSONBytes(t, initialObj), historyItems[2].value)
 }
 
 func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
