@@ -423,8 +423,8 @@ func applyLiveHistoryFilter(filteredKeys []DataKey, req *resourcepb.ListRequest)
 	return filteredKeys
 }
 
-// sortHistoryKeys sorts the history keys based on the sortAscending flag
-func sortHistoryKeys(filteredKeys []DataKey, sortAscending bool) {
+// sortByResourceVersion sorts the history keys based on the sortAscending flag
+func sortByResourceVersion(filteredKeys []DataKey, sortAscending bool) {
 	if sortAscending {
 		sort.Slice(filteredKeys, func(i, j int) bool {
 			return filteredKeys[i].ResourceVersion < filteredKeys[j].ResourceVersion
@@ -510,7 +510,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 	filteredKeys = applyLiveHistoryFilter(filteredKeys, req)
 
 	// Sort the entries if not already sorted correctly
-	sortHistoryKeys(filteredKeys, sortAscending)
+	sortByResourceVersion(filteredKeys, sortAscending)
 
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
@@ -574,7 +574,7 @@ func (k *kvStorageBackend) processTrashEntries(ctx context.Context, req *resourc
 	}
 
 	// Sort the entries
-	sortHistoryKeys(filteredKeys, sortAscending)
+	sortByResourceVersion(filteredKeys, sortAscending)
 
 	// Pagination: filter out items up to and including lastSeenRV
 	pagedKeys := applyPagination(filteredKeys, lastSeenRV, sortAscending)
