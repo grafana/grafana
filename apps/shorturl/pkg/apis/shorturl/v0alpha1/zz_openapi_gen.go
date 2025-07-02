@@ -122,13 +122,6 @@ func schema_pkg_apis_shorturl_v0alpha1_ShortURLSpec(ref common.ReferenceCallback
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"uid": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -144,7 +137,7 @@ func schema_pkg_apis_shorturl_v0alpha1_ShortURLSpec(ref common.ReferenceCallback
 						},
 					},
 				},
-				Required: []string{"uid", "path", "lastSeenAt"},
+				Required: []string{"path", "lastSeenAt"},
 			},
 		},
 	}

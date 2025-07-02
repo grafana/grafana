@@ -4,7 +4,6 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type ShortURLSpec struct {
-	Uid        string `json:"uid"`
 	Path       string `json:"path"`
 	LastSeenAt int64  `json:"lastSeenAt"`
 }

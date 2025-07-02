@@ -15,7 +15,6 @@ shorturl: {
 			}
 			schema: {
 				spec: {
-					uid: 	string
 					path: string
 					lastSeenAt: int64
 				}

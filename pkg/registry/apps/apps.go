@@ -58,7 +58,7 @@ func ProvideRegistryServiceSink(
 	logger := log.New("app-registry")
 	var apiGroupRunner *runner.APIGroupRunner
 	var err error
-	providers := []app.Provider{playlistAppProvider, shortURLAppProvider}
+	providers := []app.Provider{playlistAppProvider}
 	if features.IsEnabledGlobally(featuremgmt.FlagInvestigationsBackend) {
 		logger.Debug("Investigations backend is enabled")
 		providers = append(providers, investigationAppProvider)
@@ -66,6 +66,10 @@ func ProvideRegistryServiceSink(
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
 		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
+	}
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
+		logger.Debug("Kubernetes Short URLs feature is enabled")
+		providers = append(providers, shortURLAppProvider)
 	}
 	if alertingNotificationsAppProvider != nil {
 		providers = append(providers, alertingNotificationsAppProvider)

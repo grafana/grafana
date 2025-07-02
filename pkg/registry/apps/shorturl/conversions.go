@@ -16,7 +16,6 @@ import (
 
 func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMapper) *shorturl.ShortURL {
 	spec := shorturl.ShortURLSpec{
-		Uid:        v.Uid,
 		Path:       v.Path,
 		LastSeenAt: v.LastSeenAt,
 	}
