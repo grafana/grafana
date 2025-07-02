@@ -43,21 +43,7 @@ func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Trac
 	if err != nil {
 		return nil, fmt.Errorf("provide Resource DB: %w", err)
 	}
-	var once sync.Once
-	var resourceDB db.DB
-
-	return dbProviderFunc(func(ctx context.Context) (db.DB, error) {
-		once.Do(func() {
-			resourceDB, err = p.init(ctx)
-		})
-		return resourceDB, err
-	}), nil
-}
-
-type dbProviderFunc func(context.Context) (db.DB, error)
-
-func (f dbProviderFunc) Init(ctx context.Context) (db.DB, error) {
-	return f(ctx)
+	return p, nil
 }
 
 type resourceDBProvider struct {
@@ -68,6 +54,10 @@ type resourceDBProvider struct {
 	tracer          trace.Tracer
 	registerMetrics bool
 	logQueries      bool
+
+	once       sync.Once
+	resourceDB db.DB
+	initErr    error
 }
 
 func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (p *resourceDBProvider, err error) {
@@ -124,7 +114,14 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	}
 }
 
-func (p *resourceDBProvider) init(ctx context.Context) (db.DB, error) {
+func (p *resourceDBProvider) Init(ctx context.Context) (db.DB, error) {
+	p.once.Do(func() {
+		p.resourceDB, p.initErr = p.initDB(ctx)
+	})
+	return p.resourceDB, p.initErr
+}
+
+func (p *resourceDBProvider) initDB(ctx context.Context) (db.DB, error) {
 	p.log.Info("Initializing Resource DB",
 		"db_type",
 		p.engine.Dialect().DriverName(),
