@@ -55,10 +55,6 @@ func GenerateRandomNSPrefix() string {
 
 // RunStorageBackendTest runs the storage backend test suite
 func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOptions) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	if opts == nil {
 		opts = &TestOptions{}
 	}
