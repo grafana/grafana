@@ -49,7 +49,8 @@ export function runShardSplitQuery(datasource: LokiDatasource, request: DataQuer
   const queries = datasource
     .interpolateVariablesInQueries(request.targets, request.scopedVars)
     .filter((query) => query.expr)
-    .filter((query) => !query.hide);
+    .filter((query) => !query.hide)
+    .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
 
   return splitQueriesByStreamShard(datasource, request, queries);
 }
