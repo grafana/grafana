@@ -36,7 +36,7 @@ type kvStorageBackend struct {
 
 var _ StorageBackend = &kvStorageBackend{}
 
-func NewkvStorageBackend(kv KV) *kvStorageBackend {
+func NewKvStorageBackend(kv KV) *kvStorageBackend {
 	s, err := snowflake.NewNode(rand.Int64N(1024))
 	if err != nil {
 		panic(err)
@@ -102,7 +102,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
-	}, io.NopCloser(bytes.NewReader(event.Value)))
+	}, bytes.NewReader(event.Value))
 	if err != nil {
 		return 0, fmt.Errorf("failed to write data: %w", err)
 	}
@@ -166,12 +166,16 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		ResourceVersion: meta.ResourceVersion,
 		Action:          meta.Action,
 	})
-	if err != nil {
+	if err != nil || data == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
 	value, err := io.ReadAll(data)
 	if err != nil {
+		data.Close()
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+	}
+	if closeErr := data.Close(); closeErr != nil {
+		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: closeErr.Error()}}
 	}
 	return &BackendReadResponse{
 		Key:             req.Key,
@@ -181,7 +185,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 }
 
-// // ListIterator returns an iterator for listing resources.
+// ListIterator returns an iterator for listing resources.
 func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
@@ -282,6 +286,11 @@ func (i *kvListIterator) Next() bool {
 
 	i.value, i.err = io.ReadAll(data)
 	if i.err != nil {
+		data.Close()
+		return false
+	}
+	if closeErr := data.Close(); closeErr != nil {
+		i.err = closeErr
 		return false
 	}
 
@@ -610,9 +619,19 @@ func (i *kvHistoryIterator) Next() bool {
 		i.err = err
 		return false
 	}
+	if data == nil {
+		i.err = fmt.Errorf("data is nil")
+		return false
+	}
 	i.value, err = io.ReadAll(data)
 	if err != nil {
 		i.err = err
+		data.Close()
+
+		return false
+	}
+	if closeErr := data.Close(); closeErr != nil {
+		i.err = closeErr
 		return false
 	}
 
@@ -694,11 +713,15 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				ResourceVersion: event.ResourceVersion,
 				Action:          event.Action,
 			})
-			if err != nil {
+			if err != nil || dataReader == nil {
 				return
 			}
 			data, err := io.ReadAll(dataReader)
 			if err != nil {
+				dataReader.Close()
+				return
+			}
+			if closeErr := dataReader.Close(); closeErr != nil {
 				return
 			}
 			var t resourcepb.WatchEvent_Type
