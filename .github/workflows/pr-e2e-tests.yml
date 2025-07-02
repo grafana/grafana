@@ -28,10 +28,13 @@ jobs:
         with:
           path: ./grafana
           persist-credentials: false
+
+      # TODO: add a cleanup workflow to remove the cache when the PR is closed
+      # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#force-deletion-of-caches-overriding-default-cache-eviction-policy
+      # TODO: maybe we could just use the cache to store the build, instead of uploading as an artifact?
       - uses: actions/cache@v4
         id: cache
         with:
-          # Ensure this cache key is identical to the one in run-playwright-tests
           key: "build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', '/public/*',  '/packages/*', '/pkg/**/*.go', '**/go.mod', '**/go.sum') }}"
           path: |
             dist
@@ -224,6 +227,7 @@ jobs:
           persist-credentials: false
 
       - name: Check test suites
+        id: check-jobs
         uses: ./.github/actions/check-jobs
         continue-on-error: true # Failure will be reported on Show test results step
         with:
@@ -234,10 +238,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --immutable
 
       - name: Download blob reports from GitHub Actions Artifacts
         uses: actions/download-artifact@v4
