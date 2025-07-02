@@ -670,6 +670,21 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *FileInfo) (*p
 
 		// Create a new pull request
 		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
+
+		// Try to find an existing pull request for this branch
+		logger := logging.FromContext(ctx)
+		prs, err := r.gh.ListPullRequests(ctx, r.owner, r.repo, ref, cfg.Branch)
+		if err != nil {
+			// Log the error but don't fail the entire operation
+			logger.Warn("failed to list pull requests", "error", err, "owner", r.owner, "repo", r.repo, "head", ref, "base", cfg.Branch)
+		} else if len(prs) > 0 {
+			if len(prs) > 1 {
+				logger.Debug("found multiple pull requests. Using the first one", "prs", prs)
+			}
+
+			// Use the first PR found (there should typically be only one)
+			urls.PullRequestURL = prs[0].HTMLURL
+		}
 	}
 
 	return urls, nil

@@ -103,6 +103,8 @@ type Client interface {
 	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
 	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
 
+	ListPullRequests(ctx context.Context, owner, repository, head, base string) ([]PullRequest, error)
+
 	CreatePullRequest(ctx context.Context, owner, repository, title, body, head, base string) (*PullRequest, error)
 
 	GetDiff(ctx context.Context, owner, repository, base, head string) (*Diff, error)

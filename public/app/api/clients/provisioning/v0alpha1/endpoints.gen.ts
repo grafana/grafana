@@ -1172,6 +1172,8 @@ export type ResourceUrLs = {
   compareURL?: string;
   /** A URL that will create a new pull requeset for this branch */
   newPullRequestURL?: string;
+  /** A URL pointing to the pull request for this branch */
+  pullRequestURL?: string;
   /** A URL pointing to the repository this lives in */
   repositoryURL?: string;
   /** A URL pointing to the this file in the repository */

@@ -336,6 +336,9 @@ type ResourceURLs struct {
 	// A URL that will create a new pull requeset for this branch
 	NewPullRequestURL string `json:"newPullRequestURL,omitempty"`
 
+	// A URL pointing to an existing pull request for this branch
+	PullRequestURL string `json:"pullRequestURL,omitempty"`
+
 	// Compare this version to the target branch
 	CompareURL string `json:"compareURL,omitempty"`
 }

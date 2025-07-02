@@ -370,6 +370,8 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
 
   // Check if this is a GitHub link
   const githubURL = file.data?.urls?.newPullRequestURL ?? file.data?.urls?.compareURL;
+  const existingPullRequestURL = file.data?.urls?.pullRequestURL;
+  console.log('githubURL', file.data);
 
   if (githubURL) {
     return (
@@ -381,17 +383,32 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
             'This dashboard is loaded from a branch in GitHub.'
           )}
           buttonContent={
-            <Trans i18nKey="dashboard-scene.dashboard-preview-banner.create-pull-request-in-git-hub">
-              Create pull request
-            </Trans>
+            existingPullRequestURL ? (
+              <Stack alignItems="center">
+                <Trans i18nKey="dashboard-scene.dashboard-preview-banner.view-pull-request-in-git-hub">
+                  View pull request in GitHub
+                </Trans>
+                <Icon name="external-link-alt" />
+              </Stack>
+            ) : (
+              <Trans i18nKey="dashboard-scene.dashboard-preview-banner.create-pull-request-in-git-hub">
+                Create pull request
+              </Trans>
+            )
           }
-          onRemove={() => setShowPRModal(true)}
+          onRemove={() => {
+            if (existingPullRequestURL) {
+              window.open(textUtil.sanitizeUrl(existingPullRequestURL), '_blank');
+            } else {
+              setShowPRModal(true);
+            }
+          }}
         >
           <Trans i18nKey="dashboard-scene.dashboard-preview-banner.not-saved">
             The value is not yet saved in the Grafana database
           </Trans>
         </Alert>
-        {showPRModal && (
+        {showPRModal && !existingPullRequestURL && (
           <CreatePullRequestModal
             slug={slug}
             branch={queryParams.ref ?? 'master'}
