@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,6 +33,7 @@ type kvStorageBackend struct {
 	eventStore *eventStore
 	notifier   *notifier
 	builder    DocumentBuilder
+	log        logging.Logger
 }
 
 var _ StorageBackend = &kvStorageBackend{}
@@ -50,6 +52,7 @@ func NewKvStorageBackend(kv KV) *kvStorageBackend {
 		notifier:   newNotifier(eventStore, notifierOptions{}),
 		snowflake:  s,
 		builder:    StandardDocumentBuilder(), // For now we use the standard document builder.
+		log:        &logging.NoOpLogger{},     // Make this configurable
 	}
 }
 
@@ -720,15 +723,18 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				Action:          event.Action,
 			})
 			if err != nil || dataReader == nil {
-				return
+				k.log.Error("failed to get data for event", "error", err)
+				continue
 			}
 			data, err := io.ReadAll(dataReader)
 			if err != nil {
 				dataReader.Close()
-				return
+				k.log.Error("failed to read data for event", "error", err)
+				continue
 			}
 			if closeErr := dataReader.Close(); closeErr != nil {
-				return
+				k.log.Error("failed to close data reader", "error", closeErr)
+				continue
 			}
 			var t resourcepb.WatchEvent_Type
 			switch event.Action {
