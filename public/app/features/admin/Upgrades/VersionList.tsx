@@ -60,7 +60,6 @@ export function VersionList({ versions, installedVersion }: Props) {
                         variant="primary"
                         icon="download-alt"
                         size="sm"
-                        // className={styles.button}
                         href={`https://grafana.com/grafana/download/${v.version}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -110,12 +109,6 @@ export function VersionList({ versions, installedVersion }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    padding: theme.spacing(2, 4, 3),
-  }),
-  spinner: css({
-    marginLeft: theme.spacing(1),
-  }),
   table: css({
     marginTop: theme.spacing(2),
     width: '100%',
