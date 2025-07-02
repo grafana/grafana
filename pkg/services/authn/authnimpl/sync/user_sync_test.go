@@ -1453,8 +1453,9 @@ func TestUserSync_SCIMUtilIntegration(t *testing.T) {
 						"namespace": "default",
 					},
 					"spec": map[string]interface{}{
-						"enableUserSync":  mockCfg.userSyncEnabled,
-						"enableGroupSync": false, // Not used for this test
+						"enableUserSync":           mockCfg.userSyncEnabled,
+						"enableGroupSync":          false, // Not used for this test
+						"allowNonProvisionedUsers": mockCfg.nonProvisionedUsersAllowed,
 					},
 				},
 			}
