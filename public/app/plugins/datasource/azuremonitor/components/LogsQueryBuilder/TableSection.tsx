@@ -38,7 +38,7 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       label: opt.label,
       value: opt.value,
     })),
-  ];  
+  ];
 
   const columnOptions: Array<SelectableValue<string>> = allColumns.map((col) => ({
     label: col.name,
@@ -79,22 +79,22 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
 
   const handleColumnsChange = (selected: SelectableValue<string> | Array<SelectableValue<string>> | null) => {
     const selectedArray = Array.isArray(selected) ? selected : selected ? [selected] : [];
-  
+
     if (selectedArray.length === 0) {
       buildAndUpdateQuery({ columns: [] });
       return;
     }
-  
+
     const includesAll = selectedArray.some((opt) => opt.value === '__all_columns__');
     const lastSelected = selectedArray[selectedArray.length - 1];
-  
+
     if (includesAll && lastSelected.value === '__all_columns__') {
       buildAndUpdateQuery({
         columns: allColumns.map((col) => col.name),
       });
       return;
     }
-  
+
     if (includesAll && selectedArray.length > 1) {
       const filtered = selectedArray.filter((opt) => opt.value !== '__all_columns__');
       buildAndUpdateQuery({
@@ -102,18 +102,18 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
       });
       return;
     }
-  
+
     if (includesAll && selectedArray.length === 1) {
       buildAndUpdateQuery({
         columns: allColumns.map((col) => col.name),
       });
       return;
     }
-  
+
     buildAndUpdateQuery({
       columns: selectedArray.map((opt) => opt.value!),
     });
-  };  
+  };
 
   const onDeleteAllColumns = () => {
     buildAndUpdateQuery({

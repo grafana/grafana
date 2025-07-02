@@ -33,7 +33,9 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const hasLoadedOrderBy = useRef(false);
 
-  const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>(builderQuery?.orderBy?.expressions || []);
+  const [orderBy, setOrderBy] = useState<BuilderQueryEditorOrderByExpression[]>(
+    builderQuery?.orderBy?.expressions || []
+  );
 
   useEffect(() => {
     const currentTable = builderQuery?.from?.property.name || null;

@@ -30,7 +30,9 @@ export const GroupBySection: React.FC<GroupBySectionProps> = ({
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
-  const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>(builderQuery?.groupBy?.expressions || []);
+  const [groupBys, setGroupBys] = useState<BuilderQueryEditorGroupByExpression[]>(
+    builderQuery?.groupBy?.expressions || []
+  );
 
   const hasLoadedGroupBy = useRef(false);
 

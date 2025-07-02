@@ -155,15 +155,15 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     const from = timeRange?.from?.toISOString();
     const to = timeRange?.to?.toISOString();
     const timeColumn = query.azureLogAnalytics?.timeColumn || 'TimeGenerated';
-  
+
     const kustoQuery = `
       ${query.azureLogAnalytics?.builderQuery?.from?.property.name}
       | where ${timeColumn} >= datetime(${from}) and ${timeColumn} <= datetime(${to})
       | distinct ${filter.property.name}
       | limit 1000
     `;
-  
-    const results: any = await lastValueFrom(
+
+    const results = await lastValueFrom(
       datasource.azureLogAnalyticsDatasource.query({
         requestId: 'azure-logs-builder-filter-values',
         interval: '',
@@ -185,22 +185,22 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         ],
       })
     );
-  
+
     if (results.state === 'Done') {
       const values = results.data?.[0]?.fields?.[0]?.values ?? [];
-  
+
       const dynamicValues = values.toArray().map(
-        (v: any): ComboboxOption<string> => ({
+        (v: unknown): ComboboxOption<string> => ({
           label: String(v),
           value: String(v),
         })
       );
-  
+
       return [...variableOptionGroup.options, ...dynamicValues];
     }
-  
+
     return variableOptionGroup.options;
-  };  
+  };
 
   return (
     <EditorRow>

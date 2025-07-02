@@ -23,7 +23,9 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   variableOptionGroup,
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
-  const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>(builderQuery?.reduce?.expressions || []);
+  const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>(
+    builderQuery?.reduce?.expressions || []
+  );
   const prevTable = useRef<string | null>(builderQuery?.from?.property.name || null);
   const hasLoadedAggregates = useRef(false);
 

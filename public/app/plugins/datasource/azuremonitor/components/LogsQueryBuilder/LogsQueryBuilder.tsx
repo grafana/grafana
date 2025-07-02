@@ -146,12 +146,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
             )}
           />
         )}
-        <TableSection
-          {...props}
-          tables={tables}
-          allColumns={allColumns}
-          buildAndUpdateQuery={buildAndUpdateQuery}
-        />
+        <TableSection {...props} tables={tables} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
         <FilterSection
           {...props}
           allColumns={allColumns}
