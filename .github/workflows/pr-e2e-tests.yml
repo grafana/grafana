@@ -48,7 +48,7 @@ jobs:
         with:
           verb: run
           cloud-token: ${{ secrets.TEMP_DAGGER_TOKEN_JOSH }} # TODO: remove before merging
-          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
+          args: go run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}" > out.txt
       - name: Cat built artifact
         if: steps.cache.outputs.cache-hit != 'true'
         run: cat out.txt
