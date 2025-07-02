@@ -8361,8 +8361,8 @@
         "loki": {
           "indexed-label": "Indexed label",
           "indexed-label-plural": "Indexed labels",
-          "parsed-label-plural": "Parsed labels",
-          "parsedl-label": "Parsed label",
+          "parsed-label-plural": "Parsed fields",
+          "parsedl-label": "Parsed field",
           "structured-metadata": "Structured metadata",
           "structured-metadata-plural": "Structured metadata"
         }
