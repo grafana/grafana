@@ -1,19 +1,24 @@
-import { useEffect } from 'react';
-import { Controller, useForm, FormProvider } from 'react-hook-form';
+import { css } from '@emotion/css';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { Controller, useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { Alert, Button, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack, TextArea, useStyles2, useTheme2 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import kbn from 'app/core/utils/kbn';
 import { Resource } from 'app/features/apiserver/types';
+import { GenAIButton } from 'app/features/dashboard/components/GenAI/GenAIButton';
+import { EventTrackingSrc } from 'app/features/dashboard/components/GenAI/tracking';
+import { isLLMPluginEnabled } from 'app/features/dashboard/components/GenAI/utils';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 
+import { AIContextProvider, useAIContext } from '../../components/Provisioned/AIContextProvider';
 import { DashboardEditFormSharedFields } from '../../components/Provisioned/DashboardEditFormSharedFields';
 import { getDashboardUrl } from '../../utils/getDashboardUrl';
 import { useProvisionedRequestHandler } from '../../utils/useProvisionedRequestHandler';
@@ -32,7 +37,76 @@ export interface Props extends SaveProvisionedDashboardProps {
   readOnly: boolean;
 }
 
-export function SaveProvisionedDashboardForm({
+// Custom TextArea with suffix support
+interface TextAreaWithSuffixProps extends React.ComponentProps<typeof TextArea> {
+  suffix?: React.ReactNode;
+}
+
+const LOCAL_STORAGE_ALWAYS_AUTOGEN_KEY = 'grafana-dashboard-always-autogen-all';
+
+const TextAreaWithSuffix = ({ suffix, value, ...textAreaProps }: TextAreaWithSuffixProps) => {
+  const theme = useTheme2();
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  const styles = useStyles2(() => ({
+    wrapper: css({
+      position: 'relative',
+      display: 'flex',
+    }),
+    textArea: css({
+      paddingRight: suffix ? theme.spacing(5) : undefined,
+      resize: 'none',
+      overflow: 'hidden',
+      minHeight: theme.spacing(5), // Minimum height
+    }),
+    suffix: css({
+      position: 'absolute',
+      top: theme.spacing(1),
+      right: theme.spacing(1),
+      zIndex: 1,
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      pointerEvents: 'auto',
+    }),
+  }));
+
+  // Auto-resize function
+  const autoResize = useCallback(() => {
+    const textArea = textAreaRef.current;
+    if (textArea) {
+      // Reset height to auto to get the actual scrollHeight
+      textArea.style.height = 'auto';
+      // Set height to scrollHeight to fit content
+      textArea.style.height = `${Math.max(textArea.scrollHeight, parseInt(theme.spacing(5), 10))}px`;
+    }
+  }, [theme]);
+
+  // Auto-resize on value change (including during typing effect)
+  useEffect(() => {
+    autoResize();
+  }, [value, autoResize]);
+
+  // Auto-resize on initial mount
+  useEffect(() => {
+    autoResize();
+  }, [autoResize]);
+
+  return (
+    <div className={styles.wrapper}>
+      <TextArea
+        {...textAreaProps}
+        ref={textAreaRef}
+        value={value}
+        className={styles.textArea}
+        onInput={autoResize} // Also resize on manual input
+      />
+      {suffix && <div className={styles.suffix}>{suffix}</div>}
+    </div>
+  );
+};
+
+const SaveProvisionedDashboardFormInner = ({
   defaultValues,
   dashboard,
   drawer,
@@ -42,21 +116,80 @@ export function SaveProvisionedDashboardForm({
   isGitHub,
   workflowOptions,
   readOnly,
-}: Props) {
+}: Props) => {
   const navigate = useNavigate();
   const appEvents = getAppEvents();
   const { isDirty, editPanel: panelEditor } = dashboard.useState();
 
   const [createOrUpdateFile, request] = useCreateOrUpdateRepositoryFile(isNew ? undefined : defaultValues.path);
 
-  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
-  const { handleSubmit, watch, control, reset, register } = methods;
-  const [workflow] = watch(['workflow']);
+  const { handleSubmit, watch, control, reset, register, setValue, formState } =
+    useFormContext<ProvisionedDashboardFormData>();
+
+  const [_, setAiLoading] = useState({
+    title: false,
+    description: false,
+    path: false,
+    comment: false,
+    ref: false,
+  });
+  const [showAutoGenCheckbox, setShowAutoGenCheckbox] = useState(false);
+  const [alwaysAutoGenAll, setAlwaysAutoGenAll] = useState(() => {
+    return localStorage.getItem(LOCAL_STORAGE_ALWAYS_AUTOGEN_KEY) === 'true';
+  });
+
+  const workflow = watch('workflow');
+
+  const fieldsWithAIAutofill = useMemo(() => {
+    const fields = ['comment'];
+
+    if (isNew) {
+      fields.push('title', 'description', 'path');
+    }
+
+    if (workflow === 'branch') {
+      fields.push('ref');
+    }
+
+    return fields;
+  }, [isNew, workflow]);
+
+  // LLM state
+  const [isLLMEnabled, setIsLLMEnabled] = useState(false);
+
+  // Check if LLM is enabled
+  useEffect(() => {
+    isLLMPluginEnabled().then(setIsLLMEnabled);
+  }, []);
+
+  // Get AI context
+  const aiContext = useAIContext();
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  // Helper function to get dashboard context for AI generation
+  const getDashboardContext = useCallback(() => {
+    const dashboardModel = {
+      title: dashboard.state.title || 'Untitled Dashboard',
+      tags: dashboard.state.tags || [],
+      isNew: isNew,
+      changeInfo: changeInfo
+        ? {
+            hasChanges: changeInfo.hasChanges,
+            hasTimeChanges: changeInfo.hasTimeChanges,
+            hasVariableValueChanges: changeInfo.hasVariableValueChanges,
+            hasRefreshChange: changeInfo.hasRefreshChange,
+            hasFolderChanges: changeInfo.hasFolderChanges,
+            hasMigratedToV2: changeInfo.hasMigratedToV2,
+            diffCount: changeInfo.diffCount,
+          }
+        : null,
+    };
+    return dashboardModel;
+  }, [dashboard.state, isNew, changeInfo]);
 
   const onRequestError = (error: unknown) => {
     appEvents.publish({
@@ -108,133 +241,311 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
-    // Validate required fields
-    if (!repo || !path) {
-      console.error('Missing required fields for saving:', { repo, path });
-      return;
-    }
+  const handleFormSubmit = useCallback(
+    async ({ title, description, repo, path, comment, ref }: ProvisionedDashboardFormData) => {
+      console.log('handleFormSubmit', { title, description, repo, path, comment, ref });
 
-    // If user is writing to the original branch, override ref with whatever we loaded from
-    if (workflow === 'write') {
-      ref = loadedFromRef;
-    }
+      // Validate required fields
+      if (!repo || !path) {
+        console.error('Missing required fields for saving:', { repo, path });
+        return;
+      }
 
-    const body = dashboard.getSaveResource({
-      isNew,
-      title,
-      description,
+      // If user is writing to the original branch, override ref with whatever we loaded from
+      if (workflow === 'write') {
+        ref = loadedFromRef;
+      }
+
+      const body = dashboard.getSaveResource({
+        isNew,
+        title,
+        description,
+      });
+
+      await createOrUpdateFile({
+        ref,
+        name: repo,
+        path,
+        message: comment,
+        body,
+      }).unwrap();
+    },
+    [workflow, loadedFromRef, dashboard, isNew, createOrUpdateFile]
+  );
+
+  const handleFormSubmitDebug = async (formData: any) => {
+    console.log('handleFormSubmitDebug', formData);
+    await handleFormSubmit(formData);
+  };
+
+  const nonDirtyAIFields = useMemo(() => {
+    return Object.keys(watch()).filter(
+      (fieldName) =>
+        fieldsWithAIAutofill.includes(fieldName) &&
+        !formState.dirtyFields[fieldName as keyof ProvisionedDashboardFormData]
+    );
+  }, [watch, fieldsWithAIAutofill, formState.dirtyFields]);
+
+  // Auto-generate all fields (trigger all GenAIButtons)
+  const [hasAutoGeneratedAll, setHasAutoGeneratedAll] = useState(false);
+  const autoGenerateAll = useCallback(() => {
+    nonDirtyAIFields.forEach((fieldName) => {
+      setAiLoading((prev) => ({ ...prev, [fieldName]: true }));
+      const button = document.getElementById(`${fieldName}-ai-button-container`)?.querySelector('button');
+      if (button) {
+        button.click();
+      }
     });
+    setShowAutoGenCheckbox(true);
+    setHasAutoGeneratedAll(true);
+  }, [nonDirtyAIFields, setAiLoading]);
 
-    createOrUpdateFile({
-      ref,
-      name: repo,
-      path,
-      message: comment,
-      body,
-    });
+  // Reset when drawer is opened
+  useEffect(() => {
+    if (drawer.isActive && alwaysAutoGenAll && !hasAutoGeneratedAll) {
+      autoGenerateAll();
+      setHasAutoGeneratedAll(true);
+    }
+  }, [drawer.isActive, alwaysAutoGenAll, hasAutoGeneratedAll, autoGenerateAll]);
+
+  // Per-field effect for autofill (title and description in main form)
+  useEffect(() => {
+    if (drawer.isActive && alwaysAutoGenAll && !hasAutoGeneratedAll && isNew) {
+      let retries = 0;
+      const maxRetries = 5;
+      const retryDelay = 120; // ms
+
+      function tryClick(id: string) {
+        const btn = document.getElementById(id)?.querySelector('button');
+        if (btn) {
+          btn.click();
+          return true;
+        }
+        return false;
+      }
+
+      function clickWithRetry(id: string) {
+        if (tryClick(id)) {
+          return;
+        }
+        if (retries < maxRetries) {
+          retries++;
+          setTimeout(() => clickWithRetry(id), retryDelay);
+        } else {
+          console.warn(`GenAIButton for ${id} not found after ${maxRetries} retries`);
+        }
+      }
+
+      // Click title and description buttons for new dashboards
+      clickWithRetry('title-ai-button-container');
+      clickWithRetry('description-ai-button-container');
+    }
+  }, [drawer.isActive, alwaysAutoGenAll, hasAutoGeneratedAll, isNew]);
+
+  useEffect(() => {
+    if (!drawer.isActive) {
+      setHasAutoGeneratedAll(false);
+    }
+  }, [drawer.isActive]);
+
+  // Handler for the checkbox
+  const handleAutoGenCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAlwaysAutoGenAll(e.target.checked);
+    localStorage.setItem(LOCAL_STORAGE_ALWAYS_AUTOGEN_KEY, e.target.checked ? 'true' : 'false');
   };
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(handleFormSubmit)} name="save-provisioned-form">
-        <Stack direction="column" gap={2}>
-          {readOnly && (
-            <Alert
-              title={t(
-                'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
-                'This repository is read only'
-              )}
-            >
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
-                If you have direct access to the target, copy the JSON and paste it there.
-              </Trans>
-            </Alert>
-          )}
+    <form onSubmit={handleSubmit(handleFormSubmitDebug)} name="save-provisioned-form">
+      <Stack direction="column" gap={2}>
+        {readOnly && (
+          <Alert
+            title={t(
+              'dashboard-scene.save-provisioned-dashboard-form.title-this-repository-is-read-only',
+              'This repository is read only'
+            )}
+          >
+            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.copy-json-message">
+              If you have direct access to the target, copy the JSON and paste it there.
+            </Trans>
+          </Alert>
+        )}
 
-          {isNew && (
-            <>
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}
-                invalid={!!methods.formState.errors.title}
-                error={methods.formState.errors.title?.message}
-              >
-                <Input
-                  id="dashboard-title"
-                  {...register('title', {
-                    required: t(
-                      'dashboard-scene.save-provisioned-dashboard-form.title-required',
-                      'Dashboard title is required'
-                    ),
-                    validate: validateTitle,
-                  })}
-                />
-              </Field>
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}
-                invalid={!!methods.formState.errors.description}
-                error={methods.formState.errors.description?.message}
-              >
-                <TextArea id="dashboard-description" {...register('description')} />
-              </Field>
-
-              <Field
-                noMargin
-                label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
-              >
-                <Controller
-                  control={control}
-                  name={'folder'}
-                  render={({ field: { ref, value, onChange, ...field } }) => {
-                    return (
-                      <FolderPicker
-                        onChange={async (uid?: string, title?: string) => {
-                          onChange({ uid, title });
-                          // Update folderUid URL param
-                          updateURLParams('folderUid', uid);
-                          const meta = await getProvisionedMeta(uid);
-                          dashboard.setState({
-                            meta: {
-                              ...meta,
-                              folderUid: uid,
-                            },
-                          });
+        {isNew && (
+          <>
+            <Field
+              noMargin
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <span>{t('dashboard-scene.save-provisioned-dashboard-form.label-title', 'Title')}</span>
+                  {isLLMEnabled && (
+                    <div id="title-ai-button-container">
+                      <GenAIButton
+                        tooltip={t(
+                          'dashboard-scene.save-provisioned-dashboard-form.ai-fill-title',
+                          'AI autofill title'
+                        )}
+                        messages={aiContext.getTitleMessages(getDashboardContext(), changeInfo)}
+                        onGenerate={(response) => {
+                          setValue('title', response, { shouldDirty: true });
+                          setAiLoading((prev) => ({ ...prev, title: false }));
                         }}
-                        value={value.uid}
-                        {...field}
+                        eventTrackingSrc={EventTrackingSrc.dashboardTitle}
                       />
-                    );
-                  }}
-                />
-              </Field>
-            </>
-          )}
+                    </div>
+                  )}
+                </Stack>
+              }
+              invalid={!!formState.errors.title}
+              error={formState.errors.title?.message}
+            >
+              <Input
+                id="dashboard-title"
+                {...register('title', {
+                  required: t(
+                    'dashboard-scene.save-provisioned-dashboard-form.title-required',
+                    'Dashboard title is required'
+                  ),
+                  validate: validateTitle,
+                })}
+              />
+            </Field>
+            <Field
+              noMargin
+              label={
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <span>{t('dashboard-scene.save-provisioned-dashboard-form.label-description', 'Description')}</span>
+                  {isLLMEnabled && (
+                    <div id="description-ai-button-container">
+                      <GenAIButton
+                        tooltip={t(
+                          'dashboard-scene.save-provisioned-dashboard-form.ai-fill-description',
+                          'AI autofill description'
+                        )}
+                        messages={aiContext.getDescriptionMessages(
+                          getDashboardContext(),
+                          watch('title') || getDashboardContext().title,
+                          changeInfo
+                        )}
+                        onGenerate={(response) => {
+                          setValue('description', response, { shouldDirty: true });
+                          setAiLoading((prev) => ({ ...prev, description: false }));
+                        }}
+                        eventTrackingSrc={EventTrackingSrc.dashboardDescription}
+                      />
+                    </div>
+                  )}
+                </Stack>
+              }
+              invalid={!!formState.errors.description}
+              error={formState.errors.description?.message}
+            >
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => <TextAreaWithSuffix {...field} />}
+              />
+            </Field>
 
-          {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
+            <Field
+              noMargin
+              label={t('dashboard-scene.save-provisioned-dashboard-form.label-target-folder', 'Target folder')}
+            >
+              <Controller
+                control={control}
+                name={'folder'}
+                render={({ field: { ref, value, onChange, ...field } }) => {
+                  return (
+                    <FolderPicker
+                      onChange={async (uid?: string, title?: string) => {
+                        onChange({ uid, title });
+                        // Update folderUid URL param
+                        updateURLParams('folderUid', uid);
+                        const meta = await getProvisionedMeta(uid);
+                        dashboard.setState({
+                          meta: {
+                            ...meta,
+                            folderUid: uid,
+                          },
+                        });
+                      }}
+                      value={value.uid}
+                      {...field}
+                    />
+                  );
+                }}
+              />
+            </Field>
+          </>
+        )}
 
-          <DashboardEditFormSharedFields
-            resourceType="dashboard"
-            readOnly={readOnly}
-            workflow={workflow}
-            workflowOptions={workflowOptions}
-            isGitHub={isGitHub}
-            isNew={isNew}
-          />
+        {!isNew && !readOnly && <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />}
 
-          <Stack gap={2}>
-            <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty || readOnly}>
-              {request.isLoading
-                ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
-                : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
-            </Button>
-            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-              <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
-            </Button>
-          </Stack>
+        <DashboardEditFormSharedFields
+          resourceType="dashboard"
+          readOnly={readOnly}
+          workflow={workflow}
+          workflowOptions={workflowOptions}
+          isGitHub={isGitHub}
+          isNew={isNew}
+          changeInfo={changeInfo}
+          setAiLoading={setAiLoading}
+          shouldAutoGenerateAll={drawer.isActive && alwaysAutoGenAll && !hasAutoGeneratedAll}
+        />
+
+        <Stack gap={2} direction="row" justifyContent="flex-start">
+          <Button
+            variant="secondary"
+            icon={request.isLoading ? 'spinner' : 'ai-sparkle'}
+            onClick={autoGenerateAll}
+            disabled={request.isLoading || !isDirty || readOnly || hasAutoGeneratedAll}
+            tooltip={t(
+              'dashboard-scene.save-provisioned-dashboard-form.magic-save-tooltip',
+              'Auto-generate all fields'
+            )}
+          >
+            {request.isLoading
+              ? t('dashboard-scene.save-provisioned-dashboard-form.magic-saving', 'Auto-generating...')
+              : t('dashboard-scene.save-provisioned-dashboard-form.magic-save', 'Auto generate all')}
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={request.isLoading || !isDirty || readOnly}
+            tooltip={t(
+              'dashboard-scene.save-provisioned-dashboard-form.traditional-save-tooltip',
+              'Save dashboard'
+            )}
+          >
+            {request.isLoading
+              ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
+              : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
+          </Button>
         </Stack>
-      </form>
+        {showAutoGenCheckbox && (
+          <label style={{ display: 'flex', alignItems: 'center'}}>
+            <input
+              type="checkbox"
+              checked={alwaysAutoGenAll}
+              onChange={handleAutoGenCheckboxChange}
+              style={{ marginRight: 8 }}
+            />
+            {t('dashboard-scene.save-provisioned-dashboard-form.always-autogen-checkbox', 'Always auto-generate all fields when saving')}
+          </label>
+        )}
+      </Stack>
+    </form>
+  );
+};
+
+export function SaveProvisionedDashboardForm(props: Props) {
+  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues: props.defaultValues });
+  const { setValue } = methods;
+
+  return (
+    <FormProvider {...methods}>
+      <AIContextProvider setValue={setValue}>
+        <SaveProvisionedDashboardFormInner {...props} />
+      </AIContextProvider>
     </FormProvider>
   );
 }

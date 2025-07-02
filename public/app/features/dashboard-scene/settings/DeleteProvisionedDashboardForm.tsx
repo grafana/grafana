@@ -128,6 +128,7 @@ export function DeleteProvisionedDashboardForm({
               workflow={workflow}
               workflowOptions={workflowOptions}
               isGitHub={isGitHub}
+              setAiLoading={() => {}}
             />
 
             {/* Save / Cancel button */}
