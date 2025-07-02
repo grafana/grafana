@@ -1659,6 +1659,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesShortURLs",
+        "resourceVersion": "1751469121124",
+        "creationTimestamp": "2025-07-02T15:12:01Z"
+      },
+      "spec": {
+        "description": "Routes short url requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesSnapshots",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-12-05T22:31:49Z"

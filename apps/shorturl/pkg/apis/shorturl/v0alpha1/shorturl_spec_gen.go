@@ -1,0 +1,15 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
+package v0alpha1
+
+// +k8s:openapi-gen=true
+type ShortURLSpec struct {
+	Uid        string `json:"uid"`
+	Path       string `json:"path"`
+	LastSeenAt int64  `json:"lastSeenAt"`
+}
+
+// NewShortURLSpec creates a new ShortURLSpec object.
+func NewShortURLSpec() *ShortURLSpec {
+	return &ShortURLSpec{}
+}

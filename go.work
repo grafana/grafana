@@ -12,6 +12,7 @@ use (
 	./apps/iam
 	./apps/investigations
 	./apps/playlist
+	./apps/shorturl
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
