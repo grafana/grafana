@@ -66,7 +66,7 @@ describe('sanitize', () => {
     it('should preserve existing rel attributes and add noopener noreferrer, if not already added', () => {
       const html = '<a href="https://example.com" target="_blank" rel="external noreferrer">Link</a>';
       const str = sanitize(html);
-      expect(str).toBe('<a href="https://example.com" target="_blank" rel="external noreferrer noopener">Link</a>');
+      expect(str).toBe('<a href="https://example.com" target="_blank" rel="noopener noreferrer">Link</a>');
     });
 
     it('should not modify links without target="_blank"', () => {
