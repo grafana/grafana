@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/e2e"
 	gapi "github.com/grafana/grafana-api-golang-client"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/stretchr/testify/require"
 )
 
@@ -383,7 +384,7 @@ func mapInstancePeers(is []string) map[string][]string {
 	return mIs
 }
 
-func (s *AlertmanagerScenario) NewMimirClient(tenantID string) (*MimirClient, error) {
+func (s *AlertmanagerScenario) NewMimirClient(tenantID string) (client.MimirClient, error) {
 	if s.Mimir == nil {
 		return nil, fmt.Errorf("mimir service not started")
 	}

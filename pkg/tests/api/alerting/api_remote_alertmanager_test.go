@@ -56,15 +56,13 @@ func TestIntegrationRemoteAlertmanagerConfigUpload(t *testing.T) {
 	// Check that the initial Mimir config contains the default Grafana configuration
 	initialMimirConfig, err := mimirClient.GetGrafanaAlertmanagerConfig(context.Background())
 	require.NoError(t, err)
-	require.NotEmpty(t, initialMimirConfig) // Grafana automatically syncs default config to remote alertmanager
+	require.NotNil(t, initialMimirConfig) // Grafana automatically syncs default config to remote alertmanager
+	require.NotNil(t, initialMimirConfig.GrafanaAlertmanagerConfig)
 
 	// Initially there is just the default grafana-default-email receiver
-	config := initialMimirConfig["data"].(map[string]any)["configuration"].(map[string]any)
-	alertmanagerConfig := config["alertmanager_config"].(map[string]any)
-	receivers := alertmanagerConfig["receivers"].([]any)
+	receivers := initialMimirConfig.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers
 	require.Len(t, receivers, 1)
-	defaultReceiver := receivers[0].(map[string]any)
-	require.Equal(t, "grafana-default-email", defaultReceiver["name"])
+	require.Equal(t, "grafana-default-email", receivers[0].Name)
 
 	// Now upload a new extra config and check that it gets uploaded to Mimir
 	testAlertmanagerConfigYAML := `
@@ -73,12 +71,14 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: test-webhook
+  receiver: extra-slack
 
 receivers:
-- name: test-webhook
-  webhook_configs:
-  - url: 'http://127.0.0.1:5001/test'
+- name: extra-slack
+  slack_configs:
+  - api_url: 'http://localhost/slack'
+    channel: '#alerts'
+    title: 'Alerts'
 `
 
 	headers := map[string]string{
@@ -104,46 +104,29 @@ receivers:
 	// Check that the configuration was successfully sent to Mimir and contains the new receiver
 	finalMimirConfig, err := mimirClient.GetGrafanaAlertmanagerConfig(context.Background())
 	require.NoError(t, err)
-	require.NotEmpty(t, finalMimirConfig)
-	cfg := finalMimirConfig["data"].(map[string]any)["configuration"].(map[string]any)
-	receivers = cfg["alertmanager_config"].(map[string]any)["receivers"].([]any)
+	require.NotNil(t, finalMimirConfig)
+	require.NotNil(t, finalMimirConfig.GrafanaAlertmanagerConfig)
 
-	require.ElementsMatch(t, receivers, []any{
-		map[string]any{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": []any{
-				map[string]any{
-					"disableResolveMessage": false,
-					"name":                  "email receiver",
-					"settings": map[string]any{
-						"addresses": "<example@email.com>",
-					},
-					"type": "email",
-					"uid":  "",
-				},
-			},
-		},
-		map[string]any{
-			"name": "test-webhook",
-			"webhook_configs": []any{
-				map[string]any{
-					"http_config": map[string]any{
-						"enable_http2":     true,
-						"follow_redirects": true,
-						"proxy_url":        nil,
-						"tls_config": map[string]any{
-							"insecure_skip_verify": false,
-						},
-					},
-					"max_alerts":    float64(0),
-					"send_resolved": true,
-					"timeout":       float64(0),
-					"url":           "<secret>",
-					"url_file":      "",
-				},
-			},
-		},
-	})
+	receivers = finalMimirConfig.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers
+	require.Len(t, receivers, 2)
+
+	var foundDefault, foundExtraSlack bool
+	for _, receiver := range receivers {
+		switch receiver.Name {
+		case "grafana-default-email":
+			foundDefault = true
+			require.Len(t, receiver.GrafanaManagedReceivers, 1)
+			require.Equal(t, "email receiver", receiver.GrafanaManagedReceivers[0].Name)
+			require.Equal(t, "email", receiver.GrafanaManagedReceivers[0].Type)
+		case "extra-slack":
+			foundExtraSlack = true
+			require.Len(t, receiver.SlackConfigs, 1)
+			require.NotNil(t, receiver.SlackConfigs[0].APIURL)
+			require.Equal(t, "#alerts", receiver.SlackConfigs[0].Channel)
+		}
+	}
+	require.True(t, foundDefault, "Default receiver not found")
+	require.True(t, foundExtraSlack, "Extra slack receiver not found")
 }
 
 // TestIntegrationRemoteAlertmanagerHistoricalConfigActivation tests that when we activate
@@ -191,12 +174,13 @@ route:
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-  receiver: historical-webhook
+  receiver: old-slack
 
 receivers:
-- name: historical-webhook
-  webhook_configs:
-  - url: 'http://127.0.0.1:5002/historical'
+- name: old-slack
+  slack_configs:
+  - api_url: 'http://localhost/slack'
+    channel: '#alerts'
 `
 
 	headers := map[string]string{
@@ -233,20 +217,17 @@ receivers:
 	// Verify the configuration
 	finalMimirConfig, err := mimirClient.GetGrafanaAlertmanagerConfig(context.Background())
 	require.NoError(t, err)
-	require.NotEmpty(t, finalMimirConfig)
+	require.NotNil(t, finalMimirConfig)
+	require.NotNil(t, finalMimirConfig.GrafanaAlertmanagerConfig)
 
-	cfg := finalMimirConfig["data"].(map[string]any)["configuration"].(map[string]any)
-	receivers := cfg["alertmanager_config"].(map[string]any)["receivers"].([]any)
-
+	receivers := finalMimirConfig.GrafanaAlertmanagerConfig.AlertmanagerConfig.Receivers
 	require.Len(t, receivers, 2)
 
 	found := false
-	for _, rcv := range receivers {
-		receiver := rcv.(map[string]any)
-		if receiver["name"] == "historical-webhook" {
+	for _, receiver := range receivers {
+		if receiver.Name == "old-slack" {
 			found = true
-			webhookConfigs := receiver["webhook_configs"].([]any)
-			require.Len(t, webhookConfigs, 1)
+			require.Len(t, receiver.SlackConfigs, 1)
 			break
 		}
 	}
