@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+const AnnonKeyLastSeenAt = "iam.grafana.app/last-seen-at"
 
 var (
 	_ rest.Scoper               = (*LegacyStore)(nil)
@@ -133,11 +136,19 @@ func toUserItem(u *user.User, ns string) iamv0alpha.User {
 			Disabled:      u.IsDisabled,
 			GrafanaAdmin:  u.IsAdmin,
 			Provisioned:   u.IsProvisioned,
-			LastSeenAt:    u.LastSeenAt,
 		},
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
+	obj.SetAnnotation(AnnonKeyLastSeenAt, formatTime(&u.LastSeenAt))
 	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
+}
+
+func formatTime(v *time.Time) string {
+	txt := ""
+	if v != nil && v.Unix() != 0 {
+		txt = v.UTC().Format(time.RFC3339)
+	}
+	return txt
 }

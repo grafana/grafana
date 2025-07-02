@@ -2602,12 +2602,6 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
-					"lastSeenAt": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "date-time",
-						},
-					},
 					"login": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -2631,7 +2625,7 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "lastSeenAt", "login", "name", "provisioned"},
+				Required: []string{"disabled", "email", "emailVerified", "grafanaAdmin", "login", "name", "provisioned"},
 			},
 		},
 	}

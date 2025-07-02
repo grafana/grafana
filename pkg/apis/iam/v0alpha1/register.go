@@ -29,7 +29,6 @@ var UserResourceInfo = utils.NewResourceInfo(userKind.Group(), userKind.Version(
 			{Name: "Login", Type: "string", Format: "string", Description: "The user login"},
 			{Name: "Email", Type: "string", Format: "string", Description: "The user email"},
 			{Name: "Created At", Type: "date"},
-			{Name: "Last Seen At", Type: "date", Description: "The last time the user was seen"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
 			u, ok := obj.(*iamv0alpha1.User)
@@ -39,7 +38,6 @@ var UserResourceInfo = utils.NewResourceInfo(userKind.Group(), userKind.Version(
 					u.Spec.Login,
 					u.Spec.Email,
 					u.CreationTimestamp.UTC().Format(time.RFC3339),
-					u.Spec.LastSeenAt.UTC().Format(time.RFC3339),
 				}, nil
 			}
 			return nil, fmt.Errorf("expected user")

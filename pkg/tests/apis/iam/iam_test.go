@@ -135,20 +135,40 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
 			{
+				"disabled": false,
 				"email": "admin2-1",
-				"login": "admin2-1"
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "admin2-1",
+				"name": "",
+				"provisioned": false
 			},
 			{
+				"disabled": false,
 				"email": "admin2-2",
-				"login": "admin2-2"
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "admin2-2",
+				"name": "",
+				"provisioned": false
 			},
 			{
+				"disabled": false,
 				"email": "editor-2",
-				"login": "editor-2"
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "editor-2",
+				"name": "",
+				"provisioned": false
 			},
 			{
+				"disabled": false,
 				"email": "viewer-2",
-				"login": "viewer-2"
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "viewer-2",
+				"name": "",
+				"provisioned": false
 			}
 		]`, found)
 	})
