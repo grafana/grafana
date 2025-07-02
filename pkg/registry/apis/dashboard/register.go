@@ -52,6 +52,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
+	graphqlsubgraph "github.com/grafana/grafana-app-sdk/graphql/subgraph"
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -62,6 +64,7 @@ var (
 	_ builder.APIGroupVersionsProvider = (*DashboardsAPIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor     = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupRouteProvider    = (*DashboardsAPIBuilder)(nil)
+	_ builder.GraphQLCapableBuilder    = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -570,4 +573,25 @@ func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context
 	}
 
 	return nil
+}
+
+// GetGraphQLSubgraph implements builder.GraphQLCapableBuilder
+// This enables the Dashboard API to be exposed via GraphQL federation
+func (b *DashboardsAPIBuilder) GetGraphQLSubgraph() (graphqlsubgraph.GraphQLSubgraph, error) {
+	// Create the storage adapter that bridges Dashboard legacy storage to GraphQL
+	storageAdapter := NewDashboardStorageAdapter(b.legacy.Access, request.GetNamespaceMapper(b.cfg))
+
+	// Create the GraphQL subgraph using the app-sdk
+	subgraph, err := graphqlsubgraph.New(graphqlsubgraph.SubgraphConfig{
+		GroupVersion: dashv1.DashboardResourceInfo.GroupVersion(),
+		Kinds:        []sdkresource.Kind{dashv1.DashboardKind()},
+		StorageGetter: func(gvr schema.GroupVersionResource) graphqlsubgraph.Storage {
+			return storageAdapter
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Dashboard GraphQL subgraph: %w", err)
+	}
+
+	return subgraph, nil
 }
