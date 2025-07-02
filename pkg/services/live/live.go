@@ -693,7 +693,7 @@ func (g *GrafanaLive) handleOnRPC(clientContextWithSpan context.Context, client 
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
+		return centrifuge.RPCReply{}, centrifuge.ErrorExpired
 	}
 
 	var req dtos.MetricRequest
@@ -734,7 +734,7 @@ func (g *GrafanaLive) handleOnSubscribe(clientContextWithSpan context.Context, c
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		return centrifuge.SubscribeReply{}, centrifuge.ErrorExpired
 	}
 
 	// See a detailed comment for StripOrgID about orgID management in Live.
@@ -840,7 +840,7 @@ func (g *GrafanaLive) handleOnPublish(clientCtxWithSpan context.Context, client 
 
 	// Check if ID token is expired and trigger refresh if needed
 	if expired := g.checkIDTokenExpirationAndRefresh(user, client); expired {
-		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
+		return centrifuge.PublishReply{}, centrifuge.ErrorExpired
 	}
 
 	// See a detailed comment for StripOrgID about orgID management in Live.
