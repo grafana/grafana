@@ -56,30 +56,17 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
  */
 export function sanitize(unsanitizedString: string): string {
   try {
-    const cfg: DOMPurify.Config = {
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+
+    return DOMPurify.sanitize(unsanitizedString, {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
       ADD_ATTR: ['target'],
-    };
-
-    const sanitized = DOMPurify.sanitize(unsanitizedString, cfg);
-
-    // add security attributes to target="_blank" links
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = sanitized;
-
-    const blankTargetLinks = tempDiv.querySelectorAll('a[target="_blank"]');
-    blankTargetLinks.forEach((link) => {
-      const currentRel = link.getAttribute('rel') || '';
-      const relValues = new Set(currentRel.split(/\s+/g).filter(Boolean));
-
-      relValues.add('noopener');
-      relValues.add('noreferrer');
-
-      link.setAttribute('rel', Array.from(relValues).join(' '));
     });
-
-    return tempDiv.innerHTML;
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return escapeHtml(unsanitizedString);
