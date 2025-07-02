@@ -7,7 +7,9 @@ const NUM_ROOT_DASHBOARDS = 60;
 const NUM_NESTED_FOLDERS = 60;
 const NUM_NESTED_DASHBOARDS = 60;
 
-test.describe(
+// TODO change this test so it doesn't conflict with the existing dashboard browse test
+// probably needs a separate user
+test.describe.skip(
   'Dashboard browse (nested)',
   {
     tag: ['@dashboards'],

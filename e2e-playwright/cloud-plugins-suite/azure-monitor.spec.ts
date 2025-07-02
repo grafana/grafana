@@ -71,7 +71,8 @@ async function provisionAzureMonitorDatasources(
   await configPage.saveAndTest();
 }
 
-test.describe(
+// TODO unskip when we've figured out how to populate the credentials in CI
+test.describe.skip(
   'Azure Monitor datasource',
   {
     tag: ['@cloud-plugins'],
