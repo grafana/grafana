@@ -344,16 +344,9 @@ export const LogLineDetailsField = ({
         );
       })}
       {showFieldsStats && fieldStats && (
-        <tr>
-          <td>
-            <IconButton
-              variant={showFieldsStats ? 'primary' : 'secondary'}
-              name="signal"
-              tooltip={t('logs.log-line-details.fields.hide-adhoc-statistics', 'Hide ad-hoc statistics')}
-              onClick={showStats}
-            />
-          </td>
-          <td colSpan={3}>
+        <div className={styles.row}>
+          <div />
+          <div className={disableActions ? undefined : styles.statsColumn}>
             <LogLabelStats
               stats={fieldStats}
               label={keys[0]}
@@ -361,8 +354,8 @@ export const LogLineDetailsField = ({
               rowCount={fieldCount}
               isLabel={isLabel}
             />
-          </td>
-        </tr>
+          </div>
+        </div>
       )}
     </>
   );
@@ -395,6 +388,10 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     gridColumn: 'span 3',
   }),
   linkNoActions: css({
+    gridColumn: 'span 2',
+  }),
+  statsActionsColumn: css({}),
+  statsColumn: css({
     gridColumn: 'span 2',
   }),
   valueContainer: css({
