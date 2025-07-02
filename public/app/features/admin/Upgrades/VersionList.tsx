@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, LinkButton, useStyles2 } from '@grafana/ui';
+import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 interface Version {
   startingVersion: string;
@@ -21,48 +21,50 @@ export function VersionList({ versions, installedVersion }: Props) {
   const styles = useStyles2(getStyles);
 
   if (!versions || versions.length === 0) {
-    return <p>No version history was found.</p>;
+    return <p>No recommended upgrades found.</p>;
   }
 
   return (
+    <Stack direction="column" gap={2}>
+    <br></br>
+    <h1>Current Grafana Version: {installedVersion}</h1>
+    <h2>Recommended Upgrades</h2>
+    <p>The following upgrades are recommended to ensure you are running the latest version of Grafana.</p>
     <table className={styles.table}>
       <thead>
         <tr>
-          <th>Starting Version</th>
           <th>Version</th>
           <th></th>
           <th>Release Date</th>
-          <th>Notes</th>
+          <th>Upgrade Type</th>
+          <th>Support Status</th>
           <th>More Info</th>
         </tr>
       </thead>
       <tbody>
+        <tr></tr>
         {versions.map((v) => {
-          const isInstalled = v.version === installedVersion;
           return (
             <tr key={v.version}>
-              <td>{v.startingVersion}</td>
               <td>{v.version}</td>
               <td>
-                {isInstalled ? (
-                  <Badge text="Installed" icon="check" color="green" className={styles.badge} />
-                ) : (
                   <LinkButton
                     fill="solid"
                     variant="secondary"
                     icon="download-alt"
-                    fullWidth
                     size="sm"
                     className={styles.badge}
                     href={`https://grafana.com/grafana/download/${v.version}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     tooltip="Install"
                   >
                     Install
                   </LinkButton>
-                )}
               </td>
               <td>{v.releaseDate}</td>
-              <td>{v.notes + ' ' + v.type || '-'}</td>
+              <td>{v.type || '-'} version</td>
+              <td>{v.isOutOfSupport ? 'Out of Support' : 'In Support'}</td>
               <td>
                 <a
                   href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`}
@@ -84,8 +86,9 @@ export function VersionList({ versions, installedVersion }: Props) {
             </tr>
           );
         })}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </Stack>
   );
 }
 
@@ -93,14 +96,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: theme.spacing(2, 4, 3),
   }),
-  currentVersion: css({
-    fontWeight: theme.typography.fontWeightBold,
-  }),
   spinner: css({
     marginLeft: theme.spacing(1),
   }),
   table: css({
-    tableLayout: 'fixed',
     marginTop: theme.spacing(2),
     width: '100%',
     'td, th': {

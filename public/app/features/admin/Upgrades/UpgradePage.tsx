@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { TabsBar, Tab, Alert, Button, Stack } from '@grafana/ui';
@@ -6,7 +6,6 @@ import { Page } from 'app/core/components/Page/Page';
 import { getUpgradesAPI } from 'app/features/admin/Upgrades/api';
 
 import { Changelog } from './Changelog';
-import { Overview } from './Overview';
 import { VersionList } from './VersionList';
 
 const upgradesApi = getUpgradesAPI();
@@ -32,48 +31,31 @@ const getVersions = () => {
 
 const apiVersions = await getVersions();
 
-const currentVersion = config.buildInfo.version;
-
+const currentVersion = apiVersions ? apiVersions[0].startingVersion : config.buildInfo.version;
 const TABS = [
-  { id: 'OVERVIEW', label: 'Overview' },
-  { id: 'CHANGELOG', label: 'Changelog' },
   { id: 'VERSIONS', label: 'Version History' },
+  { id: 'CHANGELOG', label: 'Changelog' },
 ];
-enum TabView {
-  OVERVIEW = 'OVERVIEW',
-  CHANGELOG = 'CHANGELOG',
-  VERSIONS = 'VERSIONS',
-}
 
-const versionInfo = apiVersions.find((item) => item.startingVersion === currentVersion);
-
-const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
-  [TabView.OVERVIEW]: <Overview installedVersion={currentVersion} versions={apiVersions} />,
-  [TabView.CHANGELOG]: <Changelog sanitizedHTML={''} />,
-  [TabView.VERSIONS]: <VersionList versions={apiVersions} installedVersion={currentVersion} />,
-};
-
-//TODO: get changelog
-// const getChangelog = () => {
-// }
-
-// TODO: get current Grafana version
-// const getCurrentGrafanaVersion = () => {
 
 function UpgradePage() {
-  const [activeTab, setActiveTab] = useState('OVERVIEW');
+  const [activeTab, setActiveTab] = useState('VERSIONS');
+
 
   return (
     <Page navId="upgrade-grafana">
       <Page.Contents>
-        {versionInfo?.isOutOfSupport && (
-          <Alert title="New version available" severity="info">
-            <Stack direction="column" justifyContent="space-between" gap={2} alignItems="flex-start">
-              <div>Upgrade Grafana to the latest version.</div>
-              <Button variant="primary">Upgrade</Button>
-            </Stack>
-          </Alert>
-        )}
+        {apiVersions.length > 0 ?
+      (<Alert title="New version available" severity="info">
+        <Stack direction="column" justifyContent="space-between" gap={2} alignItems="flex-start">
+          <div>Check below to upgrade to the latest version</div>
+        </Stack>
+      </Alert>
+    ) : (
+      <Alert title=":)" severity="success">
+        <div>You are running the latest version of Grafana {currentVersion}</div>
+      </Alert>
+    )}
         <div>
           <TabsBar>
             {TABS.map((tab) => (
@@ -85,10 +67,10 @@ function UpgradePage() {
               />
             ))}
           </TabsBar>
-          {activeTab ? (
-            TAB_PAGE_MAP[activeTab as TabView]
+          {activeTab === 'VERSIONS' ? (
+            <VersionList installedVersion={currentVersion} versions={apiVersions} />
           ) : (
-            <Overview installedVersion={currentVersion} versions={apiVersions} />
+            <Changelog sanitizedHTML={''} />
           )}
         </div>
       </Page.Contents>
