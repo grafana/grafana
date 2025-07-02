@@ -5,6 +5,7 @@ import { ResourceClient } from '../../apiserver/types';
 // Define the types inline based on the backend Go types
 interface DashboardPanelResult {
   dashboardUID: string;
+  dashboardName: string;
   panelID: number;
   panelJSON: string;
   panelObject: object;
@@ -53,6 +54,7 @@ class K8sAPI {
 
         return {
           dashboardUID: item.dashboardUID,
+          dashboardName: item.dashboardName,
           panelID: item.panelID,
           panelJSON: item.panelJSON,
           panelObject: panelObject,

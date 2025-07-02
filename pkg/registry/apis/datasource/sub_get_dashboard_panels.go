@@ -81,9 +81,10 @@ func (r *subDashboardPanelsREST) Connect(ctx context.Context, dsUid string, opts
 				}
 				if ds.Get("uid").MustString() == dsUid {
 					rsp = append(rsp, datasource.DashboardPanelResult{
-						DashboardUID: dashboard.UID,
-						PanelID:      panelJSON.Get("id").MustInt(),
-						PanelJSON:    string(panelJSONStr),
+						DashboardUID:  dashboard.UID,
+						DashboardName: dashboard.Title,
+						PanelID:       panelJSON.Get("id").MustInt(),
+						PanelJSON:     string(panelJSONStr),
 					})
 				}
 			}

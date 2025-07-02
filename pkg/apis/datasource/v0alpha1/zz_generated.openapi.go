@@ -49,6 +49,13 @@ func schema_pkg_apis_datasource_v0alpha1_DashboardPanelResult(ref common.Referen
 							Format:  "",
 						},
 					},
+					"dashboardName": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"panelID": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -64,7 +71,7 @@ func schema_pkg_apis_datasource_v0alpha1_DashboardPanelResult(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"dashboardUID", "panelID", "panelJSON"},
+				Required: []string{"dashboardUID", "dashboardName", "panelID", "panelJSON"},
 			},
 		},
 	}

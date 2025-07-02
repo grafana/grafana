@@ -1,30 +1,29 @@
 import { css } from '@emotion/css';
 import { useState, useEffect } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   GrafanaTheme2,
   DataSourceInstanceSettings,
   SelectableValue,
-  PanelPlugin,
   LoadingState,
   dateTime,
   FieldType,
   createDataFrame,
   DataQueryResponse,
-  EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { PanelRenderer } from '@grafana/runtime';
 import { Select, useStyles2, Spinner, Alert } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { useDispatch } from 'app/types';
 
 import { getUpgradesAPI } from './api';
 
 interface DashboardPanelResult {
   dashboardUID: string;
+  dashboardName: string;
   panelID: number;
   panelJSON: string;
   panelObject: object;
@@ -36,52 +35,36 @@ interface DataSourceOption {
   description?: string;
 }
 
-// Simple panel renderer that doesn't require Redux panel state
-function SimplePanelRenderer({
-  panel,
-  width = 400,
-  height = 300,
-}: {
-  panel: PanelModel;
-  width?: number;
-  height?: number;
-}) {
-  const [plugin, setPlugin] = useState<PanelPlugin | null>(null);
+// Component to handle individual panel rendering with real data
+function PanelWithRealData({ panel }: { panel: PanelModel }) {
   const [panelData, setPanelData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const dispatch = useDispatch();
 
   useEffect(() => {
-    const loadPluginAndData = async () => {
-      try {
-        setLoading(true);
-
-        // Load the panel plugin
-        const loadedPlugin = await dispatch(loadPanelPlugin(panel.type));
-        setPlugin(loadedPlugin);
-        await panel.pluginLoaded(loadedPlugin);
-
-        // Execute the actual query from the panel configuration
-        await executeQuery();
-      } catch (err) {
-        console.error('Failed to load panel plugin or execute query:', err);
-        setError(`Failed to load ${panel.type} plugin: ${err}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const executeQuery = async () => {
       try {
-        const panelOptions = panel.getOptions();
-        console.log('Panel options:', panelOptions);
+        setLoading(true);
+        console.log('Panel options:', panel.getOptions());
         console.log('Panel targets:', panel.targets);
         console.log('Panel datasource:', panel.datasource);
+
+        // If no targets, fall back to sample data
+        if (!panel.targets || panel.targets.length === 0) {
+          console.log('No targets found, using sample data');
+          createSampleData();
+          return;
+        }
 
         // Get the datasource
         const datasourceService = getDatasourceSrv();
         const datasource = await datasourceService.get(panel.datasource);
+
+        if (!datasource) {
+          console.log('Datasource not found, using sample data');
+          createSampleData();
+          return;
+        }
 
         // Create time range for last 30 seconds
         const now = Date.now();
@@ -119,22 +102,41 @@ function SimplePanelRenderer({
         if ('subscribe' in queryResponse) {
           // It's an Observable
           queryResult = await new Promise<DataQueryResponse>((resolve, reject) => {
-            queryResponse.subscribe({
+            const subscription = queryResponse.subscribe({
               next: (result: DataQueryResponse) => {
                 console.log('Query result:', result);
                 resolve(result);
               },
-              error: (err: any) => reject(err),
+              error: (err: any) => {
+                console.error('Observable query error:', err);
+                reject(err);
+              },
             });
+
+            // Set a timeout to prevent hanging
+            setTimeout(() => {
+              subscription.unsubscribe();
+              reject(new Error('Query timeout'));
+            }, 10000);
           });
         } else {
           // It's a Promise
-          queryResult = await queryResponse;
+          queryResult = await Promise.race([
+            queryResponse,
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Query timeout')), 10000)),
+          ]);
           console.log('Query result:', queryResult);
         }
 
+        // Check if we got valid data
+        if (!queryResult.data || queryResult.data.length === 0) {
+          console.log('No data returned from query, using sample data');
+          createSampleData();
+          return;
+        }
+
         // Apply field config to maintain styling (colors, etc.)
-        const processedSeries = (queryResult.data || []).map((series: any) => {
+        const processedSeries = queryResult.data.map((series: any) => {
           // Apply field config overrides and defaults
           if (panel.fieldConfig) {
             series.fields = series.fields?.map((field: any) => {
@@ -155,15 +157,16 @@ function SimplePanelRenderer({
         });
       } catch (queryError) {
         console.error('Query execution failed:', queryError);
-
         // Fall back to sample data if query fails
-        console.log('Falling back to sample data...');
+        console.log('Falling back to sample data due to query error...');
         createSampleData();
+      } finally {
+        setLoading(false);
       }
     };
 
     const createSampleData = () => {
-      // Generate sample data as fallback
+      // Generate sample data as fallback only when needed
       const now = Date.now();
       const timeRange = {
         from: dateTime(now - 30000),
@@ -204,34 +207,31 @@ function SimplePanelRenderer({
       });
     };
 
-    loadPluginAndData();
-  }, [panel.type, dispatch, panel]);
+    executeQuery();
+  }, [panel]);
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width, height }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
         <Spinner size="lg" />
       </div>
     );
   }
 
-  if (error || !plugin) {
+  if (error) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width, height, padding: 16 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          padding: 16,
+        }}
+      >
         <Alert title={t('plugin-panels.panel.error', 'Panel Error')} severity="error">
-          {error || t('plugin-panels.panel.plugin-not-found', 'Plugin not found')}
-        </Alert>
-      </div>
-    );
-  }
-
-  const PanelComponent = plugin.panel;
-
-  if (!PanelComponent) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width, height, padding: 16 }}>
-        <Alert title={t('plugin-panels.panel.error', 'Panel Error')} severity="error">
-          {t('plugin-panels.panel.no-component', 'Panel component not found')}
+          {error}
         </Alert>
       </div>
     );
@@ -239,34 +239,70 @@ function SimplePanelRenderer({
 
   if (!panelData) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width, height }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div style={{ width, height, position: 'relative', overflow: 'hidden' }}>
-      <PanelComponent
-        id={panel.id}
-        data={panelData}
-        title={panel.title}
-        timeRange={panelData.timeRange}
-        timeZone="browser"
-        options={panel.getOptions()}
-        fieldConfig={panel.fieldConfig}
-        transparent={panel.transparent}
-        width={width}
-        height={height}
-        renderCounter={1}
-        replaceVariables={(str: string) => str}
-        onOptionsChange={() => {}}
-        onFieldConfigChange={() => {}}
-        onChangeTimeRange={() => {}}
-        eventBus={new EventBusSrv()}
-      />
-    </div>
+    <AutoSizer>
+      {({ width, height }: { width: number; height: number }) => (
+        <PanelRenderer
+          pluginId={panel.type}
+          data={panelData}
+          title={panel.title || 'Panel'}
+          options={panel.getOptions()}
+          fieldConfig={panel.fieldConfig}
+          width={width}
+          height={height}
+          timeZone="browser"
+        />
+      )}
+    </AutoSizer>
   );
+}
+
+// Helper function to create sample panel data (only used as fallback)
+function createSamplePanelData() {
+  const now = Date.now();
+  const timeRange = {
+    from: dateTime(now - 30000),
+    to: dateTime(now),
+    raw: { from: 'now-30s', to: 'now' },
+  };
+
+  const dataPoints = [];
+  const valuePoints = [];
+  for (let i = 0; i < 30; i++) {
+    const timestamp = now - (30 - i) * 1000;
+    dataPoints.push(timestamp);
+    valuePoints.push(Math.random() * 100 + 50);
+  }
+
+  const series = [
+    createDataFrame({
+      name: 'Sample Data',
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          values: dataPoints,
+        },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: valuePoints,
+        },
+      ],
+    }),
+  ];
+
+  return {
+    state: LoadingState.Done,
+    series,
+    timeRange,
+  };
 }
 
 function PluginPanels() {
@@ -370,10 +406,10 @@ function PluginPanels() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h3>
-          <Trans i18nKey="plugin-panels.title">Plugin Panels</Trans>
+          <Trans i18nKey="plugin-panels.title">Inspect Data Source Panels</Trans>
         </h3>
         <p>
-          <Trans i18nKey="plugin-panels.description">Select a data source to view panels that use it</Trans>
+          <Trans i18nKey="plugin-panels.description">Select a data source to view dashboard panels that use it</Trans>
         </p>
       </div>
 
@@ -384,7 +420,7 @@ function PluginPanels() {
           onChange={handleDataSourceChange}
           options={dataSources}
           placeholder={t('plugin-panels.datasource.placeholder', 'Select a data source...')}
-          width={40}
+          width={60}
         />
       </div>
 
@@ -423,7 +459,7 @@ function PluginPanels() {
                   <h4>{panelModel.title || `Panel ${panelResult.panelID}`}</h4>
                   <div className={styles.dashboardInfo}>
                     <span>
-                      <Trans i18nKey="plugin-panels.panel.dashboard-prefix">Dashboard:</Trans>{' '}
+                      <Trans i18nKey="plugin-panels.panel.dashboard-prefix">Source Dashboard:&nbsp;</Trans>
                     </span>
                     <a
                       href={`/d/${panelResult.dashboardUID}`}
@@ -431,12 +467,12 @@ function PluginPanels() {
                       rel="noopener noreferrer"
                       className={styles.dashboardLink}
                     >
-                      {panelResult.dashboardUID}
+                      {panelResult.dashboardName}
                     </a>
                   </div>
                 </div>
                 <div className={styles.panelContent}>
-                  <SimplePanelRenderer panel={panelModel} width={400} height={300} />
+                  <PanelWithRealData panel={panelModel} />
                 </div>
               </div>
             );
@@ -486,10 +522,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   panelsGrid: css({
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(500px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(800px, 1fr))',
     gap: theme.spacing(3),
     marginTop: theme.spacing(3),
     width: '100%',
+    maxWidth: '80vw',
   }),
 
   panelWrapper: css({
@@ -497,6 +534,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.background.primary,
     overflow: 'hidden',
+    minHeight: '300px',
   }),
 
   panelHeader: css({
@@ -536,11 +574,34 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '300px',
     width: '100%',
     overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'stretch',
+    padding: theme.spacing(1),
 
-    // Ensure panel takes full width
+    // Ensure panel takes full width and height
     '& > div': {
-      width: '100% !important',
-      height: '100% !important',
+      width: '100%',
+      height: '100%',
+      minWidth: '100%',
+      minHeight: '100%',
+      flex: '1',
+    },
+
+    // Disable pointer events on panel content to prevent hover crashes
+    '& *': {
+      pointerEvents: 'none',
+    },
+
+    // Force visualization containers to full size
+    '& .panel-content, & [data-testid="panel-content"]': {
+      width: '100%',
+      height: '100%',
+    },
+
+    // Common panel wrapper selectors
+    '& .grafana-panel, & .panel, & .uplot': {
+      width: '100%',
+      height: '100%',
     },
   }),
 });

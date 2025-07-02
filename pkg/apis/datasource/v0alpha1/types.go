@@ -47,9 +47,10 @@ type HealthCheckResult struct {
 type DashboardPanelResult struct {
 	metav1.TypeMeta `json:",inline"`
 
-	DashboardUID string `json:"dashboardUID"`
-	PanelID      int    `json:"panelID"`
-	PanelJSON    string `json:"panelJSON"`
+	DashboardUID  string `json:"dashboardUID"`
+	DashboardName string `json:"dashboardName"`
+	PanelID       int    `json:"panelID"`
+	PanelJSON     string `json:"panelJSON"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
