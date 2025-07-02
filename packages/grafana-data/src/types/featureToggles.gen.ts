@@ -420,10 +420,9 @@ export interface FeatureToggles {
   */
   tableSharedCrosshair?: boolean;
   /**
-  * Enables query hints for Loki
-  * @default true
+  * Enables regression analysis transformation
   */
-  lokiQueryHints?: boolean;
+  regressionTransformation?: boolean;
   /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
