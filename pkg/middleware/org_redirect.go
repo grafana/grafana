@@ -3,6 +3,8 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -11,6 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// Only allow redirects that start with an alphanumerical character, a dash or an underscore.
+var redirectRe = regexp.MustCompile(`^/?[a-zA-Z0-9-_].*`)
 
 // OrgRedirect changes org and redirects users if the
 // querystring `orgId` doesn't match the active org.
@@ -29,6 +34,11 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 		}
 
 		if orgId == ctx.OrgID {
+			return
+		}
+
+		if !validRedirectPath(c.Req.URL.Path) {
+			// Do not switch orgs or perform the redirect because the new path is not valid
 			return
 		}
 
@@ -54,4 +64,9 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 
 		c.Redirect(newURL, 302)
 	}
+}
+
+func validRedirectPath(p string) bool {
+	cleanPath := path.Clean(p)
+	return cleanPath == "." || cleanPath == "/" || redirectRe.MatchString(cleanPath)
 }
