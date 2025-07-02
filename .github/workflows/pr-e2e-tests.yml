@@ -14,6 +14,10 @@ on:
 
 permissions: {}
 
+env:
+  ACTIONS_STEP_DEBUG: true
+  RUNNER_DEBUG: 1
+
 jobs:
   build-grafana:
     name: Build & Package Grafana
@@ -27,20 +31,63 @@ jobs:
         with:
           path: ./grafana
           persist-credentials: false
-      - uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+
+      # TODO: add a cleanup workflow to remove the cache when the PR is closed
+      # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#force-deletion-of-caches-overriding-default-cache-eviction-policy
+      # TODO: maybe we could just use the cache to store the build, instead of uploading as an artifact?
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          key: "xx_build-grafana-${{ runner.os }}-${{ hashFiles('yarn.lock', '/public/*',  '/packages/*', '/pkg/**/*.go', '**/go.mod', '**/go.sum') }}"
+          path: |
+            build-dir
+
+      - name: Debug build-dir
+        run: |
+          mkdir -p build-dir
+          ls -lah build-dir
+
+      # If no cache hit, build Grafana
+      - name: Build Grafana
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
           cloud-token: ${{ secrets.TEMP_DAGGER_TOKEN_JOSH }} # TODO: remove before merging
           args: go -C grafana run ./pkg/build/cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir="${PWD}/grafana" > out.txt
-      - run: mv "$(cat out.txt)" grafana.tar.gz
-      - run: echo "artifact=grafana-e2e-${{github.run_number}}" >> "$GITHUB_OUTPUT"
+      - name: Cat built artifact
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: cat out.txt
+      - name: Move built artifact
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p build-dir
+          mv "$(cat out.txt)" build-dir/grafana.tar.gz
+
+      # If cache hit, validate the artifact is present
+      - name: Validate artifact
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          if [ ! -f build-dir/grafana.tar.gz ]; then
+            echo "Error: build-dir/grafana.tar.gz not found in cache"
+            exit 1
+          fi
+
+      - name: Debug build-dir
+        run: |
+          ls -lah build-dir
+
+      - name: Set artifact name
+        run: echo "artifact=grafana-e2e-${{github.run_number}}" >> "$GITHUB_OUTPUT"
         id: artifact
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         id: upload
         with:
           retention-days: 1
           name: ${{ steps.artifact.outputs.artifact }}
-          path: grafana.tar.gz
+          path: build-dir/grafana.tar.gz
 
   build-e2e-runner:
     name: Build E2E test runner
@@ -180,25 +227,22 @@ jobs:
     name: All Playwright tests complete
     runs-on: ubuntu-latest
     steps:
-      - name: Check test suites
-        uses: ./.github/actions/check-jobs
-        with:
-          needs: ${{ toJson(needs) }}
-          fail-step: false
-          failure-message: "One or more E2E test suites have failed"
-          success-message: "All E2E test suites completed successfully"
-
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
+      - name: Check test suites
+        id: check-jobs
+        uses: ./.github/actions/check-jobs
+        continue-on-error: true # Failure will be reported on Show test results step
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more E2E test suites have failed"
+          success-message: "All E2E test suites completed successfully"
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --immutable
 
       - name: Download blob reports from GitHub Actions Artifacts
         uses: actions/download-artifact@v4
@@ -271,6 +315,10 @@ jobs:
     name: All E2E tests complete
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Check test suites
         uses: ./.github/actions/check-jobs
         with:
