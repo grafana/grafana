@@ -3521,18 +3521,12 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
       "error-invalid-folder-name": "Invalid folder name",
       "error-required": "Folder name is required",
-      "folder-comment-input-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
-      "label-branch": "Branch",
-      "label-comment": "Comment",
       "label-folder-name": "Folder name",
-      "label-workflow": "Workflow",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
       "title-pull-request-created": "Pull request created",
-      "title-repository-not-found": "Repository not found",
       "title-this-repository-is-read-only": "This repository is read only"
     },
     "no-results": {
