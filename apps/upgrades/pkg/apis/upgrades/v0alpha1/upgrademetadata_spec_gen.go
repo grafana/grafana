@@ -9,6 +9,7 @@ type UpgradeMetadataSpec struct {
 	State                  UpgradeMetadataSpecState `json:"state"`
 	IsOutOfSupport         bool                     `json:"is_out_of_support"`
 	TargetMinorReleaseDate string                   `json:"target_minor_release_date"`
+	Type                   string                   `json:"type"`
 }
 
 // NewUpgradeMetadataSpec creates a new UpgradeMetadataSpec object.

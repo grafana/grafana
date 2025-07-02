@@ -172,6 +172,7 @@ func (v *VersionChecker) GetLatestVersions(ctx context.Context) ([]*upgradesv0al
 						State:                  "new",
 						IsOutOfSupport:         isTargetVersionOutOfSupport,
 						TargetMinorReleaseDate: releaseDate.Format(time.DateOnly),
+						Type:                   "major",
 					},
 				},
 			)
@@ -204,6 +205,7 @@ func (v *VersionChecker) GetLatestVersions(ctx context.Context) ([]*upgradesv0al
 						State:                  "new",
 						IsOutOfSupport:         isTargetVersionOutOfSupport,
 						TargetMinorReleaseDate: releaseDate.Format(time.DateOnly),
+						Type:                   "minor",
 					},
 				},
 			)
@@ -236,6 +238,7 @@ func (v *VersionChecker) GetLatestVersions(ctx context.Context) ([]*upgradesv0al
 						State:                  "new",
 						IsOutOfSupport:         isTargetVersionOutOfSupport,
 						TargetMinorReleaseDate: releaseDate.Format(time.DateOnly),
+						Type:                   "patch",
 					},
 				},
 			)
@@ -268,6 +271,7 @@ func (v *VersionChecker) GetLatestVersions(ctx context.Context) ([]*upgradesv0al
 						State:                  "new",
 						IsOutOfSupport:         isTargetVersionOutOfSupport,
 						TargetMinorReleaseDate: releaseDate.Format(time.DateOnly),
+						Type:                   "security patch",
 					},
 				},
 			)

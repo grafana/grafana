@@ -4,9 +4,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, LinkButton, useStyles2 } from '@grafana/ui';
 
 interface Version {
+  startingVersion: string;
   version: string;
   releaseDate: string;
   notes?: string;
+  isOutOfSupport: boolean;
+  type: string;
 }
 
 interface Props {
@@ -25,6 +28,7 @@ export function VersionList({ versions, installedVersion }: Props) {
     <table className={styles.table}>
       <thead>
         <tr>
+          <th>Starting Version</th>
           <th>Version</th>
           <th></th>
           <th>Release Date</th>
@@ -37,6 +41,7 @@ export function VersionList({ versions, installedVersion }: Props) {
           const isInstalled = v.version === installedVersion;
           return (
             <tr key={v.version}>
+              <td>{v.startingVersion}</td>
               <td>{v.version}</td>
               <td>
                 {isInstalled ? (
@@ -57,7 +62,7 @@ export function VersionList({ versions, installedVersion }: Props) {
                 )}
               </td>
               <td>{v.releaseDate}</td>
-              <td>{v.notes || '-'}</td>
+              <td>{v.notes + ' ' + v.type || '-'}</td>
               <td>
                 <a
                   href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`}

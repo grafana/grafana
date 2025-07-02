@@ -157,8 +157,15 @@ func schema_pkg_apis_upgrades_v0alpha1_UpgradeMetadataSpec(ref common.ReferenceC
 							Format:  "",
 						},
 					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"starting_version", "target_version", "state", "is_out_of_support", "target_minor_release_date"},
+				Required: []string{"starting_version", "target_version", "state", "is_out_of_support", "target_minor_release_date", "type"},
 			},
 		},
 	}
