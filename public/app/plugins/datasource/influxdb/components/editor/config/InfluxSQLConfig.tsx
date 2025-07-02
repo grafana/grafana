@@ -44,7 +44,7 @@ export const InfluxSqlConfig = (props: Props) => {
               },
             });
           }}
-          onBlur={trackInfluxDBConfigV1SQLDatabaseInputField}
+          onBlur={() => trackInfluxDBConfigV1SQLDatabaseInputField()}
         />
       </Field>
       <Field horizontal label={<InlineLabel width={WIDTH_SHORT}>Token</InlineLabel>} className={styles.horizontalField}>
@@ -56,7 +56,7 @@ export const InfluxSqlConfig = (props: Props) => {
           onReset={() => updateDatasourcePluginResetOption(props, 'token')}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
           isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
-          onBlur={trackInfluxDBConfigV1SQLTokenInputField}
+          onBlur={() => trackInfluxDBConfigV1SQLTokenInputField()}
         />
       </Field>
       <Field

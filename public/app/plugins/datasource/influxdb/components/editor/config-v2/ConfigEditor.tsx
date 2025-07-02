@@ -23,7 +23,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
               <TextLink
                 href="https://docs.google.com/forms/d/e/1FAIpQLSdi-zyX3c51vh937UKhNYYxhljUnFi6dQSlZv50mES9NrK-ig/viewform"
                 external
-                onClick={trackInfluxDBConfigV2FeedbackButtonClicked}
+                onClick={() => trackInfluxDBConfigV2FeedbackButtonClicked()}
               >
                 Submit feedback.
               </TextLink>
