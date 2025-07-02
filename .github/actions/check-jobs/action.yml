@@ -15,6 +15,17 @@ inputs:
     required: false
     type: string
     default: "All jobs passed successfully"
+  fail-step:
+    description: Fail the step if failures are found, defaults to true
+    required: false
+    type: boolean
+    default: true
+outputs:
+  any-failed:
+    description: Whether any jobs failed
+    required: false
+    type: boolean
+
 runs:
   using: "composite"
   steps:
@@ -24,22 +35,22 @@ runs:
         NEEDS: ${{ inputs.needs }}
         FAILURE_MSG: ${{ inputs.failure-message }}
         SUCCESS_MSG: ${{ inputs.success-message }}
+        FAIL_STEP: ${{ inputs.fail-step }}
       run: |
         set -euo pipefail
 
         # Extract failures
         FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
 
-        # Display the failures for debugging
-        echo "Failed jobs:"
-        echo "$FAILURES"
-
         # Check if there are any failures
         if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then
           echo "❌ $FAILURE_MSG"
           echo "Failed suites:"
           echo "$FAILURES" | jq -r 'to_entries[] | "- \(.key): \(.value)"'
-          exit 1
+          echo "any-failed=true" >> "$GITHUB_OUTPUT"
+          if [ "$FAIL_STEP" = "true" ]; then
+            exit 1
+          fi
         fi
 
         echo "✅ $SUCCESS_MSG"

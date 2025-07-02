@@ -180,6 +180,14 @@ jobs:
     name: All Playwright tests complete
     runs-on: ubuntu-latest
     steps:
+      - name: Check test suites
+        uses: ./.github/actions/check-jobs
+        with:
+          needs: ${{ toJson(needs) }}
+          fail-step: false
+          failure-message: "One or more E2E test suites have failed"
+          success-message: "All E2E test suites completed successfully"
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -210,14 +218,14 @@ jobs:
           retention-days: 7
 
       - name: Show test results
-        run: npx playwright merge-reports --reporter list ./all-blob-reports
-
-      - name: Check test suites
-        uses: ./.github/actions/check-jobs
-        with:
-          needs: ${{ toJson(needs) }}
-          failure-message: "One or more E2E test suites have failed"
-          success-message: "All E2E test suites completed successfully"
+        env:
+          FAILED: ${{ steps.check-jobs.outputs.any-failed }}
+        # sed removes the leading `../../src/` from the paths
+        run: |
+          npx playwright merge-reports --reporter list ./all-blob-reports | sed 's|\(\.\./\)\{1,\}src/|/|g'
+          if [ "$FAILED" = "true" ]; then
+            exit 1
+          fi
 
   run-a11y-test:
     needs:
@@ -264,7 +272,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check test suites
-        uses: ./.github/actions/check-test-suites
+        uses: ./.github/actions/check-jobs
         with:
           needs: ${{ toJson(needs) }}
           failure-message: "One or more E2E test suites have failed"
