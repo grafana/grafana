@@ -110,6 +110,12 @@
       "update-button": "更新",
       "users-heading": "组织用户"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "审计",
       "title-custom-branding": "定制品牌",
@@ -3209,6 +3215,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "已启用",
       "text-badge-not-enabled": "未启用"
     },
@@ -3241,6 +3249,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "管理身份验证设置并配置单点登录。不妨在我们的<2>文档</2>中了解更多信息。"
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3441,18 +3455,12 @@
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
-      "description-branch-name-in-git-hub": "GitHub 中的分支名称",
       "error-invalid-folder-name": "文件夹名称无效",
       "error-required": "文件夹名称为必填项",
-      "folder-comment-input-placeholder-describe-changes-optional": "添加备注以描述您的更改（可选）",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
-      "label-branch": "分支",
-      "label-comment": "评论",
       "label-folder-name": "文件夹名称",
-      "label-workflow": "工作流程",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
       "title-pull-request-created": "拉取请求已创建",
-      "title-repository-not-found": "找不到存储库",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
     "no-results": {
@@ -3462,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。"
+    "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3876,7 @@
   "close-button": {
     "tooltip": "关闭"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "加载选项时发生错误。"
@@ -9465,6 +9480,15 @@
       "view": "查看"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "打开可视化建议",
       "switch-to-table": "切换至表格"
     },
@@ -11559,6 +11583,12 @@
       "select-search-input": "输入以搜索(国家、城市、缩写)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "添加注释",
@@ -12008,6 +12038,7 @@
           "polynomial": "多项式"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "要预测的 X,Y 点的数量"
     },
     "rename-by-regex-transformer-editor": {

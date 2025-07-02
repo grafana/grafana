@@ -110,6 +110,12 @@
       "update-button": "업데이트",
       "users-heading": "조직 사용자"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "감사",
       "title-custom-branding": "사용자 지정 브랜딩",
@@ -3209,6 +3215,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "활성화됨",
       "text-badge-not-enabled": "활성화되지 않음"
     },
@@ -3241,6 +3249,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "인증 설정을 관리하고 싱글 사인온을 구성하세요. 자세한 내용은 Grafana의 <2>문서</2>를 확인하세요."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3441,18 +3455,12 @@
       "button-create": "생성",
       "button-creating": "생성 중...",
       "cancel": "취소",
-      "description-branch-name-in-git-hub": "GitHub의 브랜치 이름",
       "error-invalid-folder-name": "유효하지 않은 폴더 이름",
       "error-required": "폴더 이름은 필수 입력 항목입니다",
-      "folder-comment-input-placeholder-describe-changes-optional": "변경 사항을 설명하는 메모 추가(선택 사항)",
       "folder-name-input-placeholder-enter-folder-name": "폴더 이름 입력",
-      "label-branch": "브랜치",
-      "label-comment": "코멘트",
       "label-folder-name": "폴더 이름",
-      "label-workflow": "워크플로",
       "text-pull-request-created": "이 폴더에 대한 변경 사항을 포함하는 풀 요청이 생성되었습니다.",
       "title-pull-request-created": "풀 요청 생성됨",
-      "title-repository-not-found": "리포지토리를 찾을 수 없습니다",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다."
     },
     "no-results": {
@@ -3462,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요."
+    "text-this-repository-is-read-only": "대상에 직접 액세스할 수 있는 경우 JSON을 복사하여 붙여넣으세요.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3876,7 @@
   "close-button": {
     "tooltip": "닫기"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "옵션을 불러오는 중에 오류가 발생했습니다."
@@ -9465,6 +9480,15 @@
       "view": "보기"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "시각화 제안 열기",
       "switch-to-table": "표로 전환"
     },
@@ -11559,6 +11583,12 @@
       "select-search-input": "입력하여 검색(국가, 도시, 약어)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "주석 추가",
@@ -12008,6 +12038,7 @@
           "polynomial": "다항식"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "예측할 X, Y 포인트 수"
     },
     "rename-by-regex-transformer-editor": {

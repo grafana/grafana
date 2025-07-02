@@ -110,6 +110,12 @@
       "update-button": "Обновить",
       "users-heading": "Пользователи организации"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Проверка",
       "title-custom-branding": "Пользовательский брендинг",
@@ -3248,6 +3254,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Включено",
       "text-badge-not-enabled": "Не включена"
     },
@@ -3280,6 +3288,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Управление параметрами аутентификации и настройка единого входа Подробнее см. в нашей <2>документации</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3495,18 +3509,12 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
-      "description-branch-name-in-git-hub": "Имя ветви в GitHub",
       "error-invalid-folder-name": "Недопустимое имя папки",
       "error-required": "Требуется имя папки",
-      "folder-comment-input-placeholder-describe-changes-optional": "Добавьте примечание с описанием изменений (необязательно)",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
-      "label-branch": "Ветвь",
-      "label-comment": "Комментарий",
       "label-folder-name": "Имя папки",
-      "label-workflow": "Рабочий процесс",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
       "title-pull-request-created": "Создан запрос на включение изменений",
-      "title-repository-not-found": "Репозиторий не найден",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
     "no-results": {
@@ -3516,7 +3524,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда."
+    "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3916,6 +3930,7 @@
   "close-button": {
     "tooltip": "Закрыть"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Ошибка при загрузке параметров."
@@ -9552,6 +9567,15 @@
       "view": "Просмотр"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Открыть варианты визуализации",
       "switch-to-table": "Переключиться на таблицу"
     },
@@ -11664,6 +11688,12 @@
       "select-search-input": "Введите объект для поиска (страну, город, аббревиатуру)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Добавить аннотацию",
@@ -12113,6 +12143,7 @@
           "polynomial": "Полиномиальная"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Количество точек X, Y для прогнозирования"
     },
     "rename-by-regex-transformer-editor": {

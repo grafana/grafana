@@ -110,6 +110,12 @@
       "update-button": "Aktualizuj",
       "users-heading": "Użytkownicy organizacji"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Audyty",
       "title-custom-branding": "Własny branding",
@@ -3248,6 +3254,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Włączone",
       "text-badge-not-enabled": "Niewłączone"
     },
@@ -3280,6 +3288,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Zarządzaj ustawieniami uwierzytelniania i skonfiguruj logowanie jednokrotne. Więcej informacji znajdziesz w <2>dokumentacji</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3495,18 +3509,12 @@
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
-      "description-branch-name-in-git-hub": "Nazwa gałęzi w GitHub",
       "error-invalid-folder-name": "Nieprawidłowa nazwa folderu",
       "error-required": "Wymagana jest nazwa folderu",
-      "folder-comment-input-placeholder-describe-changes-optional": "Dodaj notatkę, aby opisać zmiany (opcjonalnie)",
       "folder-name-input-placeholder-enter-folder-name": "Podaj nazwę folderu",
-      "label-branch": "Gałąź",
-      "label-comment": "Uwagi",
       "label-folder-name": "Nazwa folderu",
-      "label-workflow": "Przepływ pracy",
       "text-pull-request-created": "Utworzono żądanie pull ze zmianami w tym folderze:",
       "title-pull-request-created": "Utworzono żądanie pull",
-      "title-repository-not-found": "Nie znaleziono repozytorium",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
     "no-results": {
@@ -3516,7 +3524,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam."
+    "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3916,6 +3930,7 @@
   "close-button": {
     "tooltip": "Zamknij"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Podczas ładowania opcji wystąpił błąd."
@@ -9552,6 +9567,15 @@
       "view": "Widok"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Otwórz sugestie dotyczące wizualizacji",
       "switch-to-table": "Przełącz na tabelę"
     },
@@ -11664,6 +11688,12 @@
       "select-search-input": "Wpisz, aby wyszukać (kraj, miasto, skrót)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Dodaj komentarz",
@@ -12113,6 +12143,7 @@
           "polynomial": "Wielomian"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Liczba punktów X,Y do prognozowania"
     },
     "rename-by-regex-transformer-editor": {
