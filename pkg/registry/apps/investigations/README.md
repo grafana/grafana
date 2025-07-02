@@ -212,7 +212,7 @@ These examples use HTTP Basic Authentication with `admin:admin`. In production e
 
 ```graphql
 query GetInvestigations {
-  investigations_investigations(namespace: "default") {
+  investigations(namespace: "default") {
     items {
       metadata {
         name
@@ -263,7 +263,7 @@ query GetInvestigations {
 
 ```graphql
 query GetInvestigations {
-  investigations_investigations(namespace: "default") {
+  investigations(namespace: "default") {
     items {
       metadata {
         name
@@ -283,7 +283,7 @@ query GetInvestigations {
 
 ```graphql
 query GetInvestigation {
-  investigations_investigation(namespace: "default", name: "my-investigation") {
+  investigation(namespace: "default", name: "my-investigation") {
     metadata {
       name
     }
@@ -326,7 +326,7 @@ curl -X POST http://localhost:3000/api/graphql \
   -u admin:admin \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query GetInvestigations { investigations_investigations(namespace: \"default\") { items { metadata { name namespace creationTimestamp } title createdByProfile { uid name gravatarUrl } hasCustomName isFavorite collectables { id title origin type } } } }"
+    "query": "query GetInvestigations { investigations(namespace: \"default\") { items { metadata { name namespace creationTimestamp } title createdByProfile { uid name gravatarUrl } hasCustomName isFavorite collectables { id title origin type } } } }"
   }'
 ```
 
@@ -337,7 +337,7 @@ curl -X POST http://localhost:3000/api/graphql \
   -u admin:admin \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query GetInvestigation { investigations_investigation(namespace: \"default\", name: \"my-investigation\") { metadata { name } title createdByProfile { name uid } overviewNote } }"
+    "query": "query GetInvestigation { investigation(namespace: \"default\", name: \"my-investigation\") { metadata { name } title createdByProfile { name uid } overviewNote } }"
   }'
 ```
 
@@ -348,7 +348,7 @@ curl -X POST http://localhost:3000/api/graphql \
   -u admin:admin \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "query GetInvestigations { investigations_investigations(namespace: \"default\") { items { metadata { name } title createdByProfile { name } hasCustomName isFavorite } } }"
+    "query": "query GetInvestigations { investigations(namespace: \"default\") { items { metadata { name } title createdByProfile { name } hasCustomName isFavorite } } }"
   }'
 ```
 
