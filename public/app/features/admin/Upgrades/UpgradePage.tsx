@@ -37,25 +37,25 @@ const TABS = [
   // { id: 'CHANGELOG', label: 'Changelog' }, // TODO: add changelog
 ];
 
-
 function UpgradePage() {
   const [activeTab, setActiveTab] = useState('VERSIONS');
-
 
   return (
     <Page navId="upgrade-grafana">
       <Page.Contents>
-        {apiVersions.length > 0 ?
-      (<Alert title="New version available" severity="info">
-        <Stack direction="column" justifyContent="space-between" gap={2} alignItems="flex-start">
-          <div>Check below to upgrade to the latest version</div>
-        </Stack>
-      </Alert>
-    ) : (
-      <Alert title="Hurray! You're up-to-date!" severity="success">
-        <div>You're running the latest Grafana version  <strong>{currentVersion}</strong></div>
-      </Alert>
-    )}
+        {apiVersions.length > 0 ? (
+          <Alert title="New version available" severity="info">
+            <Stack direction="column" justifyContent="space-between" gap={2} alignItems="flex-start">
+              <div>Check below to upgrade to the latest version</div>
+            </Stack>
+          </Alert>
+        ) : (
+          <Alert title="Hurray! You're up-to-date!" severity="success">
+            <div>
+              You're running the latest Grafana version <strong>{currentVersion}</strong>
+            </div>
+          </Alert>
+        )}
         <div>
           <TabsBar>
             {TABS.map((tab) => (

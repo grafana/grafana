@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
-
-import GrafanaLogo from '/public/img/grafana_icon.svg';
+import grafanaLogo from 'img/grafana_icon.svg';
 
 interface Version {
   version: string;
@@ -24,7 +23,7 @@ export function VersionList({ versions, installedVersion }: Props) {
     <Stack direction="column" gap={2}>
       <br></br>
       <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <img src={GrafanaLogo} alt="Grafana Logo" style={{ height: 32, width: 32 }} />
+        <img src={grafanaLogo} alt="Grafana Logo" style={{ height: 32, width: 32 }} />
         <span>Grafana Version: {installedVersion}</span>
         <Badge text="Installed" color="green" icon="check" />
       </h1>
