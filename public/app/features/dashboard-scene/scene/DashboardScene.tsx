@@ -63,6 +63,7 @@ import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isInCloneChain } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getViewPanelUrl } from '../utils/urlBuilders';
@@ -183,6 +184,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
+  // keeps track of the current url if the url is the url of this dashboard scene
+  private _currentQueryParams?: string;
+
   protected _renderBeforeActivation = true;
 
   public serializer: DashboardSceneSerializerLike<
@@ -213,9 +217,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.addActivationHandler(() => this._activationHandler());
   }
 
+  // Setups a listener to the url and saves the current query params if the url is the url of this dashboard scene.
+  private setupUrlListener = () => {
+    // return a noop function if the feature toggle is disabled
+    if (!config.featureToggles.preserveDashboardStateWhenNavigating) {
+      return () => {};
+    }
+
+    const unlisten = locationService.getHistory().listen((a) => {
+      if (a.pathname.includes(this.state.uid ?? '')) {
+        this._currentQueryParams = a.search;
+      }
+    });
+
+    // return a function to unlisten to the url and preserve the current query params if the url is the url of this dashboard scene.
+    return () => {
+      unlisten();
+
+      if (this._currentQueryParams) {
+        preserveDashboardSceneStateInLocalStorage(new URLSearchParams(this._currentQueryParams), this.state.uid);
+        this._currentQueryParams = undefined;
+      }
+    };
+  };
+
   private _activationHandler() {
     let prevSceneContext = window.__grafanaSceneContext;
     const isNew = locationService.getLocation().pathname === '/dashboard/new';
+
+    // track the current url if the url is the url of this dashboard scene. Save
+    const removeUrlListener = this.setupUrlListener();
 
     window.__grafanaSceneContext = this;
 
@@ -246,6 +277,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // Deactivation logic
     return () => {
+      removeUrlListener();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();

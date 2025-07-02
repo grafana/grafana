@@ -38,7 +38,7 @@ describe('dashboardSessionState', () => {
       preserveDashboardSceneStateInLocalStorage(params, 'uid');
 
       expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBe(
-        '?from=now-6h&to=now&timezone=browser&var-customVar=a'
+        'from=now-6h&to=now&timezone=browser&var-customVar=a'
       );
     });
   });
