@@ -204,3 +204,13 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:queryparam}'
 Interpolation result: "var-servers=test1&var-servers=test2"
 ```
+
+### Delimiter
+
+Formats variables with multiple values into a delimiter-separated string.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:delimiter:;}'
+Interpolation result: "test1;test2"
+```

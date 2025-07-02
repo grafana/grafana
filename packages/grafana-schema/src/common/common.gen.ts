@@ -873,6 +873,7 @@ export enum VariableFormatID {
   SingleQuote = 'singlequote',
   Text = 'text',
   UriEncode = 'uriencode',
+  Delimiter = 'delimiter'
 }
 
 export interface DataSourceRef {

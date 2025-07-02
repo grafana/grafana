@@ -39,6 +39,11 @@ describe('format variable to string values', () => {
     expect(result).toBe('test|test2');
   });
 
+  it('multi value and delimiter should render delimiter string', () => {
+    const result = formatVariableValue(['test', 'test2'], 'delimiter:;');
+    expect(result).toBe('test;test2');
+  });
+
   it('multi value and distributed should render distributed string', () => {
     const result = formatVariableValue(['test', 'test2'], 'distributed', {
       name: 'build',
