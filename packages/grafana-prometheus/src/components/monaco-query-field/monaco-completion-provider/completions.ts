@@ -5,8 +5,7 @@ import { languages } from 'monaco-editor';
 import { TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { prometheusRegularEscape } from '../../../datasource';
-import { escapeLabelValueInExactSelector } from '../../../language_utils';
+import { escapeLabelValueInExactSelector, prometheusRegularEscape } from '../../../escaping';
 import { FUNCTIONS } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
 
@@ -169,7 +168,13 @@ async function getLabelNames(
     return Promise.resolve(dataProvider.getAllLabelNames());
   } else {
     const selector = makeSelector(metric, otherLabels);
-    return await dataProvider.getSeriesLabels(timeRange, selector, otherLabels);
+    const labelNames = await dataProvider.getSeriesLabels(timeRange, selector);
+
+    // Exclude __name__ from output
+    otherLabels.push({ name: '__name__', value: '', op: '!=' });
+    const usedLabelNames = new Set(otherLabels.map((l) => l.name));
+    // names used in the query
+    return labelNames.filter((l) => !usedLabelNames.has(l));
   }
 }
 

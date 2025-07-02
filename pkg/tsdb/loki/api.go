@@ -15,22 +15,22 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/promlib/converter"
 	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
 )
 
 type LokiAPI struct {
-	client                    *http.Client
-	url                       string
-	log                       log.Logger
-	tracer                    tracing.Tracer
-	requestStructuredMetadata bool
+	client *http.Client
+	url    string
+	log    log.Logger
+	tracer trace.Tracer
 }
 
 type RawLokiResponse struct {
@@ -39,11 +39,11 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer, requestStructuredMetadata bool) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
+func newLokiAPI(client *http.Client, url string, log log.Logger, tracer trace.Tracer) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log, tracer: tracer}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, categorizeLabels bool) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -102,11 +102,7 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, cat
 			req.Header.Set("X-Query-Tags", "Source="+value)
 		}
 	}
-
-	if categorizeLabels {
-		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
-	}
-
+	req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
 	setXScopeOrgIDHeader(req, ctx)
 
 	return req, nil
@@ -163,7 +159,7 @@ func readLokiError(body io.ReadCloser) error {
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (*backend.DataResponse, error) {
-	req, err := makeDataRequest(ctx, api.url, query, api.requestStructuredMetadata)
+	req, err := makeDataRequest(ctx, api.url, query)
 	if err != nil {
 		return nil, err
 	}

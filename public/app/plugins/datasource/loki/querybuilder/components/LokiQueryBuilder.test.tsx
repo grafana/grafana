@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { dateTime } from '@grafana/data';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
+import { createLokiDatasource } from '../../mocks/datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder, Props, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';

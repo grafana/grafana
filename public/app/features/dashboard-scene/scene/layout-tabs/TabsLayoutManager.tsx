@@ -14,7 +14,6 @@ import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsL
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
-import { RowItemRepeaterBehavior } from '../layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -134,6 +133,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     });
   }
 
+  public getOutlineChildren() {
+    return this.state.tabs;
+  }
+
   public addNewTab(tab?: TabItem) {
     const newTab = tab ?? new TabItem({});
     const existingNames = new Set(this.state.tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
@@ -230,7 +233,22 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     this.setState({ tabs, currentTabIndex: 0 });
   }
 
-  public moveTab(_tabKey: string, fromIndex: number, toIndex: number) {
+  public moveTab(fromIndex: number, toIndex: number) {
+    const objectToMove = this.state.tabs[fromIndex];
+
+    dashboardEditActions.moveElement({
+      source: this,
+      movedObject: objectToMove,
+      perform: () => {
+        this.rearrangeTabs(fromIndex, toIndex);
+      },
+      undo: () => {
+        this.rearrangeTabs(toIndex, fromIndex);
+      },
+    });
+  }
+
+  private rearrangeTabs(fromIndex: number, toIndex: number) {
     const tabs = [...this.state.tabs];
     const [removed] = tabs.splice(fromIndex, 1);
     tabs.splice(toIndex, 0, removed);
@@ -268,10 +286,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         const conditionalRendering = row.state.conditionalRendering;
         conditionalRendering?.clearParent();
 
-        const behavior = row.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
-        const $behaviors = !behavior
-          ? undefined
-          : [new TabItemRepeaterBehavior({ variableName: behavior.state.variableName })];
+        const $behaviors = row.state.repeatByVariable
+          ? [new TabItemRepeaterBehavior({ variableName: row.state.repeatByVariable })]
+          : undefined;
 
         tabs.push(
           new TabItem({ layout: row.state.layout.clone(), title: row.state.title, conditionalRendering, $behaviors })

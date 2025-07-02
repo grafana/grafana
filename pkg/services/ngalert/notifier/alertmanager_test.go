@@ -2,15 +2,13 @@ package notifier
 
 import (
 	"context"
-	"net/url"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
-	promcfg "github.com/prometheus/common/config"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -58,15 +56,85 @@ func setupAMTest(t *testing.T) *alertmanager {
 
 	orgID := 1
 	stateStore := NewFileStore(int64(orgID), kvStore)
+	crypto := NewCrypto(secretsService, s, l)
 
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures())
+	am, err := NewAlertmanager(context.Background(), 1, cfg, s, stateStore, &NilPeer{}, decryptFn, nil, m, featuremgmt.WithFeatures(), crypto)
 	require.NoError(t, err)
 	return am
 }
 
-func TestAlertmanager_newAlertmanager(t *testing.T) {
+func TestIntegrationAlertmanager_newAlertmanager(t *testing.T) {
 	am := setupAMTest(t)
 	require.False(t, am.Ready())
+}
+
+func TestAlertmanager_SaveAndApplyConfig_WithExternalSecrets(t *testing.T) {
+	am := setupAMTest(t)
+
+	cfg := &definitions.PostableUserConfig{
+		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+			Config: definitions.Config{
+				Route: &definitions.Route{
+					Receiver: "default-receiver",
+				},
+			},
+			Receivers: []*definitions.PostableApiReceiver{
+				{
+					Receiver: config.Receiver{Name: "default-receiver"},
+				},
+			},
+		},
+		ExtraConfigs: []definitions.ExtraConfiguration{
+			{
+				Identifier:    "external-prometheus",
+				MergeMatchers: []*labels.Matcher{{Type: labels.MatchEqual, Name: "cluster", Value: "prod"}},
+				AlertmanagerConfig: `
+route:
+  receiver: webhook-receiver
+receivers:
+  - name: webhook-receiver
+    webhook_configs:
+      - url: 'https://webhook.example.com/alerts'
+        http_config:
+          basic_auth:
+            username: 'admin'
+            password: 'super-secret-password'
+      - url: 'https://slack.com/webhook/ABC123'
+        send_resolved: true
+  - name: email-receiver
+    email_configs:
+      - to: 'alerts@example.com'
+        from: 'grafana@example.com'
+        smarthost: 'smtp.gmail.com:587'
+        auth_username: 'grafana@example.com'
+        auth_password: 'another-secret-password'`,
+			},
+		},
+	}
+
+	err := am.SaveAndApplyConfig(context.Background(), cfg)
+	require.NoError(t, err)
+
+	savedConfig, err := am.Store.GetLatestAlertmanagerConfiguration(context.Background(), am.Base.TenantID())
+	require.NoError(t, err)
+
+	// Verify secrets are encrypted in stored config
+	var savedUserConfig definitions.PostableUserConfig
+	err = json.Unmarshal([]byte(savedConfig.AlertmanagerConfiguration), &savedUserConfig)
+	require.NoError(t, err)
+
+	require.Len(t, savedUserConfig.ExtraConfigs, 1)
+	extraConfig := savedUserConfig.ExtraConfigs[0]
+
+	require.Equal(t, "external-prometheus", extraConfig.Identifier)
+	require.NotContains(t, extraConfig.AlertmanagerConfig, "super-secret-password")
+	require.NotContains(t, extraConfig.AlertmanagerConfig, "another-secret-password")
+	require.NotContains(t, extraConfig.AlertmanagerConfig, "ABC123")
+
+	// Apply the saved configuration again and check that it is applied without errors
+	err = am.ApplyConfig(context.Background(), savedConfig)
+	require.NoError(t, err)
+	require.True(t, am.Ready())
 }
 
 func TestAlertmanager_ApplyConfig(t *testing.T) {
@@ -130,33 +198,17 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 						TemplateFiles: map[string]string{
 							"mimir-template": "{{ define \"mimir.title\" }}Mimir Alert{{ end }}",
 						},
-						AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-							Config: definitions.Config{
-								Route: &definitions.Route{
-									Receiver: "mimir-webhook",
-									GroupBy:  []model.LabelName{"alertname", "cluster"},
-								},
-							},
-							Receivers: []*definitions.PostableApiReceiver{
-								{
-									Receiver: config.Receiver{
-										Name: "mimir-webhook",
-										WebhookConfigs: []*config.WebhookConfig{
-											{
-												URL: &config.SecretURL{
-													URL: &url.URL{
-														Scheme: "https",
-														Host:   "webhook.example.com",
-														Path:   "/alerts",
-													},
-												},
-												HTTPConfig: &promcfg.DefaultHTTPClientConfig,
-											},
-										},
-									},
-								},
-							},
-						},
+						AlertmanagerConfig: `route:
+  receiver: mimir-webhook
+  group_by:
+    - alertname
+    - cluster
+receivers:
+  - name: mimir-webhook
+    webhook_configs:
+      - url: https://webhook.example.com/alerts
+        send_resolved: true
+        http_config: {}`,
 					},
 				},
 			},
@@ -170,13 +222,10 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 					{
 						Identifier:    "", // invalid: empty identifier
 						MergeMatchers: config.Matchers{},
-						AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-							Config: definitions.Config{
-								Route: &definitions.Route{
-									Receiver: "test-receiver",
-								},
-							},
-						},
+						AlertmanagerConfig: `route:
+  receiver: test-receiver
+receivers:
+  - name: test-receiver`,
 					},
 				},
 			},
@@ -190,15 +239,13 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			am := setupAMTest(t)
 			ctx := context.Background()
 
-			changed, err := am.applyConfig(ctx, tc.config, false)
+			err := am.SaveAndApplyConfig(ctx, tc.config)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, tc.expectedError)
-				require.False(t, changed)
 			} else {
 				require.NoError(t, err)
-				require.True(t, changed)
 
 				templateDefs := tc.config.GetMergedTemplateDefinitions()
 				expectedTemplateCount := len(tc.config.TemplateFiles)

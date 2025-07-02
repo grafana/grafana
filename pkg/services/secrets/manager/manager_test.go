@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestSecretsService_EnvelopeEncryption(t *testing.T) {
+func TestIntegrationSecretsService_EnvelopeEncryption(t *testing.T) {
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
@@ -90,7 +90,7 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 	})
 }
 
-func TestSecretsService_DataKeys(t *testing.T) {
+func TestIntegrationSecretsService_DataKeys(t *testing.T) {
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
 	ctx := context.Background()
@@ -168,7 +168,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 	})
 }
 
-func TestSecretsService_UseCurrentProvider(t *testing.T) {
+func TestIntegrationSecretsService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		testDB := db.InitTestDB(t)
 		svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
@@ -273,7 +273,7 @@ func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 	return providers, nil
 }
 
-func TestSecretsService_Run(t *testing.T) {
+func TestIntegrationSecretsService_Run(t *testing.T) {
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
@@ -323,7 +323,7 @@ func TestSecretsService_Run(t *testing.T) {
 	})
 }
 
-func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
+func TestIntegrationSecretsService_ReEncryptDataKeys(t *testing.T) {
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)
@@ -370,7 +370,7 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 	})
 }
 
-func TestSecretsService_Decrypt(t *testing.T) {
+func TestIntegrationSecretsService_Decrypt(t *testing.T) {
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
 	store := database.ProvideSecretsStore(testDB)

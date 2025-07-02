@@ -9,13 +9,14 @@ import {
   dateTimeFormatTimeAgo,
   WithAccessControlMetadata,
 } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
 import * as api from '../api';
 import { usePluginConfig } from '../hooks/usePluginConfig';
+import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../mocks/mockHelpers';
 import { fetchRemotePlugins } from '../state/actions';
 import {
   CatalogPlugin,
@@ -354,6 +355,7 @@ describe('Plugin details page', () => {
 
     it('should not display install button for enterprise plugins if license is invalid (but allow uninstall)', async () => {
       config.licenseInfo.enabledFeatures = {};
+      config.buildInfo.edition = GrafanaEdition.Enterprise;
 
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 

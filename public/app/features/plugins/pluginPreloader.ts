@@ -17,23 +17,25 @@ export type PluginPreloadResult = {
   addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
 };
 
-const preloadedAppPlugins = new Set<string>();
-const isNotYetPreloaded = ({ id }: AppPluginConfig) => !preloadedAppPlugins.has(id);
-const markAsPreloaded = (apps: AppPluginConfig[]) => apps.forEach(({ id }) => preloadedAppPlugins.add(id));
+const preloadPromises = new Map<string, Promise<void>>();
+
+export const clearPreloadedPluginsCache = () => {
+  preloadPromises.clear();
+};
 
 export async function preloadPlugins(apps: AppPluginConfig[] = []) {
-  const appPluginsToPreload = apps.filter(isNotYetPreloaded);
+  // Create preload promises for each app, reusing existing promises if already loading
+  const promises = apps.map((app) => {
+    if (!preloadPromises.has(app.id)) {
+      preloadPromises.set(app.id, preload(app));
+    }
+    return preloadPromises.get(app.id)!;
+  });
 
-  if (appPluginsToPreload.length === 0) {
-    return;
-  }
-
-  markAsPreloaded(apps);
-
-  await Promise.all(appPluginsToPreload.map(preload));
+  await Promise.all(promises);
 }
 
-async function preload(config: AppPluginConfig) {
+async function preload(config: AppPluginConfig): Promise<void> {
   try {
     const meta = await getPluginSettings(config.id, {
       showErrorAlert: contextSrv.user.orgRole !== '',

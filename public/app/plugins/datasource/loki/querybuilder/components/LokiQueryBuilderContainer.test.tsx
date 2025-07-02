@@ -1,7 +1,7 @@
 import { render, screen, waitFor, findAllByRole, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
+import { createLokiDatasource } from '../../mocks/datasource';
 
 import { LokiQueryBuilderContainer } from './LokiQueryBuilderContainer';
 

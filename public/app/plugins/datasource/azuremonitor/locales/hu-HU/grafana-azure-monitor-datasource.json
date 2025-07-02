@@ -222,6 +222,9 @@
       "text-no-resources": "Nem található erőforrás",
       "title-error-occurred": "Hiba történt az erőforrások Azure Monitor szolgáltatásból történő lekérése során"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Erőforrás keresése",
       "placeholder-resource-search": "Erőforrás keresése"

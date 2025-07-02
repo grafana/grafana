@@ -5,8 +5,8 @@ import { ComponentProps } from 'react';
 import { DataSourceApi } from '@grafana/data';
 import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/plugin-ui';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiDatasource } from '../../datasource';
+import { createLokiDatasource } from '../../mocks/datasource';
 import { LokiQueryModeller } from '../LokiQueryModeller';
 import { LokiOperationId } from '../types';
 

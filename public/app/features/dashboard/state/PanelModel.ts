@@ -49,6 +49,7 @@ export interface GridPos {
 type RunPanelQueryOptions = {
   dashboardUID: string;
   dashboardTimezone: string;
+  dashboardTitle: string;
   timeData: TimeOverrideResult;
   width: number;
   publicDashboardAccessToken?: string;
@@ -363,7 +364,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
+  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width, dashboardTitle }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
@@ -371,6 +372,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       panelName: this.title,
       panelPluginId: this.type,
       dashboardUID: dashboardUID,
+      dashboardTitle: dashboardTitle,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,

@@ -8877,6 +8877,9 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -12941,6 +12944,9 @@
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
         "queriedDatasourceUIDs": {
           "type": "array",
           "items": {
@@ -12997,7 +13003,8 @@
       "type": "object",
       "properties": {
         "alertmanager_config": {
-          "$ref": "#/definitions/Config"
+          "description": "Configuration for Alertmanager in YAML format.\nin: body",
+          "type": "string"
         },
         "template_files": {
           "type": "object",
@@ -15355,6 +15362,26 @@
         }
       }
     },
+    "ExtraConfiguration": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "type": "string"
+        },
+        "identifier": {
+          "type": "string"
+        },
+        "merge_matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "FailedUser": {
       "description": "FailedUser holds the information of an user that failed",
       "type": "object",
@@ -15863,20 +15890,6 @@
         }
       }
     },
-    "GettableAlertmanagerUserConfig": {
-      "type": "object",
-      "properties": {
-        "alertmanager_config": {
-          "type": "string"
-        },
-        "template_files": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "GettableAlertmanagers": {
       "type": "object",
       "properties": {
@@ -16303,6 +16316,12 @@
       "properties": {
         "alertmanager_config": {
           "$ref": "#/definitions/GettableApiAlertingConfig"
+        },
+        "extra_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtraConfiguration"
+          }
         },
         "template_file_provenances": {
           "type": "object",
@@ -16963,6 +16982,7 @@
           "format": "int64"
         },
         "id": {
+          "description": "Deprecated: this field will be removed in the future",
           "type": "integer",
           "format": "int64"
         },
@@ -18657,6 +18677,12 @@
         "alertmanager_config": {
           "$ref": "#/definitions/PostableApiAlertingConfig"
         },
+        "extra_config": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExtraConfiguration"
+          }
+        },
         "template_files": {
           "type": "object",
           "additionalProperties": {
@@ -20203,6 +20229,9 @@
         },
         "notificationSettings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
         },
         "query": {
           "type": "string"
