@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
@@ -24,7 +24,7 @@ const (
 // Service must not be used for cipher.
 // Use secrets.Service implementing envelope encryption instead.
 type Service struct {
-	tracer tracing.Tracer
+	tracer trace.Tracer
 	log    log.Logger
 
 	cfg          *setting.Cfg
@@ -35,7 +35,7 @@ type Service struct {
 }
 
 func NewEncryptionService(
-	tracer tracing.Tracer,
+	tracer trace.Tracer,
 	usageMetrics usagestats.Service,
 	cfg *setting.Cfg,
 ) (*Service, error) {
@@ -101,7 +101,7 @@ func (s *Service) registerUsageMetrics() {
 }
 
 func (s *Service) Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error) {
-	ctx, span := s.tracer.Start(ctx, "cipher.service.Decrypt")
+	ctx, span := s.tracer.Start(ctx, "CipherService.Decrypt")
 	defer span.End()
 
 	var err error
@@ -163,7 +163,7 @@ func (s *Service) deriveEncryptionAlgorithm(payload []byte) (string, []byte, err
 }
 
 func (s *Service) Encrypt(ctx context.Context, payload []byte, secret string) ([]byte, error) {
-	ctx, span := s.tracer.Start(ctx, "cipher.service.Encrypt")
+	ctx, span := s.tracer.Start(ctx, "CipherService.Encrypt")
 	defer span.End()
 
 	var err error
