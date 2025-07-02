@@ -3,9 +3,11 @@ import { Property } from 'csstype';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, isDataFrame, classicColors, colorManipulator } from '@grafana/data';
+import { TablePillCellOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { TableCellRendererProps } from '../types';
+
 
 export function PillCell({ value, field, justifyContent, cellOptions }: TableCellRendererProps) {
   const styles = useStyles2(getStyles, justifyContent);
@@ -79,11 +81,19 @@ export function PillCell({ value, field, justifyContent, cellOptions }: TableCel
   );
 }
 
-function getPillColor(pill: string, cellOptions: any): string {
-  const colorMode = cellOptions?.colorMode || 'auto';
+function isPillCellOptions(cellOptions: TableCellRendererProps['cellOptions']): cellOptions is TablePillCellOptions {
+  return cellOptions?.type === 'pill';
+}
+
+function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOptions']): string {
+  if (!isPillCellOptions(cellOptions)) {
+    return getDeterministicColor(pill);
+  }
+  
+  const colorMode = cellOptions.colorMode || 'auto';
   
   // Fixed color mode (highest priority)
-  if (colorMode === 'fixed' && cellOptions?.color) {
+  if (colorMode === 'fixed' && cellOptions.color) {
     // If it's a hex color, use it directly; otherwise check if it's a valid named color
     if (cellOptions.color.startsWith('#')) {
       return cellOptions.color;

@@ -13,7 +13,7 @@ export const PillCellOptionsEditor = ({
   cellOptions,
   onChange,
 }: TableCellEditorProps<TablePillCellOptions>) => {
-  const colorMode = cellOptions?.colorMode || 'auto';
+  const colorMode = (cellOptions.colorMode === 'mapped' ? 'auto' : cellOptions.colorMode) || 'auto';
 
   const onColorModeChange = (mode: 'auto' | 'fixed') => {
     const updatedOptions = { ...cellOptions, colorMode: mode };
@@ -33,9 +33,10 @@ export const PillCellOptionsEditor = ({
           'table.pill-cell-options-editor.description-color-mode',
           'Choose how colors are assigned to pills'
         )}
+        noMargin
       >
         <RadioButtonGroup
-          value={colorMode as 'auto' | 'fixed'}
+          value={colorMode}
           onChange={onColorModeChange}
           options={colorModeOptions}
         />
@@ -48,6 +49,7 @@ export const PillCellOptionsEditor = ({
             'table.pill-cell-options-editor.description-fixed-color',
             'All pills in this column will use this color'
           )}
+          noMargin
         >
           <ColorPicker
             color={cellOptions.color || '#FF780A'}
