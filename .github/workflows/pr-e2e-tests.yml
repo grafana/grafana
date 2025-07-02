@@ -44,6 +44,7 @@ jobs:
 
       - name: Debug build-dir
         run: |
+          mkdir -p build-dir
           ls -lah build-dir
 
       # If no cache hit, build Grafana
