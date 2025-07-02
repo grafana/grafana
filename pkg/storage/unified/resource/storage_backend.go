@@ -172,13 +172,9 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if err != nil || data == nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
-	value, err := io.ReadAll(data)
+	value, err := readAndClose(data)
 	if err != nil {
-		data.Close()
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
-	}
-	if closeErr := data.Close(); closeErr != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: closeErr.Error()}}
 	}
 	return &BackendReadResponse{
 		Key:             req.Key,
@@ -293,13 +289,8 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 
-	i.value, i.err = io.ReadAll(data)
+	i.value, i.err = readAndClose(data)
 	if i.err != nil {
-		data.Close()
-		return false
-	}
-	if closeErr := data.Close(); closeErr != nil {
-		i.err = closeErr
 		return false
 	}
 
@@ -632,15 +623,8 @@ func (i *kvHistoryIterator) Next() bool {
 		i.err = fmt.Errorf("data is nil")
 		return false
 	}
-	i.value, err = io.ReadAll(data)
-	if err != nil {
-		i.err = err
-		data.Close()
-
-		return false
-	}
-	if closeErr := data.Close(); closeErr != nil {
-		i.err = closeErr
+	i.value, i.err = readAndClose(data)
+	if i.err != nil {
 		return false
 	}
 
@@ -726,14 +710,9 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				k.log.Error("failed to get data for event", "error", err)
 				continue
 			}
-			data, err := io.ReadAll(dataReader)
+			data, err := readAndClose(dataReader)
 			if err != nil {
-				dataReader.Close()
-				k.log.Error("failed to read data for event", "error", err)
-				continue
-			}
-			if closeErr := dataReader.Close(); closeErr != nil {
-				k.log.Error("failed to close data reader", "error", closeErr)
+				k.log.Error("failed to read and close data for event", "error", err)
 				continue
 			}
 			var t resourcepb.WatchEvent_Type
@@ -809,4 +788,11 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, namespace strin
 		})
 	}
 	return stats, nil
+}
+
+// readAndClose reads all data from a ReadCloser and ensures it's closed,
+// combining any errors from both operations.
+func readAndClose(r io.ReadCloser) ([]byte, error) {
+	data, err := io.ReadAll(r)
+	return data, errors.Join(err, r.Close())
 }
