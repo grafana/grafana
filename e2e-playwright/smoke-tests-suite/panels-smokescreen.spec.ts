@@ -12,6 +12,8 @@ test.describe(
       selectors,
       page,
     }) => {
+      // this test can absolutely take longer than the default 30s timeout
+      test.setTimeout(60000);
       // Create new dashboard
       await dashboardPage.goto();
 

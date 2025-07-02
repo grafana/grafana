@@ -7,7 +7,8 @@ test.use({
   },
 });
 
-const DASHBOARD_UID = 'edediimbjhdz4b';
+const DASHBOARD_UID = 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8';
+const DASHBOARD_UID_2 = 'edediimbjhdz4b';
 
 test.describe(
   'Shared dashboards',
@@ -46,7 +47,7 @@ test.describe(
       selectors,
       request,
     }) => {
-      await gotoDashboardPage({ uid: DASHBOARD_UID });
+      await gotoDashboardPage({ uid: DASHBOARD_UID_2 });
 
       // Open share externally drawer
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
