@@ -9,24 +9,18 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // encryptionStoreImpl is the actual implementation of the data key storage.
 type encryptionStoreImpl struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
-	tracer  trace.Tracer
 	log     log.Logger
 }
 
 func ProvideDataKeyStorage(
 	db contracts.Database,
-	tracer trace.Tracer,
 	features featuremgmt.FeatureToggles,
-	registerer prometheus.Registerer,
 ) (contracts.DataKeyStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -36,7 +30,6 @@ func ProvideDataKeyStorage(
 	store := &encryptionStoreImpl{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
-		tracer:  tracer,
 		log:     log.New("encryption.store"),
 	}
 
@@ -44,12 +37,6 @@ func ProvideDataKeyStorage(
 }
 
 func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid string) (*contracts.SecretDataKey, error) {
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.GetDataKey", trace.WithAttributes(
-		attribute.String("namespace", namespace),
-		attribute.String("uid", uid),
-	))
-	defer span.End()
-
 	req := readDataKey{
 		SQLTemplate: sqltemplate.New(ss.dialect),
 		Namespace:   namespace,
@@ -102,12 +89,6 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 }
 
 func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace, label string) (*contracts.SecretDataKey, error) {
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.GetCurrentDataKey", trace.WithAttributes(
-		attribute.String("namespace", namespace),
-		attribute.String("label", label),
-	))
-	defer span.End()
-
 	req := readCurrentDataKey{
 		SQLTemplate: sqltemplate.New(ss.dialect),
 		Namespace:   namespace,
@@ -160,11 +141,6 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 }
 
 func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace string) ([]*contracts.SecretDataKey, error) {
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.GetAllDataKeys", trace.WithAttributes(
-		attribute.String("namespace", namespace),
-	))
-	defer span.End()
-
 	req := listDataKeys{
 		SQLTemplate: sqltemplate.New(ss.dialect),
 		Namespace:   namespace,
@@ -217,13 +193,6 @@ func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace str
 }
 
 func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *contracts.SecretDataKey) error {
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.CreateDataKey", trace.WithAttributes(
-		attribute.String("uid", dataKey.UID),
-		attribute.String("namespace", dataKey.Namespace),
-		attribute.Bool("active", dataKey.Active),
-	))
-	defer span.End()
-
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}
@@ -259,11 +228,6 @@ func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *contr
 }
 
 func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace string) error {
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.DisableDataKeys", trace.WithAttributes(
-		attribute.String("namespace", namespace),
-	))
-	defer span.End()
-
 	req := disableDataKeys{
 		SQLTemplate: sqltemplate.New(ss.dialect),
 		Namespace:   namespace,
@@ -293,12 +257,6 @@ func (ss *encryptionStoreImpl) DisableDataKeys(ctx context.Context, namespace st
 }
 
 func (ss *encryptionStoreImpl) DeleteDataKey(ctx context.Context, namespace, uid string) error {
-	ctx, span := ss.tracer.Start(ctx, "DataKeyStorage.DeleteDataKey", trace.WithAttributes(
-		attribute.String("uid", uid),
-		attribute.String("namespace", namespace),
-	))
-	defer span.End()
-
 	if len(uid) == 0 {
 		return fmt.Errorf("data key id is missing")
 	}
