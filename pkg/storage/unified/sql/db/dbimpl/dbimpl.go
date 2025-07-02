@@ -75,52 +75,49 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	// we prefix them with "db_". We use the database config from core Grafana
 	// as fallback, and as it uses a dedicated INI section, then keys are not
 	// prefixed with "db_"
-	resourceAPIGetter := newConfGetter(cfg.SectionWithEnvOverrides("resource_api"), "db_")
-	databaseGetter := newConfGetter(cfg.SectionWithEnvOverrides("database"), "")
+	getter := newConfGetter(cfg.SectionWithEnvOverrides("resource_api"), "db_")
+	fallbackGetter := newConfGetter(cfg.SectionWithEnvOverrides("database"), "")
 
 	p = &resourceDBProvider{
 		cfg:         cfg,
 		log:         log.New("entity-db"),
-		logQueries:  resourceAPIGetter.Bool("log_queries"),
+		logQueries:  getter.Bool("log_queries"),
 		migrateFunc: migrations.MigrateResourceStore,
 		tracer:      tracer,
 	}
 
-	if grafanaDB != nil {
-		// try to use the grafana db connection (should only happen in tests)
-		if databaseGetter.Bool(grafanaDBInstrumentQueriesKey) {
-			return nil, errGrafanaDBInstrumentedNotSupported
-		}
-		p.engine = grafanaDB.GetEngine()
-		return p, nil
-	}
-
-	dbType := resourceAPIGetter.String("type")
+	dbType := getter.String("type")
+	grafanaDBType := fallbackGetter.String("type")
 	switch {
 	// Deprecated: First try with the config in the "resource_api" section, which is specific to Unified Storage
 	case dbType == dbTypePostgres:
 		p.registerMetrics = true
-		p.engine, err = getEnginePostgres(resourceAPIGetter)
+		p.engine, err = getEnginePostgres(getter)
 		return p, err
 
 	case dbType == dbTypeMySQL:
 		p.registerMetrics = true
-		p.engine, err = getEngineMySQL(resourceAPIGetter)
+		p.engine, err = getEngineMySQL(getter)
 		return p, err
 
 	case dbType != "":
 		return p, fmt.Errorf("invalid db type specified: %s", dbType)
-	}
 
-	fallBackDBType := databaseGetter.String("type")
-	if fallBackDBType == "" {
+	// If we have an empty Resource API db config, try with the core Grafana database config
+	case grafanaDBType != "":
+		p.registerMetrics = true
+		p.engine, err = getEngine(cfg)
+		return p, err
+	case grafanaDB != nil:
+		// try to use the grafana db connection (should only happen in tests)
+		if fallbackGetter.Bool(grafanaDBInstrumentQueriesKey) {
+			return nil, errGrafanaDBInstrumentedNotSupported
+		}
+		p.engine = grafanaDB.GetEngine()
+		return p, nil
+	default:
 		return p, fmt.Errorf("no database type specified")
 	}
-
-	p.registerMetrics = true
-	p.logQueries = databaseGetter.Bool("log_queries")
-	p.engine, err = getEngine(cfg)
-	return p, err
 }
 
 func (p *resourceDBProvider) init(ctx context.Context) (db.DB, error) {
