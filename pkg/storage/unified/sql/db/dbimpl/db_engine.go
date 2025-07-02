@@ -38,6 +38,12 @@ func getEngine(cfg *setting.Cfg) (*xorm.Engine, error) {
 		if err != nil {
 			return nil, fmt.Errorf("open database: %w", err)
 		}
+
+		engine.SetMaxOpenConns(dbSection.Key("max_open_conn").MustInt(0))
+		engine.SetMaxIdleConns(dbSection.Key("max_idle_conn").MustInt(4))
+		maxLifetime := time.Duration(dbSection.Key("conn_max_lifetime").MustInt(14400)) * time.Second
+		engine.SetConnMaxLifetime(maxLifetime)
+
 		return engine, nil
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
