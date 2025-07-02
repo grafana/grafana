@@ -45,9 +45,9 @@ refs:
 
 # Provisioning RBAC with Terraform
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can create, change or remove [Custom roles](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) and create or remove [basic and custom role assignments](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment), by using [Terraform's Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
@@ -90,6 +90,75 @@ terraform {
 provider "grafana" {
     url = <YOUR_GRAFANA_URL>
     auth = <YOUR_GRAFANA_SERVICE_ACCOUNT_TOKEN>
+}
+```
+
+## Provision basic roles
+
+The following example shows how to assign basic roles to users, teams, and service accounts. Basic roles are predefined in Grafana and provide a set of permissions for common use cases.
+
+| Basic role      | UID                   |
+| --------------- | --------------------- |
+| `None`          | `basic_none`          |
+| `Viewer`        | `basic_viewer`        |
+| `Editor`        | `basic_editor`        |
+| `Admin`         | `basic_admin`         |
+| `Grafana Admin` | `basic_grafana_admin` |
+
+You can use any of the basic role UIDs from the table above in your role assignments. For example, to assign the "None" role, use `basic_none` as the `role_uid`.
+
+```terraform
+resource "grafana_team" "viewer_team" {
+  name = "terraform_viewer_team"
+}
+
+resource "grafana_user" "editor_user" {
+  email    = "terraform_editor@example.com"
+  login    = "terraform_editor_user"
+  password = <TEST_PASSWORD>
+}
+
+resource "grafana_service_account" "admin_sa" {
+  name = "terraform_admin_sa"
+}
+
+# Assign Viewer role to a team
+resource "grafana_role_assignment" "viewer_role_assignment" {
+  role_uid = "basic_viewer"
+  teams    = [grafana_team.viewer_team.id]
+}
+
+# Assign Editor role to a user
+resource "grafana_role_assignment" "editor_role_assignment" {
+  role_uid = "basic_editor"
+  users    = [grafana_user.editor_user.id]
+}
+
+# Assign Admin role to a service account
+resource "grafana_role_assignment" "admin_role_assignment" {
+  role_uid = "basic_admin"
+  service_accounts = [grafana_service_account.admin_sa.id]
+}
+```
+
+### Provision basic role to multiple users
+
+```terraform
+resource "grafana_user" "editor_user_2" {
+  email    = "terraform_editor_2@example.com"
+  login    = "terraform_editor_2_user"
+  password = <TEST_PASSWORD>
+}
+resource "grafana_user" "editor_user_3" {
+  email    = "terraform_editor_3@example.com"
+  login    = "terraform_editor_3_user"
+  password = <TEST_PASSWORD>
+}
+
+# Assign Editor role to multiply users
+resource "grafana_role_assignment" "editor_role_assignment" {
+  role_uid = "basic_editor"
+  users    = [grafana_user.editor_user_2.id, grafana_user.editor_user_3.id]
 }
 ```
 

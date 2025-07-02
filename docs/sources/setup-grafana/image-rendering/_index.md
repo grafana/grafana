@@ -18,23 +18,23 @@ weight: 1000
 
 # Set up image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export]({{< relref "../../dashboards/create-reports#export-dashboard-as-pdf" >}}), and [Reporting]({{< relref "../../dashboards/create-reports" >}}). PDF Export and Reporting are available only in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in alert notifications, [PDF export](../../dashboards/create-reports/#export-dashboard-as-pdf), and [Reporting](../../dashboards/create-reports/). PDF Export and Reporting are available only in [Grafana Enterprise](../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
 
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana#temp_data_lifetime" >}}) setting.
+A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime](../configure-grafana/#temp_data_lifetime) setting.
 
 You can also render a PNG by hovering over the panel to display the actions menu in the top-right corner, and then clicking **Share > Share link**. The **Render image** option is displayed in the link settings.
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [max_concurrent_screenshots]({{< relref "../configure-grafana#max_concurrent_screenshots" >}}).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [max_concurrent_screenshots](../configure-grafana/#max_concurrent_screenshots).
 
 ## Install Grafana Image Renderer plugin
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 All PhantomJS support has been removed. Instead, use the Grafana Image Renderer plugin or remote rendering service.
-{{% /admonition %}}
+{{< /admonition >}}
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer/?tab=installation#installation).
 
@@ -48,7 +48,7 @@ Rendering multiple images in parallel requires an even bigger memory footprint. 
 
 The Grafana Image Renderer plugin has a number of configuration options that are used in plugin or remote rendering modes.
 
-In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../configure-grafana#plugingrafana-image-renderer" >}}).
+In plugin mode, you can specify them directly in the [Grafana configuration file](../configure-grafana/#plugingrafana-image-renderer).
 
 In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file) or, for some of them, you can override the configuration defaults using environment variables.
 
@@ -66,9 +66,9 @@ You can see a docker-compose example using a custom configuration file [here](ht
 
 ### Security
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 This feature is available in Image Renderer v3.6.1 and later.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can restrict access to the rendering endpoint by specifying a secret token. The token should be configured in the Grafana configuration file and the renderer configuration file. This token is important when you run the plugin in remote rendering mode.
 
@@ -94,7 +94,7 @@ AUTH_TOKEN=-
 }
 ```
 
-See [Grafana configuration]({{< relref "../configure-grafana#renderer_token" >}}) for how to configure the token in Grafana.
+See [Grafana configuration](../configure-grafana/#renderer_token) for how to configure the token in Grafana.
 
 ### Rendering mode
 
@@ -104,9 +104,9 @@ You can instruct how headless browser instances are created by configuring a ren
 
 Default mode will create a new browser instance on each request. When handling multiple concurrent requests, this mode increases memory usage as it will launch multiple browsers at the same time. If you want to set a maximum number of browser to open, you'll need to use the [clustered mode](#clustered).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When using the `default` mode, it's recommended to not remove the default Chromium flag `--disable-gpu`. When receiving a lot of concurrent requests, not using this flag can cause Puppeteer `newPage` function to freeze, causing request timeouts and leaving browsers open.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ```bash
 RENDERING_MODE=default
@@ -164,7 +164,7 @@ RENDERING_MODE=reusable
 
 #### Optimize the performance, CPU and memory usage of the image renderer
 
-The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service]({{< relref "./monitoring" >}}).
+The performance and resources consumption of the different modes depend a lot on the number of concurrent requests your service is handling. To understand how many concurrent requests your service is handling, [monitor your image renderer service](monitoring/).
 
 With no concurrent requests, the different modes show very similar performance and CPU / memory usage.
 
@@ -177,9 +177,9 @@ To achieve better performance, monitor the machine on which your service is runn
 
 ### Other available settings
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Please note that not all settings are available using environment variables. If there is no example using environment variable below, it means that you need to update the configuration file.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### HTTP host
 
@@ -215,9 +215,9 @@ HTTP_PORT=0
 
 #### HTTP protocol
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 HTTPS protocol is supported in the image renderer v3.11.0 and later.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Change the protocol of the server, it can be `http` or `https`. Default is `http`.
 
@@ -269,7 +269,7 @@ HTTP_MIN_TLS_VERSION=TLSv1.2
 
 #### Enable Prometheus metrics
 
-You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [Enable Prometheus metrics endpoint]({{< relref "./monitoring#enable-prometheus-metrics-endpoint" >}}) for details.
+You can enable [Prometheus](https://prometheus.io/) metrics endpoint `/metrics` using the environment variable `ENABLE_METRICS`. Node.js and render request duration metrics are included, see [Enable Prometheus metrics endpoint](monitoring/#enable-prometheus-metrics-endpoint) for details.
 
 Default is `false`.
 
@@ -365,14 +365,38 @@ RENDERING_DUMPIO=true
 }
 ```
 
+#### Tracing
+
+{{< admonition type="note" >}}
+Tracing is supported in the image renderer v3.12.6 and later.
+{{< /admonition >}}
+
+Set the tracing URL to enable OpenTelemetry Tracing. The default is empty (disabled).
+You can also configure the service name that will be set in the traces. The default is `grafana-image-renderer`.
+
+```bash
+RENDERING_TRACING_URL="http://localhost:4318/v1/traces"
+```
+
+```json
+{
+  "rendering": {
+    "tracing": {
+      "url": "http://localhost:4318/v1/traces",
+      "serviceName": "grafana-renderer"
+    }
+  }
+}
+```
+
 #### Custom Chrome/Chromium
 
 If you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
 installed on your system, then you can use this instead of the pre-packaged version of Chromium.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not compatible with the [Grafana Image renderer plugin](/grafana/plugins/grafana-image-renderer).
-{{% /admonition %}}
+{{< /admonition >}}
 
 You need to make sure that the Chrome/Chromium executable is available for the Grafana/image rendering service process.
 

@@ -4,13 +4,13 @@ import { CoreApp } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import * as ui from '@grafana/ui';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import { invalidNamespaceError } from '../../__mocks__/errors';
-import createMockQuery from '../../__mocks__/query';
 import { selectors } from '../../e2e/selectors';
+import createMockDatasource from '../../mocks/datasource';
+import { invalidNamespaceError } from '../../mocks/errors';
+import createMockQuery from '../../mocks/query';
 import { AzureQueryType, ResultFormat } from '../../types';
 import { selectOptionInTest } from '../../utils/testUtils';
-import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
+import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
 
 import QueryEditor from './QueryEditor';
 
@@ -23,12 +23,18 @@ jest.mock('@grafana/ui', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ___esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
+      if (val === '$ws') {
+        return '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace';
+      }
       return val;
     },
+    getVariables: () => [
+      { name: 'var1', current: { value: 'value1' } },
+      { name: 'var2', current: { value: 'value2' } },
+    ],
   }),
 }));
 
@@ -99,11 +105,13 @@ describe('Azure Monitor QueryEditor', () => {
     const metrics = await screen.findByLabelText(/Service/);
     await selectOptionInTest(metrics, 'Logs');
 
-    expect(onChange).toHaveBeenCalledWith({
-      refId: mockQuery.refId,
-      datasource: mockQuery.datasource,
-      queryType: AzureQueryType.LogAnalytics,
-    });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refId: mockQuery.refId,
+        datasource: mockQuery.datasource,
+        queryType: AzureQueryType.LogAnalytics,
+      })
+    );
   });
 
   it('displays error messages from frontend Azure calls', async () => {

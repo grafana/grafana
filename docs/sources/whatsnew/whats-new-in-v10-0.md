@@ -19,21 +19,21 @@ weight: -37
 
 Welcome to Grafana 10.0! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide](../../upgrade-guide/upgrade-v10.0/).
 
 <!-- Template below
 ## Feature
 <!-- Name of contributor -->
 <!-- [Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
-{{% /admonition %}}
+{{< /admonition >}}
 -->
 
 ## Breaking changes
 
-For Grafana v10.0, we've also provided a list of [breaking changes]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.0]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}).
+For Grafana v10.0, we've also provided a list of [breaking changes](../../breaking-changes/breaking-changes-v10-0/) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.0](../../breaking-changes/breaking-changes-v10-0/).
 
 ## Correlations
 
@@ -87,7 +87,7 @@ _Generally available in all editions of Grafana._
 
 <!-- Nathan Marrs -->
 
-We're promoting the canvas panel out of public preview and into general availability. Over the past several months we've introduced multiple enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We're excited to include Canvas as a first class citizen in Grafana’s core panel library. To learn more about the panel, refer to our [Canvas documentation]({{< relref "../panels-visualizations/visualizations/canvas" >}}). Also, check out our [latest blog post about canvas](https://grafana.com/blog/2023/05/11/use-canvas-panels-to-customize-visualizations-in-grafana/).
+We're promoting the canvas panel out of public preview and into general availability. Over the past several months we've introduced multiple enhancements to the panel such as the ability to draw connections between elements, the ability to set the color and size of connections based on data, and the ability to add data links. We're excited to include Canvas as a first class citizen in Grafana’s core panel library. To learn more about the panel, refer to our [Canvas documentation](../../panels-visualizations/visualizations/canvas/). Also, check out our [latest blog post about canvas](https://grafana.com/blog/2023/05/11/use-canvas-panels-to-customize-visualizations-in-grafana/).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
@@ -97,7 +97,7 @@ We're promoting the canvas panel out of public preview and into general availabi
 
 _Experimental in all editions of Grafana_
 
-The Trends panel allows you to display trends where the x-axis is numeric and not time. This experimental panel addresses gaps that were not solved by either the Time series or XY Chart panels. For example, you can plot function graphs, rpm/torque curves, supply/demand relationships, and more. To learn more about the Trend panel, refer to the [Trend documentation]({{< relref "../panels-visualizations/visualizations/trend" >}}).
+The Trends panel allows you to display trends where the x-axis is numeric and not time. This experimental panel addresses gaps that were not solved by either the Time series or XY Chart panels. For example, you can plot function graphs, rpm/torque curves, supply/demand relationships, and more. To learn more about the Trend panel, refer to the [Trend documentation](../../panels-visualizations/visualizations/trend/).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-trend-panel-new-colors.png" max-width="750px" caption="Trend engine power and torque curves" >}}
 
@@ -120,7 +120,7 @@ Currently, the Datagrid Panel supports the following features in Grafana version
 - Draggable columns and rows
 - Series selection when pulling data from a data source
 
-To learn more, refer to the [Datagrid documentation]({{< relref "../panels-visualizations/visualizations/datagrid/" >}}).
+To learn more, refer to the [Datagrid documentation](../../panels-visualizations/visualizations/datagrid/).
 
 In subsequent releases, we’ll continue adding features to the Datagrid panel to further improve the user experience.
 
@@ -163,7 +163,7 @@ _Generally available in all editions of Grafana._
 
 We've implemented support for adding time regions to the Time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday to Friday to display work weeks, right alongside your data. Time regions are also a useful way to highlight specific parts of a day like night, work hours, or whatever you want to define for each day. They allow you to quickly orient yourself in parts of the day or ignore highlighted parts of the time series.
 
-To learn more, refer to our [time region documentation]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#add-time-regions" >}}).
+To learn more, refer to our [time region documentation](../../dashboards/build-dashboards/annotate-visualizations/#add-time-regions).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
 
@@ -175,7 +175,7 @@ _Generally available in all editions of Grafana._
 
 You can now filter dashboard annotations to apply annotations to all panels or selected panels, or use them to exclude selected panels.
 
-To learn more, refer to our [documentation about adding annotation queries]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries" >}}).
+To learn more, refer to our [documentation about adding annotation queries](../../dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
 
@@ -249,11 +249,11 @@ We've also added a **Public dashboard users** tab in **Administration > Users** 
 
 To try it out, please contact customer support.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 This feature will have a cost by active users after being promoted into general availability.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 To learn more, refer to our [public dashboards documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
 
@@ -266,11 +266,11 @@ To learn more, refer to our [public dashboards documentation](https://grafana.co
 _Generally available in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
 You can now configure SAML using our new user interface, making the process easier and more convenient than ever before.
-With the new user interface (UI), you can now configure SAML without needing to restart Grafana and you can control access to the configuration UI by using [role-based access control (RBAC)]({{< relref "../administration/roles-and-permissions/access-control/" >}}), which makes the process much faster and more efficient.
+With the new user interface (UI), you can now configure SAML without needing to restart Grafana and you can control access to the configuration UI by using [role-based access control (RBAC)](../../administration/roles-and-permissions/access-control/), which makes the process much faster and more efficient.
 
 The SAML UI is available in Grafana Enterprise, Cloud Pro, and Advanced. It's user-friendly, with clear instructions and helpful prompts to guide you through the process.
 
-For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../setup-grafana/configure-security/configure-authentication/saml-ui/" >}}).
+For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface](../../setup-grafana/configure-security/configure-authentication/saml-ui/).
 
 ### Case-insensitive usernames and email addresses
 
@@ -284,11 +284,11 @@ From now on, whether you type your username or email address in uppercase, lower
 
 To help you deal with potential user identity conflicts, we've built a [Grafana CLI user identity conflict resolver tool](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/), which is available from Grafana version 9.3.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If you're running Grafana with MySQL as a database, this change doesn't have any impact as MySQL users were already treated as case-insensitive.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Tracing
 

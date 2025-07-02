@@ -4,6 +4,7 @@ import {
   CSVConfig,
   DataFrame,
   DataTransformerID,
+  dateTime,
   dateTimeFormat,
   LogsModel,
   MutableDataFrame,
@@ -20,7 +21,7 @@ import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/tran
  * @param {(Pick<LogsModel, 'meta' | 'rows'>)} logsModel
  * @param {string} title
  */
-export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title: string) {
+export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title = '') {
   let textToDownload = '';
 
   logsModel.meta?.forEach((metaItem) => {
@@ -30,15 +31,14 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
   textToDownload = textToDownload + '\n\n';
 
   logsModel.rows.forEach((row) => {
-    const newRow = row.timeEpochMs + '\t' + row.entry + '\n';
+    const newRow = row.timeEpochMs + '\t' + dateTime(row.timeEpochMs).toISOString() + '\t' + row.entry + '\n';
     textToDownload = textToDownload + newRow;
   });
 
   const blob = new Blob([textToDownload], {
     type: 'text/plain;charset=utf-8',
   });
-
-  const fileName = `${title}-logs-${dateTimeFormat(new Date())}.txt`;
+  const fileName = `${title ? `${title}-logs` : 'Logs'}-${dateTimeFormat(new Date())}.txt`;
   saveAs(blob, fileName);
 }
 

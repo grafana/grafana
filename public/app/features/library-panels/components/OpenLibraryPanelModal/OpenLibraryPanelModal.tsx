@@ -2,9 +2,9 @@ import debounce from 'debounce-promise';
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { AsyncSelect, Button, Modal } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardSearchItem } from '../../../search/types';
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';
@@ -31,6 +31,7 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
     [libraryPanel.uid]
   );
   const debouncedLoadOptions = useMemo(() => debounce(loadOptions, 300, { leading: true }), [loadOptions]);
+
   const onViewPanel = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     locationService.push(urlUtil.renderUrl(`/d/${option?.value?.uid}`, {}));

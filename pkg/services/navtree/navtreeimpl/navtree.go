@@ -20,9 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type ServiceImpl struct {
@@ -34,6 +37,7 @@ type ServiceImpl struct {
 	pluginSettings       pluginsettings.Service
 	starService          star.Service
 	features             featuremgmt.FeatureToggles
+	openFeature          *featuremgmt.OpenFeatureService
 	dashboardService     dashboards.DashboardService
 	accesscontrolService ac.Service
 	kvStore              kvstore.KVStore
@@ -50,11 +54,13 @@ type NavigationAppConfig struct {
 	SortWeight int64
 	Text       string
 	Icon       string
+	SubTitle   string
+	IsNew      bool
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
 	features featuremgmt.FeatureToggles, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service,
-	license licensing.Licensing, authnService authn.Service) navtree.Service {
+	license licensing.Licensing, authnService authn.Service, openFeature *featuremgmt.OpenFeatureService) navtree.Service {
 	service := &ServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("navtree service"),
@@ -64,6 +70,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 		pluginSettings:       pluginSettings,
 		starService:          starService,
 		features:             features,
+		openFeature:          openFeature,
 		dashboardService:     dashboardService,
 		accesscontrolService: accesscontrolService,
 		kvStore:              kvStore,
@@ -80,6 +87,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
+	ctx := c.Req.Context()
 
 	treeRoot.AddSection(s.getHomeNode(c, prefs))
 
@@ -131,16 +139,13 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
-		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",
 			Id:         navtree.NavIDDrilldown,
 			SubTitle:   "Drill down into your data using Grafana's powerful queryless apps",
 			Icon:       "drilldown",
-			IsNew:      true,
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
-			Children:   drilldownChildNavLinks,
 		})
 	}
 
@@ -148,7 +153,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
-	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.SignedInUser.GetOrgID()]
+	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.GetOrgID()]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
 	if uaVisibleForOrg {
@@ -184,7 +189,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
 	}
 
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) && c.IsSignedIn {
+	enabled := s.openFeature.Client.Boolean(ctx, featuremgmt.FlagPinNavItems, true, openfeature.TransactionContext(ctx))
+	if enabled && c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,
@@ -206,7 +212,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	} else {
 		homePage := s.cfg.HomePage
 
-		if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
+		if prefs.HomeDashboardUID == "" && len(homePage) > 0 {
 			homeUrl = homePage
 		}
 	}
@@ -218,17 +224,19 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
 	}
-	ctx := c.Req.Context()
-	if s.features.IsEnabled(ctx, featuremgmt.FlagHomeSetupGuide) {
-		var children []*navtree.NavLink
-		// setup guide (a submenu item under Home)
-		children = append(children, &navtree.NavLink{
-			Id:         "home-setup-guide",
-			Text:       "Setup guide",
-			Url:        homeUrl + "/setup-guide",
-			SortWeight: navtree.WeightHome,
-		})
-		homeNode.Children = children
+	if c.IsSignedIn && c.HasRole(org.RoleAdmin) {
+		ctx := c.Req.Context()
+		if _, exists := s.pluginStore.Plugin(ctx, "grafana-setupguide-app"); exists {
+			var children []*navtree.NavLink
+			// setup guide (a submenu item under Home)
+			children = append(children, &navtree.NavLink{
+				Id:         "home-setup-guide",
+				Text:       "Getting started guide",
+				Url:        "/a/grafana-setupguide-app/getting-started",
+				SortWeight: navtree.WeightHome,
+			})
+			homeNode.Children = children
+		}
 	}
 	return homeNode
 }
@@ -274,10 +282,10 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
-	if c.SignedInUser.GetLogin() != c.SignedInUser.GetName() {
-		login = c.SignedInUser.GetLogin()
+	if c.GetLogin() != c.GetName() {
+		login = c.GetLogin()
 	}
-	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.SignedInUser.GetEmail())
+	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.GetEmail())
 
 	children := []*navtree.NavLink{
 		{
@@ -296,20 +304,8 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 		})
 	}
 
-	if !s.cfg.DisableSignoutMenu {
-		// add sign out first
-		children = append(children, &navtree.NavLink{
-			Text:         "Sign out",
-			Id:           "sign-out",
-			Url:          s.cfg.AppSubURL + "/logout",
-			Icon:         "arrow-from-right",
-			Target:       "_self",
-			HideFromTabs: true,
-		})
-	}
-
 	return &navtree.NavLink{
-		Text:       c.SignedInUser.GetName(),
+		Text:       c.GetName(),
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
@@ -323,7 +319,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, _ := identity.UserIdentifier(c.GetID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}
@@ -338,7 +334,12 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		for uid := range starredDashboardResult.UserStars {
 			uids = append(uids, uid)
 		}
-		starredDashboards, err := s.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
+		starredDashboards, err := s.dashboardService.SearchDashboards(c.Req.Context(), &dashboards.FindPersistedDashboardsQuery{
+			DashboardUIDs: uids,
+			Type:          searchstore.TypeDashboard,
+			OrgId:         c.GetOrgID(),
+			SignedInUser:  c.SignedInUser,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -354,7 +355,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
 				Id:   "starred/" + starredItem.UID,
 				Text: starredItem.Title,
-				Url:  starredItem.GetURL(),
+				Url:  starredItem.URL,
 			})
 		}
 	}
@@ -368,7 +369,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	dashboardChildNavs := []*navtree.NavLink{}
 
 	if c.IsSignedIn {
-		if c.SignedInUser.HasRole(org.RoleViewer) {
+		if c.HasRole(org.RoleViewer) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
@@ -401,7 +402,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) && (c.SignedInUser.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagRestoreDashboards) && (c.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
@@ -438,20 +439,14 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	contactPointsPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
-	}
 
-	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
-	// alerting API to maintain backwards compatibility.
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
-		contactPointsPerms = append(contactPointsPerms,
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		ac.EvalPermission(ac.ActionAlertingReceiversRead),
+		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate),
 
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
-		)
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 	}
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
@@ -495,8 +490,16 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			})
 		}
 	}
+	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
+		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
+			Text:     "Recently deleted",
+			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
+			Id:       "alerts/recently-deleted",
+			Url:      s.cfg.AppSubURL + "/alerting/recently-deleted",
+		})
+	}
 
-	if c.SignedInUser.GetOrgRole() == org.RoleAdmin {
+	if c.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
@@ -570,18 +573,4 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
-}
-
-func (s *ServiceImpl) buildDrilldownNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
-	drilldownChildNavs := []*navtree.NavLink{}
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) && !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
-		drilldownChildNavs = append(drilldownChildNavs, &navtree.NavLink{
-			Text:     "Metrics",
-			SubTitle: "Queryless exploration of your metrics",
-			Id:       "explore/metrics",
-			Url:      s.cfg.AppSubURL + "/explore/metrics",
-			Icon:     "code-branch",
-		})
-	}
-	return drilldownChildNavs
 }

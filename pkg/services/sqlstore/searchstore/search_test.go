@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestBuilder_EqualResults_Basic(t *testing.T) {
+func TestIntegrationBuilder_EqualResults_Basic(t *testing.T) {
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -75,7 +75,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	}, res)
 }
 
-func TestBuilder_Pagination(t *testing.T) {
+func TestIntegrationBuilder_Pagination(t *testing.T) {
 	user := &user.SignedInUser{
 		UserID:  1,
 		OrgID:   1,
@@ -122,7 +122,7 @@ func TestBuilder_Pagination(t *testing.T) {
 	assert.Equal(t, "P", resPg2[0].Title, "page 2 should start with the 16th dashboard")
 }
 
-func TestBuilder_RBAC(t *testing.T) {
+func TestIntegrationBuilder_RBAC(t *testing.T) {
 	testsCases := []struct {
 		desc            string
 		userPermissions []accesscontrol.Permission
@@ -153,6 +153,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:read",
+				"dashboards:view",
+				"dashboards:edit",
+				"dashboards:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -161,6 +164,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:read",
+				"folders:view",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				0,
@@ -168,6 +174,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"folders:read",
+				"folders:view",
+				"folders:edit",
+				"folders:admin",
 			},
 		},
 		{
@@ -186,6 +195,8 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:write",
+				"dashboards:edit",
+				"dashboards:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -194,6 +205,8 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:write",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				0,
@@ -201,6 +214,8 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:create",
+				"folders:edit",
+				"folders:admin",
 			},
 		},
 		{
@@ -219,6 +234,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:read",
+				"folders:view",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -227,6 +245,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"folders:read",
+				"folders:view",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -235,6 +256,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:read",
+				"dashboards:view",
+				"dashboards:edit",
+				"dashboards:admin",
 				int64(1),
 			},
 		},
@@ -254,6 +278,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:read",
+				"dashboards:view",
+				"dashboards:edit",
+				"dashboards:admin",
 				int64(1),
 				int64(1),
 				0,
@@ -261,6 +288,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:read",
+				"folders:view",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				0,
@@ -268,6 +298,9 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"folders:read",
+				"folders:view",
+				"folders:edit",
+				"folders:admin",
 			},
 		},
 		{
@@ -286,6 +319,8 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:write",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -294,6 +329,8 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:create",
+				"folders:edit",
+				"folders:admin",
 				int64(1),
 				int64(1),
 				int64(1),
@@ -302,6 +339,8 @@ func TestBuilder_RBAC(t *testing.T) {
 				int64(1),
 				0,
 				"dashboards:write",
+				"dashboards:edit",
+				"dashboards:admin",
 			},
 		},
 	}
@@ -334,6 +373,7 @@ func TestBuilder_RBAC(t *testing.T) {
 						"",
 						tc.features,
 						recursiveQueriesAreSupported,
+						store.GetDialect(),
 					),
 				},
 				Dialect:  store.GetDialect(),

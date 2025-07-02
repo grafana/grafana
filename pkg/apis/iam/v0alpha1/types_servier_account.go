@@ -30,7 +30,7 @@ type ServiceAccountList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ServiceAccount `json:"items,omitempty"`
+	Items []ServiceAccount `json:"items"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -38,7 +38,7 @@ type ServiceAccountTokenList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []ServiceAccountToken `json:"items,omitempty"`
+	Items []ServiceAccountToken `json:"items"`
 }
 
 type ServiceAccountToken struct {

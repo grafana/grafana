@@ -9,6 +9,7 @@ import { NavLinkDTO } from './navModel';
 import { OrgRole } from './orgs';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
+import { TimeOption } from './time';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -72,6 +73,9 @@ export interface UnifiedAlertingConfig {
   alertStateHistoryBackend?: string;
   // will be undefined if implementation is not "multiple"
   alertStateHistoryPrimary?: string;
+  recordingRulesEnabled?: boolean;
+  // will be undefined if no default datasource is configured
+  defaultRecordingRulesTargetDatasourceUID?: string;
 }
 
 /** Supported OAuth services
@@ -125,7 +129,7 @@ export interface CurrentUserDTO {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  locale: string;
+  regionalFormat: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
@@ -165,7 +169,6 @@ export interface GrafanaConfig {
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
-  newPanelTitle: string;
   bootData: BootData;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
@@ -195,11 +198,11 @@ export interface GrafanaConfig {
   passwordHint: string;
   loginError?: string;
   viewersCanEdit: boolean;
-  editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   trustedTypesDefaultPolicyEnabled: boolean;
   cspReportOnlyEnabled: boolean;
   liveEnabled: boolean;
+  liveMessageSizeLimit: number;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
@@ -214,9 +217,7 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
-  angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
-  secretsManagerPluginEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;
   googleAnalyticsId: string | undefined;
@@ -229,6 +230,7 @@ export interface GrafanaConfig {
   rudderstackIntegrationsUrl: string | undefined;
   analyticsConsoleReporting: boolean;
   dashboardPerformanceMetrics: string[];
+  panelSeriesLimit: number;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
@@ -239,6 +241,7 @@ export interface GrafanaConfig {
   reportingStaticContext?: Record<string, string>;
   exploreDefaultTimeOffset?: string;
   exploreHideLogsDownload?: boolean;
+  quickRanges?: TimeOption[];
 
   // The namespace to use for kubernetes apiserver requests
   namespace: string;
@@ -248,6 +251,7 @@ export interface GrafanaConfig {
    * Grafana's supported language.
    */
   language: string | undefined;
+  regionalFormat: string;
 }
 
 export interface SqlConnectionLimits {
@@ -284,4 +288,5 @@ export interface AuthSettings {
   disableLogin?: boolean;
   passwordlessEnabled?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
+  disableSignoutMenu?: boolean;
 }

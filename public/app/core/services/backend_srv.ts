@@ -147,7 +147,14 @@ export class BackendSrv implements BackendService {
   chunked(options: BackendSrvRequest): Observable<FetchResponse<Uint8Array | undefined>> {
     const requestId = options.requestId ?? `chunked-${this.chunkRequestId++}`;
     const controller = new AbortController();
-    const url = parseUrlFromOptions(options);
+
+    let url: string;
+    try {
+      url = parseUrlFromOptions(options);
+    } catch (error) {
+      return throwError(() => error);
+    }
+
     const init = parseInitFromOptions({
       ...options,
       requestId,
@@ -295,8 +302,14 @@ export class BackendSrv implements BackendService {
   }
 
   private getFromFetchStream<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    const url = parseUrlFromOptions(options);
     const init = parseInitFromOptions(options);
+
+    let url: string;
+    try {
+      url = parseUrlFromOptions(options);
+    } catch (error) {
+      return throwError(() => error);
+    }
 
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async (response) => {
@@ -347,6 +360,16 @@ export class BackendSrv implements BackendService {
   }
 
   showErrorAlert(config: BackendSrvRequest, err: FetchError) {
+    // do not show non-user error alerts for api keys or render tokens, they are used for kiosk mode and reporting and can't react to error pop-ups
+    if (
+      (err.status < 400 || err.status >= 500) &&
+      this.dependencies.contextSrv.isSignedIn &&
+      (this.dependencies.contextSrv.user.authenticatedBy === 'apikey' ||
+        this.dependencies.contextSrv.user.authenticatedBy === 'render')
+    ) {
+      return;
+    }
+
     if (config.showErrorAlert === false) {
       return;
     }
@@ -592,7 +615,7 @@ export class BackendSrv implements BackendService {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
-    return getDashboardAPI().getDashboardDTO(uid);
+    return getDashboardAPI('v1').getDashboardDTO(uid);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {

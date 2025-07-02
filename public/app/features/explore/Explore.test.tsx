@@ -109,27 +109,21 @@ const dummyProps: Props = {
   },
   changeDatasource: jest.fn(),
 };
-
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () => Promise.resolve({}),
-      getList: () => [],
-      getInstanceSettings: () => {},
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({}),
+    getList: () => [],
+    getInstanceSettings: () => {},
+  }),
+  usePluginLinks: jest.fn(() => ({ links: [] })),
+}));
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: () => true,
     getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
-}));
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
 
 // for the AutoSizer component to have a width

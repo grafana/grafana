@@ -6,19 +6,23 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -26,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -54,22 +57,21 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 	tagService := tagimpl.ProvideService(sql)
 	ruleStore := alertingStore.SetupStoreForTesting(t, sql)
-	origNewDashboardGuardian := guardian.New
-	defer func() { guardian.New = origNewDashboardGuardian }()
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 	folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 	fStore := folderimpl.ProvideStore(sql)
 	dashStore, err := database.ProvideDashboardStore(sql, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql))
 	require.NoError(t, err)
-	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderSvc := folderimpl.ProvideService(
-		fStore, accesscontrolmock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
-		nil, sql, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
+		nil, sql, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuremgmt.WithFeatures(), accesscontrolmock.NewMockedPermissionsService(),
-		ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		serverlock.ProvideService(sql, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore())
 	require.NoError(t, err)
 	dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
-	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc)
+	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore, dashSvc, prometheus.NewPedanticRegistry())
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
@@ -80,7 +82,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		}),
 	})
 
-	_ = testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
+	dashboard2 := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
 		OrgID:    1,
 		IsFolder: false,
@@ -90,18 +92,20 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	})
 
 	dash1Annotation := &annotations.Item{
-		OrgID:       1,
-		DashboardID: 1,
-		Epoch:       10,
+		OrgID:        1,
+		DashboardID:  1, // nolint: staticcheck
+		DashboardUID: dashboard1.UID,
+		Epoch:        10,
 	}
 	err = repo.Save(context.Background(), dash1Annotation)
 	require.NoError(t, err)
 
 	dash2Annotation := &annotations.Item{
-		OrgID:       1,
-		DashboardID: 2,
-		Epoch:       10,
-		Tags:        []string{"foo:bar"},
+		OrgID:        1,
+		DashboardID:  2, // nolint: staticcheck
+		DashboardUID: dashboard2.UID,
+		Epoch:        10,
+		Tags:         []string{"foo:bar"},
 	}
 	err = repo.Save(context.Background(), dash2Annotation)
 	require.NoError(t, err)
@@ -236,20 +240,17 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		dashStore, err := database.ProvideDashboardStore(sql, cfg, features, tagService)
 		require.NoError(t, err)
 
-		origNewGuardian := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-		})
-
-		ac := acimpl.ProvideAccessControl(features)
+		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 		fStore := folderimpl.ProvideStore(sql)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sql)
 		folderSvc := folderimpl.ProvideService(
 			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore,
-			nil, sql, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+			nil, sql, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 		dashSvc, err := dashboardsservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, features, accesscontrolmock.NewMockedPermissionsService(),
-			ac, folderSvc, fStore, nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService())
+			ac, actest.FakeService{}, folderSvc, nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+			serverlock.ProvideService(sql, tracing.InitializeTracerForTest()),
+			kvstore.NewFakeKVStore(),
+		)
 		require.NoError(t, err)
 		dashSvc.RegisterDashboardPermissions(accesscontrolmock.NewMockedPermissionsService())
 		cfg.AnnotationMaximumTagsLength = 60
@@ -294,10 +295,11 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 
 			annotationTxt := fmt.Sprintf("annotation %d", i)
 			dash1Annotation := &annotations.Item{
-				OrgID:       orgID,
-				DashboardID: dashboard.ID,
-				Epoch:       10,
-				Text:        annotationTxt,
+				OrgID:        orgID,
+				DashboardID:  dashboard.ID, // nolint: staticcheck
+				DashboardUID: dashboard.UID,
+				Epoch:        10,
+				Text:         annotationTxt,
 			}
 			err = store.Add(context.Background(), dash1Annotation)
 			require.NoError(t, err)
@@ -343,7 +345,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationMaximumTagsLength = 60
 			ruleStore := alertingStore.SetupStoreForTesting(t, sql)
-			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql), tracing.InitializeTracerForTest(), ruleStore, dashSvc)
+			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql), tracing.InitializeTracerForTest(), ruleStore, dashSvc, prometheus.NewPedanticRegistry())
 
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			testutil.SetupRBACPermission(t, sql, role, usr)

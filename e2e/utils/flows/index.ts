@@ -16,6 +16,7 @@ export * from './importDashboard';
 export * from './importDashboards';
 export * from './userPreferences';
 export * from './confirmModal';
+export * as 'scenes' from './scenes';
 
 export {
   VISUALIZATION_ALERT_LIST,

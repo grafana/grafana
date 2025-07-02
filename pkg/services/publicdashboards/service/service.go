@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -143,7 +144,7 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId i
 		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
 	})
 	if err != nil {
-		var dashboardErr dashboards.DashboardErr
+		var dashboardErr dashboardaccess.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
 			if dashboardErr.StatusCode == 404 {
 				return nil, ErrDashboardNotFound.Errorf("FindDashboard: dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)

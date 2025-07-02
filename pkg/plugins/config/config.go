@@ -25,7 +25,6 @@ type PluginManagementCfg struct {
 
 	Features Features
 
-	AngularSupportEnabled  bool
 	HideAngularDeprecation []string
 }
 
@@ -35,11 +34,12 @@ type Features struct {
 	SkipHostEnvVarsEnabled      bool
 	SriChecksEnabled            bool
 	PluginsCDNSyncLoaderEnabled bool
+	LocalizationForPlugins      bool
 }
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	pluginsCDNURLTemplate string, appURL string, features Features, angularSupportEnabled bool,
+	pluginsCDNURLTemplate string, appURL string, features Features,
 	grafanaComAPIURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, grafanaComAPIToken string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
@@ -52,7 +52,6 @@ func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings set
 		GrafanaComAPIURL:       grafanaComAPIURL,
 		GrafanaAppURL:          appURL,
 		Features:               features,
-		AngularSupportEnabled:  angularSupportEnabled,
 		HideAngularDeprecation: hideAngularDeprecation,
 		ForwardHostEnvVars:     forwardHostEnvVars,
 		GrafanaComAPIToken:     grafanaComAPIToken,

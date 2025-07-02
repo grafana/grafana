@@ -2,7 +2,6 @@ package permissions
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
@@ -44,75 +44,58 @@ type PermissionsFilter interface {
 	With() (string, []any)
 	Where() (string, []any)
 
-	buildClauses()
+	buildClauses(dialect migrator.Dialect)
 	nestedFoldersSelectors(permSelector string, permSelectorArgs []any, leftTable string, Col string, rightTableCol string, orgID int64) (string, []any)
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboardaccess.PermissionType and query type
 // The filter is configured to use the new permissions filter (without subqueries) if the feature flag is enabled
 // The filter is configured to use the old permissions filter (with subqueries) if the feature flag is disabled
-func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissionLevel dashboardaccess.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) PermissionsFilter {
+func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissionLevel dashboardaccess.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool, dialect migrator.Dialect) PermissionsFilter {
 	needEdit := permissionLevel > dashboardaccess.PERMISSION_VIEW
 
 	var folderAction string
 	var dashboardAction string
 	var folderActionSets []string
 	var dashboardActionSets []string
-	if queryType == searchstore.TypeFolder {
+	switch queryType {
+	case searchstore.TypeFolder:
 		folderAction = dashboards.ActionFoldersRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		if needEdit {
 			folderAction = dashboards.ActionDashboardsCreate
-			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-				folderActionSets = []string{"folders:edit", "folders:admin"}
-			}
+			folderActionSets = []string{"folders:edit", "folders:admin"}
 		}
-	} else if queryType == searchstore.TypeDashboard {
+	case searchstore.TypeDashboard:
 		dashboardAction = dashboards.ActionDashboardsRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
 		if needEdit {
 			dashboardAction = dashboards.ActionDashboardsWrite
-			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-				folderActionSets = []string{"folders:edit", "folders:admin"}
-				dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
-			}
+			folderActionSets = []string{"folders:edit", "folders:admin"}
+			dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
 		}
-	} else if queryType == searchstore.TypeAlertFolder {
+	case searchstore.TypeAlertFolder:
 		folderAction = accesscontrol.ActionAlertingRuleRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
 		if needEdit {
 			folderAction = accesscontrol.ActionAlertingRuleCreate
-			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-				folderActionSets = []string{"folders:edit", "folders:admin"}
-			}
+			folderActionSets = []string{"folders:edit", "folders:admin"}
 		}
-	} else if queryType == searchstore.TypeAnnotation {
+	case searchstore.TypeAnnotation:
 		dashboardAction = accesscontrol.ActionAnnotationsRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
-		}
-	} else {
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
+	default:
 		folderAction = dashboards.ActionFoldersRead
 		dashboardAction = dashboards.ActionDashboardsRead
-		if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-			folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
-			dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
-		}
+		folderActionSets = []string{"folders:view", "folders:edit", "folders:admin"}
+		dashboardActionSets = []string{"dashboards:view", "dashboards:edit", "dashboards:admin"}
 		if needEdit {
 			folderAction = dashboards.ActionDashboardsCreate
 			dashboardAction = dashboards.ActionDashboardsWrite
-			if features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
-				folderActionSets = []string{"folders:edit", "folders:admin"}
-				dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
-			}
+			folderActionSets = []string{"folders:edit", "folders:admin"}
+			dashboardActionSets = []string{"dashboards:edit", "dashboards:admin"}
 		}
 	}
 
@@ -129,7 +112,7 @@ func NewAccessControlDashboardPermissionFilter(user identity.Requester, permissi
 			features: features, recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 		}
 	}
-	f.buildClauses()
+	f.buildClauses(dialect)
 	return f
 }
 
@@ -157,7 +140,7 @@ func (f *accessControlDashboardPermissionFilter) hasRequiredActions() bool {
 	return false
 }
 
-func (f *accessControlDashboardPermissionFilter) buildClauses() {
+func (f *accessControlDashboardPermissionFilter) buildClauses(dialect migrator.Dialect) {
 	if f.user == nil || f.user.IsNil() || !f.hasRequiredActions() {
 		f.where = clause{string: "(1 = 0)"}
 		return
@@ -171,7 +154,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	}
 
 	orgID := f.user.GetOrgID()
-	filter, params := accesscontrol.UserRolesFilter(orgID, userID, f.user.GetTeams(), accesscontrol.GetOrgRoles(f.user))
+	filter, params := accesscontrol.UserRolesFilter(orgID, userID, f.user.GetTeams(), accesscontrol.GetOrgRoles(f.user), dialect)
 	rolesFilter := " AND role_id IN(SELECT id FROM role " + filter + ") "
 	var args []any
 	builder := strings.Builder{}

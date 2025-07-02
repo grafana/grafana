@@ -41,6 +41,8 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				target = m.Spec.Local.Path
 			case GitHubRepositoryType:
 				target = m.Spec.GitHub.URL
+			case GitRepositoryType:
+				target = m.Spec.Git.URL
 			}
 
 			return []interface{}{
@@ -68,7 +70,7 @@ var JobResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*Job)
 			if !ok {
-				return nil, errors.New("expected Repository")
+				return nil, errors.New("expected Job")
 			}
 
 			return []interface{}{

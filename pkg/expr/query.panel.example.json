@@ -16,8 +16,8 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "type": "math",
-      "expression": "$A - $B"
+      "expression": "$A - $B",
+      "type": "math"
     },
     {
       "refId": "C",
@@ -25,12 +25,12 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "type": "reduce",
       "expression": "$A",
       "reducer": "max",
       "settings": {
         "mode": "dropNN"
-      }
+      },
+      "type": "reduce"
     },
     {
       "refId": "D",
@@ -38,11 +38,11 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "expression": "$A",
-      "window": "1d",
       "downsampler": "last",
+      "expression": "$A",
+      "type": "resample",
       "upsampler": "pad",
-      "type": "resample"
+      "window": "1d"
     },
     {
       "refId": "E",
@@ -79,7 +79,6 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "expression": "A",
       "conditions": [
         {
           "evaluator": {
@@ -90,6 +89,7 @@
           }
         }
       ],
+      "expression": "A",
       "type": "threshold"
     },
     {
@@ -98,7 +98,6 @@
         "type": "__expr__",
         "uid": "TheUID"
       },
-      "expression": "B",
       "conditions": [
         {
           "evaluator": {
@@ -147,6 +146,7 @@
           }
         }
       ],
+      "expression": "B",
       "type": "threshold"
     },
     {
@@ -156,6 +156,7 @@
         "uid": "TheUID"
       },
       "expression": "SELECT * FROM A limit 1",
+      "format": "",
       "type": "sql"
     }
   ]

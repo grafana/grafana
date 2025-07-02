@@ -16,7 +16,7 @@ import {
   ExploreLogsPanelState,
   DataQuery,
 } from '@grafana/data';
-import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
@@ -27,7 +27,7 @@ import { makeExplorePaneState } from '../state/utils';
 
 import { Logs } from './Logs';
 import { visualisationTypeKey } from './utils/logs';
-import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
+import { getMockElasticFrame, getMockLokiFrame } from './utils/mocks';
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({

@@ -1,15 +1,15 @@
 import { useEffect } from 'react';
 
 import { NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
+import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
 import appEvents from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 import { HelpModal } from '../../help/HelpModal';
-import { MEGA_MENU_TOGGLE_ID } from '../TopBar/SingleTopBar';
 
 import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 

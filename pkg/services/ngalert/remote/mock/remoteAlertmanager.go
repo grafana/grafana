@@ -125,12 +125,12 @@ func (_c *RemoteAlertmanagerMock_CompareAndSendConfiguration_Call) RunAndReturn(
 	return _c
 }
 
-// CompareAndSendState provides a mock function with given fields: _a0
-func (_m *RemoteAlertmanagerMock) CompareAndSendState(_a0 context.Context) error {
+// SendState provides a mock function with given fields: _a0
+func (_m *RemoteAlertmanagerMock) SendState(_a0 context.Context) error {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CompareAndSendState")
+		panic("no return value specified for SendState")
 	}
 
 	var r0 error
@@ -143,30 +143,30 @@ func (_m *RemoteAlertmanagerMock) CompareAndSendState(_a0 context.Context) error
 	return r0
 }
 
-// RemoteAlertmanagerMock_CompareAndSendState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CompareAndSendState'
-type RemoteAlertmanagerMock_CompareAndSendState_Call struct {
+// RemoteAlertmanagerMock_SendState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendState'
+type RemoteAlertmanagerMock_SendState_Call struct {
 	*mock.Call
 }
 
-// CompareAndSendState is a helper method to define mock.On call
+// SendState is a helper method to define mock.On call
 //   - _a0 context.Context
-func (_e *RemoteAlertmanagerMock_Expecter) CompareAndSendState(_a0 interface{}) *RemoteAlertmanagerMock_CompareAndSendState_Call {
-	return &RemoteAlertmanagerMock_CompareAndSendState_Call{Call: _e.mock.On("CompareAndSendState", _a0)}
+func (_e *RemoteAlertmanagerMock_Expecter) SendState(_a0 interface{}) *RemoteAlertmanagerMock_SendState_Call {
+	return &RemoteAlertmanagerMock_SendState_Call{Call: _e.mock.On("SendState", _a0)}
 }
 
-func (_c *RemoteAlertmanagerMock_CompareAndSendState_Call) Run(run func(_a0 context.Context)) *RemoteAlertmanagerMock_CompareAndSendState_Call {
+func (_c *RemoteAlertmanagerMock_SendState_Call) Run(run func(_a0 context.Context)) *RemoteAlertmanagerMock_SendState_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *RemoteAlertmanagerMock_CompareAndSendState_Call) Return(_a0 error) *RemoteAlertmanagerMock_CompareAndSendState_Call {
+func (_c *RemoteAlertmanagerMock_SendState_Call) Return(_a0 error) *RemoteAlertmanagerMock_SendState_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *RemoteAlertmanagerMock_CompareAndSendState_Call) RunAndReturn(run func(context.Context) error) *RemoteAlertmanagerMock_CompareAndSendState_Call {
+func (_c *RemoteAlertmanagerMock_SendState_Call) RunAndReturn(run func(context.Context) error) *RemoteAlertmanagerMock_SendState_Call {
 	_c.Call.Return(run)
 	return _c
 }

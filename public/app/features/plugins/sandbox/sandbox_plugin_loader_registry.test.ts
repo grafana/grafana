@@ -1,5 +1,6 @@
 import { PluginMeta, PluginSignatureStatus, PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { getPluginDetails } from '../admin/api';
 import { CatalogPluginDetails } from '../admin/types';
@@ -30,6 +31,7 @@ jest.mock('../admin/api', () => ({
 
 const getPluginSettingsMock = jest.mocked(getPluginSettings);
 const getPluginDetailsMock = jest.mocked(getPluginDetails);
+const mockContextSrv = jest.mocked(contextSrv);
 
 const fakePluginSettings: PluginMeta = {
   id: 'test-plugin',
@@ -45,6 +47,7 @@ describe('Sandbox eligibility checks', () => {
     jest.clearAllMocks();
     getPluginDetailsMock.mockReset();
     getPluginSettingsMock.mockReset();
+    mockContextSrv.isSignedIn = true;
 
     // restore default check
     setSandboxEnabledCheck(isPluginFrontendSandboxEnabled);
@@ -58,9 +61,10 @@ describe('Sandbox eligibility checks', () => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  test('shouldLoadPluginInFrontendSandbox returns false for Angular plugins', async () => {
-    const result = await shouldLoadPluginInFrontendSandbox({ isAngular: true, pluginId: 'test-plugin' });
-    expect(result).toBe(false);
+  test('isPluginFrontendSandboxEligible returns false for unsigned users', async () => {
+    mockContextSrv.isSignedIn = false;
+    const isEligible = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
+    expect(isEligible).toBe(false);
   });
 
   test('shouldLoadPluginInFrontendSandbox returns false when feature toggle is off', async () => {

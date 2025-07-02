@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import { DataSourceApi, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineField, Select } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
@@ -103,7 +104,10 @@ export function ExpressionQueryEditor(props: Props) {
 
   return (
     <div>
-      <InlineField label="Operation" labelWidth={labelWidth}>
+      <InlineField
+        label={t('expressions.expression-query-editor.label-operation', 'Operation')}
+        labelWidth={labelWidth}
+      >
         <Select options={expressionTypes} value={selected} onChange={onSelectExpressionType} width={25} />
       </InlineField>
       {renderExpressionType()}

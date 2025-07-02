@@ -1,13 +1,14 @@
-import { act, render } from '@testing-library/react';
+import { act, render, waitFor, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { GroupByVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { GroupByVariableEditor } from './GroupByVariableEditor';
+import { getGroupByVariableOptions, GroupByVariableEditor } from './GroupByVariableEditor';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -21,8 +22,8 @@ const promDatasource = mockDataSource({
   type: 'prometheus',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
-  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
@@ -31,9 +32,11 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
         query: jest.fn(),
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
+      getTagKeys: () => [],
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
+    getTagKeys: () => [],
   }),
 }));
 
@@ -43,8 +46,8 @@ describe('GroupByVariableEditor', () => {
     const dataSourcePicker = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.dataSourceSelect
     );
-    const infoText = renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText);
-    const allowCustomValueCheckbox = renderer.getByTestId(
+
+    const allowCustomValueCheckbox = renderer.queryByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
@@ -52,8 +55,6 @@ describe('GroupByVariableEditor', () => {
     expect(allowCustomValueCheckbox).toBeChecked();
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
-    expect(infoText).toBeInTheDocument();
-    expect(infoText).toHaveTextContent('This data source does not support group by variable yet.');
   });
 
   it('should update the variable data source when data source picker is changed', async () => {
@@ -86,6 +87,31 @@ describe('GroupByVariableEditor', () => {
     );
 
     expect(variable.state.defaultOptions).toEqual(undefined);
+  });
+
+  it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
+    const variable = new GroupByVariable({
+      name: 'test',
+      datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
+    });
+
+    const result = getGroupByVariableOptions(variable);
+
+    expect(result.length).toBe(1);
+    const descriptor = result[0];
+
+    // Mock the parent property that OptionsPaneItem expects
+    descriptor.parent = new OptionsPaneCategoryDescriptor({
+      id: 'mock-parent-id',
+      title: 'Mock Parent',
+    });
+
+    render(descriptor.render());
+
+    await waitFor(() => {
+      // Check that some part of the component renders
+      expect(screen.getByText(/data source does not support/i)).toBeInTheDocument();
+    });
   });
 });
 

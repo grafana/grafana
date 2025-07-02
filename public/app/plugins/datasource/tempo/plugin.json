@@ -6,7 +6,7 @@
   "executable": "gpx_tempo",
 
   "metrics": true,
-  "alerting": false,
+  "alerting": true,
   "annotations": false,
   "logs": false,
   "streaming": false,
@@ -27,6 +27,14 @@
       {
         "name": "GitHub Project",
         "url": "https://github.com/grafana/tempo"
+      },
+      {
+        "name": "Raise issue",
+        "url": "https://github.com/grafana/grafana/issues/new"
+      },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/datasources/tempo/"
       }
     ],
     "version": "%VERSION%"

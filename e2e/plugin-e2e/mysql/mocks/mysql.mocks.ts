@@ -40,8 +40,8 @@ export const fieldsResponse = (refId: string) => ({
           },
           data: {
             values: [
-              ['createdAt', 'id', 'time', 'updatedAt', 'bigint'],
-              ['datetime', 'int', 'datetime', 'datetime', 'int'],
+              ['createdAt', 'id', 'time', 'updatedAt', 'bigint', 'name'],
+              ['datetime', 'int', 'datetime', 'datetime', 'int', 'string'],
             ],
           },
         },

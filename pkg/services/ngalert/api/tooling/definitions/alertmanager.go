@@ -3,30 +3,22 @@ package definitions
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/mohae/deepcopy"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
-
-// swagger:route POST /alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
-//
-// sets an Alerting config
-//
-// This API is designated to internal use only and can be removed or changed at any time without prior notice.
-//
-// Deprecated: true
-//     Responses:
-//       201: Ack
-//       400: ValidationError
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
@@ -275,12 +267,23 @@ type (
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
 	ReceiverType              = definition.ReceiverType
+	MergeResult               = definition.MergeResult
 )
 
 const (
 	GrafanaReceiverType      = definition.GrafanaReceiverType
 	AlertmanagerReceiverType = definition.AlertmanagerReceiverType
+
+	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
 )
+
+var (
+	errInvalidExtraConfigurationBase = errutil.ValidationFailed("alerting.invalidExtraConfiguration").MustTemplate(errInvalidExtraConfigurationMsg, errutil.WithPublic(errInvalidExtraConfigurationMsg))
+)
+
+func errInvalidExtraConfiguration(err error) error {
+	return errInvalidExtraConfigurationBase.Build(errutil.TemplateData{Public: map[string]any{"Error": err}})
+}
 
 var (
 	AsGrafanaRoute = definition.AsGrafanaRoute
@@ -369,6 +372,10 @@ type TestTemplatesResult struct {
 
 	// Interpolated value of the template.
 	Text string `json:"text"`
+
+	// Scope that was successfully used to interpolate the template. If the root scope "." fails, more specific
+	// scopes will be tried, such as ".Alerts', or ".Alert".
+	Scope TemplateScope `json:"scope"`
 }
 
 type TestTemplatesErrorResult struct {
@@ -388,6 +395,15 @@ type TemplateErrorKind string
 const (
 	InvalidTemplate TemplateErrorKind = "invalid_template"
 	ExecutionError  TemplateErrorKind = "execution_error"
+)
+
+// swagger:enum TemplateScope
+type TemplateScope string
+
+const (
+	RootScope   TemplateScope = "."
+	AlertsScope TemplateScope = ".Alerts"
+	AlertScope  TemplateScope = ".Alert"
 )
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
@@ -497,6 +513,8 @@ type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertma
 	SilenceID string `json:"silenceID,omitempty"`
 }
 
+// GettableSilences gettable silences
+//
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
@@ -551,11 +569,15 @@ func (s GettableGrafanaSilence) MarshalJSON() ([]byte, error) {
 // swagger:model gettableGrafanaSilences
 type GettableGrafanaSilences []*GettableGrafanaSilence
 
+// GettableAlerts gettable alerts
+//
 // swagger:model gettableAlerts
 type GettableAlerts = amv2.GettableAlerts
 
 type GettableAlert = amv2.GettableAlert
 
+// AlertGroups alert groups
+//
 // swagger:model alertGroups
 type AlertGroups = amv2.AlertGroups
 
@@ -636,11 +658,152 @@ type DatasourceUIDReference struct {
 	DatasourceUID string
 }
 
+type ExtraConfiguration struct {
+	Identifier         string            `yaml:"identifier" json:"identifier"`
+	MergeMatchers      config.Matchers   `yaml:"merge_matchers" json:"merge_matchers"`
+	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+}
+
+func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
+	if c.AlertmanagerConfig == "" {
+		return config.Config{}, fmt.Errorf("no alertmanager configuration available")
+	}
+
+	var prometheusConfig config.Config
+	if err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &prometheusConfig); err != nil {
+		return config.Config{}, fmt.Errorf("failed to parse alertmanager config: %w", err)
+	}
+
+	return prometheusConfig, nil
+}
+
+func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
+	prometheusConfig, err := c.parsePrometheusConfig()
+	if err != nil {
+		return PostableApiAlertingConfig{}, err
+	}
+
+	return fromPrometheusConfig(prometheusConfig), nil
+}
+
+// GetSanitizedAlertmanagerConfigYAML returns the alertmanager configuration as a YAML string
+// with secrets masked and global settings removed for mimirtool compatibility.
+func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error) {
+	prometheusConfig, err := c.parsePrometheusConfig()
+	if err != nil {
+		return "", err
+	}
+
+	// Remove global settings as they are not used in Grafana
+	prometheusConfig.Global = nil
+
+	configYAML, err := yaml.Marshal(prometheusConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal sanitized configuration: %w", err)
+	}
+
+	return string(configYAML), nil
+}
+
+func (c ExtraConfiguration) Validate() error {
+	if c.Identifier == "" {
+		return errors.New("identifier is required")
+	}
+
+	if len(c.MergeMatchers) == 0 {
+		return errInvalidExtraConfiguration(errors.New("at least one matcher is required"))
+	}
+
+	for _, m := range c.MergeMatchers {
+		if m.Type != labels.MatchEqual {
+			return errInvalidExtraConfiguration(errors.New("only matchers with type equal are supported"))
+		}
+	}
+
+	// Alertmanager configuration is validated during YAML unmarshalling.
+	am := config.Config{}
+	err := yaml.Unmarshal([]byte(c.AlertmanagerConfig), &am)
+	if err != nil {
+		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
+	}
+
+	return nil
+}
+
+func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
+	config := PostableApiAlertingConfig{
+		Config: Config{
+			Global:       prometheusConfig.Global,
+			Route:        AsGrafanaRoute(prometheusConfig.Route),
+			InhibitRules: prometheusConfig.InhibitRules,
+			Templates:    prometheusConfig.Templates,
+		},
+	}
+
+	for _, receiver := range prometheusConfig.Receivers {
+		config.Receivers = append(config.Receivers, &PostableApiReceiver{
+			Receiver: receiver,
+		})
+	}
+
+	return config
+}
+
 // swagger:model
 type PostableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs       []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
 	amSimple           map[string]interface{}    `yaml:"-" json:"-"`
+}
+
+func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) {
+	if len(c.ExtraConfigs) == 0 {
+		return MergeResult{
+			Config: c.AlertmanagerConfig,
+		}, nil
+	}
+	// support only one config for now
+	mimirCfg := c.ExtraConfigs[0]
+	opts := definition.MergeOpts{
+		DedupSuffix:     mimirCfg.Identifier,
+		SubtreeMatchers: mimirCfg.MergeMatchers,
+	}
+	if err := opts.Validate(); err != nil {
+		return MergeResult{}, fmt.Errorf("invalid merge options: %w", err)
+	}
+
+	mcfg, err := mimirCfg.GetAlertmanagerConfig()
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
+	}
+
+	return definition.Merge(c.AlertmanagerConfig, mcfg, opts)
+}
+
+// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
+func (c *PostableUserConfig) GetMergedTemplateDefinitions() []alertingTemplates.TemplateDefinition {
+	out := make([]alertingTemplates.TemplateDefinition, 0, len(c.TemplateFiles))
+	for name, tmpl := range c.TemplateFiles {
+		out = append(out, alertingTemplates.TemplateDefinition{
+			Name:     name,
+			Template: tmpl,
+			Kind:     alertingTemplates.GrafanaKind,
+		})
+	}
+	if len(c.ExtraConfigs) == 0 {
+		return out
+	}
+	// support only one config for now
+	for name, tmpl := range c.ExtraConfigs[0].TemplateFiles {
+		out = append(out, alertingTemplates.TemplateDefinition{
+			Name:     name,
+			Template: tmpl,
+			Kind:     alertingTemplates.MimirKind,
+		})
+	}
+	return out
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
@@ -652,6 +815,10 @@ func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 	// validate first
 	if err := c.validate(); err != nil {
 		return err
+	}
+
+	if len(c.ExtraConfigs) > 1 {
+		return errors.New("only one extra config is supported")
 	}
 
 	type intermediate struct {
@@ -685,33 +852,13 @@ func (c *PostableUserConfig) validate() error {
 	return nil
 }
 
-// Decrypt returns a copy of the configuration struct with decrypted secure settings in receivers.
-func (c *PostableUserConfig) Decrypt(decryptFn func(payload []byte) ([]byte, error)) (PostableUserConfig, error) {
-	newCfg, ok := deepcopy.Copy(c).(*PostableUserConfig)
-	if !ok {
-		return PostableUserConfig{}, fmt.Errorf("failed to copy config")
-	}
-
-	// Iterate through receivers and decrypt secure settings.
-	for _, rcv := range newCfg.AlertmanagerConfig.Receivers {
-		for _, gmr := range rcv.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			decrypted, err := gmr.DecryptSecureSettings(decryptFn)
-			if err != nil {
-				return PostableUserConfig{}, err
-			}
-			gmr.SecureSettings = decrypted
-		}
-	}
-	return *newCfg, nil
-}
-
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
 func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
 	UIDs := make(map[string]*PostableGrafanaReceiver)
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				UIDs[gr.UID] = gr
 			}
 		default:
@@ -763,6 +910,7 @@ type GettableUserConfig struct {
 	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
 	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
 	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs            []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
 
 	// amSimple stores a map[string]interface of the decoded alertmanager config.
 	// This enables circumventing the underlying alertmanager secret type
@@ -815,7 +963,7 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
-			for _, gr := range r.GettableGrafanaReceivers.GrafanaManagedReceivers {
+			for _, gr := range r.GrafanaManagedReceivers {
 				UIDs[gr.UID] = gr
 			}
 		default:
@@ -903,21 +1051,9 @@ func (c *GettableApiAlertingConfig) UnmarshalYAML(value *yaml.Node) error {
 func (c *GettableApiAlertingConfig) validate() error {
 	receivers := make(map[string]struct{}, len(c.Receivers))
 
-	var hasGrafReceivers, hasAMReceivers bool
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-		switch r.Type() {
-		case GrafanaReceiverType:
-			hasGrafReceivers = true
-		case AlertmanagerReceiverType:
-			hasAMReceivers = true
-		default:
-			continue
-		}
-	}
-
-	if hasGrafReceivers && hasAMReceivers {
-		return fmt.Errorf("cannot mix Alertmanager & Grafana receiver types")
+	// Populate the receivers map with defined receiver names
+	for _, receiver := range c.Receivers {
+		receivers[receiver.Name] = struct{}{}
 	}
 
 	for _, receiver := range AllReceivers(c.Route.AsAMRoute()) {
@@ -951,7 +1087,7 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	hasGrafanaReceivers := len(r.GettableGrafanaReceivers.GrafanaManagedReceivers) > 0
+	hasGrafanaReceivers := len(r.GrafanaManagedReceivers) > 0
 
 	if hasGrafanaReceivers {
 		if len(r.EmailConfigs) > 0 {
@@ -984,14 +1120,14 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 }
 
 func (r *GettableApiReceiver) Type() ReceiverType {
-	if len(r.GettableGrafanaReceivers.GrafanaManagedReceivers) > 0 {
+	if len(r.GrafanaManagedReceivers) > 0 {
 		return GrafanaReceiverType
 	}
 	return AlertmanagerReceiverType
 }
 
 func (r *GettableApiReceiver) GetName() string {
-	return r.Receiver.Name
+	return r.Name
 }
 
 type GettableGrafanaReceivers struct {

@@ -69,6 +69,7 @@ func setupDBForGrafana(t *testing.T, ctx context.Context, m cfgMap) {
 			last_seen_at DATETIME NULL,
 			is_disabled INTEGER NOT NULL DEFAULT 0,
 			is_service_account BOOLEAN DEFAULT 0,
+			is_provisioned BOOLEAN DEFAULT 0,
 			uid TEXT NULL
 		);
 		CREATE TABLE org (

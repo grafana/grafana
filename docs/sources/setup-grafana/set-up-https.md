@@ -107,9 +107,9 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 
 The examples in this section use LetsEncrypt because it is free.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The instructions provided in this section are for a Debian-based Linux system. For other distributions and operating systems, please refer to the [certbot instructions](https://certbot.eff.org/instructions). Also, these instructions require you to have a domain name that you are in control of. Dynamic domain names like those from Amazon EC2 or DynDNS providers will not function.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Install `snapd` and `certbot`
 
@@ -224,7 +224,7 @@ To adjust permissions, perform the following steps:
 
 ## Configure Grafana HTTPS and restart Grafana
 
-In this section you edit the `grafana.ini` file so that it includes the certificate you created. If you need help identifying where to find this file, or what each key means, refer to [Configuration file location]({{< relref "./configure-grafana#configuration-file-location" >}}).
+In this section you edit the `grafana.ini` file so that it includes the certificate you created. If you need help identifying where to find this file, or what each key means, refer to [Configuration file location](../configure-grafana/#configuration-file-location).
 
 To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
@@ -246,7 +246,7 @@ To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
 1. Optional. From Grafana v11.2, edit the `cert_pass` configuration option with the decryption password if you are using encrypted certificates.
 
-1. [Restart the Grafana server]({{< relref "./start-restart-grafana#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
+1. [Restart the Grafana server](../start-restart-grafana/#linux) using `systemd`, `init.d`, or the binary as appropriate for your environment.
 
 ## Troubleshooting
 

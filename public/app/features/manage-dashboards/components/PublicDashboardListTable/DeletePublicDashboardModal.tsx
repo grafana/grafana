@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { ConfirmModal, useStyles2 } from '@grafana/ui/src';
-import { t } from 'app/core/internationalization';
+import { ConfirmModal, useStyles2 } from '@grafana/ui';
 
 const Body = () => {
   const styles = useStyles2(getStyles);

@@ -23,9 +23,9 @@ title: Team Sync HTTP API
 
 # Team Sync API
 
-> Team Sync is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
+> Team Sync is only available in Grafana Enterprise. Read more about [Grafana Enterprise](/docs/grafana/latest/introduction/grafana-enterprise/).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Get External Groups
 
@@ -33,7 +33,7 @@ title: Team Sync HTTP API
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                 | Scope    |
 | ---------------------- | -------- |
@@ -75,7 +75,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -117,7 +117,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}) for an explanation.
+See note in the [introduction](#external-group-synchronization-api) for an explanation.
 
 | Action                  | Scope    |
 | ----------------------- | -------- |
@@ -147,3 +147,54 @@ Status Codes:
 - **401** - Unauthorized
 - **403** - Permission denied
 - **404** - Team not found/Group not found
+
+## Search Team Groups
+
+`GET /api/teams/:teamId/groups/search`
+
+Search for team groups with pagination support.
+
+**Required permissions**
+
+| Action                 | Scope    |
+| ---------------------- | -------- |
+| teams.permissions:read | teams:\* |
+
+**Example Request**:
+
+```http
+GET /api/teams/1/groups/search?name=editors&query=group&page=1&perpage=10 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "totalCount": 1,
+    "teamGroups": [
+      {
+        "orgId": 1,
+        "teamId": 1,
+        "groupId": "cn=editors,ou=groups,dc=grafana,dc=org"
+      }
+    ],
+    "page": 1,
+    "perPage": 10
+  }
+]
+```
+
+Status Codes:
+
+- **200** - Ok
+- **400** - Bad Request (invalid team ID format or missing query parameter)
+- **401** - Unauthorized
+- **403** - Permission denied
+- **500** - Internal Server Error

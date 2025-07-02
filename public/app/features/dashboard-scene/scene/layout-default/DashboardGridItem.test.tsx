@@ -1,4 +1,4 @@
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
@@ -56,6 +56,27 @@ describe('PanelRepeaterGridItem', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     expect(repeater.state.repeatedPanels?.length).toBe(5);
+  });
+
+  it('Should pass isMulti/includeAll values if variable is multi variable and has them set', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1 });
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(0);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(repeater.state.repeatedPanels?.length).toBe(5);
+
+    // LocalValueVariableState is not exposed, so we build this type casting
+    const variableState = repeater.state.repeatedPanels![0].state.$variables?.state.variables[0].state as {
+      isMulti?: boolean;
+      includeAll?: boolean;
+    };
+
+    expect(variableState.isMulti).toBe(true);
+    expect(variableState.includeAll).toBe(true);
   });
 
   it('Should display a panel when there are no options', async () => {

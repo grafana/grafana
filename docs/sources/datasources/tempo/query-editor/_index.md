@@ -97,7 +97,7 @@ The three query types are:
 The **Search** query builder provides drop-down lists and text fields to help you write a query.
 The query builder is ideal for people who aren't familiar with or want to learn TraceQL.
 
-Refer to the [Search using the TraceQL query builder documentation]({{< relref "./traceql-search" >}}) to learn more about creating queries using convenient drop-down menus.
+Refer to the [Search using the TraceQL query builder documentation](traceql-search/) to learn more about creating queries using convenient drop-down menus.
 
 ![The Search query builder](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-search-v11.png)
 

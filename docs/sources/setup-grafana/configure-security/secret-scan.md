@@ -11,7 +11,7 @@ weight: 1000
 
 # Configure Grafana secret scanning and notifications
 
-With Grafana, you can use the GitHub Secret Scanning service to determine if your [service account tokens]({{< relref "../../administration/service-accounts" >}}) have been leaked on GitHub.
+With Grafana, you can use the GitHub Secret Scanning service to determine if your [service account tokens](../../../administration/service-accounts/) have been leaked on GitHub.
 
 When GitHub Secret Scanning detects a Grafana secret, its hash is stored in Grafana Labs' secret scanning service.
 
@@ -19,9 +19,9 @@ Grafana instances, whether on-premises or on the cloud, can use this service to 
 
 If the service detects a leaked token, it immediately revokes it, making it useless, and logs the event.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If the `revoke` option is disabled, the service only sends a notification to the configured webhook URL and logs the event. The token is not automatically revoked.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can also configure the service to send an outgoing webhook notification to a webhook URL.
 
@@ -39,9 +39,9 @@ Grafana has revoked this token",
 }
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Secret scanning is disabled by default. Outgoing connections are made once you enable it.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Before you begin
 

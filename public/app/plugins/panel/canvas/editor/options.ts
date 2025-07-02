@@ -1,7 +1,6 @@
-import { capitalize } from 'lodash';
-
 import { FieldType } from '@grafana/data';
-import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { PanelOptionsSupplier } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { ConnectionDirection } from 'app/features/canvas/element';
 import { SVGElements } from 'app/features/canvas/runtime/element';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
@@ -35,13 +34,13 @@ const getCategoryName = (str: string, type: string | undefined) => {
 
 export const optionBuilder: OptionSuppliers = {
   addBackground: (builder, context) => {
-    const category = getCategoryName('Background', context.options?.type);
+    const category = getCategoryName(t('canvas.category-background', 'Background'), context.options?.type);
     builder
       .addCustomEditor({
         category,
         id: 'background.color',
         path: 'background.color',
-        name: 'Color',
+        name: t('canvas.label-color', 'Color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
@@ -53,7 +52,7 @@ export const optionBuilder: OptionSuppliers = {
         category,
         id: 'background.image',
         path: 'background.image',
-        name: 'Image',
+        name: t('canvas.label-image', 'Image'),
         editor: ResourceDimensionEditor,
         settings: {
           resourceType: 'image',
@@ -63,7 +62,7 @@ export const optionBuilder: OptionSuppliers = {
         category,
         id: 'background.size',
         path: 'background.size',
-        name: 'Image size',
+        name: t('canvas.label-image-size', 'Image size'),
         editor: BackgroundSizeEditor,
         settings: {
           resourceType: 'image',
@@ -81,11 +80,11 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addBorder: (builder, context) => {
-    const category = getCategoryName('Border', context.options?.type);
+    const category = getCategoryName(t('canvas.category-border', 'Border'), context.options?.type);
     builder.addSliderInput({
       category,
       path: 'border.width',
-      name: 'Width',
+      name: t('canvas.label-width', 'Width'),
       defaultValue: 2,
       settings: {
         min: 0,
@@ -98,7 +97,7 @@ export const optionBuilder: OptionSuppliers = {
         category,
         id: 'border.color',
         path: 'border.color',
-        name: 'Color',
+        name: t('canvas.label-color', 'Color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {
@@ -111,7 +110,7 @@ export const optionBuilder: OptionSuppliers = {
     builder.addSliderInput({
       category,
       path: 'border.radius',
-      name: 'Radius',
+      name: t('canvas.label-radius', 'Radius'),
       defaultValue: 0,
       settings: {
         min: 0,
@@ -121,12 +120,12 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addColor: (builder, context) => {
-    const category = ['Color'];
+    const category = [t('canvas.category-color', 'Color')];
     builder.addCustomEditor({
       category,
       id: 'color',
       path: 'color',
-      name: 'Color',
+      name: t('canvas.label-color', 'Color'),
       editor: ColorDimensionEditor,
       settings: {},
       defaultValue: {
@@ -137,12 +136,12 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addSize: (builder, context) => {
-    const category = ['Size'];
+    const category = [t('canvas.category-size', 'Size')];
     builder.addCustomEditor({
       category,
       id: 'size',
       path: 'size',
-      name: 'Size',
+      name: t('canvas.label-size', 'Size'),
       editor: ScaleDimensionEditor,
       settings: {
         min: 1,
@@ -158,12 +157,12 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addRadius: (builder, context) => {
-    const category = ['Radius'];
+    const category = [t('canvas.category-radius', 'Radius')];
     builder.addCustomEditor({
       category,
       id: 'radius',
       path: 'radius',
-      name: 'Radius',
+      name: t('canvas.label-radius', 'Radius'),
       editor: ScaleDimensionEditor,
       settings: {
         min: 0,
@@ -180,17 +179,17 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addDirection: (builder, context) => {
-    const category = ['Arrow Direction'];
+    const category = [t('canvas.category-arrow-direction', 'Arrow Direction')];
     builder.addRadio({
       category,
       path: 'direction',
-      name: 'Direction',
+      name: t('canvas.label-direction', 'Direction'),
       settings: {
         options: [
-          { value: undefined, label: capitalize(ConnectionDirection.Forward) },
-          { value: ConnectionDirection.Reverse, label: capitalize(ConnectionDirection.Reverse) },
-          { value: ConnectionDirection.Both, label: capitalize(ConnectionDirection.Both) },
-          { value: ConnectionDirection.None, label: capitalize(ConnectionDirection.None) },
+          { value: undefined, label: t('canvas.direction-options.label-forward', 'Forward') },
+          { value: ConnectionDirection.Reverse, label: t('canvas.direction-options.label-reverse', 'Reverse') },
+          { value: ConnectionDirection.Both, label: t('canvas.direction-options.label-both', 'Both') },
+          { value: ConnectionDirection.None, label: t('canvas.direction-options.label-none', 'None') },
         ],
       },
       defaultValue: ConnectionDirection.Forward,
@@ -198,24 +197,24 @@ export const optionBuilder: OptionSuppliers = {
   },
 
   addLineStyle: (builder, context) => {
-    const category = ['Line style'];
+    const category = [t('canvas.category-line-style', 'Line style')];
     builder.addCustomEditor({
       category,
       id: 'lineStyle',
       path: 'lineStyle',
-      name: 'Line style',
+      name: t('canvas.label-line-style', 'Line style'),
       editor: LineStyleEditor,
       settings: {},
-      defaultValue: { value: LineStyle.Solid, label: 'Solid' },
+      defaultValue: { value: LineStyle.Solid, label: t('canvas.line-style-options.label-solid', 'Solid') },
     });
   },
 
   addDataLinks: (builder, context) => {
     builder.addCustomEditor({
-      category: ['Data links and actions'],
+      category: [t('canvas.category-data-links', 'Data links and actions')],
       id: 'dataLinks',
       path: 'links',
-      name: 'Links',
+      name: t('canvas.label-links', 'Links'),
       editor: DataLinksEditor,
       settings: context.options,
     });
@@ -223,10 +222,10 @@ export const optionBuilder: OptionSuppliers = {
 
   addActions: (builder, context) => {
     builder.addCustomEditor({
-      category: ['Data links and actions'],
+      category: [t('canvas.category-data-links', 'Data links and actions')],
       id: 'actions',
       path: 'actions',
-      name: 'Actions',
+      name: t('canvas.label-actions', 'Actions'),
       editor: ActionsEditor,
       settings: context.options,
     });

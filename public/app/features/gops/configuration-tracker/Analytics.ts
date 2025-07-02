@@ -1,4 +1,4 @@
-import { reportInteraction } from '@grafana/runtime/src';
+import { reportInteraction } from '@grafana/runtime';
 
 export enum IRMInteractionNames {
   ViewIRMMainPage = 'grafana_irm_configuration_tracker_main_page_view',

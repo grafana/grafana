@@ -5,7 +5,7 @@ test.describe('Loki editor', () => {
   test('Autocomplete features should work as expected.', async ({ page }) => {
     // Go to loki datasource in explore
     await page.goto(
-      '/explore?schemaVersion=1&panes=%7B%22iap%22:%7B%22datasource%22:%22gdev-loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22gdev-loki%22%7D,%22editorMode%22:%22code%22%7D%5D,%22range%22:%7B%22from%22:%22now-1h%22,%22to%22:%22now%22%7D%7D%7D&orgId=1'
+      '/explore?schemaVersion=1&panes=%7B%22iap%22:%7B%22datasource%22:%22gdev-loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22gdev-loki%22%7D,%22editorMode%22:%22builder%22%7D%5D,%22range%22:%7B%22from%22:%22now-1h%22,%22to%22:%22now%22%7D%7D%7D&orgId=1'
     );
 
     const queryEditor = page.getByTestId(e2e.selectors.components.QueryField.container);

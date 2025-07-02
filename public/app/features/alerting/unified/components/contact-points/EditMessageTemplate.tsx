@@ -1,8 +1,8 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
 
 import { isNotFoundError } from '../../api/util';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -32,14 +32,22 @@ const EditMessageTemplateComponent = () => {
   }
 
   if (isLoading || isUninitialized) {
-    return <LoadingPlaceholder text="Loading template..." />;
+    return (
+      <LoadingPlaceholder text={t('alerting.edit-message-template.text-loading-template', 'Loading template...')} />
+    );
   }
 
   if (error) {
     return isNotFoundError(error) ? (
       notFoundComponent
     ) : (
-      <Alert severity="error" title="Failed to fetch notification template">
+      <Alert
+        severity="error"
+        title={t(
+          'alerting.edit-message-template.title-failed-to-fetch-notification-template',
+          'Failed to fetch notification template'
+        )}
+      >
         {stringifyErrorLike(error)}
       </Alert>
     );

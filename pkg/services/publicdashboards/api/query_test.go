@@ -21,8 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -33,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -278,7 +281,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// Create Dashboard
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		OrgID:     1,
-		FolderUID: "1",
+		FolderUID: "",
 		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
@@ -321,15 +324,17 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// create public dashboard
 	store := publicdashboardsStore.ProvideStore(db, cfg, featuremgmt.WithFeatures())
 	cfg.PublicDashboardsEnabled = true
-	ac := acmock.New()
+	ac := actest.FakeAccessControl{}
 	ws := publicdashboardsService.ProvideServiceWrapper(store)
 	folderStore := folderimpl.ProvideDashboardFolderStore(db)
 	dashPermissionService := acmock.NewMockedPermissionsService()
 	dashService, err := service.ProvideDashboardServiceImpl(
 		cfg, dashboardStoreService, folderStore,
-		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), ac,
-		foldertest.NewFakeService(), folder.NewFakeStore(), nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil,
+		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), ac, actest.FakeService{},
+		foldertest.NewFakeService(), nil, client.MockTestRestConfig{}, nil, quotatest.New(false, nil), nil, nil,
 		nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+		serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
+		kvstore.NewFakeKVStore(),
 	)
 	require.NoError(t, err)
 	dashService.RegisterDashboardPermissions(dashPermissionService)

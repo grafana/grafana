@@ -4,13 +4,14 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 
 import { AccessControlAction, StoreState, UserFilter } from '../../types';
 
+import { EnterpriseAuthFeaturesCard } from './EnterpriseAuthFeaturesCard';
 import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
@@ -75,7 +76,10 @@ const UserListAdminPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
-            placeholder="Search user by login, email, or name."
+            placeholder={t(
+              'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
+              'Search user by login, email, or name.'
+            )}
             autoFocus={true}
             value={query}
             onChange={changeQuery}
@@ -83,8 +87,11 @@ const UserListAdminPageUnConnected = ({
           />
           <RadioButtonGroup
             options={[
-              { label: 'All users', value: false },
-              { label: 'Active last 30 days', value: true },
+              { label: t('admin.user-list-admin-page-un-connected.label.all-users', 'All users'), value: false },
+              {
+                label: t('admin.user-list-admin-page-un-connected.label.active-last-days', 'Active last 30 days'),
+                value: true,
+              },
             ]}
             onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
             value={filters.find((f) => f.name === 'activeLast30Days')?.value}
@@ -112,6 +119,7 @@ const UserListAdminPageUnConnected = ({
           fetchData={changeSort}
         />
       )}
+      <EnterpriseAuthFeaturesCard page="users" />
     </Page.Contents>
   );
 };

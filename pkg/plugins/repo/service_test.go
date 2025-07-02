@@ -108,16 +108,18 @@ func TestGetPluginArchive(t *testing.T) {
 	}
 }
 
-func TestPluginInfo(t *testing.T) {
+func TestPluginIndex(t *testing.T) {
 	const (
 		pluginID = "grafana-test-datasource"
 	)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, fmt.Sprintf("/%s", pluginID), r.URL.Path)
+		require.Equal(t, "12.0.0", r.Header.Get("grafana-version"))
+		require.Equal(t, "grafana 12.0.0", r.Header.Get("User-Agent"))
+		require.Equal(t, "includeDeprecated=true&slugIn=grafana-test-datasource", r.URL.RawQuery)
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(fmt.Sprintf(`{ "id": 1, "slug": "%s", "status": "active" }`, pluginID)))
+		_, _ = fmt.Fprintf(w, `{"items": [{ "id": 1, "slug": "%s", "status": "active" }]}`, pluginID)
 	}))
 	t.Cleanup(srv.Close)
 
@@ -126,11 +128,21 @@ func TestPluginInfo(t *testing.T) {
 		BaseURL:       srv.URL,
 		Logger:        log.NewTestPrettyLogger(),
 	})
-	pi, err := m.PluginInfo(context.Background(), pluginID)
+	pi, err := m.GetPluginsInfo(context.Background(), GetPluginsInfoOptions{
+		IncludeDeprecated: true,
+		Plugins:           []string{pluginID},
+	}, CompatOpts{
+		grafanaVersion: "12.0.0",
+		system: SystemCompatOpts{
+			os:   "darwin",
+			arch: "amd64",
+		},
+	})
 	require.NoError(t, err)
-	require.Equal(t, 1, pi.ID)
-	require.Equal(t, pluginID, pi.Slug)
-	require.Equal(t, "active", pi.Status)
+	require.Len(t, pi, 1)
+	require.Equal(t, 1, pi[0].ID)
+	require.Equal(t, pluginID, pi[0].Slug)
+	require.Equal(t, "active", pi[0].Status)
 }
 
 func verifyArchive(t *testing.T, archive *PluginArchive) {
@@ -190,7 +202,7 @@ func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 		if data.arch != "" {
 			platform += "-" + data.arch
 		}
-		_, _ = w.Write([]byte(fmt.Sprintf(`
+		_, _ = fmt.Fprintf(w, `
 				{
 					"items": [{
 						"version": "%s",
@@ -203,8 +215,7 @@ func mockPluginVersionsAPI(t *testing.T, data srvData) *httptest.Server {
 						"isCompatible": true
 					}]
 				}
-			`, data.version, platform, data.sha, data.url),
-		))
+			`, data.version, platform, data.sha, data.url)
 	})
 
 	// mock plugin archive

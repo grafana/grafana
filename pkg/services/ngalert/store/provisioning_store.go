@@ -70,21 +70,20 @@ func (st DBstore) SetProvenance(ctx context.Context, o models.Provisionable, org
 		// TODO: Add a unit-of-work pattern, so updating objects + provenance will happen consistently with rollbacks across stores.
 		// TODO: Need to make sure that writing a record where our concurrency key fails will also fail the whole transaction. That way, this gets rolled back too. can't just check that 0 updates happened inmemory. Check with jp. If not possible, we need our own concurrency key.
 		// TODO: Clean up stale provenance records periodically.
-		filter := "record_key = ? AND record_type = ? AND org_id = ?"
-		_, err := sess.Table(provenanceRecord{}).Where(filter, recordKey, recordType, org).Delete(provenanceRecord{})
+		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
+			provenanceRecord{}.TableName(),
+			[]string{"record_key", "record_type", "org_id"},
+			[]string{"record_key", "record_type", "org_id", "provenance"})
 
+		params := []interface{}{
+			recordKey,
+			recordType,
+			org,
+			p,
+		}
+
+		_, err := sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
-			return fmt.Errorf("failed to delete pre-existing provisioning status: %w", err)
-		}
-
-		record := provenanceRecord{
-			RecordKey:  recordKey,
-			RecordType: recordType,
-			Provenance: p,
-			OrgID:      org,
-		}
-
-		if _, err := sess.Insert(record); err != nil {
 			return fmt.Errorf("failed to store provisioning status: %w", err)
 		}
 

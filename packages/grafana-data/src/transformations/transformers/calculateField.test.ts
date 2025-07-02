@@ -15,6 +15,7 @@ import { DataTransformerConfig, LoadingState } from '@grafana/schema';
 
 import { DataFrameView } from '../../dataframe/DataFrameView';
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { cacheFieldDisplayNames } from '../../field/fieldState';
 import { DataFrame, FieldType } from '../../types/dataFrame';
 import { getDefaultTimeRange } from '../../types/time';
 import { BinaryOperationID } from '../../utils/binaryOperators';
@@ -221,6 +222,71 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it("byType/number: don't inherit original field.state in new fields. don't create duplicate fields.", async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: { matcher: { id: FieldMatcherID.byType, options: FieldType.number } },
+          operator: BinaryOperationID.Add,
+          right: '2',
+        },
+        replaceFields: false,
+      },
+    };
+
+    cacheFieldDisplayNames([seriesBC]);
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+
+      expect(filtered).toEqual({
+        fields: [
+          {
+            name: 'TheTime',
+            type: 'time',
+            values: [1000, 2000],
+            config: {},
+            state: { displayName: 'TheTime', multipleFrames: false },
+          },
+          {
+            name: 'B',
+            type: 'number',
+            values: [2, 200],
+            config: {},
+            state: { displayName: 'B', multipleFrames: false },
+          },
+          { name: 'B + 2', type: 'number', values: [4, 202], config: {} },
+          {
+            name: 'C',
+            type: 'number',
+            values: [3, 300],
+            config: {},
+            state: { displayName: 'C', multipleFrames: false },
+          },
+          { name: 'C + 2', type: 'number', values: [5, 302], config: {} },
+          {
+            name: 'D',
+            type: 'string',
+            values: ['first', 'second'],
+            config: {},
+            state: { displayName: 'D', multipleFrames: false },
+          },
+          {
+            name: 'E',
+            type: 'boolean',
+            values: [true, false],
+            config: {},
+            state: { displayName: 'E', multipleFrames: false },
+          },
+        ],
+        length: 2,
+      });
+    });
+  });
+
   it('multiple queries + field + static number', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
@@ -237,37 +303,29 @@ describe('calculateField transformer w/ timeseries', () => {
 
     await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
       const data = received[0];
-      expect(data).toMatchInlineSnapshot(`
-        [
-          {
-            "fields": [
-              {
-                "config": {},
-                "name": "TheTime",
-                "state": {
-                  "displayName": "TheTime",
-                  "multipleFrames": true,
-                },
-                "type": "time",
-                "values": [
-                  1000,
-                  2000,
-                ],
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'TheTime',
+              state: {
+                displayName: 'TheTime',
+                multipleFrames: true,
               },
-              {
-                "config": {},
-                "name": "B + 2",
-                "type": "number",
-                "values": [
-                  4,
-                  202,
-                ],
-              },
-            ],
-            "length": 2,
-          },
-        ]
-      `);
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {},
+              name: 'B + 2',
+              type: 'number',
+              values: [4, 202],
+            },
+          ],
+          length: 2,
+        },
+      ]);
     });
   });
 
@@ -321,65 +379,48 @@ describe('calculateField transformer w/ timeseries', () => {
     await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
       const data = received[0];
 
-      expect(data).toMatchInlineSnapshot(`
-        [
-          {
-            "fields": [
-              {
-                "config": {},
-                "name": "TheTime",
-                "type": "time",
-                "values": [
-                  1000,
-                  2000,
-                ],
-              },
-              {
-                "config": {},
-                "name": "A + 2",
-                "type": "number",
-                "values": [
-                  3,
-                  102,
-                ],
-              },
-            ],
-            "length": 2,
-          },
-          {
-            "fields": [
-              {
-                "config": {},
-                "name": "TheTime",
-                "type": "time",
-                "values": [
-                  1000,
-                  2000,
-                ],
-              },
-              {
-                "config": {},
-                "name": "B + 2",
-                "type": "number",
-                "values": [
-                  4,
-                  202,
-                ],
-              },
-              {
-                "config": {},
-                "name": "C + 2",
-                "type": "number",
-                "values": [
-                  5,
-                  302,
-                ],
-              },
-            ],
-            "length": 2,
-          },
-        ]
-      `);
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'TheTime',
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {},
+              name: 'A + 2',
+              type: 'number',
+              values: [3, 102],
+            },
+          ],
+          length: 2,
+        },
+        {
+          fields: [
+            {
+              config: {},
+              name: 'TheTime',
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {},
+              name: 'B + 2',
+              type: 'number',
+              values: [4, 202],
+            },
+            {
+              config: {},
+              name: 'C + 2',
+              type: 'number',
+              values: [5, 302],
+            },
+          ],
+          length: 2,
+        },
+      ]);
     });
   });
 
@@ -416,48 +457,124 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('unary math', async () => {
-    const unarySeries = toDataFrame({
-      fields: [
-        { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-        { name: 'A', type: FieldType.number, values: [1, -10, -200, 300] },
-      ],
+  describe('unary math', () => {
+    it('calculates absolute value accurately', async () => {
+      const unarySeries = toDataFrame({
+        fields: [
+          { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'A', type: FieldType.number, values: [1, -10, -200, 300] },
+        ],
+      });
+
+      const cfg = {
+        id: DataTransformerID.calculateField,
+        options: {
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            fieldName: 'A',
+            operator: UnaryOperationID.Abs,
+          },
+          replaceFields: true,
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [unarySeries])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        const rows = new DataFrameView(filtered).toArray();
+        expect(rows).toEqual([
+          {
+            'abs(A)': 1,
+            TheTime: 1000,
+          },
+          {
+            'abs(A)': 10,
+            TheTime: 2000,
+          },
+          {
+            'abs(A)': 200,
+            TheTime: 3000,
+          },
+          {
+            'abs(A)': 300,
+            TheTime: 4000,
+          },
+        ]);
+      });
     });
 
-    const cfg = {
-      id: DataTransformerID.calculateField,
-      options: {
-        mode: CalculateFieldMode.UnaryOperation,
-        unary: {
-          fieldName: 'A',
-          operator: UnaryOperationID.Abs,
+    it('calculates percentage value accurately', async () => {
+      const testCases = [
+        {
+          values: [1, 2, 3, 4],
+          result: [0.1, 0.2, 0.3, 0.4],
         },
-        replaceFields: true,
-      },
-    };
+        {
+          values: [1, 0, 5, 4],
+          result: [0.1, 0, 0.5, 0.4],
+        },
+        {
+          values: [1, Infinity, 5, 4],
+          result: [0.1, Infinity, 0.5, 0.4],
+        },
+        {
+          values: [0, 0, 0, 0],
+          result: [0, 0, 0, 0],
+        },
+        {
+          values: ['a', 's', 2, 4],
+          result: [NaN, NaN, 0.3333333333333333, 0.6666666666666666],
+        },
+        {
+          values: [1e5, 1, 2, 4],
+          result: [0.999930004899657, 0.000009999300048996571, 0.000019998600097993142, 0.000039997200195986284],
+        },
+      ];
 
-    await expect(transformDataFrame([cfg], [unarySeries])).toEmitValuesWith((received) => {
-      const data = received[0];
-      const filtered = data[0];
-      const rows = new DataFrameView(filtered).toArray();
-      expect(rows).toEqual([
-        {
-          'abs(A)': 1,
-          TheTime: 1000,
+      const cfg = {
+        id: DataTransformerID.calculateField,
+        options: {
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            fieldName: 'A',
+            operator: UnaryOperationID.Percent,
+          },
+          replaceFields: true,
         },
-        {
-          'abs(A)': 10,
-          TheTime: 2000,
-        },
-        {
-          'abs(A)': 200,
-          TheTime: 3000,
-        },
-        {
-          'abs(A)': 300,
-          TheTime: 4000,
-        },
-      ]);
+      };
+
+      testCases.forEach(async (testCase) => {
+        const unarySeries = toDataFrame({
+          fields: [
+            { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+            { name: 'A', type: FieldType.number, values: testCase.values },
+          ],
+        });
+
+        await expect(transformDataFrame([cfg], [unarySeries])).toEmitValuesWith((received) => {
+          const data = received[0];
+          const filtered = data[0];
+          const rows = new DataFrameView(filtered).toArray();
+          expect(rows).toEqual([
+            {
+              'percent(A)': testCase.result[0],
+              TheTime: 1000,
+            },
+            {
+              'percent(A)': testCase.result[1],
+              TheTime: 2000,
+            },
+            {
+              'percent(A)': testCase.result[2],
+              TheTime: 3000,
+            },
+            {
+              'percent(A)': testCase.result[3],
+              TheTime: 4000,
+            },
+          ]);
+        });
+      });
     });
   });
 
@@ -479,18 +596,189 @@ describe('calculateField transformer w/ timeseries', () => {
       const data = received[0];
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();
-      expect(rows).toMatchInlineSnapshot(`
-        [
-          {
-            "E * 1": 1,
-            "TheTime": 1000,
-          },
-          {
-            "E * 1": 0,
-            "TheTime": 2000,
-          },
-        ]
-      `);
+      expect(rows).toEqual([
+        {
+          'E * 1': 1,
+          TheTime: 1000,
+        },
+        {
+          'E * 1': 0,
+          TheTime: 2000,
+        },
+      ]);
+    });
+  });
+
+  it('transforms multiple queries + field + field in the old format', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: 'B',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'TheTime',
+              state: {
+                displayName: 'TheTime',
+                multipleFrames: false,
+              },
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {},
+              name: 'A + B',
+              type: 'number',
+              values: [3, 300],
+            },
+          ],
+          length: 2,
+          refId: 'joinByField--',
+        },
+      ]);
+    });
+  });
+
+  it('transforms multiple queries + field + field in the old format (non existent right field)', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: 'Z',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([]);
+    });
+  });
+
+  it('transforms multiple queries + field + number in the old format and does not join', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: '1336',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA, seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'TheTime',
+              state: {
+                displayName: 'TheTime',
+                multipleFrames: true,
+              },
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {},
+              name: 'A + 1336',
+              type: 'number',
+              values: [1337, 1436],
+            },
+          ],
+          length: 2,
+        },
+      ]);
+    });
+  });
+
+  it('when alias exists sets displayName = alias to prevent downstream auto-naming', async () => {
+    const seriesA = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'A', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        alias: 'Aye',
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: '10',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'time',
+              state: {
+                displayName: 'time',
+                multipleFrames: false,
+              },
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {
+                displayName: 'Aye',
+              },
+              name: 'Aye',
+              type: 'number',
+              values: [11, 12],
+            },
+          ],
+          length: 2,
+        },
+      ]);
     });
   });
 
@@ -587,18 +875,16 @@ describe('calculateField transformer w/ timeseries', () => {
 
     const filtered = data[0];
     const rows = new DataFrameView(filtered).toArray();
-    expect(rows).toMatchInlineSnapshot(`
-      [
-        {
-          "Test": 6,
-          "TheTime": 1000,
-        },
-        {
-          "Test": 105,
-          "TheTime": 2000,
-        },
-      ]
-    `);
+    expect(rows).toEqual([
+      {
+        Test: 6,
+        TheTime: 1000,
+      },
+      {
+        Test: 105,
+        TheTime: 2000,
+      },
+    ]);
   });
 
   it('calculates centered moving average on odd window size', async () => {

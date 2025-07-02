@@ -9,28 +9,43 @@ import {
   VariableOrigin,
   VariableSuggestion,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 
-export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
-  return useMemo(() => {
-    if (!Array.isArray(input)) {
-      return [];
-    }
+import { variableRegex } from '../variables/utils';
 
-    return Object.keys(
-      input.reduce<Record<string, boolean>>((names, frame) => {
-        if (!frame || !Array.isArray(frame.fields)) {
-          return names;
-        }
+export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
+  // get full names
+  let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
 
-        return frame.fields.reduce((names, field) => {
-          const t = getFieldDisplayName(field, frame, input);
-          names[t] = true;
-          return names;
-        }, names);
-      }, {})
+  if (withBaseFieldNames) {
+    // only add base names of fields that have same field.name
+    let baseNameCounts = new Map<string, number>();
+
+    frames.forEach((frame) =>
+      frame.fields.forEach((field) => {
+        let count = baseNameCounts.get(field.name) ?? 0;
+        baseNameCounts.set(field.name, count + 1);
+      })
     );
-  }, [input]);
+
+    let baseNames: string[] = [];
+
+    baseNameCounts.forEach((count, name) => {
+      if (count > 1) {
+        baseNames.push(name);
+      }
+    });
+
+    // prepend base names + uniquify
+    names = [...new Set(baseNames.concat(names))];
+  }
+
+  return names;
+};
+
+export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFieldNames = false): string[] {
+  return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
 }
 
 export function getDistinctLabels(input: DataFrame[]): Set<string> {
@@ -64,7 +79,9 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
+  const variableFound = variableRegex.test(value);
+  variableRegex.lastIndex = 0;
+  if (variableFound) {
     return true;
   }
   return false;
@@ -77,8 +94,8 @@ export function getTimezoneOptions(includeInternal: boolean) {
   // Browser and UTC. We add the manually to avoid
   // funky string manipulation.
   if (includeInternal) {
-    timeZoneOptions.push({ label: 'Browser', value: 'browser' });
-    timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.browser', 'Browser'), value: 'browser' });
+    timeZoneOptions.push({ label: t('transformers.get-timezone-options.label.utc', 'UTC'), value: 'utc' });
   }
 
   // Add all other timezones

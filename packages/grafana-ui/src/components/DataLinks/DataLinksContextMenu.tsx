@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { CSSProperties } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { linkModelToContextMenuItems } from '../../utils/dataLinks';
 import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
@@ -15,6 +15,10 @@ export interface DataLinksContextMenuProps {
   children: (props: DataLinksContextMenuApi) => JSX.Element;
   links: () => LinkModel[];
   style?: CSSProperties;
+  /**
+   * @deprecated Will be removed in a future version
+   */
+  actions?: ActionModel[];
 }
 
 export interface DataLinksContextMenuApi {

@@ -5,10 +5,13 @@ import { Unsubscribable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { Icon, TextLink, Themeable2, withTheme2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+import grabDarkSvg from 'img/grab_dark.svg';
+import grabLightSvg from 'img/grab_light.svg';
 
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -50,8 +53,10 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
       return (
         <div>
           <p>
-            Panels in this row use the {SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in
-            the original row, not the ones in the repeated rows.
+            <Trans i18nKey="dashboard.untheme-dashboard-row.dashboard-datasource">
+              Panels in this row use the {{ SHARED_DASHBOARD_QUERY }} data source. These panels will reference the panel
+              in the original row, not the ones in the repeated rows.
+            </Trans>
           </p>
           <TextLink
             external
@@ -59,7 +64,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
               'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
             }
           >
-            Learn more
+            <Trans i18nKey="dashboard.unthemed-dashboard-row.learn-more">Learn more</Trans>
           </TextLink>
         </div>
       );
@@ -79,7 +84,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
   onDelete = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Delete row',
+        title: t('dashboard.unthemed-dashboard-row.title.delete-row', 'Delete row'),
         text: 'Are you sure you want to remove this row and all its panels?',
         altActionText: 'Delete row only',
         icon: 'trash-alt',
@@ -133,7 +138,12 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
               onUpdate={this.onUpdate}
               warning={this.getWarning()}
             />
-            <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
+            <button
+              type="button"
+              className="pointer"
+              onClick={this.onDelete}
+              aria-label={t('dashboard.unthemed-dashboard-row.aria-label-delete-row', 'Delete row')}
+            >
               <Icon name="trash-alt" />
             </button>
           </div>
@@ -167,6 +177,7 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
 export const DashboardRow = withTheme2(UnthemedDashboardRow);
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const dragHandle = theme.name === 'dark' ? grabDarkSvg : grabLightSvg;
   const actions = css({
     color: theme.colors.text.secondary,
     opacity: 0,
@@ -236,7 +247,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       cursor: 'move',
       width: '16px',
       height: '100%',
-      background: 'url("public/img/grab_dark.svg") no-repeat 50% 50%',
+      background: `url("${dragHandle}") no-repeat 50% 50%`,
       backgroundSize: '8px',
       visibility: 'hidden',
       position: 'absolute',

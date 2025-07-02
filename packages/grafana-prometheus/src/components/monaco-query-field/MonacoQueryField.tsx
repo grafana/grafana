@@ -12,8 +12,8 @@ import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
-import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { DataProvider } from './monaco-completion-provider/data_provider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/monaco-completion-provider';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 import { language, languageConfiguration } from './promql';
 
@@ -105,7 +105,7 @@ const MonacoQueryField = (props: Props) => {
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, datasource } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, datasource, timeRange } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
@@ -155,7 +155,7 @@ const MonacoQueryField = (props: Props) => {
             historyProvider: historyRef.current,
             languageProvider: lpRef.current,
           });
-          const completionProvider = getCompletionProvider(monaco, dataProvider);
+          const completionProvider = getCompletionProvider(monaco, dataProvider, timeRange);
 
           // completion-providers in monaco are not registered directly to editor-instances,
           // they are registered to languages. this makes it hard for us to have

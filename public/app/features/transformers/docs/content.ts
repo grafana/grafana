@@ -67,6 +67,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **All number fields** - Set the left side of a **Binary operation** to apply the calculation to all number fields.
 - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
+> **Note:** If a variable is used in this transformation, the default alias will be interpolated with the value of the variable. If you want an alias to be unaffected by variable changes, explicitly define the alias.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 In the example below, we added two fields together and named them Sum.
@@ -379,13 +380,13 @@ The available conditions for string fields are:
 - **Contains substring** - Match if the value contains the specified substring (case insensitive).
 - **Does not contain substring** - Match if the value doesn't contain the specified substring (case insensitive).
 
-The available conditions for number fields are:
+The available conditions for number and time fields are:
 
 - **Greater** - Match if the value is greater than the specified value.
 - **Lower** - Match if the value is lower than the specified value.
 - **Greater or equal** - Match if the value is greater or equal.
 - **Lower or equal** - Match if the value is lower or equal.
-- **Range** - Match a range between a specified minimum and maximum, min and max included.
+- **Range** - Match a range between a specified minimum and maximum, min and max included. A time field will pre-populate with variables to filter by selected time.
 
 Consider the following dataset:
 
@@ -1151,6 +1152,7 @@ Use this transformation to provide the flexibility to rename, reorder, or hide f
 
 Grafana displays a list of fields returned by the query, allowing you to perform the following actions:
 
+- **Set field order mode** - If the mode is **Manual**, you can change the field order by hovering the cursor over a field and dragging the field to its new position. If it's **Auto**, use the **OFF**, **ASC**, and **DESC** options to order by any labels on the field or by the field name. For any field that is sorted **ASC** or **DESC**, you can drag the option to set the priority of the sorting.
 - **Change field order** - Hover over a field, and when your cursor turns into a hand, drag the field to its new position.
 - **Hide or show a field** - Use the eye icon next to the field name to toggle the visibility of a specific field.
 - **Rename fields** - Type a new name in the "Rename <field>" box to customize field names.
@@ -1218,30 +1220,11 @@ Use this transformation to address issues when a data source returns time series
 
 #### Available options
 
-##### Multi-frame time series
-
-Use this option to transform the time series data frame from the wide format to the long format. This is particularly helpful when your data source delivers time series information in a format that needs to be reshaped for optimal compatibility with your visualization.
-
-**Example: Converting from wide to long format**
-
-| Timestamp           | Value1 | Value2 |
-|---------------------|--------|--------|
-| 2023-01-01 00:00:00 | 10     | 20     |
-| 2023-01-01 01:00:00 | 15     | 25     |
-
-**Transformed to:**
-
-| Timestamp           | Variable | Value |
-|---------------------|----------|-------|
-| 2023-01-01 00:00:00 | Value1   | 10    |
-| 2023-01-01 00:00:00 | Value2   | 20    |
-| 2023-01-01 01:00:00 | Value1   | 15    |
-| 2023-01-01 01:00:00 | Value2   | 25    |
-
-
 ##### Wide time series
 
 Select this option to transform the time series data frame from the long format to the wide format. If your data source returns time series data in a long format and your visualization requires a wide format, this transformation simplifies the process.
+
+A wide time series combines data into a single frame with one shared, ascending time field. Time fields do not repeat and multiple values extend in separate columns.
 
 **Example: Converting from long to wide format**
 
@@ -1258,6 +1241,32 @@ Select this option to transform the time series data frame from the long format 
 |---------------------|--------|--------|
 | 2023-01-01 00:00:00 | 10     | 20     |
 | 2023-01-01 01:00:00 | 15     | 25     |
+
+##### Multi-frame time series
+
+Multi-frame time series break data into multiple frames that all contain two fields: a time field and a numeric value field. Time is always ascending. String values are represented as field labels.
+
+##### Long time series
+
+A long time series combines data into one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one. 
+
+**Example: Converting to long format**
+
+| Value1 | Value2 |  Timestamp          |
+|--------|--------|---------------------|
+| 10     | 20     | 2023-01-03 00:00:00 |
+| 30     | 40     | 2023-01-02 00:00:00 |
+| 50     | 60     | 2023-01-01 00:00:00 |
+| 70     | 80     | 2023-01-01 00:00:00 |
+
+**Transformed to:**
+
+| Timestamp           | Value1 | Value2 |
+|---------------------|--------|--------|
+| 2023-01-01 00:00:00 | 70     | 80     |
+| 2023-01-01 01:00:00 | 50     | 60     |
+| 2023-01-02 01:00:00 | 30     | 40     |
+| 2023-01-03 01:00:00 | 10     | 20     |
 
   `;
     },
@@ -1586,8 +1595,6 @@ ${buildImageContent(
   imageRenderType,
   'A time series visualization with a curved line representing the polynomial function'
 )}
-
-> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
   `;
     },
   },

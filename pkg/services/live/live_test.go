@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func Test_provideLiveService_RedisUnavailable(t *testing.T) {
+func TestIntegration_provideLiveService_RedisUnavailable(t *testing.T) {
 	cfg := setting.NewCfg()
 
 	cfg.LiveHAEngine = "testredisunavailable"
@@ -36,7 +36,11 @@ func Test_provideLiveService_RedisUnavailable(t *testing.T) {
 		nil,
 		&usagestats.UsageStatsMock{T: t},
 		nil,
-		featuremgmt.WithFeatures(), acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), &dashboards.FakeDashboardService{}, annotationstest.NewFakeAnnotationsRepo(), nil)
+		featuremgmt.WithFeatures(),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		&dashboards.FakeDashboardService{},
+		annotationstest.NewFakeAnnotationsRepo(),
+		nil, nil)
 
 	// Proceeds without live HA if redis is unavaialble
 	require.NoError(t, err)

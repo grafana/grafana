@@ -14,7 +14,7 @@ weight: 500
 
 Dashboard and folder permissions enable you to grant a viewer the ability to edit and save dashboard changes, or limit an editor's permission to modify a dashboard.
 
-For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../roles-and-permissions/#dashboard-permissions" >}}).
+For more information about dashboard permissions, refer to [Dashboard permissions](../../roles-and-permissions/#dashboard-permissions).
 
 ## Grant folder permissions
 
@@ -23,7 +23,7 @@ When you grant user permissions for folders, that setting applies to all dashboa
 ### Before you begin
 
 - Ensure you have organization administrator privileges
-- Identify the dashboard folder permissions you want to modify and the users, service accounts or teams to which you want to grant access. For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../roles-and-permissions/#dashboard-permissions" >}}).
+- Identify the dashboard folder permissions you want to modify and the users, service accounts or teams to which you want to grant access. For more information about dashboard permissions, refer to [Dashboard permissions](../../roles-and-permissions/#dashboard-permissions).
 
 **To grant dashboard folder permissions**:
 
@@ -41,9 +41,9 @@ When you grant folder permissions, that setting applies to all dashboards and su
 
 For example, if a user with the viewer organization role requires editor (or admin) access to a dashboard, you can assign those elevated permissions on an individual basis.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you have assigned a user dashboard folder permissions, you cannot also assign the user permission to dashboards contained in the folder.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Grant dashboard permissions when you want to restrict or enhance dashboard access for users who do not have permissions defined in the associated folder.
 
@@ -65,7 +65,7 @@ Grant dashboard permissions when you want to restrict or enhance dashboard acces
 
 # Edit dashboard permissions
 
-Edit dashboard permissions when you are want to enhance or restrict a user's access to a dashboard. For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../roles-and-permissions/#dashboard-permissions" >}}).
+Edit dashboard permissions when you are want to enhance or restrict a user's access to a dashboard. For more information about dashboard permissions, refer to [Dashboard permissions](../../roles-and-permissions/#dashboard-permissions).
 
 ### Before you begin
 
@@ -135,4 +135,4 @@ Folder permissions settings:
 
 Result: User1 has editor permissions for the folder because user1 has permissions on a folder that contains this folder.
 
-> Refer to [Role-based access Control]({{< relref "../../roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how to use RBAC permissions to restrict access to dashboards, folders, administrative functions, and other resources.
+> Refer to [Role-based access Control](../../roles-and-permissions/access-control/) in Grafana Enterprise to understand how to use RBAC permissions to restrict access to dashboards, folders, administrative functions, and other resources.

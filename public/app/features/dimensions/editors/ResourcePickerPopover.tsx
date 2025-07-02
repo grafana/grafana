@@ -5,6 +5,7 @@ import { useOverlay } from '@react-aria/overlays';
 import { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -94,17 +95,17 @@ export const ResourcePickerPopover = (props: Props) => {
               className={getTabClassName(PickerTabType.Folder)}
               onClick={() => setActivePicker(PickerTabType.Folder)}
             >
-              Folder
+              <Trans i18nKey="dimensions.resource-picker-popover.folder">Folder</Trans>
             </button>
             <button className={getTabClassName(PickerTabType.URL)} onClick={() => setActivePicker(PickerTabType.URL)}>
-              URL
+              <Trans i18nKey="dimensions.resource-picker-popover.url">URL</Trans>
             </button>
           </div>
           <div className={styles.resourcePickerPopoverContent}>
             {renderPicker()}
             <div className={styles.buttonRow}>
               <Button variant={'secondary'} onClick={() => onClose()} fill="outline">
-                Cancel
+                <Trans i18nKey="dimensions.resource-picker-popover.cancel">Cancel</Trans>
               </Button>
               <Button
                 variant={newValue && newValue !== value ? 'primary' : 'secondary'}
@@ -136,7 +137,7 @@ export const ResourcePickerPopover = (props: Props) => {
                   }
                 }}
               >
-                Select
+                <Trans i18nKey="dimensions.resource-picker-popover.select">Select</Trans>
               </Button>
             </div>
           </div>

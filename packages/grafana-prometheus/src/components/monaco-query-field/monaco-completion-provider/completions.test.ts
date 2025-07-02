@@ -1,7 +1,8 @@
 import { config } from '@grafana/runtime';
 
-import { SUGGESTIONS_LIMIT } from '../../../language_provider';
+import { SUGGESTIONS_LIMIT } from '../../../constants';
 import { FUNCTIONS } from '../../../promql';
+import { getMockTimeRange } from '../../../test/mocks/datasource';
 
 import { filterMetricNames, getCompletions } from './completions';
 import { DataProvider, type DataProviderParams } from './data_provider';
@@ -13,12 +14,10 @@ const dataProviderSettings = {
     datasource: {
       metricNamesAutocompleteSuggestionLimit: SUGGESTIONS_LIMIT,
     },
-    getLabelKeys: jest.fn(),
-    getLabelValues: jest.fn(),
-    getSeriesLabels: jest.fn(),
-    getSeriesValues: jest.fn(),
-    metrics: [],
-    metricsMetadata: {},
+    queryLabelKeys: jest.fn(),
+    queryLabelValues: jest.fn(),
+    retrieveLabelKeys: jest.fn(),
+    retrieveMetricsMetadata: jest.fn(),
   },
   historyProvider: history.map((expr, idx) => ({ query: { expr, refId: 'some-ref' }, ts: idx })),
 } as unknown as DataProviderParams;
@@ -183,6 +182,8 @@ function getSuggestionCountForSituation(situationType: MetricNameSituation, metr
 }
 
 describe.each(metricNameCompletionSituations)('metric name completions in situation %s', (situationType) => {
+  const timeRange = getMockTimeRange();
+
   it('should return completions for all metric names when the number of metric names is at or below the limit', async () => {
     jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
     const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.atLimit.length);
@@ -192,12 +193,12 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
 
     // No text input
     dataProvider.monacoSettings.setInputInRange('');
-    let completions = await getCompletions(situation, dataProvider);
+    let completions = await getCompletions(situation, dataProvider, timeRange);
     expect(completions).toHaveLength(expectedCompletionsCount);
 
     // With text input (use fuzzy search)
     dataProvider.monacoSettings.setInputInRange('name_1');
-    completions = await getCompletions(situation, dataProvider);
+    completions = await getCompletions(situation, dataProvider, timeRange);
     expect(completions?.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 
@@ -210,12 +211,12 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
 
     // Complex query
     dataProvider.monacoSettings.setInputInRange('metric name one two three four five');
-    let completions = await getCompletions(situation, dataProvider);
+    let completions = await getCompletions(situation, dataProvider, timeRange);
     expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
 
     // Simple query with fuzzy match
     dataProvider.monacoSettings.setInputInRange('metric_name_');
-    completions = await getCompletions(situation, dataProvider);
+    completions = await getCompletions(situation, dataProvider, timeRange);
     expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
   });
 
@@ -227,19 +228,19 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     // Do not cross the metrics names threshold
     jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.atLimit);
     dataProvider.monacoSettings.setInputInRange('name_1');
-    await getCompletions(situation, dataProvider);
+    await getCompletions(situation, dataProvider, timeRange);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
 
     // Cross the metric names threshold, without text input
     jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
     dataProvider.monacoSettings.setInputInRange('');
-    await getCompletions(situation, dataProvider);
+    await getCompletions(situation, dataProvider, timeRange);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
 
     // Cross the metric names threshold, with text input
     jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
     dataProvider.monacoSettings.setInputInRange('name_1');
-    await getCompletions(situation, dataProvider);
+    await getCompletions(situation, dataProvider, timeRange);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
   });
 
@@ -253,7 +254,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
 
     // Test with a complex query (> 4 terms)
     dataProvider.monacoSettings.setInputInRange('metric name 1 with extra terms more');
-    const completions = await getCompletions(situation, dataProvider);
+    const completions = await getCompletions(situation, dataProvider, timeRange);
 
     const metricCompletions = completions.filter((c) => c.type === 'METRIC_NAME');
     expect(metricCompletions.some((c) => c.label === 'metric_name_1_with_extra_terms')).toBe(true);
@@ -268,7 +269,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
 
     // Test with multiple terms
     dataProvider.monacoSettings.setInputInRange('metric name 1 2 3 4 5');
-    const completions = await getCompletions(situation, dataProvider);
+    const completions = await getCompletions(situation, dataProvider, timeRange);
 
     const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.beyondLimit.length);
     expect(completions.length).toBeLessThanOrEqual(expectedCompletionsCount);
@@ -283,10 +284,7 @@ describe('Label value completions', () => {
       getAllMetricNames: jest.fn(),
       metricNamesToMetrics: jest.fn(),
       getHistory: jest.fn(),
-      getLabelNames: jest.fn(),
       getLabelValues: jest.fn().mockResolvedValue(['value1', 'value"2', 'value\\3', "value'4"]),
-      getSeriesLabels: jest.fn(),
-      getSeriesValues: jest.fn(),
       monacoSettings: {
         setInputInRange: jest.fn(),
         inputInRange: '',
@@ -308,6 +306,8 @@ describe('Label value completions', () => {
       });
     });
 
+    const timeRange = getMockTimeRange();
+
     it('should not escape special characters when between quotes', async () => {
       const situation: Situation = {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
@@ -316,7 +316,7 @@ describe('Label value completions', () => {
         otherLabels: [],
       };
 
-      const completions = await getCompletions(situation, dataProvider);
+      const completions = await getCompletions(situation, dataProvider, timeRange);
 
       expect(completions).toHaveLength(4);
       expect(completions[0].insertText).toBe('value1');
@@ -333,7 +333,7 @@ describe('Label value completions', () => {
         otherLabels: [],
       };
 
-      const completions = await getCompletions(situation, dataProvider);
+      const completions = await getCompletions(situation, dataProvider, timeRange);
 
       expect(completions).toHaveLength(4);
       expect(completions[0].insertText).toBe('"value1"');
@@ -350,6 +350,8 @@ describe('Label value completions', () => {
       });
     });
 
+    const timeRange = getMockTimeRange();
+
     it('should escape special characters when between quotes', async () => {
       const situation: Situation = {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
@@ -358,7 +360,7 @@ describe('Label value completions', () => {
         otherLabels: [],
       };
 
-      const completions = await getCompletions(situation, dataProvider);
+      const completions = await getCompletions(situation, dataProvider, timeRange);
 
       expect(completions).toHaveLength(4);
       expect(completions[0].insertText).toBe('value1');
@@ -375,7 +377,7 @@ describe('Label value completions', () => {
         otherLabels: [],
       };
 
-      const completions = await getCompletions(situation, dataProvider);
+      const completions = await getCompletions(situation, dataProvider, timeRange);
 
       expect(completions).toHaveLength(4);
       expect(completions[0].insertText).toBe('"value1"');
@@ -392,6 +394,8 @@ describe('Label value completions', () => {
       });
     });
 
+    const timeRange = getMockTimeRange();
+
     it('should handle empty values', async () => {
       jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue(['']);
 
@@ -402,7 +406,7 @@ describe('Label value completions', () => {
         otherLabels: [],
       };
 
-      const completions = await getCompletions(situation, dataProvider);
+      const completions = await getCompletions(situation, dataProvider, timeRange);
       expect(completions).toHaveLength(1);
       expect(completions[0].insertText).toBe('""');
     });
@@ -417,7 +421,7 @@ describe('Label value completions', () => {
         otherLabels: [],
       };
 
-      const completions = await getCompletions(situation, dataProvider);
+      const completions = await getCompletions(situation, dataProvider, timeRange);
       expect(completions).toHaveLength(1);
       expect(completions[0].insertText).toBe('test\\"\\\\value');
     });
@@ -432,7 +436,7 @@ describe('Label value completions', () => {
         otherLabels: [],
       };
 
-      const completions = await getCompletions(situation, dataProvider);
+      const completions = await getCompletions(situation, dataProvider, timeRange);
       expect(completions).toHaveLength(1);
       expect(completions[0].insertText).toBe('"123"');
     });

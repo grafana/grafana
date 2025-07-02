@@ -54,6 +54,10 @@ By default, the configuration file is located at `/opt/homebrew/etc/grafana/graf
 For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly.
 Otherwise, add a configuration file named `custom.ini` to the `conf` directory to override the settings defined in `conf/defaults.ini`.
 
+### Grafana Cloud
+
+There is no local configuration file for Grafana Cloud stacks, but many of these settings are still configurable. To edit configurable settings, open a support ticket.
+
 ## Remove comments in the .ini files
 
 Grafana uses semicolons (`;`) to comment out lines in the INI file.
@@ -203,13 +207,13 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 #### `plugins`
 
-Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management#install-grafana-plugins" >}}).
+Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins](../../administration/plugin-management/#install-grafana-plugins).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
 #### `provisioning`
 
-Directory that contains [provisioning]({{< relref "../../administration/provisioning" >}}) configuration files that Grafana applies on startup.
+Directory that contains [provisioning](../../administration/provisioning/) configuration files that Grafana applies on startup.
 Dashboards are reloaded when the JSON files change.
 
 <hr />
@@ -386,8 +390,8 @@ The database user's password (not applicable for `sqlite3`). If the password con
 
 #### `url`
 
-Use either URL or the other fields below to configure the database
-Example: `mysql://user:secret@host:port/database`
+Use either URL or the previous fields to configure the database
+Example: `type://user:password@host:port/name`
 
 #### `max_idle_conn`
 
@@ -475,7 +479,11 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 ### `[remote_cache]`
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-and-resource-caching" >}}).
+Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
+
+{{< admonition type="note" >}}
+This setting doesn't control user session storage. User sessions are _always_ stored in the main database configured in `[database]` regardless of your `[remote_cache]` settings.
+{{< /admonition >}}
 
 #### `type`
 
@@ -491,11 +499,13 @@ Leave empty when using `database` and Grafana uses the primary database.
 
 ##### `redis`
 
-Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
+Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
 
 - `addr` is the host `:` port of the Redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to Redis.
 - `db` (optional) is the number identifier of the Redis database you want to use.
+- `username` (optional) is the connection identifier to authenticate the current connection.
+- `password` (optional) is the connection secret to authenticate the current connection.
 - `ssl` (optional) is if SSL should be used to connect to Redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
 
 ##### `memcache`
@@ -783,7 +793,7 @@ The following example limits access to the backend of a single plugin:
 #### `angular_support_enabled`
 
 This is set to false by default, meaning that the angular framework and support components aren't be loaded.
-This means that all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support won't work.
+This means that all [plugins](../../developers/angular_deprecation/angular-plugins/) and core features that depend on angular support won't work.
 
 The core features that depend on angular are:
 
@@ -853,6 +863,23 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
 
+### `[dashboard_cleanup]`
+
+Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.
+
+#### `interval`
+
+How often to run the job to cleanup associated resources. The default interval is `30s`. The minimum allowed value is `10s` to ensure the system isn't overloaded.
+
+The interval string must include a unit suffix (ms, s, m, h), e.g. 30s or 1m.
+
+#### `batch_size`
+
+Number of deleted dashboards to process in each batch during the cleanup process.
+Default: `10`, Minimum: `5`, Maximum: `200`.
+
+Increasing this value allows processing more dashboards in each cleanup cycle but may impact system performance.
+
 <hr />
 
 ### `[datasources]`
@@ -860,6 +887,10 @@ On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the d
 #### `default_manage_alerts_ui_toggle`
 
 Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source. It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
+
+#### `default_allow_recording_rules_target_alerts_ui_toggle`
+
+Default behavior for the "Allow as recording rules target" toggle when configuring a data source. It only works if the data source's `jsonData.allowAsRecordingRulesTarget` prop does not contain a previously configured value.
 
 ### `[sql_datasources]`
 
@@ -884,7 +915,7 @@ For SQL data sources (MySql, Postgres, MSSQL) you can override the default maxim
 Set to `false` to prohibit users from being able to sign up or create user accounts.
 Default is `false`.
 A Grafana Admin can still create users.
-For more information about creating a user, refer to [Add a user]({{< relref "../../administration/user-management/server-user-management#add-a-user" >}}).
+For more information about creating a user, refer to [Add a user](../../administration/user-management/server-user-management/#add-a-user).
 
 #### `allow_org_create`
 
@@ -954,7 +985,7 @@ If you manage users externally you can replace the user invite button for organi
 This option is deprecated - assign your viewers as editors, if you are using RBAC assign the data sources explorer role to your users.
 {{< /admonition >}}
 
-Viewers can access and use [Explore]({{< relref "../../explore" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
+Viewers can access and use [Explore](../../explore/) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
 #### `editors_can_admin`
 
@@ -991,7 +1022,7 @@ This is a comma-separated list of usernames. Users specified here are hidden in 
 
 ### `[auth]`
 
-Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview]({{< relref "../configure-security/configure-authentication" >}}) and other authentication documentation for detailed instructions on how to set up and configure authentication.
+Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview](../configure-security/configure-authentication/) and other authentication documentation for detailed instructions on how to set up and configure authentication.
 
 #### `login_cookie_name`
 
@@ -1196,25 +1227,25 @@ This means the plugin can only access data and resources within that specific or
 
 ### `[auth.anonymous]`
 
-Refer to [Anonymous authentication]({{< relref "../configure-security/configure-authentication/grafana#anonymous-authentication" >}}) for detailed instructions.
+Refer to [Anonymous authentication](../configure-security/configure-authentication/grafana/#anonymous-authentication) for detailed instructions.
 
 <hr />
 
 ### `[auth.github]`
 
-Refer to [GitHub OAuth2 authentication]({{< relref "../configure-security/configure-authentication/github" >}}) for detailed instructions.
+Refer to [GitHub OAuth2 authentication](../configure-security/configure-authentication/github/) for detailed instructions.
 
 <hr />
 
 ### `[auth.gitlab]`
 
-Refer to [GitLab OAuth 2.0 authentication]({{< relref "../configure-security/configure-authentication/gitlab" >}}) for detailed instructions.
+Refer to [GitLab OAuth 2.0 authentication](../configure-security/configure-authentication/gitlab/) for detailed instructions.
 
 <hr />
 
 ### `[auth.google]`
 
-Refer to [Google OAuth2 authentication]({{< relref "../configure-security/configure-authentication/google" >}}) for detailed instructions.
+Refer to [Google OAuth2 authentication](../configure-security/configure-authentication/google/) for detailed instructions.
 
 <hr />
 
@@ -1232,37 +1263,37 @@ Legacy key names, still in the configuration file so they work in environment va
 
 ### `[auth.azuread]`
 
-Refer to [Azure AD OAuth2 authentication]({{< relref "../configure-security/configure-authentication/azuread" >}}) for detailed instructions.
+Refer to [Azure AD OAuth2 authentication](../configure-security/configure-authentication/azuread/) for detailed instructions.
 
 <hr />
 
 ### `[auth.okta]`
 
-Refer to [Okta OAuth2 authentication]({{< relref "../configure-security/configure-authentication/okta" >}}) for detailed instructions.
+Refer to [Okta OAuth2 authentication](../configure-security/configure-authentication/okta/) for detailed instructions.
 
 <hr />
 
 ### `[auth.generic_oauth]`
 
-Refer to [Generic OAuth authentication]({{< relref "../configure-security/configure-authentication/generic-oauth" >}}) for detailed instructions.
+Refer to [Generic OAuth authentication](../configure-security/configure-authentication/generic-oauth/) for detailed instructions.
 
 <hr />
 
 ### `[auth.basic]`
 
-Refer to [Basic authentication]({{< relref "../configure-security/configure-authentication#basic-authentication" >}}) for detailed instructions.
+Refer to [Basic authentication](../configure-security/configure-authentication/#basic-authentication) for detailed instructions.
 
 <hr />
 
 ### `[auth.proxy]`
 
-Refer to [Auth proxy authentication]({{< relref "../configure-security/configure-authentication/auth-proxy" >}}) for detailed instructions.
+Refer to [Auth proxy authentication](../configure-security/configure-authentication/auth-proxy/) for detailed instructions.
 
 <hr />
 
 ### `[auth.ldap]`
 
-Refer to [LDAP authentication]({{< relref "../configure-security/configure-authentication/ldap" >}}) for detailed instructions.
+Refer to [LDAP authentication](../configure-security/configure-authentication/ldap/) for detailed instructions.
 
 ### `[aws]`
 
@@ -1421,7 +1452,7 @@ Disabled by default, needs to be explicitly enabled.
 
 ### `[auth.jwt]`
 
-Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
+Refer to [JWT authentication](../configure-security/configure-authentication/jwt/) for more information.
 
 <hr />
 
@@ -1726,7 +1757,7 @@ Limit the number of query evaluation results per alert rule. If the condition qu
 
 ### `[unified_alerting]`
 
-For more information about the Grafana alerts, refer to [Grafana Alerting]({{< relref "../../alerting" >}}).
+For more information about the Grafana alerts, refer to [Grafana Alerting](../../alerting/).
 
 #### `enabled`
 
@@ -1752,19 +1783,40 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 #### `ha_redis_address`
 
-The Redis server address that should be connected to.
+Redis server address or addresses. It can be a single Redis address if using Redis standalone,
+or a list of comma-separated addresses if using Redis Cluster/Sentinel.
 
 {{< admonition type="note" >}}
 For more information on Redis, refer to [Enable alerting high availability using Redis](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#enable-alerting-high-availability-using-redis).
 {{< /admonition >}}
 
+#### `ha_redis_cluster_mode_enabled`
+
+Set to `true` when using Redis in Cluster mode. Mutually exclusive with `ha_redis_sentinel_mode_enabled`.
+
+#### `ha_redis_sentinel_mode_enabled`
+
+Set to `true` when using Redis in Sentinel mode. Mutually exclusive with `ha_redis_cluster_mode_enabled`.
+
+#### `ha_redis_sentinel_master_name`
+
+Redis Sentinel master name. Only applicable when `ha_redis_sentinel_mode_enabled` is set to `true`.
+
 #### `ha_redis_username`
 
-The username that should be used to authenticate with the Redis server.
+The username that should be used to authenticate with Redis.
 
 #### `ha_redis_password`
 
-The password that should be used to authenticate with the Redis server.
+The password that should be used to authenticate with Redis.
+
+#### `ha_redis_sentinel_username`
+
+The username that should be used to authenticate with Redis Sentinel. Only applicable when `ha_redis_sentinel_mode_enabled` is set to `true`.
+
+#### `ha_redis_sentinel_password`
+
+The password that should be used to authenticate with Redis Sentinel. Only applicable when `ha_redis_sentinel_mode_enabled` is set to `true`.
 
 #### `ha_redis_db`
 
@@ -1772,7 +1824,7 @@ The Redis database. The default value is `0`.
 
 #### `ha_redis_prefix`
 
-A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting.
+A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting. Useful if you plan to share Redis with multiple Grafana instances.
 
 #### `ha_redis_peer_name`
 
@@ -1781,6 +1833,38 @@ The name of the cluster peer to use as an identifier. If none is provided, a ran
 #### `ha_redis_max_conns`
 
 The maximum number of simultaneous Redis connections.
+
+#### `ha_redis_tls_enabled`
+
+Enable TLS on the client used to communicate with the Redis server. This should be set to `true` if using any of the other `ha_redis_tls_*` fields.
+
+#### `ha_redis_tls_cert_path`
+
+Path to the PEM-encoded TLS client certificate file used to authenticate with the Redis server. Required if using Mutual TLS.
+
+#### `ha_redis_tls_key_path`
+
+Path to the PEM-encoded TLS private key file. Also requires the client certificate to be configured. Required if using Mutual TLS.
+
+#### `ha_redis_tls_ca_path`
+
+Path to the PEM-encoded CA certificates file. If not set, the host's root CA certificates are used.
+
+#### `ha_redis_tls_server_name`
+
+Overrides the expected name of the Redis server certificate.
+
+#### `ha_redis_tls_insecure_skip_verify`
+
+Skips validating the Redis server certificate.
+
+#### `ha_redis_tls_cipher_suites`
+
+Overrides the default TLS cipher suite list.
+
+#### `ha_redis_tls_min_version`
+
+Overrides the default minimum TLS version. Allowed values: `VersionTLS10`, `VersionTLS11`, `VersionTLS12`, `VersionTLS13`
 
 #### `ha_listen_address`
 
@@ -1858,7 +1942,7 @@ If a rule frequency is lower than this value, then this value is enforced.
 
 ### `[unified_alerting.screenshots]`
 
-For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/configure-notifications/template-notifications/images-in-notifications" >}}).
+For more information about screenshots, refer to [Images in notifications](../../alerting/configure-notifications/template-notifications/images-in-notifications/).
 
 #### `capture`
 
@@ -1909,6 +1993,16 @@ Configures max number of alert annotations that Grafana stores. Default value is
 
 <hr>
 
+### `[unified_alerting.prometheus_conversion]`
+
+This section applies only to rules imported as Grafana-managed rules. For more information about the import process, refer to [Import data source-managed rules to Grafana-managed rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/).
+
+#### `rule_query_offset`
+
+Set the query offset to imported Grafana-managed rules when `query_offset` is not defined in the original rule group configuration. The default value is `1m`.
+
+<hr>
+
 ### `[annotations]`
 
 #### `cleanupjob_batchsize`
@@ -1949,7 +2043,7 @@ Configures max number of API annotations that Grafana keeps. Default value is 0,
 
 ### `[explore]`
 
-For more information about this feature, refer to [Explore]({{< relref "../../explore" >}}).
+For more information about this feature, refer to [Explore](../../explore/).
 
 #### `enabled`
 
@@ -2019,14 +2113,14 @@ Setting `0` means the short links are cleaned up approximately every 10 minutes.
 A negative value such as `-1` disables expiry.
 
 {{< admonition type="caution" >}}
-Short links without an expiration increase the size of the database and can't be deleted.
+Short links without an expiration increase the size of the database and can't be deleted. Grafana recommends setting a duration based on your specific use case
 {{< /admonition >}}
 
 <hr>
 
 ### `[metrics]`
 
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../set-up-grafana-monitoring" >}}).
+For detailed instructions, refer to [Internal Grafana metrics](../set-up-grafana-monitoring/).
 
 #### `enabled`
 
@@ -2226,6 +2320,11 @@ The values `jaeger` and `w3c` are supported.
 Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`).
 The default value is `w3c`.
 
+#### `insecure`
+
+Toggles the insecure communication setting, defaults to `true`.
+When set to `false`, the OTLP client will use TLS credentials with the default system cert pool for communication.
+
 <hr>
 
 ### `[external_image_storage]`
@@ -2423,7 +2522,7 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 
-We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../administration/plugin-management#plugin-signatures" >}}).
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures](../../administration/plugin-management/#plugin-signatures).
 
 #### `plugin_admin_enabled`
 
@@ -2431,7 +2530,7 @@ Available to Grafana administrators only, enables installing, uninstalling, and 
 Set to `true` by default.
 Setting it to `false` hides the controls.
 
-For more information, refer to [Plugin catalog]({{< relref "../../administration/plugin-management#plugin-catalog" >}}).
+For more information, refer to [Plugin catalog](../../administration/plugin-management/#plugin-catalog).
 
 #### `plugin_admin_external_manage_enabled`
 
@@ -2468,18 +2567,21 @@ These plugins are hidden in the catalog.
 Enter a comma-separated list of plugin identifiers to install on startup, using the Grafana catalog as the source.
 Preinstalled plugins cannot be uninstalled from the Grafana user interface; they need to be removed from this list first.
 
+Plugins are installed asynchronously, as a background process.
+This means that Grafana starts up faster, but the plugins may not be available immediately.
+
 To pin plugins to a specific version, use the format `plugin_id@version`, for example,`grafana-piechart-panel@1.6.0`. If no version is specified, the latest version is installed. _The plugin is automatically updated_ to the latest version when a new version is available in the Grafana plugin catalog on startup (except for new major versions).
 
 To use a custom URL to download a plugin, use the format `plugin_id@version@url`, for example, `grafana-piechart-panel@1.6.0@https://example.com/grafana-piechart-panel-1.6.0.zip`.
 
-By default, Grafana installs some suggested plugins on startup. Refer to the default configuration file for that list of plugins.
+By default, Grafana installs some suggested plugins on startup. For a list of default preinstalled plugins, refer to [pkg/setting/setting_plugins.go:35](https://github.com/grafana/grafana/blob/main/pkg/setting/setting_plugins.go#L35-L40).
 
-#### `preinstall_async`
+#### `preinstall_sync`
 
-By default, plugins are preinstalled asynchronously, as a background process.
-This means that Grafana starts up faster, but the plugins may not be available immediately.
-If you need a plugin to be installed for provisioning, set this option to `false`.
-This causes Grafana to wait for the plugins to be installed before starting up and fail if a plugin can't be installed.
+Enter a comma-separated list of plugin identifiers to install on startup, using the Grafana catalog as the source.
+Same as `preinstall`, but installs plugins synchronously.
+
+These will be installed before starting Grafana. Useful when used with provisioning.
 
 #### `preinstall_disabled`
 
@@ -2493,7 +2595,7 @@ This option disables all preinstalled plugins. The default is `false`. To disabl
 
 The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
-Refer to [Grafana Live configuration documentation]({{< relref "../set-up-grafana-live" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
+Refer to [Grafana Live configuration documentation](../set-up-grafana-live/) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
 
@@ -2501,7 +2603,7 @@ Refer to [Grafana Live configuration documentation]({{< relref "../set-up-grafan
 
 The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that is accepted by Grafana Live.
 
-If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+If not set (default), then the origin is matched over [root_url](#root_url) which should be sufficient for most scenarios.
 
 Origin patterns support wildcard symbol "\*".
 
@@ -2518,7 +2620,7 @@ allowed_origins = "https://*.example.com"
 
 The high availability (HA) engine name for Grafana Live. By default, it's not set. The only possible value is `redis`.
 
-For more information, refer to the [Configure Grafana Live HA setup]({{< relref "../set-up-grafana-live#configure-grafana-live-ha-setup" >}}).
+For more information, refer to the [Configure Grafana Live HA setup](../set-up-grafana-live/#configure-grafana-live-ha-setup).
 
 #### `ha_engine_address`
 
@@ -2529,7 +2631,8 @@ Address string of selected the high availability (HA) Live engine. For Redis, it
 ```ini
 [live]
 ha_engine = redis
-ha_engine_address = 127.0.0.1:6379
+ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
+ha_engine_password: $__file{/your/redis/password/secret/mount}
 ```
 
 <hr>
@@ -2558,7 +2661,7 @@ Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
 
 ### `[plugin.grafana-image-renderer]`
 
-For more information, refer to [Image rendering]({{< relref "../image-rendering" >}}).
+For more information, refer to [Image rendering](../image-rendering/).
 
 #### `rendering_timezone`
 
@@ -2665,7 +2768,7 @@ Change the listening port of the gRPC server. Default port is `0` and uses a por
 
 ### `[enterprise]`
 
-For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
+For more information about Grafana Enterprise, refer to [Grafana Enterprise](../../introduction/grafana-enterprise/).
 
 <hr>
 
@@ -2678,34 +2781,6 @@ Keys of features to enable, separated by space.
 #### `FEATURE_TOGGLE_NAME = false`
 
 Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
-
-<hr>
-
-### `[feature_management]`
-
-The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
-
-For more information, refer to [Configure feature toggles]({{< relref "./feature-toggles" >}}).
-
-#### `allow_editing`
-
-Lets you switch the feature toggle state in the feature management page. The default is `false`.
-
-#### `update_webhook`
-
-Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page are read-only.
-
-{{< admonition type="note" >}}
-The API for feature toggle updates has not been defined yet.
-{{< /admonition >}}
-
-#### `hidden_toggles`
-
-Hide additional specific feature toggles from the feature management page. By default, feature toggles in the `unknown`, `experimental`, and `private preview` stages are hidden from the UI. Use this option to hide toggles in the `public preview`, `general availability`, and `deprecated` stages.
-
-#### `read_only_toggles`
-
-Use to disable updates for additional specific feature toggles in the feature management page. By default, feature toggles can only be updated if they are in the `general availability` and `deprecated`stages. Use this option to disable updates for toggles in those stages.
 
 <hr>
 
@@ -2747,11 +2822,57 @@ Used as the default time zone for user preferences. Can be either `browser` for 
 
 Set the default start of the week, valid values are: `saturday`, `sunday`, `monday` or `browser` to use the browser locale to define the first day of the week. Default is `browser`.
 
+### `[time_picker]`
+
+This section controls system-wide defaults for the time picker, such as the default quick ranges.
+
+#### `quick_ranges`
+
+Set the default set of quick relative offset time ranges that show up in the right column of the time picker. Each configuration entry must have a `from`, `to`, and `display` field. Any configuration for this field must be in valid JSON format made up of a list of quick range configurations.
+
+The `from` and `to` fields should be valid relative time ranges. For more information the relative time formats, refer to [Time units and relative ranges.](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/#time-units-and-relative-ranges). The `from` field is required, but omitting `to` will result in the `from` value being used in both fields.
+
+If no configuration is provided, the default time ranges will be used.
+
+For example:
+
+```ini
+[time_picker]
+quick_ranges = [
+  {
+    "display": "Last 5 minutes",
+    "from": "now-5m",
+    "to": "now",
+  },
+  {
+    "display": "Yesterday",
+    "from": "now-1d/d",
+  },
+  {
+    "display": "Today so far",
+    "from": "now/d",
+    "to": "now",
+  }
+]
+```
+
 ### `[expressions]`
 
 #### `enabled`
 
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
+
+#### `sql_expression_cell_limit`
+
+Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
+
+#### `sql_expression_cell_output_limit`
+
+Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
+
+#### `sql_expression_timeout`
+
+The duration a SQL expression will run before being cancelled. The default is `10s`.
 
 ### `[geomap]`
 
@@ -2778,7 +2899,7 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 
 ### `[rbac]`
 
-Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) for more information.
+Refer to [Role-based access control](../../administration/roles-and-permissions/access-control/) for more information.
 
 ### `[navigation.app_sections]`
 

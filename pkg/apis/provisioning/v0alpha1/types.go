@@ -4,6 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // When this code is changed, make sure to update the code generation.
@@ -49,6 +50,31 @@ type GitHubRepositoryConfig struct {
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
+
+	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
+	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
+	// The path is relative to the root of the repository, regardless of the leading slash.
+	//
+	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
+	Path string `json:"path,omitempty"`
+}
+
+type GitRepositoryConfig struct {
+	// The repository URL (e.g. `https://github.com/example/test.git`).
+	URL string `json:"url,omitempty"`
+	// The branch to use in the repository.
+	Branch string `json:"branch"`
+	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
+	Token string `json:"token,omitempty"`
+	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
+	// +listType=atomic
+	EncryptedToken []byte `json:"encryptedToken,omitempty"`
+	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
+	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
+	// The path is relative to the root of the repository, regardless of the leading slash.
+	//
+	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
+	Path string `json:"path,omitempty"`
 }
 
 // RepositoryType defines the types of Repository
@@ -59,7 +85,13 @@ type RepositoryType string
 const (
 	LocalRepositoryType  RepositoryType = "local"
 	GitHubRepositoryType RepositoryType = "github"
+	GitRepositoryType    RepositoryType = "git"
 )
+
+// IsGit returns true if the repository type is git or github
+func (r RepositoryType) IsGit() bool {
+	return r == GitRepositoryType || r == GitHubRepositoryType
+}
 
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
@@ -84,9 +116,12 @@ type RepositorySpec struct {
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
 
 	// The repository on GitHub.
-	// Mutually exclusive with local | github.
-	// TODO: github or just 'git'??
+	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+
+	// The repository on Git.
+	// Mutually exclusive with local | github | git.
+	Git *GitRepositoryConfig `json:"git,omitempty"`
 }
 
 // SyncTargetType defines where we want all values to resolve
@@ -102,8 +137,8 @@ const (
 	SyncTargetTypeInstance SyncTargetType = "instance"
 
 	// Resources will be saved into a folder managed by this repository
-	// The folder k8s name will be the same as the repository k8s name
 	// It will contain a copy of everything from the remote
+	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
 )
 
@@ -150,7 +185,8 @@ type HealthStatus struct {
 	// When the health was checked last time
 	Checked int64 `json:"checked,omitempty"`
 
-	// Summary messages (will be shown to users)
+	// Summary messages (can be shown to users)
+	// Will only be populated when not healthy
 	// +listType=atomic
 	Message []string `json:"message,omitempty"`
 }
@@ -188,6 +224,7 @@ type WebhookStatus struct {
 	Secret           string   `json:"secret,omitempty"`
 	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
+	LastEvent        int64    `json:"lastEvent,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -196,7 +233,7 @@ type RepositoryList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// +listType=atomic
-	Items []Repository `json:"items,omitempty"`
+	Items []Repository `json:"items"`
 }
 
 // The kubernetes action required when loading a given resource
@@ -218,11 +255,17 @@ type ResourceWrapper struct {
 	// Path to the remote file
 	Path string `json:"path,omitempty"`
 
-	// The commit hash (if exists)
+	// The request ref (or branch if exists)
 	Ref string `json:"ref,omitempty"`
 
 	// The repo hash value
 	Hash string `json:"hash,omitempty"`
+
+	// Basic repository info
+	Repository ResourceRepositoryInfo `json:"repository"`
+
+	// Typed links for this file (only supported by external systems, github etc)
+	URLs *ResourceURLs `json:"urls,omitempty"`
 
 	// The modified time in the remote file system
 	Timestamp *metav1.Time `json:"timestamp,omitempty"`
@@ -230,32 +273,9 @@ type ResourceWrapper struct {
 	// Different flavors of the same object
 	Resource ResourceObjects `json:"resource"`
 
-	// Lint results
-	// +listType=atomic
-	Lint []LintIssue `json:"lint,omitempty"`
-
 	// If errors exist, show them here
 	// +listType=atomic
 	Errors []string `json:"errors,omitempty"`
-}
-
-// The kubernetes action required when loading a given resource
-// +enum
-type LintSeverity string
-
-// ResourceAction values
-const (
-	LintSeverityExclude LintSeverity = "exclude"
-	LintSeverityQuiet   LintSeverity = "quiet"
-	LintSeverityWarning LintSeverity = "warning"
-	LintSeverityError   LintSeverity = "error"
-	LintSeverityFixed   LintSeverity = "fixed"
-)
-
-type LintIssue struct {
-	Severity LintSeverity `json:"severity"`
-	Rule     string       `json:"rule"`
-	Message  string       `json:"message"`
 }
 
 type ResourceType struct {
@@ -284,6 +304,37 @@ type ResourceObjects struct {
 
 	// The value returned from a dryRun request
 	DryRun common.Unstructured `json:"dryRun,omitempty"`
+
+	// For write events, this will return the value that was added or updated
+	Upsert common.Unstructured `json:"upsert,omitempty"`
+}
+
+type ResourceRepositoryInfo struct {
+	// The repository type
+	Type RepositoryType `json:"type"`
+
+	// The display name for this repository
+	Title string `json:"title"`
+
+	// The namespace this belongs to
+	Namespace string `json:"namespace"`
+
+	// The name (identifier)
+	Name string `json:"name"`
+}
+
+type ResourceURLs struct {
+	// A URL pointing to the this file in the repository
+	SourceURL string `json:"sourceURL,omitempty"`
+
+	// A URL pointing to the repository this lives in
+	RepositoryURL string `json:"repositoryURL,omitempty"`
+
+	// A URL that will create a new pull requeset for this branch
+	NewPullRequestURL string `json:"newPullRequestURL,omitempty"`
+
+	// Compare this version to the target branch
+	CompareURL string `json:"compareURL,omitempty"`
 }
 
 // Information we can get just from the file listing
@@ -293,7 +344,7 @@ type FileList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// +listType=atomic
-	Items []FileItem `json:"items,omitempty"`
+	Items []FileItem `json:"items"`
 }
 
 type FileItem struct {
@@ -311,7 +362,7 @@ type ResourceList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// +listType=atomic
-	Items []ResourceListItem `json:"items,omitempty"`
+	Items []ResourceListItem `json:"items"`
 }
 
 type ResourceListItem struct {
@@ -332,15 +383,31 @@ type ResourceStats struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// Stats across all unified storage
+	// When legacy storage is still used, this will offer a shim
 	// +listType=atomic
-	Items []ResourceCount `json:"items,omitempty"`
+	Instance []ResourceCount `json:"instance,omitempty"`
+
+	// Stats for each manager
+	// +listType=atomic
+	Managed []ManagerStats `json:"managed,omitempty"`
+}
+
+type ManagerStats struct {
+	// Manager kind
+	Kind utils.ManagerKind `json:"kind,omitempty"`
+
+	// Manager identity
+	Identity string `json:"id,omitempty"`
+
+	// stats
+	Stats []ResourceCount `json:"stats"`
 }
 
 type ResourceCount struct {
-	Repository string `json:"repository,omitempty"`
-	Group      string `json:"group"`
-	Resource   string `json:"resource"`
-	Count      int64  `json:"count"`
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+	Count    int64  `json:"count"`
 }
 
 // HistoryList is a list of versions of a resource
@@ -354,11 +421,14 @@ type TestResults struct {
 	// Is the connection healthy
 	Success bool `json:"success"`
 
-	// Error descriptions
-	Errors []string `json:"errors,omitempty"`
+	// Field related errors
+	Errors []ErrorDetails `json:"errors,omitempty"`
+}
 
-	// Optional details
-	Details *common.Unstructured `json:"details,omitempty"`
+type ErrorDetails struct {
+	Type   metav1.CauseType `json:"type"`
+	Field  string           `json:"field,omitempty"`
+	Detail string           `json:"detail,omitempty"`
 }
 
 // HistoryList is a list of versions of a resource
@@ -368,7 +438,7 @@ type HistoryList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// +listType=atomic
-	Items []HistoryItem `json:"items,omitempty"`
+	Items []HistoryItem `json:"items"`
 }
 
 type Author struct {

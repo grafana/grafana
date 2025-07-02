@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder string, nfSettings *definitions.AlertRuleNotificationSettings) (definitions.PostableRuleGroupConfig, string) {
@@ -69,7 +70,7 @@ func createRuleWithNotificationSettings(t *testing.T, client apiClient, folder s
 			},
 		},
 	}
-	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules)
+	resp, status, _ := client.PostRulesGroupWithStatus(t, folder, &rules, false)
 	assert.Equal(t, http.StatusAccepted, status)
 	require.Len(t, resp.Created, 1)
 	return rules, resp.Created[0]
@@ -87,7 +88,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -97,11 +98,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
@@ -574,7 +570,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -584,11 +580,6 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
@@ -664,14 +655,24 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
 						},
 					},
+					MissingSeriesEvalsToResolve: util.Pointer(3),
 				},
 			},
 		}
 
 		result, status, raw := apiClient.CreateOrUpdateRuleGroupProvisioning(t, originalRuleGroup)
+
 		t.Run("should create a new rule group with UIDs specified", func(t *testing.T) {
 			requireStatusCode(t, http.StatusOK, status, raw)
 			require.Equal(t, originalRuleGroup, result)
+
+			require.Len(t, result.Rules, 3)
+			for _, rule := range result.Rules {
+				require.NotEmpty(t, rule.UID)
+				if rule.UID == "rule3" {
+					require.Equal(t, 3, *rule.MissingSeriesEvalsToResolve)
+				}
+			}
 		})
 
 		t.Run("should remove a rule when updating group with a rule removed", func(t *testing.T) {
@@ -713,13 +714,7 @@ func TestMuteTimings(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -997,16 +992,9 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
-
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning alert rules from files", func(t *testing.T) {
 		// add file provisioned alert rules
@@ -1092,16 +1080,9 @@ func TestIntegrationExportFileProvisionMixed(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
-
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning mixed set of alerting configurations from files", func(t *testing.T) {
 		// add file provisioned mixed set of alerting configurations
@@ -1145,15 +1126,9 @@ func TestIntegrationExportFileProvisionContactPoints(t *testing.T) {
 	err := os.MkdirAll(alertingDir, 0750)
 	require.NoError(t, err)
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-		IsAdmin:        true,
-	})
 
 	apiClient.ReloadCachedPermissions(t)
 	t.Run("when provisioning contact points from files", func(t *testing.T) {

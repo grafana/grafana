@@ -2,10 +2,10 @@
 import UFuzzy from '@leeoniya/ufuzzy';
 import { languages } from 'monaco-editor';
 
+import { TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { prometheusRegularEscape } from '../../../datasource';
-import { escapeLabelValueInExactSelector } from '../../../language_utils';
+import { escapeLabelValueInExactSelector, prometheusRegularEscape } from '../../../escaping';
 import { FUNCTIONS } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
 
@@ -160,14 +160,21 @@ function makeSelector(metricName: string | undefined, labels: Label[]): string {
 async function getLabelNames(
   metric: string | undefined,
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: DataProvider,
+  timeRange: TimeRange
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
     return Promise.resolve(dataProvider.getAllLabelNames());
   } else {
     const selector = makeSelector(metric, otherLabels);
-    return await dataProvider.getSeriesLabels(selector, otherLabels);
+    const labelNames = await dataProvider.getSeriesLabels(timeRange, selector);
+
+    // Exclude __name__ from output
+    otherLabels.push({ name: '__name__', value: '', op: '!=' });
+    const usedLabelNames = new Set(otherLabels.map((l) => l.name));
+    // names used in the query
+    return labelNames.filter((l) => !usedLabelNames.has(l));
   }
 }
 
@@ -176,9 +183,10 @@ async function getLabelNamesForCompletions(
   suffix: string,
   triggerOnInsert: boolean,
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: DataProvider,
+  timeRange: TimeRange
 ): Promise<Completion[]> {
-  const labelNames = await getLabelNames(metric, otherLabels, dataProvider);
+  const labelNames = await getLabelNames(metric, otherLabels, dataProvider, timeRange);
   return labelNames.map((text) => {
     const isUtf8 = !isValidLegacyName(text);
     return {
@@ -200,31 +208,34 @@ async function getLabelNamesForCompletions(
 async function getLabelNamesForSelectorCompletions(
   metric: string | undefined,
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: DataProvider,
+  timeRange: TimeRange
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions(metric, '=', true, otherLabels, dataProvider);
+  return getLabelNamesForCompletions(metric, '=', true, otherLabels, dataProvider, timeRange);
 }
 
 async function getLabelNamesForByCompletions(
   metric: string | undefined,
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: DataProvider,
+  timeRange: TimeRange
 ): Promise<Completion[]> {
-  return getLabelNamesForCompletions(metric, '', false, otherLabels, dataProvider);
+  return getLabelNamesForCompletions(metric, '', false, otherLabels, dataProvider, timeRange);
 }
 
 async function getLabelValues(
   metric: string | undefined,
   labelName: string,
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: DataProvider,
+  timeRange: TimeRange
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
-    return dataProvider.getLabelValues(labelName);
+    return dataProvider.getLabelValues(timeRange, labelName);
   } else {
     const selector = makeSelector(metric, otherLabels);
-    return await dataProvider.getSeriesValues(labelName, selector);
+    return await dataProvider.getSeriesValues(timeRange, labelName, selector);
   }
 }
 
@@ -233,9 +244,10 @@ async function getLabelValuesForMetricCompletions(
   labelName: string,
   betweenQuotes: boolean,
   otherLabels: Label[],
-  dataProvider: DataProvider
+  dataProvider: DataProvider,
+  timeRange: TimeRange
 ): Promise<Completion[]> {
-  const values = await getLabelValues(metric, labelName, otherLabels, dataProvider);
+  const values = await getLabelValues(metric, labelName, otherLabels, dataProvider, timeRange);
   return values.map((text) => ({
     type: 'LABEL_VALUE',
     label: text,
@@ -248,7 +260,11 @@ function formatLabelValueForCompletion(value: string, betweenQuotes: boolean): s
   return betweenQuotes ? text : `"${text}"`;
 }
 
-export function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
+export function getCompletions(
+  situation: Situation,
+  dataProvider: DataProvider,
+  timeRange: TimeRange
+): Promise<Completion[]> {
   switch (situation.type) {
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
@@ -263,16 +279,17 @@ export function getCompletions(situation: Situation, dataProvider: DataProvider)
       return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);
     }
     case 'IN_LABEL_SELECTOR_NO_LABEL_NAME':
-      return getLabelNamesForSelectorCompletions(situation.metricName, situation.otherLabels, dataProvider);
+      return getLabelNamesForSelectorCompletions(situation.metricName, situation.otherLabels, dataProvider, timeRange);
     case 'IN_GROUPING':
-      return getLabelNamesForByCompletions(situation.metricName, situation.otherLabels, dataProvider);
+      return getLabelNamesForByCompletions(situation.metricName, situation.otherLabels, dataProvider, timeRange);
     case 'IN_LABEL_SELECTOR_WITH_LABEL_NAME':
       return getLabelValuesForMetricCompletions(
         situation.metricName,
         situation.labelName,
         situation.betweenQuotes,
         situation.otherLabels,
-        dataProvider
+        dataProvider,
+        timeRange
       );
     default:
       throw new NeverCaseError(situation);

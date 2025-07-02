@@ -7,12 +7,15 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { Team } from '../../types';
 
 import { Props, TeamList } from './TeamList';
-import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
+import { getMockTeam, getMultipleMockTeams } from './mocks/teamMocks';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasPermission: (action: string) => true,
     licensedAccessControlEnabled: () => false,
+    user: {
+      helpFlags1: 0,
+    },
   },
 }));
 

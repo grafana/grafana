@@ -3,10 +3,10 @@ import { css } from '@emotion/css';
 
 // Components
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
-import { t, Trans } from 'app/core/internationalization';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 
@@ -20,6 +20,7 @@ import { UserSignup } from './UserSignup';
 
 const LoginPage = () => {
   const styles = useStyles2(getStyles);
+
   document.title = Branding.AppTitle;
 
   return (

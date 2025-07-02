@@ -28,17 +28,17 @@ To use these API endpoints you have to use Basic authentication and the Grafana 
 The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
 {{< /admonition >}}
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](../../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
 ## Fetch settings
 
 `GET /api/admin/settings`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action        | Scope                                                                               |
 | ------------- | ----------------------------------------------------------------------------------- |
@@ -203,9 +203,9 @@ Content-Type: application/json
 
 `PUT /api/admin/settings`
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in Grafana Enterprise v8.0+.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Updates / removes and reloads database settings. You must provide either `updates`, `removals` or both.
 
@@ -213,7 +213,7 @@ This endpoint only supports changes to `auth.saml` configuration.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action         | Scope                                                                               |
 | -------------- | ----------------------------------------------------------------------------------- |
@@ -263,11 +263,11 @@ Status codes:
 
 `GET /api/admin/stats`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action            | Scope |
 | ----------------- | ----- |
@@ -307,7 +307,7 @@ Content-Type: application/json
 
 Preview usage report to be sent to vendor.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
 
@@ -345,11 +345,11 @@ Content-Type: application/json
 
 `POST /api/admin/users`
 
-Create new user. Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Create new user. Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -371,7 +371,7 @@ Content-Type: application/json
 }
 ```
 
-Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org]({{< relref "../../setup-grafana/configure-grafana/#auto-assign-org" >}}) is set to `true`.
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org](../../../setup-grafana/configure-grafana/#auto-assign-org) is set to `true`.
 
 **Example Response**:
 
@@ -386,12 +386,12 @@ Content-Type: application/json
 
 `PUT /api/admin/users/:id/password`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 Change password for a specific user.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
@@ -420,11 +420,11 @@ Content-Type: application/json
 
 `PUT /api/admin/users/:id/permissions`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action                  | Scope           |
 | ----------------------- | --------------- |
@@ -453,11 +453,11 @@ Content-Type: application/json
 
 `DELETE /api/admin/users/:id`
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
@@ -486,11 +486,11 @@ Content-Type: application/json
 
 Return a list of all auth tokens (devices) that the user currently have logged in from.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action               | Scope           |
 | -------------------- | --------------- |
@@ -545,11 +545,11 @@ Content-Type: application/json
 Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in
 and will be required to authenticate again upon next activity.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action                | Scope           |
 | --------------------- | --------------- |
@@ -585,11 +585,11 @@ Content-Type: application/json
 Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in
 and will be required to authenticate again upon next activity.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action       | Scope           |
 | ------------ | --------------- |
@@ -630,11 +630,11 @@ Reloads the provisioning config files for specified type and provision entities 
 until the new provisioned entities are already stored in the database. In case of dashboards, it will stop
 polling for changes in dashboard files and then restart it with new configurations after returning.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
+See note in the [introduction](#admin-api) for an explanation.
 
 | Action              | Scope                      | Provision entity |
 | ------------------- | -------------------------- | ---------------- |
@@ -669,7 +669,7 @@ Content-Type: application/json
 
 Reloads the LDAP configuration.
 
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Only works with Basic Authentication (username and password). See [introduction](/docs/grafana/<GRAFANA_VERSION>/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
 
@@ -694,7 +694,7 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/rotate-data-keys`
 
-[Rotates]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#rotate-data-keys" >}}) data encryption keys.
+[Rotates](../../../setup-grafana/configure-security/configure-database-encryption/#rotate-data-keys) data encryption keys.
 
 **Example Request**:
 
@@ -715,7 +715,7 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/reencrypt-data-keys`
 
-[Re-encrypts]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-data-keys" >}}) data encryption keys.
+[Re-encrypts](../../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-data-keys) data encryption keys.
 
 **Example Request**:
 
@@ -736,7 +736,7 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/reencrypt-secrets`
 
-[Re-encrypts]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-secrets" >}}) secrets.
+[Re-encrypts](../../../setup-grafana/configure-security/configure-database-encryption/#re-encrypt-secrets) secrets.
 
 **Example Request**:
 
@@ -757,7 +757,7 @@ Content-Type: application/json
 
 `POST /api/admin/encryption/rollback-secrets`
 
-[Rolls back]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/#roll-back-secrets" >}}) secrets.
+[Rolls back](../../../setup-grafana/configure-security/configure-database-encryption/#roll-back-secrets) secrets.
 
 **Example Request**:
 

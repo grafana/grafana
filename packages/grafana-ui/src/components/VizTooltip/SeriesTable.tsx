@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 /**
@@ -86,7 +87,7 @@ export const SeriesTable = ({ timestamp, series }: SeriesTableProps) => {
   return (
     <>
       {timestamp && (
-        <div className={styles.timestamp} aria-label="Timestamp">
+        <div className={styles.timestamp} aria-label={t('grafana-ui.viz-tooltip.timestamp', 'Timestamp')}>
           {timestamp}
         </div>
       )}

@@ -14,13 +14,7 @@ import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanage
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
 import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
-import {
-  getRuleHealth,
-  isAlertingRule,
-  isGrafanaRulerRule,
-  isPluginProvidedRule,
-  isPromRuleType,
-} from '../utils/rules';
+import { getRuleHealth, isPluginProvidedRule, isPromRuleType, prometheusRuleType, rulerRuleType } from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
@@ -43,6 +37,10 @@ export function useRulesFilter() {
     return getSearchFilterFromQuery(searchQuery);
   }, [searchQuery]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
+
+  const activeFilters = useMemo(() => {
+    return chain(filterState).omitBy(isEmpty).keys().filter(isRuleFilterKey).value();
+  }, [filterState]);
 
   const updateFilters = useCallback(
     (newFilter: RulesFilter) => {
@@ -92,7 +90,7 @@ export function useRulesFilter() {
     }
   }, [queryParams, updateFilters, filterState, updateQueryParams]);
 
-  return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters };
+  return { filterState, hasActiveFilters, activeFilters, searchQuery, setSearchQuery, updateFilters };
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
@@ -106,7 +104,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
     filteredRules.forEach((namespace) => {
       namespace.groups.forEach((group) => {
         group.rules.forEach((rule) => {
-          if (isAlertingRule(rule.promRule)) {
+          if (prometheusRuleType.alertingRule(rule.promRule)) {
             rule.instanceTotals = calculateRuleTotals(rule.promRule);
             rule.filteredInstanceTotals = calculateRuleFilteredTotals(rule.promRule);
           }
@@ -225,7 +223,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       if ('contactPoint' in matchesFilterFor) {
         const contactPoint = filterState.contactPoint;
         const hasContactPoint =
-          isGrafanaRulerRule(rule.rulerRule) &&
+          rulerRuleType.grafana.rule(rule.rulerRule) &&
           rule.rulerRule.grafana_alert.notification_settings?.receiver === contactPoint;
 
         if (hasContactPoint) {
@@ -234,7 +232,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       }
 
       if ('dataSourceNames' in matchesFilterFor) {
-        if (isGrafanaRulerRule(rule.rulerRule)) {
+        if (rulerRuleType.grafana.rule(rule.rulerRule)) {
           const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState);
 
           if (doesNotQueryDs) {
@@ -274,7 +272,7 @@ const reduceGroups = (filterState: RulesFilter) => {
 
       if ('ruleState' in matchesFilterFor) {
         const promRule = rule.promRule;
-        const hasPromRuleDefinition = promRule && isAlertingRule(promRule);
+        const hasPromRuleDefinition = promRule && prometheusRuleType.alertingRule(promRule);
 
         const ruleStateMatches = hasPromRuleDefinition && promRule.state === filterState.ruleState;
 
@@ -362,3 +360,20 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: Rules
     return ds?.name && filterState?.dataSourceNames?.includes(ds.name);
   });
 };
+
+const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
+  'freeFormWords',
+  'namespace',
+  'groupName',
+  'ruleName',
+  'ruleState',
+  'ruleType',
+  'dataSourceNames',
+  'labels',
+  'ruleHealth',
+  'dashboardUid',
+  'plugins',
+  'contactPoint',
+]);
+
+const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);

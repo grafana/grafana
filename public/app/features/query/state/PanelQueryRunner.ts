@@ -31,7 +31,7 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
@@ -53,6 +53,7 @@ export interface QueryRunnerOptions<
   panelName?: string;
   panelPluginId?: string;
   dashboardUID?: string;
+  dashboardTitle?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -262,6 +263,7 @@ export class PanelQueryRunner {
       panelName,
       panelPluginId,
       dashboardUID,
+      dashboardTitle,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -288,6 +290,7 @@ export class PanelQueryRunner {
       panelName,
       panelPluginId,
       dashboardUID,
+      dashboardTitle,
       range: timeRange,
       timeInfo,
       interval: '',

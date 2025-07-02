@@ -1,0 +1,27 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Carousel } from '@grafana/ui';
+
+<Meta title="MDX|Carousel" component={Carousel} />
+
+# Carousel
+
+The Carousel component displays a grid of image thumbnails that can be clicked to view full-sized images in a modal with navigation controls. It provides an elegant way to present collections of images or screenshots with fullscreen preview capabilities.
+
+The component handles image loading errors gracefully and provides keyboard navigation. It works with a simple array of image objects containing path and name information.
+
+## Usage
+
+```jsx
+import { Carousel } from '@grafana/ui';
+
+const images = [
+  { path: '/path/to/image1.jpg', name: 'First Image' },
+  { path: '/path/to/image2.jpg', name: 'Second Image' },
+  { path: '/path/to/image3.jpg', name: 'Third Image' },
+];
+
+// Basic usage
+<Carousel images={images} />;
+```
+
+<ArgTypes of={Carousel} />

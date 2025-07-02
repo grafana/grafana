@@ -16,13 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -56,7 +56,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboardaccess.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported)
+		filter := permissions.NewAccessControlDashboardPermissionFilter(&usr, dashboardaccess.PERMISSION_VIEW, "", features, recursiveQueriesAreSupported, store.GetDialect())
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()
@@ -83,13 +83,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	fStore := folderimpl.ProvideStore(store)
 	folderSvc := folderimpl.ProvideService(
 		fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(store),
-		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
-
-	origNewGuardian := guardian.New
-	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
-	b.Cleanup(func() {
-		guardian.New = origNewGuardian
-	})
+		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	rootFolders := make([]*folder.Folder, 0, numFolders)
 	dashes := make([]dashboards.Dashboard, 0, numDashboards)

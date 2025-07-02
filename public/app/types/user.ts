@@ -19,6 +19,8 @@ export interface OrgUser extends WithAccessControlMetadata {
   isDisabled: boolean;
   authLabels?: string[];
   isExternallySynced?: boolean;
+  // Externally provisioned
+  isProvisioned?: boolean;
 }
 
 export interface User {
@@ -56,6 +58,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   orgs?: Unit[];
   isExternallySynced?: boolean;
   isGrafanaAdminExternallySynced?: boolean;
+  isProvisioned?: boolean;
 }
 
 export interface Invitee {

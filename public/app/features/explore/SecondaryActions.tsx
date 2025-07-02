@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
@@ -45,6 +46,7 @@ export function SecondaryActions({
   const theme = useTheme2();
   const styles = getStyles(theme);
   const exploreActiveDS = useSelector(selectExploreDSMaps);
+
   // Prefill the query library filter with the dataSource.
   // Get current dataSource that is open. As this is only used in Explore we get it from Explore state.
   const listOfDatasources = createDatasourcesList();
@@ -71,6 +73,7 @@ export function SecondaryActions({
           </ToolbarButton>
           {queryLibraryEnabled && (
             <ToolbarButton
+              data-testid={selectors.pages.Explore.General.addFromQueryLibrary}
               aria-label={t('explore.secondary-actions.add-from-query-library', 'Add query from library')}
               variant="canvas"
               onClick={() => openQueryLibraryDrawer(activeDatasources, onSelectQueryFromLibrary)}

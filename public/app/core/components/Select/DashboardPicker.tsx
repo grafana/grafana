@@ -1,12 +1,12 @@
 import debounce from 'debounce-promise';
-import { useCallback, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
@@ -38,78 +38,69 @@ async function findDashboards(query = '') {
 const getDashboards = debounce(findDashboards, 250, { leading: true });
 
 // TODO: this component should provide a way to apply different filters to the search APIs
-export const DashboardPicker = ({
-  value,
-  onChange,
-  placeholder = 'Select dashboard',
-  noOptionsMessage = 'No dashboards found',
-  ...props
-}: Props) => {
-  const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
+export const DashboardPicker = forwardRef<HTMLElement, Props>(
+  ({ value, onChange, placeholder = 'Select dashboard', noOptionsMessage = 'No dashboards found', ...props }, ref) => {
+    const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
 
-  // This is required because the async select does not match the raw uid value
-  // We can not use a simple Select because the dashboard search should not return *everything*
-  useEffect(() => {
-    if (!value || value === current?.value?.uid) {
-      return;
-    }
+    // This is required because the async select does not match the raw uid value
+    // We can not use a simple Select because the dashboard search should not return *everything*
+    useEffect(() => {
+      if (!value || value === current?.value?.uid) {
+        return;
+      }
 
-    (async () => {
-      // value was manually changed from outside or we are rendering for the first time.
-      // We need to fetch dashboard information.
-      const isUIReadyForV2 = config.featureToggles.useV2DashboardsAPI;
-      if (isUIReadyForV2) {
-        // When using getDashboardAPI, if isUIReadyForV2 is true, we will pass `v2` prop
-        // That will return a dashboard response using schema v2. We only ask for `v2` when the component is ready to process the new shape
-        const resWithSchemaV2 = await getDashboardAPI('v2').getDashboardDTO(value, undefined);
+      (async () => {
+        // value was manually changed from outside or we are rendering for the first time.
+        // We need to fetch dashboard information.
+        const dto = await getDashboardAPI().getDashboardDTO(value, undefined);
 
-        setCurrent({
-          value: {
-            uid: resWithSchemaV2.metadata.name,
-            title: resWithSchemaV2.spec.title,
-            folderTitle: resWithSchemaV2.metadata.annotations?.[AnnoKeyFolderTitle],
-            folderUid: resWithSchemaV2.metadata.annotations?.[AnnoKeyFolder],
-          },
-          label: formatLabel(resWithSchemaV2.metadata.annotations?.[AnnoKeyFolder], resWithSchemaV2.spec.title),
-        });
-      } else {
-        // when using getDashboardAPI, if isUIReadyForV2 is false, we will always return the v1 schema version
-        const resWithSchemaV1 = await getDashboardAPI().getDashboardDTO(value, undefined);
-
-        if (resWithSchemaV1.dashboard) {
+        if (isDashboardV2Resource(dto)) {
           setCurrent({
             value: {
-              uid: resWithSchemaV1.dashboard.uid,
-              title: resWithSchemaV1.dashboard.title,
-              folderTitle: resWithSchemaV1.meta.folderTitle,
-              folderUid: resWithSchemaV1.meta.folderUid,
+              uid: dto.metadata.name,
+              title: dto.spec.title,
+              folderTitle: dto.metadata.annotations?.[AnnoKeyFolderTitle],
+              folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
             },
-            label: formatLabel(resWithSchemaV1.meta?.folderTitle, resWithSchemaV1.dashboard.title),
+            label: formatLabel(dto.metadata.annotations?.[AnnoKeyFolder], dto.spec.title),
           });
+        } else {
+          if (dto.dashboard) {
+            setCurrent({
+              value: {
+                uid: dto.dashboard.uid,
+                title: dto.dashboard.title,
+                folderTitle: dto.meta.folderTitle,
+                folderUid: dto.meta.folderUid,
+              },
+              label: formatLabel(dto.meta?.folderTitle, dto.dashboard.title),
+            });
+          }
         }
-      }
-    })();
-    // we don't need to rerun this effect every time `current` changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+      })();
+      // we don't need to rerun this effect every time `current` changes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
 
-  const onPicked = useCallback(
-    (sel: SelectableValue<DashboardPickerDTO>) => {
-      setCurrent(sel);
-      onChange?.(sel?.value);
-    },
-    [onChange, setCurrent]
-  );
+    const onPicked = useCallback(
+      (sel: SelectableValue<DashboardPickerDTO>) => {
+        setCurrent(sel);
+        onChange?.(sel?.value);
+      },
+      [onChange, setCurrent]
+    );
 
-  return (
-    <AsyncSelect
-      loadOptions={getDashboards}
-      onChange={onPicked}
-      placeholder={placeholder}
-      noOptionsMessage={noOptionsMessage}
-      value={current}
-      defaultOptions={true}
-      {...props}
-    />
-  );
-};
+    return (
+      <AsyncSelect
+        loadOptions={getDashboards}
+        onChange={onPicked}
+        placeholder={placeholder}
+        noOptionsMessage={noOptionsMessage}
+        value={current}
+        defaultOptions={true}
+        {...props}
+        selectRef={ref}
+      />
+    );
+  }
+);

@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type CDKBackendOptions struct {
@@ -73,7 +74,7 @@ type cdkBackend struct {
 	stream      chan<- *WrittenEvent
 }
 
-func (s *cdkBackend) getPath(key *ResourceKey, rv int64) string {
+func (s *cdkBackend) getPath(key *resourcepb.ResourceKey, rv int64) string {
 	var buffer bytes.Buffer
 	buffer.WriteString(s.root)
 
@@ -116,6 +117,17 @@ func (s *cdkBackend) GetResourceStats(ctx context.Context, namespace string, min
 }
 
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
+	if event.Type == resourcepb.WatchEvent_ADDED {
+		// ReadResource deals with deleted values (i.e. a file exists but has generation -999).
+		resp := s.ReadResource(ctx, &resourcepb.ReadRequest{Key: event.Key})
+		if resp.Error != nil && resp.Error.Code != http.StatusNotFound {
+			return 0, GetError(resp.Error)
+		}
+		if resp.Value != nil {
+			return 0, ErrResourceAlreadyExists
+		}
+	}
+
 	// Scope the lock
 	{
 		s.mutex.Lock()
@@ -144,7 +156,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	return rv, err
 }
 
-func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *BackendReadResponse {
+func (s *cdkBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
 	rv := req.ResourceVersion
 
 	path := s.getPath(req.Key, rv)
@@ -173,12 +185,12 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *Backen
 	if raw == nil && req.ResourceVersion > 0 {
 		if req.ResourceVersion > s.rv.Load() {
 			return &BackendReadResponse{
-				Error: &ErrorResult{
+				Error: &resourcepb.ErrorResult{
 					Code:    http.StatusGatewayTimeout,
 					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
 					Message: "ResourceVersion is larger than max",
-					Details: &ErrorDetails{
-						Causes: []*ErrorCause{
+					Details: &resourcepb.ErrorDetails{
+						Causes: []*resourcepb.ErrorCause{
 							{
 								Reason:  string(metav1.CauseTypeResourceVersionTooLarge),
 								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
@@ -190,7 +202,7 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *Backen
 		}
 
 		// If the there was an explicit request, get the latest
-		rsp := s.ReadResource(ctx, &ReadRequest{Key: req.Key})
+		rsp := s.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Key})
 		if rsp != nil && len(rsp.Value) > 0 {
 			raw = rsp.Value
 			rv = rsp.ResourceVersion
@@ -222,17 +234,17 @@ func isDeletedValue(raw []byte) bool {
 	return false
 }
 
-func (s *cdkBackend) ListIterator(ctx context.Context, req *ListRequest, cb func(ListIterator) error) (int64, error) {
-	if req.Source != ListRequest_STORE {
-		return 0, fmt.Errorf("listing from history not supported in CDK backend")
-	}
-
+func (s *cdkBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
 		return 0, err
 	}
 	err = cb(resources)
 	return resources.listRV, err
+}
+
+func (s *cdkBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+	return 0, fmt.Errorf("listing from history not supported in CDK backend")
 }
 
 func (s *cdkBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
@@ -324,11 +336,6 @@ func (c *cdkListIterator) ContinueToken() string {
 	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
 }
 
-// ContinueTokenWithCurrentRV implements ListIterator.
-func (c *cdkListIterator) ContinueTokenWithCurrentRV() string {
-	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
-}
-
 // Name implements ListIterator.
 func (c *cdkListIterator) Name() string {
 	return c.currentKey // TODO (parse name from key)
@@ -345,7 +352,7 @@ func (c *cdkListIterator) Folder() string {
 
 var _ ListIterator = (*cdkListIterator)(nil)
 
-func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) (*cdkListIterator, error) {
+func buildTree(ctx context.Context, s *cdkBackend, key *resourcepb.ResourceKey) (*cdkListIterator, error) {
 	byPrefix := make(map[string]*cdkResource)
 	path := s.getPath(key, 0)
 	iter := s.bucket.List(&blob.ListOptions{Prefix: path, Delimiter: ""}) // "" is recursive

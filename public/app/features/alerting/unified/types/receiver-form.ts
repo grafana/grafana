@@ -9,8 +9,7 @@ export interface ChannelValues {
   __id: string; // used to correlate form values to original DTOs
   type: string;
   settings: Record<string, any>;
-  secureSettings: Record<string, any>;
-  secureFields: Record<string, boolean>;
+  secureFields: Record<string, boolean | ''>;
 }
 
 export interface ReceiverFormValues<R extends ChannelValues> {

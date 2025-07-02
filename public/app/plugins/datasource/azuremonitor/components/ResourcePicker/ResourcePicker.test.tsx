@@ -2,14 +2,16 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
+import Datasource from '../../datasource';
+import createMockDatasource from '../../mocks/datasource';
+import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
   mockResourcesByResourceGroup,
   mockSearchResults,
-} from '../../__mocks__/resourcePickerRows';
+} from '../../mocks/resourcePickerRows';
+import { DeepPartial } from '../../mocks/utils';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
 import { ResourceRowType } from './types';
@@ -32,11 +34,15 @@ const singleResourceSelectionURI =
   '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server';
 
 const noop = () => {};
-function createMockResourcePickerData(preserveImplementation?: string[]) {
-  const mockDatasource = createMockDatasource();
+function createMockResourcePickerData(
+  preserveImplementation?: string[],
+  datasourceOverrides?: DeepPartial<Datasource>
+) {
+  const mockDatasource = createMockDatasource(datasourceOverrides);
   const mockResourcePicker = new ResourcePickerData(
     createMockInstanceSetttings(),
-    mockDatasource.azureMonitorDatasource
+    mockDatasource.azureMonitorDatasource,
+    mockDatasource.azureResourceGraphDatasource
   );
 
   const mockFunctions = omit(
@@ -254,7 +260,7 @@ describe('AzureMonitor ResourcePicker', () => {
     const searchRow1 = screen.queryByLabelText('search-result');
     expect(searchRow1).not.toBeInTheDocument();
 
-    const searchField = await screen.findByLabelText('resource search');
+    const searchField = await screen.findByLabelText('Resource search');
     expect(searchField).toBeInTheDocument();
 
     await userEvent.type(searchField, 'sea');
@@ -269,7 +275,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
     render(<ResourcePicker {...defaultProps} resourcePickerData={rpd} />);
 
-    const searchField = await screen.findByLabelText('resource search');
+    const searchField = await screen.findByLabelText('Resource search');
     expect(searchField).toBeInTheDocument();
 
     await userEvent.type(searchField, 'some search that has no results');
@@ -288,7 +294,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
     render(<ResourcePicker {...defaultProps} resourcePickerData={rpd} />);
 
-    const searchField = await screen.findByLabelText('resource search');
+    const searchField = await screen.findByLabelText('Resource search');
     expect(searchField).toBeInTheDocument();
 
     await userEvent.type(searchField, 'sear');
@@ -314,7 +320,7 @@ describe('AzureMonitor ResourcePicker', () => {
     const searchRow1 = screen.queryByLabelText('search-result');
     expect(searchRow1).not.toBeInTheDocument();
 
-    const searchField = await screen.findByLabelText('resource search');
+    const searchField = await screen.findByLabelText('Resource search');
     expect(searchField).toBeInTheDocument();
 
     await userEvent.type(searchField, 'sea');
@@ -332,7 +338,9 @@ describe('AzureMonitor ResourcePicker', () => {
   });
 
   it('should not throw an error if no namespaces are found - fallback used', async () => {
-    const resourcePickerData = createMockResourcePickerData(['getResourceGroupsBySubscriptionId']);
+    const resourcePickerData = createMockResourcePickerData(['getResourceGroupsBySubscriptionId'], {
+      azureResourceGraphDatasource: { getResourceGroups: jest.fn().mockResolvedValue([]) },
+    });
     resourcePickerData.postResource = jest.fn().mockResolvedValueOnce({ data: [] });
     render(
       <ResourcePicker

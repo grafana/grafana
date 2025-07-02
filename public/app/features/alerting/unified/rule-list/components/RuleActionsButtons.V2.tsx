@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { RedirectToCloneRule } from 'app/features/alerting/unified/components/rules/CloneRule';
@@ -11,12 +11,12 @@ import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, useRulerRuleAbility } from '../../hooks/useAbilities';
 import * as ruleId from '../../utils/rule-id';
-import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { isProvisionedRule, rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 
 interface Props {
   rule: RulerRuleDTO;
-  promRule: Rule;
+  promRule?: Rule;
   groupIdentifier: RuleGroupIdentifierV2;
   /**
    * Should we show the buttons in a "compact" state?
@@ -37,7 +37,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
     { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
   >(undefined);
 
-  const isProvisioned = isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance);
+  const isProvisioned = isProvisionedRule(rule);
 
   const [editRuleSupported, editRuleAllowed] = useRulerRuleAbility(rule, groupIdentifier, AlertRuleAction.Update);
 
@@ -52,17 +52,25 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
     buttons.push(
-      <LinkButton title="Edit" size={buttonSize} key="edit" variant="secondary" icon="pen" href={editURL}>
+      <LinkButton
+        title={t('alerting.rule-actions-buttons.title-edit', 'Edit')}
+        size={buttonSize}
+        key="edit"
+        variant="secondary"
+        fill="text"
+        href={editURL}
+      >
         <Trans i18nKey="common.edit">Edit</Trans>
       </LinkButton>
     );
   }
 
   return (
-    <Stack gap={1} alignItems="center" wrap="nowrap">
+    <Stack gap={0} alignItems="center" wrap="nowrap">
       {buttons}
       <AlertRuleMenu
         buttonSize={buttonSize}
+        fill="text"
         rulerRule={rule}
         promRule={promRule}
         groupIdentifier={groupIdentifier}
@@ -72,7 +80,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
       />
       {deleteModal}
-      {isGrafanaAlertingRule(rule) && showSilenceDrawer && (
+      {rulerRuleType.grafana.alertingRule(rule) && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (

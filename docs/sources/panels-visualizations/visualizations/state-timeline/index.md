@@ -15,17 +15,6 @@ labels:
     - oss
 title: State timeline
 weight: 100
-refs:
-  color-scheme:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#color-scheme
-  value-mappings:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-value-mappings/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-value-mappings/
 ---
 
 # State timeline
@@ -147,11 +136,11 @@ The **Page size** option lets you paginate the state timeline visualization to l
 
 ### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Axis options
 
-{{< docs/shared lookup="visualizations/axis-options-state-status.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+{{< docs/shared lookup="visualizations/axis-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Standard options
 

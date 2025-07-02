@@ -98,7 +98,7 @@ export {
 } from './text/string';
 export { type TextMatch, findHighlightChunksInText, findMatchesInText, parseFlags } from './text/text';
 export { type RenderMarkdownOptions, renderMarkdown, renderTextPanelMarkdown } from './text/markdown';
-export { textUtil } from './text/sanitize';
+export { textUtil, validatePath, PathValidationError } from './text/sanitize';
 
 // Events
 export { eventFactory } from './events/eventFactory';
@@ -255,10 +255,12 @@ export { UnaryOperationID, type UnaryOperation, unaryOperators } from './utils/u
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { toOption } from './utils/selectUtils';
 export * as arrayUtils from './utils/arrayUtils';
-export { store } from './utils/store';
+export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
+export { throwIfAngular } from './utils/throwIfAngular';
+export { fuzzySearch } from './utils/fuzzySearch';
 
-// Tranformations
+// Transformations
 export { standardTransformers } from './transformations/transformers';
 export {
   fieldMatchers,
@@ -550,12 +552,11 @@ export {
   type PluginExtensionLink,
   type PluginExtensionComponent,
   type PluginExtensionComponentMeta,
-  type PluginExtensionConfig,
+  type ComponentTypeWithExtensionMeta,
   type PluginExtensionFunction,
-  type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
+  type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
@@ -563,6 +564,7 @@ export {
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
+  type PluginExtensionResourceAttributesContext,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -599,6 +601,7 @@ export {
   type PluginMetaInfo,
   type PluginConfigPageProps,
   type PluginConfigPage,
+  type ExtensionInfo,
 } from './types/plugin';
 export {
   type InterpolateFunction,
@@ -813,7 +816,11 @@ export {
 export {
   type Action,
   type ActionModel,
+  type ActionVariable,
+  type ActionVariableInput,
+  ActionType,
   HttpRequestMethod,
+  ActionVariableType,
   defaultActionConfig,
   contentTypeOptions,
   httpMethodOptions,
@@ -872,3 +879,5 @@ export {
   userHasAllPermissions,
   userHasAnyPermission,
 } from './rbac/rbac';
+
+export { type UserStorage } from './types/userStorage';

@@ -1,9 +1,17 @@
 import { useMemo } from 'react';
 
-import { DataFrameType, PanelProps, buildHistogram, cacheFieldDisplayNames, getHistogramFields } from '@grafana/data';
-import { histogramFieldsToFrame, joinHistograms } from '@grafana/data/src/transformations/transformers/histogram';
+import {
+  histogramFieldsToFrame,
+  joinHistograms,
+  DataFrameType,
+  PanelProps,
+  buildHistogram,
+  cacheFieldDisplayNames,
+  getHistogramFields,
+} from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { TooltipDisplayMode, TooltipPlugin2, useTheme2 } from '@grafana/ui';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TooltipHoverMode } from '@grafana/ui/internal';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';
@@ -57,7 +65,11 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
   if (!histogram || !histogram.fields.length) {
     return (
       <div className="panel-empty">
-        <p>No histogram found in response</p>
+        <p>
+          <Trans i18nKey="histogram.histogram-panel.no-histogram-found-in-response">
+            No histogram found in response
+          </Trans>
+        </p>
       </div>
     );
   }

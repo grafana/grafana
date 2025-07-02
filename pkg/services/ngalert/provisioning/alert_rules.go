@@ -271,9 +271,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 // FilterOptions provides filtering for alert rule queries.
 // All fields are optional and will be applied as filters if provided.
 type FilterOptions struct {
-	ImportedPrometheusRule *bool
-	RuleGroups             []string
-	NamespaceUIDs          []string
+	HasPrometheusRuleDefinition *bool
+	RuleGroups                  []string
+	NamespaceUIDs               []string
 }
 
 func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertRulesQuery {
@@ -281,8 +281,8 @@ func (opts *FilterOptions) apply(q models.ListAlertRulesQuery) models.ListAlertR
 		return q
 	}
 
-	if opts.ImportedPrometheusRule != nil {
-		q.ImportedPrometheusRule = opts.ImportedPrometheusRule
+	if opts.HasPrometheusRuleDefinition != nil {
+		q.HasPrometheusRuleDefinition = opts.HasPrometheusRuleDefinition
 	}
 
 	if len(opts.NamespaceUIDs) > 0 {
@@ -450,6 +450,20 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user iden
 	return service.persistDelta(ctx, user, delta, provenance)
 }
 
+func (service *AlertRuleService) ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, provenance models.Provenance) error {
+	err := service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		for _, group := range groups {
+			err := service.ReplaceRuleGroup(ctx, user, *group, provenance)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	return err
+}
+
 func (service *AlertRuleService) DeleteRuleGroup(ctx context.Context, user identity.Requester, namespaceUID, group string, provenance models.Provenance) error {
 	return service.DeleteRuleGroups(ctx, user, provenance, &FilterOptions{
 		NamespaceUIDs: []string{namespaceUID},
@@ -556,7 +570,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 					})
 				}
 			}
-			if err := service.deleteRules(ctx, user.GetOrgID(), delta.Delete...); err != nil {
+			if err := service.deleteRules(ctx, user, delta.Delete...); err != nil {
 				return err
 			}
 		}
@@ -749,7 +763,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 	// This is different from deleting groups. We delete the rules directly rather than persisting a delta here to keep the semantics the same.
 	// TODO: Either persist a delta here as a breaking change, or deprecate this endpoint in favor of the group endpoint.
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		return service.deleteRules(ctx, user.GetOrgID(), rule)
+		return service.deleteRules(ctx, user, rule)
 	})
 }
 
@@ -775,18 +789,18 @@ func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, 
 }
 
 // deleteRules deletes a set of target rules and associated data, while checking for database consistency.
-func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, targets ...*models.AlertRule) error {
+func (service *AlertRuleService) deleteRules(ctx context.Context, user identity.Requester, targets ...*models.AlertRule) error {
 	uids := make([]string, 0, len(targets))
 	for _, tgt := range targets {
 		if tgt != nil {
 			uids = append(uids, tgt.UID)
 		}
 	}
-	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), models.NewUserUID(user), false, uids...); err != nil {
 		return err
 	}
 	for _, uid := range uids {
-		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, orgID); err != nil {
+		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, user.GetOrgID()); err != nil {
 			// We failed to clean up the record, but this doesn't break things. Log it and move on.
 			service.log.Warn("Failed to delete provenance record for rule: %w", err)
 		}

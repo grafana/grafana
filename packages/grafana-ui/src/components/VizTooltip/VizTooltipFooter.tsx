@@ -2,11 +2,14 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 
-import { Button, DataLinkButton, Icon, Stack } from '..';
-import { useStyles2 } from '../../themes';
-import { Trans } from '../../utils/i18n';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { ActionButton } from '../Actions/ActionButton';
+import { Button } from '../Button/Button';
+import { DataLinkButton } from '../DataLinks/DataLinkButton';
+import { Icon } from '../Icon/Icon';
+import { Stack } from '../Layout/Stack/Stack';
 import { ResponsiveProp } from '../Layout/utils/responsiveness';
 
 interface VizTooltipFooterProps {
@@ -73,7 +76,7 @@ const renderDataLinks = makeRenderLinksOrActions<LinkModel>(
 
 const renderActions = makeRenderLinksOrActions<ActionModel>(
   (title) => <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-action">Click to {{ actionTitle: title }}</Trans>,
-  (item, i, styles) => <ActionButton key={i} action={item} variant="secondary" />
+  (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
 export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
@@ -116,6 +119,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       textDecoration: 'underline',
       background: 'none',
+    },
+    padding: 0,
+    height: 'auto',
+    '& span': {
+      whiteSpace: 'normal',
+      textAlign: 'left',
     },
   }),
   oneClickWrapper: css({

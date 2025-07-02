@@ -1,11 +1,17 @@
 import { omit } from 'lodash';
 
-import { DataQuery, DataSourceApi, dateTimeFormat, ExploreUrlState, urlUtil } from '@grafana/data';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import {
+  DataQuery,
+  DataSourceApi,
+  dateTimeFormat,
+  ExploreUrlState,
+  urlUtil,
+  serializeStateToUrlParam,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
@@ -196,8 +202,8 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
     range: {
-      from: t('explore.rich-history-utils.default-from', 'now-1h'),
-      to: t('explore.rich-history-utils.default-to', 'now'),
+      from: 'now-1h',
+      to: 'now',
     },
     datasource: query.datasourceName,
     queries: query.queries,

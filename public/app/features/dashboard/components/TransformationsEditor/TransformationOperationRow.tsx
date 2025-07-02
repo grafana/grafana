@@ -12,6 +12,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import {
@@ -151,7 +152,10 @@ export const TransformationOperationRow = ({
       <>
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
         <QueryOperationToggleAction
-          title="Show transform help"
+          title={t(
+            'dashboard.transformation-operation-row.render-actions.title-show-transform-help',
+            'Show transform help'
+          )}
           icon="info-circle"
           // `instrumentToggleCallback` expects a function that takes a MouseEvent, is unused in the state setter. Instead, we simply toggle the state.
           onClick={instrumentToggleCallback(toggleShowHelp, 'help', showHelp)}
@@ -159,27 +163,30 @@ export const TransformationOperationRow = ({
         />
         {showFilterToggle && (
           <QueryOperationToggleAction
-            title="Filter"
+            title={t('dashboard.transformation-operation-row.render-actions.title-filter', 'Filter')}
             icon="filter"
             onClick={instrumentToggleCallback(toggleFilter, 'filter', showFilterEditor)}
             active={showFilterEditor}
           />
         )}
         <QueryOperationToggleAction
-          title="Debug"
+          title={t('dashboard.transformation-operation-row.render-actions.title-debug', 'Debug')}
           icon="bug"
           onClick={instrumentToggleCallback(toggleShowDebug, 'debug', showDebug)}
           active={showDebug}
         />
         <QueryOperationToggleAction
-          title="Disable transformation"
+          title={t(
+            'dashboard.transformation-operation-row.render-actions.title-disable-transformation',
+            'Disable transformation'
+          )}
           icon={disabled ? 'eye-slash' : 'eye'}
           onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled)}
           active={disabled}
           dataTestId={selectors.components.Transforms.disableTransformationButton}
         />
         <QueryOperationAction
-          title="Remove"
+          title={t('dashboard.transformation-operation-row.render-actions.title-remove', 'Remove')}
           icon="trash-alt"
           onClick={() => (config.featureToggles.transformationsRedesign ? setShowDeleteModal(true) : onRemove(index))}
         />
@@ -187,7 +194,9 @@ export const TransformationOperationRow = ({
         {config.featureToggles.transformationsRedesign && (
           <ConfirmModal
             isOpen={showDeleteModal}
-            title={`Delete ${uiConfig.name}?`}
+            title={t('dashboard.transformation-operation-row.title-delete', 'Delete {{name}}?', {
+              name: uiConfig.name,
+            })}
             body="Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen."
             confirmText="Delete"
             onConfirm={() => {
@@ -206,6 +215,7 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}

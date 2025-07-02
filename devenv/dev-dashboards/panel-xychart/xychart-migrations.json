@@ -28,10 +28,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -111,10 +108,7 @@
       "type": "xychart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -261,10 +255,7 @@
       "type": "xychart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -459,10 +450,7 @@
       "type": "xychart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 7,
         "w": 3,
@@ -483,10 +471,7 @@
       "type": "text"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -584,10 +569,7 @@
       "type": "xychart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -741,10 +723,7 @@
       "type": "xychart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1832,10 +1811,7 @@
       "type": "xychart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1933,10 +1909,7 @@
       "type": "xychart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2034,10 +2007,7 @@
       "type": "xychart"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {

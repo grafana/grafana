@@ -1,6 +1,7 @@
 import { DropResult } from '@hello-pangea/dnd';
 
 import { StandardEditorProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
@@ -13,7 +14,11 @@ type LayersEditorProps = StandardEditorProps<unknown, unknown, Options, GeomapIn
 export const LayersEditor = (props: LayersEditorProps) => {
   const { layers, selected, actions } = props.context.instanceState ?? {};
   if (!layers || !actions) {
-    return <div>No layers?</div>;
+    return (
+      <div>
+        <Trans i18nKey="geomap.layers-editor.no-layers">No layers?</Trans>
+      </div>
+    );
   }
 
   const onDragEnd = (result: DropResult) => {
@@ -58,7 +63,7 @@ export const LayersEditor = (props: LayersEditorProps) => {
         <AddLayerButton
           onChange={(v) => actions.addlayer(v.value!)}
           options={getLayersOptions(false).options}
-          label={'Add layer'}
+          label={t('geomap.layers-editor.label-add-layer', 'Add layer')}
         />
       </Container>
       <br />

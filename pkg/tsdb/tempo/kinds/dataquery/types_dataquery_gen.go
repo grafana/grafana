@@ -14,7 +14,6 @@ package dataquery
 import (
 	json "encoding/json"
 	errors "errors"
-	fmt "fmt"
 )
 
 type TempoQuery struct {
@@ -48,7 +47,7 @@ type TempoQuery struct {
 	// Defines the maximum number of spans per spanset that are returned from Tempo
 	Spss    *int64          `json:"spss,omitempty"`
 	Filters []TraceqlFilter `json:"filters"`
-	// Filters that are used to query the metrics summary
+	// deprecated Filters that are used to query the metrics summary
 	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
 	// The type of the table that is used to display the search results
 	TableType *SearchTableType `json:"tableType,omitempty"`
@@ -67,59 +66,10 @@ type TempoQuery struct {
 
 // NewTempoQuery creates a new TempoQuery object.
 func NewTempoQuery() *TempoQuery {
-	return &TempoQuery{}
+	return &TempoQuery{
+		Filters: []TraceqlFilter{},
+	}
 }
-
-type TempoQueryType string
-
-const (
-	TempoQueryTypeTraceql       TempoQueryType = "traceql"
-	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
-	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
-	TempoQueryTypeUpload        TempoQueryType = "upload"
-	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
-	TempoQueryTypeTraceId       TempoQueryType = "traceId"
-	TempoQueryTypeClear         TempoQueryType = "clear"
-)
-
-type MetricsQueryType string
-
-const (
-	MetricsQueryTypeRange   MetricsQueryType = "range"
-	MetricsQueryTypeInstant MetricsQueryType = "instant"
-)
-
-// The state of the TraceQL streaming search query
-type SearchStreamingState string
-
-const (
-	SearchStreamingStatePending   SearchStreamingState = "pending"
-	SearchStreamingStateStreaming SearchStreamingState = "streaming"
-	SearchStreamingStateDone      SearchStreamingState = "done"
-	SearchStreamingStateError     SearchStreamingState = "error"
-)
-
-// The type of the table that is used to display the search results
-type SearchTableType string
-
-const (
-	SearchTableTypeTraces SearchTableType = "traces"
-	SearchTableTypeSpans  SearchTableType = "spans"
-	SearchTableTypeRaw    SearchTableType = "raw"
-)
-
-// static fields are pre-set in the UI, dynamic fields are added by the user
-type TraceqlSearchScope string
-
-const (
-	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
-	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
-	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
-	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
-	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
-	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
-)
 
 type TraceqlFilter struct {
 	// Uniquely identify the filter, will not be used in the query generation
@@ -134,12 +84,65 @@ type TraceqlFilter struct {
 	ValueType *string `json:"valueType,omitempty"`
 	// The scope of the filter, can either be unscoped/all scopes, resource or span
 	Scope *TraceqlSearchScope `json:"scope,omitempty"`
+	// Whether the value is a custom value typed by the user
+	IsCustomValue *bool `json:"isCustomValue,omitempty"`
 }
 
 // NewTraceqlFilter creates a new TraceqlFilter object.
 func NewTraceqlFilter() *TraceqlFilter {
 	return &TraceqlFilter{}
 }
+
+// static fields are pre-set in the UI, dynamic fields are added by the user
+type TraceqlSearchScope string
+
+const (
+	TraceqlSearchScopeIntrinsic       TraceqlSearchScope = "intrinsic"
+	TraceqlSearchScopeUnscoped        TraceqlSearchScope = "unscoped"
+	TraceqlSearchScopeEvent           TraceqlSearchScope = "event"
+	TraceqlSearchScopeInstrumentation TraceqlSearchScope = "instrumentation"
+	TraceqlSearchScopeLink            TraceqlSearchScope = "link"
+	TraceqlSearchScopeResource        TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan            TraceqlSearchScope = "span"
+)
+
+// The type of the table that is used to display the search results
+type SearchTableType string
+
+const (
+	SearchTableTypeTraces SearchTableType = "traces"
+	SearchTableTypeSpans  SearchTableType = "spans"
+	SearchTableTypeRaw    SearchTableType = "raw"
+)
+
+type MetricsQueryType string
+
+const (
+	MetricsQueryTypeRange   MetricsQueryType = "range"
+	MetricsQueryTypeInstant MetricsQueryType = "instant"
+)
+
+type TempoQueryType string
+
+const (
+	TempoQueryTypeTraceql       TempoQueryType = "traceql"
+	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
+	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
+	TempoQueryTypeUpload        TempoQueryType = "upload"
+	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
+	TempoQueryTypeTraceId       TempoQueryType = "traceId"
+	TempoQueryTypeClear         TempoQueryType = "clear"
+)
+
+// The state of the TraceQL streaming search query
+type SearchStreamingState string
+
+const (
+	SearchStreamingStatePending   SearchStreamingState = "pending"
+	SearchStreamingStateStreaming SearchStreamingState = "streaming"
+	SearchStreamingStateDone      SearchStreamingState = "done"
+	SearchStreamingStateError     SearchStreamingState = "error"
+)
 
 type StringOrArrayOfString struct {
 	String        *string  `json:"String,omitempty"`
@@ -161,7 +164,7 @@ func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.

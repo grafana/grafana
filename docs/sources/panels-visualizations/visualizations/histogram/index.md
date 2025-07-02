@@ -18,11 +18,6 @@ labels:
 title: Histogram
 weight: 100
 refs:
-  standard-calculations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
   color-scheme:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#color-scheme
@@ -46,7 +41,7 @@ You can use a histogram visualization if you need to:
 
 ## Configure a histogram visualization
 
-Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a histogram visualization:
+After you've created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a histogram visualization:
 
 {{< youtube id="QfJ480j9-KM" >}}
 
@@ -92,47 +87,42 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/histogram-panel/histogram-example-height-weight.png" max-width="1025px" alt="A histogram visualization showing the male height and weight distribution" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Histogram options
+### Histogram options
 
 Use the following options to refine your histogram visualization.
 
-### Bucket count
+<!-- prettier-ignore-start -->
 
-Specifies the number of bins used to group your data in the histogram, affecting the granularity of the displayed distribution. Leave this empty for automatic bucket count of 30.
+| Option | Description |
+| ------ | ----------- |
+| Bucket count | Specifies the number of bins used to group your data in the histogram, affecting the granularity of the displayed distribution. Leave this empty for automatic bucket count of 30. |
+| Bucket size | The size of the buckets. Leave this empty for automatic bucket sizing (~10% of the full range). |
+| [Bucket offset](#bucket-offset) | If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window. |
+| Combine series | This will merge all series and fields into a combined histogram. |
+| Stacking | Controls how multiple series are displayed in the histogram. Choose from the following:<ul><li>**Off** - Series are not stacked, but instead shown side by side.</li><li>**Normal** - Series are stacked on top of each other, showing cumulative values.</li><li>**100%** - Series are stacked to fill 100% of the chart, showing the relative proportion of each series.</li></ul> |
+| Line width | Controls line width of the bars. |
+| Fill opacity | Controls the fill opacity bars. |
+| [Gradient mode](#gradient-mode) | Set the mode of the gradient fill. Fill gradient is based on the line color. |
 
-### Bucket size
+<!-- prettier-ignore-end -->
 
-The size of the buckets. Leave this empty for automatic bucket sizing (~10% of the full range).
+#### Bucket offset
 
-### Bucket offset
+If the first bucket should not start at zero, a non-zero offset has the effect of shifting the aggregation window.
 
-If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window. For example, 5-sized buckets that are 0-5, 5-10, 10-15 with a default 0 offset would become 2-7, 7-12, 12-17 with an offset of 2; offsets of 0, 5, or 10, in this case, would effectively do nothing. Typically, this option would be used with an explicitly defined bucket size rather than automatic. For this setting to affect, the offset amount should be greater than 0 and less than the bucket size; values outside this range will have the same effect as values within this range.
+For example, 5-sized buckets that are 0-5, 5-10, 10-15 with a default 0 offset would become 2-7, 7-12, 12-17 with an offset of 2; offsets of 0, 5, or 10, in this case, would effectively do nothing.
 
-### Combine series
+Typically, this option would be used with an explicitly defined bucket size rather than automatic. For this setting to affect, the offset amount should be greater than 0 and less than the bucket size; values outside this range have the same effect as values within this range.
 
-This will merge all series and fields into a combined histogram.
-
-### Stacking
-
-Controls how multiple series are displayed in the histogram. Choose from the following:
-
-- **Off** - Series are not stacked, but instead shown side by side.
-- **Normal** - Series are stacked on top of each other, showing cumulative values.
-- **100%** - Series are stacked to fill 100% of the chart, showing the relative proportion of each series.
-
-### Line width
-
-Controls line width of the bars.
-
-### Fill opacity
-
-Controls the fill opacity bars.
-
-### Gradient mode
+#### Gradient mode
 
 Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme](ref:color-scheme) field option.
 
@@ -145,30 +135,30 @@ Choose from the following:
 - **Hue** - Gradient color is generated based on the hue of the line color.
 - **Scheme** - The selected [color palette](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-standard-options/#color-scheme) is applied to the histogram bars.
 
-## Tooltip options
+### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
-## Legend options
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links and actions
+### Data links and actions
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}

@@ -14,6 +14,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var netTransport = &http.Transport{
@@ -25,10 +27,11 @@ var netTransport = &http.Transport{
 }
 
 var netClient = &http.Client{
-	Transport: netTransport,
+	Transport: otelhttp.NewTransport(netTransport),
 }
 
 const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
+const rateLimiterHeader = "X-Tenant-ID"
 
 var (
 	remoteVersionFetchInterval   time.Duration = time.Second * 15
@@ -69,7 +72,7 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 }
 
 func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts Opts, renderKey string) (*url.URL, error) {
-	rendererUrl := rs.Cfg.RendererUrl
+	rendererUrl := rs.Cfg.RendererServerUrl
 	if renderType == RenderCSV {
 		rendererUrl += "/csv"
 	}
@@ -158,6 +161,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	}
 
 	req.Header.Set(authTokenHeader, rs.Cfg.RendererAuthToken)
+	req.Header.Set(rateLimiterHeader, rs.domain)
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
 	for k, v := range headers {
 		req.Header[k] = v
@@ -176,6 +180,10 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 			}
 		}
 		return nil, fmt.Errorf("failed to send request to remote rendering service: %w", err)
+	}
+
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return nil, ErrTooManyRequests
 	}
 
 	return resp, nil
@@ -240,7 +248,7 @@ func (rs *RenderingService) getRemotePluginVersionWithRetry(callback func(string
 }
 
 func (rs *RenderingService) getRemotePluginVersion() (string, error) {
-	rendererURL, err := url.Parse(rs.Cfg.RendererUrl + "/version")
+	rendererURL, err := url.Parse(rs.Cfg.RendererServerUrl + "/version")
 	if err != nil {
 		return "", err
 	}

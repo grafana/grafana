@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
@@ -12,7 +12,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'home':
       return t('nav.home.title', 'Home');
     case 'home-setup-guide':
-      return t('nav.setup-guide.title', 'Setup guide');
+      return t('nav.setup-guide.title', 'Getting started guide');
     case 'new':
       return t('nav.new.title', 'New');
     case 'create':
@@ -89,6 +89,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-groups.title', 'Active notifications');
     case 'alerting-admin':
       return t('nav.alerting-admin.title', 'Settings');
+    case 'alerts/recently-deleted':
+      return t('nav.alerts-recently-deleted.title', 'Recently deleted');
     case 'cfg':
       return t('nav.config.title', 'Administration');
     case 'cfg/general':
@@ -115,8 +117,6 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.plugins.title', 'Plugins');
     case 'org-settings':
       return t('nav.org-settings.title', 'Default preferences');
-    case 'apikeys':
-      return t('nav.api-keys.title', 'API keys');
     case 'serviceaccounts':
       return t('nav.service-accounts.title', 'Service accounts');
     case 'admin':
@@ -150,7 +150,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-incident-app':
       return t('nav.incidents.title', 'Incident');
     case 'plugin-page-grafana-ml-app':
-      return t('nav.machine-learning.title', 'Machine learning');
+      return t('nav.machine-learning.title', 'AI & machine learning');
     case 'plugin-page-grafana-slo-app':
       return t('nav.slo.title', 'SLO');
     case 'plugin-page-k6-app':
@@ -253,6 +253,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.alerting-silences.subtitle', 'Stop notifications from one or more alerting rules');
     case 'groups':
       return t('nav.alerting-groups.subtitle', 'See grouped alerts with active notifications');
+    case 'alerts/recently-deleted':
+      return t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules');
     case 'datasources':
       return t('nav.datasources.subtitle', 'Add and configure data sources');
     case 'correlations':
@@ -265,8 +267,6 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.plugins.subtitle', 'Extend the Grafana experience with plugins');
     case 'org-settings':
       return t('nav.org-settings.subtitle', 'Manage preferences across an organization');
-    case 'apikeys':
-      return t('nav.api-keys.subtitle', 'Manage and create API keys that are used to interact with Grafana HTTP APIs');
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
     case 'groupsync':
@@ -280,10 +280,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'storage':
       return t('nav.storage.subtitle', 'Manage file storage');
     case 'migrate-to-cloud':
-      return t(
-        'nav.migrate-to-cloud.subtitle',
-        'Copy configuration from your self-managed installation to a cloud stack'
-      );
+      return t('nav.migrate-to-cloud.subtitle', 'Copy resources from your self-managed installation to a cloud stack');
     case 'support-bundles':
       return t('nav.support-bundles.subtitle', 'Download support bundles');
     case 'admin':
@@ -318,6 +315,8 @@ export function getNavSubTitle(navId: string | undefined) {
         'nav.private-data-source-connections.subtitle',
         'Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.'
       );
+    case 'plugin-page-grafana-ml-app':
+      return t('nav.machine-learning.subtitle', 'Explore AI and machine learning features');
     default:
       return undefined;
   }

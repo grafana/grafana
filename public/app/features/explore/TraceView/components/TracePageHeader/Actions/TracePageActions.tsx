@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
 
@@ -43,6 +44,7 @@ export type TracePageActionsProps = {
 export default function TracePageActions(props: TracePageActionsProps) {
   const { traceId, data, app } = props;
   const theme = useTheme2();
+
   const styles = getStyles(theme);
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
 
@@ -66,26 +68,40 @@ export default function TracePageActions(props: TracePageActionsProps) {
 
   return (
     <div className={styles.TracePageActions}>
-      <div className={styles.feedbackContainer}>
-        <Icon name="comment-alt-message" />
-        <a
-          href="https://forms.gle/RZDEx8ScyZNguDoC8"
-          className={styles.feedback}
-          title="Share your thoughts about tracing in Grafana."
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          Give feedback
-        </a>
-      </div>
+      {config.feedbackLinksEnabled && (
+        <div className={styles.feedbackContainer}>
+          <Icon name="comment-alt-message" />
+          <a
+            href="https://forms.gle/RZDEx8ScyZNguDoC8"
+            className={styles.feedback}
+            title={t(
+              'explore.trace-page-actions.title-share-thoughts-about-tracing-grafana',
+              'Share your thoughts about tracing in Grafana.'
+            )}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            <Trans i18nKey="explore.trace-page-actions.give-feedback">Give feedback</Trans>
+          </a>
+        </div>
+      )}
 
       <ActionButton
         onClick={copyTraceId}
         ariaLabel={'Copy Trace ID'}
-        label={copyTraceIdClicked ? 'Copied!' : 'Trace ID'}
+        label={
+          copyTraceIdClicked
+            ? t('explore.trace-page-actions.label-copied', 'Copied!')
+            : t('explore.trace-page-actions.label-trace-id', 'Trace ID')
+        }
         icon={'copy'}
       />
-      <ActionButton onClick={exportTrace} ariaLabel={'Export Trace'} label={'Export'} icon={'save'} />
+      <ActionButton
+        onClick={exportTrace}
+        ariaLabel={'Export Trace'}
+        label={t('explore.trace-page-actions.label-export', 'Export')}
+        icon={'save'}
+      />
     </div>
   );
 }

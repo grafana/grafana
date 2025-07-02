@@ -4,7 +4,7 @@ import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within }
 
 import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
-import { flushMicrotasks, testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
+import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -17,11 +17,11 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasourc
 
 import { ContactPoint } from './ContactPoint';
 import { ContactPointsPageContents } from './ContactPoints';
-import setupMimirFlavoredServer from './__mocks__/mimirFlavoredServer';
+import { RECEIVER_META_KEY } from './constants';
+import setupMimirFlavoredServer from './mocks/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
-} from './__mocks__/vanillaAlertmanagerServer';
-import { RECEIVER_META_KEY } from './constants';
+} from './mocks/vanillaAlertmanagerServer';
 import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
 
 /**
@@ -58,6 +58,16 @@ const basicContactPoint: ContactPointWithMetadata = {
   name: 'my-contact-point',
   id: 'foo',
   grafana_managed_receiver_configs: [],
+};
+
+const basicContactPointInUse: ContactPointWithMetadata = {
+  ...basicContactPoint,
+  metadata: {
+    annotations: {
+      [K8sAnnotations.InUseRules]: '1',
+      [K8sAnnotations.InUseRoutes]: '1',
+    },
+  },
 };
 
 const contactPointWithEverything: ContactPointWithMetadata = {
@@ -144,6 +154,20 @@ describe('contact points', () => {
 
         expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
+
+      test('defaults to contact points tab if user has only read permission', async () => {
+        grantUserPermissions([AccessControlAction.AlertingReceiversRead]);
+        renderWithProvider(<ContactPointsPageContents />);
+
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      });
+
+      test('defaults to contact points tab if user has only create permission', async () => {
+        grantUserPermissions([AccessControlAction.AlertingReceiversCreate]);
+        renderWithProvider(<ContactPointsPageContents />);
+
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      });
     });
 
     describe('templates tab', () => {
@@ -171,15 +195,14 @@ describe('contact points', () => {
       expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'export all' })).toBeInTheDocument();
 
-      // 2 of them are unused by routes in the mock response
       const unusedBadge = screen.getAllByLabelText('unused');
-      expect(unusedBadge).toHaveLength(3);
+      expect(unusedBadge).toHaveLength(4);
 
-      const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
+      const viewProvisioned = screen.getByTestId('view-action');
       expect(viewProvisioned).toBeInTheDocument();
       expect(viewProvisioned).toBeEnabled();
 
-      const editButtons = screen.getAllByRole('link', { name: 'edit-action' });
+      const editButtons = screen.getAllByTestId('edit-action');
       expect(editButtons).toHaveLength(4);
       editButtons.forEach((button) => {
         expect(button).toBeEnabled();
@@ -203,25 +226,13 @@ describe('contact points', () => {
       // should disable create contact point
       expect(screen.getByRole('link', { name: 'add contact point' })).toHaveAttribute('aria-disabled', 'true');
 
-      // there should be no edit buttons
-      expect(screen.queryAllByRole('link', { name: 'edit-action' })).toHaveLength(0);
+      // edit permission is based on API response - we should have 3 buttons
+      const editButtons = await screen.findAllByTestId('edit-action');
+      expect(editButtons).toHaveLength(3);
 
-      // there should be view buttons though
-      const viewButtons = screen.getAllByRole('link', { name: 'view-action' });
-      expect(viewButtons).toHaveLength(5);
-
-      // delete should be disabled in the "more" actions
-      const moreButtons = screen.queryAllByRole('button', { name: /More/ });
-      expect(moreButtons).toHaveLength(5);
-
-      // check if all of the delete buttons are disabled
-      for await (const button of moreButtons) {
-        await user.click(button);
-        const deleteButton = screen.queryByRole('menuitem', { name: 'delete' });
-        expect(deleteButton).toBeDisabled();
-        // click outside the menu to close it otherwise we can't interact with the rest of the page
-        await user.click(document.body);
-      }
+      // there should be view buttons though - one for provisioned, and one for the un-editable contact point
+      const viewButtons = screen.getAllByTestId('view-action');
+      expect(viewButtons).toHaveLength(2);
 
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
@@ -297,7 +308,7 @@ describe('contact points', () => {
         },
       ];
 
-      const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPoint, policies }} />);
+      const { user } = renderWithProvider(<ContactPoint contactPoint={{ ...basicContactPointInUse, policies }} />);
 
       expect(screen.getByRole('link', { name: /1 notification policy/ })).toBeInTheDocument();
 
@@ -376,7 +387,7 @@ describe('contact points', () => {
       const unusedBadge = screen.getAllByLabelText('unused');
       expect(unusedBadge).toHaveLength(1);
 
-      const editButtons = screen.getAllByRole('link', { name: 'edit-action' });
+      const editButtons = screen.getAllByTestId('edit-action');
       expect(editButtons).toHaveLength(2);
       editButtons.forEach((button) => {
         expect(button).toBeEnabled();
@@ -420,7 +431,7 @@ describe('contact points', () => {
 
       expect(screen.queryByRole('link', { name: 'add contact point' })).not.toBeInTheDocument();
 
-      const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
+      const viewProvisioned = screen.getByTestId('view-action');
       expect(viewProvisioned).toBeInTheDocument();
       expect(viewProvisioned).toBeEnabled();
 
@@ -431,9 +442,7 @@ describe('contact points', () => {
     });
   });
 
-  describe('alertingApiServer enabled', () => {
-    testWithFeatureToggles(['alertingApiServer']);
-
+  describe('Grafana alertmanager', () => {
     beforeEach(() => {
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,

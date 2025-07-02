@@ -41,7 +41,7 @@ __debug_bin*
 # This is the new place of the block, but I leave the previous here for a while
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
-/devenv/docker/blocks/spanner_tests
+/devenv/docker/blocks/mt-db
 
 /tmp
 tools/phantomjs/phantomjs
@@ -68,6 +68,9 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
+.cursor/
+.devcontainer/
+
 .eslintcache
 .stylelintcache
 
@@ -95,6 +98,9 @@ conf/custom.ini
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
 
+# sample yaml files
+!/conf/provisioning/sample/*.yaml
+
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
 profile.cov
@@ -109,6 +115,7 @@ profile.cov
 # Extensions
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 /pkg/server/wireexts_enterprise.go
+/pkg/server/enterprise_wire_gen.go
 /pkg/build/cmd/enterprise.go
 /pkg/extensions/*
 !/pkg/extensions/.keep
@@ -148,6 +155,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
 /packages/grafana-ui/.storybook/static
+/packages/grafana-ui/unstable
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
@@ -196,9 +204,6 @@ compilation-stats.json
 
 # auto generated frontend docs
 /docs/sources/packages_api
-
-# wire generated files
-**/wire_gen.go
 
 # Auto-generated internationalization files
 public/locales/_build/

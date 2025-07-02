@@ -1,4 +1,4 @@
-go 1.23.5
+go 1.24.4
 
 // The `skip:golangci-lint` comment tag is used to exclude the package from the `golangci-lint` GitHub Action.
 // The module at the root of the repo (`.`) is excluded because ./pkg/... is included manually in the `golangci-lint` configuration.
@@ -7,10 +7,14 @@ use (
 	. // skip:golangci-lint
 	./apps/advisor
 	./apps/alerting/notifications
+	./apps/dashboard
+	./apps/folder
+	./apps/iam
 	./apps/investigations
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
+	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
 	./pkg/apiserver
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
@@ -18,17 +22,8 @@ use (
 	./pkg/plugins/codegen
 	./pkg/promlib
 	./pkg/semconv
-	./pkg/storage/unified/apistore
-	./pkg/storage/unified/resource
-	./pkg/util/xorm // skip:golangci-lint
 )
 
-// when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
-// but we don't want to change all the imports. so we use replace to handle this situation
-replace xorm.io/xorm => ./pkg/util/xorm
-
-replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.126.0
-
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250604130045-92c8f6389b36
 
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56

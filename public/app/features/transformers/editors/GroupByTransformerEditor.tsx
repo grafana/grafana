@@ -11,11 +11,8 @@ import {
   TransformerCategory,
   GrafanaTheme2,
 } from '@grafana/data';
-import {
-  GroupByFieldOptions,
-  GroupByOperationID,
-  GroupByTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/groupBy';
+import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -32,7 +29,7 @@ export const GroupByTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<GroupByTransformerOptions>) => {
-  const fieldNames = useAllFieldNamesFromDataFrames(input);
+  const fieldNames = useAllFieldNamesFromDataFrames(input, true);
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
@@ -69,7 +66,13 @@ export const GroupByTransformerEditor = ({
   return (
     <Stack direction="column">
       {showCalcAlert && (
-        <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+        <Alert
+          title={t(
+            'transformers.group-by-transformer-editor.title-calc-alert',
+            'Calculations will not have an effect if no fields are being grouped on'
+          )}
+          severity="warning"
+        />
       )}
       {fieldNames.map((key) => (
         <GroupByFieldConfiguration
@@ -90,6 +93,7 @@ const options = [
 
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
+
   const styles = getStyles(theme);
 
   const onChange = useCallback(
@@ -106,13 +110,19 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     <InlineField className={styles.label} label={fieldName} grow shrink>
       <Stack gap={0.5} direction="row">
         <div className={styles.operation}>
-          <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
+          <Select
+            options={options}
+            value={config?.operation}
+            placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
+            onChange={onChange}
+            isClearable
+          />
         </div>
 
         {config?.operation === GroupByOperationID.aggregate && (
           <StatsPicker
             className={styles.aggregations}
-            placeholder="Select Stats"
+            placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
             stats={config.aggregations}
             onChange={(stats) => {

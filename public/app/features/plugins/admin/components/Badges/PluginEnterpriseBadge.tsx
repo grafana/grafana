@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Badge, PluginSignatureBadge, Stack, useStyles2 } from '@grafana/ui';
 
@@ -13,7 +14,7 @@ export function PluginEnterpriseBadge({ plugin }: Props): React.ReactElement {
   const customBadgeStyles = useStyles2(getBadgeColor);
 
   if (featureEnabled('enterprise.plugins')) {
-    return <Badge text="Enterprise" color="blue" />;
+    return <Badge text={t('plugins.plugin-enterprise-badge.text-enterprise', 'Enterprise')} color="blue" />;
   }
 
   return (
@@ -22,11 +23,14 @@ export function PluginEnterpriseBadge({ plugin }: Props): React.ReactElement {
       <Badge
         icon="lock"
         role="img"
-        aria-label="lock icon"
-        text="Enterprise"
+        aria-label={t('plugins.plugin-enterprise-badge.aria-label-enterprise', 'Enterprise')}
+        text={t('plugins.plugin-enterprise-badge.text-enterprise', 'Enterprise')}
         color="blue"
         className={customBadgeStyles}
-        title="Requires a Grafana Enterprise license"
+        title={t(
+          'plugins.plugin-enterprise-badge.title-requires-a-grafana-enterprise-license',
+          'Requires a Grafana Enterprise license'
+        )}
       />
     </Stack>
   );

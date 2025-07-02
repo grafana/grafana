@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
@@ -10,13 +11,13 @@ import {
   alertStateToReadable,
   alertStateToState,
   getFirstActiveAt,
-  isAlertingRule,
+  prometheusRuleType,
 } from 'app/features/alerting/unified/utils/rules';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
-import { AlertInstanceTotalState, AlertingRule, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
+import { AlertInstanceTotalState, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { UnifiedAlertListOptions } from '../types';
@@ -47,7 +48,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
       <ol className={styles.alertRuleList}>
         {rulesToDisplay.map((ruleWithLocation, index) => {
           const { namespaceName, groupName, dataSourceName } = ruleWithLocation;
-          const alertingRule: AlertingRule | undefined = isAlertingRule(ruleWithLocation.promRule)
+          const alertingRule = prometheusRuleType.alertingRule(ruleWithLocation.promRule)
             ? ruleWithLocation.promRule
             : undefined;
           const firstActiveAt = getFirstActiveAt(alertingRule);
@@ -93,9 +94,11 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                           target="__blank"
                           className={styles.link}
                           rel="noopener"
-                          aria-label="View alert rule"
+                          aria-label={t('alertlist.ungrouped-mode-view.aria-label-view-alert-rule', 'View alert rule')}
                         >
-                          <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>View alert rule</span>
+                          <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>
+                            <Trans i18nKey="alertlist.ungrouped-mode-view.view-alert-rule">View alert rule</Trans>
+                          </span>
                           <Icon name={'external-link-alt'} size="sm" />
                         </a>
                       )}
@@ -105,15 +108,14 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                         {alertStateToReadable(alertingRule.state)}
                       </span>{' '}
                       {firstActiveAt && alertingRule.state !== PromAlertingRuleState.Inactive && (
-                        <>
-                          for{' '}
-                          <span>
-                            {intervalToAbbreviatedDurationString({
-                              start: firstActiveAt,
-                              end: Date.now(),
-                            })}
-                          </span>
-                        </>
+                        <Trans
+                          i18nKey="alertlist.ungrouped-mode-view.active-for"
+                          values={{
+                            duration: intervalToAbbreviatedDurationString({ start: firstActiveAt, end: Date.now() }),
+                          }}
+                        >
+                          for <span>{'{{duration}}'}</span>
+                        </Trans>
                       )}
                     </div>
                   </div>

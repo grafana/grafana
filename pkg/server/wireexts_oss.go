@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
+	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -52,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
@@ -120,6 +122,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
+	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -146,6 +149,7 @@ var wireExtsBaseCLISet = wire.NewSet(
 	metrics.WireSet,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
+	featuremgmt.ProvideOpenFeatureService,
 	hooks.ProvideService,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
@@ -155,6 +159,9 @@ var wireExtsBaseCLISet = wire.NewSet(
 var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
+	// Unified storage
+	resource.ProvideStorageMetrics,
+	resource.ProvideIndexMetrics,
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(

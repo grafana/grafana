@@ -5,7 +5,7 @@ import { PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { getCatalogPluginMock } from '../__mocks__';
+import { getCatalogPluginMock } from '../mocks/mockHelpers';
 import { PluginTabIds } from '../types';
 
 import { PluginDetailsBody } from './PluginDetailsBody';
@@ -22,12 +22,6 @@ describe('PluginDetailsBody', () => {
       name: 'renderer type plugin',
       plugin: {
         type: PluginType.renderer,
-      },
-    },
-    {
-      name: 'secrets manager type plugin',
-      plugin: {
-        type: PluginType.secretsmanager,
       },
     },
     {

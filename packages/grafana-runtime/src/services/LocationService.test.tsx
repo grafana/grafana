@@ -38,6 +38,13 @@ describe('LocationService', () => {
       expect(locationService.getLocation().search).toBe('?servers=A&servers=B&servers=C');
     });
 
+    it('should handle boolean string values', () => {
+      locationService.push('/?query1=false&query2=true&query3');
+      locationService.partial({ newProp: 'a' });
+
+      expect(locationService.getLocation().search).toBe('?query1=false&query2=true&query3=true&newProp=a');
+    });
+
     it('persist state', () => {
       locationService.push({
         pathname: '/d/123',

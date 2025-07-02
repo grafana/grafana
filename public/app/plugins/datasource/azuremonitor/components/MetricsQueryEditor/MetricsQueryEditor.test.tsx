@@ -1,18 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
-import createMockPanelData from '../../__mocks__/panelData';
-import createMockQuery from '../../__mocks__/query';
-import {
-  createMockResourceGroupsBySubscription,
-  createMockSubscriptions,
-  mockResourcesByResourceGroup,
-} from '../../__mocks__/resourcePickerRows';
 import { selectors } from '../../e2e/selectors';
-import ResourcePickerData from '../../resourcePicker/resourcePickerData';
+import createMockDatasource from '../../mocks/datasource';
+import createMockPanelData from '../../mocks/panelData';
+import createMockQuery from '../../mocks/query';
 import { selectOptionInTest } from '../../utils/testUtils';
+import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
 
 import MetricsQueryEditor from './MetricsQueryEditor';
 
@@ -29,23 +23,6 @@ const variableOptionGroup = {
   label: 'Template variables',
   options: [],
 };
-
-export function createMockResourcePickerData() {
-  const mockDatasource = createMockDatasource();
-  const mockResourcePicker = new ResourcePickerData(
-    createMockInstanceSetttings(),
-    mockDatasource.azureMonitorDatasource
-  );
-
-  mockResourcePicker.getSubscriptions = jest.fn().mockResolvedValue(createMockSubscriptions());
-  mockResourcePicker.getResourceGroupsBySubscriptionId = jest
-    .fn()
-    .mockResolvedValue(createMockResourceGroupsBySubscription());
-  mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
-  mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
-  mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
-  return mockResourcePicker;
-}
 
 describe('MetricsQueryEditor', () => {
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;

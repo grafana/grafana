@@ -11,7 +11,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	dashboardalpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
+	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -71,8 +71,6 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger 
 }
 
 func (s *Server) IsHealthy(ctx context.Context) (bool, error) {
-	// FIXME: get back to openfga.IsReady() when issue is fixed
-	// https://github.com/openfga/openfga/issues/2251
 	_, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
 		PageSize: wrapperspb.Int32(1),
 	})
