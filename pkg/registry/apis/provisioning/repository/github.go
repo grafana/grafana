@@ -662,7 +662,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *FileInfo) (*p
 
 	urls := &provisioning.ResourceURLs{
 		RepositoryURL: cfg.URL,
-		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
+		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, safepath.Join(cfg.Path, file.Path)),
 	}
 
 	if ref != cfg.Branch {
