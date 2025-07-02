@@ -3,8 +3,8 @@ import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import SettingsPage from './Settings';
-import DataSourcesResponse from './components/settings/__mocks__/api/datasources.json';
-import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/__mocks__/server';
+import DataSourcesResponse from './components/settings/mocks/api/datasources.json';
+import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
 

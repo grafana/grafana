@@ -1,7 +1,7 @@
 import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { createLogLine, createLogRow } from '../__mocks__/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 
 import { LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';

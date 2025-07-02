@@ -4,10 +4,10 @@ import { CoreApp } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import * as ui from '@grafana/ui';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import { invalidNamespaceError } from '../../__mocks__/errors';
-import createMockQuery from '../../__mocks__/query';
 import { selectors } from '../../e2e/selectors';
+import createMockDatasource from '../../mocks/datasource';
+import { invalidNamespaceError } from '../../mocks/errors';
+import createMockQuery from '../../mocks/query';
 import { AzureQueryType, ResultFormat } from '../../types';
 import { selectOptionInTest } from '../../utils/testUtils';
 import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';

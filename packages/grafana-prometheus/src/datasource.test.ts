@@ -24,7 +24,7 @@ import {
   createDefaultPromResponse,
   fetchMockCalledWith,
   getMockTimeRange,
-} from './test/__mocks__/datasource';
+} from './test/mocks/datasource';
 import {
   PromApplication,
   PrometheusCacheLevel,

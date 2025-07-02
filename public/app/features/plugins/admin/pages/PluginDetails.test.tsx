@@ -14,9 +14,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
 import * as api from '../api';
 import { usePluginConfig } from '../hooks/usePluginConfig';
+import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../mocks/mockHelpers';
 import { fetchRemotePlugins } from '../state/actions';
 import {
   CatalogPlugin,

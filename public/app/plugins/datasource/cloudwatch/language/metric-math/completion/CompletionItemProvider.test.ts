@@ -1,9 +1,9 @@
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { setupMockedTemplateService } from '../../../__mocks__/CloudWatchDataSource';
-import * as MetricMathTestData from '../../../__mocks__/metric-math-test-data';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
+import { setupMockedTemplateService } from '../../../mocks/CloudWatchDataSource';
+import * as MetricMathTestData from '../../../mocks/metric-math-test-data';
+import MonacoMock from '../../../mocks/monarch/Monaco';
+import TextModel from '../../../mocks/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import cloudWatchMetricMathLanguageDefinition from '../definition';
 import {

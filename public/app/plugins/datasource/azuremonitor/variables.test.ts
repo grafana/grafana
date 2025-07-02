@@ -2,8 +2,8 @@ import { from, lastValueFrom } from 'rxjs';
 
 import { DataQueryRequest, toDataFrame } from '@grafana/data';
 
-import createMockDatasource from './__mocks__/datasource';
-import { invalidSubscriptionError } from './__mocks__/errors';
+import createMockDatasource from './mocks/datasource';
+import { invalidSubscriptionError } from './mocks/errors';
 import { AzureMonitorQuery, AzureQueryType } from './types';
 import { VariableSupport } from './variables';
 

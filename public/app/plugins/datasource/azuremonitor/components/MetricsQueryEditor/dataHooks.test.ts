@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import createMockDatasource from '../../__mocks__/datasource';
 import Datasource from '../../datasource';
+import createMockDatasource from '../../mocks/datasource';
 import { AzureMetricQuery, AzureMonitorOption, AzureMonitorQuery, AzureQueryType } from '../../types';
 
 import {

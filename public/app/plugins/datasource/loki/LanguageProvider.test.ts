@@ -2,11 +2,11 @@ import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, getDefaultTimeRa
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
-import { createDetectedFieldValuesMetadataRequest } from './__mocks__/createDetectedFieldValuesMetadataRequest';
-import { createDetectedFieldsMetadataRequest } from './__mocks__/createDetectedFieldsMetadataRequest';
-import { createLokiDatasource } from './__mocks__/datasource';
-import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { createDetectedFieldValuesMetadataRequest } from './mocks/createDetectedFieldValuesMetadataRequest';
+import { createDetectedFieldsMetadataRequest } from './mocks/createDetectedFieldsMetadataRequest';
+import { createLokiDatasource } from './mocks/datasource';
+import { createMetadataRequest } from './mocks/metadataRequest';
 import {
   extractLogParserFromDataFrame,
   extractLabelKeysFromDataFrame,

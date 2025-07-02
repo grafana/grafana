@@ -1,5 +1,5 @@
-import createMockDatasource from './__mocks__/datasource';
 import { migrateQuery, migrateStringQueriesToObjectQueries } from './grafanaTemplateVariableFns';
+import createMockDatasource from './mocks/datasource';
 import { AzureMonitorQuery, AzureQueryType } from './types';
 
 describe('migrateStringQueriesToObjectQueries', () => {

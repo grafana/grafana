@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockQuery from '../../__mocks__/query';
+import createMockDatasource from '../../mocks/datasource';
+import createMockQuery from '../../mocks/query';
 import { AzureMonitorOption } from '../../types';
 
 import AggregationField from './AggregationField';

@@ -3,11 +3,11 @@ import { of } from 'rxjs';
 import { DataQueryRequest, dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { createLokiDatasource } from './__mocks__/datasource';
-import { getMockFrames } from './__mocks__/frames';
 import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
+import { createLokiDatasource } from './mocks/datasource';
+import { getMockFrames } from './mocks/frames';
 import { runSplitQuery } from './querySplitting';
 import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';

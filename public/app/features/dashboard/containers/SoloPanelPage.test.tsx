@@ -7,7 +7,7 @@ import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardMeta, DashboardRoutes } from 'app/types';
 
-import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
+import { getRouteComponentProps } from '../../../core/navigation/mocks/routeProps';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
