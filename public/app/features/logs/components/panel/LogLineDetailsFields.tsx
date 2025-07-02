@@ -32,21 +32,19 @@ export const LogLineDetailsFields = ({ fields, log, logs, search }: LogLineDetai
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
   return (
-    <table className={styles.fieldsTable}>
-      <tbody>
-        {filteredFields.map((field, i) => (
-          <LogLineDetailsField
-            key={`${field.keys[0]}=${field.values[0]}-${i}`}
-            getLogs={getLogs}
-            fieldIndex={field.fieldIndex}
-            keys={field.keys}
-            links={field.links}
-            log={log}
-            values={field.values}
-          />
-        ))}
-      </tbody>
-    </table>
+    <div className={styles.fieldsTable}>
+      {filteredFields.map((field, i) => (
+        <LogLineDetailsField
+          key={`${field.keys[0]}=${field.values[0]}-${i}`}
+          getLogs={getLogs}
+          fieldIndex={field.fieldIndex}
+          keys={field.keys}
+          links={field.links}
+          log={log}
+          values={field.values}
+        />
+      ))}
+    </div>
   );
 };
 
@@ -80,31 +78,27 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   }
 
   return (
-    <table className={styles.fieldsTable}>
-      <tbody>
-        {filteredFields.map((field, i) => (
-          <LogLineDetailsField
-            key={`${field.key}=${field.value}-${i}`}
-            getLogs={getLogs}
-            isLabel
-            keys={[field.key]}
-            links={field.links}
-            log={log}
-            values={[field.value]}
-          />
-        ))}
-      </tbody>
-    </table>
+    <div className={styles.fieldsTable}>
+      {filteredFields.map((field, i) => (
+        <LogLineDetailsField
+          key={`${field.key}=${field.value}-${i}`}
+          getLogs={getLogs}
+          isLabel
+          keys={[field.key]}
+          links={field.links}
+          log={log}
+          values={[field.value]}
+        />
+      ))}
+    </div>
   );
 };
 
 const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
-    tableLayout: 'fixed',
-    width: '100%',
-    '& td:not(:last-child)': {
-      paddingRight: theme.spacing(1),
-    },
+    display: 'grid',
+    gap: theme.spacing(1),
+    gridTemplateColumns: `${theme.spacing(11.5)} minmax(20%, 30%) 1fr`,
   }),
 });
 
@@ -248,72 +242,67 @@ export const LogLineDetailsField = ({
 
   return (
     <>
-      <tr>
+      <div className={styles.row}>
         {!disableActions && (
-          <td className={styles.actions}>
-            <div>
-              {onClickFilterLabel && (
-                <AsyncIconButton
-                  name="search-plus"
-                  onClick={filterLabel}
-                  // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
-                  isActive={labelFilterActive}
-                  tooltipSuffix={refIdTooltip}
-                />
-              )}
-              {onClickFilterOutLabel && (
-                <IconButton
-                  name="search-minus"
-                  tooltip={
-                    app === CoreApp.Explore && log.dataFrame?.refId
-                      ? t('logs.log-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
-                          query: log.dataFrame?.refId,
-                        })
-                      : t('logs.log-details.fields.filter-out', 'Filter out value')
-                  }
-                  onClick={filterOutLabel}
-                />
-              )}
-              {singleKey && displayedFields.includes(keys[0]) && (
-                <IconButton
-                  variant="primary"
-                  tooltip={t(
-                    'logs.log-details.fields.toggle-field-button.hide-this-field',
-                    'Hide this field'
-                  )}
-                  name="eye"
-                  onClick={hideField}
-                />
-              )}
-              {singleKey && !displayedFields.includes(keys[0]) && (
-                <IconButton
-                  tooltip={t(
-                    'logs.log-details.fields.toggle-field-button.field-instead-message',
-                    'Show this field instead of the message'
-                  )}
-                  name="eye"
-                  onClick={showField}
-                />
-              )}
-              <IconButton
-                variant={showFieldsStats ? 'primary' : 'secondary'}
-                name="signal"
-                tooltip={t('logs.log-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-                className="stats-button"
-                disabled={!singleKey}
-                onClick={showStats}
+          <div className={styles.actions}>
+            {onClickFilterLabel && (
+              <AsyncIconButton
+                name="search-plus"
+                onClick={filterLabel}
+                // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                isActive={labelFilterActive}
+                tooltipSuffix={refIdTooltip}
               />
-            </div>
-          </td>
+            )}
+            {onClickFilterOutLabel && (
+              <IconButton
+                name="search-minus"
+                tooltip={
+                  app === CoreApp.Explore && log.dataFrame?.refId
+                    ? t('logs.log-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
+                        query: log.dataFrame?.refId,
+                      })
+                    : t('logs.log-details.fields.filter-out', 'Filter out value')
+                }
+                onClick={filterOutLabel}
+              />
+            )}
+            {singleKey && displayedFields.includes(keys[0]) && (
+              <IconButton
+                variant="primary"
+                tooltip={t('logs.log-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
+                name="eye"
+                onClick={hideField}
+              />
+            )}
+            {singleKey && !displayedFields.includes(keys[0]) && (
+              <IconButton
+                tooltip={t(
+                  'logs.log-details.fields.toggle-field-button.field-instead-message',
+                  'Show this field instead of the message'
+                )}
+                name="eye"
+                onClick={showField}
+              />
+            )}
+            <IconButton
+              variant={showFieldsStats ? 'primary' : 'secondary'}
+              name="signal"
+              tooltip={t('logs.log-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
+              className="stats-button"
+              disabled={!singleKey}
+              onClick={showStats}
+            />
+          </div>
         )}
-        <td className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</td>
-        <td className={styles.value}>
+        <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
+        <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? values[0] : <MultipleValue showCopy={true} values={values} />}
             {singleValue && <ClipboardButtonWrapper value={values[0]} />}
           </div>
-        </td>
-      </tr>
+        </div>
+      </div>
       {links?.map((link, i) => {
         if (link.onClick && onPinLine) {
           const originalOnClick = link.onClick;
@@ -380,12 +369,13 @@ export const LogLineDetailsField = ({
 };
 
 const getFieldStyles = (theme: GrafanaTheme2) => ({
+  row: css({
+    display: 'contents',
+  }),
   actions: css({
     whiteSpace: 'nowrap',
-    width: theme.spacing(11.5),
   }),
   label: css({
-    width: '30%',
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
   }),
