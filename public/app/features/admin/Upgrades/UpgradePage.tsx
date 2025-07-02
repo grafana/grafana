@@ -7,6 +7,28 @@ import { Overview } from './Overview';
 import { Changelog } from './Changelog';
 import { VersionList } from './VersionList';
 
+import { getUpgradesAPI } from 'app/features/admin/Upgrades/api';
+
+const upgradesApi = getUpgradesAPI();
+
+// Function to fetch the list of Grafana versions from the API
+const getVersions = () => {
+  return upgradesApi
+    .listUpgrades()
+    .then((response) => {
+      return response.items.map((item) => ({
+        version: item.spec.target_version,
+        releaseDate: item.spec.target_minor_release_date,
+        notes: item.spec.state === 'new' ? 'New' : '',
+      }));
+    })
+    .catch((error) => {
+      return [];
+    });
+};
+
+const apiVersions = await getVersions();
+
 const mockDetails = {
   overview: '<h2>Grafana Overview</h2><p>This is a mock overview of Grafana.</p>',
   versions: [
@@ -31,12 +53,8 @@ enum TabView {
 const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
   [TabView.OVERVIEW]: <Overview installedVersion={mockDetails.installedVersion} versions={mockDetails.versions} />,
   [TabView.CHANGELOG]: <Changelog sanitizedHTML={mockDetails.changelog} />,
-  [TabView.VERSIONS]: <VersionList versions={mockDetails.versions} installedVersion={mockDetails.installedVersion} />,
+  [TabView.VERSIONS]: <VersionList versions={apiVersions} installedVersion={mockDetails.installedVersion} />,
 };
-
-// TODO: get versions from API
-// const getVersions = () => {
-// };
 
 //TODO: get changelog
 // const getChangelog = () => {
