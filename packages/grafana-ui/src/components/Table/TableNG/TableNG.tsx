@@ -756,9 +756,11 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
     gap: theme.spacing(0.5),
     zIndex: theme.zIndex.tooltip - 1,
     paddingInline: TABLE.CELL_PADDING,
-    paddingBlock: TABLE.CELL_PADDING,
-    borderInlineEnd: 'none',
+    paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
+    '&:last-child': {
+      borderInlineEnd: 'none',
+    },
   }),
 });
 

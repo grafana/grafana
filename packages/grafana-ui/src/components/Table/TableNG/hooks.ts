@@ -415,11 +415,11 @@ export function useHeaderHeight({
       return 0;
     }
     if (!hasWrappedColHeaders) {
-      return defaultHeight;
+      return defaultHeight - TABLE.CELL_PADDING;
     }
 
     const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight);
+    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
   }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
 
   return headerHeight;
