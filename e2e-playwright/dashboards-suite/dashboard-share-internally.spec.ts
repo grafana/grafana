@@ -89,11 +89,11 @@ test.describe(
       );
 
       // Toggle the lock time range switch
-      // TODO figure out how to remove this stupid timeout
-      await page.waitForTimeout(200);
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch)
-        .click({ force: true });
+      const lockTimeRangeSwitch = dashboardPage.getByGrafanaSelector(
+        selectors.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch
+      );
+      await expect(lockTimeRangeSwitch).toBeInViewport();
+      await lockTimeRangeSwitch.click({ force: true });
 
       // Check localStorage configuration
       const shareConfig = await page.evaluate(() => {
@@ -134,14 +134,16 @@ test.describe(
       expect(initialConfig).toBeNull();
 
       // Configure the sharing options
-      // TODO figure out how to remove this stupid timeout
-      await page.waitForTimeout(200);
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch)
-        .click({ force: true });
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch)
-        .click({ force: true });
+      const lockTimeRangeSwitch = dashboardPage.getByGrafanaSelector(
+        selectors.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch
+      );
+      await expect(lockTimeRangeSwitch).toBeInViewport();
+      await lockTimeRangeSwitch.click({ force: true });
+      const shortenUrlSwitch = dashboardPage.getByGrafanaSelector(
+        selectors.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch
+      );
+      await expect(shortenUrlSwitch).toBeInViewport();
+      await shortenUrlSwitch.click({ force: true });
 
       // Close the drawer
       await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
