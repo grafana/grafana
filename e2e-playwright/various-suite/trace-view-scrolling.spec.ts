@@ -3,11 +3,15 @@ import { join } from 'path';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
-// TODO: fix the test. Currently not sensing more spans after scrolling.
-test.describe.skip(
+// this test requires a larger viewport
+test.use({
+  viewport: { width: 1280, height: 1080 },
+});
+
+test.describe(
   'Trace view',
   {
-    tag: ['@various', '@wip'],
+    tag: ['@various'],
   },
   () => {
     test('Can lazy load big traces', async ({ page, selectors }) => {
@@ -29,42 +33,29 @@ test.describe.skip(
 
       // Select the Jaeger data source
       const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
       await dataSourcePicker.click();
-
-      // Type the data source name and press Enter
-      const dataSourceInput = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
-      await dataSourceInput.fill('gdev-jaeger');
-      await dataSourceInput.press('Enter');
+      const datasourceList = page.getByTestId(selectors.components.DataSourcePicker.dataSourceList);
+      await datasourceList.getByText('gdev-jaeger').click();
 
       // Check that gdev-jaeger is visible in the query editor
-      await expect(page.locator('text=gdev-jaeger')).toBeVisible();
+      await expect(page.getByText('gdev-jaeger')).toBeVisible();
 
       // Type the query with no delay to prevent flaky tests
       const queryField = page.getByTestId(selectors.components.QueryField.container);
-      await expect(queryField).toBeVisible();
       await queryField.click();
       await page.keyboard.type('trace');
 
       // Use Shift+Enter to execute the query
       await queryField.press('Shift+Enter');
 
-      // Wait for the trace viewer to load
-      const spanBar = page.getByTestId(selectors.components.TraceViewer.spanBar);
-      //   await expect(spanBar).toBeVisible();
-
       // Get the initial count of span bars
-      const initialSpanCount = await spanBar.count();
+      const initialSpanBars = page.getByTestId(selectors.components.TraceViewer.spanBar);
+      const initialSpanBarCount = await initialSpanBars.count();
 
-      const scrollElement = page.getByTestId(selectors.pages.Explore.General.scrollView);
-      expect(scrollElement).toBeVisible();
-      await scrollElement.hover();
-
-      await page.mouse.wheel(0, 2000);
-
-      // After scrolling we should load more spans
-      const newSpanCount = await spanBar.count();
-      expect(newSpanCount).toBeGreaterThan(initialSpanCount);
+      await initialSpanBars.last().scrollIntoViewIfNeeded();
+      await expect
+        .poll(async () => await page.getByTestId(selectors.components.TraceViewer.spanBar).count())
+        .toBeGreaterThan(initialSpanBarCount);
     });
   }
 );
