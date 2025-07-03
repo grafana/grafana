@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
+import { setPluginLinksHook } from '@grafana/runtime';
+
 import { getMockDataSource } from '../mocks/dataSourcesMocks';
 
 import { DataSourceTestingStatus, Props } from './DataSourceTestingStatus';
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const getProps = (partialProps?: Partial<Props>): Props => ({
   testingStatus: {
