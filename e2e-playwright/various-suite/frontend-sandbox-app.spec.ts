@@ -26,7 +26,6 @@ test.describe(
 
         test('Loads the app page without the sandbox div wrapper', async ({ page }) => {
           await page.goto(`/a/${APP_ID}`);
-          //   await page.waitForTimeout(200); // wait to prevent false positives because playwright checks too fast
 
           const sandboxDiv = page.locator('div[data-plugin-sandbox="sandbox-app-test"]');
           await expect(sandboxDiv).not.toBeVisible();
@@ -37,7 +36,6 @@ test.describe(
 
         test('Loads the app configuration without the sandbox div wrapper', async ({ page }) => {
           await page.goto(`/plugins/${APP_ID}`);
-          //   await page.waitForTimeout(200); // wait to prevent false positives because playwright checks too fast
 
           const sandboxDiv = page.locator('div[data-plugin-sandbox="sandbox-app-test"]');
           await expect(sandboxDiv).not.toBeVisible();
