@@ -59,10 +59,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     overflow: 'auto',
     height: '100%',
-    boxShadow: theme.shadows.z2,
+    boxShadow: theme.shadows.z1,
     border: `1px solid ${theme.colors.border.medium}`,
     borderRight: 'none',
-    paddingTop: theme.spacing(0.5),
   }),
   scrollContainer: css({
     overflow: 'auto',
