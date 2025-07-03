@@ -22,6 +22,10 @@ jobs:
       contents: read
       id-token: write
 
+    env:
+      BUCKET_NAME: grafana-storybook-previews
+      DEPLOY_NAME: preview-${{ github.run_id }} # TODO: better path prefix - branch name or PR ID?
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -51,11 +55,17 @@ jobs:
       - name: Build storybook
         run: yarn storybook:build
 
-      - uses: grafana/shared-workflows/actions/push-to-gcs@main
+      - name: Upload Storybook
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           environment: prod
-          bucket: grafana-storybook-previews
-          bucket_path: preview-${{ github.run_id }} # TODO: better path prefix - PR ID?
+          bucket: ${{ env.BUCKET_NAME }}
+          bucket_path: ${{ env.DEPLOY_NAME }}
           path: packages/grafana-ui/dist/storybook
           service_account: github-gf-storybook-preview@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
+
+      - name: Write summary
+        run: |
+          echo '### Storybook preview deployed! 🚀' >> $GITHUB_STEP_SUMMARY
+          echo 'Check it out at: https://storage.googleapis.com/$BUCKET_NAME/$DEPLOY_NAME/index.html' >> $GITHUB_STEP_SUMMARY
