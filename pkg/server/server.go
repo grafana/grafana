@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -49,6 +50,11 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 	}
 
 	if err := s.Init(); err != nil {
+		return nil, err
+	}
+
+	// Initialize the OpenFeature feature flag system
+	if err := featuremgmt.InitOpenFeatureWithCfg(cfg); err != nil {
 		return nil, err
 	}
 
