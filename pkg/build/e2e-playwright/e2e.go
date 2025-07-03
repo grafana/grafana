@@ -30,7 +30,6 @@ func RunTest(
 	d *dagger.Client,
 	opts RunTestOpts,
 ) (*dagger.Container, error) {
-
 	playwrightCommand := buildPlaywrightCommand(opts)
 
 	e2eContainer := opts.FrontendContainer.
