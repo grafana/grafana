@@ -72,37 +72,68 @@ const preview: Preview = {
       // We should be able to use the builtin alphabetical sort, but is broken in SB 7.0
       // https://github.com/storybookjs/storybook/issues/22470
       storySort: (a, b) => {
-        // Skip sorting for stories with nosort tag
-        // if (a.tags.includes('nosort') || b.tags.includes('nosort')) {
-        //   return 0;
-        // }
-        // if (a.title.startsWith('Docs Overview')) {
-        //   if (b.title.startsWith('Docs Overview')) {
-        //     return 0;
-        //   }
-        //   return -1;
-        // } else if (b.title.startsWith('Docs Overview')) {
-        //   return 1;
-        // }
+        const CATEGORY_ORDER = [
+          // Should all be lowercase
+          'docs overview',
+          'foundations',
+          'iconography',
+
+          'layout',
+
+          'form layout',
+          'inputs',
+          'date time pickers',
+
+          'information',
+          'plugins',
+          'overlays',
+          'utilities',
+          'pickers',
+          'navigation',
+          'developers',
+          'zzz_general',
+          'zzz_alerting',
+        ];
 
         const aTitle = a.title.toLowerCase();
         const bTitle = b.title.toLowerCase();
+        const [aCategory] = aTitle.split('/');
+        const [bCategory] = bTitle.split('/');
 
+        //
+        // Sort by category order first
+        const aCategoryIndex = CATEGORY_ORDER.indexOf(aCategory);
+        const bCategoryIndex = CATEGORY_ORDER.indexOf(bCategory);
+
+        if (aCategoryIndex === -1 || bCategoryIndex === -1) {
+          const category = aCategoryIndex === -1 ? aCategory : bCategory;
+          throw new Error(
+            `Category ${category} not found in CATEGORY_ORDER. Prefer reusing the existing categories, or add to CATEGORY_ORDER.`
+          );
+        }
+
+        if (aCategoryIndex !== bCategoryIndex) {
+          return aCategoryIndex - bCategoryIndex;
+        }
+
+        //
+        // Sort 'Deprecated' subfolders to the bottom
         if (aTitle.includes('deprecated') && !bTitle.includes('deprecated')) {
           return 1;
-        }
-        if (bTitle.includes('deprecated') && !aTitle.includes('deprecated')) {
+        } else if (bTitle.includes('deprecated') && !aTitle.includes('deprecated')) {
           return -1;
         }
 
-        if (aTitle.includes('legacy') && !bTitle.includes('legacy')) {
+        //
+        // Sort Docs to the top
+        if (a.type === 'docs' && b.type !== 'docs') {
+          return -1;
+        } else if (a.type !== 'docs' && b.type === 'docs') {
           return 1;
         }
-        if (bTitle.includes('legacy') && !aTitle.includes('legacy')) {
-          return -1;
-        }
 
-        return a.id === b.id ? 0 : a.id.localeCompare(b.id, undefined, { numeric: true });
+        // Otherwise, just use the default sort order
+        return 0;
       },
     },
   },
