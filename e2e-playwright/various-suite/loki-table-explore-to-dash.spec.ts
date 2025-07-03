@@ -100,24 +100,25 @@ const lokiQueryResult = {
   },
 };
 
-// TODO: Fix the test. Most likely a datasource creation issue.
-test.describe.skip(
+test.use({
+  featureToggles: {
+    logsExploreTableVisualisation: true,
+  },
+});
+
+test.describe(
   'Loki Query Editor',
   {
-    tag: ['@various', '@wip'],
+    tag: ['@various'],
   },
   () => {
-    test.beforeEach(async ({ page, createDataSourceConfigPage }) => {
-      // Create the Loki datasource if it doesn't exist
-      await createDataSourceConfigPage({ type: 'loki', name: dataSourceName });
-
-      // Set feature toggle
-      await page.evaluate(() => {
-        localStorage.setItem('grafana.featureToggles', 'logsExploreTableVisualisation=1');
-      });
-    });
-
-    test('Should be able to add explore table to dashboard', async ({ page, dashboardPage, selectors }) => {
+    test('Should be able to add explore table to dashboard', async ({
+      createDataSource,
+      page,
+      dashboardPage,
+      selectors,
+    }) => {
+      await createDataSource({ type: 'loki', name: dataSourceName });
       // Mock API responses
       await page.route(/labels\?/, async (route) => {
         await route.fulfill({
@@ -145,25 +146,13 @@ test.describe.skip(
 
       // Go to Explore and choose Loki data source
       await page.goto('/explore');
+      await dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container).click();
+      await page.getByRole('button', { name: dataSourceName }).click();
 
-      const dataSourcePicker = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
-      const lokiDataSource = page.getByRole('button', { name: dataSourceName });
-      await lokiDataSource.scrollIntoViewIfNeeded();
-      await expect(lokiDataSource).toBeVisible();
-      await lokiDataSource.click();
-
-      // Click on Code mode
-      const codeButton = page.getByRole('radio', { name: 'Code' });
-      await codeButton.click({ force: true });
-
-      // Wait for the query field to be ready and check placeholder text
-      const queryField = page.locator('textarea');
-      await expect(queryField).toBeVisible();
+      await page.getByRole('radio', { name: 'Code' }).click();
 
       // Write a simple query
+      const queryField = page.getByTestId(selectors.components.QueryField.container).locator('textarea');
       await queryField.fill('query{instance="instance1"}');
 
       // Submit the query with Shift+Enter
@@ -173,42 +162,28 @@ test.describe.skip(
       await expect(page.locator('[data-testid="explore-no-data"]')).toBeHidden();
 
       // Click on the table toggle
-      const tableButton = page.getByRole('radio', { name: 'Table' });
-      await tableButton.click({ force: true });
+      await page.getByRole('radio', { name: 'Table' }).click({ force: true });
 
       // One row with two cells initially
       const cells = page.locator('[role="cell"]');
       await expect(cells).toHaveCount(2);
 
       // Find and click on the targetLabelName label
-      const targetLabelName = page.getByText('targetLabelName', { exact: true });
-      await targetLabelName.scrollIntoViewIfNeeded();
-      await expect(targetLabelName).toBeVisible();
-      await targetLabelName.click();
+      await page.getByText('targetLabelName', { exact: true }).click();
 
       // Now we should have a row with 3 columns
       await expect(cells).toHaveCount(3);
       // And a value of "targetLabelValue"
       await expect(cells.getByText('targetLabelValue')).toBeVisible();
 
-      // Click the Add button
-      const addToButton = page.getByLabel('Add', { exact: true });
-      await expect(addToButton).toBeVisible();
-      await addToButton.click();
+      await page.getByLabel('Add', { exact: true }).click();
 
-      // Click "Add to dashboard"
-      const addToDashboardButton = page.getByLabel('Add to dashboard');
-      await expect(addToDashboardButton).toBeVisible();
-      await addToDashboardButton.click();
+      await page.getByLabel('Add to dashboard').click();
 
-      // Click "Add panel to dashboard"
       const addPanelToDashboardButton = page.getByText('Add panel to dashboard');
       await expect(addPanelToDashboardButton).toBeVisible();
 
-      // Click "Open dashboard"
-      const openDashboardButton = page.getByText('Open dashboard');
-      await expect(openDashboardButton).toBeVisible();
-      await openDashboardButton.click();
+      await page.getByText('Open dashboard').click();
 
       // Check the panel is visible
       const panel = page.locator('[data-viz-panel-key="panel-1"]');
