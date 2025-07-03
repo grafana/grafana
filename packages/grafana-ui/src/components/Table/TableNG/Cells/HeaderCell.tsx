@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import React, { useEffect, useMemo } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { useEffect } from 'react';
 import { Column, SortDirection } from 'react-data-grid';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
@@ -34,9 +34,10 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterRows,
   showTypeIcons,
 }) => {
-  const styles = useStyles2(getStyles);
-  const displayName = useMemo(() => getDisplayName(field), [field]);
-  const filterable = useMemo(() => field.config.custom?.filterable ?? false, [field]);
+  const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
+  const styles = useStyles2(getStyles, headerCellWrap);
+  const displayName = getDisplayName(field);
+  const filterable = field.config.custom?.filterable ?? false;
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -50,15 +51,18 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   }, [filterable, displayName, filter, setFilter]);
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <>
-      <span className={styles.headerCellLabel}>
-        {showTypeIcons && <Icon name={getFieldTypeIcon(field)} title={field?.type} size="sm" />}
-        {/* Used cached displayName if available, otherwise use the column name (nested tables) */}
-        <div>{getDisplayName(field)}</div>
-        {direction && (direction === 'ASC' ? <Icon name="arrow-up" size="lg" /> : <Icon name="arrow-down" size="lg" />)}
-      </span>
-
+      {showTypeIcons && (
+        <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
+      )}
+      <span className={styles.headerCellLabel}>{getDisplayName(field)}</span>
+      {direction && (
+        <Icon
+          className={cx(styles.headerCellIcon, styles.headerSortIcon)}
+          size="lg"
+          name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'}
+        />
+      )}
       {filterable && (
         <Filter
           name={column.key}
@@ -68,31 +72,33 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
           field={field}
           crossFilterOrder={crossFilterOrder}
           crossFilterRows={crossFilterRows}
+          iconClassName={styles.headerCellIcon}
         />
       )}
     </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
   headerCellLabel: css({
-    border: 'none',
-    padding: 0,
-    background: 'inherit',
     cursor: 'pointer',
-    whiteSpace: 'nowrap',
+    fontWeight: theme.typography.fontWeightMedium,
+    color: theme.colors.text.secondary,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    fontWeight: theme.typography.fontWeightMedium,
-    display: 'flex',
-    alignItems: 'center',
-    color: theme.colors.text.secondary,
-    gap: theme.spacing(1),
-
+    whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
     '&:hover': {
       textDecoration: 'underline',
       color: theme.colors.text.link,
     },
+  }),
+  headerCellIcon: css({
+    marginBottom: theme.spacing(0.5),
+    alignSelf: 'flex-end',
+    color: theme.colors.text.secondary,
+  }),
+  headerSortIcon: css({
+    marginBottom: theme.spacing(0.25),
   }),
 });
 

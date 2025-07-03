@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
@@ -19,9 +19,19 @@ interface Props {
   field?: Field;
   crossFilterOrder: string[];
   crossFilterRows: { [key: string]: TableRow[] };
+  iconClassName?: string;
 }
 
-export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder, crossFilterRows }: Props) => {
+export const Filter = ({
+  name,
+  rows,
+  filter,
+  setFilter,
+  field,
+  crossFilterOrder,
+  crossFilterRows,
+  iconClassName,
+}: Props) => {
   const filterValue = filter[name]?.filtered;
 
   // get rows for cross filtering
@@ -42,13 +52,13 @@ export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder,
   const ref = useRef<HTMLButtonElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
   const styles = useStyles2(getStyles);
-  const filterEnabled = useMemo(() => Boolean(filterValue), [filterValue]);
+  const filterEnabled = Boolean(filterValue);
   const [searchFilter, setSearchFilter] = useState(filter[name]?.searchFilter || '');
   const [operator, setOperator] = useState<SelectableValue<string>>(filter[name]?.operator || REGEX_OPERATOR);
 
   return (
     <button
-      className={cx(styles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
+      className={styles.headerFilter}
       ref={ref}
       type="button"
       onClick={(ev) => {
@@ -56,7 +66,7 @@ export const Filter = ({ name, rows, filter, setFilter, field, crossFilterOrder,
         ev.stopPropagation();
       }}
     >
-      <Icon name="filter" />
+      <Icon name="filter" className={cx(iconClassName, { [styles.filterIconEnabled]: filterEnabled })} />
       {isPopoverVisible && ref.current && (
         <Popover
           content={
@@ -93,13 +103,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     label: 'headerFilter',
     padding: 0,
+    alignSelf: 'flex-end',
   }),
   filterIconEnabled: css({
     label: 'filterIconEnabled',
     color: theme.colors.primary.text,
-  }),
-  filterIconDisabled: css({
-    label: 'filterIconDisabled',
-    color: theme.colors.text.disabled,
   }),
 });
