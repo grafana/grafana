@@ -67,5 +67,5 @@ jobs:
 
       - name: Write summary
         run: |
-          echo '### Storybook preview deployed! 🚀' >> $GITHUB_STEP_SUMMARY
-          echo 'Check it out at: https://storage.googleapis.com/$BUCKET_NAME/$DEPLOY_NAME/index.html' >> $GITHUB_STEP_SUMMARY
+          echo "## Storybook preview deployed! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "Check it out at https://storage.googleapis.com/${BUCKET_NAME}/${DEPLOY_NAME}/index.html" >> $GITHUB_STEP_SUMMARY
