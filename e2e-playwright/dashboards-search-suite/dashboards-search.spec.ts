@@ -25,21 +25,18 @@ test.describe(
       const searchInput = await page.getByTestId('input-wrapper');
       await searchInput.click();
       await page.keyboard.type('Datasource tests - MySQL');
-      await page.waitForTimeout(300); // Wait because playwright checks too fast
 
       await assertResultsCount(page, 2);
 
       await page.keyboard.press('ControlOrMeta+A');
       await page.keyboard.press('Backspace');
       await page.keyboard.type('Datasource tests - MySQL (unittest)');
-      await page.waitForTimeout(300); // Wait because playwright checks too fast
 
       await assertResultsCount(page, 1);
 
       await page.keyboard.press('ControlOrMeta+A');
       await page.keyboard.press('Backspace');
       await page.keyboard.type('- MySQL');
-      await page.waitForTimeout(300); // Wait because playwright checks too fast
 
       await assertResultsCount(page, 2);
     });
@@ -48,12 +45,10 @@ test.describe(
 
 async function assertResultsCount(page, length) {
   const rowGroup = await page.getByRole('rowgroup');
-  const groups = await rowGroup.count();
-  await expect(groups).toBe(1);
+  await expect(rowGroup).toHaveCount(1);
 
   const rows = await rowGroup.first().getByRole('row');
-  const rowCount = await rows.count();
-  await expect(rowCount).toBe(length);
+  await expect(rows).toHaveCount(length);
 }
 
 async function toggleSearchView(page, selectors) {
