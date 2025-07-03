@@ -91,14 +91,14 @@ func TestLocalResolver(t *testing.T) {
 
 	// Verify all directories and files are present
 	expectedPaths := []string{
-		"another",
-		"another/path",
+		"another/",
+		"another/path/",
 		"another/path/file.txt",
-		"level1",
+		"level1/",
 		"level1/file1.txt",
-		"level1/level2",
+		"level1/level2/",
 		"level1/level2/file2.txt",
-		"level1/level2/level3",
+		"level1/level2/level3/",
 		"level1/level2/level3/file3.txt",
 		"root.txt",
 	}
@@ -1382,7 +1382,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 			expected: []FileTreeEntry{
 				{Path: "file1.txt", Blob: true, Size: 8},
 				{Path: "file2.txt", Blob: true, Size: 8},
-				{Path: "subdir", Blob: false},
+				{Path: "subdir/", Blob: false},
 				{Path: "subdir/file3.txt", Blob: true, Size: 8},
 			},
 			expectedErr: nil,
