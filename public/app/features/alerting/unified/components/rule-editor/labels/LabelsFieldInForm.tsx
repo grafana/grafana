@@ -3,8 +3,10 @@ import { useFormContext } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Stack, Text } from '@grafana/ui';
 
+import { useIsLLMPluginEnabled } from '../../../hooks/llmUtils';
 import { RuleFormValues } from '../../../types/rule-form';
 import { isRecordingRuleByType } from '../../../utils/rules';
+import { GenAIImproveLabelsButton } from '../../rules/AIGen/GenAIImproveLabelsButton';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 import { LabelsInRule } from './LabelsField';
@@ -14,6 +16,7 @@ interface LabelsFieldInFormProps {
 }
 export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   const { watch } = useFormContext<RuleFormValues>();
+  const { value: canRenderGenAIImproveButton } = useIsLLMPluginEnabled();
 
   const labels = watch('labels');
   const type = watch('type');
@@ -51,9 +54,12 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
       <Stack direction="row" gap={1} alignItems="center">
         <LabelsInRule labels={labels} />
         {hasLabels ? (
-          <Button variant="secondary" type="button" onClick={onEditClick} size="sm">
-            <Trans i18nKey="alerting.labels-field-in-form.edit-labels">Edit labels</Trans>
-          </Button>
+          <Stack direction="row" gap={1} alignItems="center">
+            <Button variant="secondary" type="button" onClick={onEditClick} size="sm">
+              <Trans i18nKey="alerting.labels-field-in-form.edit-labels">Edit labels</Trans>
+            </Button>
+            {canRenderGenAIImproveButton && <GenAIImproveLabelsButton />}
+          </Stack>
         ) : (
           <Stack direction="row" gap={2} alignItems="center">
             <Text>
@@ -69,6 +75,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
             >
               <Trans i18nKey="alerting.labels-field-in-form.add-labels">Add labels</Trans>
             </Button>
+            {canRenderGenAIImproveButton && <GenAIImproveLabelsButton />}
           </Stack>
         )}
       </Stack>

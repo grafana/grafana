@@ -9,9 +9,11 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
+import { useIsLLMPluginEnabled } from '../../hooks/llmUtils';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
+import { GenAIImproveAnnotationsButton } from '../rules/AIGen/GenAIImproveAnnotationsButton';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
@@ -23,6 +25,7 @@ import { useDashboardQuery } from './useDashboardQuery';
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
+  const { value: canRenderGenAIImproveButton } = useIsLLMPluginEnabled();
 
   const {
     control,
@@ -228,6 +231,7 @@ const AnnotationsStep = () => {
                 <Trans i18nKey="alerting.annotations-step.link-dashboard-and-panel">Link dashboard and panel</Trans>
               </Button>
             )}
+            {canRenderGenAIImproveButton && <GenAIImproveAnnotationsButton />}
           </div>
         </Stack>
         {showPanelSelector && (
