@@ -40,3 +40,6 @@ public/mockServiceWorker.js
 
 /.nx/cache
 /.nx/workspace-data
+
+# Ignore enterprise source files
+public/app/extensions/
