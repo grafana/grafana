@@ -15,6 +15,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { PanelRenderer } from '@grafana/runtime';
 import { Select, useStyles2, Spinner, Alert } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -390,105 +391,85 @@ function PluginPanels() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h3>
-          <Trans i18nKey="plugin-panels.title">Inspect Data Source Panels</Trans>
-        </h3>
-        <p>
-          <Trans i18nKey="plugin-panels.description">Select a data source to view dashboard panels that use it</Trans>
-        </p>
-      </div>
+    <Page navId="view-plugin-panels">
+      <Page.Contents>
+        <div className={styles.container}>
+          <div className={styles.controls}>
+            <Select
+              label={t('plugin-panels.datasource.label', 'Data Source')}
+              value={selectedDataSource}
+              onChange={handleDataSourceChange}
+              options={dataSources}
+              placeholder={t('plugin-panels.datasource.placeholder', 'Select a data source...')}
+              width={60}
+            />
+          </div>
 
-      <div className={styles.controls}>
-        <Select
-          label={t('plugin-panels.datasource.label', 'Data Source')}
-          value={selectedDataSource}
-          onChange={handleDataSourceChange}
-          options={dataSources}
-          placeholder={t('plugin-panels.datasource.placeholder', 'Select a data source...')}
-          width={60}
-        />
-      </div>
+          {loading && (
+            <div className={styles.loading}>
+              <Spinner size="lg" />
+              <span>
+                <Trans i18nKey="plugin-panels.loading">Loading panels...</Trans>
+              </span>
+            </div>
+          )}
 
-      {loading && (
-        <div className={styles.loading}>
-          <Spinner size="lg" />
-          <span>
-            <Trans i18nKey="plugin-panels.loading">Loading panels...</Trans>
-          </span>
-        </div>
-      )}
+          {error && (
+            <Alert title={t('plugin-panels.error.title', 'Error')} severity="error">
+              {error}
+            </Alert>
+          )}
 
-      {error && (
-        <Alert title={t('plugin-panels.error.title', 'Error')} severity="error">
-          {error}
-        </Alert>
-      )}
+          {!loading && !error && panels.length === 0 && selectedDataSource && (
+            <Alert title={t('plugin-panels.no-panels.title', 'No panels found')} severity="info">
+              <Trans i18nKey="plugin-panels.no-panels.description">
+                No panels found that use the selected data source.
+              </Trans>
+            </Alert>
+          )}
 
-      {!loading && !error && panels.length === 0 && selectedDataSource && (
-        <Alert title={t('plugin-panels.no-panels.title', 'No panels found')} severity="info">
-          <Trans i18nKey="plugin-panels.no-panels.description">
-            No panels found that use the selected data source.
-          </Trans>
-        </Alert>
-      )}
+          {!loading && panels.length > 0 && (
+            <div className={styles.panelsGrid}>
+              {panels.map((panelResult, index) => {
+                const panelModel = createPanelModel(panelResult);
+                const stateKey = `panel-${panelResult.dashboardUID}-${panelResult.panelID}`;
 
-      {!loading && panels.length > 0 && (
-        <div className={styles.panelsGrid}>
-          {panels.map((panelResult, index) => {
-            const panelModel = createPanelModel(panelResult);
-            const stateKey = `panel-${panelResult.dashboardUID}-${panelResult.panelID}`;
-
-            return (
-              <div key={stateKey} className={styles.panelWrapper}>
-                <div className={styles.panelHeader}>
-                  <h4>{panelModel.title || `Panel ${panelResult.panelID}`}</h4>
-                  <div className={styles.dashboardInfo}>
-                    <span>
-                      <Trans i18nKey="plugin-panels.panel.dashboard-prefix">Source Dashboard:&nbsp;</Trans>
-                    </span>
-                    <a
-                      href={`/d/${panelResult.dashboardUID}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.dashboardLink}
-                    >
-                      {panelResult.dashboardName}
-                    </a>
+                return (
+                  <div key={stateKey} className={styles.panelWrapper}>
+                    <div className={styles.panelHeader}>
+                      <h4>{panelModel.title || `Panel ${panelResult.panelID}`}</h4>
+                      <div className={styles.dashboardInfo}>
+                        <span>
+                          <Trans i18nKey="plugin-panels.panel.dashboard-prefix">Source Dashboard:&nbsp;</Trans>
+                        </span>
+                        <a
+                          href={`/d/${panelResult.dashboardUID}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.dashboardLink}
+                        >
+                          {panelResult.dashboardName}
+                        </a>
+                      </div>
+                    </div>
+                    <div className={styles.panelContent}>
+                      <PanelWithRealData panel={panelModel} />
+                    </div>
                   </div>
-                </div>
-                <div className={styles.panelContent}>
-                  <PanelWithRealData panel={panelModel} />
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </Page.Contents>
+    </Page>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    padding: theme.spacing(3),
+    // padding: theme.spacing(3),
     maxWidth: '100%',
-  }),
-
-  header: css({
-    marginBottom: theme.spacing(3),
-
-    h3: {
-      margin: 0,
-      marginBottom: theme.spacing(1),
-      color: theme.colors.text.primary,
-    },
-
-    p: {
-      margin: 0,
-      color: theme.colors.text.secondary,
-    },
   }),
 
   controls: css({

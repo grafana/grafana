@@ -70,6 +70,14 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/upgrades",
 		})
 	}
+	if c.HasRole(identity.RoleAdmin) {
+		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+			Text:     "Inspect Data Source Panels",
+			Id:       "view-plugin-panels",
+			SubTitle: "Select a data source to view dashboard panels that use it",
+			Url:      s.cfg.AppSubURL + "/admin/pluginpanels",
+		})
+	}
 	if c.HasRole(identity.RoleAdmin) &&
 		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
 			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
