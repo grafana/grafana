@@ -1,16 +1,16 @@
 import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
+import { ElasticsearchDataQuery } from './dataquery.gen';
 import pluginJson from './plugin.json';
 import { onDashboardLoadedHandler } from './tracking';
-import { ElasticsearchQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
 }));
 
-const targets: ElasticsearchQuery[] = [
+const targets: ElasticsearchDataQuery[] = [
   {
     refId: 'test',
     alias: '$varAlias',

@@ -3154,23 +3154,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloud-monitoring/components/VariableQueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/datasource/cloud-monitoring/components/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./Aggregation\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./AliasBy\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`./AlignmentFunction\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`./Alignment\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`./AnnotationsHelp\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`./Fields\`)", "5"],
-      [0, 0, 0, "Do not re-export imported variable (\`./GroupBy\`)", "6"],
-      [0, 0, 0, "Do not re-export imported variable (\`./LabelFilter\`)", "7"],
-      [0, 0, 0, "Do not re-export imported variable (\`./MQLQueryEditor\`)", "8"],
-      [0, 0, 0, "Do not re-export imported variable (\`./MetricQueryEditor\`)", "9"],
-      [0, 0, 0, "Do not re-export imported variable (\`./PeriodSelect\`)", "10"],
-      [0, 0, 0, "Do not re-export imported variable (\`./Preprocessor\`)", "11"],
-      [0, 0, 0, "Do not re-export imported variable (\`./Project\`)", "12"],
-      [0, 0, 0, "Do not re-export imported variable (\`./SLOQueryEditor\`)", "13"],
-      [0, 0, 0, "Do not re-export imported variable (\`./VisualMetricQueryEditor\`)", "14"]
-    ],
     "public/app/plugins/datasource/cloud-monitoring/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -3268,16 +3251,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/filterQuery.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./commentOnlyQuery\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./empty\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`./filterQuery\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`./multiLineFullQuery\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`./newCommandQuery\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`./singleLineFullQuery\`)", "5"],
-      [0, 0, 0, "Do not re-export imported variable (\`./sortQuery\`)", "6"],
-      [0, 0, 0, "Do not re-export imported variable (\`./whitespaceQuery\`)", "7"]
-    ],
     "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-logs-test-data/multiLineFullQuery.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -3320,13 +3293,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "16"],
       [0, 0, 0, "Do not use any type assertions.", "17"]
     ],
-    "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-sql-test-data/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./multiLineFullQuery\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./multiLineIncompleteQueryWithoutNamespace\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`./singleLineEmptyQuery\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`./singleLineFullQuery\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`./singleLineTwoQueries\`)", "4"]
-    ],
     "public/app/plugins/datasource/cloudwatch/mocks/cloudwatch-sql-test-data/multiLineFullQuery.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -3348,23 +3314,11 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloudwatch/mocks/dynamic-label-test-data/afterLabelValue.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/datasource/cloudwatch/mocks/dynamic-label-test-data/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./afterLabelValue\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./insideLabelValue\`)", "1"]
-    ],
     "public/app/plugins/datasource/cloudwatch/mocks/dynamic-label-test-data/insideLabelValue.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/afterFunctionQuery.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./afterFunctionQuery\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./secondArgAfterSearchQuery\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`./secondArgQuery\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`./singleLineEmptyQuery\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`./thirdArgAfterSearchQuery\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`./withinStringQuery\`)", "5"]
     ],
     "public/app/plugins/datasource/cloudwatch/mocks/metric-math-test-data/secondArgAfterSearchQuery.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3473,11 +3427,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/elasticsearch/test-helpers/render.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/datasource/elasticsearch/types.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./dataquery.gen\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`ElasticsearchQuery\`)", "1"],
-      [0, 0, 0, "Do not use export all (\`export * from ...\`)", "2"]
-    ],
     "public/app/plugins/datasource/grafana-postgresql-datasource/configuration/ConfigurationEditor.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
@@ -3517,10 +3466,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/components/SimulationSchemaForm.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/grafana-testdata-datasource/components/index.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`./RandomWalkEditor\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`./StreamingClientEditor\`)", "1"]
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
