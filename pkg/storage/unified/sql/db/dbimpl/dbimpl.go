@@ -11,13 +11,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/util/xorm"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
-	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -31,8 +33,8 @@ const grafanaDBInstrumentQueriesKey = "instrument_queries"
 var errGrafanaDBInstrumentedNotSupported = errors.New("the Resource API is " +
 	"attempting to leverage the database from core Grafana defined in the" +
 	" [database] INI section since a database configuration was not provided" +
-	" in the [resource_api] section. But we detected that the key `" +
-	grafanaDBInstrumentQueriesKey + "` is enabled in [database], and that" +
+	" in the [resource_api] section. But we detected that the key" +
+	" `instrument_queries` is enabled in [database], and that" +
 	" setup is currently unsupported. Please, consider disabling that flag")
 
 func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (db.DBProvider, error) {
@@ -66,7 +68,11 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	// as fallback, and as it uses a dedicated INI section, then keys are not
 	// prefixed with "db_"
 	getter := newConfGetter(cfg.SectionWithEnvOverrides("resource_api"), "db_")
-	fallbackGetter := newConfGetter(cfg.SectionWithEnvOverrides("database"), "")
+	fallbackConfig, fallbackErr := sqlstore.NewDatabaseConfig(cfg, nil)
+	if fallbackErr != nil {
+		// Ignore error here and keep going.
+		fallbackConfig = nil
+	}
 
 	logger := log.New("entity-db")
 	p = &resourceDBProvider{
@@ -78,7 +84,6 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	}
 
 	dbType := getter.String("type")
-	grafanaDBType := fallbackGetter.String("type")
 	switch {
 	// Deprecated: First try with the config in the "resource_api" section, which is specific to Unified Storage
 	case dbType == dbTypePostgres:
@@ -97,20 +102,23 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 		return p, fmt.Errorf("invalid db type specified: %s", dbType)
 
 	// If we have an empty Resource API db config, try with the core Grafana database config
-	case grafanaDBType != "":
-		logger.Info("Using database section", "db_type", grafanaDBType)
+	case fallbackConfig != nil && fallbackConfig.Type != "":
+		logger.Info("Using database section", "db_type", fallbackConfig.Type)
 		p.registerMetrics = true
-		p.engine, err = getEngine(cfg)
+		p.engine, err = getEngine(fallbackConfig)
 		return p, err
 	case grafanaDB != nil:
 		// try to use the grafana db connection (should only happen in tests)
-		if fallbackGetter.Bool(grafanaDBInstrumentQueriesKey) {
+		if newConfGetter(cfg.SectionWithEnvOverrides("database"), "").Bool(grafanaDBInstrumentQueriesKey) {
 			return nil, errGrafanaDBInstrumentedNotSupported
 		}
 		p.engine = grafanaDB.GetEngine()
 		return p, nil
 	default:
-		return p, fmt.Errorf("no database type specified")
+		if fallbackErr != nil {
+			return nil, fallbackErr
+		}
+		return nil, fmt.Errorf("no database type specified")
 	}
 }
 
