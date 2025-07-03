@@ -1,8 +1,10 @@
 import { useState } from 'react';
 
+import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
 import { FolderDTO } from 'app/types';
@@ -25,7 +27,9 @@ export function FolderActionsButton({ folder }: Props) {
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
-  const [deleteFolder] = useDeleteFolderMutation();
+
+  const [deleteFolderAppPlatform] = folderAPIv1beta1.useDeleteFolderMutation();
+  const [deleteFolderLegacy] = useDeleteFolderMutation();
 
   const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
@@ -44,7 +48,23 @@ export function FolderActionsButton({ folder }: Props) {
   };
 
   const onDelete = async () => {
-    await deleteFolder(folder);
+    const result = await (config.featureToggles.foldersAppPlatformAPI
+      ? deleteFolderAppPlatform({ name: folder.uid })
+      : deleteFolderLegacy(folder));
+
+    if (result.error) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [
+          t(
+            'browse-dashboards.folder-actions-button.delete-folder-error',
+            'Error deleting folder. Please try again later.'
+          ),
+        ],
+      });
+      return;
+    }
+
     reportInteraction('grafana_manage_dashboards_item_deleted', {
       item_counts: {
         folder: 1,
