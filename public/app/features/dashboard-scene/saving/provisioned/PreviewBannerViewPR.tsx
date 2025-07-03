@@ -32,16 +32,18 @@ export function PreviewBannerViewPR({
   return (
     <Alert
       {...commonAlertProps}
-      title={t('provisioned-resource.preview-banner.title-dashboard-loaded-branch-git-hub', text)}
+      title={t('provisioned-resource-preview-banner.title-dashboard-loaded-branch-git-hub', text)}
       buttonContent={
         <Stack alignItems="center">
-          <Trans i18nKey="provisioned-resource.preview-banner.open-pull-request-in-git-hub">{btnText}</Trans>
+          <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.open-pull-request-in-git-hub">
+            {btnText}
+          </Trans>
           <Icon name="external-link-alt" />
         </Stack>
       }
       onRemove={() => window.open(textUtil.sanitizeUrl(prParam), '_blank')}
     >
-      <Trans i18nKey="provisioned-resource.preview-banner.not-saved">
+      <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.not-saved">
         The value is not yet saved in the Grafana database
       </Trans>
     </Alert>
