@@ -10,6 +10,8 @@ test.use({
     dashboardNewLayouts: true,
     groupByVariable: true,
   },
+  // these tests require a larger viewport
+  viewport: { width: 1920, height: 1080 },
 });
 
 test.describe(
@@ -18,8 +20,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    // TODO - figure out why this test isn't working
-    test.skip('can drag and drop panels', async ({ gotoDashboardPage, selectors }) => {
+    test('can drag and drop panels', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
