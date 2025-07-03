@@ -1,20 +1,26 @@
 package sqltemplate
 
 // SQLite is an implementation of Dialect for the SQLite DMBS.
-var SQLite = sqlite{
-	argPlaceholderFunc: argFmtSQL92,
-	name:               "sqlite",
+var SQLite = sqlite{}
+
+type sqlite struct{}
+
+func (s sqlite) DialectName() string {
+	return "sqlite"
 }
 
-var _ Dialect = SQLite
-
-type sqlite struct {
+func (s sqlite) Ident(i string) (string, error) {
 	// See:
 	//	https://www.sqlite.org/lang_keywords.html
-	standardIdent
-	rowLockingClauseMap
-	argPlaceholderFunc
-	name
+	return standardIdent(i)
+}
+
+func (s sqlite) ArgPlaceholder(argNum int) string {
+	return "?"
+}
+
+func (s sqlite) SelectFor(s2 ...string) (string, error) {
+	return rowLockingClauseMap(nil).SelectFor(s2...)
 }
 
 func (sqlite) CurrentEpoch() string {
