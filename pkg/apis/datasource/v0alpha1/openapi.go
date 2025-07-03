@@ -5,7 +5,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-// Optional extensions for an explict datasource type
+// Optional extensions for an explicit datasource type
 type DataSourceOpenAPIExtension struct {
 	// When specified, this will replace the default spec
 	DataSourceSpec *spec.Schema `json:"spec,omitempty"`
@@ -17,10 +17,10 @@ type DataSourceOpenAPIExtension struct {
 	Schemas map[string]*spec.Schema `json:"schemas,omitempty"`
 
 	// Resource routes
-	Routes *spec3.Paths `json:"routes,omitempty"`
+	Routes map[string]*spec3.Path `json:"routes,omitempty"`
 
 	// Proxy routes
-	Proxy *spec3.Paths `json:"proxy,omitempty"`
+	Proxy map[string]*spec3.Path `json:"proxy,omitempty"`
 }
 
 type SecureValueInfo struct {
