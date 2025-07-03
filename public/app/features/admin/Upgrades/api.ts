@@ -37,6 +37,10 @@ class K8sAPI {
     return this.server.list();
   }
 
+  dismissUpgrade(upgradeID: string) {
+    return this.server.delete(upgradeID);
+  }
+
   getDashboardPanelsForDataSource(dsUID: string): Promise<DashboardPanelResult[]> {
     return this.datasourceServer.subresource<DashboardPanelResultList>(dsUID, 'panels').then((r) =>
       r.items.map((item) => {

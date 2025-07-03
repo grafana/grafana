@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TabsBar, Tab, Alert, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -22,6 +23,7 @@ const getVersions = () => {
         state: item.spec.state === 'new' ? 'New' : '',
         isOutOfSupport: item.spec.is_out_of_support,
         type: item.spec.type,
+        name: item.metadata.name,
       }));
     })
     .catch((error) => {
@@ -29,9 +31,6 @@ const getVersions = () => {
     });
 };
 
-const apiVersions = await getVersions();
-
-const currentVersion = apiVersions[0]?.startingVersion || config.buildInfo.version;
 const TABS = [
   { id: 'VERSIONS', label: 'Version' },
   // { id: 'CHANGELOG', label: 'Changelog' }, // TODO: add changelog
@@ -39,22 +38,59 @@ const TABS = [
 
 function UpgradePage() {
   const [activeTab, setActiveTab] = useState('VERSIONS');
+  const [apiVersions, setApiVersions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const currentVersion = apiVersions[0]?.startingVersion || config.buildInfo.version;
+
+  // Function to fetch and update versions data
+  const fetchVersions = async () => {
+    setIsLoading(true);
+    try {
+      const versions = await getVersions();
+      setApiVersions(versions);
+    } catch (error) {
+      console.error('Error fetching versions:', error);
+      setApiVersions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch versions on component mount
+  useEffect(() => {
+    fetchVersions();
+  }, []);
+
+  const dismissFn = async (upgradeID: string) => {
+    await upgradesApi.dismissUpgrade(upgradeID);
+
+    // Refetch versions instead of reloading the page
+    await fetchVersions();
+  };
 
   return (
     <Page navId="upgrade-grafana">
       <Page.Contents>
-        {apiVersions.length > 0 ? (
-          <Alert title="New version available" severity="info">
-            <Stack direction="column" justifyContent="space-between" gap={2} alignItems="flex-start">
-              <div>Check below to upgrade to the latest version</div>
-            </Stack>
-          </Alert>
-        ) : (
-          <Alert title="Hurray! You're up-to-date!" severity="success">
-            <div>
-              You're running the latest Grafana version <strong>{currentVersion}</strong>
-            </div>
-          </Alert>
+        {!isLoading && (
+          <>
+            {apiVersions.length > 0 ? (
+              <Alert title={t('admin.upgrades.new-version-available', 'New version available')} severity="info">
+                <Stack direction="column" justifyContent="space-between" gap={2} alignItems="flex-start">
+                  <div>
+                    <Trans i18nKey="admin.upgrades.check-below">Check below to upgrade to the latest version</Trans>
+                  </div>
+                </Stack>
+              </Alert>
+            ) : (
+              <Alert title={t('admin.upgrades.up-to-date', "Hurray! You're up-to-date!")} severity="success">
+                <div>
+                  <Trans i18nKey="admin.upgrades.running-latest">You're running the latest Grafana version</Trans>{' '}
+                  <strong>{currentVersion}</strong>
+                </div>
+              </Alert>
+            )}
+          </>
         )}
         <div>
           <TabsBar>
@@ -68,7 +104,7 @@ function UpgradePage() {
             ))}
           </TabsBar>
           {activeTab === 'VERSIONS' ? (
-            <VersionList installedVersion={currentVersion} versions={apiVersions} />
+            <VersionList installedVersion={currentVersion} versions={apiVersions} dismissUpgradeFn={dismissFn} />
           ) : (
             <Changelog sanitizedHTML={''} />
           )}

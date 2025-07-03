@@ -67,11 +67,16 @@ func (r *subDashboardPanelsREST) Connect(ctx context.Context, dsUid string, opts
 			return
 		}
 
+	outer:
 		for _, dashboard := range dashboards {
 			panels := dashboard.Data.Get("panels")
 			panelsArr := panels.MustArray()
 
 			for _, panel := range panelsArr {
+				if len(rsp) >= panelLimit {
+					break outer
+				}
+
 				panelJSON := simplejson.NewFromAny(panel)
 				ds := panelJSON.Get("datasource")
 				panelJSONStr, err := panelJSON.MarshalJSON()

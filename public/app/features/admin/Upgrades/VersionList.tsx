@@ -10,14 +10,16 @@ interface Version {
   state: string;
   isOutOfSupport: boolean;
   type: string;
+  name: string;
 }
 
 interface Props {
   versions: Version[];
   installedVersion?: string;
+  dismissUpgradeFn: (upgradeID: string) => Promise<void>;
 }
 
-export function VersionList({ versions, installedVersion }: Props) {
+export function VersionList({ versions, installedVersion, dismissUpgradeFn }: Props) {
   const styles = useStyles2(getStyles);
   return (
     <Stack direction="column" gap={2}>
@@ -65,6 +67,18 @@ export function VersionList({ versions, installedVersion }: Props) {
                         tooltip="Install"
                       >
                         Install
+                      </LinkButton>{' '}
+                      &nbsp;
+                      <LinkButton
+                        fill="solid"
+                        variant="destructive"
+                        icon="times"
+                        size="sm"
+                        rel="noopener noreferrer"
+                        tooltip="Dismiss"
+                        onClick={() => dismissUpgradeFn(v.name)}
+                      >
+                        Dismiss
                       </LinkButton>
                     </td>
                     <td>{v.releaseDate}</td>
