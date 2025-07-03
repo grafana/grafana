@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/google/go-github/v45/github"
+	"github.com/google/go-github/v70/github"
 )
 
 const (
