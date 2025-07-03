@@ -74,6 +74,8 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 	features         featuremgmt.FeatureToggles
 
+	authorizer authorizer.Authorizer
+
 	accessControl                accesscontrol.AccessControl
 	accessClient                 claims.AccessClient
 	legacy                       *DashboardStorage
@@ -90,8 +92,9 @@ type DashboardsAPIBuilder struct {
 	dualWriter                   dualwrite.Service
 	folderClient                 client.K8sHandler
 
-	log log.Logger
-	reg prometheus.Registerer
+	log          log.Logger
+	reg          prometheus.Registerer
+	ignoreLegacy bool // skip legacy storage and only use unified storage
 }
 
 func RegisterAPIService(
@@ -122,9 +125,11 @@ func RegisterAPIService(
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter)
-	builder := &DashboardsAPIBuilder{
-		log: log.New("grafana-apiserver.dashboards"),
+	dashLog := log.New("grafana-apiserver.dashboards")
 
+	builder := &DashboardsAPIBuilder{
+		log:                          dashLog,
+		authorizer:                   newLegacyAuthorizer(accessControl, dashLog),
 		dashboardService:             dashboardService,
 		dashboardPermissions:         dashboardPermissions,
 		features:                     features,
@@ -152,6 +157,19 @@ func RegisterAPIService(
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
+}
+
+func NewAPIService(ac claims.AccessClient, features featuremgmt.FeatureToggles) *DashboardsAPIBuilder {
+	return &DashboardsAPIBuilder{
+		log: log.New("grafana-apiserver.dashboards"),
+		reg: prometheus.NewRegistry(),
+
+		accessClient: ac,
+		authorizer:   newMultiTenantAuthorizer(ac),
+		features:     features,
+
+		ignoreLegacy: true,
+	}
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
@@ -487,6 +505,15 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
+	if b.ignoreLegacy {
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		storage[dashboards.StoragePath()] = store
+		return nil
+	}
+
 	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg, b.dashboardPermissions, b.accessClient)
 	if err != nil {
 		return err
@@ -564,7 +591,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 }
 
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return GetAuthorizer(b.accessControl, b.log)
+	return b.authorizer
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
