@@ -187,52 +187,55 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
   });
 }
 
-// Only successfully loaded plugins are cached
-const importedAppPlugins: Record<string, AppPlugin> = {};
+// Cache for import promises to prevent duplicate imports
+const importPromises: Record<string, Promise<AppPlugin>> = {};
 
 export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   const pluginId = meta.id;
 
-  if (importedAppPlugins[pluginId]) {
-    return importedAppPlugins[pluginId];
+  // If import is already in progress or completed, return the existing promise
+  if (importPromises[pluginId] !== undefined) {
+    return importPromises[pluginId];
   }
 
-  throwIfAngular(meta);
+  importPromises[pluginId] = (async () => {
+    throwIfAngular(meta);
 
-  const pluginExports = await importPluginModule({
-    path: meta.module,
-    version: meta.info?.version,
-    pluginId: meta.id,
-    loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
-    moduleHash: meta.moduleHash,
-    translations: meta.translations,
-  });
+    const pluginExports = await importPluginModule({
+      path: meta.module,
+      version: meta.info?.version,
+      pluginId: meta.id,
+      loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
+      moduleHash: meta.moduleHash,
+      translations: meta.translations,
+    });
 
-  const { plugin = new AppPlugin() } = pluginExports;
-  plugin.init(meta);
-  plugin.meta = meta;
-  plugin.setComponentsFromLegacyExports(pluginExports);
+    const { plugin = new AppPlugin() } = pluginExports;
+    plugin.init(meta);
+    plugin.meta = meta;
+    plugin.setComponentsFromLegacyExports(pluginExports);
 
-  exposedComponentsRegistry.register({
-    pluginId,
-    configs: plugin.exposedComponentConfigs || [],
-  });
-  addedComponentsRegistry.register({
-    pluginId,
-    configs: plugin.addedComponentConfigs || [],
-  });
-  addedLinksRegistry.register({
-    pluginId,
-    configs: plugin.addedLinkConfigs || [],
-  });
-  addedFunctionsRegistry.register({
-    pluginId,
-    configs: plugin.addedFunctionConfigs || [],
-  });
+    exposedComponentsRegistry.register({
+      pluginId,
+      configs: plugin.exposedComponentConfigs || [],
+    });
+    addedComponentsRegistry.register({
+      pluginId,
+      configs: plugin.addedComponentConfigs || [],
+    });
+    addedLinksRegistry.register({
+      pluginId,
+      configs: plugin.addedLinkConfigs || [],
+    });
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: plugin.addedFunctionConfigs || [],
+    });
 
-  importedAppPlugins[pluginId] = plugin;
+    return plugin;
+  })();
 
-  return plugin;
+  return importPromises[pluginId];
 }
 
 interface AddTranslationsToI18nOptions {
