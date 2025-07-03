@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -32,6 +31,7 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 		AllowAssignGrafanaAdmin bool
 		ResponseBody            any
 		OAuth2Extra             any
+		AccessToken             string
 		Setup                   func(*orgtest.FakeOrgService)
 		RoleAttributePath       string
 		RoleAttributeStrict     bool
@@ -446,6 +446,7 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			Name:              "Given a valid access token with role, no ID token, no API response, use access token",
 			ResponseBody:      map[string]any{},
 			OAuth2Extra:       map[string]any{},
+			AccessToken:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiRWRpdG9yIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20ifQ.oVEMSJVqBwrGXOcwGgXL_8J-CZhgFVPjXXSqzPJQ5JU", // { "role": "Editor", "email": "access.token@example.com" }
 			RoleAttributePath: "role",
 			ExpectedEmail:     "access.token@example.com",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
@@ -454,6 +455,7 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			Name:              "Given a valid access token with org roles, no ID token, no API response, use access token",
 			ResponseBody:      map[string]any{},
 			OAuth2Extra:       map[string]any{},
+			AccessToken:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiVmlld2VyIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20iLCJpbmZvIjp7InJvbGVzIjpbImFjY2Vzcy1kZXYiLCJhY2Nlc3Mtb3BzIl19fQ.g8-mNJQDL9CJWgRTFdKBRRKbsHZfFhJrzPYQGXfxGIE", // { "role": "Viewer", "email": "access.token@example.com", "info": { "roles": [ "access-dev", "access-ops" ] }}
 			RoleAttributePath: "role",
 			OrgAttributePath:  "info.roles",
 			OrgMapping:        []string{"access-dev:org_dev:Admin", "access-ops:org_engineering:Editor"},
@@ -467,6 +469,7 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 				// { "role": "Admin", "email": "id.token@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImlkLnRva2VuQGV4YW1wbGUuY29tIn0.T8wcoOOPQ_av9VsOFoYJZGNFGJgG0d3LPDvtxvgODkU",
 			},
+			AccessToken:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiRWRpdG9yIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20ifQ.oVEMSJVqBwrGXOcwGgXL_8J-CZhgFVPjXXSqzPJQ5JU", // { "role": "Editor", "email": "access.token@example.com" }
 			RoleAttributePath: "role",
 			ExpectedEmail:     "id.token@example.com",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
@@ -478,6 +481,7 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 				// { "email": "id.token@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImlkLnRva2VuQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
+			AccessToken:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiRWRpdG9yIn0.gfnKWZKNFNqrILhHFzabBVEWnJJIZBmQSBwLPCHhLUY", // { "role": "Editor" }
 			RoleAttributePath: "role",
 			ExpectedEmail:     "id.token@example.com",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
@@ -487,6 +491,7 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			AllowAssignGrafanaAdmin: true,
 			ResponseBody:            map[string]any{},
 			OAuth2Extra:             map[string]any{},
+			AccessToken:             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20ifQ.fJPjMgZW9bOYXOLgOUekNQmNrVbUNhU1iqQJwqFWzUY", // { "role": "GrafanaAdmin", "email": "access.token@example.com" }
 			RoleAttributePath:       "role",
 			ExpectedEmail:           "access.token@example.com",
 			ExpectedGrafanaAdmin:    trueBoolPtr(),
@@ -532,26 +537,8 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			}))
 			provider.info.ApiUrl = ts.URL
 
-			// Set up access token for access token test cases
-			var accessToken string
-			if strings.Contains(tc.Name, "access token") {
-				if strings.Contains(tc.Name, "GrafanaAdmin") {
-					// { "role": "GrafanaAdmin", "email": "access.token@example.com" }
-					accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20ifQ.fJPjMgZW9bOYXOLgOUekNQmNrVbUNhU1iqQJwqFWzUY"
-				} else if strings.Contains(tc.Name, "org roles") {
-					// { "role": "Viewer", "email": "access.token@example.com", "info": { "roles": [ "access-dev", "access-ops" ] }}
-					accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiVmlld2VyIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20iLCJpbmZvIjp7InJvbGVzIjpbImFjY2Vzcy1kZXYiLCJhY2Nlc3Mtb3BzIl19fQ.g8-mNJQDL9CJWgRTFdKBRRKbsHZfFhJrzPYQGXfxGIE"
-				} else if strings.Contains(tc.Name, "no email") {
-					// { "role": "Editor" }
-					accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiRWRpdG9yIn0.gfnKWZKNFNqrILhHFzabBVEWnJJIZBmQSBwLPCHhLUY"
-				} else {
-					// { "role": "Editor", "email": "access.token@example.com" }
-					accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiRWRpdG9yIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20ifQ.oVEMSJVqBwrGXOcwGgXL_8J-CZhgFVPjXXSqzPJQ5JU"
-				}
-			}
-
 			staticToken := oauth2.Token{
-				AccessToken:  accessToken,
+				AccessToken:  tc.AccessToken,
 				TokenType:    "",
 				RefreshToken: "",
 				Expiry:       time.Now(),
