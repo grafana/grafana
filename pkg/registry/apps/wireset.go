@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/upgrades"
 )
 
 var WireSet = wire.NewSet(
@@ -17,5 +18,6 @@ var WireSet = wire.NewSet(
 	advisor.RegisterApp,
 	checkregistry.ProvideService,
 	notifications.RegisterApp,
+	upgrades.RegisterApp,
 	wire.Bind(new(checkregistry.CheckService), new(*checkregistry.Service)),
 )

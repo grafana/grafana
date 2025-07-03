@@ -69,6 +69,7 @@ import (
 	notifications2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/upgrades"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -696,7 +697,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	checkregistryService := checkregistry.ProvideService(service13, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
 	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	upgradesAppProvider := upgrades.RegisterApp(cfg)
+	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, upgradesAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -718,7 +720,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service13, dashboardServiceImpl, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, dashboardFolderStoreImpl, libraryPanelService, eventualRestConfigProvider, userService)
 	snapshotsAPIBuilder := dashboardsnapshot.RegisterAPIService(serviceImpl, apiserverService, cfg, featureToggles, sqlStore, registerer)
 	featureFlagAPIBuilder := featuretoggle.RegisterAPIService(featureManager, accessControl, apiserverService, cfg, registerer)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, accessControl, registerer)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, accessControl, registerer, dashboardService)
 	if err != nil {
 		return nil, err
 	}
@@ -1209,7 +1211,8 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	checkregistryService := checkregistry.ProvideService(service13, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
 	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	upgradesAppProvider := upgrades.RegisterApp(cfg)
+	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, upgradesAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1231,7 +1234,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	dashboardsAPIBuilder := dashboard.RegisterAPIService(cfg, featureToggles, apiserverService, dashboardService, dashboardProvisioningService, service13, dashboardServiceImpl, accessControl, accessClient, provisioningServiceImpl, dashboardsStore, registerer, sqlStore, tracingService, resourceClient, dualwriteService, sortService, quotaService, dashboardFolderStoreImpl, libraryPanelService, eventualRestConfigProvider, userService)
 	snapshotsAPIBuilder := dashboardsnapshot.RegisterAPIService(serviceImpl, apiserverService, cfg, featureToggles, sqlStore, registerer)
 	featureFlagAPIBuilder := featuretoggle.RegisterAPIService(featureManager, accessControl, apiserverService, cfg, registerer)
-	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, accessControl, registerer)
+	dataSourceAPIBuilder, err := datasource.RegisterAPIService(featureToggles, apiserverService, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, accessControl, registerer, dashboardService)
 	if err != nil {
 		return nil, err
 	}
