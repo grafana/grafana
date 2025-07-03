@@ -111,7 +111,9 @@ func (s *auditLogConfigStore) Read(ctx context.Context, namespace xkube.Namespac
 	var row auditLogConfigDB
 	if err := rows.Scan(
 		&row.GUID, &row.Name, &row.Namespace, &row.Annotations, &row.Labels, &row.Created, &row.CreatedBy, &row.Updated, &row.UpdatedBy,
-		&row.StdoutEnable, &row.FileEnable, &row.FilePath, &row.LokiEnable, &row.LokiURLSecureValueName, &row.LokiProtocol, &row.LokiTLS,
+		&row.StdoutEnable,
+		&row.FileEnable, &row.FilePath, &row.FileMaxFileSizeMB, &row.FileMaxFiles,
+		&row.LokiEnable, &row.LokiURLSecureValueName, &row.LokiProtocol, &row.LokiTLS,
 	); err != nil {
 		return nil, fmt.Errorf("scanning audit log config row: %w", err)
 	}
@@ -125,7 +127,35 @@ func (s *auditLogConfigStore) Update(ctx context.Context, config *secretv0alpha1
 }
 
 func (s *auditLogConfigStore) Delete(ctx context.Context, namespace xkube.Namespace) error {
-	panic("not implemented yet")
+	ctx, span := s.tracer.Start(ctx, "AuditLogConfigStorage.Delete", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
+	req := deleteAuditLogConfig{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+	}
+
+	query, err := sqltemplate.Execute(sqlAuditLogConfigDelete, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlAuditLogConfigDelete.Name(), err)
+	}
+
+	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("deleting audit log config: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	if rowsAffected > 1 {
+		return fmt.Errorf("expected 0-1 row affected, got %d for namespace %s", rowsAffected, namespace)
+	}
+
 	return nil
 }
 

@@ -11,6 +11,8 @@ SELECT
   {{ .Ident "stdout_enable" }},
   {{ .Ident "file_enable" }},
   {{ .Ident "file_path" }},
+  {{ .Ident "file_max_file_size_mb" }},
+  {{ .Ident "file_max_files" }},
   {{ .Ident "loki_enable" }},
   {{ .Ident "loki_url_secure_value_name" }},
   {{ .Ident "loki_protocol" }},

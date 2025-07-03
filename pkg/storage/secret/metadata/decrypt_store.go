@@ -2,7 +2,9 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -24,7 +26,7 @@ func ProvideDecryptStorage(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	decryptAuthorizer contracts.DecryptAuthorizer,
-	//auditLogService contracts.AuditLogService,
+	auditLogPublisher contracts.AuditLogPublisher,
 ) (contracts.DecryptStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -41,7 +43,7 @@ func ProvideDecryptStorage(
 		keeperService:              keeperService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		decryptAuthorizer:          decryptAuthorizer,
-		//auditLogService:            auditLogService,
+		auditLogPublisher:          auditLogPublisher,
 	}, nil
 }
 
@@ -52,7 +54,7 @@ type decryptStorage struct {
 	keeperService              contracts.KeeperService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	decryptAuthorizer          contracts.DecryptAuthorizer
-	//auditLogService            contracts.AuditLogService
+	auditLogPublisher          contracts.AuditLogPublisher
 }
 
 // Decrypt decrypts a secure value from the keeper.
@@ -68,39 +70,33 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	defer func() {
 		span.SetAttributes(attribute.String("decrypter.identity", decrypterIdentity))
 
-		// entry := contracts.AuditLogEntry{
-		// 	Namespace:          xkube.Namespace(namespace),
-		// 	ObservedAt:         time.Now(),
-		// 	ActorUID:           decrypterIdentity,
-		// 	Action:             contracts.AuditLogActionTypeDecrypt,
-		// 	TargetResourceKind: "securevalue",
-		// 	TargetResourceName: name,
-		// }
+		entry := contracts.AuditLogEntry{
+			Namespace:          xkube.Namespace(namespace),
+			ObservedAt:         time.Now(),
+			ActorUID:           decrypterIdentity,
+			Action:             contracts.AuditLogActionTypeDecrypt,
+			TargetResourceKind: secretv0alpha1.SchemeGroupVersion.String(),
+			TargetResourceName: name,
+		}
 
 		if decryptErr == nil {
-			// entry.ActionStatus = contracts.AuditLogActionStatusOK
-			// if s.auditLogService != nil {
-			// 	if err := s.auditLogService.Observe(ctx, entry); err != nil {
-			// 		logging.FromContext(ctx).Error("Failed to log audit entry", "error", err)
-			// 	}
-			// }
+			entry.ActionStatus = contracts.AuditLogActionStatusOK
 
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_success", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity)
 		} else {
-			// entry.ActionStatus = contracts.AuditLogActionStatusError
-			// if errors.Is(decryptErr, contracts.ErrDecryptNotAuthorized) {
-			// 	entry.ActionStatus = contracts.AuditLogActionStatusUnauthorized
-			// }
-			// if s.auditLogService != nil {
-			// 	if err := s.auditLogService.Observe(ctx, entry); err != nil {
-			// 		logging.FromContext(ctx).Error("Failed to log audit entry", "error", err)
-			// 	}
-			// }
+			entry.ActionStatus = contracts.AuditLogActionStatusError
+			if errors.Is(decryptErr, contracts.ErrDecryptNotAuthorized) {
+				entry.ActionStatus = contracts.AuditLogActionStatusUnauthorized
+			}
 
 			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
 
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_error", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity, "error", decryptErr)
+		}
+
+		if err := s.auditLogPublisher.Publish(ctx, entry); err != nil {
+			logging.FromContext(ctx).Error("Failed to publish audit log entry", "error", err)
 		}
 	}()
 

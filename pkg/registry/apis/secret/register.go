@@ -7,7 +7,6 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,6 +23,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
@@ -50,7 +50,7 @@ type SecretAPIBuilder struct {
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	auditLogConfigStorage      contracts.AuditLogConfigStorage
-	auditLogService            contracts.AuditLogService
+	auditLogPublisher          contracts.AuditLogPublisher
 	secretsOutboxQueue         contracts.OutboxQueue
 	database                   contracts.Database
 	accessClient               claims.AccessClient
@@ -64,7 +64,7 @@ func NewSecretAPIBuilder(
 	secureValueService *service.SecureValueService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	auditLogConfigStorage contracts.AuditLogConfigStorage,
-	auditLogService contracts.AuditLogService,
+	auditLogPublisher contracts.AuditLogPublisher,
 	secretsOutboxQueue contracts.OutboxQueue,
 	database contracts.Database,
 	keeperService contracts.KeeperService,
@@ -95,7 +95,7 @@ func NewSecretAPIBuilder(
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		auditLogConfigStorage:      auditLogConfigStorage,
-		auditLogService:            auditLogService,
+		auditLogPublisher:          auditLogPublisher,
 		secretsOutboxQueue:         secretsOutboxQueue,
 		database:                   database,
 		accessClient:               accessClient,
@@ -112,7 +112,7 @@ func RegisterAPIService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	auditLogConfigStorage contracts.AuditLogConfigStorage,
-	auditLogService contracts.AuditLogService,
+	auditLogPublisher contracts.AuditLogPublisher,
 	outboxQueue contracts.OutboxQueue,
 	secureValueService *service.SecureValueService,
 	database contracts.Database,
@@ -153,7 +153,7 @@ func RegisterAPIService(
 		secureValueService,
 		keeperMetadataStorage,
 		auditLogConfigStorage,
-		auditLogService,
+		auditLogPublisher,
 		outboxQueue,
 		database,
 		keeperService,
@@ -615,8 +615,8 @@ spec:
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return &wrapAuthorizer{
-		auditLogService: b.auditLogService,
-		authorizer:      authsvc.NewResourceAuthorizer(b.accessClient),
+		auditLogPublisher: b.auditLogPublisher,
+		authorizer:        authsvc.NewResourceAuthorizer(b.accessClient),
 	}
 }
 

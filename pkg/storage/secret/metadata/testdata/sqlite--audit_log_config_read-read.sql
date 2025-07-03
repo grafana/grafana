@@ -11,6 +11,8 @@ SELECT
   "stdout_enable",
   "file_enable",
   "file_path",
+  "file_max_file_size_mb",
+  "file_max_files",
   "loki_enable",
   "loki_url_secure_value_name",
   "loki_protocol",
