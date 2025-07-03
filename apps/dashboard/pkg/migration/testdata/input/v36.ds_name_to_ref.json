@@ -1,0 +1,286 @@
+{
+  "title": "Datasource Reference Migration Test Dashboard", 
+  "schemaVersion": 35,
+  "annotations": {
+    "list": [
+      {
+        "name": "Default Annotation - Tests default datasource migration",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        }
+      },
+      {
+        "name": "Named Datasource Annotation - Tests migration by datasource name", 
+        "datasource": {
+          "uid": "existing-target-uid",
+          "type": "elasticsearch",
+          "apiVersion": "v2"
+        }
+      },
+      {
+        "name": "UID Datasource Annotation - Tests migration by datasource UID",
+        "datasource": {
+          "uid": "existing-target-uid",
+          "type": "elasticsearch",
+          "apiVersion": "v2"
+        }
+      },
+      {
+        "name": "Null Datasource Annotation - Tests null datasource fallback to default",
+        "datasource": null
+      },
+      {
+        "name": "Unknown Datasource Annotation - Tests unknown datasource preserved as UID",
+        "datasource": {
+          "uid": "unknown-datasource-name"
+        }
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "query_var_null",
+        "type": "query",
+        "datasource": null
+      },
+      {
+        "name": "query_var_named",
+        "type": "query", 
+        "datasource": {
+          "uid": "existing-target-uid",
+          "type": "elasticsearch",
+          "apiVersion": "v2"
+        }
+      },
+      {
+        "name": "query_var_uid",
+        "type": "query",
+        "datasource": {
+          "uid": "existing-target-uid",
+          "type": "elasticsearch",
+          "apiVersion": "v2"
+        }
+      },
+      {
+        "name": "query_var_unknown",
+        "type": "query",
+        "datasource": {
+          "uid": "unknown-datasource"
+        }
+      },
+      {
+        "name": "non_query_var",
+        "type": "constant",
+        "datasource": null
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Panel with Null Datasource and Targets",
+      "description": "Tests null panel datasource migration with targets - should fallback to default",
+      "datasource": null,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": null
+        }
+      ]
+    },
+    {
+      "id": 2, 
+      "title": "Panel with Null Datasource and Empty Targets",
+      "description": "Tests null panel datasource with empty targets array - should create default target",
+      "datasource": null,
+      "targets": []
+    },
+    {
+      "id": 3,
+      "title": "Panel with No Targets Array",
+      "description": "Tests null panel datasource with missing targets - should create default target array",
+      "datasource": null
+    },
+    {
+      "id": 4,
+      "title": "Panel with Mixed Datasources", 
+      "description": "Tests mixed datasource panel - targets should migrate independently",
+      "datasource": {
+        "uid": "-- Mixed --"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": null
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "uid": "existing-target-uid"
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Panel with Existing Object Datasource",
+      "description": "Tests panel with already migrated datasource object - should preserve existing refs",
+      "datasource": {
+        "uid": "existing-ref-uid",
+        "type": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "existing-target-uid",
+            "type": "elasticsearch"
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Panel with Unknown Datasource Name",
+      "description": "Tests panel with unknown datasource - should preserve as UID-only reference",
+      "datasource": {
+        "uid": "unknown-panel-datasource"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "unknown-target-datasource"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Panel with Expression Query",
+      "description": "Tests panel with expression query - should not inherit expression as panel datasource",
+      "datasource": null,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "existing-target-uid"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "uid": "__expr__",
+            "type": "__expr__"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Panel Inheriting from Target",
+      "description": "Tests panel inheriting datasource from target when panel datasource was default",
+      "datasource": null,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "existing-target-uid"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Panel with Named Datasource",
+      "description": "Tests panel with datasource referenced by name - should migrate to full object",
+      "datasource": {
+        "uid": "existing-target-uid",
+        "type": "elasticsearch",
+        "apiVersion": "v2"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "existing-target-uid",
+            "type": "elasticsearch",
+            "apiVersion": "v2"
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Panel with UID Datasource",
+      "description": "Tests panel with datasource referenced by UID - should migrate to full object",
+      "datasource": {
+        "uid": "existing-target-uid",
+        "type": "elasticsearch",
+        "apiVersion": "v2"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "existing-target-uid",
+            "type": "elasticsearch",
+            "apiVersion": "v2"
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Simple Row Panel",
+      "description": "Tests row panel - it gets datasource or targets fields added even it is not needed, but this is how it works in frontend",
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "Collapsed Row with Nested Panels",
+      "description": "Tests collapsed row with nested panels - nested panels should migrate",
+      "collapsed": true,
+      "panels": [
+        {
+          "id": 13,
+          "title": "Nested Panel with Default Datasource",
+          "description": "Nested panel in collapsed row with default datasource",
+          "datasource": null,
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "uid": "existing-target-uid"
+              }
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "title": "Nested Panel with Unknown Datasource",
+          "description": "Nested panel in collapsed row with unknown datasource",
+          "datasource": {
+            "uid": "unknown-nested-datasource"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "uid": "existing-target-uid",
+                "type": "elasticsearch",
+                "apiVersion": "v2"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

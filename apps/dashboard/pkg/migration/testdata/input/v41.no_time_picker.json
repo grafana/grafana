@@ -1,0 +1,10 @@
+{
+  "title": "No Time Picker Test Dashboard",
+  "schemaVersion": 40,
+  "panels": [],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": ""
+} 

@@ -1,0 +1,10 @@
+{
+  "panels": [],
+  "refresh": "",
+  "schemaVersion": 41,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "title": "Boolean False Refresh Test Dashboard"
+}

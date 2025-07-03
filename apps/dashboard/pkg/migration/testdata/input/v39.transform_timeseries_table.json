@@ -1,0 +1,145 @@
+{
+  "title": "V39 TimeSeriesTable Transformation Migration Test Dashboard",
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "type": "table",
+      "title": "Panel with TimeSeriesTable Transformation - Single Stat",
+      "id": 1,
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {
+            "refIdToStat": {
+              "A": "mean"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table", 
+      "title": "Panel with TimeSeriesTable Transformation - Multiple Stats",
+      "id": 2,
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {
+            "refIdToStat": {
+              "A": "mean",
+              "B": "max",
+              "C": "min",
+              "D": "sum"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Panel with TimeSeriesTable Transformation - Mixed with Other Transforms",
+      "id": 3,
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": ["mean"]
+          }
+        },
+        {
+          "id": "timeSeriesTable",
+          "options": {
+            "refIdToStat": {
+              "A": "last",
+              "B": "first"
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {}
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Panel with Non-TimeSeriesTable Transformation (Should Remain Unchanged)",
+      "id": 4,
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": ["mean", "max"]
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Panel with TimeSeriesTable - Empty RefIdToStat",
+      "id": 5,
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {
+            "refIdToStat": {}
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Panel with TimeSeriesTable - No Options (Should Skip)",
+      "id": 6,
+      "transformations": [
+        {
+          "id": "timeSeriesTable"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Panel with TimeSeriesTable - Invalid Options (Should Skip)",
+      "id": 7,
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {
+            "someOtherOption": "value"
+          }
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Panel with No Transformations (Should Remain Unchanged)",
+      "id": 8
+    },
+    {
+      "type": "row",
+      "title": "Row with Nested Panels Having TimeSeriesTable Transformations",
+      "id": 9,
+      "collapsed": false,
+      "panels": [
+        {
+          "type": "table",
+          "title": "Nested Panel with TimeSeriesTable",
+          "id": 10,
+          "transformations": [
+            {
+              "id": "timeSeriesTable",
+              "options": {
+                "refIdToStat": {
+                  "NestedA": "median",
+                  "NestedB": "stdDev"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
