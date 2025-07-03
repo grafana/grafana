@@ -1,20 +1,23 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2, MappingType } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaTheme2, MappingType, createTheme } from '@grafana/data';
 import { TableCellDisplayMode, TablePillCellOptions } from '@grafana/schema';
+
+import { mockThemeContext } from '../../../../themes/ThemeContext';
 
 import { PillCell } from './PillCell';
 
-// Mock the theme context
-jest.mock('../../../../../themes/ThemeContext', () => ({
-  useStyles2: jest.fn(() => ({
-    cell: 'cell-class',
-    pillsContainer: 'pills-container-class',
-    pill: 'pill-class',
-  })),
-}));
-
 describe('PillCell', () => {
+  let restoreThemeContext: () => void;
+
+  beforeEach(() => {
+    restoreThemeContext = mockThemeContext(createTheme());
+  });
+
+  afterEach(() => {
+    restoreThemeContext();
+  });
+
   const mockCellOptions: TablePillCellOptions = {
     type: TableCellDisplayMode.Pill,
     colorMode: 'auto',
