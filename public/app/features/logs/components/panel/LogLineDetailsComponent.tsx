@@ -68,6 +68,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
 
   const handleToggle = useCallback(
     (option: string, isOpen: boolean) => {
+      console.log(option, isOpen);
       store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
     },
     [logOptionsStorageKey]
@@ -132,7 +133,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
               key={group}
               label={group}
               collapsible
-              isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName}`, true)}
+              isOpen={store.getBool(`${logOptionsStorageKey}.log-details.${groupOptionName(group)}`, true)}
               onToggle={(isOpen: boolean) => handleToggle(groupOptionName(group), isOpen)}
             >
               <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
