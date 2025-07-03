@@ -31,8 +31,8 @@ test.describe(
       };
 
       // common steps to add a new variable
-      flows.newEditPaneVariableClick(dashboardPage, selectors);
-      flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
+      await flows.newEditPaneVariableClick(dashboardPage, selectors);
+      await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
 
       // Select datasource for the ad hoc variable
       const dataSource = 'gdev-loki';
