@@ -167,7 +167,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceSpec(ref common.ReferenceCall
 							Format:      "",
 						},
 					},
-					"use": {
+					"user": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -204,7 +204,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceSpec(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"title", "jsonData"},
 			},
 		},
 		Dependencies: []string{

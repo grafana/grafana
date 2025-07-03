@@ -47,14 +47,14 @@ type DataSourceSpec struct {
 	// Server URL
 	URL string `json:"url,omitempty"`
 
-	User            string `json:"use,omitempty"`
+	User            string `json:"user,omitempty"`
 	Database        string `json:"database,omitempty"`
 	BasicAuth       bool   `json:"basicAuth,omitempty"`
 	BasicAuthUser   string `json:"basicAuthUser,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
 
 	// Generic unstructured configuration settings
-	JsonData common.Unstructured `json:"jsonData,omitempty"`
+	JsonData common.Unstructured `json:"jsonData,omitzero"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

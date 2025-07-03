@@ -378,11 +378,13 @@ func schema_pkg_apis_secret_v0alpha1_InlineSecureValue(ref common.ReferenceCallb
 					"remove": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Remove this value -- cascading delete to the secret service if necessary",
+							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
+				Required: []string{"remove"},
 			},
 		},
 	}

@@ -15,7 +15,7 @@ type InlineSecureValue struct {
 	UID string `json:"uid,omitempty"`
 
 	// Remove this value -- cascading delete to the secret service if necessary
-	Remove bool `json:"remove,omitempty"`
+	Remove bool `json:"remove,omitzero"`
 }
 
 // Collection of secure values

@@ -14,12 +14,14 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	queryV0 "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	secretsV0 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -268,15 +270,60 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	root := "/apis/" + b.datasourceResourceInfo.GroupVersion().String() + "/"
 
 	// Add queries to the request properties
-	// Add queries to the request properties
 	err := queryschema.AddQueriesToOpenAPI(queryschema.OASQueryOptions{
 		Swagger:          oas,
 		PluginJSON:       &b.pluginJSON,
 		QueryTypes:       b.queryTypes,
 		Root:             root,
-		QueryPath:        "namespaces/{namespace}/connections/{name}/query",
+		QueryPath:        "namespaces/{namespace}/datasources/{name}/query",
 		QueryDescription: fmt.Sprintf("Query the %s datasources", b.pluginJSON.Name),
 	})
+
+	ds, ok := oas.Components.Schemas["com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"]
+	if !ok {
+		return nil, fmt.Errorf("missing DS type")
+	}
+
+	// Spec
+	p := spec.MapProperty(nil)
+	p.Description = "HELLO!"
+	p.Required = []string{"x", "y"}
+	p.Example = map[string]any{
+		"x":   10,
+		"y":   "hello",
+		"url": "http://xxxx",
+	}
+	oas.Components.Schemas["DataSourceSpec"] = p
+	ds.Properties["spec"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Ref: spec.MustCreateRef("#/components/schemas/DataSourceSpec"),
+		},
+	}
+
+	// Secure fields
+	p = spec.MapProperty(&spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.secret.v0alpha1.InlineSecureValue"),
+		},
+	})
+	p.Required = []string{"a", "b"}
+	oas.Components.Schemas["SecureFields"] = p
+	ds.Properties["secure"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Ref: spec.MustCreateRef("#/components/schemas/SecureFields"),
+		},
+	}
+	p.Example = secretsV0.InlineSecureValues{
+		"a": secretsV0.InlineSecureValue{
+			Create: "ExampleA",
+		},
+		"b": secretsV0.InlineSecureValue{
+			Create: "ExampleB",
+		},
+	}
+
+	ds.Properties["apiVersion"] = *spec.StringProperty().WithEnum(b.GetGroupVersion().String())
+	ds.Properties["kind"] = *spec.StringProperty().WithEnum("DataSource")
 
 	return oas, err
 }
