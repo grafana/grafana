@@ -84,7 +84,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			"readOnly": true,
 			"title": "test",
 			"url": "http://fake.url",
-			"use": "example"
+			"user": "example"
 		}`, string(jj))
 	})
 
