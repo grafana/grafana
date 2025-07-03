@@ -52,13 +52,11 @@ test.describe(
       await expect(page.getByTestId(selectors.pages.BrowseDashboards.table.row('Bar Gauge Demo'))).toBeVisible();
 
       // Open the new folder drawer
-      // TODO have a better selector here
       await page.getByText('New').click();
       await page.getByRole('menuitem', { name: 'New folder' }).click();
 
       // And create a new folder
       await page.getByTestId(selectors.pages.BrowseDashboards.NewFolderForm.nameInput).fill('My new folder');
-      // await page.waitForTimeout(2000);
       await page
         .getByTestId(selectors.pages.BrowseDashboards.NewFolderForm.form)
         .getByRole('button', { name: 'Create' })
