@@ -10,7 +10,6 @@ import { CloudBadge } from 'app/core/components/Branding/CloudBadge';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
-
 type AdCardProps = {
   title: string;
   description: string;
@@ -18,7 +17,7 @@ type AdCardProps = {
   logoUrl: string;
   items: string[];
   helpFlag: number;
-}
+};
 
 export function AdCard({ title, description, href, logoUrl, items, helpFlag }: AdCardProps) {
   const styles = useStyles2(getAddCardStyles);
@@ -26,14 +25,11 @@ export function AdCard({ title, description, href, logoUrl, items, helpFlag }: A
   const helpFlags = contextSrv.user.helpFlags1;
   const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & helpFlag));
 
-
   const onDismiss = () => {
-    backendSrv
-      .put(`/api/user/helpflags/${helpFlag}`, undefined, { showSuccessAlert: false })
-      .then((res) => {
-        contextSrv.user.helpFlags1 = res.helpFlags1;
-        setDismissed(true);
-      });
+    backendSrv.put(`/api/user/helpflags/${helpFlag}`, undefined, { showSuccessAlert: false }).then((res) => {
+      contextSrv.user.helpFlags1 = res.helpFlags1;
+      setDismissed(true);
+    });
   };
 
   if (isDismissed || !isOpenSourceBuildOrUnlicensed()) {
@@ -41,15 +37,10 @@ export function AdCard({ title, description, href, logoUrl, items, helpFlag }: A
   }
 
   return (
-    <div className={styles.cardBody} title={title} >
+    <div className={styles.cardBody} title={title}>
       <div className={styles.preHeader}>
         <CloudBadge />
-        <IconButton
-          name="times"
-          size="sm"
-          onClick={onDismiss}
-          aria-label={t('alerting.ad.close', 'Close')}
-        />
+        <IconButton name="times" size="sm" onClick={onDismiss} aria-label={t('alerting.ad.close', 'Close')} />
       </div>
       <header className={styles.header}>
         <div className={styles.logoColumn}>
@@ -70,7 +61,7 @@ export function AdCard({ title, description, href, logoUrl, items, helpFlag }: A
         ))}
       </div>
       <Divider />
-      <Button fill="solid" variant='secondary' onClick={() => window.open(href, '_blank')}>
+      <Button fill="solid" variant="secondary" onClick={() => window.open(href, '_blank')}>
         <Trans i18nKey="alerting.ad.learn-more">Learn more</Trans>
         <Icon name="external-link-alt" className={styles.buttonIcon} />
       </Button>
@@ -162,7 +153,6 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     alignItems: 'center',
   }),
-
 });
 
 export function isOpenSourceBuildOrUnlicensed() {

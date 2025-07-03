@@ -8,7 +8,7 @@ export function OrangeBadge({ text }: { text: string }) {
   return (
     <div className={styles.wrapper}>
       <Icon name="cloud" size="sm" />
-     {text}
+      {text}
     </div>
   );
 }
