@@ -81,6 +81,10 @@ jobs:
           service_account: github-gf-storybook-preview@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
 
+      - name: Get short commit hash
+        id: commit-hash
+        run: echo "commit-hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Post new comment
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         if: steps.find-comment.outputs.comment-id == ''
@@ -101,7 +105,7 @@ jobs:
             ${{ env.COMMENT_MARKER }}
             :wave: Storybook for this PR has been deployed to preview changes - [check it out!](https://storage.googleapis.com/${{ env.BUCKET_NAME }}/${{ env.DEPLOY_NAME }}/index.html)
 
-            <sub>Updated to `${{ github.sha.substring(0, 7) }}`</sub>
+            <sub>Updated to `${{ steps.commit-hash.outputs.commit-hash }}`</sub>
 
       - name: Write summary
         run: |
