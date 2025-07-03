@@ -6,6 +6,8 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+// +k8s:deepcopy-gen=true
+// +k8s:openapi-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type HealthCheckResult struct {
 	metav1.TypeMeta `json:",inline"`

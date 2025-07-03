@@ -1,6 +1,8 @@
 package datasource
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -64,8 +66,15 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 	if ds.SecureJsonData != nil {
 		cfg.Secure = make(secretV0.InlineSecureValues)
 		for k := range ds.SecureJsonData {
+			h := sha256.New()
+			h.Write([]byte(ds.Type)) // group+resource
+			h.Write([]byte("|"))
+			h.Write([]byte(ds.UID)) // name
+			h.Write([]byte("|"))
+			h.Write([]byte(k)) // property
+			n := hex.EncodeToString(h.Sum(nil))
 			cfg.Secure[k] = secretV0.InlineSecureValue{
-				UID: "????", // ????
+				Name: "@" + n[0:10], // ??????
 			}
 		}
 	}
@@ -103,9 +112,8 @@ func (r *converter) toAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
 	}
 
-	cmd.SecureJsonData = toSecureJsonData(ds)
-
-	return cmd, nil
+	cmd.SecureJsonData, err = toSecureJsonData(ds)
+	return cmd, err
 }
 
 func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
@@ -140,17 +148,20 @@ func (r *converter) toUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 	if len(ds.Spec.JsonData.Object) > 0 {
 		cmd.JsonData = simplejson.NewFromAny(ds.Spec.JsonData.Object)
 	}
-	cmd.SecureJsonData = toSecureJsonData(ds)
-	return cmd, nil
+	cmd.SecureJsonData, err = toSecureJsonData(ds)
+	return cmd, err
 }
 
-func toSecureJsonData(ds *datasourceV0.DataSource) map[string]string {
+func toSecureJsonData(ds *datasourceV0.DataSource) (map[string]string, error) {
 	if ds == nil || len(ds.Secure) < 1 {
-		return nil
+		return nil, nil
 	}
 
 	secure := map[string]string{}
 	for k, v := range ds.Secure {
+		if v.Shared {
+			return nil, fmt.Errorf("shared secrets not yet supported (%s)", k)
+		}
 		if v.Create != "" {
 			secure[k] = v.Create.DangerouslyExposeAndConsumeValue()
 		}
@@ -158,5 +169,5 @@ func toSecureJsonData(ds *datasourceV0.DataSource) map[string]string {
 			secure[k] = "" // Weirdly, this is the best we can do with the legacy API :(
 		}
 	}
-	return secure
+	return secure, nil
 }

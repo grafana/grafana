@@ -354,37 +354,35 @@ func schema_pkg_apis_secret_v0alpha1_InlineSecureValue(ref common.ReferenceCallb
 				Properties: map[string]spec.Schema{
 					"create": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Create a secure value",
+							Description: "Create a secure value -- this is only used for POST/PUT",
 							MinLength:   ptr.To[int64](1),
 							MaxLength:   ptr.To[int64](24576),
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"ref": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Reference a shared secret (enterprise only)",
+							Description: "Name in the secret service (reference)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"uid": {
+					"shared": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The resolved UID within the secret service",
-							Type:        []string{"string"},
+							Description: "The secret is shared (enterprise only)",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 					"remove": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Remove this value -- cascading delete to the secret service if necessary",
-							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"remove"},
 			},
 		},
 	}

@@ -7,6 +7,8 @@ import (
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
+// +k8s:deepcopy-gen=true
+// +k8s:openapi-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSource struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -20,6 +22,7 @@ type DataSource struct {
 }
 
 // DsAccess represents how the datasource connects to the remote service
+// +k8s:openapi-gen=true
 // +enum
 type DsAccess string
 
@@ -36,6 +39,8 @@ func (dsa DsAccess) String() string {
 	return string(dsa)
 }
 
+// +k8s:deepcopy-gen=true
+// +k8s:openapi-gen=true
 type DataSourceSpec struct {
 	// The diplay name (previously saved as the "name" property)
 	Title string `json:"title"`
@@ -57,6 +62,8 @@ type DataSourceSpec struct {
 	JsonData common.Unstructured `json:"jsonData,omitzero"`
 }
 
+// +k8s:deepcopy-gen=true
+// +k8s:openapi-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourceList struct {
 	metav1.TypeMeta `json:",inline"`
