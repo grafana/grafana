@@ -1008,8 +1008,7 @@ export class GraphiteDatasource
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
       targets: Record<string, string> = {};
-    let target, targetValue, i;
-    const regex = /\#([A-Z])/g;
+    let target: GraphiteQuery, targetValue, i;
     const intervalFormatFixRegex = /'(\d+)m'/gi;
     let hasTargets = false;
 
@@ -1034,7 +1033,14 @@ export class GraphiteDatasource
       targets[target.refId] = targetValue;
     }
 
+    const regex = /\#([A-Z])/g;
+
     function nestedSeriesRegexReplacer(match: string, g1: string | number) {
+      // Handle the case where a query references itself to prevent infinite recursion
+      if (target.refId === g1) {
+        return targets[g1] || match;
+      }
+
       // Recursively replace all nested series references
       return originalTargetMap[g1].replace(regex, nestedSeriesRegexReplacer) || match;
     }
