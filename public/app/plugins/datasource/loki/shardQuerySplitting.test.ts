@@ -53,11 +53,9 @@ describe('runShardSplitQuery()', () => {
     request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }]);
     datasource = createLokiDatasource();
     datasource.languageProvider.fetchLabelValues = jest.fn();
-    datasource.interpolateVariablesInQueries = jest.fn().mockImplementation((queries: LokiQuery[]) => {
-      return queries.map((query) => {
-        query.expr = query.expr.replace('$SELECTOR', '{a="b"}');
-        return query;
-      });
+    datasource.applyTemplateVariables = jest.fn().mockImplementation((query: LokiQuery) => {
+      query.expr = query.expr.replace('$SELECTOR', '{a="b"}');
+      return query;
     });
     jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1', '10', '2', '20', '3']);
     const { metricFrameA } = getMockFrames();
@@ -111,7 +109,7 @@ describe('runShardSplitQuery()', () => {
 
   test('Interpolates queries before running', async () => {
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
-      expect(datasource.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
+      expect(datasource.applyTemplateVariables).toHaveBeenCalledTimes(5);
 
       expect(datasource.runQuery).toHaveBeenCalledWith({
         intervalMs: expect.any(Number),
@@ -172,11 +170,9 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Sends the whole stream selector to fetch values', async () => {
-    datasource.interpolateVariablesInQueries = jest.fn().mockImplementation((queries: LokiQuery[]) => {
-      return queries.map((query) => {
-        query.expr = query.expr.replace('$SELECTOR', '{service_name="test", filter="true"}');
-        return query;
-      });
+    datasource.applyTemplateVariables = jest.fn().mockImplementation((query: LokiQuery) => {
+      query.expr = query.expr.replace('$SELECTOR', '{service_name="test", filter="true"}');
+      return query;
     });
 
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith(() => {
