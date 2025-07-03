@@ -25,23 +25,8 @@ jobs:
     env:
       BUCKET_NAME: grafana-storybook-previews
       DEPLOY_NAME: preview-${{ github.run_id }} # TODO: better path prefix - branch name or PR ID?
-      COMMENT_MARKER: "<!-- storybook-preview -->"
 
     steps:
-      - name: Find Comment
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
-        id: find-comment
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: ${{ env.COMMENT_MARKER }}
-
-      - name: React to comment
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.find-comment.outputs.comment-id != ''
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          reactions: eyes
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -80,33 +65,6 @@ jobs:
           path: packages/grafana-ui/dist/storybook
           service_account: github-gf-storybook-preview@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
-
-      - name: Get short commit hash
-        id: commit-hash
-        run: echo "commit-hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Post new comment
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.find-comment.outputs.comment-id == ''
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ${{ env.COMMENT_MARKER }}
-            :wave: Storybook for this PR has been deployed to preview changes - [check it out!](https://storage.googleapis.com/${{ env.BUCKET_NAME }}/${{ env.DEPLOY_NAME }}/index.html)
-
-      - name: Update existing comment
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
-        if: steps.find-comment.outputs.comment-id != ''
-        with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          reactions-edit-mode: replace # remove eyes reaction
-          reactions: ""
-          edit-mode: replace
-          body: |
-            ${{ env.COMMENT_MARKER }}
-            :wave: Storybook for this PR has been deployed to preview changes - [check it out!](https://storage.googleapis.com/${{ env.BUCKET_NAME }}/${{ env.DEPLOY_NAME }}/index.html)
-
-            <sub>Updated to `${{ steps.commit-hash.outputs.commit-hash }}`</sub>
 
       - name: Write summary
         run: |
