@@ -142,14 +142,13 @@ const preview: Preview = {
         }
 
         //
+        // If sorting different components, sort alphabetically
         if (aComponent !== bComponent) {
           return aComponent.localeCompare(bComponent, undefined, { numeric: true });
         }
 
+        // Otherwise, sort stories within componmments according to source order
         return 0;
-
-        // Otherwise, sort alphabetically
-        // return a.title.localeCompare(b.title, undefined, { numeric: true });
       },
     },
   },
