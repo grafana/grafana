@@ -6,7 +6,7 @@ import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { ManagerKind } from '../../../features/apiserver/types';
+import { AnnoKeyManagerKind, ManagerKind } from '../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from '../../../features/browse-dashboards/state/utils';
 
@@ -128,8 +128,8 @@ export function useFoldersQueryAppPlatform(isBrowsing: boolean, openFolders: Rec
             // We use resource name as UID because well, not sure what metadata.uid would be used for now as you cannot
             // query by it.
             uid: name,
-            // Extract managedBy from annotations if available
-            managedBy: ManagerKind[item.metadata.annotations?.['grafana.com/managed-by'] as keyof typeof ManagerKind],
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            managedBy: item.metadata?.annotations?.[AnnoKeyManagerKind] as ManagerKind | undefined,
           },
         };
 
