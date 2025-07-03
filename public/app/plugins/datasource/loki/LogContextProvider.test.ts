@@ -17,7 +17,7 @@ import {
   LOKI_LOG_CONTEXT_PRESERVED_LABELS,
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from './LogContextProvider';
-import { createLokiDatasource } from './__mocks__/datasource';
+import { createLokiDatasource } from './mocks/datasource';
 import { LokiQuery } from './types';
 
 const defaultLanguageProviderMock = {

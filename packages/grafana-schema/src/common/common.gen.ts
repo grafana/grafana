@@ -979,6 +979,33 @@ export interface TablePillCellOptions {
 }
 
 /**
+ * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
+ * Generally defines alignment, filtering capabilties, display options, etc.
+ */
+export interface TableFieldOptions {
+  align: FieldTextAlignment;
+  cellOptions: TableCellOptions;
+  /**
+   * This field is deprecated in favor of using cellOptions
+   */
+  displayMode?: TableCellDisplayMode;
+  filterable?: boolean;
+  hidden?: boolean; // ?? default is missing or false ??
+  /**
+   * Hides any header for a column, useful for columns that show some static content or buttons.
+   */
+  hideHeader?: boolean;
+  inspect: boolean;
+  minWidth?: number;
+  width?: number;
+  /**
+   * Enables text wrapping for the display name in the table header.
+   */
+  wrapHeaderText?: boolean;
+
+}
+
+/**
  * A specific timezone from https://en.wikipedia.org/wiki/Tz_database
  */
 export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);

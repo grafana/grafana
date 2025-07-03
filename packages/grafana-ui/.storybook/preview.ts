@@ -51,6 +51,9 @@ if (process.env.NODE_ENV === 'development') {
  */
 initialize({
   onUnhandledRequest: 'bypass',
+  serviceWorker: {
+    url: 'mockServiceWorker.js',
+  },
 });
 
 const preview: Preview = {

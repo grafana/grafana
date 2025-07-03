@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
 import { getGridTemplateColumns, getStyles, LogLine, Props } from './LogLine';
 import { LogListFontSize } from './LogList';

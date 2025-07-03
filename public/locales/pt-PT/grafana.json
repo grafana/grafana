@@ -110,6 +110,12 @@
       "update-button": "Atualizar",
       "users-heading": "Utilizadores da organização"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditoria",
       "title-custom-branding": "Marca personalizada",
@@ -3467,18 +3473,12 @@
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
-      "description-branch-name-in-git-hub": "Nome do ramo no GitHub",
       "error-invalid-folder-name": "Nome da pasta inválido",
       "error-required": "O nome da pasta é obrigatório",
-      "folder-comment-input-placeholder-describe-changes-optional": "Adicione uma nota para descrever as suas alterações (opcional)",
       "folder-name-input-placeholder-enter-folder-name": "Introduza o nome da pasta",
-      "label-branch": "Ramo",
-      "label-comment": "Comentário",
       "label-folder-name": "Nome da pasta",
-      "label-workflow": "Fluxo de trabalho",
       "text-pull-request-created": "Foi criado um pedido de extração com alterações a esta pasta:",
       "title-pull-request-created": "Pedido de extração criado",
-      "title-repository-not-found": "Repositório não encontrado",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
     },
     "no-results": {
@@ -12073,6 +12073,7 @@
           "polynomial": "Polinómio"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Número de pontos X, Y para prever"
     },
     "rename-by-regex-transformer-editor": {
