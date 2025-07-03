@@ -154,16 +154,15 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
 // placeholder function; assuming the values are already interpolated
 const replaceVars: InterpolateFunction = (value: string) => value;
 
+const EmptyActionModels: Array<ActionModel<Field>> = [];
+
 const getCellActions = (
   dataFrame: DataFrame,
   field: Field,
   rowIndex: number,
-  replaceVariables: InterpolateFunction | undefined
+  replaceVariables?: InterpolateFunction
 ) => {
-  const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
-
-  const actionsModel = getActions(
+  const models = getActions(
     dataFrame,
     field,
     field.state!.scopedVars!,
@@ -172,15 +171,23 @@ const getCellActions = (
     { valueRowIndex: rowIndex }
   );
 
-  actionsModel.forEach((action) => {
-    const key = `${action.title}`;
-    if (!actionLookup.has(key)) {
-      actions.push(action);
-      actionLookup.add(key);
-    }
-  });
+  if (models.length > 0) {
+    const actions: Array<ActionModel<Field>> = [];
+    const seen = new Set<string>();
 
-  return actions;
+    models.forEach((action) => {
+      const key = action.title;
+
+      if (!seen.has(key)) {
+        actions.push(action);
+        seen.add(key);
+      }
+    });
+
+    return actions;
+  }
+
+  return EmptyActionModels;
 };
 
 const tableStyles = {

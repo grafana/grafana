@@ -5,15 +5,15 @@ import { useState } from 'react';
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
+// import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
 import { TableCellOptions, TableCellDisplayMode } from '../../types';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils, tooltipOnClickHandler } from '../../utils';
 import { AutoCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
-export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions, actions }: AutoCellProps) {
-  const styles = useStyles2(getStyles, justifyContent);
+export default function AutoCell({ value, field, rowIdx, cellOptions, actions }: AutoCellProps) {
+  // const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
@@ -23,10 +23,14 @@ export default function AutoCell({ value, field, justifyContent, rowIdx, cellOpt
   const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
   const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
+  if (!shouldShowLink && !shouldShowTooltip) {
+    return formattedValue;
+  }
+
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
     <div
-      className={styles.cell}
+      // className={styles.cell}
       onClick={tooltipOnClickHandler(setTooltipCoords)}
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
       data-testid={selectors.components.TablePanel.autoCell}
@@ -56,14 +60,14 @@ const getLinkStyle = (styles: ReturnType<typeof getStyles>, cellOptions: TableCe
   return styles.cellLinkForColoredCell;
 };
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
-  cell: css({
-    display: 'flex',
-    justifyContent: justifyContent,
-    a: {
-      color: 'inherit',
-    },
-  }),
+export const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
+  // cell: css({
+  //   display: 'flex',
+  //   justifyContent: justifyContent,
+  //   a: {
+  //     color: 'inherit',
+  //   },
+  // }),
   cellLinkForColoredCell: css({
     cursor: 'pointer',
     overflow: 'hidden',

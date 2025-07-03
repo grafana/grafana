@@ -24,6 +24,7 @@ import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { CellColors, TableCellDisplayMode } from '../types';
 
+import { getStyles as getStylesAuto } from './Cells/AutoCell';
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellActions } from './Cells/TableCellActions';
@@ -276,6 +277,17 @@ export function TableNG(props: TableNGProps) {
         let lastRowIdx = -1;
         let _rowHeight = 0;
 
+        // get static cell class based on col props
+
+        let cellClass = '';
+
+        switch (cellType) {
+          case TableCellDisplayMode.Auto:
+            cellClass = getCellStyles(theme, justifyContent, shouldWrap, shouldOverflow, cellType === TableCellDisplayMode.Auto).cell;
+            break;
+          default:
+        }
+
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
           const rowIdx = props.row.__index;
@@ -287,25 +299,27 @@ export function TableNG(props: TableNGProps) {
             lastRowIdx = rowIdx;
           }
 
-          let colors: CellColors;
+          // let colors: CellColors;
 
-          if (applyToRowBgFn != null) {
-            colors = applyToRowBgFn(props.rowIdx);
-          } else if (cellType !== TableCellDisplayMode.Auto) {
-            const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-            colors = getCellColors(theme, cellOptions, displayValue);
-          } else {
-            colors = {};
-          }
+          // if (applyToRowBgFn != null) {
+          //   colors = applyToRowBgFn(props.rowIdx);
+          // } else if (cellType !== TableCellDisplayMode.Auto) {
+          //   const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
+          //   colors = getCellColors(theme, cellOptions, displayValue);
+          // } else {
+          //   colors = {};
+          // }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, colors);
+
+
+          // add min-height as rowheight to styles?
 
           return (
             <Cell
               key={key}
               {...props}
-              className={cx(props.className, cellStyle.cell)}
-              style={{ color: colors.textColor ?? 'inherit' }}
+              className={cx(props.className, cellClass)}
+              // style={{ color: colors.textColor ?? 'inherit' }}
             />
           );
         };
@@ -499,7 +513,7 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
-    applyToRowBgFn,
+    // applyToRowBgFn,
     columnTypes,
     height,
     textWraps,
@@ -744,26 +758,28 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
-  field: Field,
-  rowHeight: number,
+  justifyContent: Property.JustifyContent,
+  // field: Field,
+  // rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  colors: CellColors
+  inheritLinkColor: boolean
+  // colors: CellColors
 ) => ({
   cell: css({
-    textOverflow: 'initial',
-    background: colors.bgColor ?? 'inherit',
-    alignContent: 'center',
-    justifyContent: getTextAlign(field),
+    display: 'flex',
+    // textOverflow: 'initial',
+    // background: colors.bgColor ?? 'inherit',
+    alignItems: 'center',
+    justifyContent,
     paddingInline: TABLE.CELL_PADDING,
-    height: '100%',
-    minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
+    minHeight: '100%',
     ...(shouldWrap && { whiteSpace: 'pre-line' }),
     '&:last-child': {
       borderInlineEnd: 'none',
     },
     '&:hover': {
-      background: colors.bgHoverColor,
+      // background: colors.bgHoverColor,
       '.table-cell-actions': {
         display: 'flex',
       },
@@ -774,5 +790,10 @@ const getCellStyles = (
         minWidth: 'fit-content',
       }),
     },
+    ...(inheritLinkColor && {
+      a: {
+        color: 'inherit',
+      },
+    }),
   }),
 });
