@@ -63,4 +63,25 @@ sum by (job) (
       warnings: [],
     });
   });
+
+  test('Warns agains subqueries with same duration and step', () => {
+    const query = 'rate(http_requests_total[5m:5m])';
+    const queryLines = query.split('\n');
+    expect(validateQuery(query, query, queryLines, parser)).toEqual({
+      errors: [],
+      warnings: [{ endColumn: 32, endLineNumber: 1, issue: warningTypes.SubqueryExpr, startColumn: 6, startLineNumber: 1 }],
+    });
+  });
+
+  test('Warns agains queries with multiple subqueries', () => {
+    const query = 'quantile_over_time(0.5, rate(http_requests_total[1m:1m]) [1m:1m])';
+    const queryLines = query.split('\n');
+    expect(validateQuery(query, query, queryLines, parser)).toEqual({
+      errors: [],
+      warnings: [
+        { issue: warningTypes.SubqueryExpr, startColumn: 25, endColumn: 65, startLineNumber: 1, endLineNumber: 1 },
+        { issue: warningTypes.SubqueryExpr, startColumn: 30, endColumn: 56, startLineNumber: 1, endLineNumber: 1 }
+      ],
+    });
+  });
 });
