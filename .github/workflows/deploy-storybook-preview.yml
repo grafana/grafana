@@ -89,6 +89,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         if: steps.find-comment.outputs.comment-id == ''
         with:
+          issue-number: ${{ github.event.pull_request.number }}
           body: |
             ${{ env.COMMENT_MARKER }}
             :wave: Storybook for this PR has been deployed to preview changes - [check it out!](https://storage.googleapis.com/${{ env.BUCKET_NAME }}/${{ env.DEPLOY_NAME }}/index.html)
