@@ -65,7 +65,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Convert branch name to only contain alphanumeric and hyphens
-          SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | tr -cs '[:alnum:]-' '-' | sed 's/^-//;s/-$//')
+          SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | tr -cs "[:alnum:]-" "-" | sed "s/^-//;s/-$//")
 
           # Check if SANITIZED_BRANCH is empty and fail if it is
           if [ -z "$SANITIZED_BRANCH" ]; then
@@ -73,7 +73,7 @@ jobs:
             exit 1
           fi
 
-          echo "deploy-name=pr_${PR_NUMBER}_${SANITIZED_BRANCH:0:30}" >> $GITHUB_OUTPUT
+          echo "deploy-name=pr_${PR_NUMBER}_${SANITIZED_BRANCH:0:30}" >> "$GITHUB_OUTPUT"
 
       - name: Upload Storybook
         uses: grafana/shared-workflows/actions/push-to-gcs@main
