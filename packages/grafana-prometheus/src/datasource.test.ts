@@ -1016,7 +1016,7 @@ describe('PrometheusDatasource', () => {
       ];
 
       const result = extractResourceMatcher(queries, filters);
-      expect(result).toBe('{__name__!="",instance="localhost"}');
+      expect(result).toBe('{instance="localhost"}');
     });
 
     it('should extract matcher from given filters only', () => {
@@ -1035,7 +1035,7 @@ describe('PrometheusDatasource', () => {
       ];
 
       const result = extractResourceMatcher(queries, filters);
-      expect(result).toBe('{__name__!="",instance="localhost",job!="testjob"}');
+      expect(result).toBe('{instance="localhost",job!="testjob"}');
     });
 
     it('should extract matcher as match-all from no query and filter', () => {
@@ -1043,7 +1043,7 @@ describe('PrometheusDatasource', () => {
       const filters: AdHocVariableFilter[] = [];
 
       const result = extractResourceMatcher(queries, filters);
-      expect(result).toBe('{__name__!=""}');
+      expect(result).toBeUndefined();
     });
 
     it('should extract the correct matcher for queries with `... or vector(0)`', () => {
