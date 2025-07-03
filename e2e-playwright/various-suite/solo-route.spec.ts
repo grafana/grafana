@@ -28,7 +28,7 @@ test.describe(
       await expect(panelTitle).toBeVisible();
 
       // Check that uplot-main-div does not exist
-      const uplotDiv = page.locator('text=uplot-main-div');
+      const uplotDiv = page.getByText('uplot-main-div');
       await expect(uplotDiv).toBeHidden();
     });
 
@@ -44,7 +44,7 @@ test.describe(
       await expect(panelTitle).toBeVisible();
 
       // Check that uplot-main-div does not exist
-      const uplotDiv = page.locator('text=uplot-main-div');
+      const uplotDiv = page.getByText('uplot-main-div');
       await expect(uplotDiv).toBeHidden();
     });
 
@@ -60,7 +60,7 @@ test.describe(
       await expect(panelTitle).toBeVisible();
 
       // Check that uplot-main-div does not exist
-      const uplotDiv = page.locator('text=uplot-main-div');
+      const uplotDiv = page.getByText('uplot-main-div');
       await expect(uplotDiv).toBeHidden();
     });
   }

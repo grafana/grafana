@@ -1,15 +1,19 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-// Skipping due to unknown condition causing 12 gauges to be rendered instead of the desired 16
-test.describe.skip(
+// this test requires a larger viewport so all gauge panels load properly
+test.use({
+  viewport: { width: 1280, height: 1080 },
+});
+
+test.describe(
   'Gauge Panel',
   {
-    tag: ['@various', '@wip'],
+    tag: ['@various'],
   },
   () => {
-    test('Gauge rendering e2e tests', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
+    test('Gauge rendering e2e tests', async ({ gotoDashboardPage, selectors, page }) => {
       // open Panel Tests - Gauge
-      await gotoDashboardPage({ uid: '_5rDmaQiz' });
+      const dashboardPage = await gotoDashboardPage({ uid: '_5rDmaQiz' });
 
       // check that gauges are rendered
       const gaugeElements = page.locator('.flot-base');

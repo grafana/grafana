@@ -33,7 +33,7 @@ test.describe(
 
     // Basic test which loops through the defined languages in the picker
     // and verifies that the corresponding label is translated correctly
-    test('loads all the languages correctly', async ({ page, selectors, createUser, login }) => {
+    test('loads all the languages correctly', async ({ page, selectors, createUser }) => {
       await createUser();
       // login manually for now
       await page.getByTestId(selectors.pages.Login.username).fill(I18N_USER);
