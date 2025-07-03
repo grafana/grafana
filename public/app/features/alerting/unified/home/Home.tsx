@@ -29,7 +29,7 @@ function Home() {
         <WelcomeHeader />
         <PluginIntegrations />
       </Stack>
-      <Box marginTop={{ lg: 2, md: 0, xs: 0 }}>
+      <Box marginTop={{ lg: 2, md: 2, xs: 2 }}>
         <Stack direction="row" gap={2}>
           <SyntheticMonitoringCard />
           <IRMCard />

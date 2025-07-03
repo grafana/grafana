@@ -43,9 +43,7 @@ export function AdCard({ title, description, href, logoUrl, items, helpFlag }: A
         <IconButton name="times" size="sm" onClick={onDismiss} aria-label={t('alerting.ad.close', 'Close')} />
       </div>
       <header className={styles.header}>
-        <div className={styles.logoColumn}>
-          <img src={logoUrl} alt="" height="40px" width="40px" className={styles.logo} />
-        </div>
+        <img src={logoUrl} alt="" className={styles.logo} />
         <div className={styles.contentColumn}>
           <h3 className={styles.title}>{title}</h3>
           <p className={styles.description}>{description}</p>
@@ -81,10 +79,7 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'flex-start',
     gap: theme.spacing(2),
     paddingTop: theme.spacing(2),
-  }),
-
-  logoColumn: css({
-    flexShrink: 0,
+    height: theme.spacing(8),
   }),
 
   contentColumn: css({
@@ -133,19 +128,13 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(1),
   }),
 
-  button: css({
-    marginLeft: theme.spacing(2),
-  }),
-
   cardBody: css({
     padding: theme.spacing(3),
     backgroundColor: theme.colors.background.secondary,
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
-    [theme.breakpoints.up('xl')]: {
-      maxWidth: '650px',
-      width: '100%',
-    },
+    flex: 1,
+    minWidth: 0,
   }),
 
   preHeader: css({
