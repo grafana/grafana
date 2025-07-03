@@ -2,16 +2,9 @@ package setting
 
 import (
 	"regexp"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
 )
-
-type EncryptionSettings struct {
-	DataKeysCacheTTL        time.Duration
-	DataKeysCleanupInterval time.Duration
-	Algorithm               string
-}
 
 type SecretsManagerSettings struct {
 	SecretKey          string
