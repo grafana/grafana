@@ -5,6 +5,10 @@ on:
     paths:
       - 'packages/grafana-ui/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -30,7 +34,18 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'yarn'
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+          key: node_modules-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            node_modules-
+
       - name: Install dependencies
+        env:
+          YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == true && '1' || '0' }}
         run: yarn install --immutable
 
       - name: Build storybook
