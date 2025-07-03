@@ -2,6 +2,7 @@ import {
   getTimeZone,
   InterpolateFunction,
   LinkModel,
+  locationUtil,
   PanelMenuItem,
   PanelPlugin,
   PluginExtensionLink,
@@ -36,7 +37,7 @@ import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
 import { isInCloneChain } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { getEditPanelUrl, getInspectUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -89,7 +90,10 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
         shortcut: 'v',
-        href: getViewPanelUrl(panel),
+        href: locationUtil.getUrlForPartial(locationService.getLocation(), {
+          viewPanel: panel.state.key,
+          editPanel: undefined,
+        }),
       });
     }
 

@@ -7,13 +7,6 @@ import { InspectTab } from 'app/features/inspector/types';
 
 import { getQueryRunnerFor } from './utils';
 
-export function getViewPanelUrl(vizPanel: VizPanel) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), {
-    viewPanel: vizPanel.state.key,
-    editPanel: undefined,
-  });
-}
-
 export function getEditPanelUrl(panelId: number) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });
 }

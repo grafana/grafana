@@ -8,6 +8,7 @@ import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectStat
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { useDashboardState } from '../../utils/utils';
+import { useSoloPanelContext } from '../SoloPanelContext';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
 import { RowItem } from './RowItem';
@@ -19,6 +20,11 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const { isEditing } = useDashboardState(model);
   const styles = useStyles2(getStyles);
   const { hasCopiedRow } = useClipboardState();
+  const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext) {
+    return rows.map((row) => <RowWrapper row={row} manager={model} key={row.state.key!} />);
+  }
 
   return (
     <DragDropContext
