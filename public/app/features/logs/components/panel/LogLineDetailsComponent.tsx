@@ -10,10 +10,8 @@ import { getLabelTypeFromRow } from '../../utils';
 import { useAttributesExtensionLinks } from '../LogDetails';
 import { createLogLineLinks } from '../logParser';
 
-import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsHeader } from './LogLineDetailsHeader';
-import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
@@ -23,7 +21,6 @@ interface LogLineDetailsComponentProps {
 }
 
 export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -68,9 +65,6 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
   const fieldsOpen = logOptionsStorageKey
     ? store.getBool(`${logOptionsStorageKey}.log-details.fieldsOpen`, true)
     : true;
-  const displayedFieldsOpen = logOptionsStorageKey
-    ? store.getBool(`${logOptionsStorageKey}.log-details.displayedFieldsOpen`, false)
-    : false;
 
   const handleToggle = useCallback(
     (option: string, isOpen: boolean) => {
@@ -104,16 +98,6 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
         >
           <div className={styles.logLineWrapper}>{log.raw}</div>
         </ControlledCollapse>
-        {displayedFields.length > 0 && (
-          <ControlledCollapse
-            label={t('logs.log-line-details.displayed-fields-section', 'Displayed fields')}
-            collapsible
-            isOpen={displayedFieldsOpen}
-            onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}
-          >
-            <LogLineDetailsDisplayedFields />
-          </ControlledCollapse>
-        )}
         {fieldsWithLinks.links.length > 0 && (
           <ControlledCollapse
             label={t('logs.log-line-details.links-section', 'Links')}
