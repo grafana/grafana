@@ -279,7 +279,6 @@ func (c *alertmanagerCrypto) DecryptExtraConfigs(ctx context.Context, config *de
 		// Check if the config is encrypted by trying to base64 decode it
 		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig[len(cryptoPrefix):])
 		if err != nil {
-			// If it can't be base64 decoded, assume it's already decrypted and skip
 			return fmt.Errorf("failed to decode extra configuration: %w", err)
 		}
 
