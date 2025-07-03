@@ -69,7 +69,7 @@ export function GrafanaGroupLoader({
     );
   }
 
-  if (!rulerResponse || !promResponse) {
+  if (!rulerResponse && !promResponse) {
     return (
       <Alert
         title={t(
@@ -84,7 +84,7 @@ export function GrafanaGroupLoader({
 
   return (
     <>
-      {rulerResponse.rules.map((rulerRule) => {
+      {rulerResponse?.rules.map((rulerRule) => {
         const promRule = matches.get(rulerRule);
 
         if (!promRule) {
