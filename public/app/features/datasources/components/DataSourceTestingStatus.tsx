@@ -1,12 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { HTMLAttributes } from 'react';
 
-import {
-  DataSourceSettings as DataSourceSettingsType,
-  GrafanaTheme2,
-  DataSourceConfigHealthCheckContext,
-  PluginExtensionPoints,
-} from '@grafana/data';
+import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { TestingStatus, config, usePluginLinks } from '@grafana/runtime';
@@ -157,7 +152,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
     context: {
       dataSource,
       testingStatus,
-    } as DataSourceConfigHealthCheckContext,
+    },
     limitPerPlugin: 3,
   });
 
