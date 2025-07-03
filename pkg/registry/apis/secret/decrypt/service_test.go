@@ -26,6 +26,7 @@ func TestDecryptService(t *testing.T) {
 		decryptedValuesResp := map[string]service.DecryptResult{
 			"secure-value-1": service.NewDecryptResultErr(mockErr),
 		}
+
 		decryptService := &OSSDecryptService{
 			decryptStore: mockStorage,
 		}
