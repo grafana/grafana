@@ -3,8 +3,8 @@ package defaultprovider
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
-	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type grafanaProvider struct {
@@ -12,7 +12,7 @@ type grafanaProvider struct {
 	encryption cipher.Cipher
 }
 
-func New(sk string, encryption cipher.Cipher) secrets.Provider {
+func New(sk string, encryption cipher.Cipher) encryption.Provider {
 	return grafanaProvider{
 		sk:         sk,
 		encryption: encryption,
