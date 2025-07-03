@@ -12,7 +12,6 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
@@ -20,27 +19,16 @@ import (
 // driver.
 const tlsConfigName = "db_engine_tls"
 
-func getEngine(cfg *setting.Cfg) (*xorm.Engine, error) {
-	dbSection := cfg.SectionWithEnvOverrides("database")
-	dbType := dbSection.Key("type").String()
-	if dbType == "" {
-		return nil, fmt.Errorf("no database type specified")
-	}
-
-	switch dbType {
+func getEngine(config *sqlstore.DatabaseConfig) (*xorm.Engine, error) {
+	switch config.Type {
 	case dbTypeMySQL, dbTypePostgres, dbTypeSQLite:
-		config, err := sqlstore.NewDatabaseConfig(cfg, nil)
-		if err != nil {
-			return nil, nil
-		}
-
-		engine, err := xorm.NewEngine(dbType, config.ConnectionString)
+		engine, err := xorm.NewEngine(config.Type, config.ConnectionString)
 		if err != nil {
 			return nil, fmt.Errorf("open database: %w", err)
 		}
 		return engine, nil
 	default:
-		return nil, fmt.Errorf("unsupported database type: %s", dbType)
+		return nil, fmt.Errorf("unsupported database type: %s", config.Type)
 	}
 }
 
