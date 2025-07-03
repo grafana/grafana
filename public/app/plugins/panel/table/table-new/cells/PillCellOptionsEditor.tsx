@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { TablePillCellOptions } from '@grafana/schema';
-import { Field, ColorPicker, RadioButtonGroup, Stack, Button, Input, IconButton, Select } from '@grafana/ui';
+import { Field, ColorPicker, RadioButtonGroup, Stack, Button, Input, IconButton, Combobox } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -16,6 +16,13 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
   const onColorModeChange = (mode: 'auto' | 'fixed' | 'mapped') => {
     const updatedOptions = { ...cellOptions, colorMode: mode };
     onChange(updatedOptions);
+  };
+
+  const getEffectiveMatchType = (options: TablePillCellOptions): 'exact' | 'contains' | 'by-value' => {
+    if (options.valueMappingMode === 'by-value') {
+      return 'by-value';
+    }
+    return options.globalMatchType || 'exact';
   };
 
   const onColorChange = (color: string) => {
@@ -73,7 +80,7 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
         </Field>
       )}
 
-      {colorMode === 'mapped' && (
+            {colorMode === 'mapped' && (
         <>
           <Field
             label={t('table.pill-cell-options-editor.label-default-color', 'Default Color')}
@@ -84,6 +91,41 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
             noMargin
           >
             <ColorPicker color={cellOptions.color || '#FF780A'} onChange={onColorChange} enableNamedColors={false} />
+          </Field>
+
+          <Field
+            label={t('table.pill-cell-options-editor.label-global-match-type', 'Match Type')}
+            description={t(
+              'table.pill-cell-options-editor.description-global-match-type',
+              'Choose how value mappings are applied'
+            )}
+            noMargin
+          >
+            <RadioButtonGroup
+              value={getEffectiveMatchType(cellOptions)}
+              onChange={(matchType: 'exact' | 'contains' | 'by-value') => {
+                let updatedOptions = { ...cellOptions };
+                if (matchType === 'by-value') {
+                  updatedOptions = { 
+                    ...cellOptions, 
+                    valueMappingMode: 'by-value',
+                    globalMatchType: undefined 
+                  };
+                } else if (matchType === 'exact' || matchType === 'contains') {
+                  updatedOptions = { 
+                    ...cellOptions, 
+                    valueMappingMode: 'on',
+                    globalMatchType: matchType 
+                  };
+                }
+                onChange(updatedOptions);
+              }}
+              options={[
+                { label: t('table.pill-cell-options-editor.match-exact', 'Exact'), value: 'exact' },
+                { label: t('table.pill-cell-options-editor.match-contains', 'Contains'), value: 'contains' },
+                { label: t('table.pill-cell-options-editor.match-by-value', 'By Value'), value: 'by-value' },
+              ]}
+            />
           </Field>
 
           <Field
@@ -103,15 +145,17 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
                     onChange={(e) => onMappingChange(index, 'value', e.currentTarget.value)}
                     width={20}
                   />
-                  <Select
-                    value={mapping.matchType || 'exact'}
-                    onChange={(option) => onMappingChange(index, 'matchType', option.value || 'exact')}
-                    options={[
-                      { label: t('table.pill-cell-options-editor.match-exact', 'Exact'), value: 'exact' },
-                      { label: t('table.pill-cell-options-editor.match-contains', 'Contains'), value: 'contains' },
-                    ]}
-                    width={12}
-                  />
+                  {cellOptions.valueMappingMode === 'by-value' && (
+                    <Combobox
+                      value={mapping.matchType || 'exact'}
+                      onChange={(option) => onMappingChange(index, 'matchType', option?.value || 'exact')}
+                      options={[
+                        { label: t('table.pill-cell-options-editor.match-exact', 'Exact'), value: 'exact' },
+                        { label: t('table.pill-cell-options-editor.match-contains', 'Contains'), value: 'contains' },
+                      ]}
+                      width={12}
+                    />
+                  )}
                   <ColorPicker
                     color={mapping.color}
                     onChange={(color) => onMappingChange(index, 'color', color)}
@@ -132,6 +176,7 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
               >
                 {t('table.pill-cell-options-editor.add-mapping', 'Add mapping')}
               </Button>
+              <div style={{ height: '8px' }} />
             </Stack>
           </Field>
         </>

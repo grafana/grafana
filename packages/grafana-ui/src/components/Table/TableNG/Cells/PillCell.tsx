@@ -102,20 +102,48 @@ function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOpt
 
   // Mapped color mode - use valueMappings to assign colors
   if (colorMode === 'mapped' && cellOptions.valueMappings) {
-    const mapping = cellOptions.valueMappings.find(m => {
-      const matchType = m.matchType || 'exact';
-      if (matchType === 'exact') {
-        return m.value === pill;
-      } else if (matchType === 'contains') {
-        return pill.includes(m.value);
-      }
-      return false;
-    });
-    if (mapping && mapping.color) {
-      return mapping.color;
+    const valueMappingMode = cellOptions.valueMappingMode || 'by-value';
+    
+    // If value mapping is off, fall back to auto mode
+    if (valueMappingMode === 'off') {
+      return getDeterministicColor(pill);
     }
-    // Fallback to default color for unmapped values
-    return cellOptions.color || '#FF780A';
+    
+    // If value mapping is on with global match type
+    if (valueMappingMode === 'on') {
+      const globalMatchType = cellOptions.globalMatchType || 'exact';
+      const mapping = cellOptions.valueMappings.find(m => {
+        if (globalMatchType === 'exact') {
+          return m.value === pill;
+        } else if (globalMatchType === 'contains') {
+          return pill.includes(m.value);
+        }
+        return false;
+      });
+      if (mapping && mapping.color) {
+        return mapping.color;
+      }
+      // Fallback to default color for unmapped values
+      return cellOptions.color || '#FF780A';
+    }
+    
+    // If value mapping is by-value (individual match types)
+    if (valueMappingMode === 'by-value') {
+      const mapping = cellOptions.valueMappings.find(m => {
+        const matchType = m.matchType || 'exact';
+        if (matchType === 'exact') {
+          return m.value === pill;
+        } else if (matchType === 'contains') {
+          return pill.includes(m.value);
+        }
+        return false;
+      });
+      if (mapping && mapping.color) {
+        return mapping.color;
+      }
+      // Fallback to default color for unmapped values
+      return cellOptions.color || '#FF780A';
+    }
   }
 
   // Auto mode - deterministic color assignment based on string hash

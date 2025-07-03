@@ -981,6 +981,8 @@ export interface TablePillCellOptions {
     color: string;
     matchType?: 'exact' | 'contains';
   }>;
+  valueMappingMode?: 'off' | 'on' | 'by-value';
+  globalMatchType?: 'exact' | 'contains';
 }
 
 export const defaultTablePillCellOptions: Partial<TablePillCellOptions> = {

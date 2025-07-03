@@ -116,5 +116,7 @@ TablePillCellOptions: {
     matchType?: "exact" | "contains" | *"exact"
   }]
   colorMode?: "auto" | "fixed" | "mapped"
+  valueMappingMode?: "off" | "on" | "by-value" | *"by-value"
+  globalMatchType?: "exact" | "contains" | *"exact"
 } @cuetsy(kind="interface")
 

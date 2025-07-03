@@ -71,6 +71,7 @@ describe('PillCell', () => {
       type: TableCellDisplayMode.Pill,
       colorMode: 'mapped',
       color: '#FF0000', // default color
+      valueMappingMode: 'by-value',
       valueMappings: [
         { value: 'success', color: '#00FF00' },
         { value: 'error', color: '#FF0000' },
@@ -96,6 +97,7 @@ describe('PillCell', () => {
       type: TableCellDisplayMode.Pill,
       colorMode: 'mapped',
       color: '#FF0000', // default color
+      valueMappingMode: 'by-value',
       valueMappings: [
         { value: 'error', color: '#FF0000', matchType: 'contains' },
         { value: 'warn', color: '#FFFF00', matchType: 'contains' },
@@ -115,6 +117,59 @@ describe('PillCell', () => {
     expect(successPill).toBeInTheDocument();
     expect(unknownPill).toBeInTheDocument();
   });
+
+  it('should use global match type when valueMappingMode is on', () => {
+    const mappedOptions: TablePillCellOptions = {
+      type: TableCellDisplayMode.Pill,
+      colorMode: 'mapped',
+      color: '#FF0000', // default color
+      valueMappingMode: 'on',
+      globalMatchType: 'contains',
+      valueMappings: [
+        { value: 'error', color: '#FF0000' },
+        { value: 'warn', color: '#FFFF00' },
+        { value: 'success', color: '#00FF00' },
+      ],
+    };
+
+    render(<PillCell {...defaultProps} value="database_error,api_warning,success,unknown" cellOptions={mappedOptions} />);
+    
+    const errorPill = screen.getByText('database_error');
+    const warningPill = screen.getByText('api_warning');
+    const successPill = screen.getByText('success');
+    const unknownPill = screen.getByText('unknown');
+
+    expect(errorPill).toBeInTheDocument();
+    expect(warningPill).toBeInTheDocument();
+    expect(successPill).toBeInTheDocument();
+    expect(unknownPill).toBeInTheDocument();
+  });
+
+  it('should fall back to auto mode when valueMappingMode is off', () => {
+    const mappedOptions: TablePillCellOptions = {
+      type: TableCellDisplayMode.Pill,
+      colorMode: 'mapped',
+      color: '#FF0000', // default color
+      valueMappingMode: 'off',
+      valueMappings: [
+        { value: 'error', color: '#FF0000' },
+        { value: 'warn', color: '#FFFF00' },
+        { value: 'success', color: '#00FF00' },
+      ],
+    };
+
+    render(<PillCell {...defaultProps} value="error,warning,success" cellOptions={mappedOptions} />);
+    
+    const errorPill = screen.getByText('error');
+    const warningPill = screen.getByText('warning');
+    const successPill = screen.getByText('success');
+
+    expect(errorPill).toBeInTheDocument();
+    expect(warningPill).toBeInTheDocument();
+    expect(successPill).toBeInTheDocument();
+  });
+
+
 
   it('should use fixed color when colorMode is fixed', () => {
     const fixedOptions: TablePillCellOptions = {
