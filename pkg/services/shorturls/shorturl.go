@@ -3,6 +3,7 @@ package shorturls
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -11,4 +12,5 @@ type Service interface {
 	CreateShortURL(ctx context.Context, user *user.SignedInUser, path string) (*ShortUrl, error)
 	UpdateLastSeenAt(ctx context.Context, shortURL *ShortUrl) error
 	DeleteStaleShortURLs(ctx context.Context, cmd *DeleteShortUrlCommand) error
+	ConvertShortURLToDTO(shortURL *ShortUrl, appURL string) *dtos.ShortURL
 }

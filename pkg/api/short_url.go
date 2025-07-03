@@ -1,18 +1,79 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// r.Post("/api/short-url/"
+func (hs *HTTPServer) getCreateShortURLHandler() web.Handler {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
+		return hs.createKubernetesShortURLsHandler()
+	}
+	return hs.createShortURL
+}
+
+func (hs *HTTPServer) createKubernetesShortURLsHandler() web.Handler {
+	namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
+	hs.log.Info("using kubernetes short URL handler")
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, err := identity.GetRequester(r.Context())
+		if err != nil || user == nil {
+			errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
+			return
+		}
+
+		// Read the original payload
+		cmd := dtos.CreateShortURLCmd{}
+		if err := web.Bind(r, &cmd); err != nil {
+			errhttp.Write(r.Context(), fmt.Errorf("bad request data: %w", err), w)
+			return
+		}
+
+		// Transform to Kubernetes resource format
+		k8sPayload := map[string]interface{}{
+			"apiVersion": "shorturl.grafana.app/v0alpha1",
+			"kind":       "ShortURL",
+			"spec": map[string]interface{}{
+				"path": cmd.Path,
+			},
+		}
+
+		// Convert to JSON and create new request body
+		jsonPayload, err := json.Marshal(k8sPayload)
+		if err != nil {
+			errhttp.Write(r.Context(), fmt.Errorf("failed to marshal payload: %w", err), w)
+			return
+		}
+
+		// Create new request with transformed payload
+		newRequest := r.Clone(r.Context())
+		newRequest.Body = io.NopCloser(bytes.NewReader(jsonPayload))
+		newRequest.ContentLength = int64(len(jsonPayload))
+		newRequest.Header.Set("Content-Type", "application/json")
+		newRequest.Header.Set("Content-Length", fmt.Sprintf("%d", len(jsonPayload)))
+
+		// Set the correct URL path
+		newRequest.URL.Path = "/apis/shorturl.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.GetOrgID()) + "/shorturls"
+
+		hs.clientConfigProvider.DirectlyServeHTTP(w, newRequest)
+	}
+}
 
 // createShortURL handles requests to create short URLs.
 func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Response {
@@ -26,15 +87,10 @@ func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Respon
 		return response.Err(err)
 	}
 
-	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(hs.Cfg.AppURL, "/"), shortURL.Uid, c.GetOrgID())
-	c.Logger.Debug("Created short URL", "url", url)
+	shortURLDTO := hs.ShortURLService.ConvertShortURLToDTO(shortURL, hs.Cfg.AppURL)
+	c.Logger.Debug("Created short URL", "url", shortURLDTO.URL)
 
-	dto := dtos.ShortURL{
-		UID: shortURL.Uid,
-		URL: url,
-	}
-
-	return response.JSON(http.StatusOK, dto)
+	return response.JSON(http.StatusOK, shortURLDTO)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
