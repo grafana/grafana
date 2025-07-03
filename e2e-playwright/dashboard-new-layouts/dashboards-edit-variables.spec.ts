@@ -149,9 +149,7 @@ test.describe(
       await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
 
       // enable the auto option
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.autoEnabledCheckbox)
-        .click({ force: true });
+      await page.getByText('Auto option').click();
 
       // select the variable in the dashboard and confirm the variable value is set
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem).click();
