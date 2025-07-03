@@ -119,6 +119,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1px solid ${theme.components.input.borderColor}`,
       borderRadius: theme.shape.radius.default,
       padding: RADIO_GROUP_PADDING,
+      maxWidth: '100%', // Ensure it doesn't overflow its parent
       '&:hover': {
         borderColor: theme.components.input.borderHover,
       },
@@ -126,6 +127,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     fullWidth: css({
       display: 'flex',
       flexGrow: 1,
+      maxWidth: '100%', // Ensure it respects the parent's width
     }),
     icon: css({
       marginRight: '6px',
