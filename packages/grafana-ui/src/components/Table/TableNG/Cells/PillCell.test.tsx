@@ -103,29 +103,36 @@ describe('PillCell', () => {
           {
             type: MappingType.ValueToText,
             options: {
-              'success': { color: '#00FF00' },
-              'error': { color: '#FF0000' },
-              'warning': { color: '#FFFF00' },
+              success: { color: '#00FF00' },
+              error: { color: '#FF0000' },
+              warning: { color: '#FFFF00' },
             },
           },
         ],
       },
       display: (value: unknown) => ({
         text: String(value),
-        color: String(value) === 'success' ? '#00FF00' : String(value) === 'error' ? '#FF0000' : String(value) === 'warning' ? '#FFFF00' : '#FF780A',
+        color:
+          String(value) === 'success'
+            ? '#00FF00'
+            : String(value) === 'error'
+              ? '#FF0000'
+              : String(value) === 'warning'
+                ? '#FFFF00'
+                : '#FF780A',
         numeric: 0,
       }),
     };
 
     render(
-      <PillCell 
-        {...defaultProps} 
-        value="success,error,warning,unknown" 
+      <PillCell
+        {...defaultProps}
+        value="success,error,warning,unknown"
         cellOptions={mappedOptions}
         field={fieldWithMappings}
       />
     );
-    
+
     const successPill = screen.getByText('success');
     const errorPill = screen.getByText('error');
     const warningPill = screen.getByText('warning');
