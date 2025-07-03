@@ -20,8 +20,6 @@ import { MenuItem } from '../Menu/MenuItem';
 import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
 import { PopoverContent } from '../Tooltip/types';
 
-// TODO: deprecate this component?
-
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
   options: Array<SelectableValue<T>>;
