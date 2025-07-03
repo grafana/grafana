@@ -58,13 +58,17 @@ export const flows = {
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
       .click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableNameInput)
-      .fill(variable.name);
+    const variableNameInput = dashboardPage.getByGrafanaSelector(
+      selectors.components.PanelEditor.ElementEditPane.variableNameInput
+    );
+    await variableNameInput.fill(variable.name);
+    await variableNameInput.blur();
     if (variable.label) {
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableLabelInput)
-        .fill(variable.label);
+      const variableLabelInput = dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.ElementEditPane.variableLabelInput
+      );
+      await variableLabelInput.fill(variable.label);
+      await variableLabelInput.blur();
     }
   },
 };
