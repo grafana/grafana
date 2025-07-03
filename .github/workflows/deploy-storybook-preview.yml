@@ -58,3 +58,4 @@ jobs:
           bucket_path: preview-${{ github.run_id }} # TODO: better path prefix - PR ID?
           path: packages/grafana-ui/dist/storybook
           service_account: github-gf-storybook-preview@grafanalabs-workload-identity.iam.gserviceaccount.com
+          parent: false
