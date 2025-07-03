@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import { Map as OpenLayersMap, MapBrowserEvent, View } from 'ol';
+import OpenLayersMap from 'ol/Map';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
+import View from 'ol/View';
 import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';

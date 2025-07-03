@@ -1,5 +1,4 @@
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
-import { LiteralStyle } from 'ol/style/literal';
 import tinycolor from 'tinycolor2';
 
 import { Registry, RegistryItem, textUtil } from '@grafana/data';
@@ -30,12 +29,6 @@ const MarkerShapePath = {
   star: 'img/icons/marker/star.svg',
   cross: 'img/icons/marker/cross.svg',
   x: 'img/icons/marker/x-mark.svg',
-};
-
-const WebGLRegularShapes: Record<string, string> = {
-  circle: 'img/icons/marker/circle.svg',
-  square: 'img/icons/marker/square.svg',
-  triangle: 'img/icons/marker/triangle.svg',
 };
 
 export function getFillColor(cfg: StyleConfigValues) {
@@ -319,31 +312,32 @@ export function getMarkerAsPath(shape?: string): string | undefined {
   return undefined;
 }
 
-// Returns literal style for WebGL markers
-export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<LiteralStyle> {
-  // style expressions
-  const symbolStyle: LiteralStyle = {
-    symbol: {
-      symbolType: 'circle',
-      size: ['get', 'size', 'number'],
-      color: ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue']],
-      offset: ['array', ['get', 'offsetX'], ['get', 'offsetY']],
-      rotation: ['get', 'rotation', 'number'],
-      opacity: ['get', 'opacity', 'number'],
-    },
+// Returns style configuration for WebGL markers
+export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<any> {
+  // OpenLayers 10.x flat style format - use expressions to get properties set on features
+  const symbolStyle: any = {
+    'circle-radius': ['get', 'size'],
+    'circle-fill-color': ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue'], ['get', 'opacity']],
+    'circle-stroke-color': ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue'], ['get', 'opacity']],
+    'circle-stroke-width': 1,
+    'circle-opacity': ['get', 'opacity'],
   };
-  // set symbolType and src if a symbol is provided
-  if (symbol && symbolStyle.symbol) {
-    const imageString = 'image';
-    const symbolType = Object.keys(WebGLRegularShapes).find((key) => WebGLRegularShapes[key] === symbol) ?? imageString;
-    symbolStyle.symbol = { ...symbolStyle.symbol, symbolType };
-    if (symbolType === imageString) {
-      const backgroundOpacity = opacity === 0 ? 0 : 0.1 / (opacity ?? 1);
-      symbolStyle.symbol = {
-        ...symbolStyle.symbol,
-        src: await prepareSVG(getPublicOrAbsoluteUrl(symbol), undefined, backgroundOpacity),
-      };
-    }
+
+  // Handle custom symbols
+  if (symbol && symbol.endsWith('.svg')) {
+    const backgroundOpacity = opacity === 0 ? 0 : 0.1 / (opacity ?? 1);
+    return {
+      'icon-src': await prepareSVG(getPublicOrAbsoluteUrl(symbol), undefined, backgroundOpacity),
+      'icon-width': ['get', 'size'],
+      'icon-height': ['get', 'size'],
+      'icon-opacity': ['get', 'opacity'],
+      'icon-rotation': ['get', 'rotation'],
+      'icon-offset': [
+        ['get', 'offsetX'],
+        ['get', 'offsetY'],
+      ],
+      'icon-color': ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue'], ['get', 'opacity']],
+    };
   }
 
   return symbolStyle;
@@ -388,7 +382,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                 image: new RegularShape({
                   fill: new Fill({ color: 'rgba(0,0,0,0)' }),
                   points: 4,
-                  radius: cfg.size,
+                  radius: radius,
                   rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
                 }),
               }),
