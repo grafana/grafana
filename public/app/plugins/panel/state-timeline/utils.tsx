@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, Field } from '@grafana/data';
 import { Pagination } from '@grafana/ui';
 import { makeFramePerSeries } from 'app/core/components/TimelineChart/utils';
 
@@ -14,6 +14,54 @@ export const containerStyles = {
     flexDirection: 'column',
   }),
 };
+
+/**
+ * Filter DataFrame array to only show selected states.
+ * This filters at the value level within each field, converting unselected states to null
+ * so they don't appear in the timeline while maintaining time continuity.
+ */
+export function filterFramesBySelectedStates(frames: DataFrame[], selectedStates: string[]): DataFrame[] {
+  // If no states are selected, show all frames
+  if (!selectedStates || selectedStates.length === 0) {
+    return frames;
+  }
+
+  const selectedStateSet = new Set(selectedStates);
+
+  return frames.map((frame) => {
+    const filteredFields: Field[] = [];
+
+    frame.fields.forEach((field) => {
+      if (field.type === 'time') {
+        // Always include time fields unchanged
+        filteredFields.push(field);
+      } else {
+        // For non-time fields, replace unselected states with null
+        const filteredValues = field.values.map((value) => {
+          if (value != null && selectedStateSet.has(String(value))) {
+            return value;
+          }
+          return null; // Convert unselected states to null to hide them
+        });
+
+        // Create field with filtered values
+        const filteredField: Field = {
+          ...field,
+          values: filteredValues,
+        };
+
+        filteredFields.push(filteredField);
+      }
+    });
+
+    // Return frame with filtered fields
+    return {
+      ...frame,
+      fields: filteredFields,
+      length: frame.length, // Keep original length to maintain time alignment
+    };
+  });
+}
 
 const styles = {
   paginationContainer: css({

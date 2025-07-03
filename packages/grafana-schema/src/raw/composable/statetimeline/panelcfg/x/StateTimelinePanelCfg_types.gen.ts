@@ -30,6 +30,10 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
    */
   rowHeight: number;
   /**
+   * Optional list of states to display (all states shown if empty)
+   */
+  selectedStates?: Array<string>;
+  /**
    * Show timeline values on chart
    */
   showValue: ui.VisibilityMode;
@@ -40,6 +44,7 @@ export const defaultOptions: Partial<Options> = {
   mergeValues: true,
   perPage: 20,
   rowHeight: 0.9,
+  selectedStates: [],
   showValue: ui.VisibilityMode.Auto,
 };
 
