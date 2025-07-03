@@ -11,17 +11,28 @@ import {
   getOutput,
   getPlugins,
   modules,
+  nodePolyfills,
 } from './rspack.parts.ts';
 
 export default function (env: Record<string, unknown> = {}): Configuration {
-  console.log({ env });
+  const experiments = getExperiments(env);
+  const moduleRules = getModuleRules(env);
+  const optimizations = getOptimizations(env);
+  const output = getOutput(env);
+  const resolveAlias = getAliases(env);
+  const plugins = getPlugins(env);
+
   const config: Configuration = {
     amd: {},
+    cache: true,
     entry: entries,
-    experiments: getExperiments(env),
+    experiments,
     ignoreWarnings: [
       (warning: Error) => {
         if (warning.message.includes('Critical dependency: the request of a dependency is an expression')) {
+          return true;
+        }
+        if (warning.message.includes("export 'Routes' (imported as 'Routes') was not found in 'react-router-dom'")) {
           return true;
         }
         return false;
@@ -29,25 +40,18 @@ export default function (env: Record<string, unknown> = {}): Configuration {
     ],
     mode: env.production ? 'production' : 'development',
     module: {
-      rules: getModuleRules(env),
+      rules: moduleRules,
     },
-    optimization: getOptimizations(env),
-    output: getOutput(env),
+    optimization: optimizations,
+    output: output,
     resolve: {
       extensions,
-      alias: getAliases(env),
+      alias: resolveAlias,
       modules: modules,
-      fallback: {
-        // buffer: false,
-        fs: false,
-        stream: false,
-        // http: false,
-        // https: false,
-        // string_decoder: false,
-      },
+      fallback: nodePolyfills,
     },
     target: 'web',
-    plugins: getPlugins(env),
+    plugins,
   };
 
   if (env.development) {

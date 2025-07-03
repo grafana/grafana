@@ -1,10 +1,16 @@
-import rspack, { CssExtractRspackPlugin, type Optimization, type RuleSetRules } from '@rspack/core';
+import rspack, {
+  CssExtractRspackPlugin,
+  type Optimization,
+  type RuleSetRules,
+  type ExperimentCacheOptions,
+  ResolveOptions,
+} from '@rspack/core';
 import type { Configuration as DevServerConfiguration } from '@rspack/dev-server';
 import ReactRefreshPlugin from '@rspack/plugin-react-refresh';
 import AssetsPlugin from 'assets-webpack-plugin';
 import ESLintPlugin from 'eslint-rspack-plugin';
 import { createRequire } from 'node:module';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
 
 const require = createRequire(import.meta.url);
@@ -59,6 +65,7 @@ export const modules = ['node_modules', resolve('node_modules'), resolve('public
 
 export function getPlugins(env: Record<string, unknown> = {}) {
   const commonPlugins = [
+    new rspack.ProgressPlugin(),
     new rspack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
       resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
     }),
@@ -143,21 +150,21 @@ export function getPlugins(env: Record<string, unknown> = {}) {
 
 export function getExperiments(env: Record<string, unknown> = {}) {
   // This doesn't work reliably right now so disabling.
-  // const cache = {
-  //   cache: {
-  //     buildDependencies: [import.meta.filename],
-  //     name: env.production ? 'grafana-default-production' : 'grafana-default-development',
-  //     type: 'persistent',
-  //   } as ExperimentCacheOptions,
-  // };
+  const cache = {
+    cache: {
+      buildDependencies: [import.meta.filename, join(import.meta.dirname, '../../tsconfig.json')],
+      name: env.production ? 'grafana-default-rspack-production' : 'grafana-default-rspack-development',
+      type: 'persistent',
+    } as ExperimentCacheOptions,
+  };
   return {
     asyncWebAssembly: true,
-    // ...cache,
+    ...cache,
   };
 }
 
-export function getModuleRules(env: Record<string, unknown> = {}): RuleSetRules {
-  const commonModuleRules = [
+export function getModuleRules(env: Record<string, unknown> = {}) {
+  const commonModuleRules: RuleSetRules = [
     {
       test: /\.(j|t)s$/,
       exclude: [/[\\/]node_modules[\\/]/],
@@ -280,7 +287,7 @@ export function getModuleRules(env: Record<string, unknown> = {}): RuleSetRules 
   return commonModuleRules;
 }
 
-export const nodePolyfills = {
+export const nodePolyfills: ResolveOptions['fallback'] = {
   // buffer: false,
   fs: false,
   stream: false,
