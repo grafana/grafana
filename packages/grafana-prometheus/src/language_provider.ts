@@ -796,7 +796,7 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
  * Handles UTF8 metrics by properly escaping them.
  *
  * @param {PromQuery[]} queries - Array of Prometheus queries
- * @returns {string} Metric names as a regex matcher
+ * @returns {string[]} Metric names as a regex matcher inside the array for easy handling
  */
 export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string[] => {
   if (!queries) {
