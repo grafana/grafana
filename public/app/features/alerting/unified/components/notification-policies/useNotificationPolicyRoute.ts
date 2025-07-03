@@ -31,6 +31,7 @@ import {
   mergePartialAmRouteWithRouteTree,
   omitRouteFromRouteTree,
 } from '../../utils/routeTree';
+import { NAMED_ROOT_LABEL_NAME } from './Policy';
 
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
@@ -233,6 +234,8 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
     return {
       ...route.spec.defaults,
       routes: route.spec.routes?.map((subroute) => (k8sSubRouteToRoute(subroute, route.spec.defaults.name))),
+      // TODO: Improve this special case for named routes.
+      object_matchers: route.spec.defaults.name === '' || route.spec.defaults.name === ROOT_ROUTE_NAME ? undefined : [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, route.spec.defaults.name]],
       [ROUTES_META_SYMBOL]: {
         provisioned: isK8sEntityProvisioned(route),
         resourceVersion: route.metadata.resourceVersion,

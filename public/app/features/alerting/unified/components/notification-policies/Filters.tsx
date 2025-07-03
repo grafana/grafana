@@ -1,10 +1,22 @@
 import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Combobox,
+  ComboboxOption,
+  Field,
+  Icon,
+  Input,
+  Label,
+  Stack,
+  Text,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -19,23 +31,28 @@ import {
 } from '../../utils/matchers';
 
 import { ExternalAlertmanagerContactPointSelector } from './ContactPointSelector';
+import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
 interface NotificationPoliciesFilterProps {
   onChangeMatchers: (labels: ObjectMatcher[]) => void;
   onChangeReceiver: (receiver: string | undefined) => void;
+  onChangeNamedRoute: (namedRoute: string | undefined) => void;
+  namedRouteOptions: RouteWithID[];
   matchingCount: number;
 }
 
 const NotificationPoliciesFilter = ({
   onChangeReceiver,
   onChangeMatchers,
+  onChangeNamedRoute,
+  namedRouteOptions,
   matchingCount,
 }: NotificationPoliciesFilterProps) => {
   const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
   const { isGrafanaAlertmanager } = useAlertmanager();
   const [searchParams, setSearchParams] = useURLSearchParams();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
+  const { queryString, contactPoint, route } = getNotificationPoliciesFilters(searchParams);
   const styles = useStyles2(getStyles);
 
   const handleChangeLabels = useCallback(() => debounce(onChangeMatchers, 500), [onChangeMatchers]);
@@ -43,6 +60,10 @@ const NotificationPoliciesFilter = ({
   useEffect(() => {
     onChangeReceiver(contactPoint);
   }, [contactPoint, onChangeReceiver]);
+
+  useEffect(() => {
+    onChangeNamedRoute(route);
+  }, [route, onChangeNamedRoute]);
 
   useEffect(() => {
     const matchers = parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher);
@@ -53,10 +74,11 @@ const NotificationPoliciesFilter = ({
     if (searchInputRef.current) {
       searchInputRef.current.value = '';
     }
-    setSearchParams({ contactPoint: '', queryString: undefined });
+    setSearchParams({ contactPoint: '', queryString: undefined, route: undefined });
   }, [setSearchParams]);
 
-  const hasFilters = queryString || contactPoint;
+  const hasFilters = queryString || contactPoint || route;
+  const hasPolicyMatchingFilters = queryString || contactPoint;
 
   let inputValid = Boolean(queryString && queryString.length > 3);
   try {
@@ -68,6 +90,20 @@ const NotificationPoliciesFilter = ({
   } catch (err) {
     inputValid = false;
   }
+
+  const routeOptions: Array<ComboboxOption> = useMemo(
+    () =>
+      namedRouteOptions
+        .map((route) => ({
+          label:
+            route.name === '' || route.name === ROOT_ROUTE_NAME
+              ? t('alerting.notification-policies-list.default-policy', 'Default policy')
+              : route.name,
+          value: route.name ?? ROOT_ROUTE_NAME,
+        }))
+        .sort((a, b) => (a.value === ROOT_ROUTE_NAME ? -1 : b.value === ROOT_ROUTE_NAME ? 1 : 0)),
+    [namedRouteOptions]
+  );
 
   return (
     <Stack direction="row" alignItems="flex-end" gap={1}>
@@ -149,16 +185,36 @@ const NotificationPoliciesFilter = ({
           )}
         </Field>
       )}
+      {isGrafanaAlertmanager && (
+        <Field label={'Select Route'} style={{ marginBottom: 0 }}>
+          <Combobox
+            placeholder={'Choose a route'}
+            id="rootRouteSelect"
+            options={routeOptions}
+            onChange={(value) => {
+              if (!value) {
+                setSearchParams({ route: undefined });
+              } else {
+                setSearchParams({ route: value?.value });
+              }
+            }}
+            width={28}
+            value={route}
+          />
+        </Field>
+      )}
       {hasFilters && (
         <Stack alignItems="center">
           <Button variant="secondary" icon="times" onClick={clearFilters}>
             <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
           </Button>
-          <Text variant="bodySmall" color="secondary">
-            {matchingCount === 0 && 'No policies matching filters.'}
-            {matchingCount === 1 && `${matchingCount} policy matches the filters.`}
-            {matchingCount > 1 && `${matchingCount} policies match the filters.`}
-          </Text>
+          {hasPolicyMatchingFilters && (
+            <Text variant="bodySmall" color="secondary">
+              {matchingCount === 0 && 'No policies matching filters.'}
+              {matchingCount === 1 && `${matchingCount} policy matches the filters.`}
+              {matchingCount > 1 && `${matchingCount} policies match the filters.`}
+            </Text>
+          )}
         </Stack>
       )}
     </Stack>
@@ -224,6 +280,7 @@ const unquoteMatchersIfRequired = ([key, operator, value]: ObjectMatcher): Objec
 const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   queryString: searchParams.get('queryString') ?? undefined,
   contactPoint: searchParams.get('contactPoint') ?? undefined,
+  route: searchParams.get('route') ?? undefined,
 });
 
 const getStyles = () => ({
