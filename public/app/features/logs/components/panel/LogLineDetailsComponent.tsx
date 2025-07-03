@@ -92,6 +92,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
       <LogLineDetailsHeader log={log} search={search} onSearch={handleSearch} />
       <div className={styles.componentWrapper}>
         <ControlledCollapse
+          className={styles.collapsable}
           label={t('logs.log-line-details.log-line-section', 'Log line')}
           collapsible
           isOpen={logLineOpen}
@@ -101,6 +102,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
         </ControlledCollapse>
         {fieldsWithLinks.links.length > 0 && (
           <ControlledCollapse
+            className={styles.collapsable}
             label={t('logs.log-line-details.links-section', 'Links')}
             collapsible
             isOpen={linksOpen}
@@ -119,6 +121,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
         {labelGroups.map((group) =>
           group === '' ? (
             <ControlledCollapse
+              className={styles.collapsable}
               key={'fields'}
               label={t('logs.log-line-details.fields-section', 'Fields')}
               collapsible
@@ -130,6 +133,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
             </ControlledCollapse>
           ) : (
             <ControlledCollapse
+              className={styles.collapsable}
               key={group}
               label={group}
               collapsible
@@ -142,6 +146,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
         )}
         {!labelGroups.length && fieldsWithoutLinks.length > 0 && (
           <ControlledCollapse
+            className={styles.collapsable}
             key={'fields'}
             label={t('logs.log-line-details.fields-section', 'Fields')}
             collapsible
@@ -162,6 +167,11 @@ function groupOptionName(group: string) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  collapsable: css({
+    '&:last-of-type': {
+      marginBottom: 0,
+    },
+  }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
   }),
