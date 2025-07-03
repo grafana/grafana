@@ -18729,6 +18729,10 @@
           "description": "Selected language (beta)",
           "type": "string"
         },
+        "locale": {
+          "description": "Selected locale (beta)",
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/PreferencesNavbarPreference"
         },
