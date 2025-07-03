@@ -111,7 +111,7 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
 
   listItem: css({
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.secondary,
     lineHeight: theme.typography.bodySmall.lineHeight,
