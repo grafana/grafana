@@ -93,18 +93,22 @@ test.describe(
         selectors.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch
       );
       await expect(lockTimeRangeSwitch).toBeInViewport();
-      await lockTimeRangeSwitch.click({ force: true });
+      await expect(async () => {
+        await lockTimeRangeSwitch.uncheck({ force: true });
+      }).toPass();
 
-      // Check localStorage configuration
-      const shareConfig = await page.evaluate(() => {
-        const config = window.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
-        return config ? JSON.parse(config) : null;
-      });
+      await expect(async () => {
+        // Check localStorage configuration
+        const shareConfig = await page.evaluate(() => {
+          const config = window.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
+          return config ? JSON.parse(config) : null;
+        });
 
-      expect(shareConfig).not.toBeNull();
-      expect(shareConfig.useAbsoluteTimeRange).toBe(false);
-      expect(shareConfig.useShortUrl).toBe(true);
-      expect(shareConfig.theme).toBe('current');
+        expect(shareConfig).not.toBeNull();
+        expect(shareConfig.useAbsoluteTimeRange).toBe(false);
+        expect(shareConfig.useShortUrl).toBe(true);
+        expect(shareConfig.theme).toBe('current');
+      }).toPass();
 
       // Wait for the API response
       const response = await updateResponse;
@@ -138,28 +142,34 @@ test.describe(
         selectors.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch
       );
       await expect(lockTimeRangeSwitch).toBeInViewport();
-      await lockTimeRangeSwitch.click({ force: true });
+      await expect(async () => {
+        await lockTimeRangeSwitch.uncheck({ force: true });
+      }).toPass();
       const shortenUrlSwitch = dashboardPage.getByGrafanaSelector(
         selectors.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch
       );
       await expect(shortenUrlSwitch).toBeInViewport();
-      await shortenUrlSwitch.click({ force: true });
+      await expect(async () => {
+        await shortenUrlSwitch.uncheck({ force: true });
+      }).toPass();
 
       // Close the drawer
       await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
 
       await expect(page).not.toHaveURL(/.*shareView=link.*/);
 
-      // Check that localStorage has been updated with the configuration
-      const finalConfig = await page.evaluate(() => {
-        const config = window.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
-        return config ? JSON.parse(config) : null;
-      });
+      await expect(async () => {
+        // Check that localStorage has been updated with the configuration
+        const finalConfig = await page.evaluate(() => {
+          const config = window.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
+          return config ? JSON.parse(config) : null;
+        });
 
-      expect(finalConfig).not.toBeNull();
-      expect(finalConfig.useAbsoluteTimeRange).toBe(false);
-      expect(finalConfig.useShortUrl).toBe(false);
-      expect(finalConfig.theme).toBe('current');
+        expect(finalConfig).not.toBeNull();
+        expect(finalConfig.useAbsoluteTimeRange).toBe(false);
+        expect(finalConfig.useShortUrl).toBe(false);
+        expect(finalConfig.theme).toBe('current');
+      }).toPass();
     });
   }
 );
