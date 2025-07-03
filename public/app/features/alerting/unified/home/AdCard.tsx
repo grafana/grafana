@@ -99,7 +99,6 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
   }),
 
   itemsList: css({
-    listStyle: 'none',
     display: 'grid',
     gridTemplateColumns: '1fr',
     gap: theme.spacing(0.5),
@@ -137,7 +136,6 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     flex: 1,
-    minWidth: 0,
   }),
 
   preHeader: css({
