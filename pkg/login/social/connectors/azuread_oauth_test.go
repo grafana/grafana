@@ -841,7 +841,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				tt.fields.cfg,
 				ProvideOrgRoleMapper(tt.fields.cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures(),
 				cache)
 
@@ -1019,7 +1019,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				tt.fields.cfg,
 				ProvideOrgRoleMapper(tt.fields.cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures(),
 				cache)
 
@@ -1119,7 +1119,7 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			require.Equal(t, tc.want.forceUseGraphAPI, s.forceUseGraphAPI)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
@@ -1280,7 +1280,7 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -1360,7 +1360,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+			s := NewAzureADProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1417,7 +1417,7 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewAzureADProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+			s := NewAzureADProvider(tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

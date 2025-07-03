@@ -390,7 +390,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				}, cfg,
 				ProvideOrgRoleMapper(cfg,
 					&orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures())
 
 			token := &oauth2.Token{
@@ -471,7 +471,7 @@ func TestSocialGitHub_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.teamIds, s.teamIds)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
@@ -598,7 +598,7 @@ func TestSocialGitHub_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -679,7 +679,7 @@ func TestSocialGitHub_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -738,7 +738,7 @@ func TestGitHub_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitHubProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitHubProvider(tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

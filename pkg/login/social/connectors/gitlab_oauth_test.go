@@ -209,7 +209,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 				SkipOrgRoleSync:         tt.Cfg.SkipOrgRoleSync,
 				OrgMapping:              tt.Cfg.OrgMapping,
 				// OrgAttributePath:        "",
-			}, cfg, orgMapper, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			}, cfg, orgMapper, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
@@ -398,7 +398,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				},
 				&setting.Cfg{
 					AutoAssignOrgRole: "",
-				}, nil, &ssosettingstests.MockService{},
+				}, nil, ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures())
 
 			// Test case: successful extraction
@@ -489,7 +489,7 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 	defer mockServer.Close()
 
 	// Create a SocialGitlab instance with the mock server URL
-	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 	// Call getGroups and verify that it returns all groups
 	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}
@@ -611,7 +611,7 @@ func TestSocialGitlab_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -692,7 +692,7 @@ func TestSocialGitlab_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGitLabProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {

@@ -53,7 +53,7 @@ export async function getAuthProviderStatus(providerId: string): Promise<AuthPro
 
 export function initAuthConfig() {
   // skip the LDAP provider if it is enabled by SSO settings
-  if (config.featureToggles.ssoSettingsApi && config.featureToggles.ssoSettingsLDAP) {
+  if (config.featureToggles.ssoSettingsLDAP) {
     return;
   }
 
