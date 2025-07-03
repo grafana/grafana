@@ -23,7 +23,6 @@ type outboxStore struct {
 	dialect sqltemplate.Dialect
 	metrics *metrics.StorageMetrics
 	tracer  trace.Tracer
-	metrics *metrics.StorageMetrics
 }
 
 func ProvideOutboxQueue(
@@ -53,7 +52,6 @@ type outboxMessageDB struct {
 }
 
 func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (messageID int64, err error) {
-	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "outboxStore.Append", trace.WithAttributes(
 		attribute.String("name", input.Name),
 		attribute.String("namespace", input.Namespace),
@@ -158,7 +156,6 @@ func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendO
 }
 
 func (s *outboxStore) ReceiveN(ctx context.Context, limit uint) ([]contracts.OutboxMessage, error) {
-	start := time.Now()
 	messageIDs, err := s.fetchMessageIdsInQueue(ctx, limit)
 	if err != nil {
 		return nil, fmt.Errorf("fetching message ids from queue: %w", err)
