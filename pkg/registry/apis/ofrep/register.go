@@ -57,7 +57,21 @@ func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile stri
 	}
 }
 
-func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) *APIBuilder {
+	var staticEvaluator featuremgmt.StaticFlagEvaluator
+	if cfg.OpenFeature.ProviderType == setting.StaticProviderType {
+		var err error
+		confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+		if err != nil {
+			panic("failed to read feature flags from config: " + err.Error())
+		}
+		staticEvaluator, err = featuremgmt.CreateStaticEvaluator(cfg.OpenFeature.ProviderType, confFlags)
+		if err != nil {
+			panic("failed to create static evaluator: " + err.Error())
+		}
+	} else {
+		staticEvaluator = nil // No static evaluator needed for non-static providers
+	}
 	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
 	apiregistration.RegisterAPI(b)
 	return b

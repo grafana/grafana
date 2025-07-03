@@ -3,7 +3,6 @@ package featuremgmt
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -17,43 +16,25 @@ type StaticFlagEvaluator interface {
 	EvalAllFlags(ctx context.Context) (OFREPBulkResponse, error)
 }
 
-// ProvideStaticEvaluator creates a static evaluator from configuration
-// This can be used in wire dependency injection
-func ProvideStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
-	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		l := log.New("static-evaluator")
-		l.Debug("cannot create static evaluator if configured provider is goff")
-		return &staticEvaluator{}, nil
+// CreateStaticEvaluator is a dependancy for ofrep APIBuilder
+func CreateStaticEvaluator(providerType string, staticFlags map[string]bool) (StaticFlagEvaluator, error) {
+	if providerType != setting.StaticProviderType {
+		return nil, fmt.Errorf("provider type %s is not a static provider", providerType)
 	}
 
-	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
+	staticProvider, err := newStaticProvider(staticFlags)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
+		return nil, fmt.Errorf("failed to create static provider: %w", err)
 	}
 
-	return createStaticEvaluator(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags)
-}
-
-// createStaticEvaluator evaluator that allows evaluating static flags from config.ini
-func createStaticEvaluator(providerType string, u *url.URL, staticFlags map[string]bool) (StaticFlagEvaluator, error) {
-	provider, err := createProvider(providerType, u, staticFlags)
-	if err != nil {
-		return nil, err
-	}
-
-	staticProvider, ok := provider.(*inMemoryBulkProvider)
+	p, ok := staticProvider.(*inMemoryBulkProvider)
 	if !ok {
-		return nil, fmt.Errorf("provider is not a static provider")
-	}
-
-	client, err := createClient(provider)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("static provider is not of type inMemoryBulkProvider")
 	}
 
 	return &staticEvaluator{
-		provider: staticProvider,
-		client:   client,
+		provider: p,
+		client:   openfeature.GetApiInstance().GetNamedClient("static-evaluator"),
 		log:      log.New("static-evaluator"),
 	}, nil
 }
