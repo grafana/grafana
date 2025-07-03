@@ -9,6 +9,11 @@ export const warningTypes: Record<string, string> = {
   SubqueryExpr: 'Subquery detected, this may cause performance issues. Consider using ... instead.',
 };
 
+enum NodeType {
+  SubqueryExpr = 'SubqueryExpr',
+  Duration = 'NumberDurationLiteralInDurationContext',
+};
+
 interface ParserIssueBoundary {
   startLineNumber: number;
   startColumn: number;
@@ -91,9 +96,18 @@ function parseQuery(query: string, parser: LRParser) {
         parseErrors.push({ node: node, text: query.substring(node.from, node.to) });
       }
 
-      if (nodeRef.type.name === 'SubqueryExpr') {
+      if (nodeRef.type.name === NodeType.SubqueryExpr) {
         const node = nodeRef.node;
-        parseWarnings.push({ node: node, text: query.substring(node.from, node.to) });
+        const durations: string[] = [];
+
+        const children = node.getChildren(NodeType.Duration);
+        for (const child of children) {
+          durations.push(query.substring(child.from, child.to));
+        }
+
+        if (durations.length === 2 && durations[0] === durations[1]) {
+          parseWarnings.push({ node: node, text: query.substring(node.from, node.to) });
+        }
       }
     },
   });
