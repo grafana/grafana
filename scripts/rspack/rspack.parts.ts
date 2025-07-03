@@ -65,6 +65,14 @@ export function getPlugins(env: Record<string, unknown> = {}) {
     new rspack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
+    new rspack.CopyRspackPlugin({
+      patterns: [
+        {
+          from: 'public/img',
+          to: 'img',
+        },
+      ],
+    }),
     new rspack.DefinePlugin({
       'process.env': {
         NODE_ENV: env.production ? JSON.stringify('production') : JSON.stringify('development'),
@@ -80,7 +88,7 @@ export function getPlugins(env: Record<string, unknown> = {}) {
       filename: 'assets-manifest.json',
       processOutput: (assets) => {
         const arrayify = (value) => (Array.isArray(value) ? value : [value]);
-        const devServerPath = 'http://localhost:8080';
+        const devServerPath = 'http://localhost:3000';
         const entrypoints = Object.entries(assets).reduce(
           (acc, [key, value]) => {
             const valuesAsArray = Object.entries(value).reduce((acc, [key, value]) => {
