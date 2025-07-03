@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import createMockPanelData from '../../__mocks__/panelData';
-import createMockQuery from '../../__mocks__/query';
 import { selectors } from '../../e2e/selectors';
+import createMockDatasource from '../../mocks/datasource';
+import createMockPanelData from '../../mocks/panelData';
+import createMockQuery from '../../mocks/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
 

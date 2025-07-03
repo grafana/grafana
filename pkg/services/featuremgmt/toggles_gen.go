@@ -87,10 +87,6 @@ const (
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
 
-	// FlagLokiQuerySplittingConfig
-	// Give users the option to configure split durations for Loki queries
-	FlagLokiQuerySplittingConfig = "lokiQuerySplittingConfig"
-
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
@@ -142,10 +138,6 @@ const (
 	// FlagExtraThemes
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
-
-	// FlagLokiPredefinedOperations
-	// Adds predefined query operations to Loki query editor
-	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
 
 	// FlagPluginsFrontendSandbox
 	// Enables the plugins frontend sandbox
@@ -311,10 +303,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagLokiStructuredMetadata
-	// Enables the loki data source to request structured metadata from the Loki server
-	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
-
 	// FlagCachingOptimizeSerializationMemoryUsage
 	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
 	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
@@ -367,10 +355,6 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
-	// FlagSsoSettingsApi
-	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
-	FlagSsoSettingsApi = "ssoSettingsApi"
-
 	// FlagCanvasPanelPanZoom
 	// Allow pan and zoom in canvas panel
 	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
@@ -394,10 +378,6 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
-
-	// FlagLokiQueryHints
-	// Enables query hints for Loki
-	FlagLokiQueryHints = "lokiQueryHints"
 
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
@@ -899,10 +879,6 @@ const (
 	// Enables the alerting bulk actions in the UI
 	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
 
-	// FlagExtensionsReadOnlyProxy
-	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
-	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
-
 	// FlagKubernetesAuthzApis
 	// Registers AuthZ /apis endpoint
 	FlagKubernetesAuthzApis = "kubernetesAuthzApis"
@@ -938,4 +914,8 @@ const (
 	// FlagEnableAppChromeExtensions
 	// Set this to true to enable all app chrome extensions registered by plugins.
 	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
+
+	// FlagFoldersAppPlatformAPI
+	// Enables use of app platform API for folders
+	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
 )
