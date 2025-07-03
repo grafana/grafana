@@ -1,13 +1,4 @@
-import {
-  FieldOverrideContext,
-  FieldType,
-  getFieldDisplayName,
-  PanelPlugin,
-  ReducerID,
-  standardEditorsRegistry,
-  identityOverrideProcessor,
-  FieldConfigProperty,
-} from '@grafana/data';
+import { PanelPlugin, standardEditorsRegistry, identityOverrideProcessor, FieldConfigProperty } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions, TableCellHeight } from '@grafana/schema';
 
@@ -108,11 +99,25 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           category,
           defaultValue: undefined,
           hideFromDefaults: true,
+        })
+        .addCustomEditor({
+          id: 'footer.reducer',
+          category: [t('table-new.category-table-footer', 'Table footer')],
+          path: 'footer.reducer',
+          name: t('table-new.name-calculation', 'Calculation'),
+          description: t('table-new.description-calculation', 'Choose a reducer function / calculation'),
+          editor: standardEditorsRegistry.get('stats-picker').editor,
+          override: standardEditorsRegistry.get('stats-picker').editor,
+          defaultValue: [],
+          process: identityOverrideProcessor,
+          shouldApply: () => true,
+          settings: {
+            allowMultiple: true,
+          },
         });
     },
   })
   .setPanelOptions((builder) => {
-    const footerCategory = [t('table-new.category-table-footer', 'Table footer')];
     const category = [t('table-new.category-table', 'Table')];
     builder
       .addBooleanSwitch({
@@ -134,63 +139,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           ],
         },
       })
-      .addBooleanSwitch({
-        path: 'footer.show',
-        category: footerCategory,
-        name: t('table-new.name-show-table-footer', 'Show table footer'),
-        defaultValue: defaultOptions.footer?.show,
-      })
-      .addCustomEditor({
-        id: 'footer.reducer',
-        category: footerCategory,
-        path: 'footer.reducer',
-        name: t('table-new.name-calculation', 'Calculation'),
-        description: t('table-new.description-calculation', 'Choose a reducer function / calculation'),
-        editor: standardEditorsRegistry.get('stats-picker').editor,
-        defaultValue: [ReducerID.sum],
-        showIf: (cfg) => cfg.footer?.show,
-      })
-      .addBooleanSwitch({
-        path: 'footer.countRows',
-        category: footerCategory,
-        name: t('table-new.name-count-rows', 'Count rows'),
-        description: t('table-new.description-count-rows', 'Display a single count for all data rows'),
-        defaultValue: defaultOptions.footer?.countRows,
-        showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
-      })
-      .addMultiSelect({
-        path: 'footer.fields',
-        category: footerCategory,
-        name: t('table-new.name-fields', 'Fields'),
-        description: t('table-new.description-fields', 'Select the fields that should be calculated'),
-        settings: {
-          allowCustomValue: false,
-          options: [],
-          placeholder: t('table-new.placeholder-fields', 'All Numeric Fields'),
-          getOptions: async (context: FieldOverrideContext) => {
-            const options = [];
-            if (context && context.data && context.data.length > 0) {
-              const frame = context.data[0];
-              for (const field of frame.fields) {
-                if (field.type === FieldType.number) {
-                  const name = getFieldDisplayName(field, frame, context.data);
-                  const value = field.name;
-                  options.push({ value, label: name });
-                }
-              }
-            }
-            return options;
-          },
-        },
-        defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show && !(cfg.footer?.countRows && cfg.footer?.reducer.includes(ReducerID.count)),
-      })
       .addCustomEditor({
         id: 'footer.enablePagination',
         path: 'footer.enablePagination',
         name: t('table-new.name-enable-pagination', 'Enable pagination'),
         category,
         editor: PaginationEditor,
+        defaultValue: defaultOptions?.footer?.enablePagination,
       });
   })
   .setSuggestionsSupplier(new TableSuggestionsSupplier());

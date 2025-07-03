@@ -7704,7 +7704,6 @@
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
       "copy": "Copy to Clipboard",
-      "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
       "csv-placeholder": "Enter CSV here...",
       "filter-placeholder": "Filter values",
@@ -7714,6 +7713,11 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "footer": {
+        "reducer": {
+          "count": "Count"
+        }
+      },
       "inspect-drawer-title": "Inspect value",
       "inspect-menu-label": "Inspect value",
       "no-values-label": "No values",
@@ -11429,8 +11433,6 @@
     "description-calculation": "Choose a reducer function / calculation",
     "description-cell-value-inspect": "Enable cell value inspection in a modal window",
     "description-column-filter": "Enables/disables field filters in table",
-    "description-count-rows": "Display a single count for all data rows",
-    "description-fields": "Select the fields that should be calculated",
     "description-min-column-width": "The minimum width for column auto resizing",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
@@ -11439,15 +11441,11 @@
     "name-column-alignment": "Column alignment",
     "name-column-filter": "Column filter",
     "name-column-width": "Column width",
-    "name-count-rows": "Count rows",
     "name-enable-pagination": "Enable pagination",
-    "name-fields": "Fields",
     "name-hide-in-table": "Hide in table",
     "name-min-column-width": "Minimum column width",
-    "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
-    "placeholder-column-width": "auto",
-    "placeholder-fields": "All Numeric Fields"
+    "placeholder-column-width": "auto"
   },
   "tag-filter": {
     "clear-button": "Clear tags",

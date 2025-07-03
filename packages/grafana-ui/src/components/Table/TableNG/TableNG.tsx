@@ -13,7 +13,7 @@ import {
   SortColumn,
 } from 'react-data-grid';
 
-import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -26,20 +26,14 @@ import { CellColors, TableCellDisplayMode } from '../types';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
+import { SummaryCell } from './Cells/SummaryCell';
 import { TableCellActions } from './Cells/TableCellActions';
 import { getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
-import {
-  useColumnResize,
-  useFilteredRows,
-  useFooterCalcs,
-  usePaginatedRows,
-  useRowHeight,
-  useSortedRows,
-  useTextWraps,
-} from './hooks';
+import { useColumnResize, useFilteredRows, usePaginatedRows, useRowHeight, useSortedRows, useTextWraps } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps } from './types';
 import {
+  calculateFooterHeight,
   frameToRecords,
   getDefaultRowHeight,
   getDisplayName,
@@ -64,7 +58,7 @@ export function TableNG(props: TableNGProps) {
     enablePagination,
     enableSharedCrosshair = false,
     enableVirtualization,
-    footerOptions,
+    fieldConfig,
     getActions,
     height,
     initialSortBy,
@@ -78,21 +72,17 @@ export function TableNG(props: TableNGProps) {
     width,
   } = props;
 
+  const hasFooter = useMemo(
+    () => data.fields.some((field) => field.config?.custom?.footer?.reducer?.length ?? false),
+    [data.fields]
+  );
+  const footerHeight = hasFooter ? calculateFooterHeight(data, fieldConfig) : 0;
+
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, {
-    enablePagination,
-    noHeader,
-  });
+  const styles = useStyles2(getGridStyles, { enablePagination, noHeader });
   const panelContext = usePanelContext();
 
   const hasHeader = !noHeader;
-  const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
-  const isCountRowsSet = Boolean(
-    footerOptions?.countRows &&
-      footerOptions.reducer &&
-      footerOptions.reducer.length &&
-      footerOptions.reducer[0] === ReducerID.count
-  );
 
   const [contextMenuProps, setContextMenuProps] = useState<ContextMenuProps | null>(null);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
@@ -159,13 +149,12 @@ export function TableNG(props: TableNGProps) {
     width: availableWidth,
     height,
     hasHeader,
-    hasFooter,
+    footerHeight,
     rowHeight,
   });
 
   // Create a map of column key to text wrap
   const textWraps = useTextWraps(data.fields);
-  const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
   const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
   const renderRow = useMemo(
@@ -216,20 +205,22 @@ export function TableNG(props: TableNGProps) {
         },
         sortColumns,
         rowHeight,
+        bottomSummaryRows: hasFooter ? [{}] : undefined,
+        summaryRowHeight: footerHeight,
         headerRowClass: styles.headerRow,
         headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
-        bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
       enableVirtualization,
+      hasFooter,
       resizeHandler,
       sortColumns,
       rowHeight,
       styles.headerRow,
       noHeader,
-      hasFooter,
       setSortColumns,
       onSortByChange,
+      footerHeight,
     ]
   );
 
@@ -247,7 +238,6 @@ export function TableNG(props: TableNGProps) {
 
       f.forEach((field, i) => {
         const justifyContent = getTextAlign(field);
-        const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
         const cellOptions = getCellOptions(field);
@@ -374,19 +364,7 @@ export function TableNG(props: TableNGProps) {
               showTypeIcons={showTypeIcons}
             />
           ),
-          renderSummaryCell: () => {
-            if (isCountRowsSet && i === 0) {
-              return (
-                <div className={footerStyles.footerCellCountRows}>
-                  <span>
-                    <Trans i18nKey="grafana-ui.table.count">Count</Trans>
-                  </span>
-                  <span>{footerCalcs[i]}</span>
-                </div>
-              );
-            }
-            return <div className={footerStyles.footerCell}>{footerCalcs[i]}</div>;
-          },
+          renderSummaryCell: () => <SummaryCell rows={sortedRows} field={field} omitCountAll={i > 0} />,
         };
 
         result.columns.push(column);
@@ -474,7 +452,9 @@ export function TableNG(props: TableNGProps) {
 
     return result;
   }, [
+    applyToRowBgFn,
     availableWidth,
+    columnTypes,
     commonDataGridProps,
     crossFilterOrder,
     crossFilterRows,
@@ -483,26 +463,23 @@ export function TableNG(props: TableNGProps) {
     enableSharedCrosshair,
     expandedRows,
     filter,
-    footerCalcs,
     getActions,
     hasNestedFrames,
-    isCountRowsSet,
+    height,
     onCellFilterAdded,
     panelContext,
     replaceVariables,
-    rows,
     rowHeight,
+    rows,
     setFilter,
     showTypeIcons,
     sortColumns,
+    sortedRows,
     styles,
+    textWraps,
     theme,
     visibleFields,
     widths,
-    applyToRowBgFn,
-    columnTypes,
-    height,
-    textWraps,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
@@ -719,24 +696,12 @@ const getGridStyles = (
   }),
 });
 
-const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
-  footerCellCountRows: css({
-    display: 'flex',
-    justifyContent: 'space-between',
-  }),
-  footerCell: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'space-between',
-  }),
-});
-
 const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
   headerCell: css({
     display: 'flex',
     gap: theme.spacing(0.5),
     zIndex: theme.zIndex.tooltip - 1,
-    paddingInline: TABLE.CELL_PADDING,
-    paddingBlock: TABLE.CELL_PADDING,
+    padding: TABLE.CELL_PADDING,
     borderInlineEnd: 'none',
     justifyContent,
   }),

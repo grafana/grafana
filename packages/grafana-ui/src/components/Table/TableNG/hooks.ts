@@ -1,13 +1,13 @@
 import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { Column, DataGridProps, SortColumn } from 'react-data-grid';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import { Field, FieldType, formattedValueToString } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
-import { ColumnTypes, FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
+import { ColumnTypes, FilterType, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
 import { getDisplayName, processNestedTableRows, getCellHeightCalculator, applySort, getCellOptions } from './utils';
 
 // Helper function to get displayed value
@@ -129,9 +129,9 @@ export interface PaginatedRowsOptions {
   width: number;
   rowHeight: number | ((row: TableRow) => number);
   hasHeader?: boolean;
-  hasFooter?: boolean;
   paginationHeight?: number;
   enabled?: boolean;
+  footerHeight: number;
 }
 
 export interface PaginatedRowsResult {
@@ -150,7 +150,7 @@ const PAGINATION_HEIGHT = 38;
 
 export function usePaginatedRows(
   rows: TableRow[],
-  { height, width, hasHeader, hasFooter, rowHeight, enabled }: PaginatedRowsOptions
+  { height, width, hasHeader, rowHeight, enabled, footerHeight }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
   const [page, setPage] = useState(0);
@@ -177,8 +177,7 @@ export function usePaginatedRows(
     }
 
     // calculate number of rowsPerPage based on height stack
-    const rowAreaHeight =
-      height - (hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0) - (hasFooter ? avgRowHeight : 0) - PAGINATION_HEIGHT;
+    const rowAreaHeight = height - (hasHeader ? TABLE.HEADER_ROW_HEIGHT : 0) - footerHeight - PAGINATION_HEIGHT;
     const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
     // ensure at least one row per page is displayed
     let rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
@@ -198,7 +197,7 @@ export function usePaginatedRows(
       pageRangeEnd,
       smallPagination,
     };
-  }, [width, height, hasHeader, hasFooter, avgRowHeight, enabled, numRows, page]);
+  }, [width, height, hasHeader, footerHeight, avgRowHeight, enabled, numRows, page]);
 
   // safeguard against page overflow on panel resize or other factors
   useEffect(() => {
@@ -231,67 +230,6 @@ export function usePaginatedRows(
     pageRangeEnd,
     smallPagination,
   };
-}
-
-export interface FooterCalcsOptions {
-  enabled?: boolean;
-  isCountRowsSet?: boolean;
-  footerOptions?: TableFooterCalc;
-}
-
-export function useFooterCalcs(
-  rows: TableRow[],
-  fields: Field[],
-  { enabled, footerOptions, isCountRowsSet }: FooterCalcsOptions
-): string[] {
-  return useMemo(() => {
-    const footerReducers = footerOptions?.reducer;
-
-    if (!enabled || !footerOptions || !Array.isArray(footerReducers) || !footerReducers.length) {
-      return [];
-    }
-
-    return fields.map((field, index) => {
-      if (field.state?.calcs) {
-        delete field.state?.calcs;
-      }
-
-      if (isCountRowsSet) {
-        return index === 0 ? `${rows.length}` : '';
-      }
-
-      if (index === 0) {
-        const footerCalcReducer = footerReducers[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
-      }
-
-      if (field.type !== FieldType.number) {
-        return '';
-      }
-
-      // if field.display is undefined, don't throw
-      const displayFn = field.display;
-      if (!displayFn) {
-        return '';
-      }
-
-      // If fields array is specified, only show footer for fields included in that array
-      if (footerOptions.fields?.length && !footerOptions.fields?.includes(getDisplayName(field))) {
-        return '';
-      }
-
-      const calc = footerReducers[0];
-      const value = reduceField({
-        field: {
-          ...field,
-          values: rows.map((row) => row[getDisplayName(field)]),
-        },
-        reducers: footerReducers,
-      })[calc];
-
-      return formattedValueToString(displayFn(value));
-    });
-  }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
 export function useTextWraps(fields: Field[]): Record<string, boolean> {
@@ -371,10 +309,9 @@ export function useRowHeight(
     const HPADDING = TABLE.CELL_PADDING;
     const VPADDING = TABLE.CELL_PADDING;
     const BORDER_RIGHT = 0.666667;
-    const LINE_HEIGHT = 22;
 
     const wrapWidths = columnWidths.map((c) => c - 2 * HPADDING - BORDER_RIGHT);
-    const calc = getCellHeightCalculator(ctx, LINE_HEIGHT, defaultRowHeight, VPADDING);
+    const calc = getCellHeightCalculator(ctx, TABLE.LINE_HEIGHT, defaultRowHeight, VPADDING);
 
     return (row: TableRow) => {
       // nested rows

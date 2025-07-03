@@ -24,7 +24,15 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
+import {
+  CellColors,
+  TableRow,
+  TableFieldOptionsType,
+  ColumnTypes,
+  FrameToRowsConverter,
+  Comparator,
+  TableNGProps,
+} from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellHeightCalculator = (text: string, cellWidth: number) => number;
@@ -329,7 +337,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+  const convert = new Function('frame', fnBody) as FrameToRowsConverter;
   return convert(frame);
 };
 
@@ -476,6 +484,57 @@ export const processNestedTableRows = (
   });
 
   return result;
+};
+
+/**
+ * @internal
+ * Get the maximum number of reducers across all fields
+ */
+const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']): number => {
+  // Filter to only numeric fields that can have reducers
+  const numericFields = dataFrame.fields.filter(({ type }) => type === FieldType.number);
+
+  // If there are no numeric fields, return 0
+  if (numericFields.length === 0) {
+    return 0;
+  }
+
+  // Map each field to its reducer count (direct config or override)
+  const reducerCounts = numericFields.map((field) => {
+    // Get the direct reducer count from the field config
+    const directReducers = field.config?.custom?.footer?.reducer ?? [];
+    let reducerCount = directReducers.length;
+
+    // Check for overrides if field config is available
+    if (fieldConfig?.overrides) {
+      // Find override that matches this field
+      const override = fieldConfig.overrides.find(
+        ({ matcher: { id, options } }) => id === 'byName' && options === getDisplayName(field)
+      );
+
+      // Check if there's a footer reducer property in the override
+      const footerProperty = override?.properties?.find(({ id }) => id === 'custom.footer.reducer');
+      if (footerProperty?.value && Array.isArray(footerProperty.value)) {
+        // If override exists, it takes precedence over direct config
+        reducerCount = footerProperty.value.length;
+      }
+    }
+
+    return reducerCount;
+  });
+
+  // Return the maximum count or 0 if no reducers found
+  return reducerCounts.length > 0 ? Math.max(...reducerCounts) : 0;
+};
+
+/**
+ * @internal
+ * Calculate the footer height based on the maximum reducer count
+ */
+export const calculateFooterHeight = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']) => {
+  const maxReducerCount = getMaxReducerCount(dataFrame, fieldConfig);
+  // Base height (+ padding) + height per reducer
+  return maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
 };
 
 /**
