@@ -90,6 +90,7 @@ swagger-enterprise-gen: ## Generate API Swagger specification
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
+	-t enterprise \
 	--exclude-tag=alpha \
 	--include-tag=enterprise
 endif
@@ -189,10 +190,18 @@ gen-feature-toggles:
 		go test -v ./pkg/services/featuremgmt/...; \
 	fi
 
-.PHONY: gen-go
-gen-go:
-	@echo "generate go files"
-	$(GO) run $(GO_RACE_FLAG) ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
+.PHONY: gen-go gen-enterprise-go
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+gen-enterprise-go:
+	@echo "skipping re-generating Wire graph for enterprise: not enabled"
+else
+gen-enterprise-go: ## Generate Wire graph (Enterprise)
+	@echo "re-generating Wire graph for enterprise"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
+endif
+gen-go: gen-enterprise-go ## Generate Wire graph
+	@echo "generatng Wire graph"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
 .PHONY: fix-cue
 fix-cue:

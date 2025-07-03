@@ -110,6 +110,12 @@
       "update-button": "Mettre à jour",
       "users-heading": "Utilisateurs de l'organisation"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditer",
       "title-custom-branding": "Marquage personnalisé",
@@ -3222,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Activé",
       "text-badge-not-enabled": "Non activé"
     },
@@ -3254,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Gérez vos paramètres d’authentification et configurez l’authentification unique. Pour en savoir plus, consultez notre <2>documentation</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3473,12 @@
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
-      "description-branch-name-in-git-hub": "Nom de la branche dans GitHub",
       "error-invalid-folder-name": "Nom de dossier non valide",
       "error-required": "Un nom de dossier est obligatoire",
-      "folder-comment-input-placeholder-describe-changes-optional": "Ajoutez une note pour décrire vos modifications (facultatif)",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
-      "label-branch": "Branche",
-      "label-comment": "Commentaire",
       "label-folder-name": "Nom du dossier",
-      "label-workflow": "Flux de travail",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
       "title-pull-request-created": "Demande de fusion créée",
-      "title-repository-not-found": "Référentiel introuvable",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
     "no-results": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Si vous avez un accès direct à la cible, copiez le JSON et collez-le à cet endroit."
+    "text-this-repository-is-read-only": "Si vous avez un accès direct à la cible, copiez le JSON et collez-le à cet endroit.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Fermer"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Une erreur s'est produite lors du chargement des options."
@@ -9494,6 +9509,15 @@
       "view": "Afficher"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Ouvrir les suggestions de visualisation",
       "switch-to-table": "Affichage tabulaire"
     },
@@ -11594,6 +11618,12 @@
       "select-search-input": "Tapez pour rechercher (pays, ville, abréviation)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Ajouter une annotation",
@@ -12043,6 +12073,7 @@
           "polynomial": "Polynomial"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Nombre de points X, Y à prédire"
     },
     "rename-by-regex-transformer-editor": {

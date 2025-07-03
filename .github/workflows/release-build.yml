@@ -39,8 +39,10 @@ jobs:
   setup:
     name: setup
     runs-on: github-hosted-ubuntu-x64-small
+    if: github.repository == 'grafana/grafana'
     outputs:
       version: ${{ steps.output.outputs.version }}
+      grafana-commit: ${{ steps.output.outputs.grafana_commit }}
     permissions:
       contents: read
     steps:
@@ -57,9 +59,11 @@ jobs:
         run: jq -r .version package.json | sed -s "s/pre/${BUILD_ID}/g" > VERSION
         env:
           REF_NAME: ${{ github.ref_name }}
-          BUILD_ID: ${{ github.run_number }}
+          BUILD_ID: ${{ github.run_id }}
       - id: output
-        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
     runs-on: github-hosted-ubuntu-x64-small
@@ -86,12 +90,13 @@ jobs:
         env:
           REF: ${{ github.ref_name }}
           VERSION: ${{ needs.setup.outputs.version }}
-          BUILD_ID: ${{ github.run_number }}
+          BUILD_ID: ${{ github.run_id }}
           BUCKET: grafana-prerelease
+          GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
@@ -102,6 +107,7 @@ jobs:
                   "version": VERSION,
                   "build-id": String(BUILD_ID),
                   "bucket": BUCKET,
+                  "grafana-commit": GRAFANA_COMMIT,
                 }
             })
 
@@ -157,7 +163,7 @@ jobs:
           version: ${{ needs.setup.outputs.version }}
           output: artifacts-${{ matrix.name }}.txt
           verify: true
-          build-id: ${{ github.run_number }}
+          build-id: ${{ github.run_id }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: artifacts-list-${{ matrix.name }}

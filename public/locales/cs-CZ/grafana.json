@@ -110,6 +110,12 @@
       "update-button": "Aktualizovat",
       "users-heading": "Uživatelé organizace"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Provádění auditu",
       "title-custom-branding": "Vlastní branding",
@@ -3248,6 +3254,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Povoleno",
       "text-badge-not-enabled": "Není povoleno"
     },
@@ -3280,6 +3288,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Spravujte nastavení ověření a konfigurujte jednotné přihlašování. Další informace najdete v naší <2>dokumentaci</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3495,18 +3509,12 @@
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
-      "description-branch-name-in-git-hub": "Název větvě v GitHubu",
       "error-invalid-folder-name": "Neplatný název složky",
       "error-required": "Název složky je povinný",
-      "folder-comment-input-placeholder-describe-changes-optional": "Přidat poznámku k popisu změn (nepovinné)",
       "folder-name-input-placeholder-enter-folder-name": "Zadejte název složky",
-      "label-branch": "Větev",
-      "label-comment": "Komentář",
       "label-folder-name": "Název složky",
-      "label-workflow": "Pracovní tok",
       "text-pull-request-created": "Byl vytvořen pull request se změnami v této složce:",
       "title-pull-request-created": "Pull request byl vytvořen",
-      "title-repository-not-found": "Úložiště nebylo nalezeno",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
     "no-results": {
@@ -3516,7 +3524,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Pokud máte přímý přístup k cíli, zkopírujte JSON a vložte ho tam."
+    "text-this-repository-is-read-only": "Pokud máte přímý přístup k cíli, zkopírujte JSON a vložte ho tam.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3916,6 +3930,7 @@
   "close-button": {
     "tooltip": "Zavřít"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Při načítání možností došlo k chybě."
@@ -9552,6 +9567,15 @@
       "view": "Zobrazit"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Otevřít návrhy vizualizací",
       "switch-to-table": "Přepnout na tabulku"
     },
@@ -11664,6 +11688,12 @@
       "select-search-input": "Zadejte pro vyhledávání (země, město, zkratka)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Přidat vysvětlivku",
@@ -12113,6 +12143,7 @@
           "polynomial": "Polynomický"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Počet bodů X, Y k předpovědi"
     },
     "rename-by-regex-transformer-editor": {

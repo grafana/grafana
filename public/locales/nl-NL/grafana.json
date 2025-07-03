@@ -110,6 +110,12 @@
       "update-button": "Bijwerken",
       "users-heading": "Gebruikers van de organisatie"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Aangepaste branding",
@@ -3222,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Ingeschakeld",
       "text-badge-not-enabled": "Niet ingeschakeld"
     },
@@ -3254,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Je auth-instellingen beheren en single sign-on configureren. Lees meer in onze <2>documentatie</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3473,12 @@
       "button-create": "Aanmaken",
       "button-creating": "Aanmaken...",
       "cancel": "Annuleren",
-      "description-branch-name-in-git-hub": "Filiaalnaam in GitHub",
       "error-invalid-folder-name": "Ongeldige mapnaam",
       "error-required": "Mapnaam is vereist",
-      "folder-comment-input-placeholder-describe-changes-optional": "Een opmerking toevoegen om je wijzigingen te beschrijven (optioneel)",
       "folder-name-input-placeholder-enter-folder-name": "Mapnaam invoeren",
-      "label-branch": "Vestiging",
-      "label-comment": "Opmerking",
       "label-folder-name": "Mapnaam",
-      "label-workflow": "Werkstroom",
       "text-pull-request-created": "Er is een pull request gemaakt met wijzigingen in deze map:",
       "title-pull-request-created": "Pull request is aangemaakt",
-      "title-repository-not-found": "Repository niet gevonden",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
     },
     "no-results": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Als je directe toegang hebt tot het doel, kopieer je de JSON en plak je deze daar."
+    "text-this-repository-is-read-only": "Als je directe toegang hebt tot het doel, kopieer je de JSON en plak je deze daar.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Sluiten"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Er is een fout opgetreden bij het laden van opties."
@@ -9494,6 +9509,15 @@
       "view": "Weergave"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Visualisatiesuggesties openen",
       "switch-to-table": "Schakelen naar tabel"
     },
@@ -11594,6 +11618,12 @@
       "select-search-input": "Typ om te zoeken (land, stad, afkorting)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Annotatie toevoegen",
@@ -12043,6 +12073,7 @@
           "polynomial": "Polynoom"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Aantal X-,Y-punten om te voorspellen"
     },
     "rename-by-regex-transformer-editor": {

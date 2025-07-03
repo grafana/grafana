@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
 
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
 import { GetDimensionKeysRequest } from '../../resources/types';
 import { VariableQueryType } from '../../types';
 

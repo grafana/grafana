@@ -110,6 +110,12 @@
       "update-button": "Update",
       "users-heading": "Organization users"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "Dismiss",
+      "heading": "Enterprise authentication",
+      "learn-more-link": "Learn more",
+      "text": "Manage users, teams, and permissions automatically with <1>SAML</1>, <3>SCIM</3>, <6>LDAP</6>, and <8>RBAC</8> — available in Grafana Cloud and Enterprise."
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Custom branding",
@@ -3222,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "Single sign-on (SSO) with SAML.",
+      "scim-learn-more": " Sync users and teams with SCIM.",
       "text-badge-enabled": "Enabled",
       "text-badge-not-enabled": "Not enabled"
     },
@@ -3254,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "No numeric fields found",
+      "missing-series": "Bar charts require a string or time field"
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3473,12 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
-      "description-branch-name-in-git-hub": "Branch name in GitHub",
       "error-invalid-folder-name": "Invalid folder name",
       "error-required": "Folder name is required",
-      "folder-comment-input-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
-      "label-branch": "Branch",
-      "label-comment": "Comment",
       "label-folder-name": "Folder name",
-      "label-workflow": "Workflow",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
       "title-pull-request-created": "Pull request created",
-      "title-repository-not-found": "Repository not found",
       "title-this-repository-is-read-only": "This repository is read only"
     },
     "no-results": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": "Dashboard {{name}} restored"
     },
-    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
+    "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "Alphabetically (A–Z)",
+        "alphabetically-za": "Alphabetically (Z–A)"
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Close"
   },
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
@@ -9494,6 +9509,15 @@
       "view": "View"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "Data is missing a number field",
+        "string": "Data is missing a string field",
+        "time": "Data is missing a time field",
+        "unknown": "Cannot visualize data"
+      },
+      "no-value": {
+        "default": "No data"
+      },
       "open-visualization-suggestions": "Open visualization suggestions",
       "switch-to-table": "Switch to table"
     },
@@ -11594,6 +11618,12 @@
       "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "No graphable fields",
+      "time": "Data does not have a time field"
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Add annotation",
@@ -12043,6 +12073,7 @@
           "polynomial": "Polynomial"
         }
       },
+      "regression": "regression",
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
     "rename-by-regex-transformer-editor": {
