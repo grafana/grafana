@@ -110,6 +110,12 @@
       "update-button": "Aktualisieren",
       "users-heading": "Benutzer in der Organisation"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditing",
       "title-custom-branding": "Individuelles Branding",
@@ -3222,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Aktiviert",
       "text-badge-not-enabled": "Nicht aktiviert"
     },
@@ -3254,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Verwalten Sie Ihre Authentifizierungseinstellungen und konfigurieren Sie einmalige Anmeldungen. Erfahren Sie mehr in unserer <2>Dokumentation</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3473,12 @@
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
-      "description-branch-name-in-git-hub": "Branch-Name in GitHub",
       "error-invalid-folder-name": "Ungültiger Ordnername",
       "error-required": "Ordnername erforderlich",
-      "folder-comment-input-placeholder-describe-changes-optional": "Fügen Sie eine Notiz hinzu, um Ihre Änderungen zu beschreiben (optional)",
       "folder-name-input-placeholder-enter-folder-name": "Ordnernamen eingeben",
-      "label-branch": "Branch",
-      "label-comment": "Kommentar",
       "label-folder-name": "Ordnername",
-      "label-workflow": "Workflow",
       "text-pull-request-created": "Ein Pull-Request wurde erstellt, mit Änderungen an diesem Ordner:",
       "title-pull-request-created": "Pull-Request erstellt",
-      "title-repository-not-found": "Repository nicht gefunden",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
     "no-results": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Wenn Sie direkten Zugriff auf das Ziel haben, kopieren Sie den JSON und fügen Sie ihn dort ein."
+    "text-this-repository-is-read-only": "Wenn Sie direkten Zugriff auf das Ziel haben, kopieren Sie den JSON und fügen Sie ihn dort ein.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Schließen"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Beim Laden der Optionen ist ein Fehler aufgetreten."
@@ -9494,6 +9509,15 @@
       "view": "Anzeigen"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Visualisierungsvorschläge öffnen",
       "switch-to-table": "Zur Tabelle wechseln"
     },
@@ -11594,6 +11618,12 @@
       "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Anmerkung hinzufügen",
@@ -12043,6 +12073,7 @@
           "polynomial": "Polynom"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Anzahl der zu prognostizierenden X-, Y-Punkte"
     },
     "rename-by-regex-transformer-editor": {

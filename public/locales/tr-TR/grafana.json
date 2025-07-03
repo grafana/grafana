@@ -110,6 +110,12 @@
       "update-button": "Güncelle",
       "users-heading": "Kuruluş kullanıcıları"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Denetim",
       "title-custom-branding": "Özel markalama",
@@ -3222,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Etkin",
       "text-badge-not-enabled": "Devre dışı"
     },
@@ -3254,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Kimlik doğrulama ayarlarınızı yönetin ve çoklu oturum açmayı yapılandırın. Daha fazla bilgi için <2>belgelerimize</2> bakın."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3473,12 @@
       "button-create": "Oluştur",
       "button-creating": "Oluşturuluyor...",
       "cancel": "İptal",
-      "description-branch-name-in-git-hub": "GitHub'daki dal adı",
       "error-invalid-folder-name": "Geçersiz klasör adı",
       "error-required": "Klasör adı gereklidir",
-      "folder-comment-input-placeholder-describe-changes-optional": "Değişikliklerinizi açıklayan bir not ekleyin (isteğe bağlı)",
       "folder-name-input-placeholder-enter-folder-name": "Klasör adını girin",
-      "label-branch": "Dal",
-      "label-comment": "Yorum",
       "label-folder-name": "Klasör adı",
-      "label-workflow": "İş akışı",
       "text-pull-request-created": "Bu klasörde yapılan değişikliklerle bir çekme isteği oluşturuldu:",
       "title-pull-request-created": "Çekme isteği oluşturuldu",
-      "title-repository-not-found": "Depo bulunamadı",
       "title-this-repository-is-read-only": "Bu depo salt okunur"
     },
     "no-results": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın."
+    "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Kapat"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Seçenekler yüklenirken bir hata oluştu."
@@ -9494,6 +9509,15 @@
       "view": "Görüntüle"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Görselleştirme önerilerini aç",
       "switch-to-table": "Tabloya geç"
     },
@@ -11594,6 +11618,12 @@
       "select-search-input": "Aramak için yazmaya başlayın (ülke, şehir, kısaltma)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Ek açıklama ekle",
@@ -12043,6 +12073,7 @@
           "polynomial": "Polinom"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Tahmin edilecek X,Y noktalarının sayısı"
     },
     "rename-by-regex-transformer-editor": {

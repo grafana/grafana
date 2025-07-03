@@ -13,11 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/scimutil"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -79,13 +81,25 @@ var (
 	errSignupNotAllowed  = errors.New("system administrator has disabled signup")
 )
 
+// StaticSCIMConfig represents the static SCIM configuration from config.ini
+type StaticSCIMConfig struct {
+	AllowNonProvisionedUsers  bool
+	IsUserProvisioningEnabled bool
+}
+
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
 	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
+	k8sClient client.K8sHandler,
 ) *UserSync {
 	scimSection := cfg.Raw.Section("auth.scim")
+	staticConfig := &StaticSCIMConfig{
+		AllowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
+		IsUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
+	}
+
 	return &UserSync{
-		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
-		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
+		allowNonProvisionedUsers:  staticConfig.AllowNonProvisionedUsers,
+		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
 		userService:               userService,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
@@ -94,6 +108,8 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		tracer:                    tracer,
 		features:                  features,
 		lastSeenSF:                &singleflight.Group{},
+		scimUtil:                  scimutil.NewSCIMUtil(k8sClient),
+		staticConfig:              staticConfig,
 	}
 }
 
@@ -108,6 +124,8 @@ type UserSync struct {
 	tracer                    tracing.Tracer
 	features                  featuremgmt.FeatureToggles
 	lastSeenSF                *singleflight.Group
+	scimUtil                  *scimutil.SCIMUtil
+	staticConfig              *StaticSCIMConfig
 }
 
 // ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
@@ -163,12 +181,22 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 func (s *UserSync) skipProvisioningValidation(ctx context.Context, currentIdentity *authn.Identity) bool {
 	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID, "id", currentIdentity.ID)
 
-	if !s.isUserProvisioningEnabled {
+	// Use dynamic SCIM settings if available, otherwise fall back to static config
+	effectiveUserSyncEnabled := s.isUserProvisioningEnabled
+	effectiveAllowNonProvisionedUsers := s.allowNonProvisionedUsers
+
+	if s.scimUtil != nil {
+		orgID := currentIdentity.GetOrgID()
+		effectiveUserSyncEnabled = s.scimUtil.IsUserSyncEnabled(ctx, orgID, s.staticConfig.IsUserProvisioningEnabled)
+		effectiveAllowNonProvisionedUsers = s.scimUtil.AreNonProvisionedUsersAllowed(ctx, orgID, s.staticConfig.AllowNonProvisionedUsers)
+	}
+
+	if !effectiveUserSyncEnabled {
 		log.Debug("User provisioning is disabled, skipping validation")
 		return true
 	}
 
-	if s.allowNonProvisionedUsers {
+	if effectiveAllowNonProvisionedUsers {
 		log.Debug("Non-provisioned users are allowed, skipping validation")
 		return true
 	}

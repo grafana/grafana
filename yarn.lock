@@ -3542,11 +3542,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.24.0":
-  version: 6.25.0
-  resolution: "@grafana/scenes-react@npm:6.25.0"
+"@grafana/scenes-react@npm:^6.27.0":
+  version: 6.27.0
+  resolution: "@grafana/scenes-react@npm:6.27.0"
   dependencies:
-    "@grafana/scenes": "npm:6.25.0"
+    "@grafana/scenes": "npm:6.27.0"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3558,13 +3558,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/3064b8270098f4489239051741ccc4edb73352f91687fe14037751593363526164ad737e51e6820a850eba436f04454d0b8d7be14fbdb0e403161045d39f6064
+  checksum: 10/4e52ad816a5ca05715ed0d317ece8ba8ccf857367f37c637edef11069b8f0db28ed41266f3bc8439ccf6af390d66e2351e17f026eb5cdc5ae516ab9afad6d18b
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.25.0, @grafana/scenes@npm:^6.24.0":
-  version: 6.25.0
-  resolution: "@grafana/scenes@npm:6.25.0"
+"@grafana/scenes@npm:6.27.0, @grafana/scenes@npm:^6.27.0":
+  version: 6.27.0
+  resolution: "@grafana/scenes@npm:6.27.0"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3584,7 +3584,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/eae7ccb82fad458dffbc71fa8b8273e8a57686cd95c0aa76929df51b81eca43117c3d04e31a279d87fd295672df98b0ee28c3501377518c73f6c935a1a791f20
+  checksum: 10/c8328cc323fe513d5bbb70eea44bcd08ff7b444e4266134151ccef1f038453f99d36dec0785f95bb0565c0c1623f463000721f9b22401d45ba79bdec14112332
   languageName: node
   linkType: hard
 
@@ -3775,7 +3775,7 @@ __metadata:
     react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
-    react-data-grid: "grafana/react-data-grid#3420f7f2a9e0d707d3313ec5b143a6be53f720b5"
+    react-data-grid: "grafana/react-data-grid#de920f0105cb2b7d774444e7443a675f3b568ad6"
     react-dom: "npm:18.3.1"
     react-dropzone: "npm:14.3.8"
     react-highlight-words: "npm:0.21.0"
@@ -18202,8 +18202,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.24.0"
-    "@grafana/scenes-react": "npm:^6.24.0"
+    "@grafana/scenes": "npm:^6.27.0"
+    "@grafana/scenes-react": "npm:^6.27.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -26659,15 +26659,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-data-grid@grafana/react-data-grid#3420f7f2a9e0d707d3313ec5b143a6be53f720b5":
-  version: 7.0.0-beta.55
-  resolution: "react-data-grid@https://github.com/grafana/react-data-grid.git#commit=3420f7f2a9e0d707d3313ec5b143a6be53f720b5"
+"react-data-grid@grafana/react-data-grid#de920f0105cb2b7d774444e7443a675f3b568ad6":
+  version: 7.0.0-beta.56
+  resolution: "react-data-grid@https://github.com/grafana/react-data-grid.git#commit=de920f0105cb2b7d774444e7443a675f3b568ad6"
   dependencies:
     clsx: "npm:^2.0.0"
   peerDependencies:
     react: ^18.0 || ^19.0
     react-dom: ^18.0 || ^19.0
-  checksum: 10/9fe309924a7b22d0a62f0df69bdc7b9e0df62c5624e96125f2d729500dfe103037cfbe654fa63294d89fc9b5fea618a540160e2e12e7de4c7052049827df3687
+  checksum: 10/efc1dcb764fa5f3549d012737e79d423b34e6ad7b0a122849d757f59b45e648afe7c5cfeb1a61464245aa7b393f9251ff91fd49f8f857139d7df185c23d68b68
   languageName: node
   linkType: hard
 

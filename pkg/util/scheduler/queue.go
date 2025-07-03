@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -23,7 +25,7 @@ var ErrMissingTenantID = errors.New("item requires TenantID")
 
 type tenantQueue struct {
 	id       string
-	items    []func(ctx context.Context)
+	items    []func()
 	isActive bool
 }
 
@@ -40,13 +42,13 @@ func (tq *tenantQueue) isEmpty() bool {
 func (tq *tenantQueue) isFull(maxSize int) bool {
 	return maxSize > 0 && len(tq.items) >= maxSize
 }
-func (tq *tenantQueue) addItem(runnable func(ctx context.Context)) {
+func (tq *tenantQueue) addItem(runnable func()) {
 	tq.items = append(tq.items, runnable)
 }
 
 type enqueueRequest struct {
 	tenantID string
-	runnable func(ctx context.Context)
+	runnable func()
 	respChan chan error
 }
 
@@ -55,7 +57,7 @@ type dequeueRequest struct {
 }
 
 type dequeueResponse struct {
-	runnable func(ctx context.Context)
+	runnable func()
 	err      error
 }
 
@@ -69,8 +71,8 @@ type activeTenantsLenRequest struct {
 
 type NoopQueue struct{}
 
-func (*NoopQueue) Enqueue(ctx context.Context, _ string, runnable func(ctx context.Context)) error {
-	runnable(ctx)
+func (*NoopQueue) Enqueue(ctx context.Context, _ string, runnable func()) error {
+	runnable()
 	return nil
 }
 
@@ -81,6 +83,8 @@ func NewNoopQueue() *NoopQueue {
 // Queue implements a multi-tenant qos with round-robin fairness using a dispatcher goroutine.
 type Queue struct {
 	services.Service
+
+	logger log.Logger
 
 	enqueueChan           chan enqueueRequest
 	dequeueChan           chan dequeueRequest
@@ -108,6 +112,7 @@ type Queue struct {
 type QueueOptions struct {
 	MaxSizePerTenant int
 	Registerer       prometheus.Registerer
+	Logger           log.Logger
 }
 
 // NewQueue creates a new Queue and starts its dispatcher goroutine.
@@ -116,7 +121,13 @@ func NewQueue(opts *QueueOptions) *Queue {
 		opts.MaxSizePerTenant = DefaultMaxSizePerTenant
 	}
 
+	if opts.Logger == nil {
+		opts.Logger = log.NewNopLogger()
+	}
+
 	q := &Queue{
+		logger: opts.Logger,
+
 		enqueueChan:           make(chan enqueueRequest),
 		dequeueChan:           make(chan dequeueRequest),
 		lenChan:               make(chan lenRequest),
@@ -132,11 +143,11 @@ func NewQueue(opts *QueueOptions) *Queue {
 	q.queueLength = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
 		Name: "queue_length",
 		Help: "Number of items in the queue",
-	}, []string{"namespace"})
+	}, []string{"tenant"})
 	q.discardedRequests = promauto.With(opts.Registerer).NewCounterVec(prometheus.CounterOpts{
 		Name: "discarded_requests_total",
 		Help: "Total number of discarded requests",
-	}, []string{"namespace", "reason"})
+	}, []string{"tenant", "reason"})
 	q.enqueueDuration = promauto.With(opts.Registerer).NewHistogram(prometheus.HistogramOpts{
 		Name:    "enqueue_duration_seconds",
 		Help:    "Duration of enqueue operation in seconds",
@@ -189,7 +200,7 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 	if !exists {
 		tq = &tenantQueue{
 			id:    req.tenantID,
-			items: make([]func(ctx context.Context), 0, 8),
+			items: make([]func(), 0, 8),
 		}
 		q.tenantQueues[req.tenantID] = tq
 	}
@@ -226,6 +237,8 @@ func (q *Queue) handleLenRequest(req lenRequest) {
 func (q *Queue) dispatcherLoop(ctx context.Context) error {
 	defer close(q.dispatcherStoppedChan)
 
+	q.logger.Info("queue running", "maxSizePerTenant", q.maxSizePerTenant)
+
 	for {
 		q.scheduleRoundRobin()
 
@@ -250,7 +263,7 @@ func (q *Queue) dispatcherLoop(ctx context.Context) error {
 
 // Enqueue adds a work item to the appropriate tenant's qos.
 // It blocks only if the dispatcher is busy or the tenant queue is full.
-func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
+func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) error {
 	if runnable == nil {
 		return ErrNilRunnable
 	}
@@ -275,7 +288,6 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 	select {
 	case q.enqueueChan <- req:
 		err = <-respChan
-		q.enqueueDuration.Observe(time.Since(start).Seconds())
 	case <-q.dispatcherStoppedChan:
 		q.discardedRequests.WithLabelValues(tenantID, "dispatcher_stopped").Inc()
 		err = ErrQueueClosed
@@ -283,6 +295,7 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 		q.discardedRequests.WithLabelValues(tenantID, "context_canceled").Inc()
 		err = ctx.Err()
 	}
+	q.enqueueDuration.Observe(time.Since(start).Seconds())
 
 	return err
 }
@@ -290,7 +303,7 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 // Dequeue removes and returns a work item from the qos using linked-list round-robin.
 // It blocks until an item is available for any tenant, the queue is closed,
 // or the context is cancelled.
-func (q *Queue) Dequeue(ctx context.Context) (func(ctx context.Context), error) {
+func (q *Queue) Dequeue(ctx context.Context) (func(), error) {
 	if q.State() != services.Running {
 		return nil, ErrQueueClosed
 	}
@@ -352,6 +365,8 @@ func (q *Queue) ActiveTenantsLen() int {
 }
 
 func (q *Queue) stopping(_ error) error {
+	q.logger.Info("queue stopping")
+
 	q.queueLength.Reset()
 	q.discardedRequests.Reset()
 	for _, tq := range q.tenantQueues {
@@ -359,5 +374,7 @@ func (q *Queue) stopping(_ error) error {
 	}
 	q.activeTenants.Init()
 	q.pendingDequeueRequests.Init()
+
+	q.logger.Info("queue stopped")
 	return nil
 }

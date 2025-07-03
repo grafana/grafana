@@ -51,7 +51,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           settings: {
             placeholder: t('table-new.placeholder-column-width', 'auto'),
             min: 20,
-            max: 300,
           },
           shouldApply: () => true,
           defaultValue: defaultTableFieldOptions.width,
@@ -102,6 +101,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           category,
           description: t('table-new.description-column-filter', 'Enables/disables field filters in table'),
           defaultValue: defaultTableFieldOptions.filterable,
+        })
+        .addBooleanSwitch({
+          path: 'wrapHeaderText',
+          name: t('table.name-wrap-header-text', 'Wrap header text'),
+          description: t(
+            'table.description-wrap-header-text',
+            'Enables text wrapping for the field name in the table header'
+          ),
+          category,
+          defaultValue: defaultTableFieldOptions.wrapHeaderText,
         })
         .addBooleanSwitch({
           path: 'hidden',

@@ -110,6 +110,12 @@
       "update-button": "Atualizar",
       "users-heading": "Utilizadores da organização"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditoria",
       "title-custom-branding": "Marca personalizada",
@@ -3222,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Ativado",
       "text-badge-not-enabled": "Não ativado"
     },
@@ -3254,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Faça a gestão das suas definições de autenticação e configure o início de sessão único. Saiba mais na nossa <2>documentação</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3473,12 @@
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
-      "description-branch-name-in-git-hub": "Nome do ramo no GitHub",
       "error-invalid-folder-name": "Nome da pasta inválido",
       "error-required": "O nome da pasta é obrigatório",
-      "folder-comment-input-placeholder-describe-changes-optional": "Adicione uma nota para descrever as suas alterações (opcional)",
       "folder-name-input-placeholder-enter-folder-name": "Introduza o nome da pasta",
-      "label-branch": "Ramo",
-      "label-comment": "Comentário",
       "label-folder-name": "Nome da pasta",
-      "label-workflow": "Fluxo de trabalho",
       "text-pull-request-created": "Foi criado um pedido de extração com alterações a esta pasta:",
       "title-pull-request-created": "Pedido de extração criado",
-      "title-repository-not-found": "Repositório não encontrado",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
     },
     "no-results": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá."
+    "text-this-repository-is-read-only": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Fechar"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Ocorreu um erro ao carregar as opções."
@@ -9494,6 +9509,15 @@
       "view": "Ver"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Abrir sugestões de visualização",
       "switch-to-table": "Mudar para tabela"
     },
@@ -11594,6 +11618,12 @@
       "select-search-input": "Digite para pesquisar (país, cidade, abreviatura)"
     }
   },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
+    }
+  },
   "timeseries": {
     "annotation-editor2": {
       "add-annotation": "Adicionar anotação",
@@ -12043,6 +12073,7 @@
           "polynomial": "Polinómio"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Número de pontos X, Y para prever"
     },
     "rename-by-regex-transformer-editor": {

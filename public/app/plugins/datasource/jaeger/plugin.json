@@ -3,6 +3,7 @@
   "name": "Jaeger",
   "id": "jaeger",
   "category": "tracing",
+  "executable": "gpx_jaeger",
 
   "backend": true,
   "metrics": true,

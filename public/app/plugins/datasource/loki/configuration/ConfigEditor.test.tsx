@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDefaultConfigOptions } from '../__mocks__/datasource';
+import { createDefaultConfigOptions } from '../mocks/datasource';
 
 import { ConfigEditor } from './ConfigEditor';
 
