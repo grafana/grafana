@@ -20,7 +20,7 @@ test.describe(
       const longTraceResponse = JSON.parse(readFileSync(fixturePath, 'utf8'));
 
       // Mock the API response
-      await page.route('**/api/traces/trace', async (route) => {
+      await page.route('*/**/api/traces/trace', async (route) => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -40,10 +40,11 @@ test.describe(
       // Check that gdev-jaeger is visible in the query editor
       await expect(page.getByText('gdev-jaeger')).toBeVisible();
 
-      // Type the query with no delay to prevent flaky tests
-      const queryField = page.getByTestId(selectors.components.QueryField.container);
-      await queryField.click();
-      await page.keyboard.type('trace');
+      // Type the query
+      const queryField = page
+        .getByTestId(selectors.components.QueryField.container)
+        .locator('[contenteditable="true"]');
+      await queryField.fill('trace');
 
       // Use Shift+Enter to execute the query
       await queryField.press('Shift+Enter');
