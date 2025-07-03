@@ -8798,7 +8798,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rspack/cli@npm:^1.2.1":
+"@rspack/cli@npm:^1.4.2":
   version: 1.7.7
   resolution: "@rspack/cli@npm:1.7.7"
   dependencies:
@@ -8814,7 +8814,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rspack/core@npm:^1.2.1":
+"@rspack/core@npm:^1.4.2":
   version: 1.7.7
   resolution: "@rspack/core@npm:1.7.7"
   dependencies:
@@ -8830,7 +8830,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rspack/dev-server@npm:^1.0.10":
+"@rspack/dev-server@npm:^1.1.3":
   version: 1.2.1
   resolution: "@rspack/dev-server@npm:1.2.1"
   dependencies:
@@ -8890,18 +8890,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rspack/plugin-react-refresh@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@rspack/plugin-react-refresh@npm:1.0.1"
+"@rspack/plugin-react-refresh@npm:^1.4.3":
+  version: 1.6.1
+  resolution: "@rspack/plugin-react-refresh@npm:1.6.1"
   dependencies:
     error-stack-parser: "npm:^2.1.4"
-    html-entities: "npm:^2.5.2"
+    html-entities: "npm:^2.6.0"
   peerDependencies:
     react-refresh: ">=0.10.0 <1.0.0"
+    webpack-hot-middleware: 2.x
   peerDependenciesMeta:
-    react-refresh:
+    webpack-hot-middleware:
       optional: true
-  checksum: 10/dbef08401b37f106632cf75713132076223b8445858e7a109acc5c2467e7e131a2f1c778af4e6fbd94e96b2abb8ce3b31458f8885f39f244ca221233c32a7097
+  checksum: 10/c55f6662b3d476ee1d89aa0ca2e00a4e968695713ee3768646364656bc383a2fda4216bbc8563fc750227839c4df9440de1ebe9cd059770947fd3289db82f067
   languageName: node
   linkType: hard
 
@@ -21524,10 +21525,10 @@ __metadata:
     "@react-types/shared": "npm:3.31.0"
     "@reduxjs/toolkit": "npm:2.10.1"
     "@rsdoctor/webpack-plugin": "npm:^1.0.0"
-    "@rspack/cli": "npm:^1.2.1"
-    "@rspack/core": "npm:^1.2.1"
-    "@rspack/dev-server": "npm:^1.0.10"
-    "@rspack/plugin-react-refresh": "npm:1.0.1"
+    "@rspack/cli": "npm:^1.4.2"
+    "@rspack/core": "npm:^1.4.2"
+    "@rspack/dev-server": "npm:^1.1.3"
+    "@rspack/plugin-react-refresh": "npm:^1.4.3"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
     "@stylistic/eslint-plugin-ts": "npm:^4.0.0"
@@ -21790,7 +21791,7 @@ __metadata:
     systemjs: "npm:6.15.1"
     testing-library-selector: "npm:0.3.1"
     tracelib: "npm:1.0.1"
-    ts-checker-rspack-plugin: "npm:^1.1.1"
+    ts-checker-rspack-plugin: "npm:^1.1.4"
     ts-jest: "npm:29.4.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
@@ -22194,7 +22195,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-entities@npm:^2.5.2":
+"html-entities@npm:^2.6.0":
   version: 2.6.0
   resolution: "html-entities@npm:2.6.0"
   checksum: 10/06d4e7a3ba6243bba558af176e56f85e09894b26d911bc1ef7b2b9b3f18b46604360805b32636f080e954778e9a34313d1982479a05a5aa49791afd6a4229346
@@ -35023,7 +35024,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-checker-rspack-plugin@npm:^1.1.1":
+"ts-checker-rspack-plugin@npm:^1.1.4":
   version: 1.3.0
   resolution: "ts-checker-rspack-plugin@npm:1.3.0"
   dependencies:
