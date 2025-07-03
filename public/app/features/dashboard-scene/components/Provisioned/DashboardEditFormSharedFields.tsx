@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Field, TextArea, Input, RadioButtonGroup, useStyles2, useTheme2, Stack } from '@grafana/ui';
+import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { GenAIButton } from 'app/features/dashboard/components/GenAI/GenAIButton';
 import { EventTrackingSrc } from 'app/features/dashboard/components/GenAI/tracking';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
@@ -116,10 +117,11 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
       formState: { errors },
     } = useFormContext();
 
+    const { data: folderData } = useGetFolderQuery({ name: watch('folder').uid });
+
     const workflow = watch('workflow') || 'branch';
     const currentTitle = watch('title') || '';
     const currentDescription = watch('description') || '';
-    const comment = watch('comment');
 
     const pathText =
       resourceType === 'dashboard'
@@ -136,15 +138,12 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
         tags: [], // Could be enhanced to get tags from dashboard state if available
         isNew: isNew || false,
         resourceType,
+        folder: folderData?.spec?.title || '',
       };
-    }, [currentTitle, isNew, resourceType]);
+    }, [currentTitle, isNew, resourceType, folderData]);
 
     // Don't show AI buttons if autofill is disabled
     const showAIButtons = !fieldsAutoFilled && !autofillDisabledThisSession;
-
-    useEffect(() => {
-      console.log('watched comment:', comment);
-    }, [comment]);
 
     // Autofill handlers for each field
     // const handleAIFillPath = useCallback(() => {
@@ -230,6 +229,8 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
                       setValue('path', response, { shouldDirty: true });
                       setAiLoading((prev) => ({ ...prev, path: false }));
                     }}
+                    onError={() => setAiLoading((prev) => ({ ...prev, path: false }))}
+                    onStopGeneration={() => setAiLoading((prev) => ({ ...prev, path: false }))}
                     eventTrackingSrc={EventTrackingSrc.dashboardTitle}
                   />
                 </div>
@@ -242,7 +243,6 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
           )}
         >
           <Input
-            id="dashboard-path"
             {...register('path', {
               required: t(
                 'provisioned-resource-form.save-or-delete-resource-shared-fields.path-required',
@@ -278,6 +278,8 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
                       setValue('comment', response, { shouldDirty: true, shouldTouch: true });
                       setAiLoading((prev) => ({ ...prev, comment: false }));
                     }}
+                    onError={() => setAiLoading((prev) => ({ ...prev, comment: false }))}
+                    onStopGeneration={() => setAiLoading((prev) => ({ ...prev, comment: false }))}
                     eventTrackingSrc={EventTrackingSrc.dashboardChanges}
                   />
                 </div>
@@ -333,6 +335,8 @@ const DashboardEditFormSharedFieldsInner = memo<DashboardEditFormSharedFieldsPro
                         setValue('ref', response, { shouldDirty: true });
                         setAiLoading((prev) => ({ ...prev, ref: false }));
                       }}
+                      onError={() => setAiLoading((prev) => ({ ...prev, ref: false }))}
+                      onStopGeneration={() => setAiLoading((prev) => ({ ...prev, ref: false }))}
                       eventTrackingSrc={EventTrackingSrc.dashboardTitle}
                     />
                   </div>

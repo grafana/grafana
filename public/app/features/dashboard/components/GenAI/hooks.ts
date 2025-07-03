@@ -26,6 +26,7 @@ interface Options {
   model: string;
   temperature: number;
   onResponse?: (response: string) => void;
+  onError?: (error: Error) => void;
 }
 
 const defaultOptions = {
@@ -68,6 +69,7 @@ export function useLLMStream({ model, temperature, onResponse }: Options = defau
         'Failed to generate content using LLM',
         'Please try again or if the problem persists, contact your organization admin.'
       );
+      onError?.(e);
       console.error(e);
       genAILogger.logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
     },
