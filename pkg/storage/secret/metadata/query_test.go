@@ -312,7 +312,7 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					Name: "update-receive-count",
 					Data: &incrementReceiveCountOutbox{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageIDs:  []string{"id1", "id2", "id3"},
+						MessageIDs:  []int64{1, 2, 3},
 					},
 				},
 			},
@@ -322,7 +322,7 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					Data: &appendSecureValueOutbox{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Row: &outboxMessageDB{
-							MessageID:   "my-uuid",
+							MessageID:   1,
 							MessageType: "some-type",
 							Name:        "name",
 							Namespace:   "namespace",
@@ -337,7 +337,7 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					Data: &appendSecureValueOutbox{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Row: &outboxMessageDB{
-							MessageID:       "my-uuid",
+							MessageID:       1,
 							MessageType:     "some-type",
 							Name:            "name",
 							Namespace:       "namespace",
@@ -352,7 +352,7 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					Data: &appendSecureValueOutbox{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Row: &outboxMessageDB{
-							MessageID:       "my-uuid",
+							MessageID:       1,
 							MessageType:     "some-type",
 							Name:            "name",
 							Namespace:       "namespace",
@@ -367,7 +367,7 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					Data: &appendSecureValueOutbox{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Row: &outboxMessageDB{
-							MessageID:       "my-uuid",
+							MessageID:       1,
 							MessageType:     "some-type",
 							Name:            "name",
 							Namespace:       "namespace",
@@ -379,23 +379,30 @@ func TestSecureValueOutboxQueries(t *testing.T) {
 					},
 				},
 			},
-
-			sqlSecureValueOutboxReceiveN: {
+			sqlSecureValueOutboxFetchMessageIDs: {
 				{
 					Name: "basic",
-					Data: &receiveNSecureValueOutbox{
+					Data: &fetchMessageIDsOutbox{
 						SQLTemplate:  mocks.NewTestingSQLTemplate(),
 						ReceiveLimit: 10,
 					},
 				},
 			},
-
+			sqlSecureValueOutboxReceiveN: {
+				{
+					Name: "basic",
+					Data: &receiveNSecureValueOutbox{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						MessageIDs:  []int64{1, 2, 3},
+					},
+				},
+			},
 			sqlSecureValueOutboxDelete: {
 				{
 					Name: "basic",
 					Data: &deleteSecureValueOutbox{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageID:   "my-uuid",
+						MessageID:   1,
 					},
 				},
 			},

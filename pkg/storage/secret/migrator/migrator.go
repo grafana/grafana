@@ -134,7 +134,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Name: TableNameSecureValueOutbox,
 		Columns: []*migrator.Column{
 			{Name: "request_id", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true}, // Fixed size of a UUID.
+			{Name: "id", Type: migrator.DB_BigInt, Length: 36, IsPrimaryKey: true, IsAutoIncrement: true}, // Fixed size of a UUID.
 			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 16, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
@@ -148,8 +148,6 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			// There's only one operation per secret in the queue at all times,
 			// meaning the namespace + name combination should be unique
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
-			// Used for sorting
-			{Cols: []string{"created"}, Type: migrator.IndexType},
 		},
 	})
 
