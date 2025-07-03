@@ -444,7 +444,8 @@
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
     "swagger-ui-react/dompurify": "3.2.6",
-    "refractor/prismjs": "^1.27.0"
+    "refractor/prismjs": "^1.27.0",
+    "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#release-mapbox-scoped"
   },
   "workspaces": {
     "packages": [
