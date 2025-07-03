@@ -21,8 +21,8 @@ import (
 
 type QOSEnqueueDequeuer interface {
 	services.Service
-	Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error
-	Dequeue(ctx context.Context) (func(ctx context.Context), error)
+	Enqueue(ctx context.Context, tenantID string, runnable func()) error
+	Dequeue(ctx context.Context) (func(), error)
 }
 
 // ServerOptions contains the options for creating a new ResourceServer
