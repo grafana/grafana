@@ -164,7 +164,7 @@ describe('PillCell', () => {
   });
 
   it('should show dash for null values', () => {
-    render(<PillCell {...defaultProps} value={null as any} />);
+    render(<PillCell {...defaultProps} value={null as unknown as string} />);
     expect(screen.getByText('-')).toBeInTheDocument();
   });
 });
