@@ -85,7 +85,7 @@ test.describe(
 
       // Check that Administration is no longer in bookmarks
       await expect(bookmarksItem.locator('a')).toHaveCount(1);
-      await expect(bookmarksItem.locator('a').filter({ hasText: 'Administration' })).not.toBeVisible();
+      await expect(bookmarksItem.locator('a').filter({ hasText: 'Administration' })).toBeHidden();
     });
   }
 );

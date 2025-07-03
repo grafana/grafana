@@ -137,7 +137,7 @@ test.describe(
 export async function waitForMonacoToLoad(page: Page) {
   // Wait for spinner to disappear
   const spinner = page.getByTestId('Spinner');
-  await expect(spinner).not.toBeVisible();
+  await expect(spinner).toBeHidden();
 
   // Wait for Monaco to be available in window
   await page.waitForFunction(() => {

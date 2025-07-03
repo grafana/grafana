@@ -14,7 +14,7 @@ test.describe(
     test('Graph panel is auto-migrated', async ({ gotoDashboardPage, page }) => {
       await gotoDashboardPage({ uid: DASHBOARD_ID });
       await expect(page.locator(`text=${DASHBOARD_NAME}`)).toBeVisible();
-      await expect(page.getByTestId(UPLOT_MAIN_DIV_SELECTOR).first()).not.toBeVisible();
+      await expect(page.getByTestId(UPLOT_MAIN_DIV_SELECTOR).first()).toBeHidden();
 
       await gotoDashboardPage({ uid: DASHBOARD_ID });
 
@@ -24,7 +24,7 @@ test.describe(
     test('Annotation markers exist for time regions', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
       await gotoDashboardPage({ uid: DASHBOARD_ID });
       await expect(page.locator(`text=${DASHBOARD_NAME}`)).toBeVisible();
-      await expect(page.getByTestId(UPLOT_MAIN_DIV_SELECTOR).first()).not.toBeVisible();
+      await expect(page.getByTestId(UPLOT_MAIN_DIV_SELECTOR).first()).toBeHidden();
 
       await gotoDashboardPage({ uid: DASHBOARD_ID });
 

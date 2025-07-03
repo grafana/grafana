@@ -28,7 +28,7 @@ test.describe(
           await page.goto(`/a/${APP_ID}`);
 
           const sandboxDiv = page.locator('div[data-plugin-sandbox="sandbox-app-test"]');
-          await expect(sandboxDiv).not.toBeVisible();
+          await expect(sandboxDiv).toBeHidden();
 
           const appPage = page.getByTestId('sandbox-app-test-page-one');
           await expect(appPage).toBeVisible();
@@ -38,7 +38,7 @@ test.describe(
           await page.goto(`/plugins/${APP_ID}`);
 
           const sandboxDiv = page.locator('div[data-plugin-sandbox="sandbox-app-test"]');
-          await expect(sandboxDiv).not.toBeVisible();
+          await expect(sandboxDiv).toBeHidden();
 
           const configPage = page.getByTestId('sandbox-app-test-config-page');
           await expect(configPage).toBeVisible();

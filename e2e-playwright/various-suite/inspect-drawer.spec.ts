@@ -85,13 +85,13 @@ const expectDrawerTabsAndContent = async (dashboardPage, selectors, page) => {
   await expect(dataContent).toBeVisible();
 
   const statsContent = dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Stats.content);
-  await expect(statsContent).not.toBeVisible();
+  await expect(statsContent).toBeHidden();
 
   const jsonContent = dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content);
-  await expect(jsonContent).not.toBeVisible();
+  await expect(jsonContent).toBeHidden();
 
   const queryContent = dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Query.content);
-  await expect(queryContent).not.toBeVisible();
+  await expect(queryContent).toBeHidden();
 
   // Test Stats tab
   const statsTab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Stats'));
@@ -99,9 +99,9 @@ const expectDrawerTabsAndContent = async (dashboardPage, selectors, page) => {
   await statsTab.click();
 
   await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Stats.content)).toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Data.content)).not.toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).not.toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Query.content)).not.toBeVisible();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Data.content)).toBeHidden();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeHidden();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Query.content)).toBeHidden();
 
   // Test JSON tab
   const jsonTab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('JSON'));
@@ -109,9 +109,9 @@ const expectDrawerTabsAndContent = async (dashboardPage, selectors, page) => {
   await jsonTab.click();
 
   await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Data.content)).not.toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Stats.content)).not.toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Query.content)).not.toBeVisible();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Data.content)).toBeHidden();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Stats.content)).toBeHidden();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Query.content)).toBeHidden();
 
   // Test Query tab
   const queryTab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Query'));
@@ -119,9 +119,9 @@ const expectDrawerTabsAndContent = async (dashboardPage, selectors, page) => {
   await queryTab.click();
 
   await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Query.content)).toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Data.content)).not.toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Stats.content)).not.toBeVisible();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).not.toBeVisible();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Data.content)).toBeHidden();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Stats.content)).toBeHidden();
+  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeHidden();
 };
 
 const expectDrawerClose = async (dashboardPage, selectors) => {
@@ -132,7 +132,7 @@ const expectDrawerClose = async (dashboardPage, selectors) => {
   const drawerTitle = dashboardPage.getByGrafanaSelector(
     selectors.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
   );
-  await expect(drawerTitle).not.toBeVisible();
+  await expect(drawerTitle).toBeHidden();
 };
 
 const expectSubMenuScenario = async (dashboardPage, selectors, page, subMenu: string, tabTitle?: string) => {

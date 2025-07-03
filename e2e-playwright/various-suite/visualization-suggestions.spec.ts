@@ -29,7 +29,7 @@ test.describe(
       await searchInput.fill('Table');
 
       // Should no longer see line chart
-      await expect(lineChartCard).not.toBeVisible();
+      await expect(lineChartCard).toBeHidden();
 
       // Select a visualization
       const tableCard = page.getByTestId(selectors.components.VisualizationPreview.card('Table'));

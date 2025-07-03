@@ -17,7 +17,7 @@ test.describe.skip(
 
       // check that no panel errors exist
       const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
-      await expect(errorInfo).not.toBeVisible();
+      await expect(errorInfo).toBeHidden();
     });
   }
 );

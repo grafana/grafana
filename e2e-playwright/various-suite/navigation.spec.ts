@@ -17,11 +17,11 @@ test.describe(
       await undockButton.click();
 
       const navMenu = page.getByTestId(selectors.components.NavMenu.Menu);
-      await expect(navMenu).not.toBeVisible();
+      await expect(navMenu).toBeHidden();
 
       // Reload the page
       await page.reload();
-      await expect(navMenu).not.toBeVisible();
+      await expect(navMenu).toBeHidden();
     });
 
     test('Can re-dock after undock', async ({ page, selectors }) => {
@@ -53,7 +53,7 @@ test.describe(
 
       // Still undocked
       const navMenu = page.getByTestId(selectors.components.NavMenu.Menu);
-      await expect(navMenu).not.toBeVisible();
+      await expect(navMenu).toBeHidden();
 
       // Dock the menu
       await openMenuButton.click();
@@ -73,7 +73,7 @@ test.describe(
       await page.reload();
 
       const navMenu = page.getByTestId(selectors.components.NavMenu.Menu);
-      await expect(navMenu).not.toBeVisible();
+      await expect(navMenu).toBeHidden();
     });
   }
 );

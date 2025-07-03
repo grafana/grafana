@@ -46,7 +46,7 @@ test.describe(
 
       // Verify no error alerts are visible
       const errorAlert = page.getByTestId('alert-error');
-      await expect(errorAlert).not.toBeVisible();
+      await expect(errorAlert).toBeHidden();
     });
   }
 );

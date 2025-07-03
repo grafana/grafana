@@ -48,7 +48,7 @@ test.describe(
       const annotationsChoosePanelInput = page.getByTestId(
         selectors.components.Annotations.annotationsChoosePanelInput
       );
-      await expect(annotationsChoosePanelInput).not.toBeVisible();
+      await expect(annotationsChoosePanelInput).toBeHidden();
 
       // Test "All panels except" option
       await annotationsTypeInput.click();

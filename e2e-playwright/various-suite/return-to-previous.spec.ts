@@ -67,7 +67,7 @@ test.describe(
       await dismissButton.click();
 
       const buttonGroup = page.getByTestId(selectors.components.ReturnToPrevious.buttonGroup);
-      await expect(buttonGroup).not.toBeVisible();
+      await expect(buttonGroup).toBeHidden();
     });
 
     test('should not persist when going back to the alert rule details view', async ({ page, selectors }) => {
@@ -87,7 +87,7 @@ test.describe(
 
       // The ReturnToPrevious button should not exist
       const rtpButtonGroup = page.getByTestId(selectors.components.ReturnToPrevious.buttonGroup);
-      await expect(rtpButtonGroup).not.toBeVisible();
+      await expect(rtpButtonGroup).toBeHidden();
     });
 
     test('should override the button label and change the href when user changes alert rules', async ({
@@ -124,7 +124,7 @@ test.describe(
 
       // The ReturnToPrevious button should disappear
       const buttonGroup = page.getByTestId(selectors.components.ReturnToPrevious.buttonGroup);
-      await expect(buttonGroup).not.toBeVisible();
+      await expect(buttonGroup).toBeHidden();
 
       // Check whether the RTP button leads back to the second alert rule
       expect(page.url()).toBe(alertRule2Url);

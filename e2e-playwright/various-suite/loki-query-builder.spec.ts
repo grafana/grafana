@@ -121,7 +121,7 @@ test.describe.skip(
       await valueInput.fill('instance2');
       await page.keyboard.press('Enter');
 
-      await expect(page.getByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).not.toBeVisible();
+      await expect(page.getByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).toBeHidden();
       await expect(page.getByText(finalQuery)).toBeVisible();
 
       // Change to code editor

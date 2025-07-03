@@ -36,7 +36,7 @@ test.describe.skip(
           await page.waitForTimeout(300); // wait to prevent false positives because playwright checks too fast
 
           const sandboxDiv = page.locator(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`);
-          await expect(sandboxDiv).not.toBeVisible();
+          await expect(sandboxDiv).toBeHidden();
         });
       });
 
@@ -105,7 +105,7 @@ test.describe.skip(
 
           await page.waitForTimeout(300); // wait to prevent false positives because playwright checks too fast
           const sandboxDiv = page.locator(`div[data-plugin-sandbox="${DATASOURCE_ID}"]`);
-          await expect(sandboxDiv).not.toBeVisible();
+          await expect(sandboxDiv).toBeHidden();
         });
 
         test('Should accept values when typed', async ({ page, dashboardPage, selectors }) => {

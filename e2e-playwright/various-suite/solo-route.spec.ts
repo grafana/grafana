@@ -29,7 +29,7 @@ test.describe(
 
       // Check that uplot-main-div does not exist
       const uplotDiv = page.locator('text=uplot-main-div');
-      await expect(uplotDiv).not.toBeVisible();
+      await expect(uplotDiv).toBeHidden();
     });
 
     test('Can view solo repeated panel in scenes', async ({ page, selectors }) => {
@@ -45,7 +45,7 @@ test.describe(
 
       // Check that uplot-main-div does not exist
       const uplotDiv = page.locator('text=uplot-main-div');
-      await expect(uplotDiv).not.toBeVisible();
+      await expect(uplotDiv).toBeHidden();
     });
 
     test('Can view solo in repeated row and panel in scenes', async ({ page, selectors }) => {
@@ -61,7 +61,7 @@ test.describe(
 
       // Check that uplot-main-div does not exist
       const uplotDiv = page.locator('text=uplot-main-div');
-      await expect(uplotDiv).not.toBeVisible();
+      await expect(uplotDiv).toBeHidden();
     });
   }
 );

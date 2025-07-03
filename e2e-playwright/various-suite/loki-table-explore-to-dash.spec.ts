@@ -170,7 +170,7 @@ test.describe.skip(
       await queryField.press('Shift+Enter');
 
       // Assert the no-data message is not visible
-      await expect(page.locator('[data-testid="explore-no-data"]')).not.toBeVisible();
+      await expect(page.locator('[data-testid="explore-no-data"]')).toBeHidden();
 
       // Click on the table toggle
       const tableButton = page.getByRole('radio', { name: 'Table' });
