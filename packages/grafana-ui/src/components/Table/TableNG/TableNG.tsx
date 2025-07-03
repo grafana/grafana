@@ -60,6 +60,7 @@ type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, Tabl
 export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
+    cellHeightCustom,
     data,
     enablePagination,
     enableSharedCrosshair = false,
@@ -133,7 +134,10 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { columnTypes, hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
+  const defaultRowHeight = useMemo(
+    () => getDefaultRowHeight(theme, cellHeight, cellHeightCustom),
+    [theme, cellHeight, cellHeightCustom]
+  );
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
@@ -327,7 +331,7 @@ export function TableNG(props: TableNGProps) {
                 cellOptions,
                 frame,
                 field,
-                height,
+                height: _rowHeight,
                 justifyContent,
                 rowIdx,
                 theme,
@@ -474,6 +478,7 @@ export function TableNG(props: TableNGProps) {
 
     return result;
   }, [
+    applyToRowBgFn,
     availableWidth,
     commonDataGridProps,
     crossFilterOrder,
@@ -499,9 +504,7 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
-    applyToRowBgFn,
     columnTypes,
-    height,
     textWraps,
   ]);
 
@@ -755,7 +758,7 @@ const getCellStyles = (
     background: colors.bgColor ?? 'inherit',
     alignContent: 'center',
     justifyContent: getTextAlign(field),
-    paddingInline: TABLE.CELL_PADDING,
+    padding: TABLE.CELL_PADDING,
     height: '100%',
     minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
     ...(shouldWrap && { whiteSpace: 'pre-line' }),

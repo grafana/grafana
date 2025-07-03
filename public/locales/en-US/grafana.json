@@ -7703,6 +7703,18 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "cell-type": {
+        "actions": "Actions",
+        "auto": "Auto",
+        "color-background": "Colored background",
+        "color-text": "Colored text",
+        "data-links": "Data links",
+        "gauge": "Gauge",
+        "image": "Image",
+        "json": "JSON View",
+        "markdown": "Markdown",
+        "sparkline": "Sparkline"
+      },
       "copy": "Copy to Clipboard",
       "count": "Count",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
@@ -11356,6 +11368,7 @@
     "category-table": "Table",
     "category-table-footer": "Table footer",
     "cell-height-options": {
+      "label-custom": "Custom",
       "label-large": "Large",
       "label-medium": "Medium",
       "label-small": "Small"
@@ -11434,6 +11447,7 @@
     "description-min-column-width": "The minimum width for column auto resizing",
     "name-calculation": "Calculation",
     "name-cell-height": "Cell height",
+    "name-cell-height-custom": "Custom cell height",
     "name-cell-type": "Cell type",
     "name-cell-value-inspect": "Cell value inspect",
     "name-column-alignment": "Column alignment",
@@ -11446,6 +11460,7 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "placeholder-cell-height": "auto",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },
