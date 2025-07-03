@@ -3,8 +3,6 @@ package resources
 import (
 	"context"
 	"fmt"
-	"sort"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -133,24 +131,6 @@ func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*Pa
 	return parsed, err
 }
 
-func (r *DualReadWriter) getConfiguredBranch() string {
-	cfg := r.repo.Config()
-	switch cfg.Spec.Type {
-	case provisioning.GitHubRepositoryType:
-		if cfg.Spec.GitHub != nil {
-			return cfg.Spec.GitHub.Branch
-		}
-	case provisioning.GitRepositoryType:
-		if cfg.Spec.Git != nil {
-			return cfg.Spec.Git.Branch
-		}
-	case provisioning.LocalRepositoryType:
-		// branches are not supported for local repositories
-		return ""
-	}
-	return ""
-}
-
 // CreateFolder creates a new folder in the repository
 // FIXME: fix signature to return ParsedResource
 func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions) (*provisioning.ResourceWrapper, error) {
@@ -185,6 +165,12 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 			Action: provisioning.ResourceActionCreate,
 		},
 	}
+
+	urls, err := getFolderURLs(ctx, opts.Path, opts.Ref, r.repo)
+	if err != nil {
+		return nil, err
+	}
+	wrap.URLs = urls
 
 	if opts.Ref == "" {
 		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
@@ -339,15 +325,15 @@ func (r *DualReadWriter) authorizeCreateFolder(ctx context.Context, _ string) er
 }
 
 func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
-	// if the ref is not the active branch, just delete the files from the branch
-	// do not delete the items from grafana itself
-	if opts.Ref != "" && opts.Ref != r.getConfiguredBranch() {
+	// if the ref is set, it is not the active branch, so just delete the files from the branch
+	// and do not delete the items from grafana itself
+	if opts.Ref != "" {
 		err := r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 		if err != nil {
 			return nil, fmt.Errorf("error deleting folder from repository: %w", err)
 		}
 
-		return folderDeleteResponse(opts.Path, opts.Ref, r.repo.Config()), nil
+		return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo)
 	}
 
 	// before deleting from the repo, first get all children resources to delete from grafana afterwards
@@ -376,11 +362,27 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 		return nil, fmt.Errorf("delete folder from grafana: %w", err)
 	}
 
-	return folderDeleteResponse(opts.Path, opts.Ref, r.repo.Config()), nil
+	return folderDeleteResponse(ctx, opts.Path, opts.Ref, r.repo)
 }
 
-func folderDeleteResponse(path, ref string, cfg *provisioning.Repository) *ParsedResource {
-	return &ParsedResource{
+func getFolderURLs(ctx context.Context, path, ref string, repo repository.Repository) (*provisioning.ResourceURLs, error) {
+	if urlRepo, ok := repo.(repository.RepositoryWithURLs); ok && ref != "" {
+		urls, err := urlRepo.ResourceURLs(ctx, &repository.FileInfo{Path: path, Ref: ref})
+		if err != nil {
+			return nil, err
+		}
+		return urls, nil
+	}
+	return nil, nil
+}
+
+func folderDeleteResponse(ctx context.Context, path, ref string, repo repository.Repository) (*ParsedResource, error) {
+	urls, err := getFolderURLs(ctx, path, ref, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	parsed := &ParsedResource{
 		Action: provisioning.ResourceActionDelete,
 		Info: &repository.FileInfo{
 			Path: path,
@@ -393,20 +395,23 @@ func folderDeleteResponse(path, ref string, cfg *provisioning.Repository) *Parse
 		},
 		GVR: FolderResource,
 		Repo: provisioning.ResourceRepositoryInfo{
-			Type:      cfg.Spec.Type,
-			Namespace: cfg.Namespace,
-			Name:      cfg.Name,
-			Title:     cfg.Spec.Title,
+			Type:      repo.Config().Spec.Type,
+			Namespace: repo.Config().Namespace,
+			Name:      repo.Config().Name,
+			Title:     repo.Config().Spec.Title,
 		},
+		URLs: urls,
 	}
+
+	return parsed, nil
 }
 
 func (r *DualReadWriter) getChildren(ctx context.Context, folderPath string, treeEntries []repository.FileTreeEntry) ([]*ParsedResource, []Folder, error) {
 	var resourcesInFolder []repository.FileTreeEntry
 	var foldersInFolder []Folder
 	for _, entry := range treeEntries {
-		// the folder itself should be included in this, to do that, trim the suffix of the folder path and see if it matches exactly
-		if !strings.HasPrefix(entry.Path, folderPath) && entry.Path != strings.TrimSuffix(folderPath, "/") {
+		// make sure the path is supported (i.e. not ignored by git sync) and that the path is the folder itself or a child of the folder
+		if IsPathSupported(entry.Path) != nil || !safepath.InDir(entry.Path, folderPath) {
 			continue
 		}
 		// folders cannot be parsed as resources, so handle them separately
@@ -445,12 +450,8 @@ func (r *DualReadWriter) deleteChildren(ctx context.Context, childrenResources [
 	}
 
 	// we need to delete the folders furthest down in the tree first, as folder deletion will fail if there is anything inside of it
-	sort.Slice(folders, func(i, j int) bool {
-		depthI := strings.Count(folders[i].Path, "/")
-		depthJ := strings.Count(folders[j].Path, "/")
+	safepath.SortByDepth(folders, func(f Folder) string { return f.Path }, false)
 
-		return depthI > depthJ
-	})
 	for _, f := range folders {
 		err := r.folders.Client().Delete(ctx, f.ID, metav1.DeleteOptions{})
 		if err != nil {

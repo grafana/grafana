@@ -176,3 +176,56 @@ func TestWalkError(t *testing.T) {
 
 	require.ErrorIs(t, err, expectedErr)
 }
+
+func TestSortByDepth(t *testing.T) {
+	tests := []struct {
+		name     string
+		asc      bool
+		paths    []string
+		expected []string
+	}{
+		{
+			name:     "ascending sort (shallowest first)",
+			paths:    []string{"a/b/c", "a", "a/b", "d/e/f/g"},
+			asc:      true,
+			expected: []string{"a", "a/b", "a/b/c", "d/e/f/g"},
+		},
+		{
+			name:     "descending sort with alphabetical tie-break",
+			paths:    []string{"a/b/c", "a", "a/b", "d/e/f/g", "x/y/z"},
+			asc:      false,
+			expected: []string{"d/e/f/g", "a/b/c", "x/y/z", "a/b", "a"},
+		},
+		{
+			name:     "paths with empty string",
+			paths:    []string{"a/b/c", "", "a", "a/b"},
+			asc:      true,
+			expected: []string{"", "a", "a/b", "a/b/c"},
+		},
+		{
+			name:     "paths with trailing slashes",
+			paths:    []string{"a/b/", "a/b/c", "b/", "a/", "a"},
+			asc:      true,
+			expected: []string{"a", "a/", "b/", "a/b/", "a/b/c"},
+		},
+		{
+			name:     "single path",
+			paths:    []string{"a/b/c"},
+			expected: []string{"a/b/c"},
+		},
+		{
+			name:     "empty paths",
+			paths:    []string{},
+			expected: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			paths := make([]string, len(tt.paths))
+			copy(paths, tt.paths)
+			SortByDepth(paths, func(s string) string { return s }, tt.asc)
+			assert.Equal(t, tt.expected, paths)
+		})
+	}
+}

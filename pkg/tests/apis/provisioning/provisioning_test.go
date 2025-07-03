@@ -707,6 +707,9 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 		Do(ctx)
 	require.NoError(t, result.Error())
 
+	// make sure we don't fail when there is a .keep file in a folder
+	helper.CopyToProvisioningPath(t, "testdata/.keep", "folder/nested/.keep")
+
 	dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, 3, len(dashboards.Items))
