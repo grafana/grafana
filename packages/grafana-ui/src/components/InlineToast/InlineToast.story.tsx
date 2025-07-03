@@ -16,7 +16,6 @@ const story: Meta = {
     },
   },
   argTypes: {
-    // foo is the property we want to remove from the UI
     referenceElement: {
       table: {
         disable: true,
