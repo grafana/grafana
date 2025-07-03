@@ -25,7 +25,7 @@ var ErrMissingTenantID = errors.New("item requires TenantID")
 
 type tenantQueue struct {
 	id       string
-	items    []func(ctx context.Context)
+	items    []func()
 	isActive bool
 }
 
@@ -42,13 +42,13 @@ func (tq *tenantQueue) isEmpty() bool {
 func (tq *tenantQueue) isFull(maxSize int) bool {
 	return maxSize > 0 && len(tq.items) >= maxSize
 }
-func (tq *tenantQueue) addItem(runnable func(ctx context.Context)) {
+func (tq *tenantQueue) addItem(runnable func()) {
 	tq.items = append(tq.items, runnable)
 }
 
 type enqueueRequest struct {
 	tenantID string
-	runnable func(ctx context.Context)
+	runnable func()
 	respChan chan error
 }
 
@@ -57,7 +57,7 @@ type dequeueRequest struct {
 }
 
 type dequeueResponse struct {
-	runnable func(ctx context.Context)
+	runnable func()
 	err      error
 }
 
@@ -71,8 +71,8 @@ type activeTenantsLenRequest struct {
 
 type NoopQueue struct{}
 
-func (*NoopQueue) Enqueue(ctx context.Context, _ string, runnable func(ctx context.Context)) error {
-	runnable(ctx)
+func (*NoopQueue) Enqueue(ctx context.Context, _ string, runnable func()) error {
+	runnable()
 	return nil
 }
 
@@ -200,7 +200,7 @@ func (q *Queue) handleEnqueueRequest(req enqueueRequest) {
 	if !exists {
 		tq = &tenantQueue{
 			id:    req.tenantID,
-			items: make([]func(ctx context.Context), 0, 8),
+			items: make([]func(), 0, 8),
 		}
 		q.tenantQueues[req.tenantID] = tq
 	}
@@ -263,7 +263,7 @@ func (q *Queue) dispatcherLoop(ctx context.Context) error {
 
 // Enqueue adds a work item to the appropriate tenant's qos.
 // It blocks only if the dispatcher is busy or the tenant queue is full.
-func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
+func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func()) error {
 	if runnable == nil {
 		return ErrNilRunnable
 	}
@@ -303,7 +303,7 @@ func (q *Queue) Enqueue(ctx context.Context, tenantID string, runnable func(ctx 
 // Dequeue removes and returns a work item from the qos using linked-list round-robin.
 // It blocks until an item is available for any tenant, the queue is closed,
 // or the context is cancelled.
-func (q *Queue) Dequeue(ctx context.Context) (func(ctx context.Context), error) {
+func (q *Queue) Dequeue(ctx context.Context) (func(), error) {
 	if q.State() != services.Running {
 		return nil, ErrQueueClosed
 	}

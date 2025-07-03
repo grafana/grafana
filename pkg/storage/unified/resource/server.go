@@ -146,7 +146,7 @@ type BlobSupport interface {
 }
 
 type QOSEnqueuer interface {
-	Enqueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error
+	Enqueue(ctx context.Context, tenantID string, runnable func()) error
 }
 
 type BlobConfig struct {
@@ -602,7 +602,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		res *resourcepb.CreateResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
 		res, err = s.create(ctx, user, req)
 	})
 	if runErr != nil {
@@ -656,7 +656,7 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 		res *resourcepb.UpdateResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
 		res, err = s.update(ctx, user, req)
 	})
 	if runErr != nil {
@@ -724,7 +724,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		err error
 	)
 
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
 		res, err = s.delete(ctx, user, req)
 	})
 	if runErr != nil {
@@ -828,7 +828,7 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 		res *resourcepb.ReadResponse
 		err error
 	)
-	runErr := s.runInQueue(ctx, req.Key.Namespace, func(ctx context.Context) {
+	runErr := s.runInQueue(ctx, req.Key.Namespace, func() {
 		res, err = s.read(ctx, user, req)
 	})
 	if runErr != nil {
@@ -1335,7 +1335,7 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	return rsp, nil
 }
 
-func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
+func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func()) error {
 	boff := backoff.New(ctx, backoff.Config{
 		MinBackoff: DefaultMinBackoff,
 		MaxBackoff: DefaultMaxBackoff,
@@ -1347,9 +1347,9 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		err error
 	)
 	wg.Add(1)
-	wrapped := func(ctx context.Context) {
+	wrapped := func() {
 		defer wg.Done()
-		runnable(ctx)
+		runnable()
 	}
 	for boff.Ongoing() {
 		err = s.queue.Enqueue(ctx, tenantID, wrapped)
