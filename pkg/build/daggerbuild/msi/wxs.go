@@ -50,6 +50,9 @@ func WxsVersion(ersion string) string {
 			v = "0"
 		}
 
+		if len(v) > 5 {
+			v = v[len(v)-5:]
+		}
 		return fmt.Sprintf("%s.%s.%s.%s", major, minor, patch, v)
 	}
 	return fmt.Sprintf("%s.%s.%s.0", major, minor, patch)

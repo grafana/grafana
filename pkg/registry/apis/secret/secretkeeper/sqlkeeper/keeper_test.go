@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -136,6 +136,8 @@ func Test_SQLKeeperSetup(t *testing.T) {
 }
 
 func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
+	tracer := noop.NewTracerProvider().Tracer("test")
+
 	// Initialize the encryption manager with in-memory implementation
 	encMgr := &inMemoryEncryptionManager{}
 
@@ -143,7 +145,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	encValueStore := newInMemoryEncryptedValueStorage()
 
 	// Initialize the SQLKeeper
-	sqlKeeper := NewSQLKeeper(tracing.InitializeTracerForTest(), encMgr, encValueStore)
+	sqlKeeper := NewSQLKeeper(tracer, encMgr, encValueStore)
 
 	return sqlKeeper, nil
 }
