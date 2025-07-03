@@ -67,6 +67,7 @@ type OAuthInfo struct {
 	ApiUrl                      string            `mapstructure:"api_url" toml:"api_url"`
 	AuthStyle                   string            `mapstructure:"auth_style" toml:"auth_style"`
 	AuthUrl                     string            `mapstructure:"auth_url" toml:"auth_url"`
+	AuthorizationErrorMessage   string            `mapstructure:"authorization_error_message" toml:"authorization_error_message"`
 	AutoLogin                   bool              `mapstructure:"auto_login" toml:"auto_login"`
 	ClientAuthentication        string            `mapstructure:"client_authentication" toml:"client_authentication"`
 	ClientId                    string            `mapstructure:"client_id" toml:"client_id"`
@@ -81,10 +82,10 @@ type OAuthInfo struct {
 	HostedDomain                string            `mapstructure:"hosted_domain" toml:"hosted_domain"`
 	Icon                        string            `mapstructure:"icon" toml:"icon"`
 	Name                        string            `mapstructure:"name" toml:"name"`
+	OrgAttributePath            string            `mapstructure:"org_attribute_path" toml:"org_attribute_path"`
+	OrgMapping                  []string          `mapstructure:"org_mapping" toml:"org_mapping"`
 	RoleAttributePath           string            `mapstructure:"role_attribute_path" toml:"role_attribute_path"`
 	RoleAttributeStrict         bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict"`
-	OrgAttributePath            string            `mapstructure:"org_attribute_path"`
-	OrgMapping                  []string          `mapstructure:"org_mapping"`
 	Scopes                      []string          `mapstructure:"scopes" toml:"scopes"`
 	SignoutRedirectUrl          string            `mapstructure:"signout_redirect_url" toml:"signout_redirect_url"`
 	SkipOrgRoleSync             bool              `mapstructure:"skip_org_role_sync" toml:"skip_org_role_sync"`
@@ -93,11 +94,11 @@ type OAuthInfo struct {
 	TlsClientCa                 string            `mapstructure:"tls_client_ca" toml:"tls_client_ca"`
 	TlsClientCert               string            `mapstructure:"tls_client_cert" toml:"tls_client_cert"`
 	TlsClientKey                string            `mapstructure:"tls_client_key" toml:"tls_client_key"`
-	TlsSkipVerify               bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure"`
+	TlsSkipVerify               bool              `mapstructure:"tls_skip_verify" toml:"tls_skip_verify"`
 	TokenUrl                    string            `mapstructure:"token_url" toml:"token_url"`
 	UsePKCE                     bool              `mapstructure:"use_pkce" toml:"use_pkce"`
 	UseRefreshToken             bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
-	Extra                       map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
+	Extra                       map[string]string `mapstructure:",remain"`
 }
 
 func NewOAuthInfo() *OAuthInfo {
@@ -128,6 +129,10 @@ func (o *OAuthInfo) IsSkipOrgRoleSyncEnabled() bool {
 
 func (o *OAuthInfo) IsAllowAssignGrafanaAdminEnabled() bool {
 	return o.AllowAssignGrafanaAdmin
+}
+
+func (o *OAuthInfo) GetAuthorizationErrorMessage() string {
+	return o.AuthorizationErrorMessage
 }
 
 type BasicUserInfo struct {

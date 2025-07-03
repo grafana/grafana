@@ -1067,6 +1067,29 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 A custom error message for when users are unauthorized. Default is a key for an internationalized phrase in the frontend, `Login provider denied login request`.
 
+#### `oauth_authorization_error_message`
+
+A custom message for OAuth authorization failures. Use this to direct users to appropriate resources for gaining access. When set, this overrides the default "User is not authorized" message. This setting can be used to provide helpful guidance to users who are denied access, such as directing them to contact their administrator or apply for access.
+
+Example:
+```ini
+oauth_authorization_error_message = You are not authorized to access this Grafana instance. Please contact your IT administrator or visit https://company.com/access-request to request access.
+```
+
+You can also configure provider-specific authorization error messages by setting the `authorization_error_message` option in individual OAuth provider configurations:
+
+```ini
+[auth.azuread]
+enabled = true
+authorization_error_message = Access denied. Please ensure you are a member of the required Azure AD groups and contact your system administrator if you need access.
+
+[auth.generic_oauth]
+enabled = true
+authorization_error_message = Authorization failed. Please contact support@company.com to request access to this system.
+```
+
+Provider-specific messages take precedence over the global `oauth_authorization_error_message` setting.
+
 #### `oauth_refresh_token_server_lock_min_wait_ms`
 
 Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.

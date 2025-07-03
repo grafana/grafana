@@ -55,9 +55,48 @@ var (
 
 	errOAuthMissingRequiredEmail = errutil.Unauthorized("auth.oauth.email.missing", errutil.WithPublicMessage("Provider didn't return an email address"))
 	errOAuthEmailNotAllowed      = errutil.Unauthorized("auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
+	errOAuthUserNotAuthorized    = errutil.Unauthorized("auth.oauth.user.not-authorized", errutil.WithPublicMessage("User is not authorized"))
 )
 
+// createOAuthUserNotAuthorizedError creates a user-friendly authorization error with optional custom message
+func createOAuthUserNotAuthorizedError(customMessage string) error {
+	if customMessage != "" {
+		return errutil.Unauthorized("auth.oauth.user.not-authorized", errutil.WithPublicMessage(customMessage)).Errorf("user is not authorized")
+	}
+	return errOAuthUserNotAuthorized.Errorf("user is not authorized")
+}
+
+// isAuthorizationError checks if the error indicates an authorization failure
+func isAuthorizationError(err error) bool {
+	errMsg := err.Error()
+	// Check for common authorization failure patterns
+	authPatterns := []string{
+		"not authorized",
+		"access denied",
+		"insufficient permissions",
+		"not a member",
+		"tenant mismatch",
+		"audience mismatch",
+		"organization mismatch",
+		"team mismatch",
+		"user not found",
+		"no valid role",
+		"missing required",
+	}
+
+	for _, pattern := range authPatterns {
+		if strings.Contains(strings.ToLower(errMsg), pattern) {
+			return true
+		}
+	}
+	return false
+}
+
 func fromSocialErr(err *connectors.SocialError) error {
+	// Check if this is an authorization failure and return a user-friendly error
+	if isAuthorizationError(err) {
+		return createOAuthUserNotAuthorizedError(err.Error())
+	}
 	return errutil.Unauthorized("auth.oauth.userinfo.failed", errutil.WithPublicMessage(err.Error())).Errorf("%w", err)
 }
 
@@ -148,6 +187,18 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	if err != nil {
 		var sErr *connectors.SocialError
 		if errors.As(err, &sErr) {
+			// Check if this is an authorization failure and get custom message from config
+			if isAuthorizationError(sErr) {
+				customMessage := oauthCfg.GetAuthorizationErrorMessage()
+				if customMessage == "" {
+					// Fall back to global configuration
+					customMessage = c.cfg.OAuthAuthorizationErrorMessage
+				}
+				if customMessage != "" {
+					return nil, createOAuthUserNotAuthorizedError(customMessage)
+				}
+				return nil, errOAuthUserNotAuthorized.Errorf("user is not authorized")
+			}
 			return nil, fromSocialErr(sErr)
 		}
 		return nil, errOAuthUserInfo.Errorf("failed to get user info: %w", err)
