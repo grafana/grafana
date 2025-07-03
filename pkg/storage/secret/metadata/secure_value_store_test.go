@@ -43,11 +43,11 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the secure value storage
-	secureValueStorage, err := ProvideSecureValueMetadataStorage(db, tracer, features)
+	secureValueStorage, err := ProvideSecureValueMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 
 	// Initialize the keeper storage
-	keeperStorage, err := ProvideKeeperMetadataStorage(db, tracer, features)
+	keeperStorage, err := ProvideKeeperMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 
 	t.Run("create and read a secure value", func(t *testing.T) {
