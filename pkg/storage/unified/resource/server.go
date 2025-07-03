@@ -776,10 +776,6 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 		PreviousRV: latest.ResourceVersion,
 		GUID:       uuid.New().String(),
 	}
-	requester, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, apierrors.NewBadRequest("unable to get user")
-	}
 	marker := &unstructured.Unstructured{}
 	err = json.Unmarshal(latest.Value, marker)
 	if err != nil {
@@ -794,7 +790,7 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(requester.GetUID())
+	obj.SetUpdatedBy(user.GetUID())
 	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
 	event.Value, err = marker.MarshalJSON()
@@ -1352,8 +1348,8 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	)
 	wg.Add(1)
 	wrapped := func(ctx context.Context) {
+		defer wg.Done()
 		runnable(ctx)
-		wg.Done()
 	}
 	for boff.Ongoing() {
 		err = s.queue.Enqueue(ctx, tenantID, wrapped)

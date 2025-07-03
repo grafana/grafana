@@ -143,11 +143,11 @@ func NewQueue(opts *QueueOptions) *Queue {
 	q.queueLength = promauto.With(opts.Registerer).NewGaugeVec(prometheus.GaugeOpts{
 		Name: "queue_length",
 		Help: "Number of items in the queue",
-	}, []string{"namespace"})
+	}, []string{"slug"})
 	q.discardedRequests = promauto.With(opts.Registerer).NewCounterVec(prometheus.CounterOpts{
 		Name: "discarded_requests_total",
 		Help: "Total number of discarded requests",
-	}, []string{"namespace", "reason"})
+	}, []string{"slug", "reason"})
 	q.enqueueDuration = promauto.With(opts.Registerer).NewHistogram(prometheus.HistogramOpts{
 		Name:    "enqueue_duration_seconds",
 		Help:    "Duration of enqueue operation in seconds",
