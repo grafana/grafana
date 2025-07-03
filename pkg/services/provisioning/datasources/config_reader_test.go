@@ -457,7 +457,7 @@ type spyStore struct {
 
 func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, v := range s.items {
-		if query.Name == v.Name && query.OrgID == v.OrgID {
+		if query.Name == v.Name && query.OrgID == v.OrgID { // nolint:staticcheck
 			return v, nil
 		}
 	}
