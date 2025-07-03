@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import grafanaLogo from 'img/grafana_icon.svg';
 
@@ -26,28 +27,46 @@ export function VersionList({ versions, installedVersion, dismissUpgradeFn }: Pr
       <br></br>
       <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <img src={grafanaLogo} alt="Grafana Logo" style={{ height: 32, width: 32 }} />
-        <span>Grafana Version: {installedVersion}</span>
-        <Badge text="Installed" color="green" icon="check" />
+        <Trans i18nKey="admin.upgrades.grafana-version">Grafana Version: {installedVersion}</Trans>
+        <Badge text={t('admin.upgrades.installed-text', 'Installed')} color="green" icon="check" />
       </h1>
       {versions.length === 0 ? (
-        <p>No recommended upgrades found.</p>
+        <p>
+          <Trans i18nKey="admin.upgrades.noUpgrades">No recommended upgrades found.</Trans>
+        </p>
       ) : (
         <>
-          <h2>Recommended Upgrades</h2>
+          <h2>
+            <Trans i18nKey="admin.upgrades.recommendedUpgrades">Recommended Upgrades</Trans>
+          </h2>
           <p>
-            The following upgrades are recommended for your Grafana instance to ensure you are running the latest
-            supported version of Grafana.
+            <Trans i18nKey="admin.upgrades.recommendedUpgradesDescription">
+              The following upgrades are recommended for your Grafana instance to ensure you are running the latest
+              supported version of Grafana.
+            </Trans>
           </p>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Version</th>
+                <th>
+                  <Trans i18nKey="admin.upgrades.version">Version</Trans>
+                </th>
                 <th></th>
-                <th>Release Date</th>
-                <th>Upgrade Type</th>
-                <th>Support Status</th>
-                <th>Changelog</th>
-                <th>Upgrade Guide</th>
+                <th>
+                  <Trans i18nKey="admin.upgrades.releaseDate">Release Date</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="admin.upgrades.upgradeType">Upgrade Type</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="admin.upgrades.supportStatus">Support Status</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="admin.upgrades.changelog">Changelog</Trans>
+                </th>
+                <th>
+                  <Trans i18nKey="admin.upgrades.upgradeGuide">Upgrade Guide</Trans>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -64,9 +83,9 @@ export function VersionList({ versions, installedVersion, dismissUpgradeFn }: Pr
                         href={`https://grafana.com/grafana/download/${v.version}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        tooltip="Install"
+                        tooltip={t('admin.upgrades.downloadPageTooltip', 'Go to download page')}
                       >
-                        Install
+                        <Trans i18nKey="admin.upgrades.downloadPage">Download Page</Trans>
                       </LinkButton>{' '}
                       &nbsp;
                       <LinkButton
@@ -75,15 +94,15 @@ export function VersionList({ versions, installedVersion, dismissUpgradeFn }: Pr
                         icon="times"
                         size="sm"
                         rel="noopener noreferrer"
-                        tooltip="Dismiss"
+                        tooltip={t('admin.upgrades.dismissTooltip', 'Dismiss')}
                         onClick={() => dismissUpgradeFn(v.name)}
                       >
-                        Dismiss
+                        <Trans i18nKey="admin.upgrades.dismiss">Dismiss</Trans>
                       </LinkButton>
                     </td>
                     <td>{v.releaseDate}</td>
                     <td>{v.type.toUpperCase()}</td>
-                    <td>{v.isOutOfSupport ? 'Out of Support' : 'In Support'}</td>
+                    <td>{v.isOutOfSupport ? t('admin.upgrades.outOfSupport', 'Out of Support') : t('admin.upgrades.inSupport', 'In Support')}</td>
                     <td>
                       <LinkButton
                         type="button"
@@ -93,8 +112,9 @@ export function VersionList({ versions, installedVersion, dismissUpgradeFn }: Pr
                         href={`https://github.com/grafana/grafana/releases/tag/v${v.version}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        tooltip={t('admin.upgrades.releaseNotesTooltip', 'Release Notes')}
                       >
-                        Release Notes
+                        <Trans i18nKey="admin.upgrades.releaseNotes">Release Notes</Trans>
                       </LinkButton>
                     </td>
                     <td>
@@ -106,8 +126,9 @@ export function VersionList({ versions, installedVersion, dismissUpgradeFn }: Pr
                         href={`https://grafana.com/docs/grafana/latest/upgrade-guide/upgrade-v${v.version.split('.')?.slice(0, 2)?.join('.')}`} // Upgrade guides only go as deep as the minor version
                         target="_blank"
                         rel="noopener noreferrer"
+                        tooltip={t('admin.upgrades.upgradeGuideTooltip', 'Upgrade Guide')}
                       >
-                        Upgrade Guide
+                        <Trans i18nKey="admin.upgrades.upgradeGuide">Upgrade Guide</Trans>
                       </LinkButton>
                     </td>
                   </tr>
