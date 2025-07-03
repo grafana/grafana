@@ -460,12 +460,19 @@ export function TableNG(props: TableNGProps) {
         }
 
         // Type guard to check if data exists as it's optional
-        const nestedData = row.data;
+        let nestedData = row.data;
         if (!nestedData) {
           return null;
         }
 
         const expandedRecords = applySort(frameToRecords(nestedData), nestedData.fields, sortColumns);
+        if (!expandedRecords.length) {
+          return (
+            <div className={styles.noDataNested}>
+              <Trans i18nKey="grafana-ui.table.nested-table.no-data">No data</Trans>
+            </div>
+          );
+        }
 
         return (
           <DataGrid<TableRow, TableSummaryRow>
@@ -692,6 +699,14 @@ const getGridStyles = (
     '&[aria-selected=true]': {
       outline: 'none',
     },
+  }),
+  noDataNested: css({
+    height: TABLE.NESTED_NO_DATA_HEIGHT,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.h4.fontSize,
   }),
   cellActions: css({
     display: 'none',
