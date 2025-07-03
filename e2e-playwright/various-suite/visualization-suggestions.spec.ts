@@ -6,22 +6,26 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    test('Should be shown and clickable', async ({ page, selectors }) => {
+    test('Should be shown and clickable', async ({ page, selectors, gotoPanelEditPage }) => {
       // Open dashboard with edit panel
-      await page.goto('/d/aBXrJ0R7z?editPanel=9');
+      const panelEditPage = await gotoPanelEditPage({
+        dashboard: {
+          uid: 'aBXrJ0R7z',
+        },
+        id: '9',
+      });
 
       // Try visualization suggestions
-      const toggleVizPicker = page.getByTestId(selectors.components.PanelEditor.toggleVizPicker);
-      await toggleVizPicker.click();
-
-      // Click on the "Suggestions" radio button
-      const suggestionsRadioButton = page
-        .getByTestId(selectors.components.RadioButton.container)
-        .filter({ hasText: 'Suggestions' });
-      await suggestionsRadioButton.click();
+      await panelEditPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker).click();
+      await panelEditPage
+        .getByGrafanaSelector(selectors.components.RadioButton.container)
+        .filter({ hasText: 'Suggestions' })
+        .click();
 
       // Verify we see suggestions
-      const lineChartCard = page.getByTestId(selectors.components.VisualizationPreview.card('Line chart'));
+      const lineChartCard = panelEditPage.getByGrafanaSelector(
+        selectors.components.VisualizationPreview.card('Line chart')
+      );
       await expect(lineChartCard).toBeVisible();
 
       // Verify search works
@@ -32,12 +36,12 @@ test.describe(
       await expect(lineChartCard).toBeHidden();
 
       // Select a visualization
-      const tableCard = page.getByTestId(selectors.components.VisualizationPreview.card('Table'));
-      await tableCard.click();
+      await panelEditPage.getByGrafanaSelector(selectors.components.VisualizationPreview.card('Table')).click();
 
       // Verify table header is visible
-      const tableHeader = page.getByRole('row', { name: 'table header' });
-      await expect(tableHeader).toBeVisible();
+      await expect(
+        panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header)
+      ).toBeVisible();
     });
   }
 );
