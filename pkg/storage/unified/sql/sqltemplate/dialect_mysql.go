@@ -11,7 +11,7 @@ var MySQL = mysql{}
 type mysql struct{}
 
 func (m mysql) DialectName() string {
-	return "mysq"
+	return "mysql"
 }
 
 func (m mysql) Ident(s string) (string, error) {
