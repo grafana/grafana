@@ -1259,6 +1259,22 @@
     },
     {
       "metadata": {
+        "name": "foldersAppPlatformAPI",
+        "resourceVersion": "1751377081192",
+        "creationTimestamp": "2025-07-01T13:38:01Z"
+      },
+      "spec": {
+        "description": "Enables use of app platform API for folders",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-navigate-organise",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "formatString",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-10-13T18:17:12Z"
