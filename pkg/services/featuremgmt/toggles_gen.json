@@ -2839,7 +2839,8 @@
       "metadata": {
         "name": "ssoSettingsApi",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-11-08T09:50:01Z"
+        "creationTimestamp": "2023-11-08T09:50:01Z",
+        "deletionTimestamp": "2025-07-02T14:16:57Z"
       },
       "spec": {
         "description": "Enables the SSO settings API and the OAuth configuration UIs in Grafana",

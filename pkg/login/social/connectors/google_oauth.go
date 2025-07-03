@@ -58,9 +58,7 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 		provider.log.Warn("Using legacy Google API URL, please update your configuration")
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.GoogleProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.GoogleProviderName, provider)
 
 	return provider
 }

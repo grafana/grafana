@@ -57,9 +57,7 @@ func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 		SocialBase: newSocialBase(social.GitlabProviderName, orgRoleMapper, info, features, cfg),
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
 
 	return provider
 }
