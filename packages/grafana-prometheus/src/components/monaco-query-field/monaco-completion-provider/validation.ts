@@ -12,7 +12,7 @@ export const warningTypes: Record<string, string> = {
 enum NodeType {
   SubqueryExpr = 'SubqueryExpr',
   Duration = 'NumberDurationLiteralInDurationContext',
-};
+}
 
 interface ParserIssueBoundary {
   startLineNumber: number;
