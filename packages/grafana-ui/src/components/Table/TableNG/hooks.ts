@@ -326,7 +326,7 @@ export function useTypographyCtx(): TypographyCtx {
     const avgCharWidth = txtWidth / txt.length + letterSpacing;
     const { count } = varPreLine(ctx);
     const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
-      if (!text) {
+      if (text === '') {
         return defaultHeight;
       }
       const numLines = count(text, cellWidth);
@@ -366,33 +366,34 @@ export function useHeaderHeight({
   typographyCtx: { calcRowHeight, avgCharWidth },
   showTypeIcons = false,
 }: UseHeaderHeightOptions): number {
+  const perIconSpace = ICON_WIDTH + ICON_GAP;
   const columnAvailableWidths = useMemo(
     () =>
       columnWidths.map((c, idx) => {
         let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
         // filtering icon
         if (fields[idx]?.config?.custom?.filterable) {
-          width -= ICON_WIDTH + ICON_GAP;
+          width -= perIconSpace;
         }
         // sorting icon
         if (sortColumns.some((col) => col.columnKey === getDisplayName(fields[idx]))) {
-          width -= ICON_WIDTH + ICON_GAP;
+          width -= perIconSpace;
         }
         // type icon
         if (showTypeIcons) {
-          width -= ICON_WIDTH + ICON_GAP;
+          width -= perIconSpace;
         }
         return Math.floor(width);
       }),
-    [fields, columnWidths, sortColumns, showTypeIcons]
+    [fields, columnWidths, sortColumns, showTypeIcons, perIconSpace]
   );
 
   const [wrappedColHeaderIdxs, hasWrappedColHeaders] = useMemo(() => {
     let hasWrappedColHeaders = false;
     return [
       fields.map((field) => {
-        const wrapText = field.config?.custom?.wrapHeaderText;
-        if (wrapText === true) {
+        const wrapText = field.config?.custom?.wrapHeaderText ?? false;
+        if (wrapText) {
           hasWrappedColHeaders = true;
         }
         return wrapText;
@@ -415,14 +416,16 @@ export function useHeaderHeight({
       return 0;
     }
     if (!hasWrappedColHeaders) {
-      return defaultHeight - TABLE.CELL_PADDING;
+      return defaultHeight;
     }
 
     const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
+    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight);
   }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
 
-  return headerHeight;
+  // we do not have a top padding on the header row, and the default row height includes top and bottom padding.
+  // TODO: is there a less clunky way to subtract the top padding value?
+  return headerHeight - TABLE.CELL_PADDING;
 }
 
 interface UseRowHeightOptions {

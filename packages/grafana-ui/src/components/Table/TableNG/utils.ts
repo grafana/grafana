@@ -62,7 +62,11 @@ export function isCellInspectEnabled(field: Field): boolean {
  */
 export function shouldTextWrap(field: Field): boolean {
   const cellOptions = getCellOptions(field);
-  return ('wrapText' in cellOptions && cellOptions.wrapText) ?? false;
+  // @ts-ignore - a handful of cellTypes have boolean wrapText, but not all of them.
+  // we should be very careful to only use boolean type for cellOptions.wrapText.
+  // TBH we will probably move this up to a field option which is showIf rendered anyway,
+  // but that'll be a migration to do, so it needs to happen post-GA.
+  return Boolean(cellOptions?.wrapText);
 }
 
 // matches characters which CSS
@@ -92,6 +96,7 @@ export function getMaxWrapCell(
   let maxLinesIdx = -1;
   let maxLinesText = '';
 
+  // TODO: consider changing how we store this, using a record by column key instead of an array
   for (let i = 0; i < colWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const field = fields[i];
