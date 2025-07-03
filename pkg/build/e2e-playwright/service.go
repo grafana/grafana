@@ -10,19 +10,25 @@ import (
 )
 
 type GrafanaServiceOpts struct {
-	HostSrc      *dagger.Directory
-	GrafanaTarGz *dagger.File
-	License      *dagger.File
+	HostSrc           *dagger.Directory
+	FrontendContainer *dagger.Container
+	GrafanaTarGz      *dagger.File
+	License           *dagger.File
 }
 
 func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOpts) (*dagger.Service, error) {
+	testPlugins := opts.FrontendContainer.
+		WithDirectory("e2e/test-plugins", opts.HostSrc.Directory("./e2e/test-plugins")).
+		WithDirectory("packages/grafana-plugin-configs", opts.HostSrc.Directory("./packages/grafana-plugin-configs")).
+		WithExec([]string{"yarn", "e2e:plugin:build"})
+
 	container := d.Container().From("alpine:3").
 		WithExec([]string{"apk", "add", "--no-cache", "bash", "tar", "netcat-openbsd", "util-linux"}).
 		WithMountedFile("/src/grafana.tar.gz", opts.GrafanaTarGz).
 		WithExec([]string{"mkdir", "-p", "/src/grafana"}).
 		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
 		WithDirectory("/src/grafana/devenv", opts.HostSrc.Directory("./devenv")).
-		WithDirectory("/src/grafana/e2e/test-plugins", opts.HostSrc.Directory("./e2e/test-plugins")).
+		WithDirectory("/src/grafana/e2e/test-plugins", testPlugins.Directory("./e2e/test-plugins")).
 		WithDirectory("/src/grafana/scripts", opts.HostSrc.Directory("./scripts")).
 		WithWorkdir("/src/grafana").
 		// Only set config variables here that are specific to the dagger/GHA runner.

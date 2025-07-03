@@ -94,10 +94,14 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	// Explicitly only the files used by the grafana-server service
-	hostSrc := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
+	grafanaHostSrc := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
 		Include: []string{
 			"./devenv",
-			"./e2e/test-plugins", // Directory is included so provisioning works, but they're not actually build
+
+			// Must build test plugins to run e2e tests
+			"./e2e/test-plugins",
+			"./packages/grafana-plugin-configs",
+
 			"./scripts/grafana-server/custom.ini",
 			"./scripts/grafana-server/start-server",
 			"./scripts/grafana-server/kill-server",
@@ -105,8 +109,47 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		},
 	})
 
+	// Minimal files needed to run yarn install
+	yarnHostSrc := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
+		Include: []string{
+			"package.json",
+			"yarn.lock",
+			".yarnrc.yml",
+			".yarn",
+			"packages/*/package.json",
+			"packages/grafana-plugin-configs",
+			"public/app/plugins/*/*/package.json",
+			"e2e/test-plugins/*/package.json",
+			".nvmrc",
+		},
+	})
+
+	// Files needed to run e2e tests. yarnHostSrc will be copied into the test runner container as well.
+	e2eHostSrc := d.Host().Directory(".", dagger.HostDirectoryOpts{
+		Include: []string{
+			"public/app/types/*.d.ts",
+			"public/app/core/icons/cached.json",
+
+			// packages we use in playwright tests
+			"packages",           // TODO: do we need all of this?
+			"public/app/plugins", // TODO: do we need all of this?
+
+			// e2e files
+			"e2e-playwright",
+			"e2e/test-plugins",
+			"playwright.config.ts",
+		},
+		Exclude: []string{
+			"**/dist",
+		},
+	})
+
+	frontendContainer, err := WithFrontendContainer(ctx, d, yarnHostSrc)
+	if err != nil {
+		return fmt.Errorf("failed to create frontend container: %w", err)
+	}
+
 	targz := d.Host().File(targzPath)
-	// pa11yConfig := d.Host().File(pa11yConfigPath)
 
 	var license *dagger.File
 	if licensePath != "" {
@@ -114,9 +157,10 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	svc, err := GrafanaService(ctx, d, GrafanaServiceOpts{
-		HostSrc:      hostSrc,
-		GrafanaTarGz: targz,
-		License:      license,
+		HostSrc:           grafanaHostSrc,
+		FrontendContainer: frontendContainer,
+		GrafanaTarGz:      targz,
+		License:           license,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create Grafana service: %w", err)
@@ -124,6 +168,8 @@ func run(ctx context.Context, cmd *cli.Command) error {
 
 	runOpts := RunTestOpts{
 		GrafanaService:       svc,
+		FrontendContainer:    frontendContainer,
+		HostSrc:              e2eHostSrc,
 		Shard:                pwShard,
 		TestResultsExportDir: resultsDir,
 		HTMLReportExportDir:  htmlDir,
