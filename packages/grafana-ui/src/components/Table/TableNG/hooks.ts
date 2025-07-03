@@ -497,7 +497,8 @@ export function useRowHeight({
 
         // Ensure we have a minimum height (defaultHeight) for the nested table even if data is empty
         const rowCount = row.data?.length ?? 0;
-        return Math.max(defaultHeight, defaultHeight * rowCount + headerHeight);
+        const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
+        return Math.max(defaultHeight, defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2);
       }
 
       // regular rows
@@ -511,7 +512,6 @@ export function useRowHeight({
     fields,
     hasNestedFrames,
     hasWrappedCols,
-    headerHeight,
     maxWrapCellOptions,
     colWidths,
   ]);

@@ -85,7 +85,6 @@ export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, {
     enablePagination,
-    noHeader,
     transparent,
   });
   const panelContext = usePanelContext();
@@ -238,21 +237,9 @@ export function TableNG(props: TableNGProps) {
         },
         sortColumns,
         rowHeight,
-        headerRowClass: styles.headerRow,
-        headerRowHeight: headerHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
-    [
-      enableVirtualization,
-      resizeHandler,
-      sortColumns,
-      headerHeight,
-      styles.headerRow,
-      rowHeight,
-      hasFooter,
-      setSortColumns,
-      onSortByChange,
-    ]
+    [enableVirtualization, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
   );
 
   interface Schema {
@@ -429,6 +416,7 @@ export function TableNG(props: TableNGProps) {
       return result;
     }
 
+    const hasNestedHeaders = firstNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
     const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
       firstNestedData.fields,
@@ -483,6 +471,8 @@ export function TableNG(props: TableNGProps) {
           <DataGrid<TableRow, TableSummaryRow>
             {...commonDataGridProps}
             className={cx(styles.grid, styles.gridNested)}
+            headerRowClass={cx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
+            headerRowHeight={hasNestedHeaders ? defaultHeaderHeight : 0}
             columns={nestedColumns}
             rows={expandedRecords}
             renderers={{ renderRow, renderCell: renderCellRoot }}
@@ -501,6 +491,7 @@ export function TableNG(props: TableNGProps) {
     crossFilterOrder,
     crossFilterRows,
     data,
+    defaultHeaderHeight,
     defaultRowHeight,
     enableSharedCrosshair,
     expandedRows,
@@ -543,6 +534,8 @@ export function TableNG(props: TableNGProps) {
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
+        headerRowClass={cx(styles.headerRow, { [styles.displayNone]: noHeader })}
+        headerRowHeight={headerHeight}
         onCellKeyDown={
           hasNestedFrames
             ? (_, event) => {
@@ -657,7 +650,7 @@ const renderRowFactory =
 
 const getGridStyles = (
   theme: GrafanaTheme2,
-  { enablePagination, noHeader, transparent }: { enablePagination?: boolean; noHeader?: boolean; transparent?: boolean }
+  { enablePagination, transparent }: { enablePagination?: boolean; transparent?: boolean }
 ) => ({
   grid: css({
     '--rdg-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
@@ -693,6 +686,7 @@ const getGridStyles = (
     width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
     overflow: 'visible',
     marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
+    marginBlock: TABLE.CELL_PADDING,
   }),
   cellNested: css({
     '&[aria-selected=true]': {
@@ -719,11 +713,13 @@ const getGridStyles = (
   headerRow: css({
     paddingBlockStart: 0,
     fontWeight: 'normal',
-    ...(noHeader ? { display: 'none' } : {}),
     '& .rdg-cell': {
       height: '100%',
       alignItems: 'flex-end',
     },
+  }),
+  displayNone: css({
+    display: 'none',
   }),
   paginationContainer: css({
     alignItems: 'center',
