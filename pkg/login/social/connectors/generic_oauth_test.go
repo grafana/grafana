@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -440,6 +441,57 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			ExpectedEmail:     "john.doe@example.com",
 			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleViewer},
 		},
+		// Access Token Test Cases
+		{
+			Name:              "Given a valid access token with role, no ID token, no API response, use access token",
+			ResponseBody:      map[string]any{},
+			OAuth2Extra:       map[string]any{},
+			RoleAttributePath: "role",
+			ExpectedEmail:     "access.token@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
+		},
+		{
+			Name:              "Given a valid access token with org roles, no ID token, no API response, use access token",
+			ResponseBody:      map[string]any{},
+			OAuth2Extra:       map[string]any{},
+			RoleAttributePath: "role",
+			OrgAttributePath:  "info.roles",
+			OrgMapping:        []string{"access-dev:org_dev:Admin", "access-ops:org_engineering:Editor"},
+			ExpectedEmail:     "access.token@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{4: org.RoleAdmin, 5: org.RoleEditor},
+		},
+		{
+			Name:         "Given a valid access token and ID token, prefer ID token",
+			ResponseBody: map[string]any{},
+			OAuth2Extra: map[string]any{
+				// { "role": "Admin", "email": "id.token@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImlkLnRva2VuQGV4YW1wbGUuY29tIn0.T8wcoOOPQ_av9VsOFoYJZGNFGJgG0d3LPDvtxvgODkU",
+			},
+			RoleAttributePath: "role",
+			ExpectedEmail:     "id.token@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleAdmin},
+		},
+		{
+			Name:         "Given a valid access token with no email, ID token with no role, API response with no data, merge",
+			ResponseBody: map[string]any{},
+			OAuth2Extra: map[string]any{
+				// { "email": "id.token@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImlkLnRva2VuQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+			},
+			RoleAttributePath: "role",
+			ExpectedEmail:     "id.token@example.com",
+			ExpectedOrgRoles:  map[int64]org.RoleType{2: org.RoleEditor},
+		},
+		{
+			Name:                    "Given a valid access token with GrafanaAdmin role and AssignGrafanaAdmin enabled",
+			AllowAssignGrafanaAdmin: true,
+			ResponseBody:            map[string]any{},
+			OAuth2Extra:             map[string]any{},
+			RoleAttributePath:       "role",
+			ExpectedEmail:           "access.token@example.com",
+			ExpectedGrafanaAdmin:    trueBoolPtr(),
+			ExpectedOrgRoles:        map[int64]org.RoleType{2: org.RoleAdmin},
+		},
 	}
 
 	cfg := &setting.Cfg{
@@ -479,8 +531,27 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 				require.NoError(t, err)
 			}))
 			provider.info.ApiUrl = ts.URL
+
+			// Set up access token for access token test cases
+			var accessToken string
+			if strings.Contains(tc.Name, "access token") {
+				if strings.Contains(tc.Name, "GrafanaAdmin") {
+					// { "role": "GrafanaAdmin", "email": "access.token@example.com" }
+					accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20ifQ.fJPjMgZW9bOYXOLgOUekNQmNrVbUNhU1iqQJwqFWzUY"
+				} else if strings.Contains(tc.Name, "org roles") {
+					// { "role": "Viewer", "email": "access.token@example.com", "info": { "roles": [ "access-dev", "access-ops" ] }}
+					accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiVmlld2VyIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20iLCJpbmZvIjp7InJvbGVzIjpbImFjY2Vzcy1kZXYiLCJhY2Nlc3Mtb3BzIl19fQ.g8-mNJQDL9CJWgRTFdKBRRKbsHZfFhJrzPYQGXfxGIE"
+				} else if strings.Contains(tc.Name, "no email") {
+					// { "role": "Editor" }
+					accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiRWRpdG9yIn0.gfnKWZKNFNqrILhHFzabBVEWnJJIZBmQSBwLPCHhLUY"
+				} else {
+					// { "role": "Editor", "email": "access.token@example.com" }
+					accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiRWRpdG9yIiwiZW1haWwiOiJhY2Nlc3MudG9rZW5AZXhhbXBsZS5jb20ifQ.oVEMSJVqBwrGXOcwGgXL_8J-CZhgFVPjXXSqzPJQ5JU"
+				}
+			}
+
 			staticToken := oauth2.Token{
-				AccessToken:  "",
+				AccessToken:  accessToken,
 				TokenType:    "",
 				RefreshToken: "",
 				Expiry:       time.Now(),
@@ -853,7 +924,7 @@ func TestPayloadCompression(t *testing.T) {
 			}
 
 			token := staticToken.WithExtra(test.OAuth2Extra)
-			userInfo := provider.extractFromToken(token)
+			userInfo := provider.extractFromIDToken(token)
 
 			if test.ExpectedEmail == "" {
 				require.Nil(t, userInfo, "Testing case %q", test.Name)
