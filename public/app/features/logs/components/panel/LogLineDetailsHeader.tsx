@@ -193,7 +193,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: theme.spacing(0.75),
-    zIndex: theme.zIndex.modal,
+    zIndex: theme.zIndex.navbarFixed,
     height: theme.spacing(5),
     marginBottom: theme.spacing(0.5),
     padding: theme.spacing(0.5, 1),
