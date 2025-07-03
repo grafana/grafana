@@ -7716,6 +7716,9 @@
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
       "inspect-menu-label": "Inspect value",
+      "nested-table": {
+        "no-data": "No data"
+      },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
     },
