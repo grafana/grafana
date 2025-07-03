@@ -60,4 +60,4 @@ export function useGetFolderQueryFacade(uid: string) {
 }
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { type Folder, type GetFolderChildrenApiResponse } from './endpoints.gen';
+export { type Folder, type FolderList } from './endpoints.gen';

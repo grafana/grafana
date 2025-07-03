@@ -7,8 +7,10 @@ import (
 	"time"
 
 	unifiedsql "github.com/grafana/grafana/pkg/storage/unified/sql"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/assert"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -17,18 +19,23 @@ import (
 type outboxStore struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
+	tracer  trace.Tracer
 }
 
-func ProvideOutboxQueue(db contracts.Database) contracts.OutboxQueue {
+func ProvideOutboxQueue(
+	db contracts.Database,
+	tracer trace.Tracer,
+) contracts.OutboxQueue {
 	return &outboxStore{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:  tracer,
 	}
 }
 
 type outboxMessageDB struct {
 	RequestID       string
-	MessageID       string
+	MessageID       int64
 	MessageType     contracts.OutboxMessageType
 	Name            string
 	Namespace       string
@@ -39,10 +46,29 @@ type outboxMessageDB struct {
 	Created         int64
 }
 
-func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
+func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMessage) (messageID int64, err error) {
+	ctx, span := s.tracer.Start(ctx, "outboxStore.Append", trace.WithAttributes(
+		attribute.String("name", input.Name),
+		attribute.String("namespace", input.Namespace),
+		attribute.String("type", string(input.Type)),
+		attribute.String("requestID", input.RequestID),
+	))
+	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, "failed to append outbox message")
+			span.RecordError(err)
+		}
+
+		if messageID != 0 {
+			span.SetAttributes(attribute.Int64("messageID", messageID))
+		}
+	}()
+
 	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
-	messageID, err := s.insertMessage(ctx, input)
+	messageID, err = s.insertMessage(ctx, input)
 	if err != nil {
 		return messageID, fmt.Errorf("inserting message into outbox table: %+w", err)
 	}
@@ -50,7 +76,7 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 	return messageID, nil
 }
 
-func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendOutboxMessage) (string, error) {
+func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendOutboxMessage) (int64, error) {
 	keeperName := sql.NullString{}
 	if input.KeeperName != nil {
 		keeperName = sql.NullString{
@@ -75,13 +101,10 @@ func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendO
 		}
 	}
 
-	messageID := uuid.New().String()
-
 	req := appendSecureValueOutbox{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Row: &outboxMessageDB{
 			RequestID:       input.RequestID,
-			MessageID:       messageID,
 			MessageType:     input.Type,
 			Name:            input.Name,
 			Namespace:       input.Namespace,
@@ -95,33 +118,46 @@ func (s *outboxStore) insertMessage(ctx context.Context, input contracts.AppendO
 
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxAppend, req)
 	if err != nil {
-		return messageID, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
+		return 0, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
 	}
 
 	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		if unifiedsql.IsRowAlreadyExistsError(err) {
-			return messageID, contracts.ErrSecureValueOperationInProgress
+			return 0, contracts.ErrSecureValueOperationInProgress
 		}
-		return messageID, fmt.Errorf("inserting message into secure value outbox table: %w", err)
+		return 0, fmt.Errorf("inserting message into secure value outbox table: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return messageID, fmt.Errorf("get rows affected: %w", err)
+		return 0, fmt.Errorf("get rows affected: %w", err)
 	}
 
 	if rowsAffected != 1 {
-		return messageID, fmt.Errorf("expected to affect 1 row, but affected %d", rowsAffected)
+		return 0, fmt.Errorf("expected to affect 1 row, but affected %d", rowsAffected)
 	}
 
-	return messageID, nil
+	id, err := result.LastInsertId()
+	if err != nil {
+		return id, fmt.Errorf("fetching last inserted id: %w", err)
+	}
+
+	return id, nil
 }
 
-func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxMessage, error) {
+func (s *outboxStore) ReceiveN(ctx context.Context, limit uint) ([]contracts.OutboxMessage, error) {
+	messageIDs, err := s.fetchMessageIdsInQueue(ctx, limit)
+	if err != nil {
+		return nil, fmt.Errorf("fetching message ids from queue: %w", err)
+	}
+	// If queue is empty
+	if len(messageIDs) == 0 {
+		return nil, nil
+	}
 	req := receiveNSecureValueOutbox{
-		SQLTemplate:  sqltemplate.New(s.dialect),
-		ReceiveLimit: n,
+		SQLTemplate: sqltemplate.New(s.dialect),
+		MessageIDs:  messageIDs,
 	}
 
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxReceiveN, req)
@@ -173,6 +209,7 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 			KeeperName:   keeperName,
 			ExternalID:   externalID,
 			ReceiveCount: row.ReceiveCount,
+			Created:      row.Created,
 		}
 
 		if row.MessageType != contracts.DeleteSecretOutboxMessage && row.EncryptedSecret.Valid {
@@ -189,8 +226,54 @@ func (s *outboxStore) ReceiveN(ctx context.Context, n uint) ([]contracts.OutboxM
 	return messages, nil
 }
 
-func (s *outboxStore) Delete(ctx context.Context, messageID string) error {
-	assert.True(messageID != "", "outboxStore.Delete: messageID is required")
+func (s *outboxStore) fetchMessageIdsInQueue(ctx context.Context, limit uint) ([]int64, error) {
+	req := fetchMessageIDsOutbox{
+		SQLTemplate:  sqltemplate.New(s.dialect),
+		ReceiveLimit: limit,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueOutboxFetchMessageIDs, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxFetchMessageIDs.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("fetching rows from secure value outbox table: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	messageIDs := make([]int64, 0, limit)
+
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scanning row; %w", err)
+		}
+		messageIDs = append(messageIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("reading rows: %w", err)
+	}
+
+	return messageIDs, nil
+}
+
+func (s *outboxStore) Delete(ctx context.Context, messageID int64) (err error) {
+	ctx, span := s.tracer.Start(ctx, "outboxStore.Append", trace.WithAttributes(
+		attribute.Int64("messageID", messageID),
+	))
+	defer span.End()
+
+	defer func() {
+		if err != nil {
+			span.SetStatus(codes.Error, "failed to delete message from outbox")
+			span.RecordError(err)
+		}
+	}()
+
+	assert.True(messageID != 0, "outboxStore.Delete: messageID is required")
 
 	if err := s.deleteMessage(ctx, messageID); err != nil {
 		return fmt.Errorf("deleting message from outbox table %+w", err)
@@ -199,18 +282,56 @@ func (s *outboxStore) Delete(ctx context.Context, messageID string) error {
 	return nil
 }
 
-func (s *outboxStore) deleteMessage(ctx context.Context, messageID string) error {
-	req := deleteSecureValueOutbox{
+func (s *outboxStore) deleteMessage(ctx context.Context, messageID int64) error {
+	tsReq := getOutboxMessageTimestamp{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		MessageID:   messageID,
 	}
 
-	query, err := sqltemplate.Execute(sqlSecureValueOutboxDelete, req)
+	// First query the object so we can get the timestamp and calculate the total lifetime
+	timestampQuery, err := sqltemplate.Execute(sqlSecureValueOutboxQueryTimestamp, tsReq)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxQueryTimestamp.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, timestampQuery, tsReq.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("querying timestamp from secure value outbox table: %w", err)
+	}
+
+	if !rows.Next() {
+		_ = rows.Close()
+		return fmt.Errorf("no row found for message id=%v", messageID)
+	}
+
+	var timestamp int64
+	var messageType string
+	if err := rows.Scan(&timestamp, &messageType); err != nil {
+		_ = rows.Close()
+		return fmt.Errorf("scanning timestamp: %w", err)
+	}
+
+	// Explicitly close rows and check for errors before proceeding
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("closing rows: %w", err)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("rows error: %w", err)
+	}
+
+	// Then delete the object
+	delReq := deleteSecureValueOutbox{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		MessageID:   messageID,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueOutboxDelete, delReq)
 	if err != nil {
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxDelete.Name(), err)
 	}
 
-	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
+	result, err := s.db.ExecContext(ctx, query, delReq.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("deleting message id=%v from secure value outbox table: %w", messageID, err)
 	}
@@ -220,6 +341,7 @@ func (s *outboxStore) deleteMessage(ctx context.Context, messageID string) error
 		return fmt.Errorf("get rows affected: %w", err)
 	}
 
+	// TODO: Presumably it's a bug if we delete 0 rows?
 	if rowsAffected > 1 {
 		return fmt.Errorf("bug: deleted more than one row from the outbox table, should delete only one at a time: deleted=%v", rowsAffected)
 	}
@@ -227,7 +349,7 @@ func (s *outboxStore) deleteMessage(ctx context.Context, messageID string) error
 	return nil
 }
 
-func (s *outboxStore) IncrementReceiveCount(ctx context.Context, messageIDs []string) error {
+func (s *outboxStore) IncrementReceiveCount(ctx context.Context, messageIDs []int64) error {
 	if len(messageIDs) == 0 {
 		return nil
 	}
@@ -236,6 +358,7 @@ func (s *outboxStore) IncrementReceiveCount(ctx context.Context, messageIDs []st
 		SQLTemplate: sqltemplate.New(s.dialect),
 		MessageIDs:  messageIDs,
 	}
+
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxUpdateReceiveCount, req)
 	if err != nil {
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxUpdateReceiveCount.Name(), err)

@@ -1540,13 +1540,17 @@
     {
       "metadata": {
         "name": "jaegerBackendMigration",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2024-11-15T14:40:20Z"
+        "resourceVersion": "1751465665226",
+        "creationTimestamp": "2024-11-15T14:40:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-02 14:14:25.226989 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables querying the Jaeger data source without the proxy",
-        "stage": "experimental",
-        "codeowner": "@grafana/oss-big-tent"
+        "stage": "GA",
+        "codeowner": "@grafana/oss-big-tent",
+        "expression": "true"
       }
     },
     {
@@ -1884,8 +1888,9 @@
     {
       "metadata": {
         "name": "lokiQueryHints",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-12-18T20:43:16Z"
+        "resourceVersion": "1743693517832",
+        "creationTimestamp": "2023-12-18T20:43:16Z",
+        "deletionTimestamp": "2025-06-12T12:14:47Z"
       },
       "spec": {
         "description": "Enables query hints for Loki",
@@ -2631,7 +2636,8 @@
       "metadata": {
         "name": "regressionTransformation",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-11-24T14:49:16Z"
+        "creationTimestamp": "2023-11-24T14:49:16Z",
+        "deletionTimestamp": "2025-07-01T13:24:02Z"
       },
       "spec": {
         "description": "Enables regression analysis transformation",
@@ -2853,7 +2859,8 @@
       "metadata": {
         "name": "ssoSettingsApi",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-11-08T09:50:01Z"
+        "creationTimestamp": "2023-11-08T09:50:01Z",
+        "deletionTimestamp": "2025-07-02T14:16:57Z"
       },
       "spec": {
         "description": "Enables the SSO settings API and the OAuth configuration UIs in Grafana",

@@ -3,10 +3,10 @@ import { get, set } from 'lodash';
 import { ScopedVars } from '@grafana/data';
 import { VariableInterpolation } from '@grafana/runtime';
 
-import createMockQuery from '../__mocks__/query';
-import { createTemplateVariables } from '../__mocks__/utils';
-import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
+import createMockQuery from '../mocks/query';
+import { createTemplateVariables } from '../mocks/utils';
+import { multiVariable } from '../mocks/variables';
 import {
   AzureAPIResponse,
   AzureMonitorDataSourceInstanceSettings,

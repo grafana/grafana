@@ -1095,11 +1095,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "DescendantCounts",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "DescendantCounts",
             "version": "v1beta1"
           }
         ]
@@ -1150,11 +1145,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "Folder",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "Folder",
             "version": "v1beta1"
           }
         ]
@@ -1195,11 +1185,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderAccessInfo",
-            "version": "__internal"
-          },
           {
             "group": "folder.grafana.app",
             "kind": "FolderAccessInfo",
@@ -1282,11 +1267,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderInfoList",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderInfoList",
             "version": "v1beta1"
           }
         ]
@@ -1327,11 +1307,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderList",
-            "version": "__internal"
-          },
           {
             "group": "folder.grafana.app",
             "kind": "FolderList",
