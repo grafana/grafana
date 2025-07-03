@@ -34,7 +34,7 @@ func TestIntegration_provideLiveService_RedisUnavailable(t *testing.T) {
 
 	cfg.LiveHAEngine = "testredisunavailable"
 
-	_, err := setupLiveService(nil, t)
+	_, err := setupLiveService(cfg, t)
 
 	// Proceeds without live HA if redis is unavailable
 	require.NoError(t, err)
