@@ -2,36 +2,46 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = '5SdHCasdf';
 
-// TODO this test can interfere with other tests that set user preferences
+const USER = 'dashboard-timepicker-test';
+const PASSWORD = 'dashboard-timepicker-test';
+
+// Separate user to isolate changes from other tests
+test.use({
+  user: {
+    user: USER,
+    password: PASSWORD,
+  },
+  storageState: {
+    cookies: [],
+    origins: [],
+  },
+});
+
 test.describe(
   'Dashboard timepicker',
   {
     tag: ['@dashboards'],
   },
   () => {
-    test.afterEach(async ({ request }) => {
-      // Reset user preferences after each test
-      await request.put('/api/user/preferences', {
-        data: {
-          timezone: '',
-        },
-      });
-    });
-
     test('Shows the correct calendar days with custom timezone set via preferences', async ({
+      createUser,
       page,
       gotoDashboardPage,
       dashboardPage,
       selectors,
-      request,
     }) => {
+      await createUser();
+      // login manually for now
+      await page.getByTestId(selectors.pages.Login.username).fill(USER);
+      await page.getByTestId(selectors.pages.Login.password).fill(PASSWORD);
+      await page.getByTestId(selectors.pages.Login.submit).click();
+      await expect(page.getByTestId(selectors.components.NavToolbar.commandPaletteTrigger)).toBeVisible();
+
       // Set user preferences for timezone
-      const preferencesResponse = await request.put('/api/user/preferences', {
-        data: {
-          timezone: 'Asia/Tokyo',
-        },
-      });
-      expect(preferencesResponse.status()).toBe(200);
+      await page.goto('/profile');
+      await page.getByTestId(selectors.components.TimeZonePicker.containerV2).click();
+      await page.getByRole('option', { name: 'Asia/Tokyo' }).click();
+      await page.getByTestId(selectors.components.UserProfile.preferencesSaveButton).click();
 
       // Open dashboard with time range from 8th to end of 10th.
       // Will be Tokyo time because of above preference
@@ -52,11 +62,19 @@ test.describe(
     });
 
     test('Shows the correct calendar days with custom timezone set via time picker', async ({
+      createUser,
       page,
       gotoDashboardPage,
       dashboardPage,
       selectors,
     }) => {
+      await createUser();
+      // login manually for now
+      await page.getByTestId(selectors.pages.Login.username).fill(USER);
+      await page.getByTestId(selectors.pages.Login.password).fill(PASSWORD);
+      await page.getByTestId(selectors.pages.Login.submit).click();
+      await expect(page.getByTestId(selectors.components.NavToolbar.commandPaletteTrigger)).toBeVisible();
+
       // Open dashboard with time range from 2022-06-08 00:00:00 to 2022-06-10 23:59:59 in Tokyo time
       await gotoDashboardPage({
         uid: DASHBOARD_UID,

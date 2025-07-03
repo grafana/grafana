@@ -15,7 +15,7 @@ test.describe(
       await expect(panelTitle).toBeVisible();
 
       // Check that the panel is visible
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))).toBeHidden();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))).toHaveCount(0);
       await expect(panelTitle.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
 
       // Open panel menu and click edit
@@ -63,7 +63,7 @@ test.describe(
       );
 
       // Check that table view works
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))).toBeHidden();
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.loadingBar(''))).toHaveCount(0);
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleTableView).click({ force: true });
       const tableHeader = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Table.header);
       await expect(tableHeader).toBeVisible();
