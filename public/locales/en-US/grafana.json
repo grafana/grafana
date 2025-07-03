@@ -5376,15 +5376,9 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
-      "not-saved": "The value is not yet saved in the Grafana database",
       "not-yet-saved": "The value is not saved in the Grafana database",
-      "open-pull-request-in-git-hub": "Open pull request in GitHub",
-      "title-dashboard-loaded-branch-git-hub": "This dashboard is loaded from a branch in GitHub.",
       "title-dashboard-loaded-external-repository": "This dashboard is loaded from an external repository",
-      "title-dashboard-loaded-request-git-hub": "This dashboard is loaded from a pull request in GitHub.",
-      "title-error-loading-dashboard": "Error loading dashboard",
-      "value-not-saved": "The value is not yet saved in the Grafana database",
-      "view-pull-request-in-git-hub": "View pull request in GitHub"
+      "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
       "text": {
@@ -9958,6 +9952,13 @@
       "name": "Name",
       "teams": "Teams",
       "text-loading-teams": "Loading teams..."
+    }
+  },
+  "provisioned-resource": {
+    "preview-banner": {
+      "not-saved": "The value is not yet saved in the Grafana database",
+      "open-pull-request-in-git-hub": "{btnText}",
+      "title-dashboard-loaded-branch-git-hub": ""
     }
   },
   "provisioned-resource-form": {

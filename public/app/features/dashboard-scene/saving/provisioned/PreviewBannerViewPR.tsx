@@ -4,6 +4,11 @@ import { Alert, Icon, Stack } from '@grafana/ui';
 
 import { commonAlertProps } from './DashboardPreviewBanner';
 
+// TODO: We have this https://github.com/grafana/git-ui-sync-project/issues/166 to add more details about the PR.
+
+/**
+ * @description This component is used to display a banner when a provisioned dashboard/folder is created or loaded from a new branch in Github.
+ */
 export function PreviewBannerViewPR({
   prParam,
   isFolder = false,
