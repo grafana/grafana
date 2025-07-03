@@ -1072,8 +1072,9 @@ A custom error message for when users are unauthorized. Default is a key for an 
 A custom message for OAuth authorization failures. Use this to direct users to appropriate resources for gaining access. When set, this overrides the default "User is not authorized" message. This setting can be used to provide helpful guidance to users who are denied access, such as directing them to contact their administrator or apply for access.
 
 Example:
+
 ```ini
-oauth_authorization_error_message = You are not authorized to access this Grafana instance. Please contact your IT administrator or visit https://company.com/access-request to request access.
+oauth_authorization_error_message = You are not authorized to access this Grafana instance.
 ```
 
 You can also configure provider-specific authorization error messages by setting the `authorization_error_message` option in individual OAuth provider configurations:
