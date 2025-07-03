@@ -913,7 +913,10 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
  * adhocFilters={key:"instance", operator:"=", value:"localhost"}
  * returns {__name__=~"metricName", instance="localhost"}
  */
-export const extractResourceMatcher = (queries: PromQuery[], adhocFilters: AdHocVariableFilter[]): string => {
+export const extractResourceMatcher = (
+  queries: PromQuery[],
+  adhocFilters: AdHocVariableFilter[]
+): string | undefined => {
   // Extract metric names from queries we have already
   const metricMatch = populateMatchParamsFromQueries(queries);
   const labelFilters: QueryBuilderLabelFilter[] = adhocFilters.map((f) => ({
@@ -924,5 +927,9 @@ export const extractResourceMatcher = (queries: PromQuery[], adhocFilters: AdHoc
   // Extract label filters from the filters we have already
   const labelsMatch = renderLabelsWithoutBrackets(labelFilters);
   // Create a matcher using metric names and label filters
-  return `{${[metricMatch, ...labelsMatch].join(',')}}`;
+  if (metricMatch.length === 0 && labelsMatch.length === 0) {
+    return undefined;
+  }
+
+  return `{${[...metricMatch, ...labelsMatch].join(',')}}`;
 };
