@@ -47,7 +47,6 @@ import { LokiQuery } from './types';
 
 export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = datasource
-    .interpolateVariablesInQueries(request.targets, request.scopedVars)
     .filter((query) => query.expr)
     .filter((query) => !query.hide)
     .map((query) => datasource.applyTemplateVariables(query, request.scopedVars, request.filters));
