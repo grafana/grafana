@@ -739,6 +739,7 @@ export interface FeatureToggles {
   crashDetection?: boolean;
   /**
   * Enables querying the Jaeger data source without the proxy
+  * @default true
   */
   jaegerBackendMigration?: boolean;
   /**
@@ -1011,4 +1012,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
+  /**
+  * Enables use of app platform API for folders
+  * @default false
+  */
+  foldersAppPlatformAPI?: boolean;
 }
