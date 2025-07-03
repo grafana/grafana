@@ -9,7 +9,10 @@ test.use({
     user: I18N_USER,
     password: I18N_PASSWORD,
   },
-  storageState: `playwright/.auth/${I18N_USER}.json`,
+  storageState: {
+    cookies: [],
+    origins: [],
+  },
 });
 
 test.describe(
@@ -32,7 +35,12 @@ test.describe(
     // and verifies that the corresponding label is translated correctly
     test('loads all the languages correctly', async ({ page, selectors, createUser, login }) => {
       await createUser();
-      await login();
+      // login manually for now
+      await page.getByTestId(selectors.pages.Login.username).fill(I18N_USER);
+      await page.getByTestId(selectors.pages.Login.password).fill(I18N_PASSWORD);
+      await page.getByTestId(selectors.pages.Login.submit).click();
+      await expect(page.getByTestId(selectors.components.NavToolbar.commandPaletteTrigger)).toBeVisible();
+
       // Navigate to profile page
       await page.goto('/profile');
 
