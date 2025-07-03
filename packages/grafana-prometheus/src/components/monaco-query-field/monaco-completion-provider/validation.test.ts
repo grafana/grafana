@@ -69,7 +69,9 @@ sum by (job) (
     const queryLines = query.split('\n');
     expect(validateQuery(query, query, queryLines, parser)).toEqual({
       errors: [],
-      warnings: [{ endColumn: 32, endLineNumber: 1, issue: warningTypes.SubqueryExpr, startColumn: 6, startLineNumber: 1 }],
+      warnings: [
+        { endColumn: 32, endLineNumber: 1, issue: warningTypes.SubqueryExpr, startColumn: 6, startLineNumber: 1 },
+      ],
     });
   });
 
@@ -80,7 +82,7 @@ sum by (job) (
       errors: [],
       warnings: [
         { issue: warningTypes.SubqueryExpr, startColumn: 25, endColumn: 65, startLineNumber: 1, endLineNumber: 1 },
-        { issue: warningTypes.SubqueryExpr, startColumn: 30, endColumn: 56, startLineNumber: 1, endLineNumber: 1 }
+        { issue: warningTypes.SubqueryExpr, startColumn: 30, endColumn: 56, startLineNumber: 1, endLineNumber: 1 },
       ],
     });
   });
