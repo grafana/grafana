@@ -8,7 +8,7 @@ import { simpleContactPointsListScenario, withErrorScenario } from './ContactPoi
 
 const meta: Meta<typeof ContactPointSelector> = {
   component: ContactPointSelector,
-  title: 'zzz_ContactPointSelector',
+  title: 'ContactPointSelector',
   decorators: defaultDecorators,
   parameters: {
     docs: {

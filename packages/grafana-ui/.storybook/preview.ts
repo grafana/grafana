@@ -71,6 +71,16 @@ const preview: Preview = {
       // Sort stories first by Docs Overview, then alphabetically
       // We should be able to use the builtin alphabetical sort, but is broken in SB 7.0
       // https://github.com/storybookjs/storybook/issues/22470
+
+      // Story sorting is weird - All stories are sorted as a single 1D list, but then grouped in the UI.
+      // Story titles are generally in the format of [Category]/[Component]/[Story]. However, some categories
+      // will have an additional `Deprecated` sub folder before the [Component]
+      //
+      // We want to have multi-level sorting where:
+      // - The top level category has an explicit order
+      // - Components are sorted alphabetically within their category
+      //   - Except the Deprecated folder, which is sorted to the bottom
+      // - Stories per component use the default file sort order
       storySort: (a, b) => {
         const CATEGORY_ORDER = [
           // Should all be lowercase
@@ -90,16 +100,14 @@ const preview: Preview = {
           'navigation',
 
           'plugins',
+          'alerting',
           'developers',
-
-          'zzz_general',
-          'zzz_alerting',
         ];
 
         const aTitle = a.title.toLowerCase();
         const bTitle = b.title.toLowerCase();
-        const [aCategory] = aTitle.split('/');
-        const [bCategory] = bTitle.split('/');
+        const [aCategory, aComponent] = aTitle.split('/');
+        const [bCategory, bComponent] = bTitle.split('/');
 
         //
         // Sort by category order first
@@ -133,8 +141,15 @@ const preview: Preview = {
           return 1;
         }
 
+        //
+        if (aComponent !== bComponent) {
+          return aComponent.localeCompare(bComponent, undefined, { numeric: true });
+        }
+
+        return 0;
+
         // Otherwise, sort alphabetically
-        return a.title.localeCompare(b.title, undefined, { numeric: true });
+        // return a.title.localeCompare(b.title, undefined, { numeric: true });
       },
     },
   },
