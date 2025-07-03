@@ -15,6 +15,7 @@ import {
 
 import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -33,10 +34,11 @@ import {
   useColumnResize,
   useFilteredRows,
   useFooterCalcs,
+  useHeaderHeight,
   usePaginatedRows,
   useRowHeight,
   useSortedRows,
-  useTextWraps,
+  useTypographyCtx,
 } from './hooks';
 import { TableNGProps, TableRow, TableSummaryRow, TableColumn, ContextMenuProps } from './types';
 import {
@@ -48,11 +50,12 @@ import {
   getVisibleFields,
   shouldTextOverflow,
   getApplyToRowBgFn,
-  getColumnTypes,
   computeColWidths,
   applySort,
   getCellColors,
   getCellOptions,
+  shouldTextWrap,
+  isCellInspectEnabled,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -116,7 +119,6 @@ export function TableNG(props: TableNGProps) {
   }, [isContextMenuOpen]);
 
   const rows = useMemo(() => frameToRecords(data), [data]);
-  const columnTypes = useMemo(() => getColumnTypes(data.fields), [data.fields]);
   const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
 
   const {
@@ -131,9 +133,10 @@ export function TableNG(props: TableNGProps) {
     rows: sortedRows,
     sortColumns,
     setSortColumns,
-  } = useSortedRows(filteredRows, data.fields, { columnTypes, hasNestedFrames, initialSortBy });
+  } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = useMemo(() => getDefaultRowHeight(theme, cellHeight), [theme, cellHeight]);
+  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
+  const defaultHeaderHeight = getDefaultRowHeight(theme, TableCellHeight.Sm);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
@@ -143,8 +146,26 @@ export function TableNG(props: TableNGProps) {
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
     [width, hasNestedFrames]
   );
+  const typographyCtx = useTypographyCtx();
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
-  const rowHeight = useRowHeight(widths, visibleFields, hasNestedFrames, defaultRowHeight, expandedRows);
+  const headerHeight = useHeaderHeight({
+    columnWidths: widths,
+    fields: visibleFields,
+    enabled: hasHeader,
+    defaultHeight: defaultHeaderHeight,
+    sortColumns,
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx,
+  });
+  const rowHeight = useRowHeight({
+    columnWidths: widths,
+    fields: visibleFields,
+    hasNestedFrames,
+    defaultHeight: defaultRowHeight,
+    headerHeight,
+    expandedRows,
+    typographyCtx,
+  });
 
   const {
     rows: paginatedRows,
@@ -158,13 +179,12 @@ export function TableNG(props: TableNGProps) {
     enabled: enablePagination,
     width: availableWidth,
     height,
-    hasHeader,
-    hasFooter,
+    headerHeight,
+    footerHeight: hasFooter ? defaultRowHeight : 0,
     rowHeight,
   });
 
   // Create a map of column key to text wrap
-  const textWraps = useTextWraps(data.fields);
   const footerCalcs = useFooterCalcs(sortedRows, data.fields, { enabled: hasFooter, footerOptions, isCountRowsSet });
   const applyToRowBgFn = useMemo(() => getApplyToRowBgFn(data.fields, theme) ?? undefined, [data.fields, theme]);
 
@@ -217,16 +237,16 @@ export function TableNG(props: TableNGProps) {
         sortColumns,
         rowHeight,
         headerRowClass: styles.headerRow,
-        headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
+        headerRowHeight: headerHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
       enableVirtualization,
       resizeHandler,
       sortColumns,
-      rowHeight,
+      headerHeight,
       styles.headerRow,
-      noHeader,
+      rowHeight,
       hasFooter,
       setSortColumns,
       onSortByChange,
@@ -253,7 +273,7 @@ export function TableNG(props: TableNGProps) {
         const cellOptions = getCellOptions(field);
         const renderFieldCell = getCellRenderer(field, cellOptions);
 
-        const cellInspect = Boolean(field.config.custom?.inspect);
+        const cellInspect = isCellInspectEnabled(field);
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
         const showActions = cellInspect || showFilters;
         const width = widths[i];
@@ -269,9 +289,8 @@ export function TableNG(props: TableNGProps) {
           : undefined;
 
         const cellType = cellOptions.type;
-        const fieldType = columnTypes[displayName];
-        const shouldWrap = textWraps[displayName];
-        const shouldOverflow = shouldTextOverflow(fieldType, cellType, shouldWrap, cellInspect);
+        const shouldOverflow = shouldTextOverflow(field);
+        const shouldWrap = shouldTextWrap(field);
 
         let lastRowIdx = -1;
         let _rowHeight = 0;
@@ -327,7 +346,7 @@ export function TableNG(props: TableNGProps) {
                 cellOptions,
                 frame,
                 field,
-                height,
+                height: _rowHeight,
                 justifyContent,
                 rowIdx,
                 theme,
@@ -361,7 +380,7 @@ export function TableNG(props: TableNGProps) {
           width,
           headerCellClass,
           renderCell: renderCellContent,
-          renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
+          renderHeaderCell: ({ column, sortDirection }) => (
             <HeaderCell
               column={column}
               rows={rows}
@@ -474,6 +493,7 @@ export function TableNG(props: TableNGProps) {
 
     return result;
   }, [
+    applyToRowBgFn,
     availableWidth,
     commonDataGridProps,
     crossFilterOrder,
@@ -490,8 +510,8 @@ export function TableNG(props: TableNGProps) {
     onCellFilterAdded,
     panelContext,
     replaceVariables,
-    rows,
     rowHeight,
+    rows,
     setFilter,
     showTypeIcons,
     sortColumns,
@@ -499,10 +519,6 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
-    applyToRowBgFn,
-    columnTypes,
-    height,
-    textWraps,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
@@ -698,7 +714,11 @@ const getGridStyles = (
   headerRow: css({
     paddingBlockStart: 0,
     fontWeight: 'normal',
-    ...(noHeader && { display: 'none' }),
+    ...(noHeader ? { display: 'none' } : {}),
+    '& .rdg-cell': {
+      height: '100%',
+      alignItems: 'flex-end',
+    },
   }),
   paginationContainer: css({
     alignItems: 'center',
@@ -736,9 +756,11 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
     gap: theme.spacing(0.5),
     zIndex: theme.zIndex.tooltip - 1,
     paddingInline: TABLE.CELL_PADDING,
-    paddingBlock: TABLE.CELL_PADDING,
-    borderInlineEnd: 'none',
+    paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
+    '&:last-child': {
+      borderInlineEnd: 'none',
+    },
   }),
 });
 
