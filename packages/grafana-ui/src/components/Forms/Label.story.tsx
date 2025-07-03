@@ -4,7 +4,7 @@ import { Label } from './Label';
 import mdx from './Label.mdx';
 
 const meta: Meta<typeof Label> = {
-  title: 'Form layout/Label',
+  title: 'Forms/Label',
   component: Label,
   argTypes: {
     children: { control: { type: 'text' } },

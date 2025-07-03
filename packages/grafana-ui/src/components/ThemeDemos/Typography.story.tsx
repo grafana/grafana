@@ -5,11 +5,10 @@ import * as React from 'react';
 import { Divider } from '../Divider/Divider';
 import { Field } from '../Forms/Field';
 import { Stack } from '../Layout/Stack/Stack';
-
-import { Text } from './Text';
+import { Text } from '../Text/Text';
 
 const meta: Meta = {
-  title: 'Foundations/Typography',
+  title: 'Developers/Typography',
 };
 
 const FONT_WEIGHTS = [/*100, 200, 300, */ 400, 500 /*600, 700, 800, 900*/];

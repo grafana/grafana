@@ -4,7 +4,7 @@ import { InlineLabel, Props } from './InlineLabel';
 import mdx from './InlineLabel.mdx';
 
 const meta: Meta<typeof InlineLabel> = {
-  title: 'Form layout/InlineLabel',
+  title: 'Forms/InlineLabel',
   component: InlineLabel,
   parameters: {
     docs: {

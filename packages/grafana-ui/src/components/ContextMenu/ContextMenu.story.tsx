@@ -10,7 +10,7 @@ import { renderMenuItems } from './ContextMenuStoryHelper';
 import { WithContextMenu, WithContextMenuProps } from './WithContextMenu';
 
 const meta: Meta<typeof ContextMenu> = {
-  title: 'Navigation/ContextMenu',
+  title: 'Overlays/ContextMenu',
   component: ContextMenu,
   parameters: {
     docs: {

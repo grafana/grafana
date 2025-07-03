@@ -4,7 +4,7 @@ import { Legend } from './Legend';
 import mdx from './Legend.mdx';
 
 const meta: Meta<typeof Legend> = {
-  title: 'Form layout/Legend',
+  title: 'Forms/Legend',
   component: Legend,
   parameters: {
     docs: {

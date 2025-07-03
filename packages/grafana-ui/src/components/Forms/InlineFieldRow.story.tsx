@@ -7,7 +7,7 @@ import { InlineFieldRow } from './InlineFieldRow';
 import mdx from './InlineFieldRow.mdx';
 
 const meta: Meta<typeof InlineFieldRow> = {
-  title: 'Form layout/InlineFieldRow',
+  title: 'Forms/InlineFieldRow',
   component: InlineFieldRow,
   parameters: {
     docs: {

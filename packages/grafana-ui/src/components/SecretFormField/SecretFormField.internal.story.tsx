@@ -5,7 +5,7 @@ import { Meta, StoryFn } from '@storybook/react';
 import { SecretFormField } from './SecretFormField';
 
 const meta: Meta<typeof SecretFormField> = {
-  title: 'Form layout/Deprecated/SecretFormField',
+  title: 'Forms/Deprecated/SecretFormField',
   component: SecretFormField,
   parameters: {
     controls: {
