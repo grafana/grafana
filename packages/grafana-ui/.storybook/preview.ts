@@ -76,20 +76,21 @@ const preview: Preview = {
           'docs overview',
           'foundations',
           'iconography',
-
           'layout',
 
-          'form layout',
+          'forms',
           'inputs',
+          'pickers',
           'date time pickers',
 
           'information',
-          'plugins',
           'overlays',
           'utilities',
-          'pickers',
           'navigation',
+
+          'plugins',
           'developers',
+
           'zzz_general',
           'zzz_alerting',
         ];
@@ -131,8 +132,8 @@ const preview: Preview = {
           return 1;
         }
 
-        // Otherwise, just use the default sort order
-        return 0;
+        // Otherwise, sort alphabetically
+        return a.title.localeCompare(b.title, undefined, { numeric: true });
       },
     },
   },

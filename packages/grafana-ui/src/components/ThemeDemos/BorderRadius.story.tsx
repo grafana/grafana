@@ -3,7 +3,7 @@ import { Meta, StoryFn } from '@storybook/react';
 import { BorderRadiusContainer } from './BorderRadius';
 
 const meta: Meta = {
-  title: 'Utilities/Border radius',
+  title: 'Developers/Border radius',
   component: BorderRadiusContainer,
   decorators: [],
   parameters: {
