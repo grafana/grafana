@@ -22,6 +22,11 @@ alertRule: {
 			}
 			selectableFields: [
 				"spec.title",
+				"spec.paused",
+				"spec.dashboardUID",
+				"spec.panelID",
+				"spec.notificationSettings.receiver",
+				// TODO: add status fields for filtering
 			]
 		}
 	}

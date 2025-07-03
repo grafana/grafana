@@ -170,6 +170,10 @@ spec:
             status: {}
           selectableFields:
             - jsonPath: .spec.title
+            - jsonPath: .spec.paused
+            - jsonPath: .spec.dashboardUID
+            - jsonPath: .spec.panelID
+            - jsonPath: .spec.notificationSettings.receiver
     names:
         kind: AlertRule
         plural: alertrules

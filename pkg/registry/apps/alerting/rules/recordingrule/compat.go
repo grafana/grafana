@@ -134,6 +134,9 @@ func ConvertToDomainModel(k8sRule *model.RecordingRule) (*ngmodels.AlertRule, er
 		})
 
 		if query.Source != nil && *query.Source {
+			if domainRule.Condition != "" {
+				return nil, fmt.Errorf("multiple queries marked as source: %s and %s", domainRule.Condition, refID)
+			}
 			domainRule.Condition = refID
 		}
 	}

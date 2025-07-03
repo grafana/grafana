@@ -61,6 +61,8 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		RuleType:      ngmodels.RuleTypeFilterAlerting,
 		Limit:         opts.Limit,
 		ContinueToken: opts.Continue,
+		// TODO: add field selectors for filtering
+		// TODO: add label selectors for filtering on group and folders
 	})
 	if err != nil {
 		return nil, err
@@ -86,10 +88,16 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	return obj, err
 }
 
-func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
 	}
 
 	p, ok := obj.(*model.AlertRule)
@@ -113,7 +121,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, _ rest.V
 	return ConvertToK8sResource(user.GetOrgID(), &created, s.namespacer)
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
@@ -182,5 +190,6 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
 	// TODO: should we support this?
+	// @moustafab: I think so, as we support a bulk delete operation in the current API.
 	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
 }

@@ -28,7 +28,8 @@ func ConvertToK8sResource(
 	if rule.Type() != ngmodels.RuleTypeAlerting {
 		return nil, invalidRuleError
 	}
-
+	// TODO: add the common metadata fields
+	// TODO: figure out how the rule folder is supposed to be mapped on k8s objects
 	k8sRule := &model.AlertRule{
 		ObjectMeta: metav1.ObjectMeta{
 			UID:       types.UID(rule.UID),
@@ -207,52 +208,56 @@ func ConvertToDomainModel(k8sRule *model.AlertRule) (*ngmodels.AlertRule, error)
 		})
 
 		if query.Source != nil && *query.Source {
+			if domainRule.Condition != "" {
+				return nil, fmt.Errorf("multiple queries marked as source: %s and %s", domainRule.Condition, refID)
+			}
 			domainRule.Condition = refID
 		}
 	}
 
-	// Technically this is a singleton, but we'll iterate over it to be safe.
 	sourceSettings := k8sRule.Spec.NotificationSettings
-	settings := ngmodels.NotificationSettings{
-		Receiver: sourceSettings.Receiver,
-		GroupBy:  sourceSettings.GroupBy,
-	}
-	if sourceSettings.GroupWait != nil {
-		groupWait, err := prom_model.ParseDuration(*sourceSettings.GroupWait)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse duration: %w", err)
+	if sourceSettings != nil {
+		settings := ngmodels.NotificationSettings{
+			Receiver: sourceSettings.Receiver,
+			GroupBy:  sourceSettings.GroupBy,
 		}
-		settings.GroupWait = &groupWait
-	}
-	if sourceSettings.GroupInterval != nil {
-		groupInterval, err := prom_model.ParseDuration(*sourceSettings.GroupInterval)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse duration: %w", err)
+		if sourceSettings.GroupWait != nil {
+			groupWait, err := prom_model.ParseDuration(*sourceSettings.GroupWait)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse duration: %w", err)
+			}
+			settings.GroupWait = &groupWait
 		}
-		settings.GroupInterval = &groupInterval
-	}
-	if sourceSettings.RepeatInterval != nil {
-		repeatInterval, err := prom_model.ParseDuration(*sourceSettings.RepeatInterval)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse duration: %w", err)
+		if sourceSettings.GroupInterval != nil {
+			groupInterval, err := prom_model.ParseDuration(*sourceSettings.GroupInterval)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse duration: %w", err)
+			}
+			settings.GroupInterval = &groupInterval
 		}
-		settings.RepeatInterval = &repeatInterval
-	}
-	if sourceSettings.MuteTimeIntervals != nil {
-		settings.MuteTimeIntervals = make([]string, 0, len(sourceSettings.MuteTimeIntervals))
-		for _, m := range sourceSettings.MuteTimeIntervals {
-			muteInterval := string(m)
-			settings.MuteTimeIntervals = append(settings.MuteTimeIntervals, muteInterval)
+		if sourceSettings.RepeatInterval != nil {
+			repeatInterval, err := prom_model.ParseDuration(*sourceSettings.RepeatInterval)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse duration: %w", err)
+			}
+			settings.RepeatInterval = &repeatInterval
 		}
-	}
-	if sourceSettings.ActiveTimeIntervals != nil {
-		settings.ActiveTimeIntervals = make([]string, 0, len(sourceSettings.ActiveTimeIntervals))
-		for _, a := range sourceSettings.ActiveTimeIntervals {
-			activeTimeInterval := string(a)
-			settings.ActiveTimeIntervals = append(settings.ActiveTimeIntervals, activeTimeInterval)
+		if sourceSettings.MuteTimeIntervals != nil {
+			settings.MuteTimeIntervals = make([]string, 0, len(sourceSettings.MuteTimeIntervals))
+			for _, m := range sourceSettings.MuteTimeIntervals {
+				muteInterval := string(m)
+				settings.MuteTimeIntervals = append(settings.MuteTimeIntervals, muteInterval)
+			}
 		}
+		if sourceSettings.ActiveTimeIntervals != nil {
+			settings.ActiveTimeIntervals = make([]string, 0, len(sourceSettings.ActiveTimeIntervals))
+			for _, a := range sourceSettings.ActiveTimeIntervals {
+				activeTimeInterval := string(a)
+				settings.ActiveTimeIntervals = append(settings.ActiveTimeIntervals, activeTimeInterval)
+			}
+		}
+		domainRule.NotificationSettings[0] = settings
 	}
-	domainRule.NotificationSettings[0] = settings
 
 	return domainRule, nil
 }

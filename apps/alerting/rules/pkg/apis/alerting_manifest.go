@@ -38,6 +38,10 @@ var appManifestData = app.ManifestData{
 					Schema: &versionSchemaAlertRulev0alpha1,
 					SelectableFields: []string{
 						"spec.title",
+						"spec.paused",
+						"spec.dashboardUID",
+						"spec.panelID",
+						"spec.notificationSettings.receiver",
 					},
 				},
 			},

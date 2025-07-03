@@ -22,6 +22,9 @@ recordingRule: {
 			}
 			selectableFields: [
 				"spec.title",
+				"spec.metric",
+				"spec.targetDatasourceUID",
+				// TODO: add status fields for filtering
 			]
 		}
 	}

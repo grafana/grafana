@@ -84,6 +84,7 @@ type ListAlertRulesOptions struct {
 	RuleType      models.RuleTypeFilter
 	Limit         int64
 	ContinueToken string
+	// TODO: plumb more options
 }
 
 func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identity.Requester, opts ListAlertRulesOptions) (rules []*models.AlertRule, provenances map[string]models.Provenance, nextToken string, err error) {

@@ -61,6 +61,8 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		RuleType:      ngmodels.RuleTypeFilterRecording,
 		Limit:         opts.Limit,
 		ContinueToken: opts.Continue,
+		// TODO: add field selectors for filtering
+		// TODO: add label selectors for filtering on group and folders
 	})
 	if err != nil {
 		return nil, err

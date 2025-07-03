@@ -13,7 +13,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaAlertRule = resource.NewSimpleSchema("rules.alerting.grafana.app", "v0alpha1", &AlertRule{}, &AlertRuleList{}, resource.WithKind("AlertRule"),
-		resource.WithPlural("alertrules"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{resource.SelectableField{
+		resource.WithPlural("alertrules"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
 			FieldSelector: "spec.title",
 			FieldValueFunc: func(o resource.Object) (string, error) {
 				cast, ok := o.(*AlertRule)
@@ -23,6 +23,55 @@ var (
 				return cast.Spec.Title, nil
 			},
 		},
+			{
+				FieldSelector: "spec.paused",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*AlertRule)
+					if !ok {
+						return "", fmt.Errorf("provided object must be of type *AlertRule")
+					}
+					if cast.Spec.Paused == nil {
+						return "", nil
+					}
+					return fmt.Sprintf("%v", *cast.Spec.Paused), nil
+				},
+			},
+			{
+				FieldSelector: "spec.dashboardUID",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*AlertRule)
+					if !ok {
+						return "", fmt.Errorf("provided object must be of type *AlertRule")
+					}
+					if cast.Spec.DashboardUID == nil {
+						return "", nil
+					}
+					return *cast.Spec.DashboardUID, nil
+				},
+			},
+			{
+				FieldSelector: "spec.panelID",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*AlertRule)
+					if !ok {
+						return "", fmt.Errorf("provided object must be of type *AlertRule")
+					}
+					if cast.Spec.PanelID == nil {
+						return "", nil
+					}
+					return fmt.Sprintf("%d", *cast.Spec.PanelID), nil
+				},
+			},
+			{
+				FieldSelector: "spec.notificationSettings.receiver",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*AlertRule)
+					if !ok {
+						return "", fmt.Errorf("provided object must be of type *AlertRule")
+					}
+					return cast.Spec.NotificationSettings.Receiver, nil
+				},
+			},
 		}))
 	kindAlertRule = resource.Kind{
 		Schema: schemaAlertRule,
