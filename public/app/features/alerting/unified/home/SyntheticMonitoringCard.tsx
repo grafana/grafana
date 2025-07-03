@@ -1,13 +1,13 @@
 import { t } from '@grafana/i18n';
 import syntheticMonitoringSvg from 'img/synthetic_monitoring_logo.svg';
 
-import { AdCard } from './AdCard';
+import AdCard from './AdCard';
 
 const LINK =
   'https://grafana.com/auth/sign-up/create-user?synthetic-monitoring=&redirectPath=synthetic-monitoring&utm_source=oss-grafana&cnt=alerting-synthetic-monitoring';
 const HELP_FLAG_SYNTHETIC_MONITORING = 0x0008;
 
-export function SyntheticMonitoringCard() {
+export default function SyntheticMonitoringCard() {
   return (
     <AdCard
       title={t('alerting.home.synthetic-monitoring-card-title', 'Synthetic Monitoring')}

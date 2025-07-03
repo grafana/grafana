@@ -1,13 +1,13 @@
 import { t } from '@grafana/i18n';
 import irmSvg from 'img/irm_logo.svg';
 
-import { AdCard } from './AdCard';
+import AdCard from './AdCard';
 
 const LINK =
   'https://grafana.com/auth/sign-up/create-user?irm=&redirectPath=irm&utm_source=oss-grafana&cnt=alerting-irm';
 const HELP_FLAG_IRM = 0x0010;
 
-export function IRMCard() {
+export default function IRMCard() {
   return (
     <AdCard
       title={t('alerting.home.irm-card-title', 'Incident response and management')}

@@ -8,10 +8,10 @@ import { isLocalDevEnv } from '../utils/misc';
 import { withPageErrorBoundary } from '../withPageErrorBoundary';
 
 import GettingStarted, { WelcomeHeader } from './GettingStarted';
-import { IRMCard } from './IRMCard';
+import IRMCard from './IRMCard';
 import { getInsightsScenes, insightsIsAvailable } from './Insights';
 import { PluginIntegrations } from './PluginIntegrations';
-import { SyntheticMonitoringCard } from './SyntheticMonitoringCard';
+import SyntheticMonitoringCard from './SyntheticMonitoringCard';
 
 function Home() {
   const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
