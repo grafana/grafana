@@ -4,7 +4,7 @@ import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
-import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -16,6 +16,7 @@ import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import { DropImageUploadHandler } from './features/drop-image/DropImageUploadHandler';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
@@ -122,12 +123,19 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                     <ScopesContextProvider>
                       <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
                         <MaybeExtensionSidebarProvider>
-                          <GlobalStylesWrapper />
-                          <div className="grafana-app">
-                            <RouterWrapper {...routerWrapperProps} />
-                            <LiveConnectionWarning />
-                            <PortalContainer />
-                          </div>
+                          <DropImageUploadHandler
+                            onDecoded={(url: string) => {
+                              locationService.push(url);
+                            }}
+                          >
+                            <GlobalStylesWrapper />
+
+                            <div className="grafana-app">
+                              <RouterWrapper {...routerWrapperProps} />
+                              <LiveConnectionWarning />
+                              <PortalContainer />
+                            </div>
+                          </DropImageUploadHandler>
                         </MaybeExtensionSidebarProvider>
                       </ExtensionRegistriesProvider>
                     </ScopesContextProvider>

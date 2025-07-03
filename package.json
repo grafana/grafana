@@ -370,6 +370,7 @@
     "moveable": "0.53.0",
     "nanoid": "^5.0.9",
     "node-forge": "^1.3.1",
+    "node-stego": "portal:./../hackathon/2025-June/node-stego",
     "ol": "7.4.0",
     "ol-ext": "4.0.33",
     "pluralize": "^8.0.0",
