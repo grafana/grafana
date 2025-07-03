@@ -12,12 +12,9 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Verify variable interpolation works', async ({ page, gotoDashboardPage, dashboardPage }) => {
+    test('Verify variable interpolation works', async ({ page, gotoDashboardPage }) => {
       // Open dashboard global variables and interpolation
       await gotoDashboardPage({ uid: DASHBOARD_UID });
-
-      // Wait for dashboard to fully load
-      // await page.waitForLoadState('networkidle');
 
       // Get the actual timezone from the browser context (should be Pacific/Easter due to test.use)
       const timeZone = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);

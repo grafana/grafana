@@ -6,8 +6,11 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test('Tests transformations editor', async ({ selectors, gotoDashboardPage, dashboardPage }) => {
-      await gotoDashboardPage({ uid: 'TkZXxlNG3', queryParams: new URLSearchParams({ editPanel: '47' }) });
+    test('Tests transformations editor', async ({ selectors, gotoDashboardPage }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: 'TkZXxlNG3',
+        queryParams: new URLSearchParams({ editPanel: '47' }),
+      });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.addTransformationButton).click();
@@ -22,9 +25,11 @@ test.describe(
     test('Tests case where transformations can be disabled and not clear out panel data', async ({
       selectors,
       gotoDashboardPage,
-      dashboardPage,
     }) => {
-      await gotoDashboardPage({ uid: 'TkZXxlNG3', queryParams: new URLSearchParams({ editPanel: '47' }) });
+      const dashboardPage = await gotoDashboardPage({
+        uid: 'TkZXxlNG3',
+        queryParams: new URLSearchParams({ editPanel: '47' }),
+      });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.addTransformationButton).click();

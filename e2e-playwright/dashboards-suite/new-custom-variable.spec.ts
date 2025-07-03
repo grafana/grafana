@@ -56,8 +56,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a custom template variable', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({
+    test('can add a custom template variable', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({ orgId: '1', editview: 'variables' }),
       });
@@ -84,13 +84,8 @@ test.describe(
       await expect(page.locator('.markdown-html').first()).toContainText('VariableUnderTest: two');
     });
 
-    test('can add a custom template variable with labels', async ({
-      page,
-      gotoDashboardPage,
-      dashboardPage,
-      selectors,
-    }) => {
-      await gotoDashboardPage({
+    test('can add a custom template variable with labels', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({ orgId: '1', editview: 'variables' }),
       });

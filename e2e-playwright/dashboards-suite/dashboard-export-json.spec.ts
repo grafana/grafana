@@ -6,8 +6,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Export for internal and external use', async ({ dashboardPage, gotoDashboardPage, page, selectors }) => {
-      await gotoDashboardPage({
+    test('Export for internal and external use', async ({ gotoDashboardPage, page, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: 'ZqZnVvFZz',
       });
 

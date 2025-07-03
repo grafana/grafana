@@ -8,14 +8,14 @@ test.describe(
   },
   () => {
     test('Tests each panel type in the panel edit view to ensure no crash', async ({
-      dashboardPage,
+      gotoDashboardPage,
       selectors,
       page,
     }) => {
       // this test can absolutely take longer than the default 30s timeout
       test.setTimeout(60000);
       // Create new dashboard
-      await dashboardPage.goto();
+      const dashboardPage = await gotoDashboardPage({});
 
       // Add new panel
       await dashboardPage.addPanel();

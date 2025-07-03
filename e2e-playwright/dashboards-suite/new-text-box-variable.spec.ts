@@ -9,8 +9,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new text box variable', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({
+    test('can add a new text box variable', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({ orgId: '1', editview: 'variables' }),
       });

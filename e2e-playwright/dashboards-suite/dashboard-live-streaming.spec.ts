@@ -31,8 +31,8 @@ test.describe(
       }
     });
 
-    test('Should receive streaming data', async ({ gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({ uid: dashboardUID });
+    test('Should receive streaming data', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Live'))).toBeVisible();
       await expect
         .poll(

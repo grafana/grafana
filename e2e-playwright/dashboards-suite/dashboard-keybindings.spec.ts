@@ -12,8 +12,8 @@ test.describe(
       viewport: { width: 1280, height: 1080 },
     });
 
-    test('should collapse and expand all rows', async ({ dashboardPage, gotoDashboardPage, page, selectors }) => {
-      await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
+    test('should collapse and expand all rows', async ({ gotoDashboardPage, page, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
 
       const panelContents = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
       await expect(panelContents).toHaveCount(5);
@@ -41,13 +41,12 @@ test.describe(
       await expect(page.getByText('server = B, pod = Bob')).toBeVisible();
     });
 
-    test('should open panel inspect', async ({ dashboardPage, gotoDashboardPage, page, selectors }) => {
-      await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
+    test('should open panel inspect', async ({ gotoDashboardPage, page, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
 
       // Find Panel #1 and press 'i' to open inspector
       const panel1 = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Panel #1'));
       await expect(panel1).toBeVisible();
-      // await panel1.click();
       await panel1.press('i');
 
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeVisible();

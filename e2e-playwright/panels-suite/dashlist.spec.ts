@@ -11,11 +11,10 @@ test.describe(
     // this is to prevent the fix for https://github.com/grafana/grafana/issues/76800 from regressing
     test('should pass current variable values correctly when `Include current template variable values` is set', async ({
       gotoDashboardPage,
-      dashboardPage,
       selectors,
       page,
     }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       // check the initial value of the urls contain the variable value correctly
       const panel = dashboardPage.getByGrafanaSelector(
@@ -42,7 +41,7 @@ test.describe(
         .click();
 
       // blur the dropdown
-      await page.locator('body').click();
+      await page.locator('body').click({ position: { x: 0, y: 0 } });
 
       // check the urls are updated with the new variable value
       await expect(panel).toBeVisible();

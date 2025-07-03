@@ -10,11 +10,10 @@ test.describe(
   () => {
     test('clicking a value that is not part of dependents options should change these to All', async ({
       gotoDashboardPage,
-      dashboardPage,
       selectors,
       page,
     }) => {
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({
           orgId: '1',
@@ -111,11 +110,10 @@ test.describe(
 
     test('adding a value that is not part of dependents options should add the new values dependant options', async ({
       gotoDashboardPage,
-      dashboardPage,
       selectors,
       page,
     }) => {
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({
           orgId: '1',
@@ -204,11 +202,10 @@ test.describe(
 
     test('removing a value that is part of dependents options should remove the new values dependant options', async ({
       gotoDashboardPage,
-      dashboardPage,
       selectors,
       page,
     }) => {
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         // can't use queryParams here because it won't work with the multiple values for each variable
         uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-datacenter=B&var-server=AA&var-server=BB&var-pod=AAA&var-pod=BBB`,
       });

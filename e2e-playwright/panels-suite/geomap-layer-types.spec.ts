@@ -12,8 +12,11 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test('Tests changing the layer type', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
-      await gotoDashboardPage({ uid: DASHBOARD_ID, queryParams: new URLSearchParams({ editPanel: '1' }) });
+    test('Tests changing the layer type', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_ID,
+        queryParams: new URLSearchParams({ editPanel: '1' }),
+      });
 
       await expect(page.locator('[data-testid="layer-drag-drop-list"]')).toBeVisible();
       const field = dashboardPage.getByGrafanaSelector(

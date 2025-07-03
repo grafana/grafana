@@ -2,6 +2,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 const DASHBOARD_UID = '5SdHCasdf';
 
+// TODO this test can interfere with other tests that set user preferences
 test.describe(
   'Dashboard timepicker',
   {

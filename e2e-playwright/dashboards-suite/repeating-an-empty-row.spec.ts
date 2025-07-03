@@ -8,8 +8,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('should be able to repeat empty rows vertically', async ({ gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('should be able to repeat empty rows vertically', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       let prevTop = Number.NEGATIVE_INFINITY;
       const rowTitles = ['Row title 1', 'Row title 2', 'Row title 3'];
@@ -29,8 +29,8 @@ test.describe(
       }
     });
 
-    test('responds to changes to the variables', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('responds to changes to the variables', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       const rowTitles = ['Row title 1', 'Row title 2', 'Row title 3'];
 
@@ -82,13 +82,9 @@ test.describe(
       }
     });
 
-    test('loads a dashboard based on the query params correctly', async ({
-      gotoDashboardPage,
-      dashboardPage,
-      selectors,
-    }) => {
+    test('loads a dashboard based on the query params correctly', async ({ gotoDashboardPage, selectors }) => {
       // Have to manually add the queryParams to the url because they have the same name
-      await gotoDashboardPage({ uid: `${PAGE_UNDER_TEST}?var-row=1&var-row=3` });
+      const dashboardPage = await gotoDashboardPage({ uid: `${PAGE_UNDER_TEST}?var-row=1&var-row=3` });
 
       let prevTop = Number.NEGATIVE_INFINITY;
       const rowsShown = ['Row title 1', 'Row title 3'];

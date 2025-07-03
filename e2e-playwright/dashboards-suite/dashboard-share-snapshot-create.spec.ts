@@ -17,9 +17,9 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Create a snapshot dashboard', async ({ page, gotoDashboardPage, dashboardPage, selectors, request }) => {
+    test('Create a snapshot dashboard', async ({ page, gotoDashboardPage, selectors }) => {
       // Opening a dashboard
-      await gotoDashboardPage({ uid: DASHBOARD_UID });
+      const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
       const panelsToCheck = [
         'Raw Data Graph',

@@ -13,13 +13,11 @@ test.describe(
   },
   () => {
     test('Create a public dashboard with template variables shows a template variable warning', async ({
-      page,
       gotoDashboardPage,
-      dashboardPage,
       selectors,
     }) => {
       // Navigate to dashboard with template variables
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: 'HYaGDGIMk',
       });
 

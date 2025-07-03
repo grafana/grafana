@@ -16,8 +16,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Close share externally drawer', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({ uid: DASHBOARD_UID });
+    test('Close share externally drawer', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
       // Open share externally drawer
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
@@ -43,11 +43,10 @@ test.describe(
     test('Create and disable a shared dashboard and check API', async ({
       page,
       gotoDashboardPage,
-      dashboardPage,
       selectors,
       request,
     }) => {
-      await gotoDashboardPage({ uid: DASHBOARD_UID_2 });
+      const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID_2 });
 
       // Open share externally drawer
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();

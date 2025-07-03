@@ -8,8 +8,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('default options should be correct', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('default options should be correct', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       // Test first variable (A)
       const firstVariableInput = dashboardPage

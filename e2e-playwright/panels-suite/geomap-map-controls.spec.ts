@@ -8,8 +8,11 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test('Tests map controls options', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
-      await gotoDashboardPage({ uid: DASHBOARD_ID, queryParams: new URLSearchParams({ editPanel: '1' }) });
+    test('Tests map controls options', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_ID,
+        queryParams: new URLSearchParams({ editPanel: '1' }),
+      });
 
       // Wait until the query editor has been loaded by ensuring that the QueryEditor select contains the text 'flight_info_by_state.csv'
       await expect(

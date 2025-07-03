@@ -6,11 +6,11 @@ test.describe(
     tag: ['@smoke'],
   },
   () => {
-    test('Login, create dashboard and panel scenario', async ({ dashboardPage, selectors, page }) => {
+    test('Login, create dashboard and panel scenario', async ({ gotoDashboardPage, selectors, page }) => {
       // TODO need to add a datasource here
 
       // Create new dashboard
-      await dashboardPage.goto();
+      const dashboardPage = await gotoDashboardPage({});
 
       // Add new panel
       await dashboardPage.addPanel();

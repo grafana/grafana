@@ -8,8 +8,11 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test('Tests location auto option', async ({ gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({ uid: DASHBOARD_ID, queryParams: new URLSearchParams({ editPanel: '1' }) });
+    test('Tests location auto option', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DASHBOARD_ID,
+        queryParams: new URLSearchParams({ editPanel: '1' }),
+      });
 
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Transformations')).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Transforms.addTransformationButton).click();

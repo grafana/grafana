@@ -8,13 +8,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Tests dashboard links and variables in links', async ({
-      page,
-      gotoDashboardPage,
-      dashboardPage,
-      selectors,
-    }) => {
-      await gotoDashboardPage({ uid: DASHBOARD_UID });
+    test('Tests dashboard links and variables in links', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
       const verifyLinks = async (variableValue: string) => {
         const dashboardLinks = dashboardPage.getByGrafanaSelector(selectors.components.DashboardLinks.link);

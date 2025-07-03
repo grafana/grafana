@@ -8,8 +8,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('should restore scroll position', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('should restore scroll position', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       // Verify first panel is visible
       await expect(

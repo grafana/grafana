@@ -31,13 +31,8 @@ test.describe(
       }
     });
 
-    test('Should not reload if linking to same dashboard', async ({
-      page,
-      gotoDashboardPage,
-      dashboardPage,
-      selectors,
-    }) => {
-      await gotoDashboardPage({ uid: dashboardUID });
+    test('Should not reload if linking to same dashboard', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
 
       const panel = dashboardPage.getByGrafanaSelector(
         selectors.components.Panels.Panel.title('Data links without slug')

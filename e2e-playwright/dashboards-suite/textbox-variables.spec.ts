@@ -10,19 +10,14 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('default options should be correct', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('default options should be correct', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
       await validateTextboxAndMarkup(page, dashboardPage, selectors, 'default value');
     });
 
-    test('loading variable from url should be correct', async ({
-      page,
-      gotoDashboardPage,
-      dashboardPage,
-      selectors,
-    }) => {
-      await gotoDashboardPage({
+    test('loading variable from url should be correct', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({
           'var-text': 'not default value',

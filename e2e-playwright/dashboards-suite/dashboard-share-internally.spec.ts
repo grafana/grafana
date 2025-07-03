@@ -22,9 +22,9 @@ test.describe(
       });
     });
 
-    test('Create a locked time range short link', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
+    test('Create a locked time range short link', async ({ page, gotoDashboardPage, selectors }) => {
       // Navigate to dashboard with specific time range
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ from: 'now-6h', to: 'now' }),
       });
@@ -71,9 +71,9 @@ test.describe(
       expect(responseBody.url).toContain('goto');
     });
 
-    test('Create a relative time range short link', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
+    test('Create a relative time range short link', async ({ page, gotoDashboardPage, selectors }) => {
       // Navigate to dashboard with specific time range
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ from: 'now-6h', to: 'now' }),
       });
@@ -114,9 +114,9 @@ test.describe(
       expect(responseBody.url).toContain('goto');
     });
 
-    test('Share button gets configured link', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
+    test('Share button gets configured link', async ({ page, gotoDashboardPage, selectors }) => {
       // Navigate to dashboard with specific time range
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams({ from: 'now-6h', to: 'now' }),
       });

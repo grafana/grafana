@@ -12,10 +12,9 @@ test.describe(
     test('query variable should be default and default fields should be correct', async ({
       page,
       gotoDashboardPage,
-      dashboardPage,
       selectors,
     }) => {
-      await gotoDashboardPage({
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({ orgId: '1', editview: 'variables' }),
       });
@@ -101,8 +100,8 @@ test.describe(
       ).toBeHidden();
     });
 
-    test('adding a single value query variable', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({
+    test('adding a single value query variable', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({ orgId: '1', editview: 'variables' }),
       });
@@ -163,8 +162,8 @@ test.describe(
       await expect(options).toContainText('C');
     });
 
-    test('adding a multi value query variable', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({
+    test('adding a multi value query variable', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({ orgId: '1', editview: 'variables' }),
       });

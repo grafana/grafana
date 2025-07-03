@@ -14,8 +14,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Create a snapshot dashboard', async ({ page, gotoDashboardPage, dashboardPage, selectors }) => {
-      await gotoDashboardPage({
+    test('Create a snapshot dashboard', async ({ page, gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
       });
 

@@ -8,13 +8,11 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test('Tests various Panel edit queries scenarios', async ({
-      selectors,
-      gotoDashboardPage,
-      dashboardPage,
-      page,
-    }) => {
-      await gotoDashboardPage({ uid: '5SdHCadmz', queryParams: new URLSearchParams({ editPanel: '3' }) });
+    test('Tests various Panel edit queries scenarios', async ({ selectors, gotoDashboardPage, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: '5SdHCadmz',
+        queryParams: new URLSearchParams({ editPanel: '3' }),
+      });
 
       // New panel editor opens when navigating from Panel menu
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();

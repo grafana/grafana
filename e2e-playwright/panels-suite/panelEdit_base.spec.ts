@@ -8,8 +8,8 @@ test.describe(
     tag: ['@panels'],
   },
   () => {
-    test('Tests various Panel edit scenarios', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
-      await gotoDashboardPage({ uid: 'TkZXxlNG3' });
+    test('Tests various Panel edit scenarios', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: 'TkZXxlNG3' });
 
       const panelTitle = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_UNDER_TEST));
       await expect(panelTitle).toBeVisible();

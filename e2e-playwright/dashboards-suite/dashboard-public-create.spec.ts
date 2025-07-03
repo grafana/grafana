@@ -12,15 +12,9 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Create, open and disable a public dashboard', async ({
-      page,
-      gotoDashboardPage,
-      dashboardPage,
-      selectors,
-      request,
-    }) => {
+    test('Create, open and disable a public dashboard', async ({ page, gotoDashboardPage, selectors, request }) => {
       // Navigate to dashboard without template variables
-      await gotoDashboardPage({ uid: 'ZqZnVvFZz' });
+      let dashboardPage = await gotoDashboardPage({ uid: 'ZqZnVvFZz' });
 
       // Open sharing modal
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.shareDashboard).click();
@@ -173,7 +167,7 @@ test.describe(
       await page.getByRole('button', { name: 'Close', exact: true }).click();
 
       // Navigate to dashboard without template variables
-      await gotoDashboardPage({ uid: 'ZqZnVvFZz' });
+      dashboardPage = await gotoDashboardPage({ uid: 'ZqZnVvFZz' });
 
       // Open sharing modal
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.shareDashboard).click();
