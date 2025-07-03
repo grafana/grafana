@@ -12,7 +12,7 @@ import {
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';

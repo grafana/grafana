@@ -10,7 +10,7 @@ import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { DashboardModel } from '../../state/DashboardModel';

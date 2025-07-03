@@ -5,7 +5,7 @@ import { config, featureEnabled } from '@grafana/runtime';
 import { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import {
   CatalogPlugin,

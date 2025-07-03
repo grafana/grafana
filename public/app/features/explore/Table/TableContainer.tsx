@@ -12,7 +12,7 @@ import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
 } from 'app/plugins/panel/table/migrations';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 import { ExploreItemState } from 'app/types/explore';
 
 import { LimitedDataDisclaimer } from '../LimitedDataDisclaimer';

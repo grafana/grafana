@@ -4,7 +4,7 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
-import { ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types/store';
 import { DashboardPanelsChangedEvent, PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
 import { changePanelKey, panelModelAndPluginReady, removePanel } from './reducers';

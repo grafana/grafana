@@ -9,7 +9,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { SaveDashboardAsOptions, SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';

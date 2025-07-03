@@ -8,7 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
 import { grafanaRulerGroup, grafanaRulerGroup2, grafanaRulerRule } from '../mocks/grafanaRulerApi';

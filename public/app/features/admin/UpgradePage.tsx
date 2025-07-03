@@ -6,6 +6,7 @@ import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { StoreState } from 'app/types/store';
 import checkmarkSvg from 'img/licensing/checkmark.svg';
 import customerSupportSvg from 'img/licensing/customer_support.svg';
 import handinhandSupportSvg from 'img/licensing/handinhand_support.svg';
@@ -13,7 +14,6 @@ import pluginEnterpriseSvg from 'img/licensing/plugin_enterprise.svg';
 import slaSvg from 'img/licensing/sla.svg';
 
 import { getNavModel } from '../../core/selectors/navModel';
-import { StoreState } from '../../types';
 
 import { LicenseChrome } from './LicenseChrome';
 import { ServerStats } from './ServerStats';

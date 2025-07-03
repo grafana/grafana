@@ -30,7 +30,7 @@ import { SaveLibraryPanelModal } from 'app/features/library-panels/components/Sa
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { notifyApp } from '../../../../core/actions';

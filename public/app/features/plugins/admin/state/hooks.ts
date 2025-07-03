@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { PluginError, PluginType } from '@grafana/data';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { sortPlugins, Sorters, isPluginUpdatable } from '../helpers';
 import { CatalogPlugin, PluginStatus } from '../types';

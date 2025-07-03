@@ -8,8 +8,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, Themeable2, withTheme2 } from '@grafana/ui';
+import { StoreState, ThunkDispatch } from 'app/types/store';
 
-import { StoreState, ThunkDispatch } from '../../../types';
 import { VariableHideSelect } from '../../dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from '../../dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';

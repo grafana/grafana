@@ -32,8 +32,9 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { KioskMode, StoreState } from 'app/types';
+import { KioskMode } from 'app/types/dashboard';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { StoreState } from 'app/types/store';
 
 import {
   DynamicDashNavButtonModel,

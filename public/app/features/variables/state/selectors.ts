@@ -3,7 +3,7 @@ import memoizeOne from 'memoize-one';
 import { TypedVariableModel } from '@grafana/data';
 
 import { getState } from '../../../store/store';
-import { StoreState } from '../../../types';
+import { StoreState } from 'app/types/store';
 import { toStateKey } from '../utils';
 
 import { getInitialTemplatingState, TemplatingState } from './reducers';

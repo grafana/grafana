@@ -23,7 +23,7 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
