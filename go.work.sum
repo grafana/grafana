@@ -314,7 +314,6 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0 h1:t527LHHE3HmiHrq74QMpNPZpGCIJzTx+apLkMKt4HC0=
 github.com/RoaringBitmap/gocroaring v0.4.0 h1:5nufXUgWpBEUNEJXw7926YAA58ZAQRpWPrQV1xCoSjc=
 github.com/RoaringBitmap/real-roaring-datasets v0.0.0-20190726190000-eb7c87156f76 h1:ZYlhPbqQFU+AHfgtCdHGDTtRW1a8geZyiE8c6Q+Sl1s=
-github.com/RoaringBitmap/real-roaring-datasets v0.0.0-20190726190000-eb7c87156f76/go.mod h1:oM0MHmQ3nDsq609SS36p+oYbRi16+oVvU2Bw4Ipv0SE=
 github.com/Sereal/Sereal/Go/sereal v0.0.0-20231009093132-b9187f1a92c6 h1:5kUcJJAKWWI82Xnp/CaU0eu5hLlHkmm9acjowSkwCd0=
 github.com/Sereal/Sereal/Go/sereal v0.0.0-20231009093132-b9187f1a92c6/go.mod h1:JwrycNnC8+sZPDyzM3MQ86LvaGzSpfxg885KOOwFRW4=
 github.com/Shopify/goreferrer v0.0.0-20220729165902-8cddb4f5de06 h1:KkH3I3sJuOLP3TjA/dfr4NAY8bghDwnXiU7cTKxQqo0=
@@ -360,12 +359,6 @@ github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e h1:QEF07wC0T1rKkctt1
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 h1:G1bPvciwNyF7IUmKXNt9Ak3m6u9DE1rF+RmtIkBpVdA=
 github.com/aws/aws-msk-iam-sasl-signer-go v1.0.1 h1:nMp7diZObd4XEVUR0pEvn7/E13JIgManMX79Q6quV6E=
 github.com/aws/aws-msk-iam-sasl-signer-go v1.0.1/go.mod h1:MVYeeOhILFFemC/XlYTClvBjYZrg/EPd3ts885KrNTI=
-github.com/aws/aws-sdk-go-v2/config v1.29.17 h1:jSuiQ5jEe4SAMH6lLRMY9OVC+TqJLP5655pBGjmnjr0=
-github.com/aws/aws-sdk-go-v2/config v1.29.17/go.mod h1:9P4wwACpbeXs9Pm9w1QTh6BwWwJjwYvJ1iCt5QbCXh8=
-github.com/aws/aws-sdk-go-v2/credentials v1.17.70 h1:ONnH5CM16RTXRkS8Z1qg7/s2eDOhHhaXVd72mmyv4/0=
-github.com/aws/aws-sdk-go-v2/credentials v1.17.70/go.mod h1:M+lWhhmomVGgtuPOhO85u4pEa3SmssPTdcYpP/5J/xc=
-github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 h1:KAXP9JSHO1vKGCr5f4O6WmlVKLFFXgWYAGoJosorxzU=
-github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32/go.mod h1:h4Sg6FQdexC1yYG9RDnOvLbW1a/P986++/Y/a+GyEM8=
 github.com/aws/aws-sdk-go-v2/service/kms v1.35.3 h1:UPTdlTOwWUX49fVi7cymEN6hDqCwe3LNv1vi7TXUutk=
 github.com/aws/aws-sdk-go-v2/service/kms v1.35.3/go.mod h1:gjDP16zn+WWalyaUqwCCioQ8gU8lzttCCc9jYsiQI/8=
 github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.32.4 h1:NgRFYyFpiMD62y4VPXh4DosPFbZd4vdMVBWKk0VmWXc=
@@ -376,12 +369,6 @@ github.com/aws/aws-sdk-go-v2/service/sqs v1.34.3 h1:Vjqy5BZCOIsn4Pj8xzyqgGmsSqzz
 github.com/aws/aws-sdk-go-v2/service/sqs v1.34.3/go.mod h1:L0enV3GCRd5iG9B64W35C4/hwsCB00Ib+DKVGTadKHI=
 github.com/aws/aws-sdk-go-v2/service/ssm v1.52.4 h1:hgSBvRT7JEWx2+vEGI9/Ld5rZtl7M5lu8PqdvOmbRHw=
 github.com/aws/aws-sdk-go-v2/service/ssm v1.52.4/go.mod h1:v7NIzEFIHBiicOMaMTuEmbnzGnqW0d+6ulNALul6fYE=
-github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 h1:AIRJ3lfb2w/1/8wOOSqYb9fUKGwQbtysJ2H1MofRUPg=
-github.com/aws/aws-sdk-go-v2/service/sso v1.25.5/go.mod h1:b7SiVprpU+iGazDUqvRSLf5XmCdn+JtT1on7uNL6Ipc=
-github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.3 h1:BpOxT3yhLwSJ77qIY3DoHAQjZsc4HEGfMCE4NGy3uFg=
-github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.3/go.mod h1:vq/GQR1gOFLquZMSrxUK/cpvKCNVYibNyJ1m7JrU88E=
-github.com/aws/aws-sdk-go-v2/service/sts v1.34.0 h1:NFOJ/NXEGV4Rq//71Hs1jC/NvPs1ezajK+yQmkwnPV0=
-github.com/aws/aws-sdk-go-v2/service/sts v1.34.0/go.mod h1:7ph2tGpfQvwzgistp2+zga9f+bCjlQJPkPUmMgDSD7w=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/baidubce/bce-sdk-go v0.9.188 h1:8MA7ewe4VpX01uYl7Kic6ZvfIReUFdSKbY46ZqlQM7U=
@@ -626,8 +613,6 @@ github.com/grafana/alerting v0.0.0-20250403153742-418bc7118d05 h1:hMzOzI/S0nkZt0
 github.com/grafana/alerting v0.0.0-20250403153742-418bc7118d05/go.mod h1:K3YAJumchx5EEZItGv4D3pCv/Ux796hmoOibP/p/eYk=
 github.com/grafana/alerting v0.0.0-20250429131604-de176b4a0309 h1:H2p3XKDHnTBGkMXLCgXiqb2dFnHbQ4zPDXOwKK4Ne3Y=
 github.com/grafana/alerting v0.0.0-20250429131604-de176b4a0309/go.mod h1:pMfhRxL2LZ3Pm8iy7VcVsb9CLYuBtjFYbf1oxgx7yFA=
-github.com/grafana/alerting v0.0.0-20250701210250-cea2d1683945 h1:3imTbxFpZSVI6IBIB9mn+Xc40lUweWjfMaBSgXR7rLs=
-github.com/grafana/alerting v0.0.0-20250701210250-cea2d1683945/go.mod h1:gtR7agmxVfJOmNKV/n2ZULgOYTYNL+PDKYB5N48tQ7Q=
 github.com/grafana/authlib v0.0.0-20250123104008-e99947858901/go.mod h1:/gYfphsNu9v1qYWXxpv1NSvMEMSwvdf8qb8YlgwIRl8=
 github.com/grafana/authlib/types v0.0.0-20250120144156-d6737a7dc8f5/go.mod h1:qYjSd1tmJiuVoSICp7Py9/zD54O9uQQA3wuM6Gg4DFM=
 github.com/grafana/authlib/types v0.0.0-20250120145936-5f0e28e7a87c/go.mod h1:qYjSd1tmJiuVoSICp7Py9/zD54O9uQQA3wuM6Gg4DFM=
@@ -642,8 +627,6 @@ github.com/grafana/grafana-app-sdk/logging v0.39.0 h1:3GgN5+dUZYqq74Q+GT9/ET+yo+
 github.com/grafana/grafana-app-sdk/logging v0.39.0/go.mod h1:WhDENSnaGHtyVVwZGVnAR7YLvh2xlLDYR3D7E6h7XVk=
 github.com/grafana/grafana-aws-sdk v0.38.2 h1:TzQD0OpWsNjtldi5G5TLDlBRk8OyDf+B5ujcoAu4Dp0=
 github.com/grafana/grafana-aws-sdk v0.38.2/go.mod h1:j3vi+cXYHEFqjhBGrI6/lw1TNM+dl0Y3f0cSnDOPy+s=
-github.com/grafana/grafana-aws-sdk v1.0.2 h1:98eBuHYFmgvH0xO9kKf4RBsEsgQRp8EOA/9yhDIpkss=
-github.com/grafana/grafana-aws-sdk v1.0.2/go.mod h1:hO7q7yWV+t6dmiyJjMa3IbuYnYkBua+G/IAlOPVIYKE=
 github.com/grafana/grafana-plugin-sdk-go v0.263.0/go.mod h1:U43Cnrj/9DNYyvFcNdeUWNjMXTKNB0jcTcQGpWKd2gw=
 github.com/grafana/grafana-plugin-sdk-go v0.267.0/go.mod h1:OuwS4c/JYgn0rr/w5zhJBpLo4gKm/vw15RsfpYAvK9Q=
 github.com/grafana/grafana-plugin-sdk-go v0.269.1/go.mod h1:yv2KbO4mlr9WuDK2f+2gHAMTwwLmLuqaEnrPXTRU+OI=
@@ -680,8 +663,6 @@ github.com/grafana/prometheus-alertmanager v0.25.1-0.20250331083058-4563aec7a975
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250331083058-4563aec7a975/go.mod h1:FGdGvhI40Dq+CTQaSzK9evuve774cgOUdGfVO04OXkw=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250604130045-92c8f6389b36 h1:AjZ58JRw1ZieFH/SdsddF5BXtsDKt5kSrKNPWrzYz3Y=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250604130045-92c8f6389b36/go.mod h1:O/QP1BCm0HHIzbKvgMzqb5sSyH88rzkFk84F4TfJjBU=
-github.com/grafana/sqlds/v4 v4.2.3 h1:9ibD1c5O5u9fifEkBSig+jAc41TUEz+M+bWQqDsofP4=
-github.com/grafana/sqlds/v4 v4.2.3/go.mod h1:bv+XHabfUF4xkgg4y+nYFCK8rpMHZsMaQk56qNaJcAM=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0 h1:bjh0PVYSVVFxzINqPFYJmAmJNrWPgnVjuSdYJGHmtFU=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0/go.mod h1:7t5XR+2IA8P2qggOAHTj/GCZfoLBle3OvNSYh1VkRBU=
 github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 h1:+ngKgrYPPJrOjhax5N+uePQ0Fh1Z7PheYoUI/0nzkPA=

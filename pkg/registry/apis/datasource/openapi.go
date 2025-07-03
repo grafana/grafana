@@ -177,7 +177,7 @@ func getCustomOpenAPI(plugin string) (*datasourceV0.DataSourceOpenAPIExtension, 
 		unstructuredRequest := &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
-					"applicaiton/json": {
+					"application/json": {
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: unstructured,
 						},
