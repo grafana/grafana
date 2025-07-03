@@ -6,7 +6,7 @@ import { LRParser } from '@lezer/lr';
 export const ErrorId = 0;
 
 export const warningTypes: Record<string, string> = {
-  SubqueryExpr: 'Subquery detected, this may cause performance issues. Consider using ... instead.',
+  SubqueryExpr: 'This query contains a subquery that may return no data. Consider using [2x:x] instead.',
 };
 
 enum NodeType {
