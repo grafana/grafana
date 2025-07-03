@@ -1827,11 +1827,6 @@
           {
             "group": "iam.grafana.app",
             "kind": "SSOSetting",
-            "version": "__internal"
-          },
-          {
-            "group": "iam.grafana.app",
-            "kind": "SSOSetting",
             "version": "v0alpha1"
           }
         ]
@@ -1871,11 +1866,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "SSOSettingList",
-            "version": "__internal"
-          },
           {
             "group": "iam.grafana.app",
             "kind": "SSOSettingList",
@@ -1937,11 +1927,6 @@
           {
             "group": "iam.grafana.app",
             "kind": "ServiceAccount",
-            "version": "__internal"
-          },
-          {
-            "group": "iam.grafana.app",
-            "kind": "ServiceAccount",
             "version": "v0alpha1"
           }
         ]
@@ -1981,11 +1966,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "ServiceAccountList",
-            "version": "__internal"
-          },
           {
             "group": "iam.grafana.app",
             "kind": "ServiceAccountList",
@@ -2078,11 +2058,6 @@
           {
             "group": "iam.grafana.app",
             "kind": "Team",
-            "version": "__internal"
-          },
-          {
-            "group": "iam.grafana.app",
-            "kind": "Team",
             "version": "v0alpha1"
           }
         ]
@@ -2116,11 +2091,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "TeamBinding",
-            "version": "__internal"
-          },
           {
             "group": "iam.grafana.app",
             "kind": "TeamBinding",
@@ -2163,11 +2133,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "TeamBindingList",
-            "version": "__internal"
-          },
           {
             "group": "iam.grafana.app",
             "kind": "TeamBindingList",
@@ -2234,11 +2199,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "TeamList",
-            "version": "__internal"
-          },
           {
             "group": "iam.grafana.app",
             "kind": "TeamList",
@@ -2327,11 +2287,6 @@
           {
             "group": "iam.grafana.app",
             "kind": "TeamMemberList",
-            "version": "__internal"
-          },
-          {
-            "group": "iam.grafana.app",
-            "kind": "TeamMemberList",
             "version": "v0alpha1"
           }
         ]
@@ -2413,11 +2368,6 @@
           {
             "group": "iam.grafana.app",
             "kind": "User",
-            "version": "__internal"
-          },
-          {
-            "group": "iam.grafana.app",
-            "kind": "User",
             "version": "v0alpha1"
           }
         ]
@@ -2457,11 +2407,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "UserList",
-            "version": "__internal"
-          },
           {
             "group": "iam.grafana.app",
             "kind": "UserList",
@@ -2548,11 +2493,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "iam.grafana.app",
-            "kind": "UserTeamList",
-            "version": "__internal"
-          },
           {
             "group": "iam.grafana.app",
             "kind": "UserTeamList",

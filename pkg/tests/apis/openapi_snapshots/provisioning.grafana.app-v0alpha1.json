@@ -2779,11 +2779,6 @@
           {
             "group": "provisioning.grafana.app",
             "kind": "Job",
-            "version": "__internal"
-          },
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "Job",
             "version": "v0alpha1"
           }
         ]
@@ -2823,11 +2818,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "JobList",
-            "version": "__internal"
-          },
           {
             "group": "provisioning.grafana.app",
             "kind": "JobList",
@@ -3088,11 +3078,6 @@
           {
             "group": "provisioning.grafana.app",
             "kind": "Repository",
-            "version": "__internal"
-          },
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "Repository",
             "version": "v0alpha1"
           }
         ]
@@ -3133,11 +3118,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "RepositoryList",
-            "version": "__internal"
-          },
           {
             "group": "provisioning.grafana.app",
             "kind": "RepositoryList",
@@ -3426,11 +3406,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "ResourceList",
-            "version": "__internal"
-          },
           {
             "group": "provisioning.grafana.app",
             "kind": "ResourceList",
@@ -3740,11 +3715,6 @@
           {
             "group": "provisioning.grafana.app",
             "kind": "ResourceWrapper",
-            "version": "__internal"
-          },
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "ResourceWrapper",
             "version": "v0alpha1"
           }
         ]
@@ -3890,11 +3860,6 @@
           {
             "group": "provisioning.grafana.app",
             "kind": "TestResults",
-            "version": "__internal"
-          },
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "TestResults",
             "version": "v0alpha1"
           }
         ]
@@ -3929,11 +3894,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "WebhookResponse",
-            "version": "__internal"
-          },
           {
             "group": "provisioning.grafana.app",
             "kind": "WebhookResponse",
