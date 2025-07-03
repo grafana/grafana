@@ -1,7 +1,11 @@
-import rspack, { CssExtractRspackPlugin, type ExperimentCacheOptions, type RuleSetRules } from '@rspack/core';
+import rspack, { CssExtractRspackPlugin, type Optimization, type RuleSetRules } from '@rspack/core';
+import type { Configuration as DevServerConfiguration } from '@rspack/dev-server';
+import ReactRefreshPlugin from '@rspack/plugin-react-refresh';
+import AssetsPlugin from 'assets-webpack-plugin';
+import ESLintPlugin from 'eslint-rspack-plugin';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
-// import WebpackAssetsManifest from 'webpack-assets-manifest';
+import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
 
 const require = createRequire(import.meta.url);
 const getEnvConfig = require('../webpack/env-util');
@@ -15,12 +19,15 @@ export const entries = {
   light: './public/sass/grafana.light.scss',
 };
 
-export const output = {
-  clean: true,
-  path: resolve(import.meta.dirname, '../../public/build'),
-  filename: '[name].[contenthash].js',
-  publicPath: 'auto',
-};
+export function getOutput(env: Record<string, unknown> = {}) {
+  return {
+    clean: true,
+    path: resolve(import.meta.dirname, '../../public/build'),
+    filename: env.production ? '[name].[contenthash].js' : '[name].js',
+    cssFilename: env.production ? '[name].[contenthash].css' : '[name].css',
+    publicPath: 'public/build/',
+  };
+}
 
 export const extensions = ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'];
 
@@ -40,22 +47,21 @@ export function getAliases(env: Record<string, unknown> = {}) {
   };
 
   return {
+    ...(env.development ? developmentAliases : {}),
     prismjs: require.resolve('prismjs'),
     '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
       '@locker/near-membrane-dom/custom-devtools-formatter.js'
     ),
-    ...(env.development ? developmentAliases : {}),
   };
 }
 
-export const modules = ['node_modules', resolve('public')];
+export const modules = ['node_modules', resolve('node_modules'), resolve('public')];
 
 export function getPlugins(env: Record<string, unknown> = {}) {
   const commonPlugins = [
     new rspack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
       resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
     }),
-    // new CorsWorkerPlugin(),
     new rspack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
@@ -68,16 +74,57 @@ export function getPlugins(env: Record<string, unknown> = {}) {
       filename: 'grafana.[name].[contenthash].css',
     }),
     new rspack.EnvironmentPlugin(envConfig),
+    new AssetsPlugin({
+      entrypoints: true,
+      useCompilerPath: true,
+      filename: 'assets-manifest.json',
+      processOutput: (assets) => {
+        const arrayify = (value) => (Array.isArray(value) ? value : [value]);
+        const devServerPath = 'http://localhost:8080';
+        const entrypoints = Object.entries(assets).reduce(
+          (acc, [key, value]) => {
+            const valuesAsArray = Object.entries(value).reduce((acc, [key, value]) => {
+              const devServerAssets = arrayify(value).map((asset) => `${devServerPath}/${asset}`);
+              acc[key] = arrayify(devServerAssets);
+              return acc;
+            }, {});
+
+            acc.entrypoints[key] = {
+              assets: valuesAsArray,
+            };
+            return acc;
+          },
+          { entrypoints: {} }
+        );
+        return JSON.stringify(entrypoints, null, 2);
+      },
+    }),
   ];
 
   const productionPlugins = [
-    // new WebpackAssetsManifest({
-    //   entrypoints: true,
-    //   publicPath: true,
-    // }),
+    // new AssetsPlugin({ entrypoints: true, useCompilerPath: true, filename: 'assets-manifest.json' }),
   ];
 
-  const developmentPlugins = [];
+  const developmentPlugins = [
+    // new ReactRefreshPlugin(),
+    // new rspack.HotModuleReplacementPlugin(),
+    new TsCheckerRspackPlugin({
+      async: true, // don't block webpack emit
+      typescript: {
+        mode: 'write-references',
+        diagnosticOptions: {
+          semantic: true,
+          syntactic: true,
+        },
+      },
+    }),
+    new ESLintPlugin({
+      cache: true,
+      lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
+      extensions: ['.ts', '.tsx'],
+      configType: 'flat',
+    }),
+  ];
 
   if (env.development) {
     return [...commonPlugins, ...developmentPlugins];
@@ -87,6 +134,7 @@ export function getPlugins(env: Record<string, unknown> = {}) {
 }
 
 export function getExperiments(env: Record<string, unknown> = {}) {
+  // This doesn't work reliably right now so disabling.
   // const cache = {
   //   cache: {
   //     buildDependencies: [import.meta.filename],
@@ -115,14 +163,11 @@ export function getModuleRules(env: Record<string, unknown> = {}): RuleSetRules 
           transform: {
             react: {
               runtime: 'automatic',
-              development: !env.production,
-              refresh: !env.production,
+              development: Boolean(env.development),
+              // refresh: Boolean(env.development),
             },
           },
         },
-        // env: {
-        //   targets: 'Chrome >= 48',
-        // },
       },
     },
     {
@@ -138,15 +183,12 @@ export function getModuleRules(env: Record<string, unknown> = {}): RuleSetRules 
           transform: {
             react: {
               runtime: 'automatic',
-              development: !env.production,
-              refresh: !env.production,
+              development: Boolean(env.development),
+              // refresh: Boolean(env.development),
             },
           },
           externalHelpers: true,
         },
-        // env: {
-        //   targets: 'Chrome >= 48', // browser compatibility
-        // },
       },
     },
     {
@@ -231,58 +273,73 @@ export function getModuleRules(env: Record<string, unknown> = {}): RuleSetRules 
 }
 
 export const nodePolyfills = {
-  buffer: false,
+  // buffer: false,
   fs: false,
   stream: false,
-  http: false,
-  https: false,
-  string_decoder: false,
+  // http: false,
+  // https: false,
+  // string_decoder: false,
+};
+
+export const devServer: DevServerConfiguration = {
+  hot: true,
+  headers: {
+    'Access-Control-Allow-Origin': '*',
+  },
+  client: {
+    overlay: false,
+  },
+  historyApiFallback: true,
+  // static: ['public/fonts', 'public/img'],
+  devMiddleware: {
+    publicPath: `/public/build`,
+  },
 };
 
 export function getOptimizations(env: Record<string, unknown> = {}) {
   if (env.development) {
     return {
       moduleIds: 'named',
-      runtimeChunk: true,
-      removeAvailableModules: false,
-      removeEmptyChunks: false,
-      splitChunks: false,
-    };
+      // runtimeChunk: true,
+      // removeEmptyChunks: false,
+      // splitChunks: false,
+    } as Optimization;
   }
-  if (env.production) {
-    return {
-      runtimeChunk: 'single',
-      splitChunks: {
-        chunks: 'all',
-        minChunks: 1,
-        cacheGroups: {
-          moment: {
-            test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
-            chunks: 'initial',
-            priority: 20,
-            enforce: true,
-          },
-          angular: {
-            test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
-            chunks: 'initial',
-            priority: 50,
-            enforce: true,
-          },
-          defaultVendors: {
-            test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-            chunks: 'initial',
-            priority: -10,
-            reuseExistingChunk: true,
-            enforce: true,
-          },
-          default: {
-            priority: -20,
-            chunks: 'all',
-            test: /.*[jt]sx?$/,
-            reuseExistingChunk: true,
-          },
+
+  return {
+    runtimeChunk: 'single',
+    splitChunks: {
+      chunks: 'all',
+      minChunks: 1,
+      cacheGroups: {
+        moment: {
+          test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: 20,
+          enforce: true,
+        },
+        angular: {
+          test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: 50,
+          enforce: true,
+        },
+        defaultVendors: {
+          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: -10,
+          reuseExistingChunk: true,
+          enforce: true,
+        },
+        default: {
+          priority: -20,
+          chunks: 'all',
+          test: /.*[jt]sx?$/,
+          reuseExistingChunk: true,
         },
       },
-    };
-  }
+    },
+    nodeEnv: 'production',
+    minimize: Boolean(env.noMinify),
+  } as Optimization;
 }
