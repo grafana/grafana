@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, isDataFrame, classicColors, colorManipulator } from '@grafana/data';
+import { GrafanaTheme2, isDataFrame, classicColors, colorManipulator, Field } from '@grafana/data';
 import { TablePillCellOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
@@ -59,7 +59,7 @@ export function PillCell({ value, field, justifyContent, cellOptions }: TableCel
     <div className={styles.cell}>
       <div className={styles.pillsContainer}>
         {pills.map((pill, index) => {
-          const bgColor = getPillColor(pill, cellOptions);
+          const bgColor = getPillColor(pill, cellOptions, field);
           const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
 
           return (
@@ -84,7 +84,7 @@ function isPillCellOptions(cellOptions: TableCellRendererProps['cellOptions']): 
   return cellOptions?.type === 'pill';
 }
 
-function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOptions']): string {
+function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOptions'], field: Field): string {
   if (!isPillCellOptions(cellOptions)) {
     return getDeterministicColor(pill);
   }
@@ -93,57 +93,21 @@ function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOpt
 
   // Fixed color mode (highest priority)
   if (colorMode === 'fixed' && cellOptions.color) {
-    // If it's a hex color, use it directly; otherwise check if it's a valid named color
-    if (cellOptions.color.startsWith('#')) {
-      return cellOptions.color;
-    } else {
-    }
+    return cellOptions.color;
   }
 
-  // Mapped color mode - use valueMappings to assign colors
-  if (colorMode === 'mapped' && cellOptions.valueMappings) {
-    const valueMappingMode = cellOptions.valueMappingMode || 'by-value';
-    
-    // If value mapping is off, fall back to auto mode
-    if (valueMappingMode === 'off') {
-      return getDeterministicColor(pill);
-    }
-    
-    // If value mapping is on with global match type
-    if (valueMappingMode === 'on') {
-      const globalMatchType = cellOptions.globalMatchType || 'exact';
-      const mapping = cellOptions.valueMappings.find(m => {
-        if (globalMatchType === 'exact') {
-          return m.value === pill;
-        } else if (globalMatchType === 'contains') {
-          return pill.includes(m.value);
-        }
-        return false;
-      });
-      if (mapping && mapping.color) {
-        return mapping.color;
+  // Mapped color mode - use field's value mappings
+  if (colorMode === 'mapped') {
+    // Check if field has value mappings
+    if (field.config.mappings && field.config.mappings.length > 0) {
+      // Use the field's display processor to get the mapped value
+      const displayValue = field.display!(pill);
+      if (displayValue.color) {
+        return displayValue.color;
       }
-      // Fallback to default color for unmapped values
-      return cellOptions.color || '#FF780A';
     }
-    
-    // If value mapping is by-value (individual match types)
-    if (valueMappingMode === 'by-value') {
-      const mapping = cellOptions.valueMappings.find(m => {
-        const matchType = m.matchType || 'exact';
-        if (matchType === 'exact') {
-          return m.value === pill;
-        } else if (matchType === 'contains') {
-          return pill.includes(m.value);
-        }
-        return false;
-      });
-      if (mapping && mapping.color) {
-        return mapping.color;
-      }
-      // Fallback to default color for unmapped values
-      return cellOptions.color || '#FF780A';
-    }
+    // Fallback to default color for unmapped values
+    return cellOptions.color || '#FF780A';
   }
 
   // Auto mode - deterministic color assignment based on string hash

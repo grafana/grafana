@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { TablePillCellOptions } from '@grafana/schema';
-import { Field, ColorPicker, RadioButtonGroup, Stack, Button, Input, IconButton, Combobox } from '@grafana/ui';
+import { Field, ColorPicker, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -18,39 +18,8 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
     onChange(updatedOptions);
   };
 
-  const getEffectiveMatchType = (options: TablePillCellOptions): 'exact' | 'contains' | 'by-value' => {
-    if (options.valueMappingMode === 'by-value') {
-      return 'by-value';
-    }
-    return options.globalMatchType || 'exact';
-  };
-
   const onColorChange = (color: string) => {
     const updatedOptions = { ...cellOptions, color };
-    onChange(updatedOptions);
-  };
-
-  const onAddMapping = () => {
-    const newMapping = { value: '', color: '#FF780A', matchType: 'exact' as const };
-    const updatedMappings = [...(cellOptions.valueMappings || []), newMapping];
-    const updatedOptions = { ...cellOptions, valueMappings: updatedMappings };
-    onChange(updatedOptions);
-  };
-
-  const onRemoveMapping = (index: number) => {
-    const updatedMappings = (cellOptions.valueMappings || []).filter((_, i) => i !== index);
-    const updatedOptions = { ...cellOptions, valueMappings: updatedMappings };
-    onChange(updatedOptions);
-  };
-
-  const onMappingChange = (index: number, field: 'value' | 'color' | 'matchType', newValue: string) => {
-    const updatedMappings = (cellOptions.valueMappings || []).map((mapping, i) => {
-      if (i === index) {
-        return { ...mapping, [field]: newValue };
-      }
-      return mapping;
-    });
-    const updatedOptions = { ...cellOptions, valueMappings: updatedMappings };
     onChange(updatedOptions);
   };
 
@@ -80,106 +49,17 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
         </Field>
       )}
 
-            {colorMode === 'mapped' && (
-        <>
-          <Field
-            label={t('table.pill-cell-options-editor.label-default-color', 'Default Color')}
-            description={t(
-              'table.pill-cell-options-editor.description-default-color',
-              'Color used for values that are not explicitly mapped'
-            )}
-            noMargin
-          >
-            <ColorPicker color={cellOptions.color || '#FF780A'} onChange={onColorChange} enableNamedColors={false} />
-          </Field>
-
-          <Field
-            label={t('table.pill-cell-options-editor.label-global-match-type', 'Match Type')}
-            description={t(
-              'table.pill-cell-options-editor.description-global-match-type',
-              'Choose how value mappings are applied'
-            )}
-            noMargin
-          >
-            <RadioButtonGroup
-              value={getEffectiveMatchType(cellOptions)}
-              onChange={(matchType: 'exact' | 'contains' | 'by-value') => {
-                let updatedOptions = { ...cellOptions };
-                if (matchType === 'by-value') {
-                  updatedOptions = { 
-                    ...cellOptions, 
-                    valueMappingMode: 'by-value',
-                    globalMatchType: undefined 
-                  };
-                } else if (matchType === 'exact' || matchType === 'contains') {
-                  updatedOptions = { 
-                    ...cellOptions, 
-                    valueMappingMode: 'on',
-                    globalMatchType: matchType 
-                  };
-                }
-                onChange(updatedOptions);
-              }}
-              options={[
-                { label: t('table.pill-cell-options-editor.match-exact', 'Exact'), value: 'exact' },
-                { label: t('table.pill-cell-options-editor.match-contains', 'Contains'), value: 'contains' },
-                { label: t('table.pill-cell-options-editor.match-by-value', 'By Value'), value: 'by-value' },
-              ]}
-            />
-          </Field>
-
-          <Field
-            label={t('table.pill-cell-options-editor.label-value-mappings', 'Value Mappings')}
-            description={t(
-              'table.pill-cell-options-editor.description-value-mappings',
-              'Map specific values to specific colors'
-            )}
-            noMargin
-          >
-            <Stack direction="column" gap={1}>
-              {(cellOptions.valueMappings || []).map((mapping, index) => (
-                <Stack key={index} direction="row" gap={1} alignItems="center">
-                  <Input
-                    placeholder={t('table.pill-cell-options-editor.placeholder-value', 'Value')}
-                    value={mapping.value}
-                    onChange={(e) => onMappingChange(index, 'value', e.currentTarget.value)}
-                    width={20}
-                  />
-                  {cellOptions.valueMappingMode === 'by-value' && (
-                    <Combobox
-                      value={mapping.matchType || 'exact'}
-                      onChange={(option) => onMappingChange(index, 'matchType', option?.value || 'exact')}
-                      options={[
-                        { label: t('table.pill-cell-options-editor.match-exact', 'Exact'), value: 'exact' },
-                        { label: t('table.pill-cell-options-editor.match-contains', 'Contains'), value: 'contains' },
-                      ]}
-                      width={12}
-                    />
-                  )}
-                  <ColorPicker
-                    color={mapping.color}
-                    onChange={(color) => onMappingChange(index, 'color', color)}
-                    enableNamedColors={false}
-                  />
-                  <IconButton
-                    name="trash-alt"
-                    onClick={() => onRemoveMapping(index)}
-                    tooltip={t('table.pill-cell-options-editor.remove-mapping', 'Remove mapping')}
-                  />
-                </Stack>
-              ))}
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onAddMapping}
-                icon="plus"
-              >
-                {t('table.pill-cell-options-editor.add-mapping', 'Add mapping')}
-              </Button>
-              <div style={{ height: '8px' }} />
-            </Stack>
-          </Field>
-        </>
+      {colorMode === 'mapped' && (
+        <Field
+          label={t('table.pill-cell-options-editor.label-value-mappings-info', 'Value Mappings')}
+          description={t(
+            'table.pill-cell-options-editor.description-value-mappings-info',
+            'For Value Mappings either use the global table Value Mappings or the Field overrides Value Mappings. The default will fall back to the Color Scheme. '
+          )}
+          noMargin
+        >
+          <div>&nbsp;</div>
+        </Field>
       )}
     </Stack>
   );

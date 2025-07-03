@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaTheme2, MappingType } from '@grafana/data';
 import { TableCellDisplayMode, TablePillCellOptions } from '@grafana/schema';
 
 import { PillCell } from './PillCell';
@@ -22,7 +22,7 @@ describe('PillCell', () => {
 
   const mockField: Field = {
     name: 'test',
-    type: 'string' as any,
+    type: FieldType.string,
     values: [],
     config: {},
   };
@@ -70,17 +70,10 @@ describe('PillCell', () => {
     const mappedOptions: TablePillCellOptions = {
       type: TableCellDisplayMode.Pill,
       colorMode: 'mapped',
-      color: '#FF0000', // default color
-      valueMappingMode: 'by-value',
-      valueMappings: [
-        { value: 'success', color: '#00FF00' },
-        { value: 'error', color: '#FF0000' },
-        { value: 'warning', color: '#FFFF00' },
-      ],
     };
 
     render(<PillCell {...defaultProps} value="success,error,warning,unknown" cellOptions={mappedOptions} />);
-    
+
     const successPill = screen.getByText('success');
     const errorPill = screen.getByText('error');
     const warningPill = screen.getByText('warning');
@@ -92,84 +85,54 @@ describe('PillCell', () => {
     expect(unknownPill).toBeInTheDocument();
   });
 
-  it('should use contains matching when matchType is contains', () => {
+  it('should use field-level value mappings when available', () => {
     const mappedOptions: TablePillCellOptions = {
       type: TableCellDisplayMode.Pill,
       colorMode: 'mapped',
-      color: '#FF0000', // default color
-      valueMappingMode: 'by-value',
-      valueMappings: [
-        { value: 'error', color: '#FF0000', matchType: 'contains' },
-        { value: 'warn', color: '#FFFF00', matchType: 'contains' },
-        { value: 'success', color: '#00FF00', matchType: 'exact' },
-      ],
     };
 
-    render(<PillCell {...defaultProps} value="database_error,api_warning,success,unknown" cellOptions={mappedOptions} />);
+    // Mock field with value mappings
+    const fieldWithMappings: Field = {
+      ...mockField,
+      config: {
+        ...mockField.config,
+        mappings: [
+          {
+            type: MappingType.ValueToText,
+            options: {
+              'success': { color: '#00FF00' },
+              'error': { color: '#FF0000' },
+              'warning': { color: '#FFFF00' },
+            },
+          },
+        ],
+      },
+      display: (value: unknown) => ({
+        text: String(value),
+        color: String(value) === 'success' ? '#00FF00' : String(value) === 'error' ? '#FF0000' : String(value) === 'warning' ? '#FFFF00' : '#FF780A',
+        numeric: 0,
+      }),
+    };
+
+    render(
+      <PillCell 
+        {...defaultProps} 
+        value="success,error,warning,unknown" 
+        cellOptions={mappedOptions}
+        field={fieldWithMappings}
+      />
+    );
     
-    const errorPill = screen.getByText('database_error');
-    const warningPill = screen.getByText('api_warning');
     const successPill = screen.getByText('success');
-    const unknownPill = screen.getByText('unknown');
-
-    expect(errorPill).toBeInTheDocument();
-    expect(warningPill).toBeInTheDocument();
-    expect(successPill).toBeInTheDocument();
-    expect(unknownPill).toBeInTheDocument();
-  });
-
-  it('should use global match type when valueMappingMode is on', () => {
-    const mappedOptions: TablePillCellOptions = {
-      type: TableCellDisplayMode.Pill,
-      colorMode: 'mapped',
-      color: '#FF0000', // default color
-      valueMappingMode: 'on',
-      globalMatchType: 'contains',
-      valueMappings: [
-        { value: 'error', color: '#FF0000' },
-        { value: 'warn', color: '#FFFF00' },
-        { value: 'success', color: '#00FF00' },
-      ],
-    };
-
-    render(<PillCell {...defaultProps} value="database_error,api_warning,success,unknown" cellOptions={mappedOptions} />);
-    
-    const errorPill = screen.getByText('database_error');
-    const warningPill = screen.getByText('api_warning');
-    const successPill = screen.getByText('success');
-    const unknownPill = screen.getByText('unknown');
-
-    expect(errorPill).toBeInTheDocument();
-    expect(warningPill).toBeInTheDocument();
-    expect(successPill).toBeInTheDocument();
-    expect(unknownPill).toBeInTheDocument();
-  });
-
-  it('should fall back to auto mode when valueMappingMode is off', () => {
-    const mappedOptions: TablePillCellOptions = {
-      type: TableCellDisplayMode.Pill,
-      colorMode: 'mapped',
-      color: '#FF0000', // default color
-      valueMappingMode: 'off',
-      valueMappings: [
-        { value: 'error', color: '#FF0000' },
-        { value: 'warn', color: '#FFFF00' },
-        { value: 'success', color: '#00FF00' },
-      ],
-    };
-
-    render(<PillCell {...defaultProps} value="error,warning,success" cellOptions={mappedOptions} />);
-    
     const errorPill = screen.getByText('error');
     const warningPill = screen.getByText('warning');
-    const successPill = screen.getByText('success');
+    const unknownPill = screen.getByText('unknown');
 
+    expect(successPill).toBeInTheDocument();
     expect(errorPill).toBeInTheDocument();
     expect(warningPill).toBeInTheDocument();
-    expect(successPill).toBeInTheDocument();
+    expect(unknownPill).toBeInTheDocument();
   });
-
-
 
   it('should use fixed color when colorMode is fixed', () => {
     const fixedOptions: TablePillCellOptions = {
@@ -201,4 +164,4 @@ describe('PillCell', () => {
     render(<PillCell {...defaultProps} value={null as any} />);
     expect(screen.getByText('-')).toBeInTheDocument();
   });
-}); 
+});

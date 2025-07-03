@@ -976,18 +976,7 @@ export interface TablePillCellOptions {
   color?: string;
   colorMode?: ('auto' | 'fixed' | 'mapped');
   type: TableCellDisplayMode.Pill;
-  valueMappings?: Array<{
-    value: string;
-    color: string;
-    matchType?: 'exact' | 'contains';
-  }>;
-  valueMappingMode?: 'off' | 'on' | 'by-value';
-  globalMatchType?: 'exact' | 'contains';
 }
-
-export const defaultTablePillCellOptions: Partial<TablePillCellOptions> = {
-  valueMappings: [],
-};
 
 /**
  * A specific timezone from https://en.wikipedia.org/wiki/Tz_database
