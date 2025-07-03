@@ -49,7 +49,8 @@ jobs:
 
       - name: Install dependencies
         env:
-          YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == true && '1' || '0' }}
+          # If the PR isn't from a fork then don't use the slower yarn checks
+          YARN_ENABLE_HARDENED_MODE: ${{ github.event.pull_request.head.repo.fork == false && '1' || '0' }}
         run: yarn install --immutable
 
       - name: Build storybook
