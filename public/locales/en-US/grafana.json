@@ -9954,13 +9954,6 @@
       "text-loading-teams": "Loading teams..."
     }
   },
-  "provisioned-resource": {
-    "preview-banner": {
-      "not-saved": "The value is not yet saved in the Grafana database",
-      "open-pull-request-in-git-hub": "{btnText}",
-      "title-dashboard-loaded-branch-git-hub": ""
-    }
-  },
   "provisioned-resource-form": {
     "save-or-delete-resource-shared-fields": {
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
@@ -9971,6 +9964,13 @@
       "label-path": "Path",
       "label-workflow": "Workflow"
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "The value is not yet saved in the Grafana database",
+      "open-pull-request-in-git-hub": "{btnText}"
+    },
+    "title-dashboard-loaded-branch-git-hub": ""
   },
   "provisioning": {
     "banner": {
