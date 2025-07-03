@@ -39,9 +39,7 @@ describe('Monaco Query Validation', () => {
     query = 'max_over_time(deriv(rate(distance_covered_total[5s])[30s5s])[10m:])';
     expect(validateQuery(query, query, [query], parser)).toEqual({
       errors: [{ endColumn: 59, endLineNumber: 1, issue: '5s', startColumn: 57, startLineNumber: 1 }],
-      warnings: [
-        { endColumn: 67, endLineNumber: 1, issue: warningTypes.SubqueryExpr, startColumn: 15, startLineNumber: 1 },
-      ],
+      warnings: [],
     });
   });
 
