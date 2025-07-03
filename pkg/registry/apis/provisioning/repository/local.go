@@ -251,8 +251,10 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 			if err != nil {
 				return fmt.Errorf("read and calculate hash of path %s: %w", path, err)
 			}
+		} else if !strings.HasSuffix(entry.Path, "/") {
+			// ensure trailing slash for directories
+			entry.Path = entry.Path + "/"
 		}
-		// TODO: do folders have a trailing slash?
 		entries = append(entries, entry)
 		return err
 	})
