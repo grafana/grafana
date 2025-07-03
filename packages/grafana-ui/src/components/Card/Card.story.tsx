@@ -11,8 +11,7 @@ const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 const meta: Meta<typeof Card> = {
   title: 'Layout/Card',
   component: Card,
-  // nosort is a custom tag used so the stories shown in docs keep the order they are defined in the file
-  tags: ['autodocs', 'nosort'],
+  tags: ['autodocs'],
   parameters: {
     controls: {
       exclude: ['onClick', 'href', 'heading', 'description', 'className', 'noMargin'],

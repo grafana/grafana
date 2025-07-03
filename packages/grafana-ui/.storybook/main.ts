@@ -12,12 +12,12 @@ const coreComponentsGlobs: StorybookConfig['stories'] = [
 
 const alertingComponentsGlobs: StorybookConfig['stories'] = [
   {
-    titlePrefix: 'zzz_Alerting',
+    titlePrefix: 'Alerting',
     directory: '../../grafana-alerting/src',
     files: 'Intro.mdx',
   },
   {
-    titlePrefix: 'zzz_Alerting',
+    titlePrefix: 'Alerting',
     directory: '../../grafana-alerting/src',
     files: process.env.NODE_ENV === 'production' ? '**/!(*.internal).story.tsx' : '**/*.story.tsx',
   },
