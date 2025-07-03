@@ -83,6 +83,7 @@ test.describe(
       const inputField = fieldLabel.locator('input');
       await expect(inputField).toBeVisible();
       await inputField.fill(variable.value);
+      await inputField.blur();
 
       // assert the panel is visible and has the correct value
       const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
@@ -115,6 +116,7 @@ test.describe(
       const inputField = fieldLabel.locator('input');
       await expect(inputField).toBeVisible();
       await inputField.fill(variable.value);
+      await inputField.blur();
 
       // select the variable in the dashboard and confirm the variable value is set
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem).click();
