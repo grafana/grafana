@@ -82,8 +82,8 @@ type OAuthInfo struct {
 	HostedDomain                string            `mapstructure:"hosted_domain" toml:"hosted_domain"`
 	Icon                        string            `mapstructure:"icon" toml:"icon"`
 	Name                        string            `mapstructure:"name" toml:"name"`
-	OrgAttributePath            string            `mapstructure:"org_attribute_path" toml:"org_attribute_path"`
-	OrgMapping                  []string          `mapstructure:"org_mapping" toml:"org_mapping"`
+	OrgAttributePath            string            `mapstructure:"org_attribute_path"`
+	OrgMapping                  []string          `mapstructure:"org_mapping"`
 	RoleAttributePath           string            `mapstructure:"role_attribute_path" toml:"role_attribute_path"`
 	RoleAttributeStrict         bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict"`
 	Scopes                      []string          `mapstructure:"scopes" toml:"scopes"`
@@ -94,11 +94,11 @@ type OAuthInfo struct {
 	TlsClientCa                 string            `mapstructure:"tls_client_ca" toml:"tls_client_ca"`
 	TlsClientCert               string            `mapstructure:"tls_client_cert" toml:"tls_client_cert"`
 	TlsClientKey                string            `mapstructure:"tls_client_key" toml:"tls_client_key"`
-	TlsSkipVerify               bool              `mapstructure:"tls_skip_verify" toml:"tls_skip_verify"`
+	TlsSkipVerify               bool              `mapstructure:"tls_skip_verify_insecure" toml:"tls_skip_verify_insecure"`
 	TokenUrl                    string            `mapstructure:"token_url" toml:"token_url"`
 	UsePKCE                     bool              `mapstructure:"use_pkce" toml:"use_pkce"`
 	UseRefreshToken             bool              `mapstructure:"use_refresh_token" toml:"use_refresh_token"`
-	Extra                       map[string]string `mapstructure:",remain"`
+	Extra                       map[string]string `mapstructure:",remain" toml:"extra,omitempty"`
 }
 
 func NewOAuthInfo() *OAuthInfo {
