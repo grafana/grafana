@@ -58,7 +58,7 @@ export default function AdCard({ title, description, href, logoUrl, items, helpF
         ))}
       </div>
       <Divider />
-      <Button fill="solid" variant="secondary" onClick={() => window.open(href, '_blank')}>
+      <Button fill="solid" variant="secondary" onClick={() => window.open(href, '_blank')} className={styles.button}>
         <Trans i18nKey="alerting.ad.learn-more">Learn more</Trans>
         <Icon name="external-link-alt" className={styles.buttonIcon} />
       </Button>
@@ -121,6 +121,10 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
   icon: css({
     marginRight: theme.spacing(1),
     color: theme.colors.success.main,
+  }),
+
+  button: css({
+    padding: `0 ${theme.spacing(2)}`,
   }),
 
   buttonIcon: css({
