@@ -5,7 +5,7 @@ import { Meta, StoryFn } from '@storybook/react';
 import { ButtonSelect } from './ButtonSelect';
 
 const meta: Meta<typeof ButtonSelect> = {
-  title: 'Inputs/ButtonSelect',
+  title: 'Inputs/Deprecated/ButtonSelect',
   component: ButtonSelect,
   parameters: {
     controls: {
