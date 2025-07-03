@@ -95,7 +95,7 @@ test.describe.skip(
         };
       } else {
         const yamlContent = readFileSync(provisioningPath, 'utf8');
-        // TODO can we do this without a type assertion?
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const yaml = load(yamlContent) as AzureMonitorProvision;
         datasourceConfig = yaml.datasources[0];
       }
