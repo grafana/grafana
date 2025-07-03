@@ -979,6 +979,7 @@ export interface TablePillCellOptions {
   valueMappings?: Array<{
     value: string;
     color: string;
+    matchType?: 'exact' | 'contains';
   }>;
 }
 

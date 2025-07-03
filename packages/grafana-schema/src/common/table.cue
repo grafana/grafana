@@ -113,6 +113,7 @@ TablePillCellOptions: {
   valueMappings?: [...{
     value: string
     color: string
+    matchType?: "exact" | "contains" | *"exact"
   }]
   colorMode?: "auto" | "fixed" | "mapped"
 } @cuetsy(kind="interface")
