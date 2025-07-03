@@ -411,21 +411,20 @@ export function useHeaderHeight({
     [columnAvailableWidths, avgCharWidth, wrappedColHeaderIdxs]
   );
 
+  // TODO: is there a less clunky way to subtract the top padding value?
   const headerHeight = useMemo(() => {
     if (!enabled) {
       return 0;
     }
     if (!hasWrappedColHeaders) {
-      return defaultHeight;
+      return defaultHeight - TABLE.CELL_PADDING;
     }
 
     const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight);
+    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
   }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
 
-  // we do not have a top padding on the header row, and the default row height includes top and bottom padding.
-  // TODO: is there a less clunky way to subtract the top padding value?
-  return headerHeight - TABLE.CELL_PADDING;
+  return headerHeight;
 }
 
 interface UseRowHeightOptions {
