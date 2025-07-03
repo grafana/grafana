@@ -40,6 +40,8 @@ check: {
 					itemID: string
 					// Links to actions that can be taken to resolve the failure
 					links: [...#ErrorLink]
+					// More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.
+					moreInfo?: string
 				}	
 				#Report: {
 						// Number of elements analyzed

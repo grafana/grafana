@@ -3404,11 +3404,6 @@
           {
             "group": "notifications.alerting.grafana.app",
             "kind": "Receiver",
-            "version": "__internal"
-          },
-          {
-            "group": "notifications.alerting.grafana.app",
-            "kind": "Receiver",
             "version": "v0alpha1"
           }
         ]
@@ -3481,11 +3476,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "notifications.alerting.grafana.app",
-            "kind": "ReceiverList",
-            "version": "__internal"
-          },
           {
             "group": "notifications.alerting.grafana.app",
             "kind": "ReceiverList",
@@ -3617,11 +3607,6 @@
           {
             "group": "notifications.alerting.grafana.app",
             "kind": "RoutingTree",
-            "version": "__internal"
-          },
-          {
-            "group": "notifications.alerting.grafana.app",
-            "kind": "RoutingTree",
             "version": "v0alpha1"
           }
         ]
@@ -3662,11 +3647,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "notifications.alerting.grafana.app",
-            "kind": "RoutingTreeList",
-            "version": "__internal"
-          },
           {
             "group": "notifications.alerting.grafana.app",
             "kind": "RoutingTreeList",
@@ -3919,11 +3899,6 @@
           {
             "group": "notifications.alerting.grafana.app",
             "kind": "TemplateGroup",
-            "version": "__internal"
-          },
-          {
-            "group": "notifications.alerting.grafana.app",
-            "kind": "TemplateGroup",
             "version": "v0alpha1"
           }
         ]
@@ -3964,11 +3939,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "notifications.alerting.grafana.app",
-            "kind": "TemplateGroupList",
-            "version": "__internal"
-          },
           {
             "group": "notifications.alerting.grafana.app",
             "kind": "TemplateGroupList",
@@ -4093,11 +4063,6 @@
           {
             "group": "notifications.alerting.grafana.app",
             "kind": "TimeInterval",
-            "version": "__internal"
-          },
-          {
-            "group": "notifications.alerting.grafana.app",
-            "kind": "TimeInterval",
             "version": "v0alpha1"
           }
         ]
@@ -4185,11 +4150,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "notifications.alerting.grafana.app",
-            "kind": "TimeIntervalList",
-            "version": "__internal"
-          },
           {
             "group": "notifications.alerting.grafana.app",
             "kind": "TimeIntervalList",

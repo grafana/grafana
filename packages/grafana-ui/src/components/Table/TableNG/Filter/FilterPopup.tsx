@@ -12,6 +12,7 @@ import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { FilterType } from '../types';
+import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
@@ -110,7 +111,7 @@ export const FilterPopup = ({
       <div className={styles.filterContainer} onClick={stopPropagation}>
         <Stack direction="column">
           <Stack alignItems="center">
-            {field && <Label className={styles.label}>{field.config.displayName || field.name}</Label>}
+            {field && <Label className={styles.label}>{getDisplayName(field)}</Label>}
             <ButtonSelect
               variant="canvas"
               options={OPERATORS}
