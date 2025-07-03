@@ -19,8 +19,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    // TODO unskip and figure out why this test isn't working
-    test.skip('can add a new group by variable', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can add a new group by variable', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
@@ -55,8 +54,8 @@ test.describe(
         });
       });
 
-      // select the variable in the dashboard and confirm the variable value is set
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem).click();
+      // open the variable dropdown in the dashboard and confirm the variable value is set
+      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem).locator('> div').click();
       const variableLabel = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label!)
       );
