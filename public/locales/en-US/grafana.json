@@ -1619,6 +1619,36 @@
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
     },
+    "improve-ai-annotations": {
+      "button": "Improve annotations with AI",
+      "modal": {
+        "apply-improvements": "Apply Annotation Improvements",
+        "error": "{error}",
+        "generate": "Improve Annotations",
+        "generating": "Generating...",
+        "preview-annotations": "Improved Annotations:",
+        "preview-title": "AI Annotations Improvements Preview",
+        "prompt-description": "Describe what you want to improve about the alert rule annotations. For example: \"Make the summary more descriptive\", \"Add troubleshooting steps to the description\", or \"Add runbook links\".",
+        "prompt-label": "How would you like to improve the annotations?",
+        "prompt-placeholder": "Make the summary more descriptive and add troubleshooting steps to the description...",
+        "title": "Improve Alert Rule Annotations with AI"
+      }
+    },
+    "improve-ai-labels": {
+      "button": "Improve labels with AI",
+      "modal": {
+        "apply-improvements": "Apply Label Improvements",
+        "error": "{error}",
+        "generate": "Improve Labels",
+        "generating": "Generating...",
+        "preview-labels": "Improved Labels:",
+        "preview-title": "AI Labels Improvements Preview",
+        "prompt-description": "Describe what you want to improve about the alert rule labels. For example: \"Add severity and team labels\", \"Add environment labels for better categorization\", or \"Create dynamic severity based on query values\".",
+        "prompt-label": "How would you like to improve the labels?",
+        "prompt-placeholder": "Add severity labels based on thresholds, team ownership, and environment categorization...",
+        "title": "Improve Alert Rule Labels with AI"
+      }
+    },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
       "monitor-status-system-tooltip": "Alerting insights provides pre-built dashboards to monitor your alerting data.",
