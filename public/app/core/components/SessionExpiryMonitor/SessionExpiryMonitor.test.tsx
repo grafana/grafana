@@ -158,4 +158,4 @@ describe('SessionExpiryMonitor', () => {
     
     clearIntervalSpy.mockRestore();
   });
-}); 
+});
