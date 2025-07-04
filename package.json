@@ -59,6 +59,7 @@
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
     "i18n:stats": "node ./scripts/cli/reportI18nStats.mjs",
+    "i18n-extract": "make i18n-extract",
     "betterer": "betterer --tsconfig ./scripts/cli/tsconfig.json",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
@@ -288,12 +289,12 @@
     "@grafana/plugin-ui": "0.10.7",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^6.22.1",
-    "@grafana/scenes-react": "^6.22.1",
+    "@grafana/scenes": "^6.27.0",
+    "@grafana/scenes-react": "^6.27.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "@hello-pangea/dnd": "17.0.0",
+    "@hello-pangea/dnd": "18.0.1",
     "@kusto/monaco-kusto": "^10.0.0",
     "@leeoniya/ufuzzy": "1.0.18",
     "@lezer/common": "1.2.3",
@@ -443,7 +444,10 @@
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
     "swagger-ui-react/dompurify": "3.2.6",
-    "refractor/prismjs": "^1.27.0"
+    "refractor/prismjs": "^1.27.0",
+    "@mapbox/jsonlint-lines-primitives": "github:mapbox/jsonlint#commit=e31b7289baedf3e1000d7ae7edd42268212c9954",
+    "get-document": "github:webmodules/get-document#commit=a04ccb499d6e0433a368c3bb150b4899b698461f",
+    "gitconfiglocal": "2.1.0"
   },
   "workspaces": {
     "packages": [

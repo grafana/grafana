@@ -253,9 +253,14 @@ By querying ARG, you can query resources with complex filtering, iteratively exp
 ### Create a Resource Graph query
 
 ARG queries are written in a variant of the [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/query-language), but not all Kusto language features are available in ARG.
+
 An Azure Resource Graph query is formatted as table data.
 
-If your Azure credentials grant you access to multiple subscriptions, you can choose multiple subscriptions before entering queries.
+If your Azure credentials grant you access to multiple subscriptions, you can choose multiple subscriptions before entering queries. It is also possible to run queries against the directory by changing the scope of the query.
+
+{{% admonition type="note" %}}
+Some queries that function at a directory level may not work at a subscription level and vice-versa.
+{{% /admonition %}}
 
 ### Resource Graph query examples
 

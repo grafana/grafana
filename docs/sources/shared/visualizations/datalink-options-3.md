@@ -35,4 +35,4 @@ For each action, define the following API call settings:
 
 <!-- prettier-ignore-end -->
 
-To learn more, refer to [Configure data links and actions](../../configure-data-links/).
+To learn more, refer to [Configure data links and actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/).

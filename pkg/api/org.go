@@ -292,16 +292,16 @@ func (hs *HTTPServer) DeleteOrgByID(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
-	// before deleting an org, check if user does not belong to the current org
+	// before deleting an org, check if user is not active in the org
 	if c.GetOrgID() == orgID {
-		return response.Error(http.StatusBadRequest, "Can not delete org for current user", nil)
+		return response.Error(http.StatusBadRequest, "Cannot delete your active organization. Please switch to a different organization first.", nil)
 	}
 
 	if err := hs.orgDeletionService.Delete(c.Req.Context(), &org.DeleteOrgCommand{ID: orgID}); err != nil {
 		if errors.Is(err, org.ErrOrgNotFound) {
 			return response.Error(http.StatusNotFound, "Failed to delete organization. ID not found", nil)
 		}
-		return response.Error(http.StatusInternalServerError, "Failed to update organization", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete organization", err)
 	}
 	return response.Success("Organization deleted")
 }
