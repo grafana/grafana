@@ -36,8 +36,22 @@ const (
 	serviceNameForProvisioning = "provisioning"
 )
 
-func newInternalIdentity(name string, namespace string, orgID int64) Requester {
-	return &StaticRequester{
+type IdentityOpts func(*StaticRequester)
+
+// WithServiceIdentityName sets the `StaticRequester.AccessTokenClaims.Rest.ServiceIdentity` field to the provided name.
+// This is so far only used by Secrets Manager to identify and gate the service decrypting a secret.
+func WithServiceIdentityName(name string) IdentityOpts {
+	return func(r *StaticRequester) {
+		r.AccessTokenClaims.Rest.ServiceIdentity = name
+	}
+}
+
+func newInternalIdentity(name string, namespace string, orgID int64, opts ...IdentityOpts) Requester {
+	// Create a copy of the ServiceIdentityClaims to avoid modifying the global one.
+	// Some of the options might mutate it.
+	claimsCopy := *ServiceIdentityClaims
+
+	staticRequester := &StaticRequester{
 		Type:           types.TypeAccessPolicy,
 		Name:           name,
 		UserUID:        name,
@@ -50,37 +64,43 @@ func newInternalIdentity(name string, namespace string, orgID int64) Requester {
 		Permissions: map[int64]map[string][]string{
 			orgID: serviceIdentityPermissions,
 		},
-		AccessTokenClaims: ServiceIdentityClaims,
+		AccessTokenClaims: &claimsCopy,
 	}
+
+	for _, opt := range opts {
+		opt(staticRequester)
+	}
+
+	return staticRequester
 }
 
 // WithServiceIdentity sets an identity representing the service itself in provided org and store it in context.
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
-func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
-	r := newInternalIdentity(serviceName, "*", orgID)
+func WithServiceIdentity(ctx context.Context, orgID int64, opts ...IdentityOpts) (context.Context, Requester) {
+	r := newInternalIdentity(serviceName, "*", orgID, opts...)
 	return WithRequester(ctx, r), r
 }
 
-func WithProvisioningIdentity(ctx context.Context, namespace string) (context.Context, Requester, error) {
+func WithProvisioningIdentity(ctx context.Context, namespace string, opts ...IdentityOpts) (context.Context, Requester, error) {
 	ns, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	r := newInternalIdentity(serviceNameForProvisioning, ns.Value, ns.OrgID)
+	r := newInternalIdentity(serviceNameForProvisioning, ns.Value, ns.OrgID, opts...)
 	return WithRequester(ctx, r), r, nil
 }
 
 // WithServiceIdentityContext sets an identity representing the service itself in context.
-func WithServiceIdentityContext(ctx context.Context, orgID int64) context.Context {
-	ctx, _ = WithServiceIdentity(ctx, orgID)
+func WithServiceIdentityContext(ctx context.Context, orgID int64, opts ...IdentityOpts) context.Context {
+	ctx, _ = WithServiceIdentity(ctx, orgID, opts...)
 	return ctx
 }
 
 // WithServiceIdentityFN calls provided closure with an context contaning the identity of the service.
-func WithServiceIdentityFn[T any](ctx context.Context, orgID int64, fn func(ctx context.Context) (T, error)) (T, error) {
-	return fn(WithServiceIdentityContext(ctx, orgID))
+func WithServiceIdentityFn[T any](ctx context.Context, orgID int64, fn func(ctx context.Context) (T, error), opts ...IdentityOpts) (T, error) {
+	return fn(WithServiceIdentityContext(ctx, orgID, opts...))
 }
 
 func getWildcardPermissions(actions ...string) map[string][]string {
@@ -118,6 +138,9 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"users:read",     // accesscontrol.ActionUsersRead,
 	"org.users:read", // accesscontrol.ActionOrgUsersRead,
 	"teams:read",     // accesscontrol.ActionTeamsRead,
+
+	// Secrets Manager uses a custom verb for secret decryption
+	"secret.grafana.app/securevalues:decrypt",
 )
 
 var serviceIdentityTokenPermissions = getTokenPermissions(
