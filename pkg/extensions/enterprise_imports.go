@@ -6,6 +6,7 @@ package extensions
 import (
 	_ "cloud.google.com/go/kms/apiv1"
 	_ "cloud.google.com/go/kms/apiv1/kmspb"
+	_ "cloud.google.com/go/spanner"
 	_ "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	_ "github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys"
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
@@ -29,13 +30,6 @@ import (
 	_ "github.com/spf13/cobra" // used by the standalone apiserver cli
 	_ "github.com/stretchr/testify/require"
 	_ "golang.org/x/time/rate"
-	_ "k8s.io/api"
-	_ "k8s.io/apimachinery/pkg/util/httpstream/spdy"
-	_ "k8s.io/apimachinery/pkg/util/proxy"
-	_ "k8s.io/kube-aggregator/pkg/apiserver/scheme"
-	_ "k8s.io/kube-aggregator/pkg/generated/openapi"
-	_ "k8s.io/kube-aggregator/pkg/registry/apiservice/rest"
-	_ "sigs.k8s.io/randfill"
 	_ "xorm.io/builder"
 
 	_ "github.com/grafana/authlib/authn"
