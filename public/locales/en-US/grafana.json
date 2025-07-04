@@ -11985,6 +11985,7 @@
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Add a convert field type transformer",
       "aria-label-remove-convert-field-type-transformer": "Remove convert field type transformer",
+      "convert-field-type": "Convert field type",
       "label": {
         "browser": "Browser",
         "utc": "UTC"
