@@ -302,7 +302,10 @@ export class LokiDatasource
       .map((q) => ({
         ...q,
         maxLines: q.maxLines ?? this.maxLines,
-        scopes: config.featureToggles.scopeFilters ? request.scopes?.flatMap((scope) => scope.spec.filters) : undefined,
+        scopes:
+          config.featureToggles.scopeFilters && config.featureToggles.logQLScope
+            ? request.scopes?.flatMap((scope) => scope.spec.filters)
+            : undefined,
       }));
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {
