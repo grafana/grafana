@@ -387,12 +387,18 @@ export class Scene {
 
     return config.featureToggles.canvasPanelPanZoom ? (
       <div className={this.styles.viewer} ref={this.setViewerRef} key={this.revId}>
-        <div className={this.styles.viewport} ref={this.setViewportRef} key={this.revId}>
+        <div className={this.styles.viewport} ref={this.setViewportRef} key={this.revId} data-testid="canvas-scene">
           {sceneDiv}
         </div>
       </div>
     ) : (
-      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
+      <div
+        key={this.revId}
+        className={this.styles.wrap}
+        style={this.style}
+        ref={this.setRef}
+        data-testid="canvas-scene"
+      >
         {sceneDiv}
       </div>
     );

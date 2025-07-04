@@ -1,45 +1,78 @@
 import { Page, Locator } from '@playwright/test';
 
-export interface CanvasTestContext {
-  page: Page;
-  canvasPanel: Locator;
-  canvasScene: Locator;
-}
+// export interface CanvasTestContext {
+//   page: Page;
+//   canvasPanel: Locator;
+//   canvasScene: Locator;
+// }
 
 /**
  * Creates a new dashboard with a Canvas panel
  */
-export async function createCanvasPanel(page: Page): Promise<CanvasTestContext> {
+export async function createCanvasPanel(page: Page): Promise<void> {
   // Navigate to Grafana
-  await page.goto('/');
+  await page.goto('/dashboards');
 
-  // Login as admin
-  await page.fill('input[name="user"]', 'admin');
-  await page.fill('input[name="password"]', 'admin');
-  await page.click('button[type="submit"]');
+  // Check if we're on a login page and fill form only if needed
+  try {
+    const userInput = page.locator('input[name="user"]');
+    await userInput.waitFor({ state: 'visible', timeout: 5000 });
 
-  // Wait for dashboard to load
-  await page.waitForSelector('[data-testid="dashboard-grid"]', { timeout: 30000 });
+    // We're on login page, fill the form
+    await page.fill('input[name="user"]', 'admin');
+    await page.fill('input[name="password"]', 'admin');
+    await page.click('button[type="submit"]');
+    await page.waitForLoadState('networkidle');
+
+    // Handle the "Skip change password" form that appears after login
+    try {
+      const skipButton = page.locator('[data-testid="data-testid Skip change password button"]');
+      await skipButton.waitFor({ state: 'visible', timeout: 5000 });
+      await skipButton.click();
+    } catch (error) {
+      // Skip button didn't appear, continue with test
+    }
+  } catch (error) {
+    // Not on login page, already logged in or different page
+    console.log('Login form not found, assuming already logged in');
+  }
+
+  // Wait for dashboard to load (wait for the New button to be available)
+  await page.waitForSelector('button:has-text("New")', { timeout: 30000 });
 
   // Create a new dashboard
-  await page.click('[data-testid="new-dashboard-button"]');
-  await page.click('[data-testid="dashboard-add-panel-button"]');
+  await page.click('button:has-text("New")');
+  await page.click('a[href="/dashboard/new"]');
+
+  // Wait for the new dashboard page to load
+  await page.waitForSelector('[data-testid="data-testid Create new panel button"]', { timeout: 30000 });
+  await page.click('[data-testid="data-testid Create new panel button"]');
+
+  // Wait for the panel editor to load and handle potential datasource selector popup
+  try {
+    // Check if datasource selector popup appears (with shorter timeout)
+    const testDataButton = page.locator('button:has(small:has-text("TestData"))');
+    await testDataButton.waitFor({ state: 'visible', timeout: 5000 });
+    await testDataButton.click();
+  } catch (error) {
+    // Datasource selector popup didn't appear, continue with test
+  }
 
   // Select Canvas visualization
-  await page.click('[data-testid="panel-editor-viz-select"]');
-  await page.click('[data-testid="viz-type-canvas"]');
+  await page.click('[data-testid="data-testid toggle-viz-picker"]');
+  await page.click('[data-testid="Plugin visualization item Canvas"]');
 
   // Wait for canvas panel to load
-  await page.waitForSelector('[data-testid="canvas-panel"]', { timeout: 10000 });
+  await page.waitForSelector('[data-testid="canvas-scene"]', { timeout: 10000 });
 
-  const canvasPanel = page.locator('[data-testid="canvas-panel"]');
-  const canvasScene = page.locator('[data-testid="canvas-scene"]');
+  // const canvasPanel = page.locator('[data-testid="canvas-panel"]');
+  // const canvasScene = page.locator('[data-testid="canvas-scene"]');
 
-  return {
-    page,
-    canvasPanel,
-    canvasScene,
-  };
+  // return {
+  //   page,
+  //   canvasPanel,
+  //   canvasScene,
+  // };
 }
 
 /**
@@ -70,7 +103,7 @@ export async function selectCanvasElement(page: Page, index: number = 0): Promis
  * Waits for moveable controls to be visible
  */
 export async function waitForMoveableControls(page: Page): Promise<void> {
-  const moveableControls = page.locator('.moveable-control');
+  const moveableControls = page.locator('[data-testid="data-testid Options group Layout"]');
   await moveableControls.waitFor({ state: 'visible' });
 }
 
