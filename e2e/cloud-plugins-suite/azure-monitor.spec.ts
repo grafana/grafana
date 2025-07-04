@@ -27,6 +27,7 @@ const dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
 const maxRetryCount = 3;
 
 Cypress.Commands.add('checkHealthRetryable', function (fn: Function, retryCount: number) {
+  // temp
   cy.then(() => {
     const result = fn(++retryCount);
     result.then((res: Interception) => {
