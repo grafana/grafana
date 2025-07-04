@@ -221,14 +221,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Check test suites
-        id: check-jobs
-        uses: ./.github/actions/check-jobs
-        continue-on-error: true # Failure will be reported on Show test results step
-        with:
-          needs: ${{ toJson(needs) }}
-          failure-message: "One or more E2E test suites have failed"
-          success-message: "All E2E test suites completed successfully"
 
       - uses: actions/setup-node@v4
         with:
@@ -277,6 +269,15 @@ jobs:
           name: playwright-html-${{ github.run_number }}
           path: playwright-report
           retention-days: 7
+
+      - name: Check test suites
+        id: check-jobs
+        uses: ./.github/actions/check-jobs
+        continue-on-error: true # Failure will be reported on Show test results step
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more E2E test suites have failed"
+          success-message: "All E2E test suites completed successfully"
 
       - name: Show test results
         env:
