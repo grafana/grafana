@@ -10976,6 +10976,10 @@
       "revoked-label": "Revoked"
     }
   },
+  "session-expiry": {
+    "warning-message": "Your session will expire in {{minutes}} minute(s). Please make sure to finish up or save any changes.",
+    "warning-title": "Session Expiring Soon"
+  },
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",

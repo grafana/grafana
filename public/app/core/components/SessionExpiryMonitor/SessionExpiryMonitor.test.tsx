@@ -27,7 +27,7 @@ jest.mock('app/core/copy/appNotification', () => ({
 }));
 
 describe('SessionExpiryMonitor', () => {
-  let store: any;
+  let store: ReturnType<typeof configureStore>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -38,7 +38,7 @@ describe('SessionExpiryMonitor', () => {
       },
     });
 
-    (contextSrv.isSignedIn as any) = true;
+    (contextSrv as { isSignedIn: boolean }).isSignedIn = true;
     (hasSessionExpiry as jest.Mock).mockReturnValue(true);
   });
 
@@ -66,7 +66,7 @@ describe('SessionExpiryMonitor', () => {
   });
 
   it('should not monitor when user is not signed in', () => {
-    (contextSrv.isSignedIn as any) = false;
+    (contextSrv as { isSignedIn: boolean }).isSignedIn = false;
     (getSessionExpiry as jest.Mock).mockReturnValue(Math.floor(Date.now() / 1000) + 10 * 60);
 
     renderComponent();
