@@ -103,6 +103,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           defaultValue: defaultTableFieldOptions.filterable,
         })
         .addBooleanSwitch({
+          path: 'wrapHeaderText',
+          name: t('table.name-wrap-header-text', 'Wrap header text'),
+          description: t(
+            'table.description-wrap-header-text',
+            'Enables text wrapping for the field name in the table header'
+          ),
+          category,
+          defaultValue: defaultTableFieldOptions.wrapHeaderText,
+        })
+        .addBooleanSwitch({
           path: 'hidden',
           name: t('table-new.name-hide-in-table', 'Hide in table'),
           category,
