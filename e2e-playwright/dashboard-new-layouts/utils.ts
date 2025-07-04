@@ -61,12 +61,14 @@ export const flows = {
     const variableNameInput = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.ElementEditPane.variableNameInput
     );
+    await variableNameInput.click();
     await variableNameInput.fill(variable.name);
     await variableNameInput.blur();
     if (variable.label) {
       const variableLabelInput = dashboardPage.getByGrafanaSelector(
         selectors.components.PanelEditor.ElementEditPane.variableLabelInput
       );
+      await variableLabelInput.click();
       await variableLabelInput.fill(variable.label);
       await variableLabelInput.blur();
     }
