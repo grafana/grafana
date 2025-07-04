@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/setting"
@@ -75,6 +76,7 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		provisioning,
 		nil, // no librarypanels.Service
 		sort.ProvideService(),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 	)
 
 	client, err := newUnifiedClient(cfg, sqlStore)

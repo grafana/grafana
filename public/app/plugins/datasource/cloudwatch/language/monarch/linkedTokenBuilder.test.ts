@@ -1,8 +1,8 @@
 import { monacoTypes } from '@grafana/ui';
 
-import { multiLineFullQuery, singleLineFullQuery } from '../../__mocks__/cloudwatch-sql-test-data';
-import MonacoMock from '../../__mocks__/monarch/Monaco';
-import TextModel from '../../__mocks__/monarch/TextModel';
+import { multiLineFullQuery, singleLineFullQuery } from '../../mocks/cloudwatch-sql-test-data';
+import MonacoMock from '../../mocks/monarch/Monaco';
+import TextModel from '../../mocks/monarch/TextModel';
 import { SQLTokenTypes } from '../cloudwatch-sql/completion/types';
 import cloudWatchSqlLanguageDefinition from '../cloudwatch-sql/definition';
 import { DESC, SELECT } from '../cloudwatch-sql/language';

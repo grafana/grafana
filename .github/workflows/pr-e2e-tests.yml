@@ -19,7 +19,27 @@ env:
   RUNNER_DEBUG: 1
 
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/pr-e2e-tests.yml
+
   build-grafana:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     name: Build & Package Grafana
     runs-on: ubuntu-latest-16-cores
     permissions:
@@ -80,6 +100,8 @@ jobs:
 
   # TODO: we won't need this when we only have playwright
   build-e2e-runner:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     name: Build E2E test runner
     runs-on: ubuntu-latest
     permissions:

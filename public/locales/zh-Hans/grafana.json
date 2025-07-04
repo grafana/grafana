@@ -110,6 +110,12 @@
       "update-button": "更新",
       "users-heading": "组织用户"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "审计",
       "title-custom-branding": "定制品牌",
@@ -3209,6 +3215,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "已启用",
       "text-badge-not-enabled": "未启用"
     },
@@ -3241,6 +3249,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "管理身份验证设置并配置单点登录。不妨在我们的<2>文档</2>中了解更多信息。"
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3441,18 +3455,12 @@
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
-      "description-branch-name-in-git-hub": "GitHub 中的分支名称",
       "error-invalid-folder-name": "文件夹名称无效",
       "error-required": "文件夹名称为必填项",
-      "folder-comment-input-placeholder-describe-changes-optional": "添加备注以描述您的更改（可选）",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
-      "label-branch": "分支",
-      "label-comment": "评论",
       "label-folder-name": "文件夹名称",
-      "label-workflow": "工作流程",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
       "title-pull-request-created": "拉取请求已创建",
-      "title-repository-not-found": "找不到存储库",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
     "no-results": {
@@ -3462,7 +3470,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。"
+    "text-this-repository-is-read-only": "如果您可以直接访问目标，请复制 JSON 并将其粘贴到那里。",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3876,7 @@
   "close-button": {
     "tooltip": "关闭"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "加载选项时发生错误。"
@@ -8315,6 +8330,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8338,7 +8365,6 @@
       "label-wrap-lines": "多行显示"
     },
     "log-details": {
-      "close": "关闭日志详情",
       "fields": "字段",
       "links": "链接",
       "log-line": "日志行",
@@ -8363,6 +8389,35 @@
       "show-less": "收起",
       "show-more": "展开",
       "tooltip-error": "错误：{{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "将链接复制到日志行",
@@ -8490,6 +8545,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "数据关联",
       "aria-label-fields": "字段",
+      "aria-label-line": "",
       "aria-label-log-level": "日志级别",
       "aria-label-no-details": "没有详情"
     },
@@ -9465,6 +9521,15 @@
       "view": "查看"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "打开可视化建议",
       "switch-to-table": "切换至表格"
     },
@@ -11329,6 +11394,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "在图片无法显示或用户使用屏幕阅读器时，将显示的替代文本",
       "description-title-text": "光标悬停在图片上时将显示的文本",
@@ -11349,6 +11415,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11557,6 +11624,12 @@
     "zone": {
       "select-aria-label": "时区选择器",
       "select-search-input": "输入以搜索(国家、城市、缩写)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
@@ -12008,6 +12081,7 @@
           "polynomial": "多项式"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "要预测的 X,Y 点的数量"
     },
     "rename-by-regex-transformer-editor": {
