@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -44,7 +45,7 @@ type RuleStore interface {
 }
 
 type lokiQueryClient interface {
-	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
+	RangeQuery(ctx context.Context, query string, start, end, limit int64) (lokiclient.QueryRes, error)
 	MaxQuerySize() int
 }
 
@@ -67,7 +68,7 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db d
 	}
 
 	return &LokiHistorianStore{
-		client:    historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(reg, subsystem), log, tracer),
+		client:    lokiclient.NewLokiClient(lokiCfg, lokiclient.NewRequester(), ngmetrics.NewHistorianMetrics(reg, subsystem), log, tracer),
 		db:        db,
 		log:       log,
 		ruleStore: ruleStore,
@@ -142,7 +143,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuer
 	return items, err
 }
 
-func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac accesscontrol.AccessResources) []*annotations.ItemDTO {
+func (r *LokiHistorianStore) annotationsFromStream(stream lokiclient.Stream, ac accesscontrol.AccessResources) []*annotations.ItemDTO {
 	items := make([]*annotations.ItemDTO, 0, len(stream.Values))
 	for _, sample := range stream.Values {
 		entry := historian.LokiEntry{}

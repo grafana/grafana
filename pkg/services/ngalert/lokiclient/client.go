@@ -1,4 +1,4 @@
-package historian
+package lokiclient
 
 import (
 	"bytes"
@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const defaultPageSize = 1000
@@ -43,45 +42,6 @@ type LokiConfig struct {
 	Encoder           encoder
 	MaxQueryLength    time.Duration
 	MaxQuerySize      int
-}
-
-func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig, error) {
-	read, write := cfg.LokiReadURL, cfg.LokiWriteURL
-	if read == "" {
-		read = cfg.LokiRemoteURL
-	}
-	if write == "" {
-		write = cfg.LokiRemoteURL
-	}
-
-	if read == "" {
-		return LokiConfig{}, fmt.Errorf("either read path URL or remote Loki URL must be provided")
-	}
-	if write == "" {
-		return LokiConfig{}, fmt.Errorf("either write path URL or remote Loki URL must be provided")
-	}
-
-	readURL, err := url.Parse(read)
-	if err != nil {
-		return LokiConfig{}, fmt.Errorf("failed to parse loki remote read URL: %w", err)
-	}
-	writeURL, err := url.Parse(write)
-	if err != nil {
-		return LokiConfig{}, fmt.Errorf("failed to parse loki remote write URL: %w", err)
-	}
-
-	return LokiConfig{
-		ReadPathURL:       readURL,
-		WritePathURL:      writeURL,
-		BasicAuthUser:     cfg.LokiBasicAuthUsername,
-		BasicAuthPassword: cfg.LokiBasicAuthPassword,
-		TenantID:          cfg.LokiTenantID,
-		ExternalLabels:    cfg.ExternalLabels,
-		MaxQueryLength:    cfg.LokiMaxQueryLength,
-		MaxQuerySize:      cfg.LokiMaxQuerySize,
-		// Snappy-compressed protobuf is the default, same goes for Promtail.
-		Encoder: SnappyProtoEncoder{},
-	}, nil
 }
 
 type HttpLokiClient struct {

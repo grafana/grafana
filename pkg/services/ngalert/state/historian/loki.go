@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
+	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -67,8 +70,8 @@ func NewErrLokiQueryTooLong(query string, maxLimit int) error {
 
 type remoteLokiClient interface {
 	Ping(context.Context) error
-	Push(context.Context, []Stream) error
-	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (QueryRes, error)
+	Push(context.Context, []lokiclient.Stream) error
+	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (lokiclient.QueryRes, error)
 	MaxQuerySize() int
 }
 
@@ -83,9 +86,9 @@ type RemoteLokiBackend struct {
 	ruleStore      RuleStore
 }
 
-func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
+func NewRemoteLokiBackend(logger log.Logger, cfg lokiclient.LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
-		client:         NewLokiClient(cfg, req, metrics, logger, tracer),
+		client:         lokiclient.NewLokiClient(cfg, req, metrics, logger, tracer),
 		externalLabels: cfg.ExternalLabels,
 		clock:          clock.New(),
 		metrics:        metrics,
@@ -161,7 +164,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	if query.From.IsZero() {
 		query.From = now.Add(-defaultQueryRange)
 	}
-	var res []Stream
+	var res []lokiclient.Stream
 	for _, logQL := range queries {
 		// Timestamps are expected in RFC3339Nano.
 		// Apply user-defined limit to every request. Multiple batches is a very rare case, and therefore we can tolerate getting more data than needed.
@@ -176,7 +179,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
+func merge(res []lokiclient.Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	filterByFolderUIDMap := make(map[string]struct{}, len(folderUIDToFilter))
 	for _, uid := range folderUIDToFilter {
 		filterByFolderUIDMap[uid] = struct{}{}
@@ -207,7 +210,7 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	pointers := make([]int, len(res))
 	for {
 		minTime := int64(math.MaxInt64)
-		minEl := Sample{}
+		minEl := lokiclient.Sample{}
 		minElStreamIdx := -1
 		// Find the element with the earliest time among all arrays.
 		for i, stream := range res {
@@ -269,7 +272,7 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
 	return frame, nil
 }
 
-func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) Stream {
+func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) lokiclient.Stream {
 	labels := mergeLabels(make(map[string]string), externalLabels)
 	// System-defined labels take precedence over user-defined external labels.
 	labels[StateHistoryLabelKey] = StateHistoryLabelValue
@@ -277,7 +280,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 	labels[GroupLabel] = fmt.Sprint(rule.Group)
 	labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 
-	samples := make([]Sample, 0, len(states))
+	samples := make([]lokiclient.Sample, 0, len(states))
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
@@ -309,20 +312,20 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		}
 		line := string(jsn)
 
-		samples = append(samples, Sample{
+		samples = append(samples, lokiclient.Sample{
 			T: state.LastEvaluationTime,
 			V: line,
 		})
 	}
 
-	return Stream{
+	return lokiclient.Stream{
 		Stream: labels,
 		Values: samples,
 	}
 }
 
-func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream Stream, logger log.Logger) error {
-	if err := h.client.Push(ctx, []Stream{stream}); err != nil {
+func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream lokiclient.Stream, logger log.Logger) error {
+	if err := h.client.Push(ctx, []lokiclient.Stream{stream}); err != nil {
 		return err
 	}
 
@@ -536,4 +539,43 @@ func (h *RemoteLokiBackend) getFolderUIDsForFilter(ctx context.Context, query mo
 	}
 	sort.Strings(uids)
 	return uids, nil
+}
+
+func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (lokiclient.LokiConfig, error) {
+	read, write := cfg.LokiReadURL, cfg.LokiWriteURL
+	if read == "" {
+		read = cfg.LokiRemoteURL
+	}
+	if write == "" {
+		write = cfg.LokiRemoteURL
+	}
+
+	if read == "" {
+		return lokiclient.LokiConfig{}, fmt.Errorf("either read path URL or remote Loki URL must be provided")
+	}
+	if write == "" {
+		return lokiclient.LokiConfig{}, fmt.Errorf("either write path URL or remote Loki URL must be provided")
+	}
+
+	readURL, err := url.Parse(read)
+	if err != nil {
+		return lokiclient.LokiConfig{}, fmt.Errorf("failed to parse loki remote read URL: %w", err)
+	}
+	writeURL, err := url.Parse(write)
+	if err != nil {
+		return lokiclient.LokiConfig{}, fmt.Errorf("failed to parse loki remote write URL: %w", err)
+	}
+
+	return lokiclient.LokiConfig{
+		ReadPathURL:       readURL,
+		WritePathURL:      writeURL,
+		BasicAuthUser:     cfg.LokiBasicAuthUsername,
+		BasicAuthPassword: cfg.LokiBasicAuthPassword,
+		TenantID:          cfg.LokiTenantID,
+		ExternalLabels:    cfg.ExternalLabels,
+		MaxQueryLength:    cfg.LokiMaxQueryLength,
+		MaxQuerySize:      cfg.LokiMaxQuerySize,
+		// Snappy-compressed protobuf is the default, same goes for Promtail.
+		Encoder: lokiclient.SnappyProtoEncoder{},
+	}, nil
 }
