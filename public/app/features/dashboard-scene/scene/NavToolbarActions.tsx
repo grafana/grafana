@@ -76,7 +76,6 @@ export function ToolbarActions({ dashboard }: Props) {
   const folderRepo = useSelector((state) => selectFolderRepository(state, meta.folderUid));
   const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
 
-  console.log('navToolbar');
   // Internal only;
   // allows viewer editing without ability to save
   // used for grafana play
