@@ -113,8 +113,14 @@ export const QueryHeader = ({
           title={t('components.query-header.title-switch-mode', 'Switch editor mode?')}
           body={
             pendingModeChange === LogsEditorMode.Builder
-              ? 'Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?'
-              : 'Switching to KQL will discard your current builder settings. Are you sure?'
+              ? t(
+                  'components.query-header.body-switching-to-builder',
+                  'Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?'
+                )
+              : t(
+                  'components.query-header.body-switching-to-kql',
+                  'Switching to KQL will discard your current builder settings. Are you sure?'
+                )
           }
           confirmText={t('components.query-header.confirmText-switch-to', 'Switch to {{newMode}}', {
             newMode: pendingModeChange === LogsEditorMode.Builder ? 'Builder' : 'KQL',

@@ -288,6 +288,7 @@
         "tooltip-autocomplete-suggestions-limited": "The number of metric names exceeds the autocomplete limit. Only the {{autocompleteLimit}}-most relevant metrics are displayed. You can adjust the threshold in the data source settings."
       },
       "prom-query-editor-selector": {
+        "body-syntax-error": "There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost.",
         "confirmText-continue": "Continue",
         "kick-start-your-query": "Kick start your query",
         "label-explain": "Explain",

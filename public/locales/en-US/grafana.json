@@ -104,6 +104,7 @@
       "not-found": "No anonymous users found."
     },
     "base-user-sessions": {
+      "body-force-logout-from-all-devices": "Are you sure you want to force logout from all devices?",
       "confirmText-confirm-logout": "Confirm logout",
       "confirmText-force-logout": "Force logout",
       "title-force-logout-from-all-devices": "Force logout from all devices"
@@ -215,6 +216,7 @@
       "not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
     },
     "org-users-table": {
+      "body-delete": "Are you sure you want to delete user {{user}}?",
       "columns": {
         "aria-label-role": "Role"
       },
@@ -311,6 +313,8 @@
       "title": "Permissions"
     },
     "user-profile": {
+      "body-delete": "Are you sure you want to delete this user?",
+      "body-disable": "Are you sure you want to disable this user?",
       "confirmText-delete-user": "Delete user",
       "confirmText-disable-user": "Disable user",
       "delete-button": "Delete user",
@@ -582,6 +586,7 @@
       "title-resetting-alertmanager-configuration": "Resetting Alertmanager configuration"
     },
     "alertmanager-configuration-version-manager": {
+      "body-restore-configuration-version-unsaved-changes": "Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.",
       "columns": {
         "compare": "Compare",
         "restore": "Restore",
@@ -1865,6 +1870,9 @@
         }
       }
     },
+    "mute-timing-actions-button": {
+      "body-delete-mute-timing": "Are you sure you would like to delete \"{{muteTiming}}\"?"
+    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Disabled",
       "title-delete-mute-timing": "Delete mute timing"
@@ -2818,6 +2826,7 @@
     },
     "templates-table": {
       "actions": "Actions",
+      "body-delete-template-group": "Are you sure you want to delete template group \"{{template}}\"?",
       "confirmText-yes-delete": "Yes, delete",
       "no-templates-defined": "No templates defined.",
       "template-group": "Template group",
@@ -5179,6 +5188,7 @@
       "label-apply-transformation-to": "Apply transformation to"
     },
     "transformation-operation-row": {
+      "body-delete": "Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.",
       "render-actions": {
         "confirmText-delete": "Delete",
         "title-debug": "Debug",
@@ -5201,6 +5211,9 @@
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
       "title-add-another-transformation": "Add another transformation"
+    },
+    "un-theme-transformations-editor": {
+      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
     },
     "un-themed-transformations-editor": {
       "actions": {
@@ -5646,6 +5659,7 @@
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "Add another transformation",
+      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen.",
       "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?"
@@ -5851,6 +5865,7 @@
       }
     },
     "unlink-modal": {
+      "body-unlink-panel": "If you unlink this panel, you will be able to edit it without affecting any other dashboards. However, once you make a change you will not be able to revert to its original reusable panel.",
       "confirmText-yes-unlink": "Yes, unlink",
       "title-really-unlink-panel": "Do you really want to unlink this panel?"
     },
@@ -5898,6 +5913,7 @@
       "variable": "Variable"
     },
     "variable-editor-list-row": {
+      "body-delete-variable": "Are you sure you want to delete: {{variable}}?",
       "confirmText-delete-variable": "Delete variable",
       "title-delete-variable": "Delete variable",
       "tooltip-duplicate-variable": "Duplicate variable",
@@ -8720,6 +8736,7 @@
       "updated-on": "Updated on"
     },
     "snapshot-list-table": {
+      "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
       "confirmText-delete": "Delete",
       "title-delete": "Delete"
     },
@@ -9835,8 +9852,7 @@
         "update-status-text": "plugins updated"
       },
       "versions": {
-        "confirmation-text-1": "Are you really sure you want to downgrade to version",
-        "confirmation-text-2": "You should normally not be doing this",
+        "confirmation-text": "Are you really sure you want to downgrade to version {{version}}? You should normally not be doing this",
         "downgrade-confirm": "Downgrade",
         "downgrade-title": "Downgrade plugin version"
       }
@@ -9925,6 +9941,7 @@
     "install-controls-button": {
       "title-uninstall-modal": "Uninstall {{plugin}}",
       "uninstall-controls": {
+        "body-uninstall-plugin": "Are you sure you want to uninstall this plugin?",
         "confirmText-confirm": "Confirm"
       }
     },
@@ -11007,6 +11024,8 @@
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "Add service account token",
+      "body-delete-service-account": "Are you sure you want to delete this service account?",
+      "body-disable-service-account": "Are you sure you want to disable this service account?",
       "confirmText-delete-service-account": "Delete service account",
       "confirmText-disable-service-account": "Disable service account",
       "delete-service-account": "Delete service account",
@@ -11049,6 +11068,10 @@
     },
     "service-accounts-list-page-unconnected": {
       "add-service-account": "Add service account",
+      "body-delete_one": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying token?",
+      "body-delete_other": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
+      "body-delete-with-tokens": "Are you sure you want to delete {{serviceAccountName}}?",
+      "body-disable-service-account": "Are you sure you want to disable '{{accountToDisable}}'?",
       "confirmText-delete": "Delete",
       "confirmText-disable-service-account": "Disable service account",
       "placeholder-search-service-account-by-name": "Search service account by name",
@@ -12395,6 +12418,7 @@
       }
     },
     "confirm-delete-modal": {
+      "body-delete-variable": "Are you sure you want to delete variable \"{{variableToDelete}}\"?",
       "confirmText-delete": "Delete",
       "title-delete-variable": "Delete variable"
     },

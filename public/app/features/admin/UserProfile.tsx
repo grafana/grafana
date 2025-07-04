@@ -142,7 +142,7 @@ export function UserProfile({
               <ConfirmModal
                 isOpen={showDeleteModal}
                 title={t('admin.user-profile.title-delete-user', 'Delete user')}
-                body="Are you sure you want to delete this user?"
+                body={t('admin.user-profile.body-delete', 'Are you sure you want to delete this user?')}
                 confirmText={t('admin.user-profile.confirmText-delete-user', 'Delete user')}
                 onConfirm={handleUserDelete}
                 onDismiss={showDeleteUserModal(false)}
@@ -162,7 +162,7 @@ export function UserProfile({
               <ConfirmModal
                 isOpen={showDisableModal}
                 title={t('admin.user-profile.title-disable-user', 'Disable user')}
-                body="Are you sure you want to disable this user?"
+                body={t('admin.user-profile.body-disable', 'Are you sure you want to disable this user?')}
                 confirmText={t('admin.user-profile.confirmText-disable-user', 'Disable user')}
                 onConfirm={handleUserDisable}
                 onDismiss={showDisableUserModal(false)}

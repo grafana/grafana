@@ -34,7 +34,8 @@ const propsToCheck = [
   'title',
   'text',
   'tooltip',
-  'confirmText'
+  'confirmText',
+  'body',
 ];
 
 /**

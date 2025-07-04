@@ -228,7 +228,10 @@ export const ServiceAccountPageUnconnected = ({
             'serviceaccounts.service-account-page-unconnected.title-delete-service-account',
             'Delete service account'
           )}
-          body="Are you sure you want to delete this service account?"
+          body={t(
+            'serviceaccounts.service-account-page-unconnected.body-delete-service-account',
+            'Are you sure you want to delete this service account?'
+          )}
           confirmText={t(
             'serviceaccounts.service-account-page-unconnected.confirmText-delete-service-account',
             'Delete service account'
@@ -242,7 +245,10 @@ export const ServiceAccountPageUnconnected = ({
             'serviceaccounts.service-account-page-unconnected.title-disable-service-account',
             'Disable service account'
           )}
-          body="Are you sure you want to disable this service account?"
+          body={t(
+            'serviceaccounts.service-account-page-unconnected.body-disable-service-account',
+            'Are you sure you want to disable this service account?'
+          )}
           confirmText={t(
             'serviceaccounts.service-account-page-unconnected.confirmText-disable-service-account',
             'Disable service account'

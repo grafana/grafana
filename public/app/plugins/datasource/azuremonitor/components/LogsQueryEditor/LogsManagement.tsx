@@ -15,7 +15,7 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
       <ConfirmModal
         isOpen={basicLogsAckOpen}
         title={t('components.logs-management.title-basic-logs-queries', 'Basic Logs Queries')}
-        body="Are you sure you want to switch to Basic Logs?"
+        body={t('components.logs-management.body-basic-logs-queries', 'Are you sure you want to switch to Basic Logs?')}
         description={t(
           'components.logs-management.description-basic-logs-queries',
           'Basic Logs queries incur cost based on the amount of data scanned.'

@@ -122,7 +122,11 @@ export function VariableEditorListRow({
               <ConfirmModal
                 isOpen={showDeleteModal}
                 title={t('dashboard-scene.variable-editor-list-row.title-delete-variable', 'Delete variable')}
-                body={`Are you sure you want to delete: ${variableState.name}?`}
+                body={t(
+                  'dashboard-scene.variable-editor-list-row.body-delete-variable',
+                  'Are you sure you want to delete: {{variable}}?',
+                  { variable: variableState.name }
+                )}
                 confirmText={t(
                   'dashboard-scene.variable-editor-list-row.confirmText-delete-variable',
                   'Delete variable'
