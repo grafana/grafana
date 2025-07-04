@@ -221,7 +221,6 @@ jobs:
         with:
           persist-credentials: false
 
-
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
@@ -247,7 +246,9 @@ jobs:
         run: npx playwright merge-reports --reporter html ./blobs
 
       - name: Merge into JSON Report
-        run: npx playwright merge-reports --reporter=json:/tmp/playwright-results.json ./blobs
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: /tmp/playwright-results.json
+        run: npx playwright merge-reports --reporter=json ./blobs
 
       - name: Bench report
         run: |
