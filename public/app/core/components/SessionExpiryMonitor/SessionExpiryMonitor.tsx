@@ -33,7 +33,17 @@ export function SessionExpiryMonitor({
 
       const now = Date.now();
       const expiryTime = expiryTimestamp * 1000;
-      const warningTime = expiryTime - (warningMinutes * 60 * 1000);
+      const sessionTimeRemainingMs = expiryTime - now;
+      const sessionTimeRemainingMinutes = sessionTimeRemainingMs / (60 * 1000);
+
+      // Dynamic warning time: Use the smaller of warningMinutes or half the remaining session time
+      // This prevents showing warnings immediately for short sessions
+      const effectiveWarningMinutes = Math.min(
+        warningMinutes, 
+        Math.max(1, sessionTimeRemainingMinutes / 2) // At least 1 minute, at most half remaining time
+      );
+      
+      const warningTime = expiryTime - (effectiveWarningMinutes * 60 * 1000);
 
       // Reset warning flag if session is renewed (expiry time changed)
       if (lastExpiryTimeRef.current && lastExpiryTimeRef.current !== expiryTime) {
@@ -44,8 +54,9 @@ export function SessionExpiryMonitor({
       }
 
       // Show warning if we've reached the warning threshold and haven't shown it yet
-      if (now >= warningTime && now < expiryTime && !hasShownWarning) {
-        const remainingMinutes = Math.ceil((expiryTime - now) / (60 * 1000));
+      // Also ensure we have at least 30 seconds remaining to avoid showing warning too late
+      if (now >= warningTime && sessionTimeRemainingMs > 30000 && !hasShownWarning) {
+        const remainingMinutes = Math.ceil(sessionTimeRemainingMs / (60 * 1000));
         
         try {
           notifyApp.warning(
