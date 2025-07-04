@@ -458,4 +458,37 @@ describe('LogLineDetails', () => {
       expect(screen.getAllByText('No results to display.')).toHaveLength(3);
     });
   });
+
+  describe('Label types', () => {
+    test('Does not show displayed fields controls if not present', () => {
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.queryByText('Displayed fields')).not.toBeInTheDocument();
+    });
+
+    test('Does not show displayed fields controls if required props are not present', () => {
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } }, { displayedFields: ['key1', 'key2'] });
+      expect(screen.queryByText('Displayed fields')).not.toBeInTheDocument();
+    });
+
+    test('Shows displayed fields controls if required props are present', async () => {
+      const setDisplayedFields = jest.fn();
+      const onClickHideField = jest.fn();
+      setup(
+        undefined,
+        { labels: { key1: 'label1', key2: 'label2' } },
+        { displayedFields: ['key1', 'key2'], setDisplayedFields, onClickHideField }
+      );
+
+      expect(screen.getByText('Displayed fields')).toBeInTheDocument();
+      expect(screen.queryAllByLabelText('Remove field')).toHaveLength(0);
+
+      await userEvent.click(screen.getByText('Displayed fields'));
+
+      expect(screen.getAllByLabelText('Remove field')).toHaveLength(2);
+
+      await userEvent.click(screen.getAllByLabelText('Remove field')[0]);
+
+      expect(onClickHideField).toHaveBeenCalledWith('key1');
+    });
+  });
 });
