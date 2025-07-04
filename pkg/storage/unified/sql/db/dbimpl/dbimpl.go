@@ -62,13 +62,21 @@ type resourceDBProvider struct {
 	initErr    error
 }
 
-func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (p *resourceDBProvider, err error) {
+func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (*resourceDBProvider, error) {
+	logger := log.New("resource-db")
+	p := &resourceDBProvider{
+		cfg:         cfg,
+		log:         logger,
+		migrateFunc: migrations.MigrateResourceStore,
+		tracer:      tracer,
+	}
 	// Try to use the grafana db connection, should only happen in tests.
 	if grafanaDB != nil {
 		if newConfGetter(cfg.SectionWithEnvOverrides("database"), "").Bool(grafanaDBInstrumentQueriesKey) {
 			return nil, errGrafanaDBInstrumentedNotSupported
 		}
 		p.engine = grafanaDB.GetEngine()
+		p.logQueries = cfg.SectionWithEnvOverrides("database").Key("log_queries").MustBool(false)
 		return p, nil
 	}
 
@@ -76,15 +84,6 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 	dbCfg, err := sqlstore.NewDatabaseConfig(cfg, nil)
 	if err != nil {
 		return nil, err
-	}
-
-	logger := log.New("resource-db")
-	p = &resourceDBProvider{
-		cfg:         cfg,
-		log:         logger,
-		logQueries:  dbCfg.LogQueries,
-		migrateFunc: migrations.MigrateResourceStore,
-		tracer:      tracer,
 	}
 
 	switch {
