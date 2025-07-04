@@ -89,7 +89,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref common.ReferenceCall
 						},
 					},
 				},
-				Required: []string{"title", "groupVersion"},
+				Required: []string{"metadata", "title", "groupVersion"},
 			},
 		},
 		Dependencies: []string{
@@ -291,6 +291,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref common.ReferenceCall
 						},
 					},
 				},
+				Required: []string{"metadata"},
 			},
 		},
 		Dependencies: []string{

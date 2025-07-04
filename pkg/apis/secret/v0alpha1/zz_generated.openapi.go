@@ -366,9 +366,8 @@ func schema_pkg_apis_secret_v0alpha1_Keeper(ref common.ReferenceCallback) common
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -385,7 +384,7 @@ func schema_pkg_apis_secret_v0alpha1_Keeper(ref common.ReferenceCallback) common
 						},
 					},
 				},
-				Required: []string{"spec"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{
@@ -534,9 +533,8 @@ func schema_pkg_apis_secret_v0alpha1_SecureValue(ref common.ReferenceCallback) c
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
-							Default:     map[string]interface{}{},
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -554,7 +552,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValue(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"spec"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{

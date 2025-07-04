@@ -58,6 +58,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_Feature(ref common.ReferenceCallback
 						},
 					},
 				},
+				Required: []string{"metadata"},
 			},
 		},
 		Dependencies: []string{
@@ -249,7 +250,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_FeatureToggles(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"spec"},
+				Required: []string{"metadata", "spec"},
 			},
 		},
 		Dependencies: []string{

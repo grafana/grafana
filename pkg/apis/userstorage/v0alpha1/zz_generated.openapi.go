@@ -53,6 +53,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref common.ReferenceCallba
 						},
 					},
 				},
+				Required: []string{"metadata"},
 			},
 		},
 		Dependencies: []string{

@@ -14,7 +14,14 @@ export function CheckRepository({ repository }: Props) {
     if (!name) {
       return;
     }
-    testRepo({ name, body: {} });
+    testRepo({
+      name,
+      body: {
+        metadata: {
+          name: name, // the repository name
+        },
+      },
+    });
   };
 
   if (testQuery.isLoading) {

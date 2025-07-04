@@ -62,7 +62,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnection(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"metadata", "title"},
 			},
 		},
 		Dependencies: []string{
