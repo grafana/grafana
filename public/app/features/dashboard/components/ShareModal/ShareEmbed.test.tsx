@@ -30,7 +30,8 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 function mockLocationHref(href: string) {
-  const location = window.location;
+  const win: typeof globalThis = window;
+  const location = win.location;
 
   let search = '';
   const searchPos = href.indexOf('?');
@@ -39,8 +40,8 @@ function mockLocationHref(href: string) {
   }
 
   // @ts-ignore
-  delete window.location;
-  window.location = {
+  delete win.location;
+  win.location = {
     ...location,
     href,
     origin: new URL(href).origin,
