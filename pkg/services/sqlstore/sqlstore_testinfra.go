@@ -175,7 +175,7 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	engine.TZLocation = time.UTC
 
 	cfgDBSec := cfg.Raw.Section("database")
-	shouldEnsure := fmt.Sprintf("%t", !(options.NoDefaultUserOrg || options.Truncate))
+	shouldEnsure := fmt.Sprintf("%t", !options.NoDefaultUserOrg && !options.Truncate)
 	cfgDBSec.Key("ensure_default_org_and_user").SetValue(shouldEnsure)
 
 	store, err := newStore(cfg, engine, features, options.MigratorFactory(features),
