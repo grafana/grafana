@@ -19,11 +19,6 @@ interface QueryTypeFieldProps {
   app: CoreApp | undefined;
 }
 
-const EDITOR_MODES = [
-  { label: 'Builder', value: LogsEditorMode.Builder },
-  { label: 'KQL', value: LogsEditorMode.Raw },
-];
-
 export const QueryHeader = ({
   query,
   onQueryChange,
@@ -36,6 +31,11 @@ export const QueryHeader = ({
 
   const [showModeSwitchWarning, setShowModeSwitchWarning] = useState(false);
   const [pendingModeChange, setPendingModeChange] = useState<LogsEditorMode | null>(null);
+
+  const EDITOR_MODES = [
+    { label: t('components.query-header.editor-modes.label-builder', 'Builder'), value: LogsEditorMode.Builder },
+    { label: t('components.query-header.editor-modes.label-kql', 'KQL'), value: LogsEditorMode.Raw },
+  ];
 
   const currentMode = query.azureLogAnalytics?.mode;
 

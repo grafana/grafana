@@ -202,6 +202,10 @@
       "button-kick-start-your-query": "Kick start your query",
       "button-run-query": "Run query",
       "confirmText-switch-to": "Switch to {{newMode}}",
+      "editor-modes": {
+        "label-builder": "Builder",
+        "label-kql": "KQL"
+      },
       "label-service": "Service",
       "placeholder-service": "Service...",
       "title-switch-mode": "Switch editor mode?"

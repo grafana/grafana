@@ -157,6 +157,10 @@
         "aria-label-prom-type-type": "{{promType}} type",
         "aria-label-prometheus-type": "Prometheus type",
         "aria-label-select-http-method": "Select HTTP method",
+        "editor-options": {
+          "label-builder": "Builder",
+          "label-code": "Code"
+        },
         "label-cache-level": "Cache level",
         "label-custom-query-parameters": "Custom query parameters",
         "label-default-editor": "Default editor",
@@ -331,6 +335,12 @@
       },
       "query-editor-hints": {
         "hint-details": "hint: {{hintDetails}}"
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "Builder",
+          "label-code": "Code"
+        }
       },
       "query-pattern": {
         "apply-query": "Apply query",
