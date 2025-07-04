@@ -161,6 +161,7 @@
       "tooltip-limit": "Restrict the number of rows returned (default is 1000)."
     },
     "logs-management": {
+      "confirmText-confirm": "Confirm",
       "description-basic-logs-queries": "Basic Logs queries incur cost based on the amount of data scanned.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Basic Logs Queries",
@@ -196,6 +197,7 @@
       "aria-label-kick-start": "Azure logs kick start your query button",
       "button-kick-start-your-query": "Kick start your query",
       "button-run-query": "Run query",
+      "confirmText-switch-to": "Switch to {{newMode}}",
       "label-service": "Service",
       "placeholder-service": "Service...",
       "title-switch-mode": "Switch editor mode?"

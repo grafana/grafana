@@ -262,7 +262,7 @@ export const OrgUsersTable = ({
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}
-          confirmText="Delete"
+          confirmText={t('admin.org-users-table.confirmText-delete', 'Delete')}
           title={t('admin.org-users-table.title-delete', 'Delete')}
           onDismiss={() => {
             setUserToRemove(null);

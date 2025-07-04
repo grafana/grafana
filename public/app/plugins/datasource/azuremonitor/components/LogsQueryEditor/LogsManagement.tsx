@@ -20,7 +20,7 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
           'components.logs-management.description-basic-logs-queries',
           'Basic Logs queries incur cost based on the amount of data scanned.'
         )}
-        confirmText="Confirm"
+        confirmText={t('components.logs-management.confirmText-confirm', 'Confirm')}
         onConfirm={() => {
           setBasicLogsAckOpen(false);
           let updatedBasicLogsQuery = setBasicLogsQuery(query, true);

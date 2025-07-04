@@ -14,7 +14,7 @@ export const UnlinkModal = ({ isOpen, onConfirm, onDismiss }: Props) => {
       icon="question-circle"
       body="If you unlink this panel, you will be able to edit it without affecting any other dashboards.
             However, once you make a change you will not be able to revert to its original reusable panel."
-      confirmText="Yes, unlink"
+      confirmText={t('dashboard-scene.unlink-modal.confirmText-yes-unlink', 'Yes, unlink')}
       onConfirm={() => {
         onConfirm();
         onDismiss();

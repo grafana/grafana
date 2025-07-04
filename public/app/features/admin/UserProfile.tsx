@@ -143,7 +143,7 @@ export function UserProfile({
                 isOpen={showDeleteModal}
                 title={t('admin.user-profile.title-delete-user', 'Delete user')}
                 body="Are you sure you want to delete this user?"
-                confirmText="Delete user"
+                confirmText={t('admin.user-profile.confirmText-delete-user', 'Delete user')}
                 onConfirm={handleUserDelete}
                 onDismiss={showDeleteUserModal(false)}
               />
@@ -163,7 +163,7 @@ export function UserProfile({
                 isOpen={showDisableModal}
                 title={t('admin.user-profile.title-disable-user', 'Disable user')}
                 body="Are you sure you want to disable this user?"
-                confirmText="Disable user"
+                confirmText={t('admin.user-profile.confirmText-disable-user', 'Disable user')}
                 onConfirm={handleUserDisable}
                 onDismiss={showDisableUserModal(false)}
               />
@@ -290,7 +290,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         </td>
         <td>
           <ConfirmButton
-            confirmText="Save"
+            confirmText={t('admin.user-profile-row.confirmText-save', 'Save')}
             onClick={this.onEditClick}
             onConfirm={this.onSave}
             onCancel={this.onCancelClick}

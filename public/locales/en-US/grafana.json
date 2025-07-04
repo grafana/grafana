@@ -84,6 +84,7 @@
     "admin-feature-toggles-table": {
       "confirm-modal-body-1": "Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary Beta phase, available for early adoption.",
       "confirm-modal-body-2": "We advise understanding the implications of each feature change before making modifications.",
+      "confirmText-save-changes": "Save changes",
       "get-stage-cell": {
         "beta": "Beta",
         "content-general-availability": "General availability",
@@ -96,13 +97,19 @@
     },
     "admin-orgs-table": {
       "aria-label-delete-org": "Delete org",
+      "confirmText-delete": "Delete",
       "title-delete": "Delete"
     },
     "anon-users": {
       "not-found": "No anonymous users found."
     },
     "base-user-sessions": {
+      "confirmText-confirm-logout": "Confirm logout",
+      "confirmText-force-logout": "Force logout",
       "title-force-logout-from-all-devices": "Force logout from all devices"
+    },
+    "change-org-button": {
+      "confirmText-save": "Save"
     },
     "edit-org": {
       "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
@@ -211,6 +218,7 @@
       "columns": {
         "aria-label-role": "Role"
       },
+      "confirmText-delete": "Delete",
       "delete-aria-label": "Delete user: {{name}}",
       "title-delete": "Delete"
     },
@@ -240,6 +248,9 @@
     },
     "settings": {
       "info-description": "These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change these you currently need to restart Grafana."
+    },
+    "un-themed-org-row": {
+      "confirmText-confirm-removal": "Confirm removal"
     },
     "upgrade-info": {
       "title": "Enterprise license"
@@ -293,12 +304,15 @@
     },
     "user-permissions": {
       "change-button": "Change",
+      "confirmText-change": "Change",
       "grafana-admin-key": "Grafana Admin",
       "grafana-admin-no": "No",
       "grafana-admin-yes": "Yes",
       "title": "Permissions"
     },
     "user-profile": {
+      "confirmText-delete-user": "Delete user",
+      "confirmText-disable-user": "Disable user",
       "delete-button": "Delete user",
       "disable-button": "Disable user",
       "edit-button": "Edit",
@@ -311,6 +325,9 @@
       "title": "User information",
       "title-delete-user": "Delete user",
       "title-disable-user": "Disable user"
+    },
+    "user-profile-row": {
+      "confirmText-save": "Save"
     },
     "user-sessions": {
       "browser-column": "Browser and OS",
@@ -550,6 +567,7 @@
       "view-configuration": "View configuration"
     },
     "alertmanager-config": {
+      "confirmText-yes-reset-configuration": "Yes, reset configuration",
       "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
       "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "message": {
@@ -569,6 +587,7 @@
         "restore": "Restore",
         "text-latest": "Latest"
       },
+      "confirmText-yes-restore-configuration": "Yes, restore configuration",
       "loading": "Loading...",
       "no-previous-configurations": "No previous configurations",
       "this-might-take-a-while": "This might take a while...",
@@ -2151,6 +2170,7 @@
     "query-and-expressions-step": {
       "add-query": "Add query",
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
+      "confirmText-deactivate": "Deactivate",
       "expressions": "Expressions",
       "loading-data-sources": "Loading data sources...",
       "manipulate-returned-queries-other-operations": "Manipulate data returned from queries with math and other operations.",
@@ -2218,6 +2238,7 @@
     "redirect-to-clone-rule": {
       "body-evaluation-group": "You will need to set a new evaluation group for the copied rule because the original one has been provisioned and cannot be used for rules created in the UI.",
       "body-not-provisioned": "The new rule will <1>not</1> be marked as a provisioned rule.",
+      "confirmText-copy": "Copy",
       "title-copy-provisioned-alert-rule": "Copy provisioned alert rule"
     },
     "redirect-to-rule-viewer": {
@@ -2792,6 +2813,7 @@
     },
     "templates-table": {
       "actions": "Actions",
+      "confirmText-yes-delete": "Yes, delete",
       "no-templates-defined": "No templates defined.",
       "template-group": "Template group",
       "title-delete-template-group": "Delete template group"
@@ -2917,6 +2939,11 @@
         "delete-contact-point": "Are you sure you want to delete this contact point?",
         "deleting-contact-point-permanently-remove": "Deleting this contact point will permanently remove it.",
         "title-delete-contact-point": "Delete contact point"
+      }
+    },
+    "use-delete-modal": {
+      "modal": {
+        "confirmText-yes-delete": "Yes, delete"
       }
     },
     "use-delete-policy-modal": {
@@ -3253,6 +3280,7 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "Reset to default values"
       },
+      "confirmText-reset": "Reset",
       "disable": "Disable",
       "disabling": "Disabling...",
       "discard": "Discard",
@@ -4861,6 +4889,7 @@
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
+      "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
     "row-options-button": {
@@ -4945,6 +4974,7 @@
     "save-dashboard-error-proxy": {
       "body-name-exists": "A dashboard with the same name in selected folder already exists.<1></1><2>Would you still like to save this dashboard?</2>",
       "body-version-mismatch": "Someone else has updated this dashboard<1></1><2>Would you still like to save this dashboard?</2>",
+      "confirmText-save-and-overwrite": "Save and overwrite",
       "title-name-exists": "Conflict",
       "title-version-mismatch": "Conflict"
     },
@@ -5142,6 +5172,7 @@
     },
     "transformation-operation-row": {
       "render-actions": {
+        "confirmText-delete": "Delete",
         "title-debug": "Debug",
         "title-disable-transformation": "Disable transformation",
         "title-filter": "Filter",
@@ -5167,6 +5198,7 @@
       "actions": {
         "add-another-transformation": "Add another transformation"
       },
+      "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?",
       "tooltip-clear-search": "Clear search",
@@ -5600,6 +5632,7 @@
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "Add another transformation",
+      "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?"
     },
@@ -5667,6 +5700,7 @@
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
+      "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
     "save-button": {
@@ -5803,6 +5837,7 @@
       }
     },
     "unlink-modal": {
+      "confirmText-yes-unlink": "Yes, unlink",
       "title-really-unlink-panel": "Do you really want to unlink this panel?"
     },
     "unsaved-changes-modal": {
@@ -5846,6 +5881,7 @@
       "variable": "Variable"
     },
     "variable-editor-list-row": {
+      "confirmText-delete-variable": "Delete variable",
       "title-delete-variable": "Delete variable",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
@@ -7485,7 +7521,8 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "confirmText-delete": "Delete"
     },
     "confirm-content": {
       "placeholder": "Type \"{{confirmPromptText}}\" to confirm"
@@ -8212,6 +8249,10 @@
     "add-library-panel-modal": {
       "title-create-library-panel": "Create library panel"
     },
+    "change-library-panel-modal": {
+      "confirmText-change": "Change",
+      "confirmText-replace": "Replace"
+    },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
     },
@@ -8656,6 +8697,7 @@
       "updated-on": "Updated on"
     },
     "snapshot-list-table": {
+      "confirmText-delete": "Delete",
       "title-delete": "Delete"
     },
     "unthemed-dashboard-import": {
@@ -9858,7 +9900,10 @@
       "updating": "Updating"
     },
     "install-controls-button": {
-      "title-uninstall-modal": "Uninstall {{plugin}}"
+      "title-uninstall-modal": "Uninstall {{plugin}}",
+      "uninstall-controls": {
+        "confirmText-confirm": "Confirm"
+      }
     },
     "install-controls-warning": {
       "body-not-published": "This plugin is not published to <2>grafana.com/plugins</2> and can't be managed via the catalog.",
@@ -10939,6 +10984,8 @@
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "Add service account token",
+      "confirmText-delete-service-account": "Delete service account",
+      "confirmText-disable-service-account": "Disable service account",
       "delete-service-account": "Delete service account",
       "disable-service-account": "Disable service account",
       "enable-service-account": "Enable service account",
@@ -10965,6 +11012,7 @@
       "used-by": "Used by"
     },
     "service-account-profile-row": {
+      "confirmText-save": "Save",
       "edit": "Edit"
     },
     "service-account-role-row": {
@@ -10978,6 +11026,8 @@
     },
     "service-accounts-list-page-unconnected": {
       "add-service-account": "Add service account",
+      "confirmText-delete": "Delete",
+      "confirmText-disable-service-account": "Disable service account",
       "placeholder-search-service-account-by-name": "Search service account by name",
       "sub-title": "Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our <2>documentation.</2>",
       "title-delete-service-account": "Delete service account",
@@ -12322,6 +12372,7 @@
       }
     },
     "confirm-delete-modal": {
+      "confirmText-delete": "Delete",
       "title-delete-variable": "Delete variable"
     },
     "create-ad-hoc-variable-adapter": {

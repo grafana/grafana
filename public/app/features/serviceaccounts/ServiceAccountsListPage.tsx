@@ -276,7 +276,7 @@ export const ServiceAccountsListPageUnconnected = ({
                     )}`
                   : ''
               }?`}
-              confirmText="Delete"
+              confirmText={t('serviceaccounts.service-accounts-list-page-unconnected.confirmText-delete', 'Delete')}
               title={t(
                 'serviceaccounts.service-accounts-list-page-unconnected.title-delete-service-account',
                 'Delete service account'
@@ -291,7 +291,10 @@ export const ServiceAccountsListPageUnconnected = ({
                 'Disable service account'
               )}
               body={`Are you sure you want to disable '${currentServiceAccount.name}'?`}
-              confirmText="Disable service account"
+              confirmText={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.confirmText-disable-service-account',
+                'Disable service account'
+              )}
               onConfirm={onDisable}
               onDismiss={onDisableModalClose}
             />

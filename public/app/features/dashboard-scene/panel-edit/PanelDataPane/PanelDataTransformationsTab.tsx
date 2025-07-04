@@ -136,7 +136,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           'Delete all transformations?'
         )}
         body="By deleting all transformations, you will go back to the main selection screen."
-        confirmText="Delete all"
+        confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
         onConfirm={() => {
           model.onChangeTransformations([]);
           setConfirmModalOpen(false);

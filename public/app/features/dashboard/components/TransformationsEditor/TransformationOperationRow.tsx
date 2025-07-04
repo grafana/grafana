@@ -198,7 +198,7 @@ export const TransformationOperationRow = ({
               name: uiConfig.name,
             })}
             body="Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen."
-            confirmText="Delete"
+            confirmText={t('dashboard.transformation-operation-row.render-actions.confirmText-delete', 'Delete')}
             onConfirm={() => {
               setShowDeleteModal(false);
               onRemove(index);

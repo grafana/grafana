@@ -103,7 +103,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
           isOpen={true}
           title={t('alerting.templates-table.title-delete-template-group', 'Delete template group')}
           body={`Are you sure you want to delete template group "${templateToDelete.title}"?`}
-          confirmText="Yes, delete"
+          confirmText={t('alerting.templates-table.confirmText-yes-delete', 'Yes, delete')}
           onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}
         />

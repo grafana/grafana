@@ -116,7 +116,9 @@ export const QueryHeader = ({
               ? 'Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?'
               : 'Switching to KQL will discard your current builder settings. Are you sure?'
           }
-          confirmText={`Switch to ${pendingModeChange === LogsEditorMode.Builder ? 'Builder' : 'KQL'}`}
+          confirmText={t('components.query-header.confirmText-switch-to', 'Switch to {{newMode}}', {
+            newMode: pendingModeChange === LogsEditorMode.Builder ? 'Builder' : 'KQL',
+          })}
           onConfirm={() => {
             if (pendingModeChange) {
               applyModeChange(pendingModeChange);

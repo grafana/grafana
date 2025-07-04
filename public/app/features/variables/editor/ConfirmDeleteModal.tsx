@@ -21,7 +21,7 @@ export function ConfirmDeleteModal({ varName, isOpen = false, onConfirm, onDismi
       Are you sure you want to delete variable "${varName}"?
     `}
       modalClass={styles.modal}
-      confirmText="Delete"
+      confirmText={t('variables.confirm-delete-modal.confirmText-delete', 'Delete')}
     />
   );
 }

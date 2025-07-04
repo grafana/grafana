@@ -24,7 +24,17 @@ const createRule = ESLintUtils.RuleCreator(
 /**
  * JSX props to check for untranslated strings
  */
-const propsToCheck = ['content', 'label', 'description', 'placeholder', 'aria-label', 'title', 'text', 'tooltip'];
+const propsToCheck = [
+  'content',
+  'label',
+  'description',
+  'placeholder',
+  'aria-label',
+  'title',
+  'text',
+  'tooltip',
+  'confirmText'
+];
 
 /**
  * Object properties to check for untranslated strings

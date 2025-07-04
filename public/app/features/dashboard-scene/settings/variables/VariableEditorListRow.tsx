@@ -123,7 +123,10 @@ export function VariableEditorListRow({
                 isOpen={showDeleteModal}
                 title={t('dashboard-scene.variable-editor-list-row.title-delete-variable', 'Delete variable')}
                 body={`Are you sure you want to delete: ${variableState.name}?`}
-                confirmText="Delete variable"
+                confirmText={t(
+                  'dashboard-scene.variable-editor-list-row.confirmText-delete-variable',
+                  'Delete variable'
+                )}
                 onConfirm={onDeleteVariable}
                 onDismiss={handleDeleteVariableModal(false)}
               />

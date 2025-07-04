@@ -140,7 +140,7 @@ export function InstallControlsButton({
           plugin: plugin.name,
         })}
         body="Are you sure you want to uninstall this plugin?"
-        confirmText="Confirm"
+        confirmText={t('plugins.install-controls-button.uninstall-controls.confirmText-confirm', 'Confirm')}
         icon="exclamation-triangle"
         onConfirm={onUninstall}
         onDismiss={hideConfirmModal}

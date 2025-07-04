@@ -288,6 +288,7 @@
         "tooltip-autocomplete-suggestions-limited": "The number of metric names exceeds the autocomplete limit. Only the {{autocompleteLimit}}-most relevant metrics are displayed. You can adjust the threshold in the data source settings."
       },
       "prom-query-editor-selector": {
+        "confirmText-continue": "Continue",
         "kick-start-your-query": "Kick start your query",
         "label-explain": "Explain",
         "run-queries": "Run queries",
