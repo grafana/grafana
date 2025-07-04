@@ -21,7 +21,13 @@ import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { getGroupOriginName, groupIdentifier } from '../utils/groupIdentifier';
 import { isAdmin } from '../utils/misc';
-import { isPluginProvidedRule, isProvisionedPromRule, prometheusRuleType, rulerRuleType } from '../utils/rules';
+import {
+  isPluginProvidedRule,
+  isProvisionedPromRule,
+  isProvisionedRule,
+  prometheusRuleType,
+  rulerRuleType,
+} from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -233,7 +239,7 @@ export function useAllRulerRuleAbilities(
   const canSilence = useCanSilence(rule);
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
-    const isProvisioned = rulerRuleType.grafana.rule(rule) && Boolean(rule.grafana_alert.provenance);
+    const isProvisioned = rule ? isProvisionedRule(rule) : false;
     // TODO: Add support for federated rules
     // const isFederated = isFederatedRuleGroup();
     const isFederated = false;
@@ -287,9 +293,10 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
   const canSilenceInFolder = useCanSilenceInFolder(rule?.folderUid);
 
   const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
-    // For GrafanaPromRuleDTO, check provisioned status using the provenance property
-    const isProvisioned = rule && isProvisionedPromRule(rule);
-    // TODO: Add support for federated rules when available for GrafanaPromRuleDTO
+    const isProvisioned = rule ? isProvisionedPromRule(rule) : false;
+
+    // Note: Grafana managed rules can't be federated - this is strictly a Mimir feature
+    // See: https://grafana.com/docs/mimir/latest/references/architecture/components/ruler/#federated-rule-groups
     const isFederated = false;
     // All GrafanaPromRuleDTO rules are Grafana-managed by definition
     const isAlertingRule = prometheusRuleType.grafana.alertingRule(rule);
@@ -329,11 +336,17 @@ export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefi
   return abilities;
 }
 
+interface IsGrafanaPromRuleEditableResult {
+  isEditable: boolean;
+  isRemovable: boolean;
+  loading: boolean;
+}
+
 /**
  * Hook for checking if a GrafanaPromRuleDTO is editable
  * Adapted version of useIsRuleEditable for GrafanaPromRuleDTO
  */
-function useIsGrafanaPromRuleEditable(rule?: GrafanaPromRuleDTO) {
+function useIsGrafanaPromRuleEditable(rule?: GrafanaPromRuleDTO): IsGrafanaPromRuleEditableResult {
   const folderUID = rule?.folderUid;
   const { folder, loading } = useFolder(folderUID);
 
@@ -364,7 +377,7 @@ function useIsGrafanaPromRuleEditable(rule?: GrafanaPromRuleDTO) {
   }, [rule, folderUID, folder, loading]);
 }
 
-export const skipToken = Symbol('abiltiy-skip-token');
+export const skipToken = Symbol('ability-skip-token');
 type SkipToken = typeof skipToken;
 
 /**

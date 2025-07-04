@@ -20,9 +20,16 @@ interface GrafanaRuleListItemProps {
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
   operation?: RuleOperation;
+  showLocation?: boolean;
 }
 
-export function GrafanaRuleListItem({ rule, groupIdentifier, namespaceName, operation }: GrafanaRuleListItemProps) {
+export function GrafanaRuleListItem({
+  rule,
+  groupIdentifier,
+  namespaceName,
+  operation,
+  showLocation = true,
+}: GrafanaRuleListItemProps) {
   const { name, uid, labels, provenance } = rule;
 
   const commonProps: RuleListItemCommonProps = {
@@ -51,12 +58,13 @@ export function GrafanaRuleListItem({ rule, groupIdentifier, namespaceName, oper
         state={promAlertingRule?.state}
         instancesCount={instancesCount}
         operation={operation}
+        showLocation={showLocation}
       />
     );
   }
 
   if (prometheusRuleType.grafana.recordingRule(rule)) {
-    return <RecordingRuleListItem {...commonProps} />;
+    return <RecordingRuleListItem {...commonProps} showLocation={showLocation} />;
   }
 
   return <UnknownRuleListItem ruleName={name} groupIdentifier={groupIdentifier} ruleDefinition={rule} />;

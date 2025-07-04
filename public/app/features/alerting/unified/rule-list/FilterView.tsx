@@ -158,6 +158,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
                   rule={rule}
                   groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}
+                  showLocation={true}
                 />
               );
             case 'datasource':

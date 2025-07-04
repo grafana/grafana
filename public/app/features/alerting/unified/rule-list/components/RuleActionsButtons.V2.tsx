@@ -145,5 +145,7 @@ function getEditableIdentifier(
 
   logWarning('Unable to construct an editable rule identifier');
 
+  // Returning undefined is safer than throwing here as it allows the component to gracefully handle
+  // the error by returning null instead of crashing the entire component tree
   return undefined;
 }

@@ -8,7 +8,6 @@ import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 
-// const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 const { useGetGrafanaGroupsQuery } = prometheusApi;
 
 export interface GrafanaGroupLoaderProps {
@@ -74,6 +73,7 @@ export function GrafanaGroupLoader({
             groupIdentifier={groupIdentifier}
             namespaceName={namespaceName}
             // we don't show the location again for rules, it's redundant because they are shown in a folder > group hierarchy
+            showLocation={false}
           />
         );
       })}
