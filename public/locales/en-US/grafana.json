@@ -352,6 +352,10 @@
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
     },
+    "ad": {
+      "close": "Close",
+      "learn-more": "Learn more"
+    },
     "add-button": {
       "add-more": "Add more"
     },
@@ -1545,8 +1549,20 @@
       }
     },
     "home": {
+      "irm-card-description": "Unify on-call, alerting, and incident response with Grafana Cloud IRM.",
+      "irm-card-item-1": "Manage on-call schedules with your calendar or Terraform.",
+      "irm-card-item-2": "Respond to incidents via web, app, Slack, or other channels.",
+      "irm-card-item-3": "Pinpoint root causes with AI-powered Grafana SIFT.",
+      "irm-card-item-4": "Analyze past incidents to improve response and resilience.",
+      "irm-card-title": "Incident response and management",
       "label-get-started": "Get started",
       "label-insights": "Insights",
+      "synthetic-monitoring-card-description": "Monitor critical user flows, websites, and APIs externally, from global locations.",
+      "synthetic-monitoring-card-item-1": "Simulate end-to-end user journeys with browser checks.",
+      "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
+      "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
+      "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
+      "synthetic-monitoring-card-title": "Synthetic Monitoring",
       "title-alerting": "Alerting"
     },
     "import-to-gma": {
@@ -3972,7 +3988,8 @@
   "close-button": {
     "tooltip": "Close"
   },
-  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise",
+  "cloud-feature-badge": "Cloud",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
@@ -8434,6 +8451,18 @@
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "Indexed label",
+          "indexed-label-plural": "Indexed labels",
+          "parsed-label-plural": "Parsed fields",
+          "parsedl-label": "Parsed field",
+          "structured-metadata": "Structured metadata",
+          "structured-metadata-plural": "Structured metadata"
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "Default",
       "label-small": "Small"
@@ -8457,7 +8486,6 @@
       "label-wrap-lines": "Wrap lines"
     },
     "log-details": {
-      "close": "Close log details",
       "fields": "Fields",
       "links": "Links",
       "log-line": "Log line",
@@ -8482,6 +8510,35 @@
       "show-less": "show less",
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "Clear",
+      "close": "Close log details",
+      "copy-shortlink": "Copy shortlink",
+      "copy-to-clipboard": "Copy to clipboard",
+      "fields": {
+        "adhoc-statistics": "Ad-hoc statistics",
+        "copy-value-to-clipboard": "Copy value to clipboard",
+        "filter-out": "Filter out value",
+        "filter-out-query": "Filter out value in query {{query}}",
+        "toggle-field-button": {
+          "field-instead-message": "Show this field instead of the message",
+          "hide-this-field": "Hide this field"
+        }
+      },
+      "fields-section": "Fields",
+      "hide-log-line": "Hide log line",
+      "links-section": "Links",
+      "log-line-section": "Log line",
+      "no-details": "No fields to display.",
+      "pin-line": "Pin log",
+      "search": {
+        "no-results": "No results to display."
+      },
+      "search-placeholder": "Search field names and values",
+      "show-context": "Show context",
+      "show-log-line": "Show log line",
+      "unpin-line": "Unpin log"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
@@ -8609,6 +8666,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
       "aria-label-fields": "Fields",
+      "aria-label-line": "Log line",
       "aria-label-log-level": "Log level",
       "aria-label-no-details": "No details"
     },
@@ -11466,6 +11524,7 @@
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-wrap-header-text": "Enables text wrapping for the field name in the table header",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -11486,6 +11545,7 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-wrap-header-text": "Wrap header text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },

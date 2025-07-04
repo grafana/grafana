@@ -41,7 +41,7 @@ type AppendOutboxMessage struct {
 type OutboxMessage struct {
 	RequestID       string
 	Type            OutboxMessageType
-	MessageID       string
+	MessageID       int64
 	Name            string
 	Namespace       string
 	EncryptedSecret string
@@ -49,15 +49,16 @@ type OutboxMessage struct {
 	ExternalID      *string
 	// How many times this message has been received
 	ReceiveCount int
+	Created      int64
 }
 
 type OutboxQueue interface {
 	// Appends a message to the outbox queue
-	Append(ctx context.Context, message AppendOutboxMessage) (string, error)
+	Append(ctx context.Context, message AppendOutboxMessage) (int64, error)
 	// Receives at most n messages from the outbox queue
 	ReceiveN(ctx context.Context, n uint) ([]OutboxMessage, error)
 	// Deletes a message from the outbox queue
-	Delete(ctx context.Context, messageID string) error
+	Delete(ctx context.Context, messageID int64) error
 	// Increments the number of times each message has been received by 1. Must be atomic.
-	IncrementReceiveCount(ctx context.Context, messageIDs []string) error
+	IncrementReceiveCount(ctx context.Context, messageIDs []int64) error
 }
