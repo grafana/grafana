@@ -42,23 +42,15 @@ test.describe(
       await timePickerButton.click();
 
       const fromField = page.getByTestId(selectors.components.TimePicker.fromField);
-      await fromField.clear();
       await fromField.fill('2024-06-05 10:05:00');
 
       const toField = page.getByTestId(selectors.components.TimePicker.toField);
-      await toField.clear();
       await toField.fill('2024-06-05 10:06:00');
 
       const applyTimeRangeButton = page.getByTestId(selectors.components.TimePicker.applyTimeRange);
       await applyTimeRangeButton.click();
 
-      const runButton = page.getByTestId(selectors.components.RefreshPicker.runButtonV2);
-      // TODO: determine if we need to check the text of the run button
-      //   await expect(runButton).toHaveText('Run query');
-
-      // Use ctrl+z to zoom out
       await page.keyboard.press('Control+z');
-      //   await expect(runButton).toHaveText('Run query');
 
       const expectedRange = 'Time range selected: 2024-06-05 10:03:30 to 2024-06-05 10:07:30';
       await expect(timePickerButton).toHaveAttribute('aria-label', expectedRange);
@@ -75,18 +67,13 @@ test.describe(
       await timePickerButton.click();
 
       const fromField = page.getByTestId(selectors.components.TimePicker.fromField);
-      await fromField.clear();
       await fromField.fill('2024-06-05 10:05:00');
 
       const toField = page.getByTestId(selectors.components.TimePicker.toField);
-      await toField.clear();
       await toField.fill('2024-06-05 10:06:00');
 
       const applyTimeRangeButton = page.getByTestId(selectors.components.TimePicker.applyTimeRange);
       await applyTimeRangeButton.click();
-
-      const runButton = page.getByTestId(selectors.components.RefreshPicker.runButtonV2);
-      //   await expect(runButton).toHaveText('Run query');
 
       let expectedRange = 'Time range selected: 2024-06-05 10:05:00 to 2024-06-05 10:06:00';
       await expect(timePickerButton).toHaveAttribute('aria-label', expectedRange);
@@ -94,7 +81,6 @@ test.describe(
       // Use time range shortcut to move back
       await page.keyboard.press('t');
       await page.keyboard.press('ArrowLeft');
-      //   await expect(runButton).toHaveText('Run query');
 
       expectedRange = 'Time range selected: 2024-06-05 10:04:00 to 2024-06-05 10:05:00'; // 1 min back
       await expect(timePickerButton).toHaveAttribute('aria-label', expectedRange);

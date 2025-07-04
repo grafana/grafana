@@ -1,4 +1,6 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { Page } from 'playwright-core';
+
+import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { getResources } from '../utils/prometheus-helpers';
 
@@ -16,7 +18,7 @@ test.describe.skip(
     /**
      * Create and save a Prometheus data source, navigate to code or builder
      */
-    async function navigateToEditor(page, selectors, editorType, name) {
+    async function navigateToEditor(page: Page, selectors: E2ESelectorGroups, editorType: string, name: string) {
       // Navigate to add data source page
       await page.goto('/datasources/new');
 
@@ -278,7 +280,7 @@ test.describe.skip(
   }
 );
 
-async function selectOption(page, option, selectors) {
+async function selectOption(page: Page, option: string, selectors: E2ESelectorGroups) {
   const optionElement = page.getByTestId(selectors.components.Select.option).filter({ hasText: option });
   await expect(optionElement).toBeVisible();
   await optionElement.click();

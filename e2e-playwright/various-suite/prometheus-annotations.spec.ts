@@ -1,4 +1,6 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { Page } from 'playwright-core';
+
+import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { addDashboard } from '../utils/dashboard-helpers';
 import { getResources } from '../utils/prometheus-helpers';
@@ -97,7 +99,7 @@ test.describe(
     /**
      * Click dashboard settings and then the annotations tab
      */
-    async function navigateToAnnotations(page, selectors) {
+    async function navigateToAnnotations(page: Page, selectors: E2ESelectorGroups) {
       const editButton = page.getByTestId(selectors.components.NavToolbar.editDashboard.editButton);
       await expect(editButton).toBeVisible();
       await editButton.click();
@@ -110,7 +112,7 @@ test.describe(
       await annotationsTab.click();
     }
 
-    async function addPrometheusAnnotation(page, selectors, annotationName) {
+    async function addPrometheusAnnotation(page: Page, selectors: E2ESelectorGroups, annotationName: string) {
       const addAnnotationButton = page.getByTestId(
         selectors.pages.Dashboard.Settings.Annotations.List.addAnnotationCTAV2
       );

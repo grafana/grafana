@@ -49,13 +49,10 @@ test.describe(
       };
 
       const STATS = {
-        types: SNAPSHOT_RESULTS.reduce(
-          (acc, r) => {
-            acc[r.type] = (acc[r.type] || 0) + 1;
-            return acc;
-          },
-          {} as Record<string, number>
-        ),
+        types: SNAPSHOT_RESULTS.reduce<Record<string, number>>((acc, r) => {
+          acc[r.type] = (acc[r.type] || 0) + 1;
+          return acc;
+        }, {}),
         statuses: {
           PENDING: SNAPSHOT_RESULTS.length,
         },

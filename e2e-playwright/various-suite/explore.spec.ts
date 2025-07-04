@@ -19,15 +19,10 @@ test.describe(
         selectors.components.DataSource.TestData.QueryTab.scenarioSelectContainer
       );
       await expect(scenarioSelectContainer).toBeVisible();
-      await scenarioSelectContainer.scrollIntoViewIfNeeded();
+      await scenarioSelectContainer.locator('input[id*="test-data-scenario-select-"]').click();
 
-      const scenarioInput = scenarioSelectContainer.locator('input[id*="test-data-scenario-select-"]');
-      await expect(scenarioInput).toBeVisible();
-      await scenarioInput.click();
-
-      const csvMetricValues = page.locator('text=CSV Metric Values');
+      const csvMetricValues = page.getByText('CSV Metric Values');
       await expect(csvMetricValues).toBeVisible();
-      await csvMetricValues.scrollIntoViewIfNeeded();
       await csvMetricValues.click();
     });
   }

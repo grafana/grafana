@@ -1,4 +1,6 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { Page } from 'playwright-core';
+
+import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const PANEL_UNDER_TEST = 'Value reducers 1';
 
@@ -8,8 +10,8 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    test('Tests various Inspect Drawer scenarios', async ({ gotoDashboardPage, dashboardPage, selectors, page }) => {
-      await gotoDashboardPage({ uid: 'wfTJJL5Wz' });
+    test('Tests various Inspect Drawer scenarios', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: 'wfTJJL5Wz' });
 
       const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_UNDER_TEST));
       await panel.scrollIntoViewIfNeeded();
@@ -68,7 +70,7 @@ test.describe(
   }
 );
 
-const expectDrawerTabsAndContent = async (dashboardPage, selectors, page) => {
+const expectDrawerTabsAndContent = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups, page: Page) => {
   const drawerTitle = dashboardPage.getByGrafanaSelector(
     selectors.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
   );
@@ -78,7 +80,7 @@ const expectDrawerTabsAndContent = async (dashboardPage, selectors, page) => {
   await expect(dataTab).toBeVisible();
 
   // Data should be the active tab
-  const activeTab = page.locator(selectors.components.Tab.active());
+  const activeTab = page.locator(selectors.components.Tab.active(''));
   await expect(activeTab).toHaveText('Data');
 
   const dataContent = dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Data.content);
@@ -124,7 +126,7 @@ const expectDrawerTabsAndContent = async (dashboardPage, selectors, page) => {
   await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelInspector.Json.content)).toBeHidden();
 };
 
-const expectDrawerClose = async (dashboardPage, selectors) => {
+const expectDrawerClose = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
   // Close using close button
   const closeButton = dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close);
   await closeButton.click();
@@ -135,7 +137,13 @@ const expectDrawerClose = async (dashboardPage, selectors) => {
   await expect(drawerTitle).toBeHidden();
 };
 
-const expectSubMenuScenario = async (dashboardPage, selectors, page, subMenu: string, tabTitle?: string) => {
+const expectSubMenuScenario = async (
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  page: Page,
+  subMenu: string,
+  tabTitle?: string
+) => {
   tabTitle = tabTitle ?? subMenu;
 
   const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(PANEL_UNDER_TEST));
@@ -158,7 +166,7 @@ const expectSubMenuScenario = async (dashboardPage, selectors, page, subMenu: st
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle));
   await expect(tab).toBeVisible();
 
-  const activeTab = page.locator(selectors.components.Tab.active());
+  const activeTab = page.locator(selectors.components.Tab.active(''));
   await expect(activeTab).toHaveText(tabTitle);
 
   await expectDrawerClose(dashboardPage, selectors);
