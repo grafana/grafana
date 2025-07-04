@@ -532,7 +532,7 @@ func TestMain(m *testing.M) {
 	if len(opts) == 0 {
 		opts = []InitTestDBOpt{{FeatureFlags: []string{}}}
 		cfgDBSec := testCfg.Raw.Section("database")
-		cfgDBSec.Key("skip_ensure_default_org_and_user").SetValue("false")
+		cfgDBSec.Key("skip_ensure_default_org_and_user").SetValue("true")
 	}
 
 	if testSQLStore == nil {
