@@ -46,10 +46,15 @@ test.describe(
         .locator('[contenteditable="true"]');
       await queryField.fill('trace');
 
-      // Use Shift+Enter to execute the query
-      await queryField.press('Shift+Enter');
+      await expect
+        .poll(async () => {
+          // Use Shift+Enter to execute the query
+          await queryField.press('Shift+Enter');
 
-      // Get the initial count of span bars
+          // Get the initial count of span bars
+          return page.getByTestId(selectors.components.TraceViewer.spanBar).count();
+        })
+        .toBeGreaterThan(0);
       const initialSpanBars = page.getByTestId(selectors.components.TraceViewer.spanBar);
       const initialSpanBarCount = await initialSpanBars.count();
 
