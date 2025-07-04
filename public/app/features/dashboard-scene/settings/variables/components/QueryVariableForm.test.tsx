@@ -77,6 +77,8 @@ describe('QueryVariableEditorForm', () => {
   const mockOnIncludeAllChange = jest.fn();
   const mockOnAllValueChange = jest.fn();
   const mockOnAllowCustomValueChange = jest.fn();
+  const mockOnStaticOptionsChange = jest.fn();
+  const mockOnStaticOptionsOrderChange = jest.fn();
 
   const defaultProps: React.ComponentProps<typeof QueryVariableEditorForm> = {
     datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
@@ -99,6 +101,8 @@ describe('QueryVariableEditorForm', () => {
     allValue: 'custom all value',
     onAllValueChange: mockOnAllValueChange,
     onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    onStaticOptionsChange: mockOnStaticOptionsChange,
+    onStaticOptionsOrderChange: mockOnStaticOptionsOrderChange,
   };
 
   async function setup(props?: React.ComponentProps<typeof QueryVariableEditorForm>) {
@@ -142,6 +146,13 @@ describe('QueryVariableEditorForm', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
+    const staticOptionsInput = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsInput
+    );
+    const staticOptionsOrderDropdown = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsOrderDropdown
+    );
+
     expect(dataSourcePicker).toBeInTheDocument();
     expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(regexInput).toBeInTheDocument();
@@ -158,6 +169,8 @@ describe('QueryVariableEditorForm', () => {
     expect(includeAllSwitch).toBeChecked();
     expect(allValueInput).toBeInTheDocument();
     expect(allValueInput).toHaveValue('custom all value');
+    expect(staticOptionsInput).toBeInTheDocument();
+    expect(staticOptionsOrderDropdown).toBeInTheDocument();
   });
 
   it('should call onDataSourceChange when changing the datasource', async () => {
@@ -292,5 +305,33 @@ describe('QueryVariableEditorForm', () => {
     expect(
       ((mockOnAllValueChange.mock.calls[0][0] as FormEvent<HTMLInputElement>).target as HTMLInputElement).value
     ).toBe('custom all value and another value');
+  });
+
+  it('should call onStaticOptionsChange when changing the static options', async () => {
+    const {
+      renderer: { getByTestId },
+    } = await setup();
+    const staticOptionsInput = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsInput
+    );
+    await userEvent.type(staticOptionsInput, 'foo : bar');
+    await userEvent.tab();
+    expect(mockOnStaticOptionsChange).toHaveBeenCalledTimes(1);
+    expect(mockOnStaticOptionsChange.mock.calls[0][0]).toBe('foo : bar');
+  });
+
+  it('should call onStaticOptionsOrderChange when changing the static options order', async () => {
+    const {
+      renderer: { getByTestId },
+    } = await setup();
+    const staticOptionsOrderDropdown = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsOrderDropdown
+    );
+    await userEvent.click(staticOptionsOrderDropdown); // open the select
+    const anotherOption = await screen.getByText('After query values');
+    await userEvent.click(anotherOption);
+
+    expect(mockOnStaticOptionsOrderChange).toHaveBeenCalledTimes(1);
+    expect(mockOnStaticOptionsOrderChange.mock.calls[0][0]).toBe('after');
   });
 });
