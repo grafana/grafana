@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0alpha "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -17,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
 
 var (
 	_ rest.Scoper               = (*LegacyStore)(nil)
@@ -62,7 +66,7 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	res, err := common.List(
 		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
-		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.User], error) {
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha.User], error) {
 			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 				Pagination: p,
 			})
@@ -71,12 +75,12 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 				return nil, err
 			}
 
-			users := make([]iamv0.User, 0, len(found.Users))
+			users := make([]iamv0alpha.User, 0, len(found.Users))
 			for _, u := range found.Users {
 				users = append(users, toUserItem(&u, ns.Value))
 			}
 
-			return &common.ListResponse[iamv0.User]{
+			return &common.ListResponse[iamv0alpha.User]{
 				Items:    users,
 				RV:       found.RV,
 				Continue: found.Continue,
@@ -88,7 +92,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	obj := &iamv0.UserList{Items: res.Items}
+	obj := &iamv0alpha.UserList{Items: res.Items}
 	obj.Continue = common.OptionalFormatInt(res.Continue)
 	obj.ResourceVersion = common.OptionalFormatInt(res.RV)
 	return obj, nil
@@ -116,25 +120,35 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	return &obj, nil
 }
 
-func toUserItem(u *user.User, ns string) iamv0.User {
-	item := &iamv0.User{
+func toUserItem(u *user.User, ns string) iamv0alpha.User {
+	item := &iamv0alpha.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(u.Created),
 		},
-		Spec: iamv0.UserSpec{
+		Spec: iamv0alpha.UserSpec{
 			Name:          u.Name,
 			Login:         u.Login,
 			Email:         u.Email,
 			EmailVerified: u.EmailVerified,
 			Disabled:      u.IsDisabled,
-			InternalID:    u.ID,
+			GrafanaAdmin:  u.IsAdmin,
+			Provisioned:   u.IsProvisioned,
 		},
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
+	obj.SetAnnotation(AnnoKeyLastSeenAt, formatTime(&u.LastSeenAt))
 	obj.SetDeprecatedInternalID(u.ID) // nolint:staticcheck
 	return *item
+}
+
+func formatTime(v *time.Time) string {
+	txt := ""
+	if v != nil && v.Unix() != 0 {
+		txt = v.UTC().Format(time.RFC3339)
+	}
+	return txt
 }

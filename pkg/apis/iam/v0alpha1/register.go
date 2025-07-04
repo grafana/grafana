@@ -2,8 +2,10 @@ package v0alpha1
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,10 +18,11 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"users", "user", "User",
-	func() runtime.Object { return &User{} },
-	func() runtime.Object { return &UserList{} },
+var userKind = iamv0alpha1.UserKind()
+var UserResourceInfo = utils.NewResourceInfo(userKind.Group(), userKind.Version(),
+	userKind.GroupVersionResource().Resource, strings.ToLower(userKind.Kind()), userKind.Kind(),
+	func() runtime.Object { return userKind.ZeroValue() },
+	func() runtime.Object { return userKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -28,7 +31,7 @@ var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			u, ok := obj.(*User)
+			u, ok := obj.(*iamv0alpha1.User)
 			if ok {
 				return []interface{}{
 					u.Name,
@@ -42,10 +45,11 @@ var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var TeamResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"teams", "team", "Team",
-	func() runtime.Object { return &Team{} },
-	func() runtime.Object { return &TeamList{} },
+var teamKind = iamv0alpha1.TeamKind()
+var TeamResourceInfo = utils.NewResourceInfo(teamKind.Group(), teamKind.Version(),
+	teamKind.GroupVersionResource().Resource, strings.ToLower(teamKind.Kind()), teamKind.Kind(),
+	func() runtime.Object { return teamKind.ZeroValue() },
+	func() runtime.Object { return teamKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -54,7 +58,7 @@ var TeamResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*Team)
+			m, ok := obj.(*iamv0alpha1.Team)
 			if !ok {
 				return nil, fmt.Errorf("expected team")
 			}
@@ -68,10 +72,11 @@ var TeamResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var ServiceAccountResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"serviceaccounts", "serviceaccount", "ServiceAccount",
-	func() runtime.Object { return &ServiceAccount{} },
-	func() runtime.Object { return &ServiceAccountList{} },
+var serviceAccountKind = iamv0alpha1.ServiceAccountKind()
+var ServiceAccountResourceInfo = utils.NewResourceInfo(serviceAccountKind.Group(), serviceAccountKind.Version(),
+	serviceAccountKind.GroupVersionResource().Resource, strings.ToLower(serviceAccountKind.Kind()), serviceAccountKind.Kind(),
+	func() runtime.Object { return serviceAccountKind.ZeroValue() },
+	func() runtime.Object { return serviceAccountKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -80,7 +85,7 @@ var ServiceAccountResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			sa, ok := obj.(*ServiceAccount)
+			sa, ok := obj.(*iamv0alpha1.ServiceAccount)
 			if ok {
 				return []interface{}{
 					sa.Name,
@@ -120,10 +125,13 @@ var SSOSettingResourceInfo = utils.NewResourceInfo(
 	},
 )
 
+var teamBindingKind = iamv0alpha1.TeamBindingKind()
 var TeamBindingResourceInfo = utils.NewResourceInfo(
-	GROUP, VERSION, "teambindings", "teambinding", "TeamBinding",
-	func() runtime.Object { return &TeamBinding{} },
-	func() runtime.Object { return &TeamBindingList{} },
+	teamBindingKind.Group(), teamBindingKind.Version(),
+	teamBindingKind.GroupVersionResource().Resource,
+	strings.ToLower(teamBindingKind.Kind()), teamBindingKind.Kind(),
+	func() runtime.Object { return teamBindingKind.ZeroValue() },
+	func() runtime.Object { return teamBindingKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -131,13 +139,13 @@ var TeamBindingResourceInfo = utils.NewResourceInfo(
 			{Name: "Created At", Type: "string", Format: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*TeamBinding)
+			m, ok := obj.(*iamv0alpha1.TeamBinding)
 			if !ok {
 				return nil, fmt.Errorf("expected team binding")
 			}
 			return []interface{}{
 				m.Name,
-				m.Spec.Team.Name,
+				m.Spec.TeamRef.Name,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
@@ -158,19 +166,19 @@ var (
 func AddKnownTypes(scheme *runtime.Scheme, version string) {
 	scheme.AddKnownTypes(
 		schema.GroupVersion{Group: GROUP, Version: version},
-		&User{},
-		&UserList{},
+		&iamv0alpha1.User{},
+		&iamv0alpha1.UserList{},
 		&UserTeamList{},
-		&ServiceAccount{},
-		&ServiceAccountList{},
+		&iamv0alpha1.ServiceAccount{},
+		&iamv0alpha1.ServiceAccountList{},
 		&ServiceAccountTokenList{},
-		&Team{},
-		&TeamList{},
+		&iamv0alpha1.Team{},
+		&iamv0alpha1.TeamList{},
 		&DisplayList{},
 		&SSOSetting{},
 		&SSOSettingList{},
-		&TeamBinding{},
-		&TeamBindingList{},
+		&iamv0alpha1.TeamBinding{},
+		&iamv0alpha1.TeamBindingList{},
 		&TeamMemberList{},
 	)
 }

@@ -1,59 +1,8 @@
 package v0alpha1
 
 import (
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type Team struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec TeamSpec `json:"spec,omitempty"`
-}
-
-type TeamSpec struct {
-	Title string `json:"title,omitempty"`
-	Email string `json:"email,omitempty"`
-
-	// This is currently used for authorization checks but we don't want to expose it
-	InternalID int64 `json:"-"`
-}
-
-func (t Team) AuthID() string {
-	return fmt.Sprintf("%d", t.Spec.InternalID)
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type TeamList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []Team `json:"items"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type TeamBinding struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec TeamBindingSpec `json:"spec,omitempty"`
-}
-
-type TeamBindingSpec struct {
-	Subjects []TeamSubject `json:"subjects,omitempty"`
-	Team     TeamRef       `json:"team,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type TeamBindingList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []TeamBinding `json:"items"`
-}
 
 type TeamSubject struct {
 	// Identity is a reference to the identity of this subject.
