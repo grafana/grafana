@@ -988,6 +988,26 @@ export interface FeatureToggles {
   */
   alertEnrichment?: boolean;
   /**
+  * Enable AI-generated alert rules.
+  * @default false
+  */
+  alertingAIGenAlertRules?: boolean;
+  /**
+  * Enable AI-improve alert rules labels and annotations.
+  * @default false
+  */
+  alertingAIImproveAlertRules?: boolean;
+  /**
+  * Enable AI-generated alerting templates.
+  * @default false
+  */
+  alertingAIGenTemplates?: boolean;
+  /**
+  * Enable AI-analyze central state history.
+  * @default false
+  */
+  alertingAIAnalyzeCentralStateHistory?: boolean;
+  /**
   * Enables the API to import Alertmanager configuration
   * @default false
   */

@@ -1,6 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, Stack, Text } from '@grafana/ui';
 
 import { useIsLLMPluginEnabled } from '../../../hooks/llmUtils';
@@ -22,6 +23,9 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   const type = watch('type');
 
   const isRecordingRule = type ? isRecordingRuleByType(type) : false;
+
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAIImproveButton = canRenderGenAIImproveButton && config.featureToggles.alertingAIImproveAlertRules;
 
   const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
@@ -58,7 +62,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
             <Button variant="secondary" type="button" onClick={onEditClick} size="sm">
               <Trans i18nKey="alerting.labels-field-in-form.edit-labels">Edit labels</Trans>
             </Button>
-            {canRenderGenAIImproveButton && <GenAIImproveLabelsButton />}
+            {canShowGenAIImproveButton && <GenAIImproveLabelsButton />}
           </Stack>
         ) : (
           <Stack direction="row" gap={2} alignItems="center">
@@ -75,7 +79,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
             >
               <Trans i18nKey="alerting.labels-field-in-form.add-labels">Add labels</Trans>
             </Button>
-            {canRenderGenAIImproveButton && <GenAIImproveLabelsButton />}
+            {canShowGenAIImproveButton && <GenAIImproveLabelsButton />}
           </Stack>
         )}
       </Stack>

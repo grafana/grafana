@@ -6,6 +6,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
@@ -26,6 +27,9 @@ const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
   const { value: canRenderGenAIImproveButton } = useIsLLMPluginEnabled();
+
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAIImproveButton = canRenderGenAIImproveButton && config.featureToggles.alertingAIImproveAlertRules;
 
   const {
     control,
@@ -231,7 +235,7 @@ const AnnotationsStep = () => {
                 <Trans i18nKey="alerting.annotations-step.link-dashboard-and-panel">Link dashboard and panel</Trans>
               </Button>
             )}
-            {canRenderGenAIImproveButton && <GenAIImproveAnnotationsButton />}
+            {canShowGenAIImproveButton && <GenAIImproveAnnotationsButton />}
           </div>
         </Stack>
         {showPanelSelector && (

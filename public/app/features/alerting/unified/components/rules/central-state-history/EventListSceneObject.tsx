@@ -5,6 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   CustomVariable,
   SceneComponentProps,
@@ -130,11 +131,15 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
 
   const { value: canRenderGenAITriageButton } = useIsLLMPluginEnabled();
 
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAITriageButton =
+    canRenderGenAITriageButton && config.featureToggles.alertingAIAnalyzeCentralStateHistory;
+
   return (
     <Stack direction="column" gap={0}>
       <div className={styles.headerContainer}>
         <ListHeader />
-        {canRenderGenAITriageButton && (
+        {canShowGenAITriageButton && (
           <div className={styles.triageButtonContainer}>
             <GenAITriageButton logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
           </div>

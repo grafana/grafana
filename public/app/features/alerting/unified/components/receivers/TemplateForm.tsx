@@ -8,7 +8,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -171,6 +171,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   };
 
   const { value: canRenderGenAITemplateButton } = useIsLLMPluginEnabled();
+
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAITemplateButton = canRenderGenAITemplateButton && config.featureToggles.alertingAIGenTemplates;
+
   return (
     <>
       <FormProvider {...formApi}>
@@ -283,7 +287,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                   </Dropdown>
                                 )}
                                 {/* GenAI button – only available for Grafana Alertmanager */}
-                                {isGrafanaAlertManager && canRenderGenAITemplateButton && (
+                                {isGrafanaAlertManager && canShowGenAITemplateButton && (
                                   <GenAITemplateButton
                                     onTemplateGenerated={handleTemplateGenerated}
                                     disabled={isProvisioned}

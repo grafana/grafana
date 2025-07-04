@@ -4,7 +4,7 @@ import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { logInfo } from '@grafana/runtime';
+import { config, logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
@@ -176,6 +176,9 @@ export function CreateAlertButton() {
 
   const { value: canRenderGenAIAlertRuleButton } = useIsLLMPluginEnabled();
 
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAIAlertRuleButton = canRenderGenAIAlertRuleButton && config.featureToggles.alertingAIGenAlertRules;
+
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
       <Stack direction="row" gap={1}>
@@ -186,7 +189,7 @@ export function CreateAlertButton() {
         >
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
-        {canCreateGrafanaRules && canRenderGenAIAlertRuleButton && <GenAIAlertRuleButton />}
+        {canCreateGrafanaRules && canShowGenAIAlertRuleButton && <GenAIAlertRuleButton />}
       </Stack>
     );
   }
