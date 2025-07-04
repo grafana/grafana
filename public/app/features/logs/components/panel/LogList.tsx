@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, MouseEvent } from 'react';
-import { VariableSizeList } from 'react-window';
+import { Align, VariableSizeList } from 'react-window';
 
 import {
   AbsoluteTimeRange,
@@ -274,6 +274,12 @@ const LogListComponent = ({
     }, 25);
   }, []);
 
+  const debouncedScrollToItem = useMemo(() => {
+    return debounce((index: number, align?: Align) => {
+      listRef.current?.scrollToItem(index, align);
+    }, 250);
+  }, []);
+
   useEffect(() => {
     const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
       handleScrollToEvent(e, logs.length, listRef.current)
@@ -383,6 +389,16 @@ const LogListComponent = ({
     [filterLogs, levelFilteredLogs, matchingUids]
   );
 
+  const focusLogLine = useCallback(
+    (log: LogListModel) => {
+      const index = filteredLogs.indexOf(log);
+      if (index >= 0) {
+        debouncedScrollToItem(index, 'start');
+      }
+    },
+    [debouncedScrollToItem, filteredLogs]
+  );
+
   return (
     <div className={styles.logListContainer}>
       <div className={styles.logListWrapper} ref={wrapperRef}>
@@ -464,6 +480,7 @@ const LogListComponent = ({
       {showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
+          focusLogLine={focusLogLine}
           logOptionsStorageKey={logOptionsStorageKey}
           logs={filteredLogs}
           onResize={handleLogDetailsResize}
