@@ -11,6 +11,14 @@ import { Annotation } from '../../utils/constants';
 
 import AnnotationsStep from './AnnotationsStep';
 
+// Mock the useIsLLMPluginEnabled hook
+jest.mock('../../hooks/llmUtils', () => ({
+  useIsLLMPluginEnabled: jest.fn(() => ({
+    loading: false,
+    value: false,
+  })),
+}));
+
 // To get anything displayed inside the Autosize component we need to mock it
 // Ref https://github.com/bvaughn/react-window/issues/454#issuecomment-646031139
 jest.mock(
