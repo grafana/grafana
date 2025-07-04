@@ -867,8 +867,10 @@
     },
     "contact-point-header": {
       "aria-label-more-actions": "More actions for contact point \"{{contactPointName}}\"",
+      "ariaLabel-delete": "Delete",
       "button-edit": "Edit",
       "button-view": "View",
+      "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
@@ -6922,6 +6924,8 @@
       "aria-label-select-service-name-operator": "Select service name operator",
       "aria-label-select-span-name": "Select span name",
       "aria-label-select-span-name-operator": "Select span name operator",
+      "ariaLabel-select-max-span-duration": "Select max span duration",
+      "ariaLabel-select-min-span-duration": "Select min span duration",
       "label-collapse": "Span Filters",
       "label-duration": "Duration",
       "label-service-name": "Service name",
@@ -6992,6 +6996,8 @@
       "split-widen": "Widen pane"
     },
     "trace-page-actions": {
+      "ariaLabel-copy-trace-id": "Copy Trace ID",
+      "ariaLabel-export-trace": "Export Trace",
       "give-feedback": "Give feedback",
       "label-copied": "Copied!",
       "label-export": "Export",
@@ -7704,6 +7710,8 @@
     },
     "panel-chrome": {
       "aria-label-toggle-collapse": "toggle collapse panel",
+      "ariaLabel-panel-loading": "Panel loading bar",
+      "ariaLabel-panel-status": "Panel status",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
