@@ -36,6 +36,8 @@ const propsToCheck = [
   'tooltip',
   'confirmText',
   'body',
+  'noOptionsMessage',
+  'loadingMessage',
 ];
 
 /**

@@ -219,6 +219,10 @@
         "label-label-filters": "Label filters",
         "tooltip-label-filters": "Optional: used to filter the metric select for this query type."
       },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "Loading labels",
+        "noOptionsMessage-no-labels-found": "No labels found"
+      },
       "metric-combobox": {
         "async-select": {
           "aria-label-open-metrics-explorer": "Open metrics explorer",

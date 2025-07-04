@@ -52,6 +52,7 @@
       "button-use-query": "Use this query",
       "label-categories": "Categories",
       "label-query-results": "Query results: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "Unable to list all categories",
       "placeholder-all-categories": "All categories",
       "placeholder-search-logs": "Search Logs queries",
       "text-loading": "Loading..."

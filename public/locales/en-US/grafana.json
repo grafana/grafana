@@ -482,6 +482,9 @@
       "label-muting-grouping-and-timings-optional": "Muting, grouping and timings (optional)",
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
+    "alert-manager-picker": {
+      "noOptionsMessage-no-datasources-found": "No datasources found"
+    },
     "alert-menu": {
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
@@ -1410,6 +1413,7 @@
       "label-disable-resolved-message": "Disable resolved message"
     },
     "grafana-evaluation-behavior-step": {
+      "loadingMessage-loading-groups": "Loading groups...",
       "message": {
         "must-be-a-positive-integer": "Must be a positive integer.",
         "must-enter-a-group-name": "Must enter a group name"
@@ -1868,7 +1872,8 @@
             "other-data-sources": "Other data sources"
           }
         }
-      }
+      },
+      "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "mute-timing-actions-button": {
       "body-delete-mute-timing": "Are you sure you would like to delete \"{{muteTiming}}\"?"
@@ -3116,7 +3121,8 @@
     "annotation-field-mapper": {
       "annotation": "Annotation",
       "first-value": "First value",
-      "from": "From"
+      "from": "From",
+      "noOptionsMessage-unknown-field-names": "Unknown field names"
     },
     "empty-state": {
       "button-title": "Add annotation query",
@@ -6365,7 +6371,8 @@
       }
     },
     "color-dimension-editor": {
-      "label-fixed-color": "Fixed color"
+      "label-fixed-color": "Fixed color",
+      "noOptionsMessage-no-fields-found": "No fields found"
     },
     "file-dropzone-custom-children": {
       "upload": "Upload"
@@ -6403,6 +6410,7 @@
       },
       "label-limit": "Limit",
       "label-value": "Value",
+      "noOptionsMessage-no-fields-found": "No fields found",
       "scalar-options": {
         "description-clamped": "Use field values, clamped to max and min",
         "description-mod": "Use field values, mod from max",
@@ -6413,7 +6421,8 @@
     "scale-dimension-editor": {
       "label-max": "Max",
       "label-min": "Min",
-      "label-value": "Value"
+      "label-value": "Value",
+      "noOptionsMessage-no-fields-found": "No fields found"
     },
     "text-dimension-editor": {
       "description-field": "Display field value",
@@ -7196,6 +7205,7 @@
   },
   "folder-filter": {
     "clear-folder-button": "Clear folders",
+    "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
@@ -8779,6 +8789,9 @@
       }
     }
   },
+  "metric-select": {
+    "noOptionsMessage-no-options-found": "No options found"
+  },
   "migrate-to-cloud": {
     "build-snapshot": {
       "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
@@ -9617,6 +9630,7 @@
     }
   },
   "org-picker": {
+    "noOptionsMessage-no-organizations-found": "No organizations found",
     "select-placeholder": "Select organization"
   },
   "page": {
@@ -11009,6 +11023,7 @@
     }
   },
   "service-account-picker": {
+    "noOptionsMessage-no-service-accounts-found": "No service accounts found",
     "select-aria-label": "Service account picker",
     "select-placeholder": "Start typing to search for service accounts"
   },
@@ -11644,6 +11659,7 @@
     "tag-option-label": "Tag option"
   },
   "team-picker": {
+    "noOptionsMessage-no-teams-found": "No teams found",
     "select-aria-label": "Team picker",
     "select-placeholder": "Select a team"
   },
@@ -12375,6 +12391,7 @@
     "title": "Organizations"
   },
   "user-picker": {
+    "noOptionsMessage-no-users-found": "No users found",
     "select-aria-label": "User picker",
     "select-placeholder": "Start typing to search for user"
   },
