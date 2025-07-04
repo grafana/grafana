@@ -63,7 +63,7 @@ const DraggableDisplayedField = ({ field, index }: DraggableDisplayedFieldProps)
     <Draggable draggableId={field} index={index}>
       {(provided) => (
         <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <Card className={styles.fieldCard}>
+          <Card noMargin className={styles.fieldCard}>
             <div>
               {field === LOG_LINE_BODY_FIELD_NAME ? t('logs.log-line-details.log-line-field', 'Log line') : field}
             </div>
@@ -84,5 +84,7 @@ const DraggableDisplayedField = ({ field, index }: DraggableDisplayedFieldProps)
 const getStyles = (theme: GrafanaTheme2) => ({
   fieldCard: css({
     padding: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+    wordBreak: 'break-word',
   }),
 });
