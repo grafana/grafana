@@ -10026,9 +10026,13 @@
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "not-saved": "The value is not yet saved in the Grafana database",
-      "open-pull-request-in-git-hub": "{btnText}"
+      "open-pull-request-in-git-hub": "Open pull request in GitHub",
+      "view-pull-request-in-git-hub": "View pull request in GitHub"
     },
-    "title-dashboard-loaded-branch-git-hub": ""
+    "title-dashboard-loaded-branch-git-hub": "This dashboard is loaded from a branch in GitHub.",
+    "title-dashboard-loaded-pull-request-git-hub": "This dashboard is loaded from a pull request in GitHub.",
+    "title-folder-created-branch-git-hub": "A new folder has been created in a branch in GitHub.",
+    "title-folder-created-pull-request-git-hub": "A new folder has been created in a pull request in GitHub."
   },
   "provisioning": {
     "banner": {

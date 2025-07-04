@@ -12,6 +12,11 @@ jest.mock('@grafana/data', () => ({
   },
 }));
 
+jest.mock('@grafana/i18n', () => ({
+  t: jest.fn((key: string, defaultValue: string) => defaultValue),
+  Trans: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 const mockTextUtil = jest.mocked(textUtil);
 
 function setup(props: { prParam: string; isFolder?: boolean; isNewPr?: boolean } = { prParam: 'test-url' }) {
@@ -27,17 +32,27 @@ function setup(props: { prParam: string; isFolder?: boolean; isNewPr?: boolean }
 }
 
 describe('PreviewBannerViewPR', () => {
-  let openSpy: jest.SpyInstance;
+  let windowOpenSpy: jest.SpyInstance;
+
+  beforeAll(() => {
+    Object.defineProperty(window, 'open', {
+      writable: true,
+      value: jest.fn(),
+    });
+    windowOpenSpy = jest.spyOn(window, 'open');
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // @ts-expect-error global.open should return a Window, but is not implemented in js-dom.
-    openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
     mockTextUtil.sanitizeUrl.mockImplementation((url) => url);
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  afterAll(() => {
+    windowOpenSpy.mockRestore();
   });
 
   describe('Dashboard scenarios', () => {
@@ -104,7 +119,7 @@ describe('PreviewBannerViewPR', () => {
       const button = screen.getByRole('button', { name: /close alert/i });
       await userEvent.click(button);
 
-      expect(openSpy).toHaveBeenCalledWith(testUrl, '_blank');
+      expect(windowOpenSpy).toHaveBeenCalledWith(testUrl, '_blank');
     });
   });
 });
