@@ -88,7 +88,7 @@ func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	cfgDBSection := cfg.Raw.Section("database")
-	cfgDBSection.Key("skip_ensure_default_org_and_user").SetValue("true")
+	cfgDBSection.Key("ensure_default_org_and_user").SetValue("false")
 	return newStore(cfg, nil, features, nil, bus, tracer)
 }
 
@@ -147,11 +147,10 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 // Reset resets database state.
 // If default org and user creation is enabled, it will be ensured they exist in the database.
 func (ss *SQLStore) Reset() error {
-	if ss.dbCfg.SkipEnsureDefaultOrgAndUser {
-		return nil
+	if ss.dbCfg.EnsureDefaultOrgAndUser {
+		return ss.ensureMainOrgAndAdminUser(false)
 	}
-
-	return ss.ensureMainOrgAndAdminUser(false)
+	return nil
 }
 
 // Quote quotes the value in the used SQL dialect
@@ -530,9 +529,8 @@ func TestMain(m *testing.M) {
 	}
 
 	if len(opts) == 0 {
-		opts = []InitTestDBOpt{{FeatureFlags: []string{}}}
 		cfgDBSec := testCfg.Raw.Section("database")
-		cfgDBSec.Key("skip_ensure_default_org_and_user").SetValue("true")
+		cfgDBSec.Key("ensure_default_org_and_user").SetValue("false")
 	}
 
 	if testSQLStore == nil {
