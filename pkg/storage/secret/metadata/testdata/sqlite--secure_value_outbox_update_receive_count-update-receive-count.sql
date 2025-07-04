@@ -3,5 +3,5 @@ UPDATE
 SET
   "receive_count" = "receive_count" + 1
 WHERE 
-  "uid" IN ('id1', 'id2', 'id3')
+  "id" IN (1, 2, 3)
 ;

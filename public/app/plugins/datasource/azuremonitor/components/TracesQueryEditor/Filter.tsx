@@ -7,15 +7,7 @@ import { CoreApp, DataFrame, getDefaultTimeRange, SelectableValue, TimeRange } f
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import {
-  HorizontalGroup,
-  Select,
-  ButtonSelect,
-  AsyncMultiSelect,
-  getSelectStyles,
-  useTheme2,
-  Checkbox,
-} from '@grafana/ui';
+import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, useTheme2, Checkbox, Stack } from '@grafana/ui';
 
 import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
 import Datasource from '../../datasource';
@@ -238,7 +230,7 @@ const Filter = (
   };
 
   return (
-    <HorizontalGroup spacing="none">
+    <Stack gap={0}>
       <Select
         menuShouldPortal
         placeholder={t('components.filter.placeholder-property', 'Property')}
@@ -288,7 +280,7 @@ const Filter = (
         onClick={onDelete}
         type="button"
       />
-    </HorizontalGroup>
+    </Stack>
   );
 };
 

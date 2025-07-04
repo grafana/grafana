@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"google.golang.org/grpc"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func InterceptorLogger(l log.Logger, enabled bool) logging.Logger {
@@ -32,4 +33,8 @@ func InterceptorLogger(l log.Logger, enabled bool) logging.Logger {
 
 func LoggingUnaryInterceptor(logger log.Logger, enabled bool) grpc.UnaryServerInterceptor {
 	return logging.UnaryServerInterceptor(InterceptorLogger(logger, enabled))
+}
+
+func LoggingStreamInterceptor(logger log.Logger, enabled bool) grpc.StreamServerInterceptor {
+	return logging.StreamServerInterceptor(InterceptorLogger(logger, enabled))
 }
