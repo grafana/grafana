@@ -2,23 +2,32 @@ import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
-import { Card, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Card, IconButton, useStyles2 } from '@grafana/ui';
+
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
 import { useLogListContext } from './LogListContext';
-import { GrafanaTheme2 } from '@grafana/data';
-
-interface Props {}
 
 export const LogLineDetailsDisplayedFields = () => {
-  const { displayedFields } = useLogListContext();
+  const { displayedFields, setDisplayedFields } = useLogListContext();
 
-  const onDragEnd = useCallback((result: DropResult) => {
-    if (result.destination == null) {
-      return;
-    }
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      if (result.destination == null) {
+        return;
+      }
 
-    console.log(result);
-  }, []);
+      const newDisplayedFields = [...displayedFields];
+      const element = displayedFields[result.source.index];
+      newDisplayedFields.splice(result.source.index, 1);
+      newDisplayedFields.splice(result.destination.index, 0, element);
+
+      setDisplayedFields?.(newDisplayedFields);
+    },
+    [displayedFields, setDisplayedFields]
+  );
 
   return (
     <div>
@@ -48,12 +57,24 @@ interface DraggableDisplayedFieldProps {
 }
 
 const DraggableDisplayedField = ({ field, index }: DraggableDisplayedFieldProps) => {
+  const { onClickHideField } = useLogListContext();
   const styles = useStyles2(getStyles);
   return (
-    <Draggable draggableId={`field-${index}`} index={index}>
+    <Draggable draggableId={field} index={index}>
       {(provided) => (
         <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-          <Card className={styles.fieldCard}>{field}</Card>
+          <Card className={styles.fieldCard}>
+            <div>
+              {field === LOG_LINE_BODY_FIELD_NAME ? t('logs.log-line-details.log-line-field', 'Log line') : field}
+            </div>
+            {onClickHideField && (
+              <IconButton
+                name="times"
+                onClick={() => onClickHideField(field)}
+                tooltip={t('logs.log-line-details.remove-displayed-field', 'Remove field')}
+              />
+            )}
+          </Card>
         </div>
       )}
     </Draggable>
