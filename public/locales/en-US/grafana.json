@@ -2789,6 +2789,9 @@
       "existing-templates-selector-placeholder-choose-notification-template": "Choose notification template",
       "loading": "Loading...",
       "template-options": {
+        "ariaLabel": {
+          "select-notification-template": "Select notification template"
+        },
         "label": {
           "select-notification-template": "Select notification template"
         }
@@ -4373,6 +4376,9 @@
     },
     "dash-nav": {
       "on-open-snapshot-original": {
+        "confirmText": {
+          "proceed": "Proceed"
+        },
         "title": {
           "proceed-to-external-site": "Proceed to external site?"
         }
@@ -5386,6 +5392,9 @@
       }
     },
     "config-public-dashboard": {
+      "confirmText": {
+        "revoke-public-url": "Revoke public URL"
+      },
       "title": {
         "revoke-public-url": "Revoke public URL"
       }
@@ -5599,6 +5608,9 @@
       "title-name-already-exists": "Name already exists"
     },
     "on-open-snapshot-original-dashboard": {
+      "confirmText": {
+        "proceed": "Proceed"
+      },
       "title": {
         "proceed-to-external-site": "Proceed to external site?"
       }
@@ -5865,6 +5877,9 @@
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
+      "confirmText": {
+        "delete-variable": "Delete variable"
+      },
       "delete": "Delete",
       "description-optional-display-name": "Optional display name",
       "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",

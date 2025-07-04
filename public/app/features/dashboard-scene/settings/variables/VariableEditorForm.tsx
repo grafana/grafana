@@ -136,7 +136,10 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
                   showModal(ConfirmModal, {
                     title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
                     body: `Are you sure you want to delete: ${name}?`,
-                    confirmText: 'Delete variable',
+                    confirmText: t(
+                      'dashboard-scene.variable-editor-form.confirmText.delete-variable',
+                      'Delete variable'
+                    ),
                     onConfirm: onDeleteVariable(hideModal),
                     onDismiss: hideModal,
                     isOpen: true,
