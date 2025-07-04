@@ -8356,6 +8356,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8379,7 +8391,6 @@
       "label-wrap-lines": "Satırları kaydır"
     },
     "log-details": {
-      "close": "Günlük ayrıntılarını kapat",
       "fields": "Alanlar",
       "links": "Bağlantılar",
       "log-line": "Günlük satırı",
@@ -8404,6 +8415,35 @@
       "show-less": "daha az göster",
       "show-more": "daha fazla göster",
       "tooltip-error": "Hata: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Bağlantıyı günlük satırına kopyala",
@@ -8531,6 +8571,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Veri bağlantıları",
       "aria-label-fields": "Alanlar",
+      "aria-label-line": "",
       "aria-label-log-level": "Günlük kaydı seviyesi",
       "aria-label-no-details": "Ayrıntı yok"
     },
@@ -11388,6 +11429,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Görsel görüntülenemediğinde veya ekran okuyucu kullanan kullanıcılar için gösterilecek alternatif metin",
       "description-title-text": "İmleç görselin üzerine getirildiğinde görüntülenecek metin",
@@ -11408,6 +11450,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

@@ -8408,6 +8408,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8431,7 +8443,6 @@
       "label-wrap-lines": "Zalomit řádky"
     },
     "log-details": {
-      "close": "Zavřít podrobnosti protokolu",
       "fields": "Pole",
       "links": "Odkazy",
       "log-line": "Řádek protokolu",
@@ -8456,6 +8467,35 @@
       "show-less": "zobrazit méně",
       "show-more": "zobrazit více",
       "tooltip-error": "Chyba: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Kopírovat odkaz na řádek protokolu",
@@ -8583,6 +8623,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Propojení dat",
       "aria-label-fields": "Pole",
+      "aria-label-line": "",
       "aria-label-log-level": "Úroveň protokolu",
       "aria-label-no-details": "Žádné podrobnosti"
     },
@@ -11458,6 +11499,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativní text, který se zobrazí, pokud nelze zobrazit obrázek, nebo pro uživatele, kteří používají čtečku obrazovky",
       "description-title-text": "Text, který se zobrazí po najetí kurzoru na obrázek",
@@ -11478,6 +11520,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
