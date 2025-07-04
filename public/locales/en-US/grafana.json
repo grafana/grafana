@@ -5256,6 +5256,7 @@
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
       "date": "Date",
+      "name-latest": "Latest",
       "notes": "Notes",
       "restore": "Restore",
       "updated-by": "Updated by",
@@ -5948,6 +5949,7 @@
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
       "date": "Date",
+      "name-latest": "Latest",
       "notes": "Notes",
       "restore": "Restore",
       "updated-by": "Updated by",
