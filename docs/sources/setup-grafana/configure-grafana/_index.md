@@ -1547,7 +1547,7 @@ Use spaces to separate multiple modes, for example, `console file`.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is `info`.
+Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`. Default is `info`.
 
 #### `filters`
 
@@ -1576,7 +1576,7 @@ Only applicable when `console` is used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1590,7 +1590,7 @@ Only applicable when `file` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1625,7 +1625,7 @@ Only applicable when `syslog` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
