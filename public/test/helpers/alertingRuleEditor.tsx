@@ -22,6 +22,7 @@ export const ui = {
     folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
     namespace: byTestId('namespace-picker'),
     group: byTestId('group-picker'),
+    pendingPeriod: byRole('textbox', { name: /^pending period/i }),
     annotationKey: (idx: number) => byTestId(`annotation-key-${idx}`),
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
     labelKey: (idx: number) => byTestId(`label-key-${idx}`),
