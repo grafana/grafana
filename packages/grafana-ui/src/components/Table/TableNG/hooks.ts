@@ -140,7 +140,7 @@ export interface PaginatedRowsOptions {
   headerHeight: number;
   footerHeight: number;
   paginationHeight?: number;
-  enabled?: boolean;
+  enabled: boolean;
 }
 
 export interface PaginatedRowsResult {
@@ -167,11 +167,17 @@ export function usePaginatedRows(
 
   // calculate average row height if row height is variable.
   const avgRowHeight = useMemo(() => {
+    if (!enabled) {
+      return 0;
+    }
+
     if (typeof rowHeight === 'number') {
       return rowHeight;
     }
-    return rows.reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
-  }, [rows, rowHeight]);
+
+    // we'll just measure 100 rows to estimate
+    return rows.slice(0, 100).reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
+  }, [rows, rowHeight, enabled]);
 
   // using dimensions of the panel, calculate pagination parameters
   const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd, smallPagination } = useMemo((): {
@@ -325,6 +331,7 @@ export function useTypographyCtx(): TypographyCtx {
     const txtWidth = ctx.measureText(txt).width;
     const avgCharWidth = txtWidth / txt.length + letterSpacing;
     const { count } = varPreLine(ctx);
+
     const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
       if (text === '') {
         return defaultHeight;

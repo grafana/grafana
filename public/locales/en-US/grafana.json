@@ -8359,6 +8359,18 @@
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "Indexed label",
+          "indexed-label-plural": "Indexed labels",
+          "parsed-label-plural": "Parsed fields",
+          "parsedl-label": "Parsed field",
+          "structured-metadata": "Structured metadata",
+          "structured-metadata-plural": "Structured metadata"
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "Default",
       "label-small": "Small"
@@ -8382,7 +8394,6 @@
       "label-wrap-lines": "Wrap lines"
     },
     "log-details": {
-      "close": "Close log details",
       "fields": "Fields",
       "links": "Links",
       "log-line": "Log line",
@@ -8407,6 +8418,35 @@
       "show-less": "show less",
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "Clear",
+      "close": "Close log details",
+      "copy-shortlink": "Copy shortlink",
+      "copy-to-clipboard": "Copy to clipboard",
+      "fields": {
+        "adhoc-statistics": "Ad-hoc statistics",
+        "copy-value-to-clipboard": "Copy value to clipboard",
+        "filter-out": "Filter out value",
+        "filter-out-query": "Filter out value in query {{query}}",
+        "toggle-field-button": {
+          "field-instead-message": "Show this field instead of the message",
+          "hide-this-field": "Hide this field"
+        }
+      },
+      "fields-section": "Fields",
+      "hide-log-line": "Hide log line",
+      "links-section": "Links",
+      "log-line-section": "Log line",
+      "no-details": "No fields to display.",
+      "pin-line": "Pin log",
+      "search": {
+        "no-results": "No results to display."
+      },
+      "search-placeholder": "Search field names and values",
+      "show-context": "Show context",
+      "show-log-line": "Show log line",
+      "unpin-line": "Unpin log"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
@@ -8534,6 +8574,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
       "aria-label-fields": "Fields",
+      "aria-label-line": "Log line",
       "aria-label-log-level": "Log level",
       "aria-label-no-details": "No details"
     },
