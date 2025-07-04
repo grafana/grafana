@@ -304,6 +304,8 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		data.Groups = userInfo.Groups
 	}
 
+	data.raw = rawJSON
+
 	s.log.Debug("Resolved user data", "data", fmt.Sprintf("%+v", data))
 	return &data, nil
 }
