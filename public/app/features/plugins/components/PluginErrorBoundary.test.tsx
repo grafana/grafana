@@ -21,12 +21,17 @@ const TestFallback = ({ error, errorInfo }: { error: Error | null; errorInfo: Re
   </div>
 );
 
-const renderWithPluginContext = (
-  children: React.ReactNode,
-  pluginMeta?: PluginMeta,
-  fallback?: React.ComponentType<{ error: Error | null; errorInfo: React.ErrorInfo | null }>,
-  onError?: (error: Error, info: React.ErrorInfo) => void
-) => {
+const renderWithPluginContext = ({
+  children,
+  pluginMeta,
+  fallback,
+  onError,
+}: {
+  children: React.ReactNode;
+  pluginMeta?: PluginMeta;
+  fallback?: React.ComponentType<{ error: Error | null; errorInfo: React.ErrorInfo | null }>;
+  onError?: (error: Error, info: React.ErrorInfo) => void;
+}) => {
   const mockPluginMeta = pluginMeta || getMockPlugin({ id: 'test-plugin', type: PluginType.panel });
 
   return render(
@@ -50,19 +55,19 @@ describe('PluginErrorBoundary', () => {
   });
 
   it('should render children normally when no error occurs', () => {
-    renderWithPluginContext(<ThrowingComponent shouldThrow={false} />);
+    renderWithPluginContext({ children: <ThrowingComponent shouldThrow={false} /> });
 
     expect(screen.getByText('Working component')).toBeInTheDocument();
   });
 
   it('should render null when an error occurs and no fallback is provided', () => {
-    const { container } = renderWithPluginContext(<ThrowingComponent shouldThrow={true} />);
+    const { container } = renderWithPluginContext({ children: <ThrowingComponent shouldThrow={true} /> });
 
     expect(container.firstChild).toBeNull();
   });
 
   it('should render custom fallback component when an error occurs', () => {
-    renderWithPluginContext(<ThrowingComponent shouldThrow={true} />, undefined, TestFallback);
+    renderWithPluginContext({ children: <ThrowingComponent shouldThrow={true} />, fallback: TestFallback });
 
     expect(screen.getByText('Fallback rendered')).toBeInTheDocument();
     expect(screen.getByText('Error: Test error message')).toBeInTheDocument();
@@ -72,7 +77,7 @@ describe('PluginErrorBoundary', () => {
   it('should call onError callback when an error occurs', () => {
     const onErrorMock = jest.fn();
 
-    renderWithPluginContext(<ThrowingComponent shouldThrow={true} />, undefined, undefined, onErrorMock);
+    renderWithPluginContext({ children: <ThrowingComponent shouldThrow={true} />, onError: onErrorMock });
 
     expect(onErrorMock).toHaveBeenCalledTimes(1);
     expect(onErrorMock).toHaveBeenCalledWith(
@@ -86,7 +91,7 @@ describe('PluginErrorBoundary', () => {
   it('should log error to console with plugin ID when no onError callback is provided', () => {
     const mockPluginMeta = getMockPlugin({ id: 'my-test-plugin', type: PluginType.datasource });
 
-    renderWithPluginContext(<ThrowingComponent shouldThrow={true} />, mockPluginMeta);
+    renderWithPluginContext({ children: <ThrowingComponent shouldThrow={true} />, pluginMeta: mockPluginMeta });
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Plugin "my-test-plugin" failed to load:',
@@ -114,7 +119,7 @@ describe('PluginErrorBoundary', () => {
   });
 
   it('should update state correctly when error occurs', () => {
-    renderWithPluginContext(<ThrowingComponent shouldThrow={true} />, undefined, TestFallback);
+    renderWithPluginContext({ children: <ThrowingComponent shouldThrow={true} />, fallback: TestFallback });
 
     // Verify that both error and errorInfo are available in the fallback
     expect(screen.getByText('Error: Test error message')).toBeInTheDocument();
@@ -122,7 +127,10 @@ describe('PluginErrorBoundary', () => {
   });
 
   it('should reset error state when children change to non-throwing component', () => {
-    const { rerender } = renderWithPluginContext(<ThrowingComponent shouldThrow={true} />, undefined, TestFallback);
+    const { rerender } = renderWithPluginContext({
+      children: <ThrowingComponent shouldThrow={true} />,
+      fallback: TestFallback,
+    });
 
     // Initially should show fallback
     expect(screen.getByText('Fallback rendered')).toBeInTheDocument();
@@ -141,13 +149,15 @@ describe('PluginErrorBoundary', () => {
   });
 
   it('should handle multiple children correctly', () => {
-    renderWithPluginContext(
-      <>
-        <div>First child</div>
-        <ThrowingComponent shouldThrow={false} />
-        <div>Third child</div>
-      </>
-    );
+    renderWithPluginContext({
+      children: (
+        <>
+          <div>First child</div>
+          <ThrowingComponent shouldThrow={false} />
+          <div>Third child</div>
+        </>
+      ),
+    });
 
     expect(screen.getByText('First child')).toBeInTheDocument();
     expect(screen.getByText('Working component')).toBeInTheDocument();
@@ -155,15 +165,16 @@ describe('PluginErrorBoundary', () => {
   });
 
   it('should handle error in one of multiple children', () => {
-    renderWithPluginContext(
-      <>
-        <div>First child</div>
-        <ThrowingComponent shouldThrow={true} />
-        <div>Third child</div>
-      </>,
-      undefined,
-      TestFallback
-    );
+    renderWithPluginContext({
+      children: (
+        <>
+          <div>First child</div>
+          <ThrowingComponent shouldThrow={true} />
+          <div>Third child</div>
+        </>
+      ),
+      fallback: TestFallback,
+    });
 
     // Should show fallback and not render any of the children
     expect(screen.getByText('Fallback rendered')).toBeInTheDocument();
