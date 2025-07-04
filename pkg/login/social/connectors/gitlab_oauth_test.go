@@ -37,7 +37,7 @@ const (
 	rootUserRespBody   = `{"id":1,"username":"root","name":"Administrator","state":"active","email":"root@example.org", "confirmed_at":"2022-09-13T19:38:04.891Z","is_admin":true,"namespace_id":1}`
 	editorUserRespBody = `{"id":3,"username":"gitlab-editor","name":"Gitlab Editor","state":"active","email":"gitlab-editor@example.org", "confirmed_at":"2022-09-13T19:38:04.891Z","is_admin":false,"namespace_id":1}`
 
-	editorUserIDToken = `{"sub":"3","preferred_username":"gitlab-editor","name":"Gitlab Editor","email":"gitlab-editor@example.org","email_verified":true,"groups_direct":["editors", "viewers"]}`
+	editorUserIDToken = `{"sub":"3","preferred_username":"gitlab-editor","name":"Gitlab Editor","email":"gitlab-editor@example.org","email_verified":true,"groups_direct":["editors", "viewers"]}` // #nosec G101 not a hardcoded credential
 
 	adminGroup  = `{"id":4,"web_url":"http://grafana-gitlab.local/groups/admins","name":"Admins","path":"admins","project_creation_level":"developer","full_name":"Admins","full_path":"admins","created_at":"2022-09-13T19:38:04.891Z"}`
 	editorGroup = `{"id":5,"web_url":"http://grafana-gitlab.local/groups/editors","name":"Editors","path":"editors","project_creation_level":"developer","full_name":"Editors","full_path":"editors","created_at":"2022-09-13T19:38:15.074Z"}`
