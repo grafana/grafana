@@ -352,6 +352,10 @@
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
     },
+    "ad": {
+      "close": "Close",
+      "learn-more": "Learn more"
+    },
     "add-button": {
       "add-more": "Add more"
     },
@@ -1525,8 +1529,20 @@
       }
     },
     "home": {
+      "irm-card-description": "Unify on-call, alerting, and incident response with Grafana Cloud IRM.",
+      "irm-card-item-1": "Manage on-call schedules with your calendar or Terraform.",
+      "irm-card-item-2": "Respond to incidents via web, app, Slack, or other channels.",
+      "irm-card-item-3": "Pinpoint root causes with AI-powered Grafana SIFT.",
+      "irm-card-item-4": "Analyze past incidents to improve response and resilience.",
+      "irm-card-title": "Incident response and management",
       "label-get-started": "Get started",
       "label-insights": "Insights",
+      "synthetic-monitoring-card-description": "Monitor critical user flows, websites, and APIs externally, from global locations.",
+      "synthetic-monitoring-card-item-1": "Simulate end-to-end user journeys with browser checks.",
+      "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
+      "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
+      "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
+      "synthetic-monitoring-card-title": "Synthetic Monitoring",
       "title-alerting": "Alerting"
     },
     "import-to-gma": {
@@ -3894,7 +3910,8 @@
   "close-button": {
     "tooltip": "Close"
   },
-  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise",
+  "cloud-feature-badge": "Cloud",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
