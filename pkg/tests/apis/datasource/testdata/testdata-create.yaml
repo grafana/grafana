@@ -1,5 +1,5 @@
 apiVersion: testdata.datasource.grafana.app/v0alpha1
-kind: GenericDataSource
+kind: DataSource
 metadata:
   name: sample-testdata
 spec:
@@ -14,4 +14,4 @@ secure:
   sampleA:
     create: secret value here # replaced with UID on write
   sampleB:
-    uid: XYZ # will not exist
+    name: XYZ # reference to a existing secret

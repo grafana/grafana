@@ -27,10 +27,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
-var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder    = (*DataSourceAPIBuilder)(nil)
+	_ builder.APIGroupMutation   = (*DataSourceAPIBuilder)(nil)
+	_ builder.APIGroupValidation = (*DataSourceAPIBuilder)(nil)
+)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
@@ -41,6 +46,7 @@ type DataSourceAPIBuilder struct {
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
+	specProvider    func() (*datasourceV0.DataSourceOpenAPIExtension, error) // TODO? include query types
 	queryTypes      *queryV0.QueryTypeDefinitionList
 	log             log.Logger
 }
@@ -91,6 +97,12 @@ func RegisterAPIService(
 		if err != nil {
 			return nil, err
 		}
+
+		// HARDCODE spec access
+		if ds.ID == "grafana-testdata-datasource" {
+			builder.specProvider = testdatasource.OpenAPIExtension
+		}
+
 		apiRegistrar.RegisterAPI(builder)
 	}
 	return builder, nil // only used for wire
