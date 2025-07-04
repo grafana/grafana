@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
@@ -12,16 +12,23 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface Props {
   containerElement: HTMLDivElement;
+  focusLogLine: (log: LogListModel) => void;
   logOptionsStorageKey?: string;
   logs: LogListModel[];
   onResize(): void;
 }
 
-export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, onResize }: Props) => {
+export const LogLineDetails = ({ containerElement, focusLogLine, logOptionsStorageKey, logs, onResize }: Props) => {
   const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    focusLogLine(showDetails[0]);
+    // Just once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleResize = useCallback(() => {
     if (containerRef.current) {
