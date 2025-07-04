@@ -20,7 +20,7 @@ export interface Props {
 export type LogLineDetailsMode = 'inline' | 'sidebar';
 
 export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize }: Props) => {
-  const { detailsWidth, logOptionsStorageKey, setDetailsWidth, showDetails } = useLogListContext();
+  const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -56,10 +56,31 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize 
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>
-          <LogLineDetailsComponent log={showDetails[0]} logOptionsStorageKey={logOptionsStorageKey} logs={logs} />
+          <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
         </div>
       </div>
     </Resizable>
+  );
+};
+
+export interface InlineLogLineDetailsProps {
+  logs: LogListModel[];
+}
+
+export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
+  const { showDetails } = useLogListContext();
+  const styles = useStyles2(getStyles);
+
+  if (!showDetails.length) {
+    return null;
+  }
+
+  return (
+    <div className={styles.container} style={{ height: '30vh' }}>
+      <div className={styles.scrollContainer}>
+        <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
+      </div>
+    </div>
   );
 };
 

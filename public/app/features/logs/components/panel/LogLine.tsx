@@ -10,6 +10,7 @@ import { Button, Icon, Tooltip } from '@grafana/ui';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
+import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
@@ -88,6 +89,7 @@ const LogLineComponent = memo(
   }: LogLineComponentProps) => {
     const {
       detailsDisplayed,
+      detailsMode,
       dedupStrategy,
       enableLogDetails,
       fontSize,
@@ -235,6 +237,7 @@ const LogLineComponent = memo(
             </Button>
           </div>
         )}
+        {detailsMode === 'inline' && detailsShown && <InlineLogLineDetails logs={[]} />}
       </>
     );
   }

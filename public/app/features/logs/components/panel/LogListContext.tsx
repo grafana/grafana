@@ -235,7 +235,7 @@ export const LogListContextProvider = ({
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
-  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>('sidebar');
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>('inline');
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
