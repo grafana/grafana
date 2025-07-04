@@ -4957,6 +4957,9 @@
         "title-not-unique": "This title is not unique"
       }
     },
+    "save-dashboard": {
+      "message-dashboard-saved": "Dashboard saved"
+    },
     "save-dashboard-as-button": {
       "save-as": "Save as"
     },
@@ -5883,6 +5886,9 @@
           "settings": "Settings"
         }
       }
+    },
+    "use-save-dashboard": {
+      "message-dashboard-saved": "Dashboard saved"
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
