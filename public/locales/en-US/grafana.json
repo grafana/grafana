@@ -5456,6 +5456,12 @@
       "label-type": "Type",
       "label-url": "URL",
       "label-with-tags": "With tags",
+      "link-type-options": {
+        "label": {
+          "dashboards": "Dashboards",
+          "link": "Link"
+        }
+      },
       "placeholder-open-dashboard": "Open dashboard"
     },
     "dashboard-link-list": {
