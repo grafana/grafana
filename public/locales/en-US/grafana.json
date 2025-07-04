@@ -7274,6 +7274,14 @@
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
     "send-custom-feedback": "Send"
   },
+  "geo": {
+    "add-location-fields": {
+      "noFieldsMessage": {
+        "no-numeric-fields-found": "No numeric fields found",
+        "no-strings-fields-found": "No strings fields found"
+      }
+    }
+  },
   "geomap": {
     "coordinates-map-view-editor": {
       "label-latitude": "Latitude",
@@ -7321,6 +7329,9 @@
     "measure-overlay": {
       "tooltip-show-measure-tools": "Show measure tools"
     },
+    "photos-layer": {
+      "noFieldsMessage-no-string-fields": "No string fields found"
+    },
     "plugin": {
       "basemap-layer-configured-server-admin": "The basemap layer is configured by the server admin."
     },
@@ -7338,7 +7349,9 @@
       "label-symbol-vertical-align": "Symbol vertical align",
       "label-text-label": "Text label",
       "label-x-offset": "X offset",
-      "label-y-offset": "Y offset"
+      "label-y-offset": "Y offset",
+      "placeholderText-select-symbol": "Select a symbol",
+      "placeholderText-select-symbol-or-add-text": "Select a symbol or add a text label"
     },
     "style-rule-editor": {
       "aria-label-comparison-operator": "Comparison operator",
@@ -12028,6 +12041,11 @@
       "remove-enum-row-tooltip-delete": "Delete"
     },
     "extract-fields-transformer-editor": {
+      "field-name-picker-settings": {
+        "placeholderText": {
+          "select-field": "Select field"
+        }
+      },
       "label-delimiter": "Delimiter",
       "label-format": "Format",
       "label-keep-time": "Keep time",
@@ -12041,6 +12059,14 @@
       "aria-label-threshold-color": "Threshold color"
     },
     "field-lookup-transformer-editor": {
+      "field-name-picker-settings": {
+        "noFieldsMessage": {
+          "no-text-fields-found": "No text fields found"
+        },
+        "placeholderText": {
+          "select-text-field": "Select text field"
+        }
+      },
       "label-field": "Field",
       "label-lookup": "Lookup"
     },
@@ -12082,6 +12108,14 @@
       "label-filter-type": "Filter type"
     },
     "format-string-transfomer-editor": {
+      "field-name-picker-settings": {
+        "noFieldsMessage": {
+          "no-text-fields-found": "No text fields found"
+        },
+        "placeholderText": {
+          "select-text-field": "Select text field"
+        }
+      },
       "label-field": "Field",
       "label-format": "Format",
       "label-substring-range": "Substring range"

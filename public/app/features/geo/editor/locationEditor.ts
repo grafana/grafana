@@ -1,4 +1,5 @@
 import { Field, FieldType, PanelOptionsEditorBuilder, DataFrame } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
 
@@ -28,7 +29,10 @@ export function addLocationFields<TOptions>(
           name: 'Latitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
-            noFieldsMessage: 'No numeric fields found',
+            noFieldsMessage: t(
+              'geo.add-location-fields.noFieldsMessage.no-numeric-fields-found',
+              'No numeric fields found'
+            ),
           },
         })
         .addFieldNamePicker({
@@ -36,7 +40,10 @@ export function addLocationFields<TOptions>(
           name: 'Longitude field',
           settings: {
             filter: (f: Field) => f.type === FieldType.number,
-            noFieldsMessage: 'No numeric fields found',
+            noFieldsMessage: t(
+              'geo.add-location-fields.noFieldsMessage.no-numeric-fields-found',
+              'No numeric fields found'
+            ),
           },
         });
       break;
@@ -47,7 +54,10 @@ export function addLocationFields<TOptions>(
         name: 'Geohash field',
         settings: {
           filter: (f: Field) => f.type === FieldType.string,
-          noFieldsMessage: 'No strings fields found',
+          noFieldsMessage: t(
+            'geo.add-location-fields.noFieldsMessage.no-strings-fields-found',
+            'No strings fields found'
+          ),
         },
       });
       break;
@@ -59,7 +69,10 @@ export function addLocationFields<TOptions>(
           name: 'Lookup field',
           settings: {
             filter: (f: Field) => f.type === FieldType.string,
-            noFieldsMessage: 'No strings fields found',
+            noFieldsMessage: t(
+              'geo.add-location-fields.noFieldsMessage.no-strings-fields-found',
+              'No strings fields found'
+            ),
           },
         })
         .addCustomEditor({
