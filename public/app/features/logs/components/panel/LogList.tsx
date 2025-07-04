@@ -93,6 +93,7 @@ type LogListComponentProps = Omit<
   | 'dedupStrategy'
   | 'displayedFields'
   | 'enableLogDetails'
+  | 'logOptionsStorageKey'
   | 'permalinkedLogId'
   | 'showTime'
   | 'sortOrder'
@@ -194,7 +195,6 @@ export const LogList = ({
           initialScrollPosition={initialScrollPosition}
           loading={loading}
           loadMore={loadMore}
-          logOptionsStorageKey={logOptionsStorageKey}
           logs={logs}
           showControls={showControls}
           timeRange={timeRange}
@@ -213,7 +213,6 @@ const LogListComponent = ({
   initialScrollPosition = 'top',
   loading,
   loadMore,
-  logOptionsStorageKey,
   logs,
   showControls,
   timeRange,
@@ -481,7 +480,6 @@ const LogListComponent = ({
         <LogLineDetails
           containerElement={containerElement}
           focusLogLine={focusLogLine}
-          logOptionsStorageKey={logOptionsStorageKey}
           logs={filteredLogs}
           onResize={handleLogDetailsResize}
         />

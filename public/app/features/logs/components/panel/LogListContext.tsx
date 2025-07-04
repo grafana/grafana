@@ -494,6 +494,7 @@ export const LogListContextProvider = ({
         getRowContextQuery,
         logSupportsContext,
         logLineMenuCustomItems,
+        logOptionsStorageKey,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,

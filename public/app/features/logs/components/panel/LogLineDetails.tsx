@@ -13,13 +13,12 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 export interface Props {
   containerElement: HTMLDivElement;
   focusLogLine: (log: LogListModel) => void;
-  logOptionsStorageKey?: string;
   logs: LogListModel[];
   onResize(): void;
 }
 
-export const LogLineDetails = ({ containerElement, focusLogLine, logOptionsStorageKey, logs, onResize }: Props) => {
-  const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
+export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize }: Props) => {
+  const { detailsWidth, logOptionsStorageKey, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
