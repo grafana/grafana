@@ -618,3 +618,8 @@ exclude github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3
 // This was retracted, but seems to be known by the Go module proxy, and is
 // otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
+
+// This package contains test data for github.com/RoaringBitmap/roaring, which is
+// only used to run tests and not required for building the Grafana binary.
+// Since the test data doesn't contain a license file we exclude it.
+exclude github.com/RoaringBitmap/real-roaring-datasets v0.0.0-20190726190000-eb7c87156f76
