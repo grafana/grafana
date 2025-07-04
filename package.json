@@ -380,7 +380,7 @@
     "react": "18.3.1",
     "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "18.3.1",
-    "react-draggable": "4.4.6",
+    "react-draggable": "4.5.0",
     "react-dropzone": "^14.2.3",
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
     "react-highlight-words": "0.21.0",
