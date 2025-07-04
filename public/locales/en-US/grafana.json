@@ -4602,6 +4602,13 @@
           "editable": "Editable",
           "readonly": "Read-only"
         }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "Default",
+          "shared-crosshair": "Shared crosshair",
+          "shared-tooltip": "Shared tooltip"
+        }
       }
     },
     "get-debug-dashboard": {
@@ -5531,6 +5538,21 @@
     },
     "empty-transformations-message": {
       "add-transformation": "Add transformation"
+    },
+    "general-settings-edit-view": {
+      "editable_options": {
+        "label": {
+          "editable": "Editable",
+          "readonly": "Read-only"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "Default",
+          "shared-crosshair": "Shared crosshair",
+          "shared-tooltip": "Shared tooltip"
+        }
+      }
     },
     "get-edit-options": {
       "title": {
