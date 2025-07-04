@@ -275,6 +275,7 @@ func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	cmd := shorturls.DeleteShortUrlCommand{
 		OlderThan: time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour),
 	}
+	// TODO: this should call the new k8sStore to delete al expired shortURL resources
 	if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {
 		logger.Error("Problem deleting stale short urls", "error", err.Error())
 	} else {
