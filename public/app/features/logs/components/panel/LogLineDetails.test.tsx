@@ -40,6 +40,7 @@ const setup = (
 
   const props: Props = {
     containerElement: document.createElement('div'),
+    focusLogLine: jest.fn(),
     logs,
     onResize: jest.fn(),
     ...(propOverrides || {}),
