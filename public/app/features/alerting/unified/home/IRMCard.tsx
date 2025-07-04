@@ -3,8 +3,7 @@ import irmSvg from 'img/irm_logo.svg';
 
 import AdCard from './AdCard';
 
-const LINK =
-  'https://grafana.com/auth/sign-up/create-user?redirectPath=irm&src=oss-grafana&cnt=alerting-irm';
+const LINK = 'https://grafana.com/auth/sign-up/create-user?redirectPath=irm&src=oss-grafana&cnt=alerting-irm';
 const HELP_FLAG_IRM = 0x0010;
 
 export default function IRMCard() {
