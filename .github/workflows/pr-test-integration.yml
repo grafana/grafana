@@ -39,10 +39,10 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration)"
-          go test -count=1 -toolexec=$PWD/go-compile-verbose -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -debug-actiongraph=/tmp/actiongraph -count=1 -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Upload artifact
         if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: go-log
-          path: /tmp/golog
+          name: actiongraph
+          path: /tmp/actiongraph
