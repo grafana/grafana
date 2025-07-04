@@ -174,8 +174,12 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	engine.DatabaseTZ = time.UTC
 	engine.TZLocation = time.UTC
 
+	cfgDBSec := cfg.Raw.Section("database")
+	shouldSkip := fmt.Sprintf("%t", options.NoDefaultUserOrg || options.Truncate)
+	cfgDBSec.Key("skip_ensure_default_org_and_user").SetValue(shouldSkip)
+
 	store, err := newStore(cfg, engine, features, options.MigratorFactory(features),
-		options.Bus, options.Tracer, options.NoDefaultUserOrg || options.Truncate)
+		options.Bus, options.Tracer)
 	if err != nil {
 		tb.Fatalf("failed to create a new SQLStore: %v", err)
 		panic("unreachable")
