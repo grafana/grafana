@@ -209,7 +209,7 @@ function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: str
 
   if (shouldShowExemplarSwitch(query, app)) {
     items.push(
-      t('grafana-prometheus.querybuilder.get-collapsed-info.exemplars', 'Examplars: {{value}}', {
+      t('grafana-prometheus.querybuilder.get-collapsed-info.exemplars', 'Exemplars: {{value}}', {
         value: query.exemplar ? 'true' : 'false',
       })
     );

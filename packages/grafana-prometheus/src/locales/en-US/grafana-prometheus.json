@@ -219,7 +219,7 @@
         "title-give-feedback": "The metrics explorer is new, please let us know how we can improve it"
       },
       "get-collapsed-info": {
-        "exemplars": "Examplars: {{value}}",
+        "exemplars": "Exemplars: {{value}}",
         "format": "Format: {{value}}",
         "legend": "Legend: {{value}}",
         "step": "Step: {{value}}",

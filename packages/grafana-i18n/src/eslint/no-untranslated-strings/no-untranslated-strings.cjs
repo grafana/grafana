@@ -56,7 +56,7 @@ const propertiesToCheck = [
   'message',
   'confirmText',
   'placeholderText',
-  'noFieldsMessage'
+  'noFieldsMessage',
 ];
 
 /** @type {RuleDefinition} */
