@@ -195,6 +195,16 @@
         "tooltip-use-series-endpoint": "Checking this option will favor the series endpoint with {{exampleParameter}} parameter over the label values endpoint with {{exampleParameter}} parameter. While the label values endpoint is considered more performant, some users may prefer the series because it has a POST method while the label values endpoint only has a GET method."
       }
     },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "Only includes unique labels",
+        "description-custom": "Provide a naming template",
+        "description-verbose": "All label names and values",
+        "label-auto": "Auto",
+        "label-custom": "Custom",
+        "label-verbose": "Verbose"
+      }
+    },
     "querybuilder": {
       "additional-settings": {
         "content-filter-metric-names-regex-search-using": "Filter metric names by regex search, using an additional call on the Prometheus API.",
@@ -203,6 +213,13 @@
       "feedback-link": {
         "give-feedback": "Give feedback",
         "title-give-feedback": "The metrics explorer is new, please let us know how we can improve it"
+      },
+      "get-collapsed-info": {
+        "exemplars": "Examplars: {{value}}",
+        "format": "Format: {{value}}",
+        "legend": "Legend: {{value}}",
+        "step": "Step: {{value}}",
+        "type": "Type: {{value}}"
       },
       "handle-function": {
         "text": {
@@ -278,6 +295,11 @@
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "Set lower limit for the step parameter",
         "aria-label-select-resolution": "Select resolution",
+        "format-options": {
+          "label-heatmap": "Heatmap",
+          "label-table": "Table",
+          "label-time-series": "Time series"
+        },
         "label-exemplars": "Exemplars",
         "label-format": "Format",
         "label-min-step": "Min step",
