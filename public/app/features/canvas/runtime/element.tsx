@@ -1032,6 +1032,7 @@ export class ElementState implements LayerElement {
           onKeyDown={!scene?.isEditingEnabled ? this.onElementKeyDown : undefined}
           role="button"
           tabIndex={0}
+          data-testid="canvas-element"
         >
           <item.display
             key={`${this.UID}/${this.revId}`}
