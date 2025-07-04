@@ -10,10 +10,6 @@ SET
   {{ .Ident "created_by" }} = {{ .Arg .Row.CreatedBy }},
   {{ .Ident "updated" }} = {{ .Arg .Row.Updated }},
   {{ .Ident "updated_by" }} = {{ .Arg .Row.UpdatedBy }},
-  {{ .Ident "status_phase" }} = {{ .Arg .Row.Phase }},
-  {{ if .Row.Message.Valid }}
-  {{ .Ident "status_message" }} = {{ .Arg .Row.Message.String }},
-  {{ end }}
   {{ .Ident "description" }} = {{ .Arg .Row.Description }},
   {{ if .Row.Keeper.Valid }}
   {{ .Ident "keeper" }} = {{ .Arg .Row.Keeper.String }},
@@ -25,6 +21,7 @@ SET
   {{ .Ident "ref" }} = {{ .Arg .Row.Ref.String }},
   {{ end }}
   {{ .Ident "external_id" }} = {{ .Arg .Row.ExternalID }}
-WHERE {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND
+WHERE 
+  {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Row.Name }}
 ;

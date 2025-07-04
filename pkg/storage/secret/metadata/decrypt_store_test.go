@@ -392,7 +392,7 @@ func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureVa
 	require.NoError(t, err)
 
 	// Set external id for the secure value
-	err = db.SetExternalID(ctx, xkube.Namespace(sv.Namespace), sv.Name, externalID)
+	err = db.SetExternalID(ctx, xkube.Namespace(sv.Namespace), sv.Name, 1, externalID)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

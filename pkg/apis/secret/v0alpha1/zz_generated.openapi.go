@@ -690,20 +690,11 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallb
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"phase": {
+					"version": {
 						SchemaProps: spec.SchemaProps{
-							Description: "High-level summary of where the `SecureValue` is in its lifecycle. One of: `Pending`, `Succeeded` or `Failed`.\n\nPossible enum values:\n - `\"Failed\"` If the creation of the secret fails, it will move to the `Failed` phase. Check the additional `status` fields for more information on what caused the failure. This state is unrecoverable.\n - `\"Pending\"` When the `SecureValue` is created, it will start in `Pending` phase to create the underlying secret asynchronously.\n - `\"Succeeded\"` If the creation of the secret is successful, it will move to the `Succeeded` phase.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-							Enum:        []interface{}{"Failed", "Pending", "Succeeded"},
-						},
-					},
-					"message": {
-						SchemaProps: spec.SchemaProps{
-							Description: "A human readable message indicating details about why the `SecureValue` is in this phase. Only applicable if the `phase=Failed`.",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
 						},
 					},
 					"externalId": {
@@ -713,7 +704,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"phase"},
+				Required: []string{"version"},
 			},
 		},
 	}

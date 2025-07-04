@@ -10,9 +10,9 @@ SET
   `created_by` = 'user:ryan',
   `updated` = 5678,
   `updated_by` = 'user:cameron',
-  `status_phase` = 'creating',
   `description` = 'description',
   `external_id` = 'extId'
-WHERE `namespace` = 'ns' AND
+WHERE 
+  `namespace` = 'ns' AND
   `name` = 'name'
 ;

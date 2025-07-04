@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/tracectx"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -19,8 +19,8 @@ type SecureValueService struct {
 	accessClient               claims.AccessClient
 	database                   contracts.Database
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
-	outboxQueue                contracts.OutboxQueue
-	encryptionManager          contracts.EncryptionManager
+	keeperMetadataStorage      contracts.KeeperMetadataStorage
+	keeperService              contracts.KeeperService
 }
 
 func ProvideSecureValueService(
@@ -28,16 +28,16 @@ func ProvideSecureValueService(
 	accessClient claims.AccessClient,
 	database contracts.Database,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
-	outboxQueue contracts.OutboxQueue,
-	encryptionManager contracts.EncryptionManager,
+	keeperMetadataStorage contracts.KeeperMetadataStorage,
+	keeperService contracts.KeeperService,
 ) *SecureValueService {
 	return &SecureValueService{
 		tracer:                     tracer,
 		accessClient:               accessClient,
 		database:                   database,
 		secureValueMetadataStorage: secureValueMetadataStorage,
-		outboxQueue:                outboxQueue,
-		encryptionManager:          encryptionManager,
+		keeperMetadataStorage:      keeperMetadataStorage,
+		keeperService:              keeperService,
 	}
 }
 
@@ -48,43 +48,70 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.Secu
 		attribute.String("actor", actorUID),
 	))
 	defer span.End()
+	return s.createNewVersion(ctx, sv, actorUID)
+}
 
-	sv.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending, Message: "Creating secure value"}
+func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueService.Update", trace.WithAttributes(
+		attribute.String("name", newSecureValue.GetName()),
+		attribute.String("namespace", newSecureValue.GetNamespace()),
+		attribute.String("actor", actorUID),
+	))
+	defer span.End()
 
-	var out *secretv0alpha1.SecureValue
+	const updateIsSync = true
+	createdSv, err := s.createNewVersion(ctx, newSecureValue, actorUID)
+	return createdSv, updateIsSync, err
+}
 
-	encryptedSecret, err := s.encryptionManager.Encrypt(ctx, sv.Namespace, []byte(sv.Spec.Value.DangerouslyExposeAndConsumeValue()))
+func (s *SecureValueService) createNewVersion(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+
+	hasSecretValue := sv.Spec.Value != ""
+
+	createdSv, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
 	if err != nil {
-		return nil, fmt.Errorf("encrypting secure value secret: %w", err)
+		return nil, fmt.Errorf("creating secure value: %w", err)
+	}
+	createdSv.Status = secretv0alpha1.SecureValueStatus{
+		Version: createdSv.Status.Version,
 	}
 
-	// Specifically here so that the spans from the worker are not inside the transaction.
-	requestID := tracectx.HexEncodeTraceFromContext(ctx)
-
-	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
+	if hasSecretValue {
+		// TODO: does this need to be for update?
+		keeperCfg, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
-			return fmt.Errorf("failed to create securevalue: %w", err)
-		}
-		out = createdSecureValue
-
-		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-			RequestID:       requestID,
-			Type:            contracts.CreateSecretOutboxMessage,
-			Name:            sv.Name,
-			Namespace:       sv.Namespace,
-			EncryptedSecret: string(encryptedSecret),
-			KeeperName:      sv.Spec.Keeper,
-		}); err != nil {
-			return fmt.Errorf("failed to append message to create secure value to outbox queue: %w", err)
+			return nil, fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Spec.Keeper, err)
 		}
 
-		return nil
-	}); err != nil {
-		return out, err
+		keeper, err := s.keeperService.KeeperForConfig(keeperCfg)
+		if err != nil {
+			return nil, fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Spec.Keeper, err)
+		}
+		logging.FromContext(ctx).Debug("retrieved keeper", "namespace", sv.Namespace, "keeperName", sv.Spec.Keeper, "type", keeperCfg.Type())
+
+		// TODO: can we stop using external id?
+		// TODO: store uses only the namespace and returns and id. It could be a kv instead.
+		// TODO: check that the encrypted store works with multiple versions
+		externalID, err := keeper.Store(ctx, keeperCfg, sv.Namespace, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
+		if err != nil {
+			return nil, fmt.Errorf("storing secure value in keeper: %w", err)
+		}
+		createdSv.Status.ExternalID = string(externalID)
+
+		if err := s.secureValueMetadataStorage.SetExternalID(ctx, xkube.Namespace(sv.Namespace), sv.Name, createdSv.Status.Version, externalID); err != nil {
+			return nil, fmt.Errorf("setting secure value external id: %w", err)
+		}
 	}
 
-	return out, nil
+	if err := s.secureValueMetadataStorage.SetVersionToActive(ctx, xkube.Namespace(sv.Namespace), sv.Name, createdSv.Status.Version); err != nil {
+		return nil, fmt.Errorf("marking secure value version as active: %w", err)
+	}
+
+	// In a single query:
+	// TODO: set external id
+	// TODO: set to active
+
+	return createdSv, nil
 }
 
 func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
@@ -139,84 +166,6 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 	}, nil
 }
 
-func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, bool, error) {
-	ctx, span := s.tracer.Start(ctx, "SecureValueService.Create", trace.WithAttributes(
-		attribute.String("name", newSecureValue.GetName()),
-		attribute.String("namespace", newSecureValue.GetNamespace()),
-		attribute.String("actor", actorUID),
-	))
-	defer span.End()
-
-	// True when the effects of an update can be seen immediately.
-	// Never true in this case since updating a secure value is async.
-	const updateIsSync = false
-
-	var (
-		out             *secretv0alpha1.SecureValue
-		encryptedSecret string
-	)
-
-	if newSecureValue.Spec.Value != "" {
-		buffer, err := s.encryptionManager.Encrypt(ctx, newSecureValue.Namespace, []byte(newSecureValue.Spec.Value.DangerouslyExposeAndConsumeValue()))
-		if err != nil {
-			return nil, false, fmt.Errorf("encrypting secure value secret: %w", err)
-		}
-		encryptedSecret = string(buffer)
-	}
-
-	// Especifically here so that the spans from the worker are not inside the transaction.
-	requestID := tracectx.HexEncodeTraceFromContext(ctx)
-
-	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		sv, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{ForUpdate: true})
-		if err != nil {
-			return fmt.Errorf("fetching secure value: %+w", err)
-		}
-
-		if sv.Status.Phase == secretv0alpha1.SecureValuePhasePending {
-			return contracts.ErrSecureValueOperationInProgress
-		}
-
-		// Succeed immediately if the value is not going to be updated
-		if encryptedSecret == "" {
-			newSecureValue.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseSucceeded}
-		} else {
-			newSecureValue.Status = secretv0alpha1.SecureValueStatus{
-				Message: "Updating secure value",
-				Phase:   secretv0alpha1.SecureValuePhasePending,
-			}
-		}
-
-		// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-		updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue, actorUID)
-		if err != nil {
-			return fmt.Errorf("failed to update secure value: %w", err)
-		}
-		out = updatedSecureValue
-
-		// Only the value needs to be updated asynchronously by the outbox worker
-		if encryptedSecret != "" {
-			if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-				RequestID:       requestID,
-				Type:            contracts.UpdateSecretOutboxMessage,
-				Name:            newSecureValue.Name,
-				Namespace:       newSecureValue.Namespace,
-				EncryptedSecret: encryptedSecret,
-				KeeperName:      newSecureValue.Spec.Keeper,
-				ExternalID:      &updatedSecureValue.Status.ExternalID,
-			}); err != nil {
-				return fmt.Errorf("failed to append message to update secure value to outbox queue: %w", err)
-			}
-		}
-
-		return nil
-	}); err != nil {
-		return out, updateIsSync, err
-	}
-
-	return out, updateIsSync, nil
-}
-
 func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Delete", trace.WithAttributes(
 		attribute.String("name", name),
@@ -224,45 +173,14 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	))
 	defer span.End()
 
-	// Set inside of the transaction callback
-	var out *secretv0alpha1.SecureValue
-
-	// Especifically here so that the spans from the worker are not inside the transaction.
-	requestID := tracectx.HexEncodeTraceFromContext(ctx)
-
-	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: true})
-		if err != nil {
-			return fmt.Errorf("fetching secure value: %+w", err)
-		}
-
-		if sv.Status.Phase == secretv0alpha1.SecureValuePhasePending {
-			return contracts.ErrSecureValueOperationInProgress
-		}
-
-		sv.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending, Message: "Deleting secure value"}
-
-		if err := s.secureValueMetadataStorage.SetStatus(ctx, namespace, name, sv.Status); err != nil {
-			return fmt.Errorf("setting secure value status phase: %+w", err)
-		}
-
-		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-			RequestID:  requestID,
-			Type:       contracts.DeleteSecretOutboxMessage,
-			Name:       name,
-			Namespace:  namespace.String(),
-			KeeperName: sv.Spec.Keeper,
-			ExternalID: &sv.Status.ExternalID,
-		}); err != nil {
-			return fmt.Errorf("appending delete secure value message to outbox queue: %+w", err)
-		}
-
-		out = sv
-
-		return nil
-	}); err != nil {
-		return out, err
+	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: true})
+	if err != nil {
+		return nil, fmt.Errorf("fetching secure value: %+w", err)
 	}
 
-	return out, nil
+	if err := s.secureValueMetadataStorage.SetVersionToInactive(ctx, namespace, name, sv.Status.Version); err != nil {
+		return nil, fmt.Errorf("setting secure value version to inactive: %+w", err)
+	}
+
+	return sv, nil
 }

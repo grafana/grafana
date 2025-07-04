@@ -8,10 +8,8 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ .Ident "created_by" }},
   {{ .Ident "updated" }},
   {{ .Ident "updated_by" }},
-  {{ .Ident "status_phase" }},
-  {{ if .Row.Message.Valid }}
-  {{ .Ident "status_message" }},
-  {{ end }}
+  {{ .Ident "active" }},
+  {{ .Ident "version" }},
   {{ .Ident "description" }},
   {{ if .Row.Keeper.Valid }}
   {{ .Ident "keeper" }},
@@ -33,10 +31,8 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ .Arg .Row.CreatedBy }},
   {{ .Arg .Row.Updated }},
   {{ .Arg .Row.UpdatedBy }},
-  {{ .Arg .Row.Phase }},
-  {{ if .Row.Message.Valid }}
-  {{ .Arg .Row.Message.String }},
-  {{ end }}
+  {{ .Arg .Row.Active }},
+  {{ .Arg .Row.Version }},
   {{ .Arg .Row.Description }},
   {{ if .Row.Keeper.Valid }}
   {{ .Arg .Row.Keeper.String }},

@@ -1,11 +1,12 @@
 package metadata
 
 import (
-	"database/sql"
+	"os/exec"
 	"testing"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
+	"github.com/stretchr/testify/require"
 	"k8s.io/utils/ptr"
 )
 
@@ -123,6 +124,27 @@ func TestSecureValueQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlGetLatestSecureValueVersion: {
+				{
+					Name: "get latest secure value version",
+					Data: &getLatestSecureValueVersion{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+					},
+				},
+			},
+			sqlSecureValueSetVersionToActive: {
+				{
+					Name: "set secure value version to active",
+					Data: &secureValueSetVersionToActive{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						Version:     1,
+					},
+				},
+			},
 			sqlSecureValueRead: {
 				{
 					Name: "read",
@@ -166,8 +188,6 @@ func TestSecureValueQueries(t *testing.T) {
 							CreatedBy:   "user:ryan",
 							Updated:     5678,
 							UpdatedBy:   "user:cameron",
-							Phase:       "creating",
-							Message:     toNullString(nil),
 							Description: "description",
 							Keeper:      toNullString(nil),
 							Decrypters:  toNullString(nil),
@@ -190,8 +210,6 @@ func TestSecureValueQueries(t *testing.T) {
 							CreatedBy:   "user:ryan",
 							Updated:     5678,
 							UpdatedBy:   "user:cameron",
-							Phase:       "creating",
-							Message:     toNullString(ptr.To("message_test")),
 							Description: "description",
 							Keeper:      toNullString(ptr.To("keeper_test")),
 							Decrypters:  toNullString(ptr.To("decrypters_test")),
@@ -228,8 +246,6 @@ func TestSecureValueQueries(t *testing.T) {
 							CreatedBy:   "user:ryan",
 							Updated:     5678,
 							UpdatedBy:   "user:cameron",
-							Phase:       "creating",
-							Message:     toNullString(nil),
 							Description: "description",
 							Keeper:      toNullString(nil),
 							Decrypters:  toNullString(nil),
@@ -254,8 +270,6 @@ func TestSecureValueQueries(t *testing.T) {
 							CreatedBy:   "user:ryan",
 							Updated:     5678,
 							UpdatedBy:   "user:cameron",
-							Phase:       "creating",
-							Message:     toNullString(ptr.To("message_test")),
 							Description: "description",
 							Keeper:      toNullString(ptr.To("keeper_test")),
 							Decrypters:  toNullString(ptr.To("decrypters_test")),
@@ -276,18 +290,6 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlSecureValueUpdateStatus: {
-				{
-					Name: "updateStatus",
-					Data: &updateStatusSecureValue{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Name:        "name",
-						Namespace:   "ns",
-						Phase:       "Succeeded",
-						Message:     "message-1",
-					},
-				},
-			},
 			sqlSecureValueReadForDecrypt: {
 				{
 					Name: "read-for-decrypt",
@@ -302,110 +304,27 @@ func TestSecureValueQueries(t *testing.T) {
 	})
 }
 
-func TestSecureValueOutboxQueries(t *testing.T) {
-	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
-		RootDir: "testdata",
-		Templates: map[*template.Template][]mocks.TemplateTestCase{
-			sqlSecureValueOutboxUpdateReceiveCount: {
-				{
+func TestFoo(t *testing.T) {
+	const n = 10_000
 
-					Name: "update-receive-count",
-					Data: &incrementReceiveCountOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageIDs:  []int64{1, 2, 3},
-					},
-				},
-			},
-			sqlSecureValueOutboxAppend: {
-				{
-					Name: "no-encrypted-secret",
-					Data: &appendSecureValueOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageDB{
-							MessageID:   1,
-							MessageType: "some-type",
-							Name:        "name",
-							Namespace:   "namespace",
-							ExternalID:  sql.NullString{Valid: true, String: "external-id"},
-							KeeperName:  sql.NullString{Valid: true, String: "keeper"},
-							Created:     1234,
-						},
-					},
-				},
-				{
-					Name: "no-external-id",
-					Data: &appendSecureValueOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageDB{
-							MessageID:       1,
-							MessageType:     "some-type",
-							Name:            "name",
-							Namespace:       "namespace",
-							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
-							KeeperName:      sql.NullString{Valid: true, String: "keeper"},
-							Created:         1234,
-						},
-					},
-				},
-				{
-					Name: "no-keeper-name",
-					Data: &appendSecureValueOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageDB{
-							MessageID:       1,
-							MessageType:     "some-type",
-							Name:            "name",
-							Namespace:       "namespace",
-							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
-							ExternalID:      sql.NullString{Valid: true, String: "external-id"},
-							Created:         1234,
-						},
-					},
-				},
-				{
-					Name: "all-fields-present",
-					Data: &appendSecureValueOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &outboxMessageDB{
-							MessageID:       1,
-							MessageType:     "some-type",
-							Name:            "name",
-							Namespace:       "namespace",
-							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
-							ExternalID:      sql.NullString{Valid: true, String: ""}, // can be empty string
-							KeeperName:      sql.NullString{Valid: true, String: "keeper"},
-							Created:         1234,
-						},
-					},
-				},
-			},
-			sqlSecureValueOutboxFetchMessageIDs: {
-				{
-					Name: "basic",
-					Data: &fetchMessageIDsOutbox{
-						SQLTemplate:  mocks.NewTestingSQLTemplate(),
-						ReceiveLimit: 10,
-					},
-				},
-			},
-			sqlSecureValueOutboxReceiveN: {
-				{
-					Name: "basic",
-					Data: &receiveNSecureValueOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageIDs:  []int64{1, 2, 3},
-					},
-				},
-			},
-			sqlSecureValueOutboxDelete: {
-				{
-					Name: "basic",
-					Data: &deleteSecureValueOutbox{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						MessageID:   1,
-					},
-				},
-			},
-		},
-	})
+	for range n {
+		t.Run("", func(t *testing.T) {
+			t.Parallel()
+			cmd := exec.Command("curl", "-X", "POST", "-H", "Content-Type: application/yaml", "--data-binary", "@/Users/brunofelipefrancisco/dev/grafana/pkg/extensions/apiserver/tests/secret/testdata/secure-value-default-generate.yaml", "http://admin:admin@localhost:3000/apis/secret.grafana.app/v0alpha1/namespaces/default/securevalues")
+			require.NoError(t, cmd.Run())
+		})
+	}
+
+	// wg := sync.WaitGroup{}
+	// wg.Add(n)
+
+	// for range n {
+	// 	go func(wg *sync.WaitGroup) {
+	// 		defer wg.Done()
+	// 		cmd := exec.Command("curl", "-X", "POST", "-H", "Content-Type: application/yaml", "--data-binary", "@/Users/brunofelipefrancisco/dev/grafana/pkg/extensions/apiserver/tests/secret/testdata/secure-value-default-generate.yaml", "http://admin:admin@localhost:3000/apis/secret.grafana.app/v0alpha1/namespaces/default/securevalues")
+	// 		require.NoError(t, cmd.Run())
+	// 	}(&wg)
+	// }
+
+	// wg.Wait()
 }
