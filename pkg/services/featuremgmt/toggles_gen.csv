@@ -86,7 +86,6 @@ dashboardScene,GA,@grafana/dashboards-squad,false,false,true
 dashboardNewLayouts,experimental,@grafana/dashboards-squad,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
-ssoSettingsApi,GA,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
@@ -166,7 +165,7 @@ prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,fal
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 enableSCIM,preview,@grafana/identity-access-team,false,false,false
 crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
-jaegerBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
+jaegerBackendMigration,GA,@grafana/oss-big-tent,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true
@@ -227,3 +226,4 @@ preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,fal
 tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
 newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
+foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,false,false,true

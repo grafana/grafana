@@ -3,6 +3,7 @@ module github.com/grafana/grafana/pkg/apimachinery
 go 1.24.4
 
 require (
+	github.com/go-jose/go-jose/v3 v3.0.4 // @grafana/identity-access-team
 	github.com/grafana/authlib v0.0.0-20250618124654-54543efcfeed // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
 	github.com/stretchr/testify v1.10.0
@@ -15,7 +16,6 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
