@@ -41,6 +41,7 @@ func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.Featu
 
 	grpcServer := grpcHandler.GetServer()
 
+	// resourcepb.RegisterBulkStoreServer(grpcServer, distributorServer)
 	resourcepb.RegisterResourceIndexServer(grpcServer, distributorServer)
 	resourcepb.RegisterManagedObjectIndexServer(grpcServer, distributorServer)
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthService)
@@ -102,6 +103,11 @@ func (ds *distributorServer) GetStats(ctx context.Context, r *resourcepb.Resourc
 
 	return client.GetStats(ctx, r)
 }
+
+// TODO implement this if we want to support it in cloud
+// func (ds *DistributorServer) BulkProcess(srv BulkStore_BulkProcessServer) error {
+// 	return nil
+// }
 
 func (ds *distributorServer) CountManagedObjects(ctx context.Context, r *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
 	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Namespace, "CountManagedObjects")
