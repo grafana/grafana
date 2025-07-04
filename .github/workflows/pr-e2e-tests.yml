@@ -254,6 +254,23 @@ jobs:
       - name: Merge into HTML Report
         run: npx playwright merge-reports --reporter html ./blobs
 
+      - name: Merge into JSON Report
+        run: npx playwright merge-reports --reporter=json:/tmp/playwright-results.json ./blobs
+
+      - name: Bench report
+        run: |
+          docker run --rm \
+            --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.3.0 test \
+            grafana-bench report \
+              --grafana-url "http://localhost:3000" \
+              --grafana-version "CI- ${{ github.sha }}" \
+              --test-suite-name "FrontendCore" \
+              --report-input playwright \
+              --report-output log \
+              --log-level DEBUG \
+              /home/bench/tests/playwright-results.json
+
       - name: Upload HTML report
         uses: actions/upload-artifact@v4
         with:
