@@ -247,11 +247,6 @@ require (
 )
 
 require (
-	cloud.google.com/go/spanner v1.76.1
-	github.com/grafana/grafana/pkg/build v0.0.0-20250702194629-61efc8b60994
-)
-
-require (
 	cel.dev/expr v0.23.1 // indirect
 	cloud.google.com/go v0.120.0 // indirect
 	cloud.google.com/go/auth v0.16.1 // indirect
