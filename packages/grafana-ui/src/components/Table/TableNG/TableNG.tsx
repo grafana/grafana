@@ -64,7 +64,7 @@ export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
     data,
-    enablePagination,
+    enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
     footerOptions,
@@ -265,6 +265,9 @@ export function TableNG(props: TableNGProps) {
         cellRootRenderers: {},
       };
 
+      let lastRowIdx = -1;
+      let _rowHeight = 0;
+
       f.forEach((field, i) => {
         const justifyContent = getTextAlign(field);
         const footerStyles = getFooterStyles(justifyContent);
@@ -291,9 +294,6 @@ export function TableNG(props: TableNGProps) {
         const cellType = cellOptions.type;
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
-
-        let lastRowIdx = -1;
-        let _rowHeight = 0;
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
