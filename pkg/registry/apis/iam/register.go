@@ -124,7 +124,18 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := legacyiamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.legacyAccessClient)
+	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+
+	dw, err := opts.DualWriteBuilder(
+		userResource.GroupResource(),
+		user.NewLegacyStore(b.store, b.accessClient),
+		store,
+	)
+	storage[userResource.StoragePath()] = dw
+	// storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo

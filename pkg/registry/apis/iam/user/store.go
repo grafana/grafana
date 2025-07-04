@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
@@ -28,6 +29,10 @@ var (
 	_ rest.Getter               = (*LegacyStore)(nil)
 	_ rest.Lister               = (*LegacyStore)(nil)
 	_ rest.Storage              = (*LegacyStore)(nil)
+	_ rest.CreaterUpdater       = (*LegacyStore)(nil)
+	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
+	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
+	_ rest.TableConvertor       = (*LegacyStore)(nil)
 )
 
 var resource = iamv0.UserResourceInfo
@@ -39,6 +44,21 @@ func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient) *L
 type LegacyStore struct {
 	store legacy.LegacyIdentityStore
 	ac    claims.AccessClient
+}
+
+// Update implements rest.Updater.
+func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	panic("unimplemented")
+}
+
+// DeleteCollection implements rest.CollectionDeleter.
+func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	panic("unimplemented")
+}
+
+// Delete implements rest.GracefulDeleter.
+func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	panic("unimplemented")
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -118,6 +138,59 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 
 	obj := toUserItem(&found.Users[0], ns.Value)
 	return &obj, nil
+}
+
+// Create implements rest.Creater.
+func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert the runtime object to IAM User
+	userObj, ok := obj.(*iamv0alpha.User)
+	if !ok {
+		return nil, fmt.Errorf("expected User object, got %T", obj)
+	}
+
+	// Validate the user object
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	// Basic validation
+	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {
+		return nil, fmt.Errorf("user must have either login or email")
+	}
+
+	// Create the user command based on the IAM user spec
+	createCmd := legacy.CreateUserCommand{
+		UID:           userObj.Name, // K8s name becomes UID
+		Login:         userObj.Spec.Login,
+		Email:         userObj.Spec.Email,
+		Name:          userObj.Spec.Name,
+		IsAdmin:       userObj.Spec.GrafanaAdmin,
+		IsDisabled:    userObj.Spec.Disabled,
+		EmailVerified: userObj.Spec.EmailVerified,
+		IsProvisioned: userObj.Spec.Provisioned,
+	}
+
+	// Generate a UID if not provided
+	if createCmd.UID == "" {
+		createCmd.UID = util.GenerateShortUID()
+	}
+
+	// Create the user
+	result, err := s.store.CreateUser(ctx, ns, createCmd)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert back to IAM User object
+	iamUser := toUserItem(&result.User, ns.Value)
+	return &iamUser, nil
 }
 
 func toUserItem(u *user.User, ns string) iamv0alpha.User {

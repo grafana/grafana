@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"text/template"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -12,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type GetUserInternalIDQuery struct {
@@ -286,4 +289,185 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 	}
 
 	return res, err
+}
+
+type CreateUserCommand struct {
+	UID           string
+	Email         string
+	Login         string
+	Name          string
+	OrgID         int64
+	IsAdmin       bool
+	IsDisabled    bool
+	EmailVerified bool
+	IsProvisioned bool
+	Salt          string
+	Rands         string
+	Created       time.Time
+	Updated       time.Time
+	LastSeenAt    time.Time
+	Role          string
+}
+
+type CreateUserResult struct {
+	User user.User
+}
+
+var sqlCreateUserTemplate = mustTemplate("create_user.sql")
+var sqlCreateOrgUserTemplate = mustTemplate("create_org_user.sql")
+
+func newCreateUser(sql *legacysql.LegacyDatabaseHelper, cmd *CreateUserCommand) createUserQuery {
+	return createUserQuery{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		UserTable:    sql.Table("user"),
+		OrgUserTable: sql.Table("org_user"),
+		Command:      cmd,
+	}
+}
+
+type createUserQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable    string
+	OrgUserTable string
+	Command      *CreateUserCommand
+}
+
+func (r createUserQuery) Validate() error {
+	if r.Command.Login == "" && r.Command.Email == "" {
+		return fmt.Errorf("user must have either login or email")
+	}
+	if r.Command.OrgID == 0 {
+		return fmt.Errorf("org ID is required")
+	}
+	return nil
+}
+
+type createOrgUserQuery struct {
+	sqltemplate.SQLTemplate
+	OrgUserTable string
+	Command      *CreateUserCommand
+	UserID       int64
+}
+
+// CreateUser implements LegacyIdentityStore.
+func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo, cmd CreateUserCommand) (*CreateUserResult, error) {
+	cmd.OrgID = ns.OrgID
+	if cmd.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	// Generate UID if not provided
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
+
+	// Normalize login and email
+	cmd.Login = strings.ToLower(cmd.Login)
+	cmd.Email = strings.ToLower(cmd.Email)
+
+	// If login is empty, use email
+	if cmd.Login == "" {
+		cmd.Login = cmd.Email
+	}
+	// If email is empty, use login
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	// Generate salt and rands
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
+
+	// Set additional fields
+	cmd.Salt = salt
+	cmd.Rands = rands
+	cmd.Created = now
+	cmd.Updated = now
+	cmd.LastSeenAt = lastSeenAt
+	cmd.Role = "Viewer" // Default role
+
+	sql, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newCreateUser(sql, &cmd)
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Execute in transaction
+	var createdUser user.User
+	err = sql.DB.InTransaction(ctx, func(ctx context.Context) error {
+		// First, create the user
+		userQuery, err := sqltemplate.Execute(sqlCreateUserTemplate, req)
+		if err != nil {
+			return fmt.Errorf("execute user template %q: %w", sqlCreateUserTemplate.Name(), err)
+		}
+
+		result, err := sql.DB.GetSqlxSession().Exec(ctx, userQuery, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to create user: %w", err)
+		}
+
+		userID, err := result.LastInsertId()
+		if err != nil {
+			return fmt.Errorf("failed to get user ID: %w", err)
+		}
+
+		// Now create the org_user relationship using a separate template
+		orgUserReq := createOrgUserQuery{
+			SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+			OrgUserTable: sql.Table("org_user"),
+			Command:      &cmd,
+			UserID:       userID,
+		}
+
+		orgUserQuery, err := sqltemplate.Execute(sqlCreateOrgUserTemplate, orgUserReq)
+		if err != nil {
+			return fmt.Errorf("execute org_user template %q: %w", sqlCreateOrgUserTemplate.Name(), err)
+		}
+
+		_, err = sql.DB.GetSqlxSession().Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to create org_user relationship: %w", err)
+		}
+
+		// Set the created user data
+		createdUser = user.User{
+			ID:               userID,
+			UID:              cmd.UID,
+			Login:            cmd.Login,
+			Email:            cmd.Email,
+			Name:             cmd.Name,
+			OrgID:            cmd.OrgID,
+			IsAdmin:          cmd.IsAdmin,
+			IsDisabled:       cmd.IsDisabled,
+			EmailVerified:    cmd.EmailVerified,
+			IsProvisioned:    cmd.IsProvisioned,
+			Salt:             cmd.Salt,
+			Rands:            cmd.Rands,
+			Created:          cmd.Created,
+			Updated:          cmd.Updated,
+			LastSeenAt:       cmd.LastSeenAt,
+			IsServiceAccount: false,
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &CreateUserResult{User: createdUser}, nil
 }
