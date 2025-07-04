@@ -11,10 +11,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const defaultPageSize = 1000
@@ -45,11 +46,12 @@ type LokiConfig struct {
 }
 
 type HttpLokiClient struct {
-	client  client.Requester
-	encoder encoder
-	cfg     LokiConfig
-	metrics *metrics.Historian
-	log     log.Logger
+	client        client.Requester
+	encoder       encoder
+	cfg           LokiConfig
+	bytesWritten  prometheus.Counter
+	writeDuration *instrument.HistogramCollector
+	log           log.Logger
 }
 
 // Kind of Operation (=, !=, =~, !~)
@@ -66,15 +68,15 @@ const (
 	NeqRegEx Operator = "!~"
 )
 
-func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger, tracer tracing.Tracer) *HttpLokiClient {
-	tc := client.NewTimedClient(req, metrics.WriteDuration)
-	trc := client.NewTracedClient(tc, tracer, "ngalert.historian.client")
+func NewLokiClient(cfg LokiConfig, req client.Requester, bytesWritten prometheus.Counter, writeDuration *instrument.HistogramCollector, logger log.Logger, tracer tracing.Tracer, spanName string) *HttpLokiClient {
+	tc := client.NewTimedClient(req, writeDuration)
+	trc := client.NewTracedClient(tc, tracer, spanName)
 	return &HttpLokiClient{
-		client:  trc,
-		encoder: cfg.Encoder,
-		cfg:     cfg,
-		metrics: metrics,
-		log:     logger.New("protocol", "http"),
+		client:       trc,
+		encoder:      cfg.Encoder,
+		cfg:          cfg,
+		bytesWritten: bytesWritten,
+		log:          logger.New("protocol", "http"),
 	}
 }
 
@@ -158,7 +160,7 @@ func (c *HttpLokiClient) Push(ctx context.Context, s []Stream) error {
 		req.Header.Add(k, v)
 	}
 
-	c.metrics.BytesWritten.Add(float64(len(enc)))
+	c.bytesWritten.Add(float64(len(enc)))
 	req = req.WithContext(ctx)
 	resp, err := c.client.Do(req)
 	if err != nil {

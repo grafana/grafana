@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
+const lokiClientSpanName = "testLokiClientSpanName"
+
 func TestLokiHTTPClient(t *testing.T) {
 	t.Run("push formats expected data", func(t *testing.T) {
 		req := NewFakeRequester()
@@ -137,11 +139,12 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
 		require.NoError(t, err)
 
+		metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		client := NewLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
 			Encoder:      JsonEncoder{},
-		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem), log.NewNopLogger(), tracing.InitializeTracerForTest())
+		}, NewRequester(), metrics.BytesWritten, metrics.WriteDuration, log.NewNopLogger(), tracing.InitializeTracerForTest(), lokiClientSpanName)
 
 		// Unauthorized request should fail against Grafana Cloud.
 		err = client.Ping(context.Background())
@@ -163,13 +166,14 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
 		require.NoError(t, err)
 
+		metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		client := NewLokiClient(LokiConfig{
 			ReadPathURL:       url,
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
 			Encoder:           JsonEncoder{},
-		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem), log.NewNopLogger(), tracing.InitializeTracerForTest())
+		}, NewRequester(), metrics.BytesWritten, metrics.WriteDuration, log.NewNopLogger(), tracing.InitializeTracerForTest(), lokiClientSpanName)
 
 		// When running on prem, you might need to set the tenant id,
 		// so the x-scope-orgid header is set.
@@ -303,7 +307,7 @@ func createTestLokiClient(req client.Requester) *HttpLokiClient {
 		Encoder:      JsonEncoder{},
 	}
 	met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
-	return NewLokiClient(cfg, req, met, log.NewNopLogger(), tracing.InitializeTracerForTest())
+	return NewLokiClient(cfg, req, met.BytesWritten, met.WriteDuration, log.NewNopLogger(), tracing.InitializeTracerForTest(), lokiClientSpanName)
 }
 
 func reqBody(t *testing.T, req *http.Request) string {

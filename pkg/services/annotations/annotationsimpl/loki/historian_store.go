@@ -67,8 +67,9 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db d
 		return nil
 	}
 
+	metrics := ngmetrics.NewHistorianMetrics(reg, subsystem)
 	return &LokiHistorianStore{
-		client:    lokiclient.NewLokiClient(lokiCfg, lokiclient.NewRequester(), ngmetrics.NewHistorianMetrics(reg, subsystem), log, tracer),
+		client:    lokiclient.NewLokiClient(lokiCfg, lokiclient.NewRequester(), metrics.BytesWritten, metrics.WriteDuration, log, tracer, historian.LokiClientSpanName),
 		db:        db,
 		log:       log,
 		ruleStore: ruleStore,

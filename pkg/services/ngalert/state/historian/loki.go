@@ -45,6 +45,7 @@ const (
 const (
 	StateHistoryLabelKey   = "from"
 	StateHistoryLabelValue = "state-history"
+	LokiClientSpanName     = "ngalert.historian.client"
 )
 
 const defaultQueryRange = 6 * time.Hour
@@ -88,7 +89,7 @@ type RemoteLokiBackend struct {
 
 func NewRemoteLokiBackend(logger log.Logger, cfg lokiclient.LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
 	return &RemoteLokiBackend{
-		client:         lokiclient.NewLokiClient(cfg, req, metrics, logger, tracer),
+		client:         lokiclient.NewLokiClient(cfg, req, metrics.BytesWritten, metrics.WriteDuration, logger, tracer, LokiClientSpanName),
 		externalLabels: cfg.ExternalLabels,
 		clock:          clock.New(),
 		metrics:        metrics,
