@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
+import { GrafanaTheme2, TimeRange, renderMarkdown } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { llm } from '@grafana/llm';
 import { Button, Modal, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
@@ -21,15 +21,13 @@ const TriageAnalysis = ({ analysis, styles }: TriageAnalysisProps) => {
       <h4>
         <Trans i18nKey="alerting.triage-ai.modal.analysis-title">Alert Triage Analysis</Trans>
       </h4>
-      <div className={styles.analysisContent}>
-        <Text variant="body">
-          {analysis.split('\n').map((line, index) => (
-            <div key={index} className={styles.analysisLine}>
-              {line}
-            </div>
-          ))}
-        </Text>
-      </div>
+      <div
+        className={styles.analysisContent}
+        dangerouslySetInnerHTML={{
+          // renderMarkdown() converts markdown text into safe HTML
+          __html: renderMarkdown(analysis),
+        }}
+      />
     </div>
   );
 };
