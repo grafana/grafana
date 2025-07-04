@@ -1816,19 +1816,19 @@ describe('LokiDatasource', () => {
     beforeEach(() => {
       origBackendSrv = getBackendSrv();
       ds = createLokiDatasource(templateSrvStub);
+      // Enable the required feature toggles
+      config.featureToggles.scopeFilters = true;
+      config.featureToggles.logQLScope = true;
     });
 
     afterEach(() => {
       setBackendSrv(origBackendSrv);
+      // Reset feature toggles to false
+      config.featureToggles.scopeFilters = false;
+      config.featureToggles.logQLScope = false;
     });
 
     it('should apply scopes to queries when feature toggles are enabled', async () => {
-      // Enable the required feature toggles
-      const originalScopeFilters = config.featureToggles.scopeFilters;
-      const originalLogQLScope = config.featureToggles.logQLScope;
-      config.featureToggles.scopeFilters = true;
-      config.featureToggles.logQLScope = true;
-
       const mockScopes = [
         {
           metadata: { name: 'test-scope' },
@@ -1870,16 +1870,10 @@ describe('LokiDatasource', () => {
           }),
         })
       );
-
-      // Restore original feature toggle values
-      config.featureToggles.scopeFilters = originalScopeFilters;
-      config.featureToggles.logQLScope = originalLogQLScope;
     });
 
     it('should not apply scopes when feature toggles are disabled', async () => {
       // Disable the required feature toggles
-      const originalScopeFilters = config.featureToggles.scopeFilters;
-      const originalLogQLScope = config.featureToggles.logQLScope;
       config.featureToggles.scopeFilters = false;
       config.featureToggles.logQLScope = false;
 
@@ -1918,19 +1912,9 @@ describe('LokiDatasource', () => {
           }),
         })
       );
-
-      // Restore original feature toggle values
-      config.featureToggles.scopeFilters = originalScopeFilters;
-      config.featureToggles.logQLScope = originalLogQLScope;
     });
 
     it('should handle empty scopes array', async () => {
-      // Enable the required feature toggles
-      const originalScopeFilters = config.featureToggles.scopeFilters;
-      const originalLogQLScope = config.featureToggles.logQLScope;
-      config.featureToggles.scopeFilters = true;
-      config.featureToggles.logQLScope = true;
-
       const query: DataQueryRequest<LokiQuery> = {
         ...baseRequestOptions,
         targets: [{ expr: '{job="grafana"}', refId: 'A' }],
@@ -1953,19 +1937,9 @@ describe('LokiDatasource', () => {
           }),
         })
       );
-
-      // Restore original feature toggle values
-      config.featureToggles.scopeFilters = originalScopeFilters;
-      config.featureToggles.logQLScope = originalLogQLScope;
     });
 
     it('should handle undefined scopes', async () => {
-      // Enable the required feature toggles
-      const originalScopeFilters = config.featureToggles.scopeFilters;
-      const originalLogQLScope = config.featureToggles.logQLScope;
-      config.featureToggles.scopeFilters = true;
-      config.featureToggles.logQLScope = true;
-
       const query: DataQueryRequest<LokiQuery> = {
         ...baseRequestOptions,
         targets: [{ expr: '{job="grafana"}', refId: 'A' }],
@@ -1988,10 +1962,6 @@ describe('LokiDatasource', () => {
           }),
         })
       );
-
-      // Restore original feature toggle values
-      config.featureToggles.scopeFilters = originalScopeFilters;
-      config.featureToggles.logQLScope = originalLogQLScope;
     });
   });
 
