@@ -12027,6 +12027,18 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Add condition",
+      "filter-match": {
+        "label": {
+          "match-all": "Match all",
+          "match-any": "Match any"
+        }
+      },
+      "filter-types": {
+        "label": {
+          "exclude": "Exclude",
+          "include": "Include"
+        }
+      },
       "label-conditions": "Conditions",
       "label-filter-type": "Filter type"
     },
