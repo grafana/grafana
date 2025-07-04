@@ -54,7 +54,6 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
     dashboard
   );
 
-  console.log('elements', elements);
   if (elements.length === 0) {
     return null;
   }
