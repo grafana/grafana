@@ -394,13 +394,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           else {
             // scan right
             let leftIdx = 0;
-            while (yData[leftIdx] == null) {
+            while (yData[leftIdx] === null) {
               leftIdx++;
             }
 
             // scan left
             let rightIdx = yData.length - 1;
-            while (rightIdx >= leftIdx && yData[rightIdx] == null) {
+            while (rightIdx >= leftIdx && yData[rightIdx] === null) {
               rightIdx--;
             }
 
