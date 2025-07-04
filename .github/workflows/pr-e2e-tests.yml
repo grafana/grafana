@@ -254,8 +254,7 @@ jobs:
         run: |
           docker run --rm \
             --volume="/tmp/playwright-results.json:/home/bench/tests/playwright-results.json" \
-            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.5.1 test \
-            grafana-bench report \
+            us-docker.pkg.dev/grafanalabs-global/docker-grafana-bench-prod/grafana-bench:v0.5.1 report \
               --grafana-url "http://localhost:3000" \
               --grafana-version "CI- ${{ github.sha }}" \
               --test-suite-name "FrontendCore" \
