@@ -47,7 +47,8 @@ matches_pattern() {
     
     # Handle wildcard patterns
     if [[ "$pattern" == *\** ]]; then
-        # Convert glob pattern to regex-like matching
+        # Intentionally use glob matching to match file paths against CODEOWNERS patterns like *.go, pkg/*/api.go, etc.
+        # shellcheck disable=SC2053
         if [[ "$file_path" == $pattern ]]; then
             return 0
         fi
@@ -62,7 +63,6 @@ matches_pattern() {
 }
 
 # Parse CODEOWNERS file and find the most specific match
-best_match=""
 best_match_owners=""
 best_match_specificity=0
 
@@ -86,8 +86,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
         specificity=${#pattern}
         
         # If this is more specific than our current best match, use it
-        if [ $specificity -gt $best_match_specificity ]; then
-            best_match="$pattern"
+        if [ "$specificity" -gt "$best_match_specificity" ]; then
             best_match_owners="$owners"
             best_match_specificity=$specificity
         fi

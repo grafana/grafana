@@ -69,6 +69,7 @@
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
+/scripts/codeowners-tools @sarahzinger
 /hack/ @grafana/grafana-app-platform-squad
 /.air.toml @macabu
 
