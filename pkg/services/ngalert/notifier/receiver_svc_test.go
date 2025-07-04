@@ -33,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestReceiverService_GetReceiver(t *testing.T) {
+func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -61,7 +61,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 	})
 }
 
-func TestReceiverService_GetReceivers(t *testing.T) {
+func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -91,7 +91,7 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 	})
 }
 
-func TestReceiverService_DecryptRedact(t *testing.T) {
+func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -728,7 +728,7 @@ func TestReceiverService_Update(t *testing.T) {
 				result, err := revision.CreateReceiver(tc.existing)
 				require.NoError(t, err)
 
-				created, err := PostableApiReceiverToReceiver(result, tc.existing.Provenance)
+				created, err := legacy_storage.PostableApiReceiverToReceiver(result, tc.existing.Provenance)
 				require.NoError(t, err)
 				err = sut.cfgStore.Save(context.Background(), revision, tc.user.GetOrgID())
 				require.NoError(t, err)

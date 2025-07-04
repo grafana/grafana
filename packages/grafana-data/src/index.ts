@@ -98,7 +98,7 @@ export {
 } from './text/string';
 export { type TextMatch, findHighlightChunksInText, findMatchesInText, parseFlags } from './text/text';
 export { type RenderMarkdownOptions, renderMarkdown, renderTextPanelMarkdown } from './text/markdown';
-export { textUtil } from './text/sanitize';
+export { textUtil, validatePath, PathValidationError } from './text/sanitize';
 
 // Events
 export { eventFactory } from './events/eventFactory';
@@ -258,8 +258,9 @@ export * as arrayUtils from './utils/arrayUtils';
 export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
+export { fuzzySearch } from './utils/fuzzySearch';
 
-// Tranformations
+// Transformations
 export { standardTransformers } from './transformations/transformers';
 export {
   fieldMatchers,

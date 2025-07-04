@@ -2,7 +2,7 @@ import { JSX, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Field, Input, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -28,7 +28,7 @@ export const CreateTeam = (): JSX.Element => {
     register,
     formState: { errors },
   } = useForm<TeamDTO>();
-  const { t } = useTranslate();
+
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);

@@ -3,47 +3,25 @@ import { Resizable } from 're-resizable';
 import { useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
-import { getDragStyles, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { getDragStyles, useStyles2 } from '@grafana/ui';
 
-import { LogDetails } from '../LogDetails';
-import { getLogRowStyles } from '../getLogRowStyles';
-
+import { LogLineDetailsComponent } from './LogLineDetailsComponent';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
-interface Props {
+export interface Props {
   containerElement: HTMLDivElement;
-  getFieldLinks?: GetFieldLinksFn;
+  logOptionsStorageKey?: string;
   logs: LogListModel[];
   onResize(): void;
 }
 
-export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize }: Props) => {
-  const {
-    app,
-    closeDetails,
-    detailsWidth,
-    displayedFields,
-    isLabelFilterActive,
-    onClickFilterLabel,
-    onClickFilterOutLabel,
-    onClickShowField,
-    onClickHideField,
-    onPinLine,
-    pinLineButtonTooltipTitle,
-    setDetailsWidth,
-    showDetails,
-    wrapLogMessage,
-  } = useLogListContext();
-  const getRows = useCallback(() => logs, [logs]);
-  const logRowsStyles = getLogRowStyles(useTheme2());
+export const LogLineDetails = ({ containerElement, logOptionsStorageKey, logs, onResize }: Props) => {
+  const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const { t } = useTranslate();
 
   const handleResize = useCallback(() => {
     if (containerRef.current) {
@@ -53,6 +31,10 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
   }, [onResize, setDetailsWidth]);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+
+  if (!showDetails.length) {
+    return null;
+  }
 
   return (
     <Resizable
@@ -66,35 +48,7 @@ export const LogLineDetails = ({ containerElement, getFieldLinks, logs, onResize
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>
-          <IconButton
-            name="times"
-            className={styles.closeIcon}
-            aria-label={t('logs.log-details.close', 'Close log details')}
-            onClick={closeDetails}
-          />
-          <table width="100%">
-            <tbody>
-              <LogDetails
-                getRows={getRows}
-                mode="sidebar"
-                row={showDetails[0]}
-                showDuplicates={false}
-                styles={logRowsStyles}
-                wrapLogMessage={wrapLogMessage}
-                onPinLine={onPinLine}
-                getFieldLinks={getFieldLinks}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowField={onClickShowField}
-                onClickHideField={onClickHideField}
-                hasError={showDetails[0].hasError}
-                displayedFields={displayedFields}
-                app={app}
-                isFilterLabelActive={isLabelFilterActive}
-                pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-              />
-            </tbody>
-          </table>
+          <LogLineDetailsComponent log={showDetails[0]} logOptionsStorageKey={logOptionsStorageKey} logs={logs} />
         </div>
       </div>
     </Resizable>
@@ -105,15 +59,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     overflow: 'auto',
     height: '100%',
+    boxShadow: theme.shadows.z1,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRight: 'none',
   }),
   scrollContainer: css({
     overflow: 'auto',
-    position: 'relative',
     height: '100%',
   }),
-  closeIcon: css({
-    position: 'absolute',
-    top: theme.spacing(1),
-    right: theme.spacing(1.5),
+  componentWrapper: css({
+    padding: theme.spacing(0, 1, 1, 1),
   }),
 });

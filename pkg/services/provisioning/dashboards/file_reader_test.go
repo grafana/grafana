@@ -108,7 +108,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 	})
 }
 
-func TestDashboardFileReader(t *testing.T) {
+func TestIntegrationDashboardFileReader(t *testing.T) {
 	logger := log.New("test-logger")
 	cfg := &config{}
 

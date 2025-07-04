@@ -11,10 +11,12 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	gocache "github.com/patrickmn/go-cache"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -44,13 +46,18 @@ type DatasourceWriterConfig struct {
 	CustomHeaders map[string]string
 }
 
+type PluginContextProvider interface {
+	GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error)
+}
+
 type DatasourceWriter struct {
-	cfg                DatasourceWriterConfig
-	datasources        datasources.DataSourceService
-	httpClientProvider HttpClientProvider
-	clock              clock.Clock
-	l                  log.Logger
-	metrics            *metrics.RemoteWriter
+	cfg                   DatasourceWriterConfig
+	datasources           datasources.DataSourceService
+	httpClientProvider    HttpClientProvider
+	pluginContextProvider PluginContextProvider
+	clock                 clock.Clock
+	l                     log.Logger
+	metrics               *metrics.RemoteWriter
 
 	writers *gocache.Cache
 }
@@ -59,18 +66,20 @@ func NewDatasourceWriter(
 	cfg DatasourceWriterConfig,
 	datasources datasources.DataSourceService,
 	httpClientProvider HttpClientProvider,
+	pluginContextProvider PluginContextProvider,
 	clock clock.Clock,
 	l log.Logger,
 	metrics *metrics.RemoteWriter,
 ) *DatasourceWriter {
 	return &DatasourceWriter{
-		cfg:                cfg,
-		datasources:        datasources,
-		httpClientProvider: httpClientProvider,
-		clock:              clock,
-		l:                  l,
-		metrics:            metrics,
-		writers:            gocache.New(cacheExpiration, cacheCleanupInterval),
+		cfg:                   cfg,
+		datasources:           datasources,
+		httpClientProvider:    httpClientProvider,
+		pluginContextProvider: pluginContextProvider,
+		clock:                 clock,
+		l:                     l,
+		metrics:               metrics,
+		writers:               gocache.New(cacheExpiration, cacheCleanupInterval),
 	}
 }
 
@@ -167,7 +176,19 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		return nil, err
 	}
 
-	ho, err := is.HTTPClientOptions(ctx)
+	httpClientCtx := ctx
+	if w.pluginContextProvider != nil {
+		pluginCtx, err := w.pluginContextProvider.GetWithDataSource(ctx, ds.Type, nil, ds)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get plugin context: %w", err)
+		}
+		httpClientCtx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	} else {
+		// This should not happen, but if the plugin context provider is not set, log a warning.
+		w.l.Warn("Plugin context provider is not set for the data source writer, PDC-enabled data sources may not work correctly", "datasource_uid", dsUID, "datasource_type", ds.Type)
+	}
+
+	ho, err := is.HTTPClientOptions(httpClientCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -185,10 +206,11 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 	cfg := PrometheusWriterConfig{
 		URL: u.String(),
 		HTTPOptions: httpclient.Options{
-			Timeouts:  ho.Timeouts,
-			TLS:       ho.TLS,
-			BasicAuth: ho.BasicAuth,
-			Header:    headers,
+			Timeouts:     ho.Timeouts,
+			TLS:          ho.TLS,
+			BasicAuth:    ho.BasicAuth,
+			Header:       headers,
+			ProxyOptions: ho.ProxyOptions,
 		},
 		Timeout: w.cfg.Timeout,
 	}

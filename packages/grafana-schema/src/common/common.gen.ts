@@ -862,6 +862,7 @@ export enum VariableFormatID {
   Glob = 'glob',
   HTML = 'html',
   JSON = 'json',
+  Join = 'join',
   Lucene = 'lucene',
   PercentEncode = 'percentencode',
   Pipe = 'pipe',
@@ -963,6 +964,10 @@ export interface TableFieldOptions {
   inspect: boolean;
   minWidth?: number;
   width?: number;
+  /**
+   * Enables text wrapping for the display name in the table header.
+   */
+  wrapHeaderText?: boolean;
 }
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {

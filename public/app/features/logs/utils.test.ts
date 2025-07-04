@@ -9,7 +9,7 @@ import {
   MutableDataFrame,
   DataFrame,
 } from '@grafana/data';
-import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
+import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
 import { logSeriesToLogsModel } from './logsModel';
 import {

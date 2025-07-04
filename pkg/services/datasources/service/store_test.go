@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
@@ -102,9 +101,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Run("fails to create a datasource with an invalid uid", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{
-				db:       db,
-				logger:   log.NewNopLogger(),
-				features: featuremgmt.WithFeatures(featuremgmt.FlagFailWrongDSUID),
+				db:     db,
+				logger: log.NewNopLogger(),
 			}
 			cmd := defaultAddDatasourceCommand
 			cmd.UID = "test/uid"
@@ -236,9 +234,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{
-				db:       db,
-				logger:   log.NewNopLogger(),
-				features: featuremgmt.WithFeatures(featuremgmt.FlagFailWrongDSUID),
+				db:     db,
+				logger: log.NewNopLogger(),
 			}
 			require.NotEmpty(t, ds.UID)
 
@@ -250,13 +247,28 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 	})
 
-	t.Run("DeleteDataSourceById", func(t *testing.T) {
-		t.Run("can delete datasource", func(t *testing.T) {
+	t.Run("DeleteDataSource", func(t *testing.T) {
+		t.Run("can delete datasource with ID", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
 			err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{ID: ds.ID, OrgID: ds.OrgID})
+			require.NoError(t, err)
+
+			query := datasources.GetDataSourcesQuery{OrgID: 10}
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
+			require.NoError(t, err)
+
+			require.Equal(t, 0, len(dataSources))
+		})
+
+		t.Run("can delete datasource with UID", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := SqlStore{db: db}
+
+			err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{UID: ds.UID, OrgID: ds.OrgID})
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourcesQuery{OrgID: 10}

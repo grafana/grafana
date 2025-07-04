@@ -1,11 +1,11 @@
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { CellProps, Text, Stack, Button } from '@grafana/ui';
 
 import { ResourceTableItem } from './types';
 
 export function StatusCell(props: CellProps<ResourceTableItem>) {
   const item = props.row.original;
-  const { t } = useTranslate();
+
   // Keep these here to preserve the translations
   // t('migrate-to-cloud.resource-status.migrating', 'Uploading...')
 
@@ -23,8 +23,6 @@ export function StatusCell(props: CellProps<ResourceTableItem>) {
 }
 
 function ErrorCell({ item }: { item: ResourceTableItem }) {
-  const { t } = useTranslate();
-
   return (
     <Stack alignItems="center">
       <Text color="error">{t('migrate-to-cloud.resource-status.failed', 'Error')}</Text>
@@ -39,8 +37,6 @@ function ErrorCell({ item }: { item: ResourceTableItem }) {
 }
 
 function WarningCell({ item }: { item: ResourceTableItem }) {
-  const { t } = useTranslate();
-
   return (
     <Stack alignItems="center">
       <Text color="warning">{t('migrate-to-cloud.resource-status.warning', 'Uploaded with warning')}</Text>

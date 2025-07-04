@@ -9,7 +9,7 @@ include .bingo/Variables.mk
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.3
+GO_VERSION = 1.24.4
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -90,6 +90,7 @@ swagger-enterprise-gen: ## Generate API Swagger specification
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
+	-t enterprise \
 	--exclude-tag=alpha \
 	--include-tag=enterprise
 endif
@@ -140,6 +141,8 @@ endif
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
 	yarn run i18next --config public/locales/i18next-parser.config.cjs
+	@echo "Extracting i18n strings for packages"
+	yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
 	yarn run plugin:i18n-extract
 
@@ -187,10 +190,18 @@ gen-feature-toggles:
 		go test -v ./pkg/services/featuremgmt/...; \
 	fi
 
-.PHONY: gen-go
-gen-go:
-	@echo "generate go files"
-	$(GO) run $(GO_RACE_FLAG) ./pkg/build/wire/cmd/wire/main.go gen -tags $(WIRE_TAGS) ./pkg/server
+.PHONY: gen-go gen-enterprise-go
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+gen-enterprise-go:
+	@echo "skipping re-generating Wire graph for enterprise: not enabled"
+else
+gen-enterprise-go: ## Generate Wire graph (Enterprise)
+	@echo "re-generating Wire graph for enterprise"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
+endif
+gen-go: gen-enterprise-go ## Generate Wire graph
+	@echo "generatng Wire graph"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
 .PHONY: fix-cue
 fix-cue:
@@ -263,6 +274,10 @@ run-go: ## Build and run web server immediately.
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start
+
+.PHONY: run-air
+run-air: ## [Experimental] Build and run backend, and watch for changes. See .air.toml for configuration. Check https://github.com/air-verse/air for installation instructions.
+	air -c .air.toml
 
 ##@ Testing
 

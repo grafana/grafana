@@ -1,9 +1,10 @@
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/ConditionalRenderingEditor';
+import { dashboardEditActions } from '../../edit-pane/shared';
 
 import { AutoGridItem } from './AutoGridItem';
 
@@ -37,7 +38,14 @@ function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
       id={id}
       sceneContext={item}
       repeat={variableName}
-      onChange={(value?: string) => item.setRepeatByVariable(value)}
+      onChange={(value?: string) => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
+          source: item,
+          perform: () => item.setRepeatByVariable(value),
+          undo: () => item.setRepeatByVariable(variableName),
+        });
+      }}
     />
   );
 }

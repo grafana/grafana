@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
+// The maximum size of a secure value in bytes when written as raw input.
+const SECURE_VALUE_RAW_INPUT_MAX_SIZE_BYTES = 24576 // 24 KiB
+
 type DecryptSecureValue struct {
 	Keeper     *string
 	Ref        string
@@ -31,7 +34,7 @@ type SecureValueMetadataStorage interface {
 	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv0alpha1.SecureValue, error)
 	Update(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
-	List(ctx context.Context, namespace xkube.Namespace) (*secretv0alpha1.SecureValueList, error)
+	List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error)
 	SetStatus(ctx context.Context, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID ExternalID) error
 	ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*DecryptSecureValue, error)
