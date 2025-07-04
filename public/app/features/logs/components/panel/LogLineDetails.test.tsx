@@ -199,8 +199,8 @@ describe('LogLineDetails', () => {
       setup(undefined, { entry: '' });
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
       expect(screen.queryByText('Links')).not.toBeInTheDocument();
-      expect(screen.queryByText('Indexed labels')).not.toBeInTheDocument();
-      expect(screen.queryByText('Parsed fields')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Indexed label/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Parsed field/)).not.toBeInTheDocument();
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
     });
   });
@@ -401,8 +401,8 @@ describe('LogLineDetails', () => {
       expect(screen.getByText('value2')).toBeInTheDocument();
       expect(screen.getByText('label3')).toBeInTheDocument();
       expect(screen.getByText('value3')).toBeInTheDocument();
-      expect(screen.getByText('Indexed labels')).toBeInTheDocument();
-      expect(screen.getByText('Parsed fields')).toBeInTheDocument();
+      expect(screen.getByText(/Indexed label/)).toBeInTheDocument();
+      expect(screen.getByText(/Parsed field/)).toBeInTheDocument();
       expect(screen.getByText('Structured metadata')).toBeInTheDocument();
     });
     test('should not show label types if they are unavailable or not supported', () => {
@@ -428,8 +428,8 @@ describe('LogLineDetails', () => {
       expect(screen.getByText('value3')).toBeInTheDocument();
 
       expect(screen.getByText('Fields')).toBeInTheDocument();
-      expect(screen.queryByText('Indexed labels')).not.toBeInTheDocument();
-      expect(screen.queryByText('Parsed fields')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Indexed label/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Parsed field/)).not.toBeInTheDocument();
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
     });
 
