@@ -324,6 +324,7 @@ type DeleteUserResult struct {
 var sqlCreateUserTemplate = mustTemplate("create_user.sql")
 var sqlCreateOrgUserTemplate = mustTemplate("create_org_user.sql")
 var sqlDeleteUserTemplate = mustTemplate("delete_user.sql")
+var sqlDeleteOrgUserTemplate = mustTemplate("delete_org_user.sql")
 
 func newCreateUser(sql *legacysql.LegacyDatabaseHelper, cmd *CreateUserCommand) createUserQuery {
 	return createUserQuery{
@@ -498,6 +499,12 @@ type deleteUserQuery struct {
 	OrgID        int64
 }
 
+type deleteOrgUserQuery struct {
+	sqltemplate.SQLTemplate
+	OrgUserTable string
+	UserID       int64
+}
+
 func (r deleteUserQuery) Validate() error {
 	if r.Command.UID == "" {
 		return fmt.Errorf("user UID is required")
@@ -529,9 +536,9 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		return nil, err
 	}
 
-	// Execute in transaction
+	// Execute in a transaction with separate operations to avoid locking issues
 	err = sql.DB.InTransaction(ctx, func(ctx context.Context) error {
-		// First, verify the user exists
+		// First, get the user ID to use for org_user deletion
 		userLookupReq := newGetUserInternalID(sql, &GetUserInternalIDQuery{
 			OrgID: ns.OrgID,
 			UID:   cmd.UID,
@@ -548,11 +555,33 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		}
 		defer rows.Close()
 
+		var userID int64
 		if !rows.Next() {
 			return fmt.Errorf("user not found")
 		}
+		if err := rows.Scan(&userID); err != nil {
+			return fmt.Errorf("failed to scan user ID: %w", err)
+		}
+		rows.Close()
 
-		// Now delete the user (will cascade to org_user due to foreign key constraints)
+		// Delete from org_user table first using the template
+		orgUserReq := deleteOrgUserQuery{
+			SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+			OrgUserTable: sql.Table("org_user"),
+			UserID:       userID,
+		}
+
+		orgUserDeleteQuery, err := sqltemplate.Execute(sqlDeleteOrgUserTemplate, orgUserReq)
+		if err != nil {
+			return fmt.Errorf("execute org_user delete template: %w", err)
+		}
+
+		_, err = sql.DB.GetSqlxSession().Exec(ctx, orgUserDeleteQuery, orgUserReq.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("failed to delete from org_user: %w", err)
+		}
+
+		// Now delete the user using the SQL template
 		deleteQuery, err := sqltemplate.Execute(sqlDeleteUserTemplate, req)
 		if err != nil {
 			return fmt.Errorf("execute delete template %q: %w", sqlDeleteUserTemplate.Name(), err)

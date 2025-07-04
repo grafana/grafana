@@ -74,6 +74,8 @@ func List[T Resource](
 	if ac != nil {
 		var err error
 		check, err = ac.Compile(ctx, ident, authlib.ListRequest{
+			Verb:      "get",
+			Group:     iamv0alpha1.GroupVersion.Group,
 			Resource:  resourceName,
 			Namespace: ns.Value,
 		})

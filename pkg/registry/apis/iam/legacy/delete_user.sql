@@ -1,12 +1,4 @@
--- Delete from org_user table first (foreign key relationship)
-DELETE FROM {{ .Ident .OrgUserTable }} 
-WHERE user_id = (
-  SELECT id FROM {{ .Ident .UserTable }} 
-  WHERE uid = {{ .Arg .Command.UID }} 
-    AND org_id = {{ .Arg .OrgID }}
-);
-
--- Delete from user table
+-- Delete from user table (org_user will be handled separately to avoid locking)
 DELETE FROM {{ .Ident .UserTable }} 
 WHERE uid = {{ .Arg .Command.UID }} 
   AND org_id = {{ .Arg .OrgID }}
