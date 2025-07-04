@@ -58,7 +58,48 @@ func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	panic("unimplemented")
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// First, get the user to ensure it exists and to return the deleted object
+	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+		OrgID:      ns.OrgID,
+		UID:        name,
+		Pagination: common.Pagination{Limit: 1},
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	if found == nil || len(found.Users) < 1 {
+		return nil, false, resource.NewNotFound(name)
+	}
+
+	userToDelete := &found.Users[0]
+
+	// Validate the delete operation if validation is provided
+	if deleteValidation != nil {
+		userObj := toUserItem(userToDelete, ns.Value)
+		if err := deleteValidation(ctx, &userObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	// Create the delete command
+	deleteCmd := legacy.DeleteUserCommand{
+		UID: name,
+	}
+
+	// Delete the user
+	_, err = s.store.DeleteUser(ctx, ns, deleteCmd)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	// Return the deleted user object
+	deletedUser := toUserItem(userToDelete, ns.Value)
+	return &deletedUser, true, nil
 }
 
 func (s *LegacyStore) New() runtime.Object {
@@ -167,7 +208,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 
 	// Create the user command based on the IAM user spec
 	createCmd := legacy.CreateUserCommand{
-		UID:           userObj.Name, // K8s name becomes UID
+		UID:           "", // Always generate a new UID, don't use metadata.name
 		Login:         userObj.Spec.Login,
 		Email:         userObj.Spec.Email,
 		Name:          userObj.Spec.Name,
@@ -177,10 +218,8 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		IsProvisioned: userObj.Spec.Provisioned,
 	}
 
-	// Generate a UID if not provided
-	if createCmd.UID == "" {
-		createCmd.UID = util.GenerateShortUID()
-	}
+	// Always generate a new UID instead of using metadata.name
+	createCmd.UID = util.GenerateShortUID()
 
 	// Create the user
 	result, err := s.store.CreateUser(ctx, ns, createCmd)
