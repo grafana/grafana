@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/cloudWatchConsts"
+	"github.com/grafana/grafana-aws-sdk-frankenstein/pkg/cloudWatchConsts"
 )
 
 func parseDimensionFilter(dimensionFilter string) ([]*Dimension, error) {

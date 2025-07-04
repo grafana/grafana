@@ -1,48 +1,46 @@
-package routes
+package cloudwatch
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestLogGroupsRoute(t *testing.T) {
-	origLogGroupsService := newLogGroupsService
+	origLogGroupsService := services.NewLogGroupsService
 	t.Cleanup(func() {
-		newLogGroupsService = origLogGroupsService
+		services.NewLogGroupsService = origLogGroupsService
 	})
 
-	reqCtxFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
-		return models.RequestContext{}, err
+	var mockLogsService = mocks.LogsService{}
+	services.NewLogGroupsService = func(models.CloudWatchLogsAPIProvider, bool) models.LogGroupsProvider {
+		return &mockLogsService
 	}
 
 	t.Run("successfully returns 1 log group with account id", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{{
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{{
 			Value: resources.LogGroup{
 				Arn:  "some arn",
 				Name: "some name",
 			},
 			AccountId: utils.Pointer("111"),
 		}}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
@@ -50,8 +48,8 @@ func TestLogGroupsRoute(t *testing.T) {
 	})
 
 	t.Run("successfully returns multiple log groups with account id", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return(
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return(
 			[]resources.ResourceResponse[resources.LogGroup]{
 				{
 					Value: resources.LogGroup{
@@ -67,13 +65,11 @@ func TestLogGroupsRoute(t *testing.T) {
 					AccountId: utils.Pointer("222"),
 				},
 			}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
@@ -96,15 +92,13 @@ func TestLogGroupsRoute(t *testing.T) {
 	})
 
 	t.Run("returns error when both logGroupPrefix and logGroup Pattern are provided", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupNamePrefix=some-prefix&logGroupPattern=some-pattern", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
@@ -112,18 +106,16 @@ func TestLogGroupsRoute(t *testing.T) {
 	})
 
 	t.Run("passes default log group limit and nil for logGroupNamePrefix, accountId, and logGroupPattern", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
-		mockLogsService.AssertCalled(t, "GetLogGroupsWithContext", resources.LogGroupsRequest{
+		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:               50,
 			ResourceRequest:     resources.ResourceRequest{},
 			LogGroupNamePrefix:  nil,
@@ -132,105 +124,93 @@ func TestLogGroupsRoute(t *testing.T) {
 	})
 
 	t.Run("passes default log group limit and nil for logGroupNamePrefix when both are absent", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
-		mockLogsService.AssertCalled(t, "GetLogGroupsWithContext", resources.LogGroupsRequest{
+		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:              50,
 			LogGroupNamePrefix: nil,
 		})
 	})
 
 	t.Run("passes log group limit from query parameter", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?limit=2", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
-		mockLogsService.AssertCalled(t, "GetLogGroupsWithContext", resources.LogGroupsRequest{
+		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit: 2,
 		})
 	})
 
 	t.Run("passes logGroupPrefix from query parameter", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupNamePrefix=some-prefix", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
-		mockLogsService.AssertCalled(t, "GetLogGroupsWithContext", resources.LogGroupsRequest{
+		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:              50,
 			LogGroupNamePrefix: utils.Pointer("some-prefix"),
 		})
 	})
 
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?logGroupPattern=some-pattern", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
-		mockLogsService.AssertCalled(t, "GetLogGroupsWithContext", resources.LogGroupsRequest{
+		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:               50,
 			LogGroupNamePattern: utils.Pointer("some-pattern"),
 		})
 	})
 
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups?accountId=some-account-id", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
-		mockLogsService.AssertCalled(t, "GetLogGroupsWithContext", resources.LogGroupsRequest{
+		mockLogsService.AssertCalled(t, "GetLogGroups", resources.LogGroupsRequest{
 			Limit:           50,
 			ResourceRequest: resources.ResourceRequest{AccountId: utils.Pointer("some-account-id")},
 		})
 	})
 
 	t.Run("returns error if service returns error", func(t *testing.T) {
-		mockLogsService := mocks.LogsService{}
-		mockLogsService.On("GetLogGroupsWithContext", mock.Anything).
+		mockLogsService = mocks.LogsService{}
+		mockLogsService.On("GetLogGroups", mock.Anything).
 			Return([]resources.ResourceResponse[resources.LogGroup]{}, fmt.Errorf("some error"))
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
-			return &mockLogsService, nil
-		}
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/log-groups", nil)
-		handler := http.HandlerFunc(ResourceRequestMiddleware(LogGroupsHandler, logger, reqCtxFunc))
+		ds := newTestDatasource()
+		handler := http.HandlerFunc(ds.resourceRequestMiddleware(ds.LogGroupsHandler))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)

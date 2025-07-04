@@ -5,21 +5,36 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
+
 	"github.com/patrickmn/go-cache"
 )
 
+func shouldSkipFetchingWildcards(ctx context.Context, q *models.CloudWatchQuery) bool {
+	newLabelParsingEnabled := features.IsEnabled(ctx, features.FlagCloudWatchNewLabelParsing)
+	if q.MetricQueryType == models.MetricQueryTypeSearch && (q.MatchExact || newLabelParsingEnabled) {
+		return true
+	}
+
+	if q.MetricQueryType == models.MetricQueryTypeQuery && q.MetricEditorMode == models.MetricEditorModeRaw {
+		return true
+	}
+
+	return false
+}
+
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
-func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
+func (ds *DataSource) getDimensionValuesForWildcards(
 	ctx context.Context,
 	region string,
-	client models.CloudWatchMetricsAPIProvider,
+	client models.CWClient,
 	origQueries []*models.CloudWatchQuery,
 	tagValueCache *cache.Cache,
 	listMetricsPageLimit int,
-	shouldSkip func(*models.CloudWatchQuery) bool) ([]*models.CloudWatchQuery, error) {
+	shouldSkip func(ctx context.Context, query *models.CloudWatchQuery) bool) ([]*models.CloudWatchQuery, error) {
 	metricsClient := clients.NewMetricsClient(client, listMetricsPageLimit)
 	service := services.NewListMetricsService(metricsClient)
 	// create copies of the original query. All the fields besides Dimensions are primitives
@@ -27,7 +42,7 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
 	queries = addWildcardDimensionsForMetricQueryTypeQueries(queries)
 
 	for _, query := range queries {
-		if shouldSkip(query) {
+		if shouldSkip(ctx, query) || query.Namespace == "" || query.MetricName == "" {
 			continue
 		}
 		for dimensionKey, values := range query.Dimensions {
@@ -43,12 +58,12 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
 			cacheKey := fmt.Sprintf("%s-%s-%s-%s-%s", region, accountID, query.Namespace, query.MetricName, dimensionKey)
 			cachedDimensions, found := tagValueCache.Get(cacheKey)
 			if found {
-				e.logger.FromContext(ctx).Debug("Fetching dimension values from cache")
+				ds.logger.FromContext(ctx).Debug("Fetching dimension values from cache")
 				query.Dimensions[dimensionKey] = cachedDimensions.([]string)
 				continue
 			}
 
-			e.logger.FromContext(ctx).Debug("Cache miss, fetching dimension values from AWS")
+			ds.logger.FromContext(ctx).Debug("Cache miss, fetching dimension values from AWS")
 			request := resources.DimensionValuesRequest{
 				ResourceRequest: &resources.ResourceRequest{
 					Region:    region,
