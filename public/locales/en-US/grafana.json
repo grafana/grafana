@@ -8374,12 +8374,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "Indexed label",
-          "indexed-label-plural": "Indexed labels",
-          "parsed-label-plural": "Parsed fields",
-          "parsedl-label": "Parsed field",
-          "structured-metadata": "Structured metadata",
-          "structured-metadata-plural": "Structured metadata"
+          "indexed-label_one": "Indexed label",
+          "indexed-label_other": "Indexed label",
+          "parsedl-label_one": "Parsed field",
+          "parsedl-label_other": "Parsed field",
+          "structured-metadata_one": "Structured metadata",
+          "structured-metadata_other": "Structured metadata"
         }
       }
     },
