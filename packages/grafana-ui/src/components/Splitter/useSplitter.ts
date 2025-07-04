@@ -111,7 +111,7 @@ export function useSplitter(options: UseSplitterOptions) {
 
       if (usePixels) {
         const newSize = clamp(secondPanePixels - diff, dims[minDimProp], dims[maxDimProp]);
-        secondPaneRef.current!.style.flexBasis = `${Math.max(newSize, 50)}px`
+        secondPaneRef.current!.style.flexBasis = `${Math.max(newSize, 50)}px`;
         splitterRef.current!.ariaValueNow = `${newSize}`;
         onResizing?.(newSize, firstPanePixels + diff, newSize);
       } else {
