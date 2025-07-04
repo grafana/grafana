@@ -7994,6 +7994,12 @@
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
       "timestamp": "Timestamp"
+    },
+    "week-start-picker": {
+      "weekStarts-label-default": "Default",
+      "weekStarts-label-monday": "Monday",
+      "weekStarts-label-saturday": "Saturday",
+      "weekStarts-label-sunday": "Sunday"
     }
   },
   "graph": {
