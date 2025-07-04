@@ -105,9 +105,10 @@ describe('loadDataSource()', () => {
     const dispatch = jest.fn();
     const getState = jest.fn();
 
+    const win: typeof globalThis = window;
     // @ts-ignore
-    delete window.location;
-    window.location = {} as Location;
+    delete win.location;
+    win.location = {} as Location;
 
     (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
@@ -126,9 +127,10 @@ describe('loadDataSource()', () => {
     const dispatch = jest.fn();
     const getState = jest.fn();
 
+    const win: typeof globalThis = window;
     // @ts-ignore
-    delete window.location;
-    window.location = {} as Location;
+    delete win.location;
+    win.location = {} as Location;
 
     (api.getDataSourceByIdOrUid as jest.Mock).mockResolvedValueOnce(dataSourceMock);
 
