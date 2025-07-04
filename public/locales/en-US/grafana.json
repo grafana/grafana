@@ -4228,9 +4228,6 @@
     }
   },
   "dashbaord-scene": {
-    "interval-variable-form": {
-      "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified"
-    },
     "variable-editor-form": {
       "run-query": "Run query"
     }
@@ -5352,7 +5349,8 @@
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
-      "label-use-static-key-dimensions": "Use static key dimensions"
+      "label-use-static-key-dimensions": "Use static key dimensions",
+      "name-allow-custom-values": "Allow custom values"
     },
     "add-to-dashboard": {
       "message": {
@@ -5439,6 +5437,7 @@
     },
     "custom-variable-form": {
       "custom-options": "Custom options",
+      "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
     },
     "dashboard-edit-pane-renderer": {
@@ -5503,6 +5502,8 @@
       "data-source-options": "Data source options",
       "description-instance-name-filter": "Regex filter for which data source instances to choose from in the variable value list. Leave empty for all.",
       "example-instance-name-filter": "Example: <codeExample />",
+      "name-instance-name-filter": "Instance name filter",
+      "name-type": "Type",
       "selection-options": "Selection options"
     },
     "default-grid-layout-manager": {
@@ -5593,7 +5594,8 @@
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "group-by-options": "Group by options",
       "label-data-source": "Data source",
-      "label-use-static-group-by-dimensions": "Use static group dimensions"
+      "label-use-static-group-by-dimensions": "Use static group dimensions",
+      "name-allow-custom-values": "Allow custom values"
     },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
@@ -5629,9 +5631,14 @@
       "apply": "Apply"
     },
     "interval-variable-form": {
+      "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified",
       "description-calculated-value-below-threshold": "The calculated value will not go below this threshold",
       "description-step-count": "How many times the current time range should be divided to calculate the value",
-      "interval-options": "Interval options"
+      "interval-options": "Interval options",
+      "name-auto-option": "Auto option",
+      "name-min-interval": "Min interval",
+      "name-step-count": "Step count",
+      "name-values": "Values"
     },
     "json-model-edit-view": {
       "cancel-button": {
@@ -5749,6 +5756,7 @@
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
       "label-target-data-source": "Target data source",
+      "name-regex": "Regex",
       "query-options": "Query options",
       "selection-options": "Selection options"
     },
@@ -5857,7 +5865,11 @@
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
       "description-enables-option-include-variables": "Enables an option to include all values",
-      "description-enables-users-custom-values": "Enables users to add custom values to the list"
+      "description-enables-users-custom-values": "Enables users to add custom values to the list",
+      "name-allow-custom-values": "Allow custom values",
+      "name-custom-all-value": "Custom all value",
+      "name-include-all-option": "Include All option",
+      "name-multi-value": "Multi-value"
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
@@ -5876,6 +5888,9 @@
       "title": {
         "copy-to-clipboard-failed": "Copy to clipboard failed"
       }
+    },
+    "text-box-variable": {
+      "name-default-value": "Default value"
     },
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "(optional)",
@@ -5937,6 +5952,9 @@
       "description-optional-display-name": "Optional display name",
       "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
       "general": "General",
+      "name-description": "Description",
+      "name-label": "Label",
+      "name-name": "Name",
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
@@ -5958,7 +5976,17 @@
       "tooltip-remove-variable": "Remove variable"
     },
     "variable-hide-select": {
+      "hide_options": {
+        "label": {
+          "label": "Label",
+          "nothing": "Nothing",
+          "variable": "Variable"
+        }
+      },
       "label": "Hide"
+    },
+    "variable-type-select": {
+      "name-variable-type": "Variable type"
     },
     "variable-usages-button": {
       "title-show-usages": "Showing usages for: {{variableId}}",
@@ -12565,9 +12593,24 @@
       "label-refresh": "Refresh"
     },
     "query-variable-sort-select": {
-      "description-values-variable": "How to sort the values of this variable"
+      "description-values-variable": "How to sort the values of this variable",
+      "name-sort": "Sort",
+      "sort_options": {
+        "label": {
+          "alphabetical-asc": "Alphabetical (asc)",
+          "alphabetical-caseinsensitive-asc": "Alphabetical (case-insensitive, asc)",
+          "alphabetical-caseinsensitive-desc": "Alphabetical (case-insensitive, desc)",
+          "alphabetical-desc": "Alphabetical (desc)",
+          "disabled": "Disabled",
+          "natural-asc": "Natural (asc)",
+          "natural-desc": "Natural (desc)",
+          "numerical-asc": "Numerical (asc)",
+          "numerical-desc": "Numerical (desc)"
+        }
+      }
     },
     "text-box-variable-editor": {
+      "name-default-value": "Default value",
       "placeholder-default-value-if-any": "default value, if any",
       "text-options": "Text options"
     },
@@ -12596,6 +12639,8 @@
       "description-optional-display-name": "Optional display name",
       "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
       "general": "General",
+      "name-label": "Label",
+      "name-name": "Name",
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
@@ -12610,8 +12655,14 @@
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
     },
+    "variable-editor-un-connected": {
+      "name-description": "Description"
+    },
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
+    },
+    "variable-type-select": {
+      "name-select-variable-type": "Select variable type"
     },
     "variable-usages-button": {
       "tooltip-show-usages": "Show usages"
