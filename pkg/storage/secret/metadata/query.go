@@ -30,15 +30,11 @@ var (
 	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
 	sqlSecureValueUpdate           = mustTemplate("secure_value_update.sql")
 	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
-	sqlSecureValueUpdateStatus     = mustTemplate("secure_value_updateStatus.sql")
 	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
 
-	sqlSecureValueOutboxAppend             = mustTemplate("secure_value_outbox_append.sql")
-	sqlSecureValueOutboxFetchMessageIDs    = mustTemplate("secure_value_outbox_fetch_message_ids.sql")
-	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
-	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")
-	sqlSecureValueOutboxUpdateReceiveCount = mustTemplate("secure_value_outbox_update_receive_count.sql")
-	sqlSecureValueOutboxQueryTimestamp     = mustTemplate("secure_value_outbox_query_timestamp.sql")
+	sqlGetLatestSecureValueVersion     = mustTemplate("secure_value_get_latest_version.sql")
+	sqlSecureValueSetVersionToActive   = mustTemplate("secure_value_set_version_to_active.sql")
+	sqlSecureValueSetVersionToInactive = mustTemplate("secure_value_set_version_to_inactive.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -150,6 +146,38 @@ func (r readSecureValue) Validate() error {
 	return nil // TODO
 }
 
+type getLatestSecureValueVersion struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+func (r getLatestSecureValueVersion) Validate() error {
+	return nil
+}
+
+type secureValueSetVersionToActive struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+	Version   int64
+}
+
+func (r secureValueSetVersionToActive) Validate() error {
+	return nil
+}
+
+type secureValueSetVersionToInactive struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+	Version   int64
+}
+
+func (r secureValueSetVersionToInactive) Validate() error {
+	return nil
+}
+
 type listSecureValue struct {
 	sqltemplate.SQLTemplate
 	Namespace string
@@ -187,6 +215,7 @@ type updateExternalIdSecureValue struct {
 	sqltemplate.SQLTemplate
 	Namespace  string
 	Name       string
+	Version    int64
 	ExternalID string
 }
 
@@ -213,8 +242,6 @@ type updateStatusSecureValue struct {
 	sqltemplate.SQLTemplate
 	Namespace string
 	Name      string
-	Phase     string
-	Message   string
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -229,48 +256,3 @@ type readSecureValueForDecrypt struct {
 }
 
 func (r readSecureValueForDecrypt) Validate() error { return nil }
-
-/*************************************/
-/**-- Secure Value Outbox Queries --**/
-/*************************************/
-type appendSecureValueOutbox struct {
-	sqltemplate.SQLTemplate
-	Row *outboxMessageDB
-}
-
-func (appendSecureValueOutbox) Validate() error { return nil }
-
-type receiveNSecureValueOutbox struct {
-	sqltemplate.SQLTemplate
-	MessageIDs []int64
-}
-
-func (receiveNSecureValueOutbox) Validate() error { return nil }
-
-type fetchMessageIDsOutbox struct {
-	sqltemplate.SQLTemplate
-	ReceiveLimit uint
-}
-
-func (fetchMessageIDsOutbox) Validate() error { return nil }
-
-type deleteSecureValueOutbox struct {
-	sqltemplate.SQLTemplate
-	MessageID int64
-}
-
-func (deleteSecureValueOutbox) Validate() error { return nil }
-
-type getOutboxMessageTimestamp struct {
-	sqltemplate.SQLTemplate
-	MessageID int64
-}
-
-func (getOutboxMessageTimestamp) Validate() error { return nil }
-
-type incrementReceiveCountOutbox struct {
-	sqltemplate.SQLTemplate
-	MessageIDs []int64
-}
-
-func (incrementReceiveCountOutbox) Validate() error { return nil }

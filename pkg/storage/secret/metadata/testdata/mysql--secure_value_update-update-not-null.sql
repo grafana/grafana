@@ -10,13 +10,12 @@ SET
   `created_by` = 'user:ryan',
   `updated` = 5678,
   `updated_by` = 'user:cameron',
-  `status_phase` = 'creating',
-  `status_message` = 'message_test',
   `description` = 'description',
   `keeper` = 'keeper_test',
   `decrypters` = 'decrypters_test',
   `ref` = 'ref_test',
   `external_id` = 'extId'
-WHERE `namespace` = 'ns' AND
+WHERE 
+  `namespace` = 'ns' AND
   `name` = 'name'
 ;

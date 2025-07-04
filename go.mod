@@ -247,6 +247,11 @@ require (
 )
 
 require (
+	cloud.google.com/go/spanner v1.76.1
+	github.com/grafana/grafana/pkg/build v0.0.0-20250702194629-61efc8b60994
+)
+
+require (
 	cel.dev/expr v0.23.1 // indirect
 	cloud.google.com/go v0.120.0 // indirect
 	cloud.google.com/go/auth v0.16.1 // indirect
@@ -270,6 +275,7 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.2 // indirect
 	github.com/FZambia/eagle v0.2.0 // indirect
+	github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.2 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.51.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.51.0 // indirect
