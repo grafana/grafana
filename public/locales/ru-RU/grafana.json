@@ -110,6 +110,12 @@
       "update-button": "Обновить",
       "users-heading": "Пользователи организации"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Проверка",
       "title-custom-branding": "Пользовательский брендинг",
@@ -3503,18 +3509,12 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
-      "description-branch-name-in-git-hub": "Имя ветви в GitHub",
       "error-invalid-folder-name": "Недопустимое имя папки",
       "error-required": "Требуется имя папки",
-      "folder-comment-input-placeholder-describe-changes-optional": "Добавьте примечание с описанием изменений (необязательно)",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
-      "label-branch": "Ветвь",
-      "label-comment": "Комментарий",
       "label-folder-name": "Имя папки",
-      "label-workflow": "Рабочий процесс",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
       "title-pull-request-created": "Создан запрос на включение изменений",
-      "title-repository-not-found": "Репозиторий не найден",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
     "no-results": {
@@ -8408,6 +8408,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8431,7 +8443,6 @@
       "label-wrap-lines": "Переносить строки"
     },
     "log-details": {
-      "close": "Закрыть сведения о журнале",
       "fields": "Поля",
       "links": "Ссылки",
       "log-line": "Строка журнала",
@@ -8456,6 +8467,35 @@
       "show-less": "меньше",
       "show-more": "больше",
       "tooltip-error": "Ошибка: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Копировать ссылку в строку журнала",
@@ -8583,6 +8623,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Ссылки на данные",
       "aria-label-fields": "Поля",
+      "aria-label-line": "",
       "aria-label-log-level": "Уровень журнала",
       "aria-label-no-details": "Нет сведений"
     },
@@ -11458,6 +11499,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Альтернативный текст, который будет отображаться, если невозможно показать изображение, или для пользователей, которые используют программу чтения с экрана",
       "description-title-text": "Текст, который будет отображаться при наведении курсора на изображение",
@@ -11478,6 +11520,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -12143,6 +12186,7 @@
           "polynomial": "Полиномиальная"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Количество точек X, Y для прогнозирования"
     },
     "rename-by-regex-transformer-editor": {

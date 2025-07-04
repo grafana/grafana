@@ -110,6 +110,12 @@
       "update-button": "Mettre à jour",
       "users-heading": "Utilisateurs de l'organisation"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditer",
       "title-custom-branding": "Marquage personnalisé",
@@ -3467,18 +3473,12 @@
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
-      "description-branch-name-in-git-hub": "Nom de la branche dans GitHub",
       "error-invalid-folder-name": "Nom de dossier non valide",
       "error-required": "Un nom de dossier est obligatoire",
-      "folder-comment-input-placeholder-describe-changes-optional": "Ajoutez une note pour décrire vos modifications (facultatif)",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
-      "label-branch": "Branche",
-      "label-comment": "Commentaire",
       "label-folder-name": "Nom du dossier",
-      "label-workflow": "Flux de travail",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
       "title-pull-request-created": "Demande de fusion créée",
-      "title-repository-not-found": "Référentiel introuvable",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
     "no-results": {
@@ -8356,6 +8356,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8379,7 +8391,6 @@
       "label-wrap-lines": "Enrouler les lignes"
     },
     "log-details": {
-      "close": "Fermer les détails du journal",
       "fields": "Champs",
       "links": "Liens",
       "log-line": "Ligne du journal",
@@ -8404,6 +8415,35 @@
       "show-less": "afficher moins",
       "show-more": "afficher plus",
       "tooltip-error": "Erreur : {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Copier le lien vers la ligne de journal",
@@ -8531,6 +8571,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Données de liaison",
       "aria-label-fields": "Champs",
+      "aria-label-line": "",
       "aria-label-log-level": "Niveau de journal",
       "aria-label-no-details": "Aucune information"
     },
@@ -11388,6 +11429,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texte alternatif qui sera affiché si une image ne peut pas être affichée ou pour les utilisateurs qui utilisent un lecteur d’écran",
       "description-title-text": "Texte qui sera affiché lorsque l’image est survolée par un curseur",
@@ -11408,6 +11450,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -12073,6 +12116,7 @@
           "polynomial": "Polynomial"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Nombre de points X, Y à prédire"
     },
     "rename-by-regex-transformer-editor": {

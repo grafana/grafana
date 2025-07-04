@@ -355,10 +355,6 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
-	// FlagSsoSettingsApi
-	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
-	FlagSsoSettingsApi = "ssoSettingsApi"
-
 	// FlagCanvasPanelPanZoom
 	// Allow pan and zoom in canvas panel
 	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
@@ -382,10 +378,6 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
-
-	// FlagLokiQueryHints
-	// Enables query hints for Loki
-	FlagLokiQueryHints = "lokiQueryHints"
 
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
@@ -922,4 +914,8 @@ const (
 	// FlagEnableAppChromeExtensions
 	// Set this to true to enable all app chrome extensions registered by plugins.
 	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
+
+	// FlagFoldersAppPlatformAPI
+	// Enables use of app platform API for folders
+	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
 )

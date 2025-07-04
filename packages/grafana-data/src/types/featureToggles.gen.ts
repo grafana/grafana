@@ -393,11 +393,6 @@ export interface FeatureToggles {
   */
   pdfTables?: boolean;
   /**
-  * Enables the SSO settings API and the OAuth configuration UIs in Grafana
-  * @default true
-  */
-  ssoSettingsApi?: boolean;
-  /**
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
@@ -423,11 +418,6 @@ export interface FeatureToggles {
   * Enables regression analysis transformation
   */
   regressionTransformation?: boolean;
-  /**
-  * Enables query hints for Loki
-  * @default true
-  */
-  lokiQueryHints?: boolean;
   /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
@@ -749,6 +739,7 @@ export interface FeatureToggles {
   crashDetection?: boolean;
   /**
   * Enables querying the Jaeger data source without the proxy
+  * @default true
   */
   jaegerBackendMigration?: boolean;
   /**
@@ -1021,4 +1012,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
+  /**
+  * Enables use of app platform API for folders
+  * @default false
+  */
+  foldersAppPlatformAPI?: boolean;
 }

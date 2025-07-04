@@ -110,6 +110,12 @@
       "update-button": "アップデート",
       "users-heading": "組織ユーザー"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "監査",
       "title-custom-branding": "カスタムブランディング",
@@ -3449,18 +3455,12 @@
       "button-create": "作成",
       "button-creating": "作成中...",
       "cancel": "キャンセル",
-      "description-branch-name-in-git-hub": "GitHubのブランチ名",
       "error-invalid-folder-name": "無効なフォルダ名",
       "error-required": "フォルダ名は必須です",
-      "folder-comment-input-placeholder-describe-changes-optional": "変更内容を説明するメモを追加します（オプション）",
       "folder-name-input-placeholder-enter-folder-name": "フォルダ名を入力してください",
-      "label-branch": "ブランチ",
-      "label-comment": "コメント",
       "label-folder-name": "フォルダ名",
-      "label-workflow": "ワークフロー",
       "text-pull-request-created": "このフォルダへの変更を含むプルリクエストが作成されました。",
       "title-pull-request-created": "プルリクエストが作成されました",
-      "title-repository-not-found": "リポジトリが見つかりません",
       "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
     },
     "no-results": {
@@ -8330,6 +8330,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8353,7 +8365,6 @@
       "label-wrap-lines": "行を折り返す"
     },
     "log-details": {
-      "close": "ログの詳細を閉じる",
       "fields": "フィールド",
       "links": "リンク",
       "log-line": "ログ行",
@@ -8378,6 +8389,35 @@
       "show-less": "表示を減らす",
       "show-more": "さらに表示する",
       "tooltip-error": "エラー：{{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "ログ行へのリンクをコピー",
@@ -8505,6 +8545,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "データリンク",
       "aria-label-fields": "フィールド",
+      "aria-label-line": "",
       "aria-label-log-level": "ログレベル",
       "aria-label-no-details": "詳細なし"
     },
@@ -11353,6 +11394,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "画像が表示できない場合やスクリーンリーダーを使用するユーザーのために表示される代替テキスト",
       "description-title-text": "画像にカーソルを合わせたときに表示されるテキスト",
@@ -11373,6 +11415,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -12038,6 +12081,7 @@
           "polynomial": "多項式"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "予測するX、Yポイント数"
     },
     "rename-by-regex-transformer-editor": {

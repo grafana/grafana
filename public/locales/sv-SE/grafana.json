@@ -110,6 +110,12 @@
       "update-button": "Uppdatera",
       "users-heading": "Organisationsanvändare"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Revision",
       "title-custom-branding": "Anpassad marknadsföring",
@@ -3467,18 +3473,12 @@
       "button-create": "Skapa",
       "button-creating": "Skapar …",
       "cancel": "Avbryt",
-      "description-branch-name-in-git-hub": "Grennamn i GitHub",
       "error-invalid-folder-name": "Ogiltigt mappnamn",
       "error-required": "Mappnamn krävs",
-      "folder-comment-input-placeholder-describe-changes-optional": "Lägg till en anteckning för att beskriva dina ändringar (valfritt)",
       "folder-name-input-placeholder-enter-folder-name": "Ange mappnamn",
-      "label-branch": "Gren",
-      "label-comment": "Kommentar",
       "label-folder-name": "Mappnamn",
-      "label-workflow": "Arbetsflöde",
       "text-pull-request-created": "En pull-begäran har skapats med ändringar i den här mappen:",
       "title-pull-request-created": "Pull-begäran skapad",
-      "title-repository-not-found": "Lagringsplatsen hittades inte",
       "title-this-repository-is-read-only": "Den här databasen är skrivskyddad"
     },
     "no-results": {
@@ -8356,6 +8356,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8379,7 +8391,6 @@
       "label-wrap-lines": "Radbryt linjer"
     },
     "log-details": {
-      "close": "Stäng loggdetaljer",
       "fields": "Fält",
       "links": "Länkar",
       "log-line": "Loggrad",
@@ -8404,6 +8415,35 @@
       "show-less": "visa mindre",
       "show-more": "visa mer",
       "tooltip-error": "Fel: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Kopiera länk till loggrad",
@@ -8531,6 +8571,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Datalänkar",
       "aria-label-fields": "Fält",
+      "aria-label-line": "",
       "aria-label-log-level": "Loggnivå",
       "aria-label-no-details": "Inga uppgiftger"
     },
@@ -11388,6 +11429,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativ text som kommer att visas om en bild inte kan visas eller för användare som använder en skärmläsare",
       "description-title-text": "Text som visas när muspekaren hålls över bilden",
@@ -11408,6 +11450,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -12073,6 +12116,7 @@
           "polynomial": "Polynom"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Antal X,Y-poäng att förutsäga"
     },
     "rename-by-regex-transformer-editor": {

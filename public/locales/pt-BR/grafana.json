@@ -110,6 +110,12 @@
       "update-button": "Atualizar",
       "users-heading": "Usuários da organização"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditoria",
       "title-custom-branding": "Branding personalizado",
@@ -3467,18 +3473,12 @@
       "button-create": "Criar",
       "button-creating": "Criando…",
       "cancel": "Cancelar",
-      "description-branch-name-in-git-hub": "Nome do branch no GitHub",
       "error-invalid-folder-name": "Nome da pasta inválido",
       "error-required": "O nome da pasta é obrigatório",
-      "folder-comment-input-placeholder-describe-changes-optional": "Adicione uma nota para descrever suas alterações (opcional)",
       "folder-name-input-placeholder-enter-folder-name": "Digitar o nome da pasta",
-      "label-branch": "Branch",
-      "label-comment": "Comentário",
       "label-folder-name": "Nome da pasta",
-      "label-workflow": "Fluxo de trabalho",
       "text-pull-request-created": "Uma solicitação de extração foi criada com alterações nesta pasta:",
       "title-pull-request-created": "Solicitação de extração criada",
-      "title-repository-not-found": "Repositório não encontrado",
       "title-this-repository-is-read-only": "Este repositório é somente leitura"
     },
     "no-results": {
@@ -8356,6 +8356,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8379,7 +8391,6 @@
       "label-wrap-lines": "Aplicar quebra de linha"
     },
     "log-details": {
-      "close": "Fechar detalhes do log",
       "fields": "Campos",
       "links": "Links",
       "log-line": "Linha de log",
@@ -8404,6 +8415,35 @@
       "show-less": "exibir menos",
       "show-more": "exibir mais",
       "tooltip-error": "Erro: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha do log",
@@ -8531,6 +8571,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Links de dados",
       "aria-label-fields": "Campos",
+      "aria-label-line": "",
       "aria-label-log-level": "Nível de log",
       "aria-label-no-details": "Sem detalhes"
     },
@@ -11388,6 +11429,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que será exibido se uma imagem não puder ser exibida ou para usuários que usam leitor de tela",
       "description-title-text": "Texto que será exibido ao passar o cursor sobre a imagem",
@@ -11408,6 +11450,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -12073,6 +12116,7 @@
           "polynomial": "Polinomial"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Número de pontos X,Y a serem previstos"
     },
     "rename-by-regex-transformer-editor": {

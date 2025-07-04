@@ -110,6 +110,12 @@
       "update-button": "Frissítés",
       "users-heading": "Szervezeti felhasználók"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditálás",
       "title-custom-branding": "Saját márkajelzés használata",
@@ -3467,18 +3473,12 @@
       "button-create": "Létrehozás",
       "button-creating": "Létrehozás…",
       "cancel": "Mégse",
-      "description-branch-name-in-git-hub": "Ág neve a GitHubon",
       "error-invalid-folder-name": "Érvénytelen mappanév",
       "error-required": "A mappa nevének megadása kötelező",
-      "folder-comment-input-placeholder-describe-changes-optional": "Megjegyzés hozzáadása a módosítások leírásához (nem kötelező)",
       "folder-name-input-placeholder-enter-folder-name": "Mappanév megadása",
-      "label-branch": "Ág",
-      "label-comment": "Megjegyzés",
       "label-folder-name": "Mappa neve",
-      "label-workflow": "Munkafolyamat",
       "text-pull-request-created": "A lekérési kérelem ennek a mappának a módosításával lett létrehozva:",
       "title-pull-request-created": "Lekérési kérelem létrehozva",
-      "title-repository-not-found": "Nem található adattár",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
     },
     "no-results": {
@@ -8356,6 +8356,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8379,7 +8391,6 @@
       "label-wrap-lines": "Sortörés"
     },
     "log-details": {
-      "close": "Napló részleteinek bezárása",
       "fields": "Mezők",
       "links": "Hivatkozások",
       "log-line": "Naplósor",
@@ -8404,6 +8415,35 @@
       "show-less": "kevesebb megjelenítése",
       "show-more": "több megjelenítése",
       "tooltip-error": "Hiba: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Hivatkozás másolása a naplósorba",
@@ -8531,6 +8571,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Adathivatkozások",
       "aria-label-fields": "Mezők",
+      "aria-label-line": "",
       "aria-label-log-level": "Naplózási szint",
       "aria-label-no-details": "Nincsenek részletek"
     },
@@ -11388,6 +11429,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Helyettesítő szöveg, amely akkor jelenik meg, ha egy kép nem jeleníthető meg, és amely a képernyőolvasót használó felhasználóknak hasznos",
       "description-title-text": "Szöveg, amely akkor jelenik meg, amikor a kép fölé viszik a kurzort",
@@ -11408,6 +11450,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -12073,6 +12116,7 @@
           "polynomial": "Polinomiális"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Előre jelzendő X,Y pontok száma"
     },
     "rename-by-regex-transformer-editor": {
