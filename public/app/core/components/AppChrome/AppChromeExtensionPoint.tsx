@@ -43,6 +43,6 @@ function InternalAppChromeExtensionPoint(): JSX.Element | null {
   return renderLimitedComponents({
     props: {},
     components: components,
-    pluginId: ['grafana-setupguide-app', 'leventebalogh-test-app'],
+    pluginId: 'grafana-setupguide-app',
   });
 }
