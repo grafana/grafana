@@ -45,12 +45,12 @@ export function createOpenModalFunction(config: AddedLinkRegistryItem): PluginEx
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: wrapWithPluginContext<ModalWrapperProps>(
-          config.pluginId,
-          config.title,
-          getModalWrapper({ title, body, width, height, config }),
-          baseLog
-        ),
+        component: wrapWithPluginContext<ModalWrapperProps>({
+          pluginId: config.pluginId,
+          extensionTitle: config.title,
+          Component: getModalWrapper({ title, body, width, height, config }),
+          log: baseLog,
+        }),
       })
     );
   };
@@ -60,12 +60,17 @@ type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
-export const wrapWithPluginContext = <T,>(
-  pluginId: string,
-  extensionTitle: string,
-  Component: React.ComponentType<T>,
-  log: ExtensionsLog
-) => {
+export const wrapWithPluginContext = <T,>({
+  pluginId,
+  extensionTitle,
+  Component,
+  log,
+}: {
+  pluginId: string;
+  extensionTitle: string;
+  Component: React.ComponentType<T>;
+  log: ExtensionsLog;
+}) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const {
       error,

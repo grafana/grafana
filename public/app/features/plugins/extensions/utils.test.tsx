@@ -818,7 +818,12 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, 'ExampleComponent', ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
 
       render(<Component a={{ b: { c: 'Grafana' } }} />);
 
@@ -828,7 +833,12 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should pass the properties into the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, 'ExampleComponent', ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
 
       render(<Component a={{ b: { c: 'Grafana' } }} />);
 
@@ -839,7 +849,12 @@ describe('Plugin Extensions / Utils', () => {
     it('should not be possible to mutate the props in development mode, but it logs an error', async () => {
       config.buildInfo.env = 'development';
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, 'ExampleComponent', ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
       const props = { a: { b: { c: 'Grafana' } } };
 
       render(<Component {...props} override />);
@@ -862,7 +877,12 @@ describe('Plugin Extensions / Utils', () => {
     it('should not be possible to mutate the props in production mode either, but it logs a warning', async () => {
       config.buildInfo.env = 'production';
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, 'ExampleComponent', ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
       const props = { a: { b: { c: 'Grafana' } } };
 
       render(<Component {...props} override />);
@@ -891,7 +911,12 @@ describe('Plugin Extensions / Utils', () => {
         throw new Error('Test error');
       };
       const extensionTitle = 'ComponentWithError';
-      const WrappedComponent = wrapWithPluginContext(pluginId, extensionTitle, ComponentWithError, log);
+      const WrappedComponent = wrapWithPluginContext({
+        pluginId,
+        extensionTitle,
+        Component: ComponentWithError,
+        log,
+      });
 
       render(<WrappedComponent />);
 
@@ -914,7 +939,12 @@ describe('Plugin Extensions / Utils', () => {
         throw new Error('Test error');
       };
       const extensionTitle = 'ComponentWithError';
-      const WrappedComponent = wrapWithPluginContext(pluginId, extensionTitle, ComponentWithError, log);
+      const WrappedComponent = wrapWithPluginContext({
+        pluginId,
+        extensionTitle,
+        Component: ComponentWithError,
+        log,
+      });
 
       render(<WrappedComponent />);
 
