@@ -222,3 +222,43 @@ func TestBadgerKV_UnderlyingStorage(t *testing.T) {
 		}
 	})
 }
+
+func TestIsValidKey(t *testing.T) {
+	tests := []struct {
+		name     string
+		key      string
+		expected bool
+	}{
+		// Valid keys
+		{"simple key", "a", true},
+		{"key with numbers", "a123", true},
+		{"key with hyphens", "a-b-c", true},
+		{"key with dots", "a.b.c", true},
+		{"key with mixed", "a1-b2.c3", true},
+		{"composite key with slash", "ns/group", true},
+		{"composite key with tilde", "ns~action", true},
+		{"complex composite key", "ns/group/resource/name", true},
+		{"data key format", "ns/group/resource/name/123~created", true},
+		{"metadata key format", "group/resource/ns/name/123~created~folder", true},
+		{"metadata key format ending with a ~", "group/resource/ns/name/123~created~", true},
+
+		// invalid keys
+		{"empty key", "", false},
+		{"uppercase letters", "Invalid", false},
+		{"special characters", "a@b", false},
+		{"spaces", "a b", false},
+		{"leading space", " key", false},
+		{"trailing space", "key ", false},
+		{"tab character", "a\tb", false},
+		{"newline character", "a\nb", false},
+		{"underscores", "a_b", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := IsValidKey(tt.key)
+			require.Equal(t, tt.expected, result,
+				"IsValidKey(%q) = %v, expected %v", tt.key, result, tt.expected)
+		})
+	}
+}

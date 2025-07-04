@@ -39,7 +39,7 @@ func (model *outboxStoreModel) Append(messageID int64, message contracts.AppendO
 func (model *outboxStoreModel) ReceiveN(n uint) []contracts.OutboxMessage {
 	maxMessages := min(len(model.rows), int(n))
 	if maxMessages == 0 {
-		return []contracts.OutboxMessage{}
+		return nil
 	}
 	return model.rows[:maxMessages]
 }
@@ -115,7 +115,7 @@ func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
 
 		ctx := context.Background()
 
-		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer)
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 		_, err := outbox.Append(ctx, contracts.AppendOutboxMessage{
 			RequestID:       "1",
@@ -148,7 +148,7 @@ func TestOutboxStore(t *testing.T) {
 
 	ctx := context.Background()
 
-	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer)
+	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 	m1 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
@@ -216,7 +216,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		tracer := noop.NewTracerProvider().Tracer("test")
 
-		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer)
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 		model := newOutboxStoreModel()
 

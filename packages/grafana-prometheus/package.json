@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@floating-ui/react": "0.27.12",
+    "@floating-ui/react": "0.27.13",
     "@grafana/data": "12.1.0-pre",
     "@grafana/e2e-selectors": "12.1.0-pre",
     "@grafana/i18n": "12.1.0-pre",
@@ -102,7 +102,7 @@
     "rollup-plugin-esbuild": "6.2.0",
     "rollup-plugin-node-externals": "^8.0.0",
     "testing-library-selector": "0.3.1",
-    "typescript": "5.7.3"
+    "typescript": "5.8.3"
   },
   "peerDependencies": {
     "react": "^18.0.0",
