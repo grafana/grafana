@@ -8436,6 +8436,7 @@
       "close": "Close log details",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
+      "displayed-fields-section": "Displayed fields",
       "fields": {
         "adhoc-statistics": "Ad-hoc statistics",
         "copy-value-to-clipboard": "Copy value to clipboard",
@@ -8449,9 +8450,11 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "links-section": "Links",
+      "log-line-field": "Log line",
       "log-line-section": "Log line",
       "no-details": "No fields to display.",
       "pin-line": "Pin log",
+      "remove-displayed-field": "Remove field",
       "search": {
         "no-results": "No results to display."
       },
