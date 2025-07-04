@@ -8,6 +8,7 @@ import { ModalRoot, Stack } from '@grafana/ui';
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppChromeExtensionPoint } from '../core/components/AppChrome/AppChromeExtensionPoint';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
+import { SessionExpiryMonitor } from '../core/components/SessionExpiryMonitor/SessionExpiryMonitor';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
 
@@ -33,6 +34,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
               <ModalsContextProvider>
                 <AppChrome>
                   <AppNotificationList />
+                  <SessionExpiryMonitor />
                   <Stack gap={0} grow={1} direction="column">
                     {props.pageBanners.map((Banner, index) => (
                       <Banner key={index.toString()} />
