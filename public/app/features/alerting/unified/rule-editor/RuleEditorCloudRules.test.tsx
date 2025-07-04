@@ -125,7 +125,7 @@ describe('RuleEditor cloud', () => {
 
     // save and check what was sent to backend
     const capture = captureRequests();
-    await user.click(ui.buttons.save.get());
+    await user.click(ui.buttons.saveAndExit.get());
     const requests = await capture;
 
     const serializedRequests = await serializeRequests(requests);

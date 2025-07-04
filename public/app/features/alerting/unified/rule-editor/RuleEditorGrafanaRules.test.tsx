@@ -125,7 +125,7 @@ describe('RuleEditor grafana managed rules', () => {
     await user.clear(pendingPeriodInput);
     await user.type(pendingPeriodInput, '0s');
 
-    await user.click(ui.buttons.save.get());
+    await user.click(ui.buttons.saveAndExit.get());
 
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
     const requests = await capture;
