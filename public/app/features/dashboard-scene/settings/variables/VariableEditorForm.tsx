@@ -171,7 +171,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
                   text={t('dashboard-scene.variable-editor-form.text-running-query', 'Running query...')}
                 />
               ) : (
-                `Run query`
+                t('dashbaord-scene.variable-editor-form.run-query', 'Run query')
               )}
             </Button>
           )}

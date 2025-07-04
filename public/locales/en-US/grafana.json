@@ -4230,6 +4230,9 @@
   "dashbaord-scene": {
     "interval-variable-form": {
       "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified"
+    },
+    "variable-editor-form": {
+      "run-query": "Run query"
     }
   },
   "dashboard": {
