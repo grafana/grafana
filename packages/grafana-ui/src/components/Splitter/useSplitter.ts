@@ -111,12 +111,12 @@ export function useSplitter(options: UseSplitterOptions) {
 
       if (usePixels) {
         const newSize = clamp(secondPanePixels - diff, dims[minDimProp], dims[maxDimProp]);
-        secondPaneRef.current!.style.flexBasis = `${newSize}px`;
+        secondPaneRef.current!.style.flexBasis = `${Math.max(newSize, 50)}px`
         splitterRef.current!.ariaValueNow = `${newSize}`;
         onResizing?.(newSize, firstPanePixels + diff, newSize);
       } else {
         const newSize = clamp(primarySizeRef.current + diff, dims[minDimProp], dims[maxDimProp]);
-        const newFlex = newSize / (containerSize.current! - handleSize);
+        const newFlex = Math.max(newSize / (containerSize.current! - handleSize), 0.05);
         firstPaneRef.current!.style.flexGrow = `${newFlex}`;
         secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
         splitterRef.current!.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
