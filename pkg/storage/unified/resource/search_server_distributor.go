@@ -43,7 +43,6 @@ func ProvideSearchDistributorServer(cfg *setting.Cfg, features featuremgmt.Featu
 
 	resourcepb.RegisterResourceIndexServer(grpcServer, distributorServer)
 	resourcepb.RegisterManagedObjectIndexServer(grpcServer, distributorServer)
-	resourcepb.RegisterBlobStoreServer(grpcServer, distributorServer)
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthService)
 	_, err = grpcserver.ProvideReflectionService(cfg, grpcHandler)
 	if err != nil {
@@ -120,24 +119,6 @@ func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resource
 	}
 
 	return client.ListManagedObjects(ctx, r)
-}
-
-func (ds *distributorServer) PutBlob(ctx context.Context, r *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace, "PutBlob")
-	if err != nil {
-		return nil, err
-	}
-
-	return client.PutBlob(ctx, r)
-}
-
-func (ds *distributorServer) GetBlob(ctx context.Context, r *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-	ctx, client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace, "GetBlob")
-	if err != nil {
-		return nil, err
-	}
-
-	return client.GetBlob(ctx, r)
 }
 
 func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, namespace string, methodName string) (context.Context, ResourceClient, error) {
