@@ -4348,7 +4348,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Public",
         "tooltip-view-as-scene": "View as Scene"
       }
     },
@@ -5110,7 +5109,6 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
-      "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-dashboard": {
