@@ -1264,8 +1264,9 @@ var (
 		{
 			Name:        "jaegerBackendMigration",
 			Description: "Enables querying the Jaeger data source without the proxy",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOSSBigTent,
+			Expression:  "true",
 		},
 		{
 			Name:         "alertingUIOptimizeReducer",
@@ -1732,6 +1733,16 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 			Expression:        "false", // extensions will be disabled by default
+		},
+		{
+			Name:              "foldersAppPlatformAPI",
+			Description:       "Enables use of app platform API for folders",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendSearchNavOrganise,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false",
 		},
 	}
 )
