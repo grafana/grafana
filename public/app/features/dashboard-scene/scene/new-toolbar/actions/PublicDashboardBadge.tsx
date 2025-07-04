@@ -3,10 +3,32 @@ import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Badge, useStyles2 } from '@grafana/ui';
+import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 
 import { ToolbarActionProps } from '../types';
 
-export const PublicDashboardBadge = ({}: ToolbarActionProps) => {
+export const PublicDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
+  if (!dashboard.state.uid) {
+    return null;
+  }
+
+  return <PublicDashboardBadgeInternal uid={dashboard.state.uid} />;
+};
+
+// Used in old architecture
+export const PublicDashboardBadgeLegacy = PublicDashboardBadgeInternal;
+
+function PublicDashboardBadgeInternal({ uid }: { uid?: string }) {
+  if (!uid) {
+    return null;
+  }
+
+  const { data: publicDashboard } = useGetPublicDashboardQuery(uid);
+
+  if (!publicDashboard) {
+    return null;
+  }
+
   const styles = useStyles2(getStyles);
 
   return (
@@ -17,7 +39,7 @@ export const PublicDashboardBadge = ({}: ToolbarActionProps) => {
       data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
     />
   );
-};
+}
 
 const getStyles = () => ({
   badge: css({
