@@ -180,6 +180,7 @@ const AnnotationsStep = () => {
                       className={cx(styles.flexRowItemMargin, styles.field)}
                       invalid={!!errors.annotations?.[index]?.value?.message}
                       error={errors.annotations?.[index]?.value?.message}
+                      noMargin
                     >
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
