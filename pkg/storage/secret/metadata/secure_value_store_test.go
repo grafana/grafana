@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts.KeeperMetadataStorage, name, namespace string) string {
@@ -36,16 +37,17 @@ func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts
 func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	ctx := context.Background()
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	db := database.ProvideDatabase(testDB)
+	tracer := noop.NewTracerProvider().Tracer("test")
+	db := database.ProvideDatabase(testDB, tracer)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the secure value storage
-	secureValueStorage, err := ProvideSecureValueMetadataStorage(db, features)
+	secureValueStorage, err := ProvideSecureValueMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 
 	// Initialize the keeper storage
-	keeperStorage, err := ProvideKeeperMetadataStorage(db, features)
+	keeperStorage, err := ProvideKeeperMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 
 	t.Run("create and read a secure value", func(t *testing.T) {

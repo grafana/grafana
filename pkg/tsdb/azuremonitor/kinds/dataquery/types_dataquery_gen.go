@@ -407,12 +407,21 @@ type AzureResourceGraphQuery struct {
 	Query *string `json:"query,omitempty"`
 	// Specifies the format results should be returned as. Defaults to table.
 	ResultFormat *string `json:"resultFormat,omitempty"`
+	// Specifies the scope of the query. Defaults to subscription.
+	Scope *ARGScope `json:"scope,omitempty"`
 }
 
 // NewAzureResourceGraphQuery creates a new AzureResourceGraphQuery object.
 func NewAzureResourceGraphQuery() *AzureResourceGraphQuery {
 	return &AzureResourceGraphQuery{}
 }
+
+type ARGScope string
+
+const (
+	ARGScopeSubscription ARGScope = "subscription"
+	ARGScopeDirectory    ARGScope = "directory"
+)
 
 // Application Insights Traces sub-query properties
 type AzureTracesQuery struct {

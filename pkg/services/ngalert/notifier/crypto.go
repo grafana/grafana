@@ -18,6 +18,7 @@ import (
 type Crypto interface {
 	LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
 	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
 
@@ -236,6 +237,10 @@ func (c *alertmanagerCrypto) Encrypt(ctx context.Context, payload []byte, opt se
 	return c.secrets.Encrypt(ctx, payload, opt)
 }
 
+func (c *alertmanagerCrypto) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
+	return c.secrets.Decrypt(ctx, payload)
+}
+
 func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
 	for i := range config.ExtraConfigs {
 		encryptedValue, err := c.secrets.Encrypt(ctx, []byte(config.ExtraConfigs[i].AlertmanagerConfig), secrets.WithoutScope())
@@ -251,9 +256,11 @@ func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *de
 
 func (c *alertmanagerCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
 	for i := range config.ExtraConfigs {
+		// Check if the config is encrypted by trying to base64 decode it
 		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig)
 		if err != nil {
-			return fmt.Errorf("failed to base64 decode extra configuration: %w", err)
+			// If it can't be base64 decoded, assume it's already decrypted and skip
+			continue
 		}
 
 		decryptedValue, err := c.secrets.Decrypt(ctx, encryptedValue)

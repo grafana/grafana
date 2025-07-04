@@ -110,6 +110,12 @@
       "update-button": "Actualizar",
       "users-heading": "Usuarios de la organización"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditoría",
       "title-custom-branding": "Marca personalizada",
@@ -3222,6 +3228,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Activado",
       "text-badge-not-enabled": "No habilitada"
     },
@@ -3254,6 +3262,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Gestiona tus ajustes de autenticación y configura el inicio de sesión único. Encuentra más información en nuestra <2><0>documentación</0></2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3473,12 @@
       "button-create": "Crear",
       "button-creating": "Creando...",
       "cancel": "Cancelar",
-      "description-branch-name-in-git-hub": "Nombre de la rama en GitHub",
       "error-invalid-folder-name": "Nombre de carpeta no válido",
       "error-required": "Nombre de la carpeta obligatorio",
-      "folder-comment-input-placeholder-describe-changes-optional": "Añade una nota para describir tus cambios (opcional)",
       "folder-name-input-placeholder-enter-folder-name": "Introducir el nombre de la carpeta",
-      "label-branch": "Rama",
-      "label-comment": "Comentario",
       "label-folder-name": "Nombre de la carpeta",
-      "label-workflow": "Flujo de trabajo",
       "text-pull-request-created": "Se ha creado una solicitud de extracción con cambios en esta carpeta:",
       "title-pull-request-created": "Solicitud de extracción creada",
-      "title-repository-not-found": "Repositorio no encontrado",
       "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
     },
     "no-results": {
@@ -3480,7 +3488,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Si tienes acceso directo al destino, copia el JSON y pégalo allí."
+    "text-this-repository-is-read-only": "Si tienes acceso directo al destino, copia el JSON y pégalo allí.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3894,7 @@
   "close-button": {
     "tooltip": "Cerrar"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Se ha producido un error al cargar las opciones."
@@ -8341,6 +8356,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8364,7 +8391,6 @@
       "label-wrap-lines": "Ajustar líneas"
     },
     "log-details": {
-      "close": "Cerrar detalles del log",
       "fields": "Campos",
       "links": "Enlaces",
       "log-line": "Línea de registro",
@@ -8389,6 +8415,35 @@
       "show-less": "mostrar menos",
       "show-more": "mostrar más",
       "tooltip-error": "Error: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar enlace a la línea de registro",
@@ -8516,6 +8571,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Enlaces de datos",
       "aria-label-fields": "Campos",
+      "aria-label-line": "",
       "aria-label-log-level": "Nivel de log",
       "aria-label-no-details": "Sin detalles"
     },
@@ -9494,6 +9550,15 @@
       "view": "Vista"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Abrir sugerencias de visualización",
       "switch-to-table": "Cambiar a tabla"
     },
@@ -11364,6 +11429,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que se mostrará si no se puede visualizar una imagen o para los usuarios que utilizan un lector de pantalla",
       "description-title-text": "Texto que se mostrará cuando se pase el cursor por encima de la imagen",
@@ -11384,6 +11450,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11592,6 +11659,12 @@
     "zone": {
       "select-aria-label": "Selector de huso horario",
       "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
@@ -12043,6 +12116,7 @@
           "polynomial": "Polinómica"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Número de puntos X,Y para predecir"
     },
     "rename-by-regex-transformer-editor": {

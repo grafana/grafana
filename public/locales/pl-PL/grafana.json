@@ -110,6 +110,12 @@
       "update-button": "Aktualizuj",
       "users-heading": "Użytkownicy organizacji"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Audyty",
       "title-custom-branding": "Własny branding",
@@ -3248,6 +3254,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Włączone",
       "text-badge-not-enabled": "Niewłączone"
     },
@@ -3280,6 +3288,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Zarządzaj ustawieniami uwierzytelniania i skonfiguruj logowanie jednokrotne. Więcej informacji znajdziesz w <2>dokumentacji</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3495,18 +3509,12 @@
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
-      "description-branch-name-in-git-hub": "Nazwa gałęzi w GitHub",
       "error-invalid-folder-name": "Nieprawidłowa nazwa folderu",
       "error-required": "Wymagana jest nazwa folderu",
-      "folder-comment-input-placeholder-describe-changes-optional": "Dodaj notatkę, aby opisać zmiany (opcjonalnie)",
       "folder-name-input-placeholder-enter-folder-name": "Podaj nazwę folderu",
-      "label-branch": "Gałąź",
-      "label-comment": "Uwagi",
       "label-folder-name": "Nazwa folderu",
-      "label-workflow": "Przepływ pracy",
       "text-pull-request-created": "Utworzono żądanie pull ze zmianami w tym folderze:",
       "title-pull-request-created": "Utworzono żądanie pull",
-      "title-repository-not-found": "Nie znaleziono repozytorium",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
     "no-results": {
@@ -3516,7 +3524,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam."
+    "text-this-repository-is-read-only": "Jeśli masz bezpośredni dostęp do celu, skopiuj kod JSON i wklej go tam.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3916,6 +3930,7 @@
   "close-button": {
     "tooltip": "Zamknij"
   },
+  "cloud-enterprise-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Podczas ładowania opcji wystąpił błąd."
@@ -8393,6 +8408,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8416,7 +8443,6 @@
       "label-wrap-lines": "Zawijaj wiersze"
     },
     "log-details": {
-      "close": "Zamknij szczegóły dziennika",
       "fields": "Pola",
       "links": "Linki",
       "log-line": "Wiersz logu",
@@ -8441,6 +8467,35 @@
       "show-less": "pokaż mniej",
       "show-more": "pokaż więcej",
       "tooltip-error": "Błąd: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Kopiuj link do wiersza logu",
@@ -8568,6 +8623,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Połączenia danych",
       "aria-label-fields": "Pola",
+      "aria-label-line": "",
       "aria-label-log-level": "Poziom logów",
       "aria-label-no-details": "Brak szczegółów"
     },
@@ -9552,6 +9608,15 @@
       "view": "Widok"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Otwórz sugestie dotyczące wizualizacji",
       "switch-to-table": "Przełącz na tabelę"
     },
@@ -11434,6 +11499,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternatywny tekst wyświetlany, jeśli obraz nie może być wyświetlony, lub w przypadku użytkowników korzystających z czytnika ekranu",
       "description-title-text": "Tekst wyświetlany po najechaniu kursorem na obraz",
@@ -11454,6 +11520,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11662,6 +11729,12 @@
     "zone": {
       "select-aria-label": "Selektor strefy czasowej",
       "select-search-input": "Wpisz, aby wyszukać (kraj, miasto, skrót)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
@@ -12113,6 +12186,7 @@
           "polynomial": "Wielomian"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Liczba punktów X,Y do prognozowania"
     },
     "rename-by-regex-transformer-editor": {
