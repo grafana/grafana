@@ -17,6 +17,8 @@ export interface Props {
   onResize(): void;
 }
 
+export type LogLineDetailsMode = 'inline' | 'sidebar';
+
 export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize }: Props) => {
   const { detailsWidth, logOptionsStorageKey, setDetailsWidth, showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);

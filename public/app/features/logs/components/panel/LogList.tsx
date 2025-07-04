@@ -222,6 +222,7 @@ const LogListComponent = ({
     app,
     displayedFields,
     dedupStrategy,
+    detailsMode,
     filterLevels,
     fontSize,
     forceEscape,
@@ -476,7 +477,7 @@ const LogListComponent = ({
           )}
         </InfiniteScroll>
       </div>
-      {showDetails.length > 0 && (
+      {detailsMode === 'sidebar' && showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
           focusLogLine={focusLogLine}
