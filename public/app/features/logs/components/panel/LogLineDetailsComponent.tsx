@@ -23,7 +23,7 @@ interface LogLineDetailsComponentProps {
 }
 
 export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields } = useLogListContext();
+  const { displayedFields, setDisplayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -74,7 +74,6 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
 
   const handleToggle = useCallback(
     (option: string, isOpen: boolean) => {
-      console.log(option, isOpen);
       store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
     },
     [logOptionsStorageKey]
@@ -106,7 +105,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
         >
           <div className={styles.logLineWrapper}>{log.raw}</div>
         </ControlledCollapse>
-        {displayedFields.length > 0 && (
+        {displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
             label={t('logs.log-line-details.displayed-fields-section', 'Displayed fields')}
             collapsible
