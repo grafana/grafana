@@ -162,6 +162,7 @@ export interface Props {
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   prettifyJSON?: boolean;
+  setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showUniqueLabels?: boolean;
   showTime: boolean;
@@ -204,6 +205,7 @@ export const LogListContextProvider = ({
   pinLineButtonTooltipTitle,
   pinnedLogs,
   prettifyJSON,
+  setDisplayedFields,
   showControls,
   showTime,
   showUniqueLabels,
@@ -509,6 +511,7 @@ export const LogListContextProvider = ({
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
         setDetailsWidth,
+        setDisplayedFields,
         setFilterLevels,
         setFontSize,
         setForceEscape,

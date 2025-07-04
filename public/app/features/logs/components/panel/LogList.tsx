@@ -73,6 +73,7 @@ export interface Props {
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
@@ -135,6 +136,7 @@ export const LogList = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  setDisplayedFields,
   showControls,
   showTime,
   sortOrder,
@@ -176,6 +178,7 @@ export const LogList = ({
       permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
+      setDisplayedFields={setDisplayedFields}
       showControls={showControls}
       showTime={showTime}
       sortOrder={sortOrder}
