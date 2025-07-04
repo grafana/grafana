@@ -87,6 +87,8 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+	cfgDBSection := cfg.Raw.Section("database")
+	cfgDBSection.Key("skip_ensure_default_org_and_user").SetValue("true")
 	return newStore(cfg, nil, features, nil, bus, tracer)
 }
 
