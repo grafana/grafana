@@ -4,6 +4,8 @@ const printAffectedPluginsSection = require('./levitate-show-affected-plugins');
 
 const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 
+const isFork = Boolean(process.env.IS_FORK || false);
+
 function stripAnsi(str) {
   return str.replace(/\x1b\[[0-9;]*m/g, '');
 }
@@ -30,7 +32,7 @@ if (data.changes.length > 0) {
   markdown += printSection('Changes', data.changes);
 }
 
-if (data.removals.length > 0 || data.changes.length > 0) {
+if ((data.removals.length > 0 || data.changes.length > 0) && !isFork) {
   markdown += printAffectedPluginsSection(data);
 }
 
