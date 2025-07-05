@@ -663,3 +663,66 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
 	})
 }
+
+func TestIntegrationExtraConfigsConflicts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"alertingImportAlertmanagerAPI"},
+	})
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	client := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+
+	// Now upload a new extra config
+	testAlertmanagerConfigYAML := `
+route:
+  receiver: default
+
+receivers:
+- name: default
+  webhook_configs:
+  - url: 'http://localhost/webhook'
+`
+
+	headers := map[string]string{
+		"Content-Type":                         "application/yaml",
+		"X-Grafana-Alerting-Config-Identifier": "external-system",
+		"X-Grafana-Alerting-Merge-Matchers":    "imported=true",
+	}
+
+	// Post the configuration to Grafana
+	response := legacyCli.ConvertPrometheusPostAlertmanagerConfig(t, definitions.AlertmanagerUserConfig{
+		AlertmanagerConfig: testAlertmanagerConfigYAML,
+	}, headers)
+	require.Equal(t, "success", response.Status)
+
+	current, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
+	require.NoError(t, err)
+	updated := current.Copy().(*v0alpha1.RoutingTree)
+	updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{
+		Matchers: []v0alpha1.RoutingTreeMatcher{
+			{
+				Label: "imported",
+				Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
+				Value: "true",
+			},
+		},
+	})
+
+	_, err = client.Update(ctx, updated, v1.UpdateOptions{})
+	require.Error(t, err)
+	require.Truef(t, errors.IsBadRequest(err), "Should get BadRequest error but got: %s", err)
+
+	// Now delete extra config
+	legacyCli.ConvertPrometheusDeleteAlertmanagerConfig(t, headers)
+
+	// and try again
+	_, err = client.Update(ctx, updated, v1.UpdateOptions{})
+	require.NoError(t, err)
+}
