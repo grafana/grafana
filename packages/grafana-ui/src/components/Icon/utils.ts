@@ -44,21 +44,8 @@ export function getSvgSize(size: IconSize) {
   }
 }
 
-let iconRoot: string | undefined;
-
 export function getIconRoot(): string {
-  if (iconRoot) {
-    return iconRoot;
-  }
-
-  const grafanaPublicPath = typeof window !== 'undefined' && window.__grafana_public_path__;
-  if (grafanaPublicPath) {
-    iconRoot = grafanaPublicPath + 'build/img/icons/';
-  } else {
-    iconRoot = 'public/build/img/icons/';
-  }
-
-  return iconRoot;
+  return __webpack_public_path__ + 'public/build/img/icons/';
 }
 
 export function getIconPath(name: IconName, type: IconType = 'default'): string {

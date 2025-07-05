@@ -31,7 +31,6 @@ export function getOutput(env: Record<string, unknown> = {}) {
     path: resolve(import.meta.dirname, '../../public/build'),
     filename: env.production ? '[name].[contenthash].js' : '[name].js',
     cssFilename: env.production ? '[name].[contenthash].css' : '[name].css',
-    publicPath: 'public/build/',
   };
 }
 
