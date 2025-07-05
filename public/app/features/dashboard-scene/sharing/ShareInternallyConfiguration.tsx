@@ -36,12 +36,14 @@ export default function ShareInternallyConfiguration({
               value={useLockedTime}
               onChange={onToggleLockedTime}
               data-testid={selectors.lockTimeRangeSwitch}
+              aria-describedby="time-range-description"
             />
             <Label
               description={t(
                 'link.share.time-range-description',
                 'Change the current relative time range to an absolute time range'
               )}
+              id="time-range-description"
             >
               <Trans i18nKey="link.share.time-range-label">Lock time range</Trans>
             </Label>
@@ -61,7 +63,7 @@ export default function ShareInternallyConfiguration({
         </Stack>
         <ThemePicker selectedTheme={selectedTheme} onChange={onChangeTheme} />
       </Stack>
-      {isLoading && <Spinner />}
+      {isLoading && <Spinner aria-label={t('link.share.generating-url', 'Generating share link')} />}
     </Stack>
   );
 }
