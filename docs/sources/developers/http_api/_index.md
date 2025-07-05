@@ -77,7 +77,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ## Deprecated HTTP APIs
 
-- [Authentication API](auth/)
+- [Authentication API](authentication/)
 
 ## Grafana Enterprise HTTP APIs
 
