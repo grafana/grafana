@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -132,6 +133,11 @@ func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 				return err
 			}
 			apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath()] = store
+			if registryStore, ok := store.(*genericregistry.Store); ok {
+				for subPath := range kind.ZeroValue().GetSubresources() {
+					apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath(subPath)] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, registryStore)
+				}
+			}
 		}
 	}
 	return nil
