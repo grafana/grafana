@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { BootData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { Combobox } from '../Combobox/Combobox';
 import { ComboboxOption } from '../Combobox/types';
@@ -17,12 +18,6 @@ export interface Props {
 }
 
 export type WeekStart = 'saturday' | 'sunday' | 'monday';
-const weekStarts: ComboboxOption[] = [
-  { value: '', label: 'Default' },
-  { value: 'saturday', label: 'Saturday' },
-  { value: 'sunday', label: 'Sunday' },
-  { value: 'monday', label: 'Monday' },
-];
 
 export function isWeekStart(value: string): value is WeekStart {
   return ['saturday', 'sunday', 'monday'].includes(value);
@@ -53,6 +48,15 @@ export function getWeekStart(override?: string): WeekStart {
 
 export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
+  const weekStarts: ComboboxOption[] = useMemo(
+    () => [
+      { value: '', label: t('grafana-ui.week-start-picker.weekStarts-label-default', 'Default') },
+      { value: 'saturday', label: t('grafana-ui.week-start-picker.weekStarts-label-saturday', 'Saturday') },
+      { value: 'sunday', label: t('grafana-ui.week-start-picker.weekStarts-label-sunday', 'Sunday') },
+      { value: 'monday', label: t('grafana-ui.week-start-picker.weekStarts-label-monday', 'Monday') },
+    ],
+    []
+  );
 
   const onChangeWeekStart = useCallback(
     (selectable: ComboboxOption | null) => {
@@ -63,7 +67,7 @@ export const WeekStartPicker = (props: Props) => {
     [onChange]
   );
 
-  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? '', [value]);
+  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? '', [value, weekStarts]);
 
   return (
     <Combobox

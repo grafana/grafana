@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -268,15 +267,25 @@ export const ServiceAccountsListPageUnconnected = ({
           <>
             <ConfirmModal
               isOpen={isRemoveModalOpen}
-              body={`Are you sure you want to delete '${currentServiceAccount.name}'${
+              body={
                 !!currentServiceAccount.tokens
-                  ? ` and ${currentServiceAccount.tokens} accompanying ${pluralize(
-                      'token',
-                      currentServiceAccount.tokens
-                    )}`
-                  : ''
-              }?`}
-              confirmText="Delete"
+                  ? t(
+                      'serviceaccounts.service-accounts-list-page-unconnected.body-delete',
+                      'Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?',
+                      {
+                        serviceAccountName: currentServiceAccount.name,
+                        count: currentServiceAccount.tokens,
+                      }
+                    )
+                  : t(
+                      'serviceaccounts.service-accounts-list-page-unconnected.body-delete-with-tokens',
+                      'Are you sure you want to delete {{serviceAccountName}}?',
+                      {
+                        serviceAccountName: currentServiceAccount.name,
+                      }
+                    )
+              }
+              confirmText={t('serviceaccounts.service-accounts-list-page-unconnected.confirmText-delete', 'Delete')}
               title={t(
                 'serviceaccounts.service-accounts-list-page-unconnected.title-delete-service-account',
                 'Delete service account'
@@ -290,8 +299,15 @@ export const ServiceAccountsListPageUnconnected = ({
                 'serviceaccounts.service-accounts-list-page-unconnected.title-disable-service-account',
                 'Disable service account'
               )}
-              body={`Are you sure you want to disable '${currentServiceAccount.name}'?`}
-              confirmText="Disable service account"
+              body={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.body-disable-service-account',
+                "Are you sure you want to disable '{{accountToDisable}}'?",
+                { accountToDisable: currentServiceAccount.name }
+              )}
+              confirmText={t(
+                'serviceaccounts.service-accounts-list-page-unconnected.confirmText-disable-service-account',
+                'Disable service account'
+              )}
               onConfirm={onDisable}
               onDismiss={onDisableModalClose}
             />

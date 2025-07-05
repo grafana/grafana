@@ -106,7 +106,7 @@ export function QueryVariableEditorForm({
 
       <VariableTextAreaField
         defaultValue={regex ?? ''}
-        name="Regex"
+        name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
         description={
           <div>
             <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
