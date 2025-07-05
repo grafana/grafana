@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"runtime/trace"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -114,6 +115,19 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 	return nil
 }
 
+// createProfilingServer creates an HTTP server with proper timeout configurations
+// to prevent resource exhaustion and hanging connections
+func createProfilingServer(addr string, handler http.Handler) *http.Server {
+        return &http.Server{
+                Addr:              addr,
+                Handler:           handler,
+                ReadHeaderTimeout: 5 * time.Second,  // Time to read request headers
+                ReadTimeout:       10 * time.Second, // Time to read entire request
+                WriteTimeout:      10 * time.Second, // Time to write response
+                IdleTimeout:       60 * time.Second, // Time for idle connections
+        }
+}
+
 func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockRate int, mutexFraction int) error {
 	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort, blockRate, mutexFraction)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
@@ -126,15 +140,13 @@ func setupProfiling(profile bool, profileAddr string, profilePort uint64, blockR
 		runtime.SetMutexProfileFraction(profileDiagnostics.mutexRate)
 
 		go func() {
-			// TODO: We should enable the linter and fix G114 here.
-			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
-			//
-			//nolint:gosec
-			err := http.ListenAndServe(fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port), nil)
-			if err != nil {
-				panic(err)
-			}
-		}()
+                        addr := fmt.Sprintf("%s:%d", profileDiagnostics.addr, profileDiagnostics.port)
+                        server := createProfilingServer(addr, nil)
+                        err := server.ListenAndServe()
+                        if err != nil {
+                                panic(err)
+                        }
+                }()
 	}
 	return nil
 }
