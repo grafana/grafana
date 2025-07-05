@@ -1,4 +1,4 @@
-import { Feature } from 'ol';
+import Feature from 'ol/Feature';
 import { Geometry, LineString, Point } from 'ol/geom';
 import VectorSource from 'ol/source/Vector';
 
@@ -8,7 +8,7 @@ import { getGeometryField, LocationFieldMatchers } from './location';
 
 export interface FrameVectorSourceOptions {}
 
-export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSource<T> {
+export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSource<Feature<T>> {
   constructor(public location: LocationFieldMatchers) {
     super({});
   }
@@ -27,7 +27,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
           frame,
           rowIndex: i,
           geometry: info.field.values[i] as T,
-        })
+        }) as Feature<T>
       );
     }
 
@@ -51,7 +51,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
         frame,
         rowIndex: 0,
         geometry: geometry as T,
-      })
+      }) as Feature<T>
     );
 
     // only call this at the end

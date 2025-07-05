@@ -1,4 +1,4 @@
-import { Map as OpenLayersMap } from 'ol';
+import OpenLayersMap from 'ol/Map';
 
 import {
   MapLayerRegistryItem,
@@ -27,18 +27,18 @@ export const defaultBaseLayer: MapLayerRegistryItem = {
   name: 'Default base layer',
   isBaseMap: true,
 
-  create: (map: OpenLayersMap, options: MapLayerOptions, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: (map: any, options: MapLayerOptions, eventBus: EventBus, theme: GrafanaTheme2) => {
     const serverLayerType = config?.geomapDefaultBaseLayerConfig?.type;
     if (serverLayerType) {
       const layer = geomapLayerRegistry.getIfExists(serverLayerType);
       if (!layer) {
         throw new Error('Invalid basemap configuration on server');
       }
-      return layer.create(map, config.geomapDefaultBaseLayerConfig!, eventBus, theme);
+      return layer.create(map as any, config.geomapDefaultBaseLayerConfig!, eventBus, theme);
     }
 
     // For now use carto as our default basemap
-    return carto.create(map, options, eventBus, theme);
+    return carto.create(map as any, options, eventBus, theme);
   },
 };
 

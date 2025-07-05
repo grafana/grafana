@@ -1,5 +1,5 @@
-import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
 import LayerGroup from 'ol/layer/Group';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import { Subject } from 'rxjs';
@@ -120,7 +120,7 @@ export async function initLayer(
     options.config.attribution = textUtil.sanitizeTextPanelContent(options.config.attribution);
   }
 
-  const handler = await item.create(map, options, panel.props.eventBus, config.theme2);
+  const handler = await item.create(map as any, options, panel.props.eventBus, config.theme2);
   const layer = handler.init(); // eslint-disable-line
   if (options.opacity != null) {
     layer.setOpacity(options.opacity);
@@ -135,7 +135,7 @@ export async function initLayer(
     // UID, // unique name when added to the map (it may change and will need special handling)
     isBasemap,
     options,
-    layer,
+    layer: layer as any,
     handler,
     mouseEvents: new Subject<FeatureLike | undefined>(),
 
@@ -153,10 +153,10 @@ export async function initLayer(
 
   // Pass state into WebGLPointsLayers contained in a LayerGroup
   if (layer instanceof LayerGroup) {
-    layer
+    (layer as any)
       .getLayers()
       .getArray()
-      .forEach((layer) => {
+      .forEach((layer: any) => {
         if (layer instanceof WebGLPointsLayer) {
           // eslint-disable-next-line
           (layer as any).__state = state;

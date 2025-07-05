@@ -1,6 +1,5 @@
 import { isNumber } from 'lodash';
 import Feature, { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -84,7 +83,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: Map, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: any, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -102,7 +101,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       const styleBase = routeStyle(style.base);
       if (style.config.size && style.config.size.fixed) {
         // Applies width to base style if specified
-        styleBase.getStroke().setWidth(style.config.size.fixed);
+        styleBase.getStroke()?.setWidth(style.config.size.fixed);
       }
       vectorLayer.setStyle(styleBase);
     } else {

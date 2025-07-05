@@ -1,6 +1,5 @@
 import { isNumber } from 'lodash';
-import { Feature } from 'ol';
-import { FeatureLike } from 'ol/Feature';
+import Feature, { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
 import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
@@ -79,7 +78,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
    * @param eventBus
    * @param theme
    */
-  create: async (map: Map, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: any, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -92,7 +91,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const source = new FrameVectorSource(location);
 
     const vectorLayer = new VectorImage({
-      source,
+      source: source as any,
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 
@@ -346,7 +345,7 @@ function updateEdge(source: FrameVectorSource, graphFrames: GraphFrame) {
       geometry: geometryEdge,
     });
     edgeFeature.setId(i);
-    source['addFeatureInternal'](edgeFeature); // @TODO revisit?
+    source['addFeatureInternal'](edgeFeature as any); // @TODO revisit?
   }
 
   // Nodes
@@ -356,7 +355,7 @@ function updateEdge(source: FrameVectorSource, graphFrames: GraphFrame) {
         frameNodes,
         rowIndex: i,
         geometry: info.field.values[i],
-      })
+      }) as any
     );
   }
 
