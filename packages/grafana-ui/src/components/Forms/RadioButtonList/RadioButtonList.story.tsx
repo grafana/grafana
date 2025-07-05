@@ -17,7 +17,7 @@ const defaultOptions: Array<SelectableValue<string>> = [
 ];
 
 const meta: Meta<typeof RadioButtonList> = {
-  title: 'Forms/RadioButtonList',
+  title: 'Inputs/RadioButtonList',
   component: RadioButtonList,
   parameters: {
     controls: {

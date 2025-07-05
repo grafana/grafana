@@ -7,7 +7,7 @@ import { ValuePicker } from './ValuePicker';
 import mdx from './ValuePicker.mdx';
 
 const meta: Meta<typeof ValuePicker> = {
-  title: 'Pickers and Editors/ValuePicker',
+  title: 'Pickers/ValuePicker',
   component: ValuePicker,
   parameters: {
     docs: {

@@ -4,7 +4,7 @@ import { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholde
 import mdx from './LoadingPlaceholder.mdx';
 
 const meta: Meta<typeof LoadingPlaceholder> = {
-  title: 'General/LoadingPlaceholder',
+  title: 'Information/LoadingPlaceholder',
   component: LoadingPlaceholder,
   parameters: {
     docs: {

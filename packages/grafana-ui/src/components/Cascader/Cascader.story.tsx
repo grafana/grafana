@@ -31,7 +31,7 @@ const options = [
 ];
 
 const meta: Meta<typeof Cascader> = {
-  title: 'Forms/Cascader',
+  title: 'Inputs/Cascader',
   component: Cascader,
   parameters: {
     docs: {

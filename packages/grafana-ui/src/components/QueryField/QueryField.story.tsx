@@ -5,7 +5,7 @@ import { TypeaheadInput } from '../../types/completion';
 import { QueryField, QueryFieldProps } from './QueryField';
 
 const meta: Meta<typeof QueryField> = {
-  title: 'Data Source/QueryField',
+  title: 'Inputs/Deprecated/QueryField',
   component: QueryField,
   parameters: {
     controls: {

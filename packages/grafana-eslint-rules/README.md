@@ -113,3 +113,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
 ### `theme-token-usage`
 
 Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!
+
+### `consistent-story-titles`
+
+Enforce consistent Storybook titles in `.story.tsx` files.
+
+Storybook titles should not contain more than one `/` for sections (resulting in maximum 2 parts), unless one of the sections is 'Deprecated'. This helps maintain a clean and organized Storybook structure.
+
+#### Examples
+
+```tsx
+// Bad ❌
+export default { title: 'Components/Forms/Button' };
+
+// Good ✅
+export default { title: 'Components/Button' };
+
+// Good ✅ - Deprecated allows any number of sections
+export default { title: 'Components/Deprecated/Forms/Button/Extra' };
+
+// Good ✅ - Variable assignment pattern
+const storyConfig = { title: 'Components/Button' };
+export default storyConfig;
+
+// Bad ❌ - Variable assignment with too many sections
+const storyConfig = { title: 'Components/Forms/Button' };
+export default storyConfig;
+```
