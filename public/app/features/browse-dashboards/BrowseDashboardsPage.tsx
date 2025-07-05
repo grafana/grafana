@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
 import { memo, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -12,6 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { useDispatch } from 'app/types';
 
+import { useGetFolderQueryFacade } from '../../api/clients/folder/v1beta1';
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { contextSrv } from '../../core/services/context_srv';
 import { ManagerKind } from '../apiserver/types';
@@ -19,7 +19,7 @@ import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
+import { useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
@@ -68,7 +68,7 @@ const BrowseDashboardsPage = memo(() => {
     }
   }, [isSearching, searchState.result, stateManager]);
 
-  const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
+  const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const [saveFolder] = useSaveFolderMutation();
   const navModel = useMemo(() => {
     if (!folderDTO) {
@@ -88,7 +88,7 @@ const BrowseDashboardsPage = memo(() => {
   const hasSelection = useHasSelection();
 
   // Fetch the root (aka general) folder if we're not in a specific folder
-  const { data: rootFolderDTO } = useGetFolderQuery(folderDTO ? skipToken : 'general');
+  const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   const folder = folderDTO ?? rootFolderDTO;
 
   const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
