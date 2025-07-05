@@ -86,8 +86,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     let hasVector = hasText;
 
     const layers = new LayerGroup({
-      // If text and no symbol, only show text - fall back on default symbol
-      layers: hasVector && symbol ? [symbolLayer, vectorLayer] : hasVector && !symbol ? [vectorLayer] : [symbolLayer],
+      layers: hasVector ? (symbol ? [symbolLayer, vectorLayer] : [vectorLayer]) : [symbolLayer],
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
@@ -175,7 +174,11 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               processedMarkers.add(markerKey);
             }
 
-            if (!isLineString) {
+            // Set style to be used by LineString
+            if (isLineString) {
+              const lineStringStyle = style.maker(values);
+              feature.setStyle(lineStringStyle);
+            } else {
               const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
               const colorValues = getRGBValues(colorString);
 
@@ -198,12 +201,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               const textStyle = textMarker(values);
               feature.setStyle(textStyle);
             }
-
-            // Set style to be used by LineString
-            if (isLineString) {
-              const lineStringStyle = style.maker(values);
-              feature.setStyle(lineStringStyle);
-            }
           });
 
           // Update hasVector state after processing all features
@@ -212,10 +209,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           // Update layer visibility based on current hasVector state
           const layersArray = layers.getLayers();
           layersArray.clear();
-          if (hasVector && symbol) {
-            layersArray.extend([symbolLayer, vectorLayer]);
-          } else if (hasVector && !symbol) {
-            layersArray.extend([vectorLayer]);
+          if (hasVector) {
+            layersArray.extend(symbol ? [symbolLayer, vectorLayer] : [vectorLayer]);
           } else {
             layersArray.extend([symbolLayer]);
           }
