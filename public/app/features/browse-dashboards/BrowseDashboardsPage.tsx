@@ -25,12 +25,13 @@ import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
+import { ProvisionedFolderPreviewBanner } from './components/ProvisionedFolderPreviewBanner';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
 import { setAllSelection, useHasSelection } from './state';
 
 // New Browse/Manage/Search Dashboards views for nested folders
-const BrowseDashboardsPage = memo(() => {
+const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
   const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
@@ -158,6 +159,7 @@ const BrowseDashboardsPage = memo(() => {
       }
     >
       <Page.Contents className={styles.pageContents}>
+        <ProvisionedFolderPreviewBanner queryParams={queryParams} />
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
