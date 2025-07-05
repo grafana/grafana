@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/codes"
@@ -627,6 +628,40 @@ func (s *Service) buildSnapshot(
 
 	s.log.Debug(fmt.Sprintf("buildSnapshot: finished snapshot in %d ms", time.Since(start).Milliseconds()))
 
+	// Hack
+	if s.cfg.CloudMigration.StoreSnapshotInDB {
+		s.log.Debug("buildSnapshot: storing snapshot in db")
+		fileDataBytes := make([]byte, 0)
+		snapshotFiles := make([]snapshotFile, 0)
+		fileInfos, err := os.ReadDir(snapshotMeta.LocalDir)
+		if err != nil {
+			s.log.Error("reading snapshot directory", "err", err)
+			goto giveup
+		}
+		for _, fileInfo := range fileInfos {
+			fileBytes, err := os.ReadFile(filepath.Join(snapshotMeta.LocalDir, fileInfo.Name()))
+			if err != nil {
+				s.log.Error("reading snapshot file", "err", err)
+				goto giveup
+			}
+			snapshotFiles = append(snapshotFiles, snapshotFile{
+				Name: fileInfo.Name(),
+				Data: fileBytes,
+			})
+		}
+		for i, file := range snapshotFiles {
+			fileDataBytes = append(fileDataBytes, fmt.Sprintf("%s@@@%s\n", file.Name, file.Data)...)
+			if i != len(snapshotFiles)-1 {
+				fileDataBytes = append(fileDataBytes, []byte("###")...)
+			}
+		}
+		if err := s.store.StoreSnapshotBlob(ctx, snapshotMeta.SessionUID, snapshotMeta.UID, fileDataBytes); err != nil {
+			s.log.Error("storing snapshot in db", "err", err)
+			goto giveup
+		}
+	giveup:
+	}
+
 	// update snapshot status to pending upload with retries
 	if err := s.updateSnapshotWithRetries(ctx, cloudmigration.UpdateSnapshotCmd{
 		UID:                    snapshotMeta.UID,
@@ -638,6 +673,11 @@ func (s *Service) buildSnapshot(
 	}
 
 	return nil
+}
+
+type snapshotFile struct {
+	Name string
+	Data []byte
 }
 
 // asynchronous process for and updating the snapshot status
@@ -653,6 +693,34 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	defer func() {
 		s.log.Debug(fmt.Sprintf("uploadSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
+
+	// Hack
+	if s.cfg.CloudMigration.StoreSnapshotInDB {
+		s.log.Debug("uploadSnapshot: retrieving snapshot from db")
+		snapshotData, err := s.store.RetrieveSnapshotBlob(ctx, snapshotMeta.SessionUID, snapshotMeta.UID)
+		snapshotFiles := make([]snapshotFile, 0)
+		lines := strings.Split(string(snapshotData), "###")
+		if err != nil {
+			s.log.Error("retrieving snapshot from db", "err", err)
+			goto giveup
+		}
+		for _, line := range lines {
+			parts := strings.Split(line, "@@@")
+			snapshotFiles = append(snapshotFiles, snapshotFile{
+				Name: parts[0],
+				Data: []byte(parts[1]),
+			})
+		}
+		for _, file := range snapshotFiles {
+			os.MkdirAll(snapshotMeta.LocalDir, 0755)
+			filePath := filepath.Join(snapshotMeta.LocalDir, file.Name)
+			if err := os.WriteFile(filePath, file.Data, 0644); err != nil {
+				s.log.Error("writing snapshot file", "err", err)
+				goto giveup
+			}
+		}
+	giveup:
+	}
 
 	indexFilePath := filepath.Join(snapshotMeta.LocalDir, "index.json")
 	// LocalDir can be set in the configuration, therefore the file path can be set to any path.
