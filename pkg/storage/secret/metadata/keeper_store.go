@@ -21,8 +21,8 @@ import (
 type keeperMetadataStorage struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
-	tracer  trace.Tracer
 	metrics *metrics.StorageMetrics
+	tracer  trace.Tracer
 }
 
 var _ contracts.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
@@ -41,8 +41,8 @@ func ProvideKeeperMetadataStorage(
 	return &keeperMetadataStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
-		tracer:  tracer,
 		metrics: metrics.NewStorageMetrics(reg),
+		tracer:  tracer,
 	}, nil
 }
 
