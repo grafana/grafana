@@ -17,7 +17,7 @@
     "codeowners-manifest:generate": "node ./scripts/codeowners-manifest/generate.js",
     "codeowners-manifest:metadata": "node ./scripts/codeowners-manifest/metadata.js",
     "codeowners-manifest:raw": "node ./scripts/codeowners-manifest/raw.js",
-    "dev:rspack": "NODE_OPTIONS=--experimental-transform-types rspack serve -c ./scripts/rspack/rspack.config.ts --env development",
+    "dev:rspack": "NODE_OPTIONS=--experimental-transform-types rspack dev -c ./scripts/rspack/rspack.config.ts --env development",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:old-arch": "./e2e/start-and-run-suite old-arch",

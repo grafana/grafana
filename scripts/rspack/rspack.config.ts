@@ -1,4 +1,5 @@
 import type { Configuration } from '@rspack/core';
+import { resolve } from 'node:path';
 
 import {
   devServer,
@@ -24,6 +25,7 @@ export default function (env: Record<string, unknown> = {}): Configuration {
 
   const config: Configuration = {
     amd: {},
+    context: resolve(import.meta.dirname, '../..'),
     cache: true,
     entry: entries,
     experiments,
@@ -55,7 +57,7 @@ export default function (env: Record<string, unknown> = {}): Configuration {
   };
 
   if (env.development) {
-    config.devServer = devServer;
+    config.devServer = devServer(Boolean(env.development));
   }
 
   return config;
