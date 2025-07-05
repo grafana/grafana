@@ -13,6 +13,7 @@ import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
+import { DrilldownAlertBox } from './DrilldownAlertBox';
 import { ExploreActions } from './ExploreActions';
 import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
@@ -51,6 +52,10 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
   const correlationDetails = useSelector(selectCorrelationDetails);
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
+  
+  // In split view, show DrilldownAlertBox once above both panes (regardless of compact mode)
+  const shouldShowTopLevelAlert = hasSplit && panes.length > 0;
+  const firstPaneDatasourceType = panes[0]?.[1]?.datasourceInstance?.type;
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -73,6 +78,9 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
       </h1>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
+      {shouldShowTopLevelAlert && firstPaneDatasourceType && (
+        <DrilldownAlertBox datasourceType={firstPaneDatasourceType} />
+      )}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}

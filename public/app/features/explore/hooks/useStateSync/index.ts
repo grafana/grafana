@@ -4,6 +4,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { addListener, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
+import { setCompactModeAction } from '../../state/main';
 import { selectPanes } from '../../state/selectors';
 
 import { parseURL } from './parseURL';
@@ -82,4 +83,10 @@ export function useStateSync(params: ExploreQueryParams) {
       syncFromURL(urlState, panesStateRef.current, dispatch);
     }
   }, [dispatch, orgId, location, params, warning]);
+
+  // Check for compact mode parameter and set it
+  useEffect(() => {
+    const isCompact = params.compact === 'true' || params.compact === '1' || params.compact === true;
+    dispatch(setCompactModeAction({ compactMode: isCompact }));
+  }, [params, dispatch]);
 }

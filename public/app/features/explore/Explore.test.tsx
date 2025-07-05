@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 
 import {
   CoreApp,
@@ -13,13 +15,14 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { usePluginLinks } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
+import { configureStore as appConfigureStore } from 'app/store/configureStore';
 
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { Explore, Props } from './Explore';
 import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
 import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
+import { exploreReducer } from './state/main';
 
 const resizeWindow = (x: number, y: number) => {
   global.innerWidth = x;
@@ -108,6 +111,7 @@ const dummyProps: Props = {
     dsToExplore: [],
   },
   changeDatasource: jest.fn(),
+  compactMode: false,
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -140,7 +144,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
 const usePluginLinksMock = jest.mocked(usePluginLinks);
 
 const setup = (overrideProps?: Partial<Props>) => {
-  const store = configureStore({
+  const store = appConfigureStore({
     explore: {
       ...initialExploreState,
       panes: {
@@ -237,5 +241,74 @@ describe('Explore', () => {
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();
     });
+  });
+});
+
+describe('Explore Compact Mode', () => {
+  it('should hide DrilldownAlertBox in compact mode when split view is active', () => {
+    const leftPaneState = makeExplorePaneState();
+    leftPaneState.datasourceInstance = { type: 'prometheus' } as any;
+    leftPaneState.initialized = true;
+    
+    const rightPaneState = makeExplorePaneState();
+    rightPaneState.datasourceInstance = { type: 'prometheus' } as any;
+    rightPaneState.initialized = true;
+
+    const storeWithSplitView = configureStore({
+      reducer: {
+        explore: exploreReducer,
+        user: (state = { orgId: 1, timeZone: 'utc' }) => state,
+      },
+      preloadedState: {
+        explore: {
+          ...initialExploreState,
+          panes: {
+            'left-pane': leftPaneState,
+            'right-pane': rightPaneState,
+          },
+          compactMode: true,
+        },
+      },
+    });
+
+    render(
+      <Provider store={storeWithSplitView}>
+        <Explore {...dummyProps} exploreId="left-pane" />
+      </Provider>
+    );
+
+    // In compact mode with split view, DrilldownAlertBox should not be rendered
+    expect(screen.queryByText('Explore Metrics, Logs, Traces and Profiles have moved!')).not.toBeInTheDocument();
+  });
+
+  it('should show DrilldownAlertBox when not in compact mode', () => {
+    const testPaneState = makeExplorePaneState();
+    testPaneState.datasourceInstance = { type: 'prometheus' } as any;
+    testPaneState.initialized = true;
+
+    const storeWithoutCompact = configureStore({
+      reducer: {
+        explore: exploreReducer,
+        user: (state = { orgId: 1, timeZone: 'utc' }) => state,
+      },
+      preloadedState: {
+        explore: {
+          ...initialExploreState,
+          panes: {
+            'test-pane': testPaneState,
+          },
+          compactMode: false,
+        },
+      },
+    });
+
+    render(
+      <Provider store={storeWithoutCompact}>
+        <Explore {...dummyProps} />
+      </Provider>
+    );
+
+    // Without compact mode, DrilldownAlertBox should be rendered
+    expect(screen.getByText('Explore Metrics, Logs, Traces and Profiles have moved!')).toBeInTheDocument();
   });
 });
