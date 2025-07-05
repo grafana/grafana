@@ -677,6 +677,9 @@ type Cfg struct {
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
+
+	// Frontend
+	FrontendDevServerEnabled bool
 }
 
 type UnifiedStorageConfig struct {
@@ -1551,6 +1554,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
+
+	// Frontend dev server
+	cfg.FrontendDevServerEnabled = cfg.Raw.Section("frontend_dev").Key("server").MustBool(false)
 
 	return nil
 }
