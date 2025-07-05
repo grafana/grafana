@@ -26,6 +26,10 @@ export {
   type ConvertFieldTypeTransformerOptions,
   convertFieldType,
 } from '../transformations/transformers/convertFieldType';
+export {
+  type FieldNameMappingTransformerOptions,
+  fieldNameMappingTransformer,
+} from '../transformations/transformers/fieldNameMapping';
 export { type FilterFieldsByNameTransformerOptions } from '../transformations/transformers/filterByName';
 export { type FilterFramesByRefIdTransformerOptions } from '../transformations/transformers/filterByRefId';
 export { FormatStringOutput, type FormatStringTransformerOptions } from '../transformations/transformers/formatString';
