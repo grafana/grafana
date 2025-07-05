@@ -2,7 +2,7 @@ import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions, TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
+import { SearchProps, SplitOpenOptions, TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -59,6 +59,15 @@ export interface SetPaneStateActionPayload {
 export const setPaneState = createAction<SetPaneStateActionPayload>('explore/setPaneState');
 
 export const clearPanes = createAction('explore/clearPanes');
+
+/**
+ * Sets the span filters for a specific Explore pane.
+ * This is used to filter spans in the Trace View based.
+ */
+export const setSpanFilters = createAction<{
+  exploreId: string;
+  spanFilters: SearchProps;
+}>('explore/setSpanFilters');
 
 /**
  * Creates a new Explore pane.
@@ -317,6 +326,25 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         queryEditorDirty: Boolean(queryEditorDirty ?? state.correlationEditorDetails?.queryEditorDirty),
         isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
         postConfirmAction,
+      },
+    };
+  }
+
+  if (setSpanFilters.match(action)) {
+    const { exploreId, spanFilters } = action.payload;
+
+    if (exploreId === undefined || !state.panes[exploreId]) {
+      console.warn('setSpanFilters action dispatched without a valid exploreId');
+      return state;
+    }
+    return {
+      ...state,
+      panes: {
+        ...state.panes,
+        [exploreId]: {
+          ...state.panes[exploreId],
+          spanFilters: spanFilters ?? state.panes[exploreId].spanFilters,
+        },
       },
     };
   }

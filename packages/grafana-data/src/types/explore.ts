@@ -18,12 +18,38 @@ export type URLRange = {
   to: URLRangeValue;
 };
 
+/**
+ * @internal
+ */
+export interface SearchProps {
+  serviceName?: string;
+  serviceNameOperator: string;
+  spanName?: string;
+  spanNameOperator: string;
+  from?: string;
+  fromOperator: string;
+  to?: string;
+  toOperator: string;
+  tags: Tag[];
+  query?: string;
+  matchesOnly: boolean;
+  criticalPathOnly: boolean;
+}
+
+export interface Tag {
+  id: string;
+  key?: string;
+  operator: string;
+  value?: string;
+}
+
 /** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   datasource: string | null;
   queries: T[];
   range: URLRange;
   panelsState?: ExplorePanelsState;
+  spanFilters?: SearchProps;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {

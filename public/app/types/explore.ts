@@ -18,6 +18,7 @@ import {
   UrlQueryMap,
   ExploreCorrelationHelperData,
   DataLinkTransformationConfig,
+  SearchProps,
 } from '@grafana/data';
 import { CorrelationData } from '@grafana/runtime';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
@@ -229,6 +230,10 @@ export interface ExploreItemState {
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 
   correlations?: CorrelationData[];
+  /**
+   * span filters that can be found in the Trace View
+   */
+  spanFilters: SearchProps;
 }
 
 export interface ExploreUpdateState {
