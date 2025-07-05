@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	ngalertapi "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -87,6 +88,26 @@ func (s *Service) getContactPoints(ctx context.Context, signedInUser *user.Signe
 	embeddedContactPoints, err := s.ngAlert.Api.ContactPointService.GetContactPoints(ctx, query, signedInUser)
 	if err != nil {
 		return nil, fmt.Errorf("fetching ngalert contact points: %w", err)
+	}
+
+	// Warn about potentially misconfigured contact points.
+	// If a contact point has no integrations, it can still be referenced in a notification policy.
+	// But the contact point service filters out contact points without integrations when listing them.
+	// This means that if a contact point without integrations is used in a notification policy,
+	// the migration will fail because the contact point cannot be found.
+	receiverQuery := models.GetReceiversQuery{OrgID: signedInUser.GetOrgID()}
+	receivers, err := s.ngAlert.Api.ReceiverService.GetReceivers(ctx, receiverQuery, signedInUser)
+	if err != nil {
+		return nil, fmt.Errorf("fetching ngalert contact point receivers: %w", err)
+	}
+	for _, receiver := range receivers {
+		if len(receiver.Integrations) == 0 {
+			s.log.Warn(
+				"Found contact point without integrations which cannot be migrated. If it is used in a notification policy, remove it from there before migration else it will fail.",
+				"contact_point_name", receiver.Name,
+				"contact_point_uid", receiver.UID,
+			)
+		}
 	}
 
 	contactPoints := make([]contactPoint, 0, len(embeddedContactPoints))
