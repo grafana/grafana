@@ -1,4 +1,4 @@
-package historian
+package lokiclient
 
 import (
 	"bytes"
@@ -13,99 +13,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
-
-func TestLokiConfig(t *testing.T) {
-	t.Run("test URL options", func(t *testing.T) {
-		type testCase struct {
-			name     string
-			in       setting.UnifiedAlertingStateHistorySettings
-			expRead  string
-			expWrite string
-			expErr   string
-		}
-
-		cases := []testCase{
-			{
-				name: "remote url only",
-				in: setting.UnifiedAlertingStateHistorySettings{
-					LokiRemoteURL: "http://url.com",
-				},
-				expRead:  "http://url.com",
-				expWrite: "http://url.com",
-			},
-			{
-				name: "separate urls",
-				in: setting.UnifiedAlertingStateHistorySettings{
-					LokiReadURL:  "http://read.url.com",
-					LokiWriteURL: "http://write.url.com",
-				},
-				expRead:  "http://read.url.com",
-				expWrite: "http://write.url.com",
-			},
-			{
-				name: "single fallback",
-				in: setting.UnifiedAlertingStateHistorySettings{
-					LokiRemoteURL: "http://url.com",
-					LokiReadURL:   "http://read.url.com",
-				},
-				expRead:  "http://read.url.com",
-				expWrite: "http://url.com",
-			},
-			{
-				name: "missing read",
-				in: setting.UnifiedAlertingStateHistorySettings{
-					LokiWriteURL: "http://url.com",
-				},
-				expErr: "either read path URL or remote",
-			},
-			{
-				name: "missing write",
-				in: setting.UnifiedAlertingStateHistorySettings{
-					LokiReadURL: "http://url.com",
-				},
-				expErr: "either write path URL or remote",
-			},
-			{
-				name: "invalid",
-				in: setting.UnifiedAlertingStateHistorySettings{
-					LokiRemoteURL: "://://",
-				},
-				expErr: "failed to parse",
-			},
-		}
-
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				res, err := NewLokiConfig(tc.in)
-				if tc.expErr != "" {
-					require.ErrorContains(t, err, tc.expErr)
-				} else {
-					require.Equal(t, tc.expRead, res.ReadPathURL.String())
-					require.Equal(t, tc.expWrite, res.WritePathURL.String())
-				}
-			})
-		}
-	})
-
-	t.Run("captures external labels", func(t *testing.T) {
-		set := setting.UnifiedAlertingStateHistorySettings{
-			LokiRemoteURL:  "http://url.com",
-			ExternalLabels: map[string]string{"a": "b"},
-		}
-
-		res, err := NewLokiConfig(set)
-
-		require.NoError(t, err)
-		require.Contains(t, res.ExternalLabels, "a")
-	})
-}
 
 func TestLokiHTTPClient(t *testing.T) {
 	t.Run("push formats expected data", func(t *testing.T) {
@@ -127,8 +40,8 @@ func TestLokiHTTPClient(t *testing.T) {
 		err := client.Push(context.Background(), data)
 
 		require.NoError(t, err)
-		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
-		sent := reqBody(t, req.lastRequest)
+		require.Contains(t, "/loki/api/v1/push", req.LastRequest.URL.Path)
+		sent := reqBody(t, req.LastRequest)
 		exp := fmt.Sprintf(`{"streams": [{"stream": {}, "values": [["%d", "some line"]]}]}`, now.UnixNano())
 		require.JSONEq(t, exp, sent)
 	})
@@ -149,7 +62,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			_, err := client.RangeQuery(context.Background(), q, now-100, now, 1100)
 
 			require.NoError(t, err)
-			params := req.lastRequest.URL.Query()
+			params := req.LastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(1100), params.Get("limit"))
 		})
@@ -169,7 +82,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			_, err := client.RangeQuery(context.Background(), q, now-100, now, 0)
 
 			require.NoError(t, err)
-			params := req.lastRequest.URL.Query()
+			params := req.LastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(defaultPageSize), params.Get("limit"))
 		})
@@ -189,7 +102,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			_, err := client.RangeQuery(context.Background(), q, now-100, now, -100)
 
 			require.NoError(t, err)
-			params := req.lastRequest.URL.Query()
+			params := req.LastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(defaultPageSize), params.Get("limit"))
 		})
@@ -209,7 +122,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			_, err := client.RangeQuery(context.Background(), q, now-100, now, maximumPageSize+1000)
 
 			require.NoError(t, err)
-			params := req.lastRequest.URL.Query()
+			params := req.LastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(maximumPageSize), params.Get("limit"))
 		})

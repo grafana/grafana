@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
@@ -682,7 +683,7 @@ func configureHistorianBackend(
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
-		req := historian.NewRequester()
+		req := lokiclient.NewRequester()
 		logCtx := log.WithContextualAttributes(ctx, []any{"backend", "loki"})
 		lokiBackendLogger := log.New("ngalert.state.historian").FromContext(logCtx)
 		backend := historian.NewRemoteLokiBackend(lokiBackendLogger, lcfg, req, met, tracer, rs, ac)
