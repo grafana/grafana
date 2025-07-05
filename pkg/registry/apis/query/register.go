@@ -47,6 +47,7 @@ type QueryAPIBuilder struct {
 	metrics        *metrics.ExprMetrics
 	parser         *queryParser
 	clientSupplier clientapi.DataSourceClientSupplier
+	connections    DataSourceConnectionProvider
 	registry       query.DataSourceApiServerRegistry
 	converter      *expr.ResultConverter
 	queryTypes     *query.QueryTypeDefinitionList
@@ -56,6 +57,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	clientSupplier clientapi.DataSourceClientSupplier,
 	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
+	connections DataSourceConnectionProvider,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
@@ -88,6 +90,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,
+		connections:          connections,
 		converter: &expr.ResultConverter{
 			Features: features,
 			Tracer:   tracer,
@@ -132,7 +135,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 		},
 		ar,
 		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
-		legacy, registerer, tracer,
+		&connectionsProvider{dsService: dataSourcesService}, legacy, registerer, tracer,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err
@@ -146,6 +149,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&query.DataSourceApiServer{},
 		&query.DataSourceApiServerList{},
+		&query.DataSourceConnection{},
+		&query.DataSourceConnectionList{},
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
 		&query.QueryTypeDefinition{},
@@ -167,6 +172,12 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	gv := query.SchemeGroupVersion
 
 	storage := map[string]rest.Storage{}
+
+	// Get a list of all datasource instances
+	// Eventually this would be backed either by search or reconciler pattern
+	storage[query.ConnectionResourceInfo.StoragePath()] = &connectionAccess{
+		connections: b.connections,
+	}
 
 	plugins := newPluginsStorage(b.registry)
 	storage[plugins.resourceInfo.StoragePath()] = plugins

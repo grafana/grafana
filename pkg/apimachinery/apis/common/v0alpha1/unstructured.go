@@ -35,6 +35,10 @@ func (u Unstructured) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	}
 }
 
+func (u *Unstructured) IsZero() bool {
+	return len(u.Object) == 0
+}
+
 func (u *Unstructured) UnstructuredContent() map[string]interface{} {
 	if u.Object == nil {
 		return make(map[string]interface{})

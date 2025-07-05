@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
 func TestExposedSecureValue(t *testing.T) {
