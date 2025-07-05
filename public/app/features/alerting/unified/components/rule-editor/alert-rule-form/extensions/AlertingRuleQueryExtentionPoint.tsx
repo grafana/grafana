@@ -5,8 +5,8 @@ import { Trans, t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 
-import { RuleFormValues } from '../../../types/rule-form';
 import { ConfirmNavigationModal } from './ConfirmationNavigationModal';
 
 type Props = {
@@ -44,6 +44,7 @@ export function AlertingRuleQueryExtentionPoint({
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const cleanedValues = cleanRuleFormValues(ruleFormValues);
+
   const context: PluginExtensionAlertingRuleContext = {
     targets: [query],
     ruleFormValues: cleanedValues,
