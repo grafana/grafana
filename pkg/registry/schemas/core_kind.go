@@ -39,6 +39,15 @@ func GetCoreKinds() ([]CoreKind, error) {
 		CueFile: dashboardCue,
 	})
 
+	datasourceCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/datasource/datasource_kind.cue"))
+	if err != nil {
+		return nil, err
+	}
+	kinds = append(kinds, CoreKind{
+		Name:    "datasource",
+		CueFile: datasourceCue,
+	})
+
 	librarypanelCue, err := loadCueFile(ctx, filepath.Join(root, "./kinds/librarypanel/librarypanel_kind.cue"))
 	if err != nil {
 		return nil, err
