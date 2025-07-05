@@ -2,6 +2,8 @@
 import { lowerCase } from 'lodash';
 import moment from 'moment-timezone';
 
+import { parseFormat } from '@grafana/i18n';
+
 import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { systemDateFormats } from './formats';
@@ -52,6 +54,14 @@ export const dateTimeParse: DateTimeParser<DateTimeOptionsWhenParsing> = (value,
   return parseOthers(value, options);
 };
 
+// @ts-expect-error there's no type error here, i just need this to fail CI so it doesn't accidentally get pushed.
+// TODO consume the feature toggle in a reasonable way
+const localeFormatPreferenceEnabled = window.grafanaBootData?.settings.featureToggles.localeFormatPreference ?? false;
+
+function firstDefined<T>(items: Array<T | undefined>): T | undefined {
+  return items.find((item) => item !== undefined);
+}
+
 const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateTime => {
   if (value.indexOf('now') !== -1) {
     if (!isValid(value)) {
@@ -63,7 +73,16 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
   }
 
   let timeZone = getTimeZone(options);
-  let format = options?.format ?? systemDateFormats.fullDate;
+  let format = firstDefined([
+    localeFormatPreferenceEnabled
+      ? parseFormat({
+          dateStyle: 'short',
+          timeStyle: 'medium',
+        })
+      : undefined,
+    options?.format,
+    systemDateFormats.fullDate,
+  ]);
   if (value.endsWith('Z')) {
     // This is a special case when we have an ISO date string
     // In this case we want to force the format to be ISO and the timeZone to be UTC
