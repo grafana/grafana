@@ -15,7 +15,7 @@ import { NullEditorSettings } from '../timeseries/config';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { defaultFieldConfig, defaultOptions, FieldConfig, Options } from './panelcfg.gen';
+import { defaultFieldConfig, defaultOptions, FieldConfig, Options, StateTimelineLegendValues } from './panelcfg.gen';
 import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
@@ -155,6 +155,22 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
+
+    builder.addMultiSelect({
+      path: 'legend.values',
+      name: 'Legend values',
+      description: 'Select values to show in the legend',
+      category: ['Legend'],
+      settings: {
+        options: [
+          { value: StateTimelineLegendValues.Duration, label: 'Duration' },
+          { value: StateTimelineLegendValues.Percentage, label: 'Percentage' },
+          { value: StateTimelineLegendValues.Occurrences, label: 'Occurrences' },
+        ],
+      },
+      showIf: (c) => c.legend.showLegend !== false,
+    });
+
     commonOptionsBuilder.addTooltipOptions(builder);
   })
   .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier())
