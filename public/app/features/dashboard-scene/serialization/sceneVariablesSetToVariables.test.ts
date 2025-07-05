@@ -45,8 +45,8 @@ const getDataSourceMock = jest.fn();
 
 const fakeDsMock: DataSourceApi = {
   name: 'fake-std',
-  type: 'fake-std',
-  getRef: () => ({ type: 'fake-std', uid: 'fake-std' }),
+  type: 'fake-type',
+  getRef: () => ({ type: 'fake-type', uid: 'fake-uid' }),
   query: () =>
     Promise.resolve({
       data: [],
@@ -74,7 +74,7 @@ const fakeDsMock: DataSourceApi = {
     toDataQuery: (q) => ({ ...q, refId: 'FakeDataSource-refId' }),
   },
   id: 1,
-  uid: 'fake-std',
+  uid: 'fake-uid',
 };
 
 jest.mock('@grafana/runtime', () => ({
@@ -95,7 +95,7 @@ describe('sceneVariablesSetToVariables', () => {
       description: 'test-desc',
       value: ['selected-value'],
       text: ['selected-value-text'],
-      datasource: { uid: 'fake-std', type: 'fake-std' },
+      datasource: { uid: 'fake-uid', type: 'fake-type' },
       query: 'query',
       includeAll: true,
       allowCustomValue: true,
@@ -123,8 +123,8 @@ describe('sceneVariablesSetToVariables', () => {
         ],
       },
       "datasource": {
-        "type": "fake-std",
-        "uid": "fake-std",
+        "type": "fake-type",
+        "uid": "fake-uid",
       },
       "definition": undefined,
       "description": "test-desc",
@@ -148,7 +148,7 @@ describe('sceneVariablesSetToVariables', () => {
       description: 'test-desc',
       value: ['selected-value'],
       text: ['selected-value-text'],
-      datasource: { uid: 'fake-std', type: 'fake-std' },
+      datasource: { uid: 'fake-uid', type: 'fake-type' },
       query: 'query',
       definition: 'query',
       includeAll: true,
@@ -176,8 +176,8 @@ describe('sceneVariablesSetToVariables', () => {
         ],
       },
       "datasource": {
-        "type": "fake-std",
-        "uid": "fake-std",
+        "type": "fake-type",
+        "uid": "fake-uid",
       },
       "definition": "query",
       "description": "test-desc",
@@ -201,7 +201,7 @@ describe('sceneVariablesSetToVariables', () => {
       description: 'test-desc',
       value: ['selected-value'],
       text: ['selected-value-text'],
-      datasource: { uid: 'fake-std', type: 'fake-std' },
+      datasource: { uid: 'fake-uid', type: 'fake-type' },
       query: 'query',
       options: [
         { label: 'test', value: 'test' },
@@ -228,7 +228,7 @@ describe('sceneVariablesSetToVariables', () => {
       description: 'test-desc',
       value: ['test'],
       text: ['test'],
-      datasource: { uid: 'fake-std', type: 'fake-std' },
+      datasource: { uid: 'fake-uid', type: 'fake-type' },
       query: 'query',
       options: [
         { label: 'test', value: 'test' },
@@ -499,7 +499,7 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       label: 'test-label',
       description: 'test-desc',
-      datasource: { uid: 'fake-std', type: 'fake-std' },
+      datasource: { uid: 'fake-uid', type: 'fake-type' },
       filters: [
         {
           key: 'filterTest',
@@ -533,8 +533,8 @@ describe('sceneVariablesSetToVariables', () => {
         },
       ],
       "datasource": {
-        "type": "fake-std",
-        "uid": "fake-std",
+        "type": "fake-type",
+        "uid": "fake-uid",
       },
       "defaultKeys": undefined,
       "description": "test-desc",
@@ -662,7 +662,7 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       label: 'test-label',
       description: 'test-desc',
-      datasource: { uid: 'fake-std', type: 'fake-std' },
+      datasource: { uid: 'fake-uid', type: 'fake-type' },
       defaultKeys: [
         {
           text: 'some',
@@ -710,8 +710,8 @@ describe('sceneVariablesSetToVariables', () => {
         },
       ],
       "datasource": {
-        "type": "fake-std",
-        "uid": "fake-std",
+        "type": "fake-type",
+        "uid": "fake-uid",
       },
       "defaultKeys": [
         {
@@ -757,7 +757,7 @@ describe('sceneVariablesSetToVariables', () => {
         label: 'test-label',
         description: 'test-desc',
         allowCustomValue: true,
-        datasource: { uid: 'fake-std', type: 'fake-std' },
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultOptions: [
           {
             text: 'Foo',
@@ -784,8 +784,8 @@ describe('sceneVariablesSetToVariables', () => {
           "value": [],
         },
         "datasource": {
-          "type": "fake-std",
-          "uid": "fake-std",
+          "type": "fake-type",
+          "uid": "fake-uid",
         },
         "defaultValue": undefined,
         "description": "test-desc",
@@ -813,7 +813,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
-        datasource: { uid: 'fake-std', type: 'fake-std' },
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultOptions: [
           {
             text: 'Foo',
@@ -841,7 +841,7 @@ describe('sceneVariablesSetToVariables', () => {
         description: 'test-desc',
         value: ['selected-value'],
         text: ['selected-value-text'],
-        datasource: { uid: 'fake-std', type: 'fake-std' },
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
         query: 'query',
         includeAll: true,
         allValue: 'test-all',
@@ -856,44 +856,45 @@ describe('sceneVariablesSetToVariables', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchInlineSnapshot(`
-    {
-      "kind": "QueryVariable",
-      "spec": {
-        "allValue": "test-all",
-        "allowCustomValue": true,
-        "current": {
-          "text": [
-            "selected-value-text",
-          ],
-          "value": [
-            "selected-value",
-          ],
-        },
-        "datasource": {
-          "type": "fake-std",
-          "uid": "fake-std",
-        },
-        "definition": undefined,
-        "description": "test-desc",
-        "hide": "dontHide",
-        "includeAll": true,
-        "label": "test-label",
-        "multi": true,
-        "name": "test",
-        "options": [],
-        "query": {
-          "kind": "fake-std",
+        {
+          "kind": "QueryVariable",
           "spec": {
-            "__legacyStringValue": "query",
+            "allValue": "test-all",
+            "allowCustomValue": true,
+            "current": {
+              "text": [
+                "selected-value-text",
+              ],
+              "value": [
+                "selected-value",
+              ],
+            },
+            "definition": undefined,
+            "description": "test-desc",
+            "hide": "dontHide",
+            "includeAll": true,
+            "label": "test-label",
+            "multi": true,
+            "name": "test",
+            "options": [],
+            "query": {
+              "datasource": {
+                "name": "fake-uid",
+              },
+              "group": "fake-type",
+              "kind": "DataQuery",
+              "spec": {
+                "__legacyStringValue": "query",
+              },
+              "version": "v0",
+            },
+            "refresh": "onDashboardLoad",
+            "regex": "",
+            "skipUrlSync": false,
+            "sort": "disabled",
           },
-        },
-        "refresh": "onDashboardLoad",
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": "disabled",
-      },
-    }
-    `);
+        }
+      `);
     });
 
     it('should handle CustomVariable', () => {
@@ -1152,7 +1153,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
-        datasource: { uid: 'fake-std', type: 'fake-std' },
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
         filters: [
           {
             key: 'filterTest',
@@ -1188,8 +1189,8 @@ describe('sceneVariablesSetToVariables', () => {
           },
         ],
         "datasource": {
-          "type": "fake-std",
-          "uid": "fake-std",
+          "type": "fake-type",
+          "uid": "fake-uid",
         },
         "defaultKeys": [],
         "description": "test-desc",
@@ -1214,7 +1215,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
-        datasource: { uid: 'fake-std', type: 'fake-std' },
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
         defaultKeys: [
           {
             text: 'some',
@@ -1264,8 +1265,8 @@ describe('sceneVariablesSetToVariables', () => {
           },
         ],
         "datasource": {
-          "type": "fake-std",
-          "uid": "fake-std",
+          "type": "fake-type",
+          "uid": "fake-uid",
         },
         "defaultKeys": [
           {
@@ -1312,7 +1313,7 @@ describe('sceneVariablesSetToVariables', () => {
           name: 'test',
           label: 'test-label',
           description: 'test-desc',
-          datasource: { uid: 'fake-std', type: 'fake-std' },
+          datasource: { uid: 'fake-uid', type: 'fake-type' },
           defaultOptions: [
             {
               text: 'Foo',
@@ -1340,8 +1341,8 @@ describe('sceneVariablesSetToVariables', () => {
             "value": [],
           },
           "datasource": {
-            "type": "fake-std",
-            "uid": "fake-std",
+            "type": "fake-type",
+            "uid": "fake-uid",
           },
           "defaultValue": undefined,
           "description": "test-desc",
@@ -1372,7 +1373,7 @@ describe('sceneVariablesSetToVariables', () => {
           name: 'test',
           label: 'test-label',
           description: 'test-desc',
-          datasource: { uid: 'fake-std', type: 'fake-std' },
+          datasource: { uid: 'fake-uid', type: 'fake-type' },
           defaultOptions: [
             {
               text: 'Foo',
