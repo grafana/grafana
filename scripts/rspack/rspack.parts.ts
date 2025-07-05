@@ -3,10 +3,10 @@ import rspack, {
   type Optimization,
   type RuleSetRules,
   type ExperimentCacheOptions,
-  ResolveOptions,
+  type ResolveOptions,
 } from '@rspack/core';
 import type { Configuration as DevServerConfiguration } from '@rspack/dev-server';
-import ReactRefreshPlugin from '@rspack/plugin-react-refresh';
+import { ReactRefreshRspackPlugin } from '@rspack/plugin-react-refresh';
 import AssetsPlugin from 'assets-webpack-plugin';
 import ESLintPlugin from 'eslint-rspack-plugin';
 import { createRequire } from 'node:module';
@@ -41,11 +41,6 @@ export function getAliases(env: Record<string, unknown> = {}) {
     // Packages linked for development need react to be resolved from the same location
     react: resolve('./node_modules/react'),
 
-    // Also Grafana packages need to be resolved from the same location so they share
-    // the same singletons
-    '@grafana/runtime': resolve(import.meta.dirname, '../../packages/grafana-runtime'),
-    '@grafana/data': resolve(import.meta.dirname, '../../packages/grafana-data'),
-
     // This is required to correctly resolve react-router-dom when linking with
     //  local version of @grafana/scenes
     'react-router-dom': resolve('./node_modules/react-router-dom'),
@@ -75,7 +70,7 @@ export function getPlugins(env: Record<string, unknown> = {}) {
       patterns: [
         {
           from: 'public/img',
-          to: 'img',
+          to: 'public/build/img',
         },
       ],
     }),
@@ -85,20 +80,20 @@ export function getPlugins(env: Record<string, unknown> = {}) {
       },
     }),
     new rspack.CssExtractRspackPlugin({
-      filename: 'grafana.[name].[contenthash].css',
+      filename: env.production ? 'grafana.[name].[contenthash].css' : 'grafana.[name].css',
     }),
     new rspack.EnvironmentPlugin(envConfig),
     new AssetsPlugin({
       entrypoints: true,
-      useCompilerPath: true,
+      removeFullPathAutoPrefix: true,
+      path: resolve(import.meta.dirname, '../../public/build'),
       filename: 'assets-manifest.json',
       processOutput: (assets) => {
         const arrayify = (value) => (Array.isArray(value) ? value : [value]);
-        const devServerPath = 'http://localhost:3000';
         const entrypoints = Object.entries(assets).reduce(
           (acc, [key, value]) => {
             const valuesAsArray = Object.entries(value).reduce((acc, [key, value]) => {
-              const devServerAssets = arrayify(value).map((asset) => `${devServerPath}/${asset}`);
+              const devServerAssets = arrayify(value).map((asset) => `${asset}`);
               acc[key] = arrayify(devServerAssets);
               return acc;
             }, {});
@@ -115,13 +110,8 @@ export function getPlugins(env: Record<string, unknown> = {}) {
     }),
   ];
 
-  const productionPlugins = [
-    // new AssetsPlugin({ entrypoints: true, useCompilerPath: true, filename: 'assets-manifest.json' }),
-  ];
-
   const developmentPlugins = [
-    // new ReactRefreshPlugin(),
-    // new rspack.HotModuleReplacementPlugin(),
+    new ReactRefreshRspackPlugin(),
     new TsCheckerRspackPlugin({
       async: true, // don't block webpack emit
       typescript: {
@@ -144,75 +134,56 @@ export function getPlugins(env: Record<string, unknown> = {}) {
     return [...commonPlugins, ...developmentPlugins];
   }
 
-  return [...commonPlugins, ...productionPlugins];
+  return commonPlugins;
 }
 
 export function getExperiments(env: Record<string, unknown> = {}) {
   // This doesn't work reliably right now so disabling.
-  const cache = {
-    cache: {
-      buildDependencies: [import.meta.filename, join(import.meta.dirname, '../../tsconfig.json')],
-      name: env.production ? 'grafana-default-rspack-production' : 'grafana-default-rspack-development',
-      type: 'persistent',
-    } as ExperimentCacheOptions,
+  const cache: ExperimentCacheOptions = {
+    buildDependencies: [import.meta.filename, join(import.meta.dirname, '../../tsconfig.json')],
+    storage: {
+      directory: env.production ? 'grafana-default-rspack-production' : 'grafana-default-rspack-development',
+      type: 'filesystem',
+    },
+    type: 'persistent',
   };
   return {
     asyncWebAssembly: true,
-    ...cache,
+    cache,
   };
 }
 
 export function getModuleRules(env: Record<string, unknown> = {}) {
   const commonModuleRules: RuleSetRules = [
     {
-      test: /\.(j|t)s$/,
-      exclude: [/[\\/]node_modules[\\/]/],
-      loader: 'builtin:swc-loader',
-      options: {
-        jsc: {
-          parser: {
-            syntax: 'typescript',
-          },
-          externalHelpers: true,
-          transform: {
-            react: {
-              runtime: 'automatic',
-              development: Boolean(env.development),
-              // refresh: Boolean(env.development),
+      test: /\.(jsx?|tsx?)$/,
+      use: [
+        {
+          loader: 'builtin:swc-loader',
+          options: {
+            jsc: {
+              parser: {
+                syntax: 'typescript',
+                tsx: true,
+              },
+              transform: {
+                react: {
+                  runtime: 'automatic',
+                  development: Boolean(env.development),
+                  // refresh: Boolean(env.development),
+                },
+              },
             },
+            // env: { targets: 'defaults' },
           },
         },
-      },
-    },
-    {
-      test: /\.(j|t)sx$/,
-      loader: 'builtin:swc-loader',
-      exclude: [/[\\/]node_modules[\\/]/],
-      options: {
-        jsc: {
-          parser: {
-            syntax: 'typescript',
-            tsx: true,
-          },
-          transform: {
-            react: {
-              runtime: 'automatic',
-              development: Boolean(env.development),
-              // refresh: Boolean(env.development),
-            },
-          },
-          externalHelpers: true,
-        },
-      },
+      ],
     },
     {
       test: /\.(sa|sc|c)ss$/,
       use: [
         {
           loader: CssExtractRspackPlugin.loader,
-          options: {
-            publicPath: './',
-          },
         },
         {
           loader: 'css-loader',
@@ -251,28 +222,9 @@ export function getModuleRules(env: Record<string, unknown> = {}) {
       },
     },
     {
-      test: /\.html$/,
-      exclude: /(index|error)\-template\.html/,
-      use: [
-        {
-          loader: 'ngtemplate-loader?relativeTo=' + resolve(import.meta.dirname, '../../public') + '&prefix=public',
-        },
-        {
-          loader: 'html-loader',
-          options: {
-            sources: false,
-            minimize: {
-              removeComments: false,
-              collapseWhitespace: false,
-            },
-          },
-        },
-      ],
-    },
-    {
       test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
       type: 'asset/resource',
-      generator: { filename: 'static/img/[name].[hash:8][ext]' },
+      generator: { filename: 'img/[name].[hash:8][ext]' },
     },
     {
       // Required for msagl library (used in Nodegraph panel) to work
@@ -295,20 +247,26 @@ export const nodePolyfills: ResolveOptions['fallback'] = {
   // string_decoder: false,
 };
 
-export const devServer: DevServerConfiguration = {
-  hot: true,
-  headers: {
-    'Access-Control-Allow-Origin': '*',
-  },
-  client: {
-    overlay: false,
-  },
-  historyApiFallback: true,
-  // static: ['public/fonts', 'public/img'],
-  devMiddleware: {
-    publicPath: `/public/build`,
-  },
-};
+export function devServer(isDevelopment: boolean): DevServerConfiguration {
+  if (!isDevelopment || !envConfig.frontend_dev_server) {
+    return {};
+  }
+  return {
+    hot: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+    client: {
+      overlay: false,
+    },
+    historyApiFallback: true,
+    static: false,
+    // static: ['public/fonts', 'public/img'],
+    // devMiddleware: {
+    // publicPath: `/public/build`,
+    // },
+  };
+}
 
 export function getOptimizations(env: Record<string, unknown> = {}) {
   if (env.development) {
@@ -330,12 +288,6 @@ export function getOptimizations(env: Record<string, unknown> = {}) {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: 20,
-          enforce: true,
-        },
-        angular: {
-          test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 50,
           enforce: true,
         },
         defaultVendors: {
