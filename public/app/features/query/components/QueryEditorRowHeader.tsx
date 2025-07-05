@@ -6,6 +6,7 @@ import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
+import { AlertingRuleQueryExtentionPoint } from 'app/features/alerting/unified/components/rule-editor/alert-rule-form/extensions/AlertingRuleQueryExtentionPoint';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
@@ -135,7 +136,7 @@ const renderDataSource = <TQuery extends DataQuery>(
   props: Props<TQuery>,
   styles: ReturnType<typeof getStyles>
 ): ReactNode => {
-  const { alerting, dataSource, onChangeDataSource } = props;
+  const { alerting, dataSource, onChangeDataSource, query } = props;
 
   if (!onChangeDataSource) {
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
@@ -150,6 +151,8 @@ const renderDataSource = <TQuery extends DataQuery>(
         current={dataSource.name}
         onChange={onChangeDataSource}
       />
+      {/* Only show the extensions in alerting. This data source picker is also used in dashboard panel mixed data source editor */}
+      {alerting && <AlertingRuleQueryExtentionPoint query={query} extensionsToShow="queryless" />}
     </div>
   );
 };
