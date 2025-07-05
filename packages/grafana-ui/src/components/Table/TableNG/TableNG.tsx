@@ -78,13 +78,14 @@ export function TableNG(props: TableNGProps) {
     replaceVariables,
     showTypeIcons,
     structureRev,
+    transparent,
     width,
   } = props;
 
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, {
     enablePagination,
-    noHeader,
+    transparent,
   });
   const panelContext = usePanelContext();
 
@@ -236,21 +237,9 @@ export function TableNG(props: TableNGProps) {
         },
         sortColumns,
         rowHeight,
-        headerRowClass: styles.headerRow,
-        headerRowHeight: headerHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
-    [
-      enableVirtualization,
-      resizeHandler,
-      sortColumns,
-      headerHeight,
-      styles.headerRow,
-      rowHeight,
-      hasFooter,
-      setSortColumns,
-      onSortByChange,
-    ]
+    [enableVirtualization, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
   );
 
   interface Schema {
@@ -427,6 +416,7 @@ export function TableNG(props: TableNGProps) {
       return result;
     }
 
+    const hasNestedHeaders = firstNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
     const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
       firstNestedData.fields,
@@ -470,17 +460,26 @@ export function TableNG(props: TableNGProps) {
         }
 
         // Type guard to check if data exists as it's optional
-        const nestedData = row.data;
+        let nestedData = row.data;
         if (!nestedData) {
           return null;
         }
 
         const expandedRecords = applySort(frameToRecords(nestedData), nestedData.fields, sortColumns);
+        if (!expandedRecords.length) {
+          return (
+            <div className={styles.noDataNested}>
+              <Trans i18nKey="grafana-ui.table.nested-table.no-data">No data</Trans>
+            </div>
+          );
+        }
 
         return (
           <DataGrid<TableRow, TableSummaryRow>
             {...commonDataGridProps}
             className={cx(styles.grid, styles.gridNested)}
+            headerRowClass={cx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
+            headerRowHeight={hasNestedHeaders ? defaultHeaderHeight : 0}
             columns={nestedColumns}
             rows={expandedRecords}
             renderers={{ renderRow, renderCell: renderCellRoot }}
@@ -499,6 +498,7 @@ export function TableNG(props: TableNGProps) {
     crossFilterOrder,
     crossFilterRows,
     data,
+    defaultHeaderHeight,
     defaultRowHeight,
     enableSharedCrosshair,
     expandedRows,
@@ -541,6 +541,8 @@ export function TableNG(props: TableNGProps) {
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
+        headerRowClass={cx(styles.headerRow, { [styles.displayNone]: noHeader })}
+        headerRowHeight={headerHeight}
         onCellKeyDown={
           hasNestedFrames
             ? (_, event) => {
@@ -655,17 +657,20 @@ const renderRowFactory =
 
 const getGridStyles = (
   theme: GrafanaTheme2,
-  { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
+  { enablePagination, transparent }: { enablePagination?: boolean; transparent?: boolean }
 ) => ({
   grid: css({
-    '--rdg-background-color': theme.colors.background.primary,
-    '--rdg-header-background-color': theme.colors.background.primary,
-    '--rdg-border-color': theme.isDark ? '#282b30' : '#ebebec',
+    '--rdg-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
+    '--rdg-header-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
+    '--rdg-border-color': theme.colors.border.weak,
     '--rdg-color': theme.colors.text.primary,
 
     // note: this cannot have any transparency since default cells that
     // overlay/overflow on hover inherit this background and need to occlude cells below
-    '--rdg-row-hover-background-color': theme.isDark ? '#212428' : '#f4f5f5',
+    '--rdg-row-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
+    '--rdg-row-hover-background-color': transparent
+      ? theme.colors.background.primary
+      : theme.colors.background.secondary,
 
     // TODO: magic 32px number is unfortunate. it would be better to have the content
     // flow using flexbox rather than hard-coding this size via a calc
@@ -685,14 +690,23 @@ const getGridStyles = (
   }),
   gridNested: css({
     height: '100%',
-    width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - 1}px)`,
+    width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
     overflow: 'visible',
-    marginLeft: COLUMN.EXPANDER_WIDTH - 1,
+    marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
+    marginBlock: TABLE.CELL_PADDING,
   }),
   cellNested: css({
     '&[aria-selected=true]': {
       outline: 'none',
     },
+  }),
+  noDataNested: css({
+    height: TABLE.NESTED_NO_DATA_HEIGHT,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.h4.fontSize,
   }),
   cellActions: css({
     display: 'none',
@@ -701,7 +715,7 @@ const getGridStyles = (
     margin: 'auto',
     height: '100%',
     color: theme.colors.text.primary,
-    background: theme.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.7)',
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
     padding: theme.spacing.x0_5,
     paddingInlineStart: theme.spacing.x1,
   }),
@@ -714,11 +728,13 @@ const getGridStyles = (
   headerRow: css({
     paddingBlockStart: 0,
     fontWeight: 'normal',
-    ...(noHeader ? { display: 'none' } : {}),
     '& .rdg-cell': {
       height: '100%',
       alignItems: 'flex-end',
     },
+  }),
+  displayNone: css({
+    display: 'none',
   }),
   paginationContainer: css({
     alignItems: 'center',
@@ -793,6 +809,7 @@ const getCellStyles = (
         zIndex: theme.zIndex.tooltip - 2,
         whiteSpace: 'pre-line',
         height: 'fit-content',
+        paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
         minWidth: 'fit-content',
       }),
     },

@@ -26,7 +26,7 @@ import { Options } from './panelcfg.gen';
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables } = props;
+  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables, transparent } = props;
 
   useMemo(() => {
     cacheFieldDisplayNames(data.series);
@@ -78,6 +78,7 @@ export function TablePanel(props: Props) {
       getActions={getCellActions}
       replaceVariables={replaceVariables}
       structureRev={data.structureRev}
+      transparent={transparent}
     />
   );
 
