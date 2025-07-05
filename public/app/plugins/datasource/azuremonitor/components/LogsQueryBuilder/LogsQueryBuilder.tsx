@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
@@ -22,6 +22,7 @@ import {
   AzureLogAnalyticsMetadataColumn,
   AzureMonitorQuery,
   EngineSchema,
+  AzureMonitorOption,
 } from '../../types';
 
 import { AggregateSection } from './AggregationSection';
@@ -40,14 +41,14 @@ interface LogsQueryBuilderProps {
   basicLogsEnabled: boolean;
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   schema: EngineSchema;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   datasource: Datasource;
   timeRange?: TimeRange;
   isLoadingSchema: boolean;
 }
 
 export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
-  const { query, onQueryChange, schema, datasource, timeRange, isLoadingSchema } = props;
+  const { query, onQueryChange, schema, datasource, timeRange } = props;
   const [isKQLPreviewHidden, setIsKQLPreviewHidden] = useState<boolean>(true);
 
   const tables: AzureLogAnalyticsMetadataTable[] = useMemo(() => {
@@ -145,13 +146,7 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
             )}
           />
         )}
-        <TableSection
-          {...props}
-          tables={tables}
-          allColumns={allColumns}
-          buildAndUpdateQuery={buildAndUpdateQuery}
-          isLoadingSchema={isLoadingSchema}
-        />
+        <TableSection {...props} tables={tables} allColumns={allColumns} buildAndUpdateQuery={buildAndUpdateQuery} />
         <FilterSection
           {...props}
           allColumns={allColumns}

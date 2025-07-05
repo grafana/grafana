@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 
 import { BuilderQueryEditorReduceExpression } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 
 import AggregateItem from './AggregateItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -13,14 +13,14 @@ import { BuildAndUpdateOptions } from './utils';
 interface AggregateSectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
 }
 export const AggregateSection: React.FC<AggregateSectionProps> = ({
   query,
   allColumns,
   buildAndUpdateQuery,
-  templateVariableOptions,
+  variableOptionGroup,
 }) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>(
@@ -81,7 +81,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
             <EditorList
               items={aggregates}
               onChange={onChange}
-              renderItem={makeRenderAggregate(availableColumns, onDeleteAggregate, templateVariableOptions)}
+              renderItem={makeRenderAggregate(availableColumns, onDeleteAggregate, variableOptionGroup)}
             />
           </EditorField>
         </EditorFieldGroup>
@@ -93,7 +93,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
 function makeRenderAggregate(
   availableColumns: Array<SelectableValue<string>>,
   onDeleteAggregate: (aggregate: BuilderQueryEditorReduceExpression) => void,
-  templateVariableOptions: SelectableValue<string>
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] }
 ) {
   return function renderAggregate(
     item: BuilderQueryEditorReduceExpression,
@@ -105,7 +105,7 @@ function makeRenderAggregate(
         onChange={onChange}
         onDelete={() => onDeleteAggregate(item)}
         columns={availableColumns}
-        templateVariableOptions={templateVariableOptions}
+        variableOptionGroup={variableOptionGroup}
       />
     );
   };

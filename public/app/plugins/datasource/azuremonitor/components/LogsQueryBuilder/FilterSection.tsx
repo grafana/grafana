@@ -15,7 +15,7 @@ import {
   BuilderQueryEditorWhereExpressionItems,
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 
 import { FilterItem } from './FilterItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -24,7 +24,7 @@ interface FilterSectionProps {
   query: AzureMonitorQuery;
   allColumns: AzureLogAnalyticsMetadataColumn[];
   buildAndUpdateQuery: (options: Partial<BuildAndUpdateOptions>) => void;
-  templateVariableOptions: SelectableValue<string>;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   datasource: Datasource;
   timeRange?: TimeRange;
 }
@@ -39,7 +39,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   buildAndUpdateQuery,
   query,
   allColumns,
-  templateVariableOptions,
+  variableOptionGroup,
   datasource,
   timeRange,
 }) => {
@@ -55,13 +55,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   );
   const hasLoadedFilters = useRef(false);
 
-  const variableOptions = Array.isArray(templateVariableOptions) ? templateVariableOptions : [templateVariableOptions];
-
   const availableColumns: Array<SelectableValue<string>> = builderQuery?.columns?.columns?.length
     ? filterDynamicColumns(builderQuery.columns.columns, allColumns).map((col) => ({ label: col, value: col }))
     : allColumns.filter((col) => col.type !== 'dynamic').map((col) => ({ label: col.name, value: col.name }));
-
-  const selectableOptions = [...availableColumns, ...variableOptions];
 
   const usedColumnsInOtherGroups = (currentGroupIndex: number): string[] => {
     return filters
@@ -161,11 +157,11 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     const timeColumn = query.azureLogAnalytics?.timeColumn || 'TimeGenerated';
 
     const kustoQuery = `
-    ${query.azureLogAnalytics?.builderQuery?.from?.property.name}
-    | where ${timeColumn} >= datetime(${from}) and ${timeColumn} <= datetime(${to})
-    | distinct ${filter.property.name}
-    | limit 1000
-  `;
+      ${query.azureLogAnalytics?.builderQuery?.from?.property.name}
+      | where ${timeColumn} >= datetime(${from}) and ${timeColumn} <= datetime(${to})
+      | distinct ${filter.property.name}
+      | limit 1000
+    `;
 
     const results = await lastValueFrom(
       datasource.azureLogAnalyticsDatasource.query({
@@ -193,15 +189,17 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
     if (results.state === 'Done') {
       const values = results.data?.[0]?.fields?.[0]?.values ?? [];
 
-      return values.toArray().map(
+      const dynamicValues = values.toArray().map(
         (v: unknown): ComboboxOption<string> => ({
           label: String(v),
           value: String(v),
         })
       );
+
+      return [...variableOptionGroup.options, ...dynamicValues];
     }
 
-    return [];
+    return variableOptionGroup.options;
   };
 
   return (
@@ -238,7 +236,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                             filterIndex={filterIndex}
                             groupIndex={groupIndex}
                             usedColumns={usedColumnsInOtherGroups(groupIndex)}
-                            selectableOptions={selectableOptions}
+                            availableColumns={availableColumns}
                             onChange={onAddOrFilters}
                             onDelete={onDeleteFilter}
                             getFilterValues={getFilterValues}
