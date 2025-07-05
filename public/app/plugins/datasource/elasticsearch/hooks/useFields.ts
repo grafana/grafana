@@ -5,7 +5,7 @@ import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { isBucketAggregationType } from '../components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { useDatasource, useRange } from '../components/QueryEditor/ElasticsearchQueryContext';
 import { isMetricAggregationType } from '../components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { MetricAggregationType, BucketAggregationType } from '../types';
+import { BucketAggregationType, MetricAggregationType } from '../dataquery.gen';
 
 type AggregationType = BucketAggregationType | MetricAggregationType;
 

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Switch, TextLink, useTheme2 } from '@grafana/ui';
 
-import { AzureMonitorDataSourceJsonData } from '../../types';
+import { AzureMonitorDataSourceJsonData } from '../../types/types';
 
 export interface Props {
   options: AzureMonitorDataSourceJsonData;

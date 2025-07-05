@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-export const insideLabelValue = {
+export const dynamicLabelTestDataInsideLabelValue = {
   query: '${DATAPOINT_COUNT} ',
   tokens: [
     [

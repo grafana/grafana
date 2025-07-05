@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { AzureMonitorQuery, ResultFormat } from '../../types';
+import { AzureMonitorQuery, ResultFormat } from '../../types/query';
 
 import FormatAsField from './FormatAsField';
 

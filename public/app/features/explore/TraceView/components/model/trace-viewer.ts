@@ -14,7 +14,7 @@
 
 import { memoize } from 'lodash';
 
-import { TraceSpan } from '../types';
+import { TraceSpan } from '../types/trace';
 
 export function _getTraceNameImpl(spans: TraceSpan[]) {
   // Use a span with no references to another span in given array

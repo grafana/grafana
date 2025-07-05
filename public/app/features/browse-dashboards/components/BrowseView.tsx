@@ -6,17 +6,15 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
 import { PAGE_SIZE } from '../api/services';
+import { fetchNextChildrenPage } from '../state/actions';
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
-  setFolderOpenState,
-  setItemSelectionState,
   useChildrenByParentUIDState,
-  setAllSelection,
   useBrowseLoadingStatus,
   useLoadNextChildrenPage,
-  fetchNextChildrenPage,
-} from '../state';
+} from '../state/hooks';
+import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';

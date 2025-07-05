@@ -20,7 +20,7 @@ import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { TNil } from '../../types';
+import TNil from '../../types/TNil';
 
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable, { KeyValuesTableLink } from './KeyValuesTable';

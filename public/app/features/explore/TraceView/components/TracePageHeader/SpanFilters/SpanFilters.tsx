@@ -23,7 +23,7 @@ import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, us
 import { defaultFilters, SearchProps } from '../../../useSearch';
 import { getTraceServiceNames, getTraceSpanNames } from '../../../utils/tags';
 import SearchBarInput from '../../common/SearchBarInput';
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 import NextPrevResult from '../SearchBar/NextPrevResult';
 import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
 

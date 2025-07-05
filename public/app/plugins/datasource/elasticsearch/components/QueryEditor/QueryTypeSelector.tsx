@@ -1,8 +1,9 @@
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonGroup } from '@grafana/ui';
 
+import { MetricAggregation } from '../../dataquery.gen';
 import { useDispatch } from '../../hooks/useStatelessReducer';
-import { MetricAggregation, QueryType } from '../../types';
+import { QueryType } from '../../types';
 
 import { useQuery } from './ElasticsearchQueryContext';
 import { changeMetricType } from './MetricAggregationsEditor/state/actions';

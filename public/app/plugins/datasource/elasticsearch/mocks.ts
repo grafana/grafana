@@ -1,8 +1,9 @@
 import { CoreApp, DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType, dateTime } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
+import { ElasticsearchDataQuery } from './dataquery.gen';
 import { ElasticDatasource } from './datasource';
-import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { ElasticsearchOptions } from './types';
 
 export function createElasticDatasource(
   settings: Partial<DataSourceInstanceSettings<Partial<ElasticsearchOptions>>> = {}
@@ -63,7 +64,7 @@ export function createElasticDatasource(
   return new ElasticDatasource(instanceSettings, templateSrv);
 }
 
-export const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
+export const createElasticQuery = (): DataQueryRequest<ElasticsearchDataQuery> => {
   return {
     requestId: '',
     interval: '',

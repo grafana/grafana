@@ -23,13 +23,11 @@ import {
 } from '@grafana/ui';
 import { NumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { SliderValueEditor } from 'app/core/components/OptionsUI/slider';
-import {
-  ColorDimensionEditor,
-  ResourceDimensionEditor,
-  ScaleDimensionEditor,
-  ScalarDimensionEditor,
-  TextDimensionEditor,
-} from 'app/features/dimensions/editors';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';
+import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
+import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
+import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
 
 import {

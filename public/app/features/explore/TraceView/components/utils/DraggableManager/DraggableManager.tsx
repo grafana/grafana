@@ -14,7 +14,7 @@
 
 import { get as _get } from 'lodash';
 
-import { TNil } from '../../types';
+import TNil from '../../types/TNil';
 
 import EUpdateTypes from './EUpdateTypes';
 import { DraggableBounds, DraggingUpdate } from './types';
