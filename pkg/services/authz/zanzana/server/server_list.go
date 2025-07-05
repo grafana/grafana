@@ -178,7 +178,7 @@ func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequ
 		fn = s.streamedListObjects
 	}
 
-	if s.cfg.CheckQueryCache {
+	if s.cfg.CacheSettings.CheckQueryCacheEnabled {
 		return s.listObjectCached(ctx, req, fn)
 	}
 
