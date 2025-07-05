@@ -42,6 +42,7 @@ import {
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
+  setNewDataSourcePicker,
 } from '@grafana/runtime';
 import {
   setGetObservablePluginComponents,
@@ -82,6 +83,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
+import { LazyDataSourcePicker } from './features/datasources/components/picker/LazyDataSourcePicker';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -230,6 +232,7 @@ export class GrafanaApp {
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
+      setNewDataSourcePicker(LazyDataSourcePicker);
       initWindowRuntime();
 
       // Do not pre-load apps if rendererDisableAppPluginsPreload is true and the request comes from the image renderer
