@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { sortBy } from 'lodash';
+import { get, sortBy } from 'lodash';
 import * as React from 'react';
 import { useEffect, useMemo } from 'react';
 import { Controller, FieldErrors, useFormContext } from 'react-hook-form';
@@ -82,10 +82,20 @@ export function ChannelSubForm<R extends ChannelValues>({
   useEffect(() => {
     // Restore values when switching back from a changed integration to the default one
     const subscription = watch((formValues, { name, type }) => {
-      // @ts-expect-error name is valid key for formValues
-      const value = name ? formValues[name] : '';
-      if (initialValues && name === typeFieldPath && value === initialValues.type && type === 'change') {
-        setValue(settingsFieldPath, initialValues.settings);
+      const value = name ? get(formValues, name) : '';
+      if (name === typeFieldPath && type === 'change') {
+        if (initialValues && value === initialValues.type) {
+          // Restore values when switching back to the default type
+          setValue(settingsFieldPath, initialValues.settings);
+        } else {
+          // Clear all settings when switching to a new type
+          const currentSettings = getValues(settingsFieldPath);
+          const clearedSettings = Object.keys(currentSettings).reduce<Record<string, unknown>>((acc, key) => {
+            acc[key] = '';
+            return acc;
+          }, {});
+          setValue(settingsFieldPath, clearedSettings);
+        }
       }
       // Restore initial value of an existing oncall integration
       if (
@@ -98,7 +108,7 @@ export function ChannelSubForm<R extends ChannelValues>({
     });
 
     return () => subscription.unsubscribe();
-  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch]);
+  }, [selectedType, initialValues, setValue, settingsFieldPath, typeFieldPath, watch, getValues]);
 
   const onResetSecureField = (key: string) => {
     // formSecureFields might not be up to date if this function is called multiple times in a row
