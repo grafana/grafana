@@ -137,7 +137,7 @@ export const isAddedLinkMetaInfoMissing = (
 ) => {
   const logPrefix = 'Could not register link extension. Reason:';
   const app = config.apps[pluginId];
-  const pluginJsonMetaInfo = app ? app.extensions.addedLinks.find(({ title }) => title === metaInfo.title) : null;
+  const pluginJsonMetaInfo = app ? app.extensions.addedLinks.filter(({ title }) => title === metaInfo.title) : null;
 
   if (!app) {
     log.error(`${logPrefix} ${errors.APP_NOT_FOUND(pluginId)}`);
@@ -150,12 +150,12 @@ export const isAddedLinkMetaInfoMissing = (
   }
 
   const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
-  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
+  if (!targets.every((target) => pluginJsonMetaInfo.some(({ targets }) => targets.includes(target)))) {
     log.error(`${logPrefix} ${errors.TARGET_NOT_MATCHING_META_INFO}`);
     return true;
   }
 
-  if (pluginJsonMetaInfo.description !== metaInfo.description) {
+  if (pluginJsonMetaInfo.some(({ description }) => description !== metaInfo.description)) {
     log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
   }
 
