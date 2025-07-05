@@ -245,13 +245,16 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	defer s.reloadMutex.RUnlock()
 
 	s.log.Debug("Getting user info")
-	toCheck := make([]*UserInfoJson, 0, 2)
+	toCheck := make([]*UserInfoJson, 0, 3)
 
-	if tokenData := s.extractFromToken(token); tokenData != nil {
-		toCheck = append(toCheck, tokenData)
+	if idTokenData := s.extractFromIDToken(token); idTokenData != nil {
+		toCheck = append(toCheck, idTokenData)
 	}
 	if apiData := s.extractFromAPI(ctx, client); apiData != nil {
 		toCheck = append(toCheck, apiData)
+	}
+	if accessTokenData := s.extractFromAccessToken(token); accessTokenData != nil {
+		toCheck = append(toCheck, accessTokenData)
 	}
 
 	userInfo := &social.BasicUserInfo{}
@@ -358,8 +361,8 @@ func (s *SocialGenericOAuth) canFetchPrivateEmail(userinfo *social.BasicUserInfo
 	return s.info.ApiUrl != "" && userinfo.Email == ""
 }
 
-func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
-	s.log.Debug("Extracting user info from OAuth token")
+func (s *SocialGenericOAuth) extractFromIDToken(token *oauth2.Token) *UserInfoJson {
+	s.log.Debug("Extracting user info from OAuth ID token")
 
 	idTokenAttribute := "id_token"
 	if s.idTokenAttributeName != "" {
@@ -373,21 +376,44 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 		return nil
 	}
 
-	rawJSON, err := s.retrieveRawIDToken(idToken)
+	rawJSON, err := s.retrieveRawJWTPayload(idToken)
 	if err != nil {
-		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", token))
+		s.log.Warn("Error retrieving id_token payload", "error", err, "token", fmt.Sprintf("%+v", token))
 		return nil
 	}
 
+	return s.parseUserInfoFromJSON(rawJSON, "id_token")
+}
+
+func (s *SocialGenericOAuth) extractFromAccessToken(token *oauth2.Token) *UserInfoJson {
+	s.log.Debug("Extracting user info from OAuth access token")
+
+	accessToken := token.AccessToken
+	if accessToken == "" {
+		s.log.Debug("No access token found")
+		return nil
+	}
+
+	rawJSON, err := s.retrieveRawJWTPayload(accessToken)
+	if err != nil {
+		s.log.Warn("Error retrieving access token payload", "error", err)
+		return nil
+	}
+
+	return s.parseUserInfoFromJSON(rawJSON, "access_token")
+}
+
+// parseUserInfoFromJSON is a helper method to parse UserInfoJson from raw JSON and source
+func (s *SocialGenericOAuth) parseUserInfoFromJSON(rawJSON []byte, source string) *UserInfoJson {
 	var data UserInfoJson
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding id_token JSON", "raw_json", string(rawJSON), "error", err)
+		s.log.Error("Error decoding user info JSON", "raw_json", string(rawJSON), "error", err, "source", source)
 		return nil
 	}
 
 	data.rawJSON = rawJSON
-	data.source = "token"
-	s.log.Debug("Received id_token", "raw_json", string(data.rawJSON), "data", data.String())
+	data.source = source
+	s.log.Debug("Parsed user info from JSON", "raw_json", string(rawJSON), "data", data.String(), "source", source)
 	return &data
 }
 
@@ -404,18 +430,7 @@ func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Cl
 		return nil
 	}
 
-	rawJSON := rawUserInfoResponse.Body
-
-	var data UserInfoJson
-	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding user info response", "raw_json", rawJSON, "error", err)
-		return nil
-	}
-
-	data.rawJSON = rawJSON
-	data.source = "API"
-	s.log.Debug("Received user info response from API", "raw_json", string(rawJSON), "data", data.String())
-	return &data
+	return s.parseUserInfoFromJSON(rawUserInfoResponse.Body, "API")
 }
 
 func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {

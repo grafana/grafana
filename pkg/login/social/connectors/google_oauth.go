@@ -236,7 +236,7 @@ func (s *SocialGoogle) extractFromToken(_ context.Context, _ *http.Client, token
 		return nil, nil
 	}
 
-	rawJSON, err := s.retrieveRawIDToken(idToken)
+	rawJSON, err := s.retrieveRawJWTPayload(idToken)
 	if err != nil {
 		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
 		return nil, nil
