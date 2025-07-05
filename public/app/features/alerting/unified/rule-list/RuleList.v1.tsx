@@ -4,7 +4,7 @@ import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { logInfo } from '@grafana/runtime';
+import { config, logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
@@ -12,6 +12,7 @@ import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, trackRuleListNavigation } from '../Analytics';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { GenAIAlertRuleButton } from '../components/rules/AIGen/GenAIAlertRuleButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
 import { NoRulesSplash } from '../components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../components/rules/RuleDetails';
@@ -20,6 +21,7 @@ import { RuleListGroupView } from '../components/rules/RuleListGroupView';
 import { RuleListStateView } from '../components/rules/RuleListStateView';
 import { RuleStats } from '../components/rules/RuleStats';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
+import { useIsLLMPluginEnabled } from '../hooks/llmUtils';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
@@ -172,15 +174,23 @@ export function CreateAlertButton() {
 
   const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
 
+  const { value: canRenderGenAIAlertRuleButton } = useIsLLMPluginEnabled();
+
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAIAlertRuleButton = canRenderGenAIAlertRuleButton && config.featureToggles.alertingAIGenAlertRules;
+
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
-      <LinkButton
-        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
-        icon="plus"
-        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-      >
-        <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
-      </LinkButton>
+      <Stack direction="row" gap={1}>
+        <LinkButton
+          href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
+          icon="plus"
+          onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+        >
+          <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
+        </LinkButton>
+        {canCreateGrafanaRules && canShowGenAIAlertRuleButton && <GenAIAlertRuleButton />}
+      </Stack>
     );
   }
   return null;

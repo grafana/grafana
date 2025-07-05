@@ -22,6 +22,11 @@ jest.mock('./GroupedView', () => ({
   GroupedView: () => <div data-testid="grouped-view">Grouped View</div>,
 }));
 
+// Mock the LLM plugin hook to avoid async state updates during tests
+jest.mock('../hooks/llmUtils', () => ({
+  useIsLLMPluginEnabled: () => ({ value: false, loading: false, error: null }),
+}));
+
 const ui = {
   filterView: byTestId('filter-view'),
   groupedView: byTestId('grouped-view'),

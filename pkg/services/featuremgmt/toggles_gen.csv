@@ -221,6 +221,10 @@ kubernetesAuthzApis,experimental,@grafana/identity-access-team,false,false,false
 restoreDashboards,experimental,@grafana/grafana-frontend-platform,false,false,false
 skipTokenRotationIfRecent,privatePreview,@grafana/identity-access-team,false,false,false
 alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
+alertingAIGenAlertRules,experimental,@grafana/alerting-squad,false,false,false
+alertingAIImproveAlertRules,experimental,@grafana/alerting-squad,false,false,false
+alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
+alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
