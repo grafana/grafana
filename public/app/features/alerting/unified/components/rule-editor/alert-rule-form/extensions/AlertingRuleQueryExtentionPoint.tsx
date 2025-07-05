@@ -6,11 +6,13 @@ import { usePluginLinks } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 
+import { RuleFormValues } from '../../../types/rule-form';
 import { ConfirmNavigationModal } from './ConfirmationNavigationModal';
 
 type Props = {
   extensionsToShow: 'queryless';
   query: DataQuery;
+  ruleFormValues: RuleFormValues;
 };
 
 const QUERYLESS_APPS = [
@@ -29,11 +31,50 @@ const DATASOURCE_TO_QUERYLESS_APP: Record<string, string[]> = {
   // 'tempo': ['grafana-exploretraces-app'],
 };
 
-export function AlertingRuleQueryExtentionPoint(props: Props): ReactElement | null {
-  const { extensionsToShow, query } = props;
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+export type PluginExtensionAlertingRuleContext = {
+  targets: DataQuery[];
+  ruleFormValues: RuleFormValues;
+};
 
-  const context = { targets: [query] };
+export function AlertingRuleQueryExtentionPoint({
+  extensionsToShow,
+  query,
+  ruleFormValues,
+}: Props): ReactElement | null {
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  // Just fix contactPoints to avoid ZodError
+  const cleanRuleFormValues = (values: RuleFormValues): RuleFormValues => {
+    const cleaned = { ...values };
+
+    // Fix contactPoints if it exists
+    if (cleaned.contactPoints) {
+      Object.keys(cleaned.contactPoints).forEach((alertManagerName) => {
+        const contactPoint = cleaned.contactPoints![alertManagerName];
+        if (contactPoint) {
+          // Add missing fields with correct types
+          cleaned.contactPoints![alertManagerName] = {
+            selectedContactPoint: contactPoint.selectedContactPoint || '',
+            overrideGrouping: contactPoint.overrideGrouping ?? false,
+            groupBy: contactPoint.groupBy || [],
+            overrideTimings: contactPoint.overrideTimings ?? false,
+            groupWaitValue: contactPoint.groupWaitValue || '',
+            groupIntervalValue: contactPoint.groupIntervalValue || '',
+            repeatIntervalValue: contactPoint.repeatIntervalValue || '',
+            muteTimeIntervals: contactPoint.muteTimeIntervals || [],
+            activeTimeIntervals: contactPoint.activeTimeIntervals || [],
+          };
+        }
+      });
+    }
+
+    return cleaned;
+  };
+
+  const cleanedValues = cleanRuleFormValues(ruleFormValues);
+  const context: PluginExtensionAlertingRuleContext = {
+    targets: [query],
+    ruleFormValues: cleanedValues,
+  };
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.AlertingRuleQueryEditor,
