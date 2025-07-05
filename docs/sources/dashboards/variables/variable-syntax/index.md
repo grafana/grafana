@@ -64,6 +64,16 @@ String to interpolate: '${servers:csv}'
 Interpolation result: 'test1,test2'
 ```
 
+### Delimiter
+
+Formats variables with multiple values into a delimiter-separated string.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:delimiter:;}'
+Interpolation result: "test1;test2"
+```
+
 ### Distributed - OpenTSDB
 
 Formats variables with multiple values in custom format for OpenTSDB.
