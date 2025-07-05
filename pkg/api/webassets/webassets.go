@@ -58,7 +58,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 
 	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
 	if cdn != "" {
-		result, err = readWebAssetsFromCDN(ctx, cdn)
+		result, err = readWebAssetsFromCDN(ctx, cfg, cdn)
 	}
 
 	// Get an OpenFeature client instance for feature flag evaluation
@@ -80,7 +80,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	}
 
 	if result == nil {
-		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
+		result, err = readWebAssetsFromFile(cfg, filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
 		if err == nil {
 			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
 			if cdn != "" {
@@ -93,7 +93,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	return entryPointAssetsCache, err
 }
 
-func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) {
+func readWebAssetsFromFile(cfg *setting.Cfg, manifestpath string) (*dtos.EntryPointAssets, error) {
 	//nolint:gosec
 	f, err := os.Open(manifestpath)
 	if err != nil {
@@ -102,10 +102,10 @@ func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 	defer func() {
 		_ = f.Close()
 	}()
-	return readWebAssets(f)
+	return readWebAssets(cfg, f)
 }
 
-func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPointAssets, error) {
+func readWebAssetsFromCDN(ctx context.Context, cfg *setting.Cfg, baseURL string) (*dtos.EntryPointAssets, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/build/assets-manifest.json", nil)
 	if err != nil {
 		return nil, err
@@ -117,14 +117,14 @@ func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPoint
 	defer func() {
 		_ = response.Body.Close()
 	}()
-	dto, err := readWebAssets(response.Body)
+	dto, err := readWebAssets(cfg, response.Body)
 	if err == nil {
 		dto.SetContentDeliveryURL(baseURL)
 	}
 	return dto, err
 }
 
-func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
+func readWebAssets(cfg *setting.Cfg, r io.Reader) (*dtos.EntryPointAssets, error) {
 	manifest := map[string]ManifestInfo{}
 	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
 		return nil, fmt.Errorf("failed to read assets-manifest.json %w", err)
@@ -155,36 +155,42 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 		return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
 	}
 
+	publicPath := "public/build/"
+
+	if cfg.FrontendDevServerEnabled {
+		publicPath = "http://localhost:8080/"
+	}
+
 	rsp := &dtos.EntryPointAssets{
 		JSFiles:         make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
 		CSSFiles:        make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.CSS)),
-		Dark:            entryPoints.Dark.Assets.CSS[0],
-		Light:           entryPoints.Light.Assets.CSS[0],
+		Dark:            publicPath + entryPoints.Dark.Assets.CSS[0],
+		Light:           publicPath + entryPoints.Light.Assets.CSS[0],
 		Swagger:         make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.JS)),
 		SwaggerCSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.Swagger.Assets.CSS)),
 	}
 
 	for _, entry := range entryPoints.App.Assets.JS {
 		rsp.JSFiles = append(rsp.JSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
+			FilePath:  publicPath + entry,
 			Integrity: integrity[entry],
 		})
 	}
 	for _, entry := range entryPoints.App.Assets.CSS {
 		rsp.CSSFiles = append(rsp.CSSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
+			FilePath:  publicPath + entry,
 			Integrity: integrity[entry],
 		})
 	}
 	for _, entry := range entryPoints.Swagger.Assets.JS {
 		rsp.Swagger = append(rsp.Swagger, dtos.EntryPointAsset{
-			FilePath:  entry,
+			FilePath:  publicPath + entry,
 			Integrity: integrity[entry],
 		})
 	}
 	for _, entry := range entryPoints.Swagger.Assets.CSS {
 		rsp.SwaggerCSSFiles = append(rsp.SwaggerCSSFiles, dtos.EntryPointAsset{
-			FilePath:  entry,
+			FilePath:  publicPath + entry,
 			Integrity: integrity[entry],
 		})
 	}
