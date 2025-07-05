@@ -42,33 +42,6 @@ export function AlertingRuleQueryExtentionPoint({
   ruleFormValues,
 }: Props): ReactElement | null {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  // Just fix contactPoints to avoid ZodError
-  const cleanRuleFormValues = (values: RuleFormValues): RuleFormValues => {
-    const cleaned = { ...values };
-
-    // Fix contactPoints if it exists
-    if (cleaned.contactPoints) {
-      Object.keys(cleaned.contactPoints).forEach((alertManagerName) => {
-        const contactPoint = cleaned.contactPoints![alertManagerName];
-        if (contactPoint) {
-          // Add missing fields with correct types
-          cleaned.contactPoints![alertManagerName] = {
-            selectedContactPoint: contactPoint.selectedContactPoint || '',
-            overrideGrouping: contactPoint.overrideGrouping ?? false,
-            groupBy: contactPoint.groupBy || [],
-            overrideTimings: contactPoint.overrideTimings ?? false,
-            groupWaitValue: contactPoint.groupWaitValue || '',
-            groupIntervalValue: contactPoint.groupIntervalValue || '',
-            repeatIntervalValue: contactPoint.repeatIntervalValue || '',
-            muteTimeIntervals: contactPoint.muteTimeIntervals || [],
-            activeTimeIntervals: contactPoint.activeTimeIntervals || [],
-          };
-        }
-      });
-    }
-
-    return cleaned;
-  };
 
   const cleanedValues = cleanRuleFormValues(ruleFormValues);
   const context: PluginExtensionAlertingRuleContext = {
@@ -138,3 +111,31 @@ export function AlertingRuleQueryExtentionPoint({
     </>
   );
 }
+
+// Just fix contactPoints to avoid ZodError
+const cleanRuleFormValues = (values: RuleFormValues): RuleFormValues => {
+  const cleaned = { ...values };
+
+  // Fix contactPoints if it exists
+  if (cleaned.contactPoints) {
+    Object.keys(cleaned.contactPoints).forEach((alertManagerName) => {
+      const contactPoint = cleaned.contactPoints![alertManagerName];
+      if (contactPoint) {
+        // Add missing fields with correct types
+        cleaned.contactPoints![alertManagerName] = {
+          selectedContactPoint: contactPoint.selectedContactPoint || '',
+          overrideGrouping: contactPoint.overrideGrouping ?? false,
+          groupBy: contactPoint.groupBy || [],
+          overrideTimings: contactPoint.overrideTimings ?? false,
+          groupWaitValue: contactPoint.groupWaitValue || '',
+          groupIntervalValue: contactPoint.groupIntervalValue || '',
+          repeatIntervalValue: contactPoint.repeatIntervalValue || '',
+          muteTimeIntervals: contactPoint.muteTimeIntervals || [],
+          activeTimeIntervals: contactPoint.activeTimeIntervals || [],
+        };
+      }
+    });
+  }
+
+  return cleaned;
+};
