@@ -9,7 +9,7 @@ export const metricsDrilldownPluginId = 'grafana-metricsdrilldown-app';
 export const extensionPointId = `${metricsDrilldownPluginId}/alerting/alertingrule/queryeditor/v1`;
 
 export type MetricsDrilldownExternsionAlertingRuleContext = {
-  targets: RuleFormValues;
+  ruleFormValues: RuleFormValues;
 };
 
 export function getAlertingExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
@@ -29,8 +29,7 @@ export function getAlertingExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
             console.warn('Extension context is undefined');
             return;
           }
-
-          const url = encodeURL(context.targets);
+          const url = encodeURL(context.ruleFormValues);
 
           locationService.push(url);
         },
