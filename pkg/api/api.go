@@ -551,7 +551,7 @@ func (hs *HTTPServer) registerRoutes() {
 		}, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
 		// short urls
-		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
+		apiRoute.Post("/short-urls", hs.getCreateShortURLHandler())
 	}, reqSignedIn)
 
 	// admin api
