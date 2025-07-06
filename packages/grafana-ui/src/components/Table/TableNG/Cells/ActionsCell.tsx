@@ -6,8 +6,9 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { ActionButton } from '../../../Actions/ActionButton';
 import { ActionCellProps } from '../types';
 
-export const ActionsCell = ({ actions }: ActionCellProps) => {
+export const ActionsCell = ({ field, getActions }: ActionCellProps) => {
   const styles = useStyles2(getStyles);
+  // const actions = getActions
 
   return (
     <div className={styles.buttonsGap}>

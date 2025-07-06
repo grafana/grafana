@@ -24,7 +24,6 @@ const GAUGE_RENDERER: TableCellRenderer = (props) => (
     height={props.height}
     width={props.width}
     rowIdx={props.rowIdx}
-    actions={props.actions}
   />
 );
 
@@ -35,7 +34,6 @@ const AUTO_RENDERER: TableCellRenderer = (props) => (
     justifyContent={props.justifyContent}
     rowIdx={props.rowIdx}
     cellOptions={props.cellOptions}
-    actions={props.actions}
   />
 );
 
@@ -57,7 +55,6 @@ const JSON_RENDERER: TableCellRenderer = (props) => (
     value={props.value}
     field={props.field}
     rowIdx={props.rowIdx}
-    actions={props.actions}
   />
 );
 
@@ -73,13 +70,12 @@ const IMAGE_RENDERER: TableCellRenderer = (props) => (
     justifyContent={props.justifyContent}
     value={props.value}
     rowIdx={props.rowIdx}
-    actions={props.actions}
   />
 );
 
 const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />;
 
-const ACTIONS_RENDERER: TableCellRenderer = (props) => <ActionsCell actions={props.actions} />;
+const ACTIONS_RENDERER: TableCellRenderer = (props) => <ActionsCell field={props.field} getActions={props.getActions} />;
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;

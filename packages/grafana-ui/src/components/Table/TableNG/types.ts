@@ -242,7 +242,7 @@ export interface GeoCellProps {
 }
 
 export interface ActionCellProps {
-  actions?: ActionModel[];
+  field: Field;
 }
 
 export interface CellColors {
@@ -251,9 +251,9 @@ export interface CellColors {
   bgHoverColor?: string;
 }
 
-export interface AutoCellProps extends ActionCellProps {
-  value: TableCellValue;
+export interface AutoCellProps {
   field: Field;
+  value: TableCellValue;
   justifyContent: Property.JustifyContent;
   rowIdx: number;
   cellOptions: TableCellOptions;

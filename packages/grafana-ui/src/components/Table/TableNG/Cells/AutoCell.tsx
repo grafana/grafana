@@ -1,49 +1,25 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import { useState } from 'react';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
-import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
+import { renderSingleLink } from '../../DataLinksActionsTooltip';
 import { TableCellOptions, TableCellDisplayMode } from '../../types';
-import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils, tooltipOnClickHandler } from '../../utils';
+import { useSingleLink } from '../hooks';
 import { AutoCellProps } from '../types';
-import { getCellLinks } from '../utils';
 
-export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions, actions }: AutoCellProps) {
+export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions }: AutoCellProps) {
   const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
-  const links = getCellLinks(field, rowIdx) || [];
-
-  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
-  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
-  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
+  const link = useSingleLink(field, rowIdx);
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-    <div
-      className={styles.cell}
-      onClick={tooltipOnClickHandler(setTooltipCoords)}
-      style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
-      data-testid={selectors.components.TablePanel.autoCell}
-    >
-      {shouldShowLink ? (
-        renderSingleLink(links[0], formattedValue, getLinkStyle(styles, cellOptions))
-      ) : shouldShowTooltip ? (
-        <DataLinksActionsTooltip
-          links={links}
-          actions={actions}
-          value={formattedValue}
-          coords={tooltipCoords}
-          onTooltipClose={() => setTooltipCoords(undefined)}
-        />
-      ) : (
-        formattedValue
-      )}
+    <div className={styles.cell} data-testid={selectors.components.TablePanel.autoCell}>
+      {link == null ? formattedValue : renderSingleLink(link, formattedValue, getLinkStyle(styles, cellOptions))}
     </div>
   );
 }

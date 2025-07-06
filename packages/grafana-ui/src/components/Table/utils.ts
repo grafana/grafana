@@ -764,7 +764,13 @@ export function guessLongestField(fieldConfig: FieldConfigSource, data: DataFram
   return longestField;
 }
 
-export type DataLinksActionsTooltipCoords = {
+export interface DataLinksActionsTooltipState {
+  coords: DataLinksActionsTooltipCoords;
+  links?: LinkModel[];
+  actions?: ActionModel[];
+}
+
+export interface DataLinksActionsTooltipCoords {
   clientX: number;
   clientY: number;
 };
