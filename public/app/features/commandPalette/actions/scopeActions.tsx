@@ -110,6 +110,7 @@ function useScopesRow(onApply: () => void) {
     function handler(event: KeyboardEvent) {
       if (isDirty && event.key === 'Enter' && event.metaKey) {
         event.preventDefault();
+        event.stopPropagation();
         finalApply();
       }
     }
