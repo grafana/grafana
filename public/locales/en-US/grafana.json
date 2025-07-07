@@ -5476,6 +5476,28 @@
         "row-height-options": "Row height options"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly",
+        "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
+        "group": "Add keys to group by on the fly",
+        "hidden-constant-variable": "A hidden constant variable, useful for metric prefixes in dashboards you want to share",
+        "users-enter-arbitrary-strings-textbox": "Users can enter any arbitrary strings in a textbox",
+        "values-are-static-and-defined-manually": "Values are static and defined manually",
+        "values-fetched-source-query": "Values are fetched from a data source query",
+        "values-timespans": "Values are timespans, ex 1m, 1h, 1d"
+      },
+      "name": {
+        "ad-hoc-filters": "Ad hoc filters",
+        "constant": "Constant",
+        "custom": "Custom",
+        "data-source": "Data source",
+        "group-by": "Group by",
+        "interval": "Interval",
+        "query": "Query",
+        "textbox": "Textbox"
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
