@@ -17,14 +17,8 @@ import {
 } from '@grafana/ui';
 
 import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
-import {
-  AzureMonitorQuery,
-  AzureQueryType,
-  Category,
-  CheatsheetQueries,
-  CheatsheetQuery,
-  DropdownCategories,
-} from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
+import { Category, CheatsheetQueries, CheatsheetQuery, DropdownCategories } from '../../types/types';
 
 import { RawQuery } from './RawQuery';
 import tokenizer from './syntax';
