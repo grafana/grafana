@@ -136,12 +136,14 @@ func newClient(opts options.StorageOptions,
 		}
 
 		if opts.SearchServerAddress != "" {
+			fmt.Println("search server address IS configured ", opts.SearchServerAddress)
 			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features)
 
 			if err != nil {
 				return nil, err
 			}
 		} else {
+			fmt.Println("search server address IS NOT configured")
 			indexConn = conn
 		}
 
