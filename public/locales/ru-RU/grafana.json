@@ -110,6 +110,12 @@
       "update-button": "Обновить",
       "users-heading": "Пользователи организации"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Проверка",
       "title-custom-branding": "Пользовательский брендинг",
@@ -345,6 +351,10 @@
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Периоды активности"
+    },
+    "ad": {
+      "close": "",
+      "learn-more": ""
     },
     "add-button": {
       "add-more": "Добавить еще"
@@ -1531,8 +1541,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "Начало работы",
       "label-insights": "Аналитика",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "Оповещение"
     },
     "import-to-gma": {
@@ -3248,6 +3270,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Включено",
       "text-badge-not-enabled": "Не включена"
     },
@@ -3280,6 +3304,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Управление параметрами аутентификации и настройка единого входа Подробнее см. в нашей <2>документации</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3495,18 +3525,12 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
-      "description-branch-name-in-git-hub": "Имя ветви в GitHub",
       "error-invalid-folder-name": "Недопустимое имя папки",
       "error-required": "Требуется имя папки",
-      "folder-comment-input-placeholder-describe-changes-optional": "Добавьте примечание с описанием изменений (необязательно)",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
-      "label-branch": "Ветвь",
-      "label-comment": "Комментарий",
       "label-folder-name": "Имя папки",
-      "label-workflow": "Рабочий процесс",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
       "title-pull-request-created": "Создан запрос на включение изменений",
-      "title-repository-not-found": "Репозиторий не найден",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
     "no-results": {
@@ -3516,7 +3540,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда."
+    "text-this-repository-is-read-only": "Если у вас есть прямой доступ к целевому объекту, скопируйте JSON-файл и вставьте его туда.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3916,6 +3946,8 @@
   "close-button": {
     "tooltip": "Закрыть"
   },
+  "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Ошибка при загрузке параметров."
@@ -8393,6 +8425,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8416,7 +8460,6 @@
       "label-wrap-lines": "Переносить строки"
     },
     "log-details": {
-      "close": "Закрыть сведения о журнале",
       "fields": "Поля",
       "links": "Ссылки",
       "log-line": "Строка журнала",
@@ -8441,6 +8484,35 @@
       "show-less": "меньше",
       "show-more": "больше",
       "tooltip-error": "Ошибка: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Копировать ссылку в строку журнала",
@@ -8568,6 +8640,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Ссылки на данные",
       "aria-label-fields": "Поля",
+      "aria-label-line": "",
       "aria-label-log-level": "Уровень журнала",
       "aria-label-no-details": "Нет сведений"
     },
@@ -9552,6 +9625,15 @@
       "view": "Просмотр"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Открыть варианты визуализации",
       "switch-to-table": "Переключиться на таблицу"
     },
@@ -11434,6 +11516,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Альтернативный текст, который будет отображаться, если невозможно показать изображение, или для пользователей, которые используют программу чтения с экрана",
       "description-title-text": "Текст, который будет отображаться при наведении курсора на изображение",
@@ -11454,6 +11537,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11662,6 +11746,12 @@
     "zone": {
       "select-aria-label": "Указатель часового пояса",
       "select-search-input": "Введите объект для поиска (страну, город, аббревиатуру)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
@@ -12113,6 +12203,7 @@
           "polynomial": "Полиномиальная"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Количество точек X, Y для прогнозирования"
     },
     "rename-by-regex-transformer-editor": {

@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import { SelectableValue, getDefaultTimeRange, toOption } from '@grafana/data';
 import { QueryBuilderOperationParamEditorProps, VisualQueryModeller } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
@@ -32,7 +31,7 @@ export function UnwrapParamEditor({
       inputId={getOperationParamId(operationId, index)}
       onOpenMenu={async () => {
         // This check is always true, we do it to make typescript happy
-        if (datasource instanceof LokiDatasource && config.featureToggles.lokiQueryHints) {
+        if (datasource instanceof LokiDatasource) {
           setState({ isLoading: true });
           const options = await loadUnwrapOptions(query, datasource, queryModeller, timeRange);
           setState({ options, isLoading: undefined });

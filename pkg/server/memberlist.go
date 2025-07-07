@@ -51,6 +51,8 @@ func toMemberlistConfig(cfg *setting.Cfg) *memberlist.KVConfig {
 	if cfg.MemberlistAdvertiseAddr != "" {
 		memberlistKVcfg.AdvertiseAddr = cfg.MemberlistAdvertiseAddr
 	}
+	memberlistKVcfg.AdvertisePort = cfg.MemberlistAdvertisePort
+	memberlistKVcfg.TCPTransport.BindPort = cfg.MemberlistAdvertisePort
 	memberlistKVcfg.JoinMembers = []string{cfg.MemberlistJoinMember}
 
 	return memberlistKVcfg

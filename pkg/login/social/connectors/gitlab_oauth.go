@@ -57,9 +57,7 @@ func NewGitLabProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 		SocialBase: newSocialBase(social.GitlabProviderName, orgRoleMapper, info, features, cfg),
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.GitlabProviderName, provider)
 
 	return provider
 }
@@ -303,6 +301,8 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 			"original_groups", data.Groups, "groups", userInfo.Groups)
 		data.Groups = userInfo.Groups
 	}
+
+	data.raw = rawJSON
 
 	s.log.Debug("Resolved user data", "data", fmt.Sprintf("%+v", data))
 	return &data, nil

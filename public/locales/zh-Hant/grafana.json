@@ -110,6 +110,12 @@
       "update-button": "更新",
       "users-heading": "組織使用者"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "稽核",
       "title-custom-branding": "自訂品牌",
@@ -345,6 +351,10 @@
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "啟用時間"
+    },
+    "ad": {
+      "close": "",
+      "learn-more": ""
     },
     "add-button": {
       "add-more": "新增更多"
@@ -1513,8 +1523,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "開始使用",
       "label-insights": "深入分析",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "警報"
     },
     "import-to-gma": {
@@ -3209,6 +3231,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "已啟用",
       "text-badge-not-enabled": "未啟用"
     },
@@ -3241,6 +3265,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "管理您的驗證設定並設定單一登入。請在我們的<2>文件</2>中閱讀更多資訊。"
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3441,18 +3471,12 @@
       "button-create": "建立",
       "button-creating": "正在建立…",
       "cancel": "取消",
-      "description-branch-name-in-git-hub": "GitHub 中的分支名稱",
       "error-invalid-folder-name": "無效的資料夾名稱",
       "error-required": "資料夾名稱為必填",
-      "folder-comment-input-placeholder-describe-changes-optional": "新增備註以描述您的變更（選填）",
       "folder-name-input-placeholder-enter-folder-name": "輸入資料夾名稱",
-      "label-branch": "分支",
-      "label-comment": "評論",
       "label-folder-name": "資料夾名稱",
-      "label-workflow": "工作流程",
       "text-pull-request-created": "已建立拉取請求，其中包含對此資料夾的變更：",
       "title-pull-request-created": "已建立拉取請求",
-      "title-repository-not-found": "找不到儲存庫",
       "title-this-repository-is-read-only": "此存放庫為唯讀"
     },
     "no-results": {
@@ -3462,7 +3486,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。"
+    "text-this-repository-is-read-only": "如果您可以直接存取目標，請複製 JSON 並將其貼上至該處。",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3892,8 @@
   "close-button": {
     "tooltip": "關閉"
   },
+  "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "載入選項時發生錯誤。"
@@ -8315,6 +8347,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8338,7 +8382,6 @@
       "label-wrap-lines": "換行"
     },
     "log-details": {
-      "close": "關閉紀錄詳細資訊",
       "fields": "欄位",
       "links": "連結",
       "log-line": "日誌行",
@@ -8363,6 +8406,35 @@
       "show-less": "顯示更少",
       "show-more": "顯示更多",
       "tooltip-error": "錯誤：{{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "將連結複製到日誌行",
@@ -8490,6 +8562,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "資料連結",
       "aria-label-fields": "欄位",
+      "aria-label-line": "",
       "aria-label-log-level": "紀錄層級",
       "aria-label-no-details": "無詳細資料"
     },
@@ -9465,6 +9538,15 @@
       "view": "檢視"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "開啟可視化建議",
       "switch-to-table": "切換到表格"
     },
@@ -11329,6 +11411,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "若圖片無法顯示或為使用螢幕閱讀器的使用者顯示的替代文字",
       "description-title-text": "滑鼠移至圖片上方時所顯示的文字",
@@ -11349,6 +11432,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11557,6 +11641,12 @@
     "zone": {
       "select-aria-label": "時區選擇器",
       "select-search-input": "輸入以搜尋（國家、城市、縮寫）"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
@@ -12008,6 +12098,7 @@
           "polynomial": "多項式"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "要預測的 X、Y 點數"
     },
     "rename-by-regex-transformer-editor": {

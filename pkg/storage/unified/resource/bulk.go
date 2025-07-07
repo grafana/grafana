@@ -305,7 +305,7 @@ func (b *batchRunner) Next() bool {
 
 		// Mention resource in the span.
 		attrs := []attribute.KeyValue{
-			attribute.String("key", k),
+			attribute.String("key", nsgrWithName(key)),
 		}
 		if b.err != nil {
 			attrs = append(attrs, attribute.String("error", b.err.Error()))

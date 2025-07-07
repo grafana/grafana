@@ -32,9 +32,10 @@ function mockLocationHref(href: string) {
     search = href.substring(searchPos);
   }
 
+  const win: typeof globalThis = window;
   //@ts-ignore
-  delete window.location;
-  window.location = {
+  delete win.location;
+  win.location = {
     ...location,
     href,
     origin: new URL(href).origin,
