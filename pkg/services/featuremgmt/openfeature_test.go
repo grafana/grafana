@@ -4,8 +4,11 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 
+	authlib "github.com/grafana/authlib/authn"
 	gofeatureflag "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,12 +45,16 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 		},
 	}
 
+	httpClientProvider := httpclient.NewProvider()
+	noopSignerMiddlewareProvider := middleware.ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(authlib.NewStaticTokenExchanger("noop-signer"), setting.NewCfg())
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
+			cfg.StackID = "stacks-1234"
 			cfg.OpenFeature = tc.cfg
 
-			p, err := ProvideOpenFeatureService(cfg)
+			p, err := ProvideOpenFeatureService(cfg, httpClientProvider, noopSignerMiddlewareProvider)
 			require.NoError(t, err)
 
 			if tc.expectedProvider == setting.GOFFProviderType {

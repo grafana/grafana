@@ -52,7 +52,7 @@ func setup(t *testing.T, conf []byte) *OpenFeatureService {
 	cfg, err := setting.NewCfgFromBytes(conf)
 	require.NoError(t, err)
 
-	p, err := ProvideOpenFeatureService(cfg)
+	p, err := ProvideOpenFeatureService(cfg, nil, nil)
 	require.NoError(t, err)
 	return p
 }

@@ -631,7 +631,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
-	openFeatureService, err := featuremgmt.ProvideOpenFeatureService(cfg)
+	openFeatureService, err := featuremgmt.ProvideOpenFeatureService(cfg, httpclientProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1176,7 +1176,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
-	openFeatureService, err := featuremgmt.ProvideOpenFeatureService(cfg)
+	openFeatureService, err := featuremgmt.ProvideOpenFeatureService(cfg, httpclientProvider)
 	if err != nil {
 		return nil, err
 	}
