@@ -7795,6 +7795,7 @@
     },
     "tags-input": {
       "add": "Add",
+      "placeholder-new-tag": "New tag (enter key to add)",
       "remove": "Remove tag: {{name}}"
     },
     "time-sync-button": {
