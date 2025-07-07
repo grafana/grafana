@@ -1223,8 +1223,11 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
 	if s.search == nil {
+		fmt.Println("no search configured")
 		return nil, fmt.Errorf("search index not configured")
 	}
+
+	fmt.Println("Handling Search")
 
 	return s.search.Search(ctx, req)
 }
@@ -1234,6 +1237,8 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Handling GetStats")
 
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
