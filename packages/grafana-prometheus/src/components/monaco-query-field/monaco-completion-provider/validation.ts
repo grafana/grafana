@@ -6,7 +6,8 @@ import { LRParser } from '@lezer/lr';
 export const ErrorId = 0;
 
 export const warningTypes: Record<string, string> = {
-  SubqueryExpr: 'This subquery may return only one data point, preventing rate/increase/delta calculations. Use a range at least twice the step size (e.g., [2x:x]).',
+  SubqueryExpr:
+    'This subquery may return only one data point, preventing rate/increase/delta calculations. Use a range at least twice the step size (e.g., [2x:x]).',
 };
 
 enum NodeType {
