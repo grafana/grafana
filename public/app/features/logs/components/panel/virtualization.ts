@@ -2,7 +2,7 @@ import ansicolor from 'ansicolor';
 
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
-import { LOG_LINE_DETAILS_HEIGHT } from './LogLineDetails';
+import { LOG_LINE_DETAILS_HEIGHT, LogLineDetailsMode } from './LogLineDetails';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 
@@ -233,6 +233,7 @@ export class LogLineVirtualization {
 }
 
 export interface DisplayOptions {
+  detailsMode: LogLineDetailsMode;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
   showDetails: LogListModel[];
@@ -246,7 +247,7 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
+  { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
@@ -254,7 +255,7 @@ export function getLogLineSize(
   }
   const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
   const detailsHeight =
-    showDetails.findIndex((log) => log.uid === logs[index].uid) >= 0
+    detailsMode === 'inline' && showDetails.findIndex((log) => log.uid === logs[index].uid) >= 0
       ? window.innerHeight * (LOG_LINE_DETAILS_HEIGHT / 100) + gap / 2
       : 0;
   // !logs[index] means the line is not yet loaded by infinite scrolling

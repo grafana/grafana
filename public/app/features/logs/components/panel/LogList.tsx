@@ -26,7 +26,7 @@ import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
-import { LogLineDetails } from './LogLineDetails';
+import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
@@ -41,6 +41,7 @@ export interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
+  detailsMode?: LogLineDetailsMode;
   displayedFields: string[];
   enableLogDetails: boolean;
   eventBus?: EventBus;
@@ -105,11 +106,12 @@ export const LogList = ({
   app,
   displayedFields,
   containerElement,
+  logOptionsStorageKey,
+  detailsMode = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.detailsMode`) ?? 'sidebar') : 'sidebar',
   dedupStrategy,
   enableLogDetails,
   eventBus,
   filterLevels,
-  logOptionsStorageKey,
   fontSize = logOptionsStorageKey ? (store.get(`${logOptionsStorageKey}.fontSize`) ?? 'default') : 'default',
   getFieldLinks,
   getRowContextQuery,
@@ -152,6 +154,7 @@ export const LogList = ({
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
+      detailsMode={detailsMode}
       displayedFields={displayedFields}
       enableLogDetails={enableLogDetails}
       filterLevels={filterLevels}
@@ -457,6 +460,7 @@ const LogListComponent = ({
               height={listHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
+                detailsMode,
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,

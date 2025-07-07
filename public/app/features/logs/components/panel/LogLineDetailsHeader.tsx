@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, MouseEvent, useRef, ChangeEvent } from 'react';
 
-import { colorManipulator, GrafanaTheme2, LogRowModel } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, LogRowModel, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Input, useStyles2 } from '@grafana/ui';
 
@@ -24,7 +24,9 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     detailsMode,
     displayedFields,
     getRowContextQuery,
+    logOptionsStorageKey,
     logSupportsContext,
+    setDetailsMode,
     onClickHideField,
     onClickShowField,
     onOpenContext,
@@ -68,6 +70,15 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
 
   const showLogLineToggle = onClickHideField && onClickShowField && displayedFields.length > 0;
   const logLineDisplayed = displayedFields.includes(LOG_LINE_BODY_FIELD_NAME);
+
+  const toggleDetailsMode = useCallback(() => {
+    const newMode = detailsMode === 'inline' ? 'sidebar' : 'inline';
+    if (logOptionsStorageKey) {
+      store.set(`${logOptionsStorageKey}.detailsMode`, newMode);
+    }
+
+    setDetailsMode(newMode);
+  }, [detailsMode, logOptionsStorageKey, setDetailsMode]);
 
   const toggleLogLine = useCallback(() => {
     if (logLineDisplayed) {
@@ -124,60 +135,71 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
           variant={logLineDisplayed ? 'primary' : undefined}
         />
       )}
-      <IconButton
-        tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
-        tooltipPlacement="top"
-        size="md"
-        name="copy"
-        onClick={copyLogLine}
-        tabIndex={0}
-      />
-      {onPermalinkClick && log.rowId !== undefined && log.uid && (
+      <div className={styles.icons}>
         <IconButton
-          tooltip={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}
+          tooltip={t('logs.log-line-details.copy-to-clipboard', 'Copy to clipboard')}
           tooltipPlacement="top"
           size="md"
-          name="share-alt"
-          onClick={copyLinkToLogLine}
+          name="copy"
+          onClick={copyLogLine}
           tabIndex={0}
         />
-      )}
-      {pinned && onUnpinLine && (
+        {onPermalinkClick && log.rowId !== undefined && log.uid && (
+          <IconButton
+            tooltip={t('logs.log-line-details.copy-shortlink', 'Copy shortlink')}
+            tooltipPlacement="top"
+            size="md"
+            name="share-alt"
+            onClick={copyLinkToLogLine}
+            tabIndex={0}
+          />
+        )}
+        {pinned && onUnpinLine && (
+          <IconButton
+            size="md"
+            name="gf-pin"
+            onClick={togglePinning}
+            tooltip={t('logs.log-line-details.unpin-line', 'Unpin log')}
+            tooltipPlacement="top"
+            tabIndex={0}
+            variant="primary"
+          />
+        )}
+        {!pinned && onPinLine && (
+          <IconButton
+            size="md"
+            name="gf-pin"
+            onClick={togglePinning}
+            tooltip={t('logs.log-line-details.pin-line', 'Pin log')}
+            tooltipPlacement="top"
+            tabIndex={0}
+          />
+        )}
+        {shouldlogSupportsContext && (
+          <IconButton
+            size="md"
+            name="gf-show-context"
+            onClick={showContext}
+            tooltip={t('logs.log-line-details.show-context', 'Show context')}
+            tooltipPlacement="top"
+            tabIndex={0}
+          />
+        )}
         <IconButton
-          size="md"
-          name="gf-pin"
-          onClick={togglePinning}
-          tooltip={t('logs.log-line-details.unpin-line', 'Unpin log')}
-          tooltipPlacement="top"
-          tabIndex={0}
-          variant="primary"
+          name={detailsMode === 'inline' ? 'columns' : 'gf-layout-simple'}
+          aria-label={
+            detailsMode
+              ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
+              : t('logs.log-line-details.inline-mode', 'Display inline')
+          }
+          onClick={toggleDetailsMode}
         />
-      )}
-      {!pinned && onPinLine && (
         <IconButton
-          size="md"
-          name="gf-pin"
-          onClick={togglePinning}
-          tooltip={t('logs.log-line-details.pin-line', 'Pin log')}
-          tooltipPlacement="top"
-          tabIndex={0}
+          name="times"
+          aria-label={t('logs.log-line-details.close', 'Close log details')}
+          onClick={closeDetails}
         />
-      )}
-      {shouldlogSupportsContext && (
-        <IconButton
-          size="md"
-          name="gf-show-context"
-          onClick={showContext}
-          tooltip={t('logs.log-line-details.show-context', 'Show context')}
-          tooltipPlacement="top"
-          tabIndex={0}
-        />
-      )}
-      <IconButton
-        name="times"
-        aria-label={t('logs.log-line-details.close', 'Close log details')}
-        onClick={closeDetails}
-      />
+      </div>
     </div>
   );
 };
@@ -203,6 +225,10 @@ const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessag
     padding: theme.spacing(0.5, 1),
     position: 'sticky',
     top: 0,
+  }),
+  icons: css({
+    display: 'flex',
+    gap: theme.spacing(0.75),
   }),
   copyLogButton: css({
     padding: 0,

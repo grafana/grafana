@@ -137,6 +137,7 @@ export interface Props {
   children?: ReactNode;
   // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
+  detailsMode?: LogLineDetailsMode;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -181,6 +182,7 @@ export const LogListContextProvider = ({
   children,
   containerElement,
   enableLogDetails,
+  detailsMode: detailsModeProp,
   dedupStrategy,
   displayedFields,
   filterLevels,
@@ -235,7 +237,7 @@ export const LogListContextProvider = ({
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
-  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>('inline');
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.

@@ -8726,6 +8726,7 @@
       },
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
+      "inline-mode": "Display inline",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
@@ -8738,6 +8739,7 @@
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
       "show-log-line": "Show log line",
+      "sidebar-mode": "Anchor to the right",
       "unpin-line": "Unpin log"
     },
     "log-line-menu": {
