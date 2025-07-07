@@ -9825,6 +9825,7 @@
         "permission": "You do not have permission to see this page.",
         "title-access-denied": "Access denied"
       },
+      "error-loading-plugin": "Plugin failed to load",
       "no-root-app-page-component-found": "No root app page component found"
     },
     "browse": {
@@ -9922,6 +9923,10 @@
     },
     "empty-state": {
       "message": "No plugins found"
+    },
+    "extensions": {
+      "extension-error-alert-description": "Check the console for more details on the error.",
+      "extension-error-alert-title": "Extension failed to load: \"{{pluginId}}/{{extensionTitle}}\""
     },
     "extensions-log-data-source": {
       "message": {
