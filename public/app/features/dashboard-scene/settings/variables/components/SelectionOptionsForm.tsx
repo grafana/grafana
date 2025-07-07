@@ -31,7 +31,7 @@ export function SelectionOptionsForm({
     <Stack direction="column" gap={2} height="inherit" alignItems="start">
       <VariableCheckboxField
         value={multi}
-        name="Multi-value"
+        name={t('dashboard-scene.selection-options-form.name-multi-value', 'Multi-value')}
         description={t(
           'dashboard-scene.selection-options-form.description-enables-multiple-values-selected',
           'Enables multiple values to be selected at the same time'
@@ -42,7 +42,7 @@ export function SelectionOptionsForm({
       {onAllowCustomValueChange && ( // backwards compat with old arch, remove on cleanup
         <VariableCheckboxField
           value={allowCustomValue ?? true}
-          name="Allow custom values"
+          name={t('dashboard-scene.selection-options-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.selection-options-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'
@@ -53,7 +53,7 @@ export function SelectionOptionsForm({
       )}
       <VariableCheckboxField
         value={includeAll}
-        name="Include All option"
+        name={t('dashboard-scene.selection-options-form.name-include-all-option', 'Include All option')}
         description={t(
           'dashboard-scene.selection-options-form.description-enables-option-include-variables',
           'Enables an option to include all values'
@@ -65,7 +65,7 @@ export function SelectionOptionsForm({
         <VariableTextField
           defaultValue={allValue ?? ''}
           onBlur={onAllValueChange}
-          name="Custom all value"
+          name={t('dashboard-scene.selection-options-form.name-custom-all-value', 'Custom all value')}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
         />
       )}

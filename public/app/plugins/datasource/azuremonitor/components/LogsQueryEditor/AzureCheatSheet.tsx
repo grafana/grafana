@@ -155,7 +155,10 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                 backspaceRemovesValue={true}
                 placeholder={t('components.azure-cheat-sheet.placeholder-all-categories', 'All categories')}
                 isClearable={true}
-                noOptionsMessage="Unable to list all categories"
+                noOptionsMessage={t(
+                  'components.azure-cheat-sheet.noOptionsMessage-unable-to-list-categories',
+                  'Unable to list all categories'
+                )}
                 formatCreateLabel={(input: string) => `Category: ${input}`}
                 isSearchable={true}
                 isMulti={true}

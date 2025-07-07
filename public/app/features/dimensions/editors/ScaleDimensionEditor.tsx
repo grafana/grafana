@@ -104,7 +104,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}
-          noOptionsMessage="No fields found"
+          noOptionsMessage={t('dimensions.scale-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
         />
       </div>
       <div className={styles.range}>

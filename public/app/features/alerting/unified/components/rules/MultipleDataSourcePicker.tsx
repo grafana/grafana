@@ -177,7 +177,10 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
         openMenuOnFocus={openMenuOnFocus}
         maxMenuHeight={500}
         placeholder={placeholder}
-        noOptionsMessage="No datasources found"
+        noOptionsMessage={t(
+          'alerting.multiple-data-source-picker.noOptionsMessage-no-datasources-found',
+          'No datasources found'
+        )}
         value={value ?? []}
         invalid={Boolean(state?.error) || Boolean(props.invalid)}
         getOptionLabel={(o) => {

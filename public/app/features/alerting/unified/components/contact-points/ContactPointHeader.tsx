@@ -100,7 +100,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         <Menu.Item
           icon="download-alt"
           label={t('alerting.contact-point-header.export-label-export', 'Export')}
-          ariaLabel="export"
+          ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
           disabled={!exportAllowed}
           data-testid="export"
           onClick={() => openExportDrawer(name)}
@@ -159,7 +159,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
       >
         <Menu.Item
           label={t('alerting.contact-point-header.label-delete', 'Delete')}
-          ariaLabel="delete"
+          ariaLabel={t('alerting.contact-point-header.ariaLabel-delete', 'Delete')}
           icon="trash-alt"
           destructive
           disabled={!canBeDeleted}

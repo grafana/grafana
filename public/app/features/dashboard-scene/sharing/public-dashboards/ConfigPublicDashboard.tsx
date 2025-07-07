@@ -47,7 +47,10 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
             isOpen: true,
             title: t('dashboard-scene.config-public-dashboard.title.revoke-public-url', 'Revoke public URL'),
             icon: 'trash-alt',
-            confirmText: 'Revoke public URL',
+            confirmText: t(
+              'dashboard-scene.config-public-dashboard.confirmText.revoke-public-url',
+              'Revoke public URL'
+            ),
             body: (
               <p className={styles.description}>
                 <Trans i18nKey="public-dashboard.config.revoke-body">

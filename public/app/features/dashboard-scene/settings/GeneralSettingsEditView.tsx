@@ -35,17 +35,6 @@ import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } fr
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
 
-const EDITABLE_OPTIONS = [
-  { label: 'Editable', value: true },
-  { label: 'Read-only', value: false },
-];
-
-const GRAPH_TOOLTIP_OPTIONS = [
-  { value: 0, label: 'Default' },
-  { value: 1, label: 'Shared crosshair' },
-  { value: 2, label: 'Shared Tooltip' },
-];
-
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
@@ -176,6 +165,37 @@ export class GeneralSettingsEditView
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
     const { enabled: liveNow } = model.getLiveNowTimer().useState();
+    const EDITABLE_OPTIONS = [
+      {
+        label: t('dashboard-scene.general-settings-edit-view.editable_options.label.editable', 'Editable'),
+        value: true,
+      },
+      {
+        label: t('dashboard-scene.general-settings-edit-view.editable_options.label.readonly', 'Read-only'),
+        value: false,
+      },
+    ];
+
+    const GRAPH_TOOLTIP_OPTIONS = [
+      {
+        value: 0,
+        label: t('dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.default', 'Default'),
+      },
+      {
+        value: 1,
+        label: t(
+          'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-crosshair',
+          'Shared crosshair'
+        ),
+      },
+      {
+        value: 2,
+        label: t(
+          'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-tooltip',
+          'Shared tooltip'
+        ),
+      },
+    ];
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>

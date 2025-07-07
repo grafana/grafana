@@ -72,7 +72,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
               </Trans>
             </div>
           }
-          confirmText="Delete"
+          confirmText={t('admin.admin-orgs-table.confirmText-delete', 'Delete')}
           onDismiss={() => setDeleteOrg(undefined)}
           onConfirm={() => {
             onDelete(deleteOrg.id);
