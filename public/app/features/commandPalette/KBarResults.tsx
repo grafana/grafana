@@ -71,7 +71,18 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
           return nextIndex;
         });
-      } else if (event.key === 'Enter' && !event.metaKey) {
+      } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        // Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux) - open in new tab
+        event.preventDefault();
+
+        if (activeRef.current instanceof HTMLAnchorElement) {
+          window.open(activeRef.current.href, '_blank', 'noopener,noreferrer');
+          query.toggle();
+        } else {
+          // For action-based items (rendered as <div> tags), execute normally
+          activeRef.current?.click();
+        }
+      } else if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
         event.preventDefault();
         // storing the active dom element in a ref prevents us from
         // having to calculate the current action to perform based
