@@ -9,7 +9,6 @@ import { llm } from '@grafana/llm';
 import { locationService } from '@grafana/runtime';
 import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 
-import { LogMessages, logInfo } from '../../../Analytics';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
@@ -223,7 +222,6 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
     const messages: llm.Message[] = [createSystemPrompt(), createUserPrompt(prompt)];
 
     handleGenerateWithTools(messages);
-    logInfo(LogMessages.alertRuleFromScratch);
   };
 
   const handleUseRule = () => {

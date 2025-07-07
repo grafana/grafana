@@ -7,7 +7,6 @@ import { Trans, t } from '@grafana/i18n';
 import { llm } from '@grafana/llm';
 import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 
-import { LogMessages, logInfo } from '../../../Analytics';
 import { RuleFormValues } from '../../../types/rule-form';
 import { callLLM, extractJsonFromLLMResponse, formatLLMError } from '../../../utils/llmUtils';
 
@@ -128,7 +127,6 @@ export const GenAIImproveLabelsButton = ({ disabled }: GenAIImproveLabelsButtonP
     setShowModal(false);
     setImprovements(null);
     setPrompt('');
-    logInfo(LogMessages.alertRuleFromScratch);
   }, [improvements, currentValues, setValue]);
 
   const handleClose = () => {
