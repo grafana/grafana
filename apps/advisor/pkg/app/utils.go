@@ -53,7 +53,7 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		if setErr != nil {
 			return setErr
 		}
-		return fmt.Errorf("error initializing check: %w", err)
+		return fmt.Errorf("error listing items for check: %w", err)
 	}
 	// Get the check type
 	var checkType resource.Object
@@ -130,7 +130,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		if setErr != nil {
 			return setErr
 		}
-		return fmt.Errorf("error initializing check: %w", err)
+		return fmt.Errorf("error getting item for check: %w", err)
 	}
 	if item != nil {
 		// Get the check type
@@ -206,7 +206,7 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 				func() {
 					defer func() {
 						if r := recover(); r != nil {
-							err = fmt.Errorf("panic recovered in step %s: %v", step.ID(), r)
+							log.Error("panic recovered in step", "step", step.ID(), "error", r, "item", item)
 						}
 					}()
 					logger := log.With("step", step.ID())

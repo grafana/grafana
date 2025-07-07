@@ -1744,11 +1744,6 @@
           {
             "group": "investigations.grafana.app",
             "kind": "Investigation",
-            "version": "__internal"
-          },
-          {
-            "group": "investigations.grafana.app",
-            "kind": "Investigation",
             "version": "v0alpha1"
           }
         ]
@@ -1895,11 +1890,6 @@
           {
             "group": "investigations.grafana.app",
             "kind": "InvestigationIndex",
-            "version": "__internal"
-          },
-          {
-            "group": "investigations.grafana.app",
-            "kind": "InvestigationIndex",
             "version": "v0alpha1"
           }
         ]
@@ -2031,11 +2021,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "investigations.grafana.app",
-            "kind": "InvestigationIndexList",
-            "version": "__internal"
-          },
           {
             "group": "investigations.grafana.app",
             "kind": "InvestigationIndexList",
@@ -2218,11 +2203,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "investigations.grafana.app",
-            "kind": "InvestigationList",
-            "version": "__internal"
-          },
           {
             "group": "investigations.grafana.app",
             "kind": "InvestigationList",

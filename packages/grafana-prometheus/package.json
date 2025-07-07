@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@floating-ui/react": "0.27.12",
+    "@floating-ui/react": "0.27.13",
     "@grafana/data": "12.1.0-pre",
     "@grafana/e2e-selectors": "12.1.0-pre",
     "@grafana/i18n": "12.1.0-pre",
@@ -48,12 +48,12 @@
     "@grafana/runtime": "12.1.0-pre",
     "@grafana/schema": "12.1.0-pre",
     "@grafana/ui": "12.1.0-pre",
-    "@hello-pangea/dnd": "17.0.0",
+    "@hello-pangea/dnd": "18.0.1",
     "@leeoniya/ufuzzy": "1.0.18",
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
-    "@prometheus-io/lezer-promql": "0.304.1",
+    "@prometheus-io/lezer-promql": "0.304.2",
     "@reduxjs/toolkit": "2.5.1",
     "@types/debounce-promise": "3.1.9",
     "@types/lodash": "4.17.15",
@@ -102,7 +102,7 @@
     "rollup-plugin-esbuild": "6.2.0",
     "rollup-plugin-node-externals": "^8.0.0",
     "testing-library-selector": "0.3.1",
-    "typescript": "5.7.3"
+    "typescript": "5.8.3"
   },
   "peerDependencies": {
     "react": "^18.0.0",

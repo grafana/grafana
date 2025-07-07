@@ -1,7 +1,7 @@
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { HistorySrv } from './HistorySrv';
-import { restore, versions } from './__mocks__/dashboardHistoryMocks';
+import { restore, versions } from './mocks/dashboardHistoryMocks';
 
 const getMock = jest.fn().mockResolvedValue({});
 const postMock = jest.fn().mockResolvedValue({});

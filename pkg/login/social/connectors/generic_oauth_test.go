@@ -458,7 +458,7 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			EmailAttributePath: "email",
 		}, cfg,
 			orgRoleMapper,
-			&ssosettingstests.MockService{},
+			ssosettingstests.NewFakeService(),
 			featuremgmt.WithFeatures())
 
 		provider.info.RoleAttributePath = tc.RoleAttributePath
@@ -507,7 +507,7 @@ func TestUserInfoSearchesForEmailAndOrgRoles(t *testing.T) {
 			EmailAttributePath: "email",
 		}, cfg,
 			orgRoleMapper,
-			&ssosettingstests.MockService{},
+			ssosettingstests.NewFakeService(),
 			featuremgmt.WithFeatures())
 
 		body, err := json.Marshal(map[string]any{"info": map[string]any{"roles": []string{"engineering", "SRE"}}})
@@ -600,7 +600,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 		},
 	}, setting.NewCfg(),
 		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
-		&ssosettingstests.MockService{},
+		ssosettingstests.NewFakeService(),
 		featuremgmt.WithFeatures())
 
 	for _, tc := range testCases {
@@ -700,7 +700,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 	},
 		setting.NewCfg(),
 		ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
-		&ssosettingstests.MockService{},
+		ssosettingstests.NewFakeService(),
 		featuremgmt.WithFeatures())
 
 	for _, tc := range testCases {
@@ -782,7 +782,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 				ApiUrl:              ts.URL,
 			}, setting.NewCfg(),
 				ProvideOrgRoleMapper(setting.NewCfg(), orgtest.NewOrgServiceFake()),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures())
 
 			token := &oauth2.Token{
@@ -802,7 +802,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 func TestPayloadCompression(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
 		EmailAttributePath: "email",
-	}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+	}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 	tests := []struct {
 		Name          string
@@ -957,7 +957,7 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			require.Equal(t, tc.want.nameAttributePath, s.nameAttributePath)
 			require.Equal(t, tc.want.loginAttributePath, s.loginAttributePath)
@@ -1176,7 +1176,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -1256,7 +1256,7 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1354,7 +1354,7 @@ func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			require.NoError(t, err)

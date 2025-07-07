@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -85,6 +84,15 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					"singularName": "",
 					"namespaced": true,
 					"kind": "FolderAccessInfo",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/children",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderList",
 					"verbs": [
 						"get"
 					]
@@ -583,7 +591,6 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("not working yet")
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 	folderWithParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
@@ -708,7 +715,6 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("not yet working")
 
 	type testCase struct {
 		description          string
@@ -735,10 +741,10 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			checkAccessControl: true,
 		},
 		{
-			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
+			description:          "get folder by UID should not return parent folders if nested folder are enabled and user does not have read access to parent folders",
 			expectedCode:         http.StatusOK,
-			expectedParentUIDs:   []string{api.REDACTED},
-			expectedParentTitles: []string{api.REDACTED},
+			expectedParentUIDs:   []string{},
+			expectedParentTitles: []string{},
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
 					Actions:           []string{dashboards.ActionFoldersRead},

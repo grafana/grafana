@@ -41,7 +41,7 @@
     "i18next-parser": "9.3.0",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
-    "typescript": "5.7.3",
+    "typescript": "5.8.3",
     "webpack": "5.97.1"
   },
   "peerDependencies": {
@@ -53,5 +53,5 @@
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next --config locales/i18next-parser.config.cjs"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.9.2"
 }

@@ -18,6 +18,8 @@ Check if border-radius theme tokens are used.
 
 To improve the consistency across Grafana we encourage devs to use tokens instead of custom values. In this case, we want the `borderRadius` to use the appropriate token such as `theme.shape.radius.default`, `theme.shape.radius.pill` or `theme.shape.radius.circle`.
 
+Instead of using `0` to remove a previously set border-radius, use `unset`.
+
 ### `no-unreduced-motion`
 
 Avoid direct use of `animation*` or `transition*` properties.
