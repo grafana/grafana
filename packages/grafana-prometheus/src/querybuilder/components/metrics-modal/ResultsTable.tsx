@@ -4,7 +4,7 @@ import { ReactElement } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { docsTip } from '../../../configuration/shared/utils';
@@ -106,15 +106,24 @@ export function ResultsTable(props: ResultsTableProps) {
     let message;
 
     if (!state.fuzzySearchQuery) {
-      message = 'There are no metrics found in the data source.';
+      message = t(
+        'grafana-prometheus.querybuilder.results-table.message-no-metrics-found',
+        'There are no metrics found in the data source.'
+      );
     }
 
     if (query.labels.length > 0) {
-      message = 'There are no metrics found. Try to expand your label filters.';
+      message = t(
+        'grafana-prometheus.querybuilder.results-table.message-expand-label-filters',
+        'There are no metrics found. Try to expand your label filters.'
+      );
     }
 
     if (state.fuzzySearchQuery || state.selectedTypes.length > 0) {
-      message = 'There are no metrics found. Try to expand your search and filters.';
+      message = t(
+        'grafana-prometheus.querybuilder.results-table.message-expand-search',
+        'There are no metrics found. Try to expand your search and filters.'
+      );
     }
 
     return (

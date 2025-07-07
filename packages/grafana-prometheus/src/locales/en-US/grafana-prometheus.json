@@ -204,6 +204,29 @@
         "give-feedback": "Give feedback",
         "title-give-feedback": "The metrics explorer is new, please let us know how we can improve it"
       },
+      "get-placeholders": {
+        "browse": "Search metrics by name",
+        "include-null-metadata": "Include results with no metadata",
+        "metadata-search-switch": "Include description in search",
+        "set-use-backend": "Enable regex search",
+        "type": "Filter by type"
+      },
+      "get-prom-types": {
+        "description-counter": "A cumulative metric that represents a single monotonically increasing counter whose value can only increase or be reset to zero on restart.",
+        "description-gauge": "A metric that represents a single numerical value that can arbitrarily go up and down.",
+        "description-histogram": "A histogram samples observations (usually things like request durations or response sizes) and counts them in configurable buckets.",
+        "description-native-histogram": "Native histograms are different from classic Prometheus histograms in a number of ways: Native histogram bucket boundaries are calculated by a formula that depends on the scale (resolution) of the native histogram, and are not user defined.",
+        "description-no-type": "These metrics have no defined type in the metadata.",
+        "description-summary": "A summary samples observations (usually things like request durations and response sizes) and can calculate configurable quantiles over a sliding time window.",
+        "description-unknown": "These metrics have been given the type unknown in the metadata.",
+        "label-counter": "Counter",
+        "label-gauge": "Gauge",
+        "label-histogram": "Histogram",
+        "label-native-histogram": "Native histogram",
+        "label-no-type": "No type",
+        "label-summary": "Summary",
+        "label-unknown": "Unknown"
+      },
       "handle-function": {
         "text": {
           "query-parsing-is-ambiguous": "Query parsing is ambiguous."
@@ -330,6 +353,9 @@
       "results-table": {
         "content-descriptive-type": "When creating a {{descriptiveType}}, Prometheus exposes multiple series with the type counter. ",
         "description": "Description",
+        "message-expand-label-filters": "There are no metrics found. Try to expand your label filters.",
+        "message-expand-search": "There are no metrics found. Try to expand your search and filters.",
+        "message-no-metrics-found": "There are no metrics found in the data source.",
         "name": "Name",
         "select": "Select",
         "type": "Type"

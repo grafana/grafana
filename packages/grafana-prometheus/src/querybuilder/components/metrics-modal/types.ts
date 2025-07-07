@@ -9,6 +9,7 @@ export type MetricData = {
 
 export type PromFilterOption = {
   value: string;
+  label: string;
   description: string;
 };
 
