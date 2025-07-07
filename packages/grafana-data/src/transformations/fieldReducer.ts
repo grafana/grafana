@@ -132,7 +132,7 @@ export enum ReducerID {
 }
 
 export function getFieldTypeForReducer(id: ReducerID, fallback: FieldType): FieldType {
-  return id === ReducerID.count
+  return id === ReducerID.count || id === ReducerID.distinctCount || id === ReducerID.changeCount
     ? FieldType.number
     : id === ReducerID.allIsNull || id === ReducerID.allIsZero
       ? FieldType.boolean

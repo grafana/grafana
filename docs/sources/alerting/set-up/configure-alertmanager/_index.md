@@ -6,7 +6,7 @@ aliases:
   - ../fundamentals/alertmanager/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alertmanager/
   - ../fundamentals/notifications/alertmanager/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/alertmanager
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/
-description: Learn about Alertmanagers and set up Alerting to use an external Alertmanager
+description: Learn about Alertmanagers and set up Alerting to use other Alertmanagers
 keywords:
   - grafana
   - alerting
@@ -21,6 +21,21 @@ labels:
 title: Configure Alertmanagers
 weight: 200
 refs:
+  configure-grafana-alerts-notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-notifications
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#configure-notifications
+  configure-notification-policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
+  alertmanager-contact-point:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
   alertmanager-data-source:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/
@@ -39,7 +54,15 @@ Grafana Alerting is based on the architecture of the Prometheus alerting system.
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-Grafana can enable one or more Alertmanagers to receive Grafana-managed alerts for notification handling. It’s important to note that each Alertmanager manages its own independent alerting resources, such as:
+Grafana includes a built-in **Grafana Alertmanager** to handle notifications. This guide shows you how to:
+
+- Use different [types of Alertmanagers](#types-of-alertmanagers-in-grafana) with Grafana
+- [Add other Alertmanager](#add-an-alertmanager) and [enable it to receive all Grafana-managed alerts](#enable-an-alertmanager-to-receive-grafana-managed-alerts)
+- Use an [Alertmanager as a contact point]() to route specific alerts
+
+## Alertmanager resources
+
+It’s important to note that each Alertmanager manages its own independent alerting resources, such as:
 
 - Contact points and notification templates
 - Notification policies and mute timings
@@ -99,6 +122,18 @@ All Grafana-managed alerts are forwarded to Alertmanagers marked as `Receiving G
 {{% admonition type="note" %}}
 Grafana Alerting does not support forwarding Grafana-managed alerts to the AlertManager in Amazon Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).
 {{% /admonition %}}
+
+## Use an Alertmanager as a contact point to receive specific alerts
+
+The previous instructions enable sending **all** Grafana-managed alerts to an Alertmanager.
+
+To send **specific** alerts to an Alertmanager, configure the Alertmanager as a contact point. You can then assign this contact point to notification policies or individual alert rules.
+
+For detailed instructions, refer to:
+
+- [Alertmanager contact point](ref:alertmanager-contact-point)
+- [Configure Grafana-managed alert rules](ref:configure-grafana-alerts-notifications)
+- [Configure notification policies](ref:configure-notification-policies)
 
 ## Manage Alertmanager configurations
 

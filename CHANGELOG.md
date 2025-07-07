@@ -1,14 +1,59 @@
-<!-- 11.6.0+security-01 START -->
+<!-- 11.6.3 START -->
 
-# 11.6.0+security-01 (2025-04-22)
+# 11.6.3 (2025-06-17)
 
 ### Bug fixes
 
+- **Security:** Fixes CVE-2025-3415
+
+<!-- 11.6.3 END -->
+<!-- 11.6.2 START -->
+
+# 11.6.2 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105103](https://github.com/grafana/grafana/pull/105103), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/blevesearch/bleve/v2 from v2.4.4-git to v2.5.0 [#105443](https://github.com/grafana/grafana/pull/105443), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.6 to v1.8.12 [#105369](https://github.com/grafana/grafana/pull/105369), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.126.0 to v0.132.0 [#105251](https://github.com/grafana/grafana/pull/105251), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Dashboard:** Fixes issue with row repeats and first row [#104467](https://github.com/grafana/grafana/pull/104467), [@torkelo](https://github.com/torkelo)
+- **Graphite:** Ensure template variables are interpolated correctly [#105388](https://github.com/grafana/grafana/pull/105388), [@aangelisc](https://github.com/aangelisc)
+- **Graphite:** Fix Graphite series interpolation [#104568](https://github.com/grafana/grafana/pull/104568), [@aangelisc](https://github.com/aangelisc)
+- **Prometheus:** Fix semver import path [#104943](https://github.com/grafana/grafana/pull/104943), [@jackw](https://github.com/jackw)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
+<!-- 11.6.2 END -->
+<!-- 11.6.1 START -->
+
+# 11.6.1 (2025-04-23)
+
+### Features and enhancements
+
+- **Chore:** Update JWT library (CVE-2025-30204) [#102727](https://github.com/grafana/grafana/pull/102727), [@grambbledook](https://github.com/grambbledook)
+- **DashboardScenePage:** Correct slug in self referencing data links [#103854](https://github.com/grafana/grafana/pull/103854), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+- **Dependencies:** Bump github.com/redis/go-redis/v9 to 9.7.3 to address CVE-2025-29923 [#102863](https://github.com/grafana/grafana/pull/102863), [@macabu](https://github.com/macabu)
+- **Go:** Bump to 1.24.2 [#103523](https://github.com/grafana/grafana/pull/103523), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+- **GrafanaUI:** Use safePolygon close handler for interactive tooltips instead of a delay [#102869](https://github.com/grafana/grafana/pull/102869), [@mthorning](https://github.com/mthorning)
+- **Prometheus:** Add support for cloud partners Prometheus data sources [#103941](https://github.com/grafana/grafana/pull/103941), [@kevinwcyu](https://github.com/kevinwcyu)
+
+### Bug fixes
+
+- **Alertmanager:** Add Role-Based Access Control via reqAction Field [#103479](https://github.com/grafana/grafana/pull/103479), [@olegpixel](https://github.com/olegpixel)
+- **GrafanaUI:** Remove blurred background from overlay backdrops to improve performance [#103647](https://github.com/grafana/grafana/pull/103647), [@joshhunt](https://github.com/joshhunt)
+- **InfluxDB:** Fix nested variable interpolation [#104096](https://github.com/grafana/grafana/pull/104096), [@aangelisc](https://github.com/aangelisc)
+- **LDAP test:** Fix page crash [#102684](https://github.com/grafana/grafana/pull/102684), [@ashharrison90](https://github.com/ashharrison90)
+- **Org redirection:** Fix linking between orgs [#102870](https://github.com/grafana/grafana/pull/102870), [@ashharrison90](https://github.com/ashharrison90)
 - **Security:** Fix CVE-2025-3454
 - **Security:** Fix CVE-2025-2703
 - **Security:** Fix CVE-2025-3260
 
-<!-- 11.6.0+security-01 END -->
+<!-- 11.6.1 END -->
 <!-- 11.6.0 START -->
 
 # 11.6.0 (2025-03-25)

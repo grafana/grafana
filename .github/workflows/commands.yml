@@ -12,9 +12,7 @@ on:
 concurrency:
   group: issue-commands-${{ github.event.issue.number }}
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   config:
@@ -34,10 +32,13 @@ jobs:
     needs: config
     if: needs.config.outputs.has-secrets
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
@@ -52,11 +53,12 @@ jobs:
           private_key: ${{ env.GH_APP_PEM }}
 
       - name: Checkout Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # v4.2.2
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
+          persist-credentials: false
 
       - name: Install Actions
         run: npm install --production --prefix ./actions

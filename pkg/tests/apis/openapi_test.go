@@ -28,8 +28,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesClientDashboardsFolders, // Will be default on by G12
-			featuremgmt.FlagQueryService,                      // Query Library
+			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
 		},
@@ -60,12 +59,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	dir := "openapi_snapshots"
 
 	var groups = []schema.GroupVersion{{
-		Group:   "dashboard.grafana.app",
-		Version: "v0alpha1",
-	}, {
-		Group:   "folder.grafana.app",
-		Version: "v0alpha1",
-	}, {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",
 	}, {

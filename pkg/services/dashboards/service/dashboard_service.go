@@ -67,6 +67,10 @@ var (
 	tracer      = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards/service")
 )
 
+const (
+	listAllDashboardsLimit = 100000
+)
+
 type DashboardServiceImpl struct {
 	cfg                    *setting.Cfg
 	log                    log.Logger
@@ -1324,18 +1328,6 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	return hits, nil
 }
 
-func (dr *DashboardServiceImpl) GetAllDashboards(ctx context.Context) ([]*dashboards.Dashboard, error) {
-	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
-		requester, err := identity.GetRequester(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return dr.listDashboardsThroughK8s(ctx, requester.GetOrgID())
-	}
-
-	return dr.dashboardStore.GetAllDashboards(ctx)
-}
-
 func (dr *DashboardServiceImpl) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
 	if dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		return dr.listDashboardsThroughK8s(ctx, orgID)
@@ -1651,23 +1643,34 @@ func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, c
 }
 
 func (dr *DashboardServiceImpl) listDashboardsThroughK8s(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
-	out, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{})
-	if err != nil {
-		return nil, err
-	} else if out == nil {
-		return nil, dashboards.ErrDashboardNotFound
-	}
+	dashes := make([]*dashboards.Dashboard, 0)
 
-	dashboards := make([]*dashboards.Dashboard, 0)
-	for _, item := range out.Items {
-		dash, err := dr.UnstructuredToLegacyDashboard(ctx, &item, orgID)
+	for continueToken := ""; true; {
+		out, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{
+			Limit:    listAllDashboardsLimit,
+			Continue: continueToken,
+		})
 		if err != nil {
 			return nil, err
+		} else if out == nil {
+			return nil, dashboards.ErrDashboardNotFound
 		}
-		dashboards = append(dashboards, dash)
+
+		for _, item := range out.Items {
+			dash, err := dr.UnstructuredToLegacyDashboard(ctx, &item, orgID)
+			if err != nil {
+				return nil, err
+			}
+			dashes = append(dashes, dash)
+		}
+
+		continueToken = out.GetContinue()
+		if continueToken == "" {
+			break
+		}
 	}
 
-	return dashboards, nil
+	return dashes, nil
 }
 
 func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) (dashboardv0alpha1.SearchResults, error) {

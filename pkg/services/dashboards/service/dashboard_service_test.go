@@ -424,8 +424,8 @@ func TestGetAllDashboards(t *testing.T) {
 
 	t.Run("Should fallback to dashboard store if Kubernetes feature flags are not enabled", func(t *testing.T) {
 		service.features = featuremgmt.WithFeatures()
-		fakeStore.On("GetAllDashboards", mock.Anything).Return([]*dashboards.Dashboard{}, nil).Once()
-		dashboard, err := service.GetAllDashboards(context.Background())
+		fakeStore.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return([]*dashboards.Dashboard{}, nil).Once()
+		dashboard, err := service.GetAllDashboardsByOrgId(context.Background(), 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashboard)
 		fakeStore.AssertExpectations(t)
@@ -457,7 +457,7 @@ func TestGetAllDashboards(t *testing.T) {
 		k8sCliMock.On("GetUserFromMeta", mock.Anything, mock.Anything).Return(&user.User{}, nil)
 		k8sCliMock.On("List", mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.UnstructuredList{Items: []unstructured.Unstructured{dashboardUnstructured}}, nil).Once()
 
-		dashes, err := service.GetAllDashboards(ctx)
+		dashes, err := service.GetAllDashboardsByOrgId(ctx, 1)
 		require.NoError(t, err)
 		require.NotNil(t, dashes)
 		k8sCliMock.AssertExpectations(t)
