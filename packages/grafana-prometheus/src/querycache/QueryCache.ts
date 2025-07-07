@@ -282,7 +282,9 @@ export function findDatapointStep(
 
   let dataPointStep = request.intervalMs;
   if (target?.interval) {
-    const minStepMs = rangeUtil.intervalToMs(applyInterpolation(target.interval));
+    const minStepMs =
+      respFrames[0].meta?.custom?.['calculatedMinStep'] ??
+      rangeUtil.intervalToMs(applyInterpolation(target.interval, request.scopedVars));
     if (minStepMs > request.intervalMs) {
       dataPointStep = minStepMs;
     }

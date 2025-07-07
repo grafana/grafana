@@ -54,6 +54,11 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 			addMetadataToMultiFrame(q, frame)
 			if i == 0 {
 				frame.Meta.ExecutedQueryString = executedQueryString(q)
+				frame.Meta.Custom = map[string]int64{
+					// This is required for incremental querying feature
+					// Knowing the calculated minStep is required for merging and caching the frames on frontend side
+					"calculatedMinStep": q.Step.Milliseconds(),
+				}
 			}
 		}
 
