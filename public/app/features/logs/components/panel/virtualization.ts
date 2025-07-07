@@ -253,9 +253,10 @@ export function getLogLineSize(
     return 0;
   }
   const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
-  const detailsHeight = showDetails.includes(logs[index])
-    ? window.innerHeight * (LOG_LINE_DETAILS_HEIGHT / 100) + gap / 2
-    : 0;
+  const detailsHeight =
+    showDetails.findIndex((log) => log.uid === logs[index].uid) >= 0
+      ? window.innerHeight * (LOG_LINE_DETAILS_HEIGHT / 100) + gap / 2
+      : 0;
   // !logs[index] means the line is not yet loaded by infinite scrolling
   if (!wrap || !logs[index]) {
     return virtualization.getLineHeight() + virtualization.getPaddingBottom() + detailsHeight;
