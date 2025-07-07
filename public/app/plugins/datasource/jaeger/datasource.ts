@@ -15,11 +15,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import {
-  DataSourceWithBackend,
-  getTemplateSrv,
-  TemplateSrv,
-} from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
 import { createGraphFrames } from './graphTransform';
