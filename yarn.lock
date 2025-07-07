@@ -2540,7 +2540,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     i18next-parser: "npm:9.3.0"
     immer: "npm:10.1.1"
     lodash: "npm:4.17.21"
@@ -2877,7 +2877,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     debounce-promise: "npm:3.1.2"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     immer: "npm:10.1.1"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.1"
@@ -2932,7 +2932,7 @@ __metadata:
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
     glob: "npm:11.0.1"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     lodash: "npm:4.17.21"
     lru-cache: "npm:11.1.0"
     monaco-editor: "npm:0.34.1"
@@ -3270,7 +3270,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@typescript-eslint/utils": "npm:^8.33.1"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-pseudo: "npm:^2.2.1"
     micro-memoize: "npm:^4.1.2"
@@ -3751,7 +3751,7 @@ __metadata:
     expose-loader: "npm:5.0.0"
     fs-extra: "npm:^11.2.0"
     hoist-non-react-statics: "npm:3.3.2"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     immutable: "npm:5.1.3"
     is-hotkey: "npm:0.2.0"
@@ -18296,7 +18296,7 @@ __metadata:
     html-loader: "npm:5.1.0"
     html-webpack-plugin: "npm:5.6.3"
     http-server: "npm:14.1.1"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-parser: "npm:9.3.0"
     i18next-pseudo: "npm:^2.2.1"
@@ -19222,7 +19222,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^23.5.1 || ^24.2.0, i18next@npm:^24.0.0":
+"i18next@npm:^23.5.1 || ^24.2.0":
   version: 24.2.2
   resolution: "i18next@npm:24.2.2"
   dependencies:
@@ -19233,6 +19233,20 @@ __metadata:
     typescript:
       optional: true
   checksum: 10/f66ed9e56d9412e59502f5df39163631daf9f1264774732fb21edbd66a528ca7a6b67dc2e2aec95683c6c7956e42c651587a54bd8ee082bd12008880ce6cd326
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^25.0.0":
+  version: 25.3.1
+  resolution: "i18next@npm:25.3.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.27.6"
+  peerDependencies:
+    typescript: ^5
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 10/f5f38af0f7b7c0055e607d4017dade5aedd1c75c44e091473b4d01537f0849e21a7ae7f66397719a2557fc53767cf9ea96a4da34127b906d3fe5ce21db895224
   languageName: node
   linkType: hard
 

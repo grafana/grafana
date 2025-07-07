@@ -340,7 +340,7 @@
     "fast-json-patch": "3.1.1",
     "file-saver": "2.0.5",
     "history": "4.10.1",
-    "i18next": "^24.0.0",
+    "i18next": "^25.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-pseudo": "^2.2.1",
     "immer": "10.1.1",
