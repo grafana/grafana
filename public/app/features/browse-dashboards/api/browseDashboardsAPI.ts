@@ -25,6 +25,7 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
+import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -293,6 +294,7 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+        const pageStateManager = getDashboardScenePageStateManager();
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
@@ -336,6 +338,9 @@ export const browseDashboardsAPI = createApi({
           }
 
           await getDashboardAPI().deleteDashboard(dashboardUID, true);
+
+          pageStateManager.clearDashboardCache();
+          pageStateManager.removeSceneCache(dashboardUID);
 
           // handling success alerts for these feature toggles
           // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
