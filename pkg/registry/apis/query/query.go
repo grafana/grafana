@@ -482,6 +482,11 @@ func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req data
 		return nil, fmt.Errorf("refID '%s' does not exist", refID)
 	}
 	frames := qdr.Responses[refID].Frames
+	// if there are no frames or there is an error, we do not need to modify the response at all
+	if len(frames) == 0 || qdr.Responses[refID].Error != nil {
+		return qdr, nil
+	}
+	// convert changes the results so that alerting can use them (ex no need for time stamps, easier to math with)
 	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, false)
 	if err != nil {
 		b.log.Error("issue converting query from alerting", "err", err)
