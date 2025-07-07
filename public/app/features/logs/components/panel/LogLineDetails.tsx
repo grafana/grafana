@@ -76,15 +76,22 @@ export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
   }
 
   return (
-    <div className={styles.container} style={{ height: '30vh' }}>
-      <div className={styles.scrollContainer}>
-        <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
+    <div className={`${styles.inlineWrapper} log-line-inline-details`}>
+      <div className={styles.container}>
+        <div className={styles.scrollContainer}>
+          <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
+        </div>
       </div>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  inlineWrapper: css({
+    gridColumn: '1 / -1',
+    height: '30vh',
+    paddingBottom: theme.spacing(0.5),
+  }),
   container: css({
     overflow: 'auto',
     height: '100%',

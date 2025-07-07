@@ -313,14 +313,28 @@ export function hasUnderOrOverflow(
   if (collapsed !== undefined && calculatedHeight) {
     calculatedHeight -= virtualization.getLineHeight();
   }
+  const inlineDetails = element.parentElement
+    ? Array.from(element.parentElement.children).filter((element) =>
+        element.classList.contains('log-line-inline-details')
+      )
+    : undefined;
+  const detailsHeight = inlineDetails?.length ? inlineDetails[0].clientHeight : 0;
+
+  // Line overflows container
+  let measuredHeight = element.scrollHeight + detailsHeight;
   const height = calculatedHeight ?? element.clientHeight;
-  if (element.scrollHeight > height) {
-    return collapsed !== undefined ? element.scrollHeight + virtualization.getLineHeight() : element.scrollHeight;
+  if (measuredHeight > height) {
+    return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
   }
+
+  // Line is smaller than container
   const child = element.children[1];
-  if (child instanceof HTMLDivElement && child.clientHeight < height) {
-    return collapsed !== undefined ? child.clientHeight + virtualization.getLineHeight() : child.clientHeight;
+  measuredHeight = child.clientHeight + detailsHeight;
+  if (child instanceof HTMLDivElement && measuredHeight < height) {
+    return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
   }
+
+  // No overflow or undermeasurement
   return null;
 }
 
