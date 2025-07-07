@@ -388,7 +388,7 @@ describe('FieldDisplay', () => {
 
       const result = getFieldDisplayValues(options);
       expect(result[0].display.color).toEqual('#73BF69');
-      expect(result[1].display.color).toEqual('#F2CC0C');
+      expect(result[1].display.color).toEqual('#FADE2A');
     });
 
     it('When showing all values lookup color via an override', () => {
@@ -435,7 +435,7 @@ describe('FieldDisplay', () => {
 
       const result = getFieldDisplayValues(options);
       expect(result[0].display.color).toEqual('#AAA');
-      expect(result[1].display.color).toEqual('#F2CC0C');
+      expect(result[1].display.color).toEqual('#FADE2A');
     });
 
     it('Multiple other string fields', () => {
