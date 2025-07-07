@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-export const multiLineIncompleteQueryWithoutNamespace = {
+export const sqlTestDataMultiLineIncompleteQueryWithoutNamespace = {
   query: `SELECT AVG(CPUUtilization) 
   FROM `,
   tokens: [

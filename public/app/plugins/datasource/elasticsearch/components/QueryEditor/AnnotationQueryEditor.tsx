@@ -2,13 +2,13 @@ import { AnnotationQuery } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { Input, Stack } from '@grafana/ui';
 
-import { ElasticsearchQuery } from '../../types';
+import { ElasticsearchDataQuery } from '../../dataquery.gen';
 
 import { ElasticQueryEditorProps, ElasticSearchQueryField } from './index';
 
 type Props = ElasticQueryEditorProps & {
-  annotation?: AnnotationQuery<ElasticsearchQuery>;
-  onAnnotationChange?: (annotation: AnnotationQuery<ElasticsearchQuery>) => void;
+  annotation?: AnnotationQuery<ElasticsearchDataQuery>;
+  onAnnotationChange?: (annotation: AnnotationQuery<ElasticsearchDataQuery>) => void;
 };
 
 export function ElasticsearchAnnotationsQueryEditor(props: Props) {

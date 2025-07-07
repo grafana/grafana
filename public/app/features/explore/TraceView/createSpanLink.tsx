@@ -28,9 +28,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
-import { SpanLinkType } from './components/types/links';
-import { TraceSpanReference } from './components/types/trace';
+import { SpanLinkDef, SpanLinkFunc, SpanLinkType } from './components/types/links';
+import { Trace, TraceSpan, TraceSpanReference } from './components/types/trace';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
