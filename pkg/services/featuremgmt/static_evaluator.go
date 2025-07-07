@@ -36,7 +36,7 @@ func ProvideStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 
 // createStaticEvaluator evaluator that allows evaluating static flags from config.ini
 func createStaticEvaluator(providerType string, u *url.URL, staticFlags map[string]bool) (StaticFlagEvaluator, error) {
-	provider, err := createProvider("", providerType, u, staticFlags, nil, nil)
+	provider, err := createProvider(providerType, u, staticFlags, nil, nil)
 	if err != nil {
 		return nil, err
 	}

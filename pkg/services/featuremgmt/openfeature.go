@@ -34,13 +34,13 @@ func ProvideOpenFeatureService(cfg *setting.Cfg, httpClientProvider *sdkhttpclie
 	}
 
 	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, cfg.OpenFeature.ContextAttrs))
-	return newOpenFeatureService(cfg.StackID, cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags, httpClientProvider, signerMiddlewareProvider)
+	return newOpenFeatureService(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags, httpClientProvider, signerMiddlewareProvider)
 }
 
 // TODO: might need to be public, so other MT services could set up open feature client
 // stackID may be empty for non-cloud use-case
-func newOpenFeatureService(stackID string, pType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider) (*OpenFeatureService, error) {
-	p, err := createProvider(stackID, pType, u, staticFlags, httpClientProvider, signerMiddlewareProvider)
+func newOpenFeatureService(pType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider) (*OpenFeatureService, error) {
+	p, err := createProvider(pType, u, staticFlags, httpClientProvider, signerMiddlewareProvider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create feature provider: type %s, %w", pType, err)
 	}
@@ -53,14 +53,13 @@ func newOpenFeatureService(stackID string, pType string, u *url.URL, staticFlags
 	return &OpenFeatureService{
 		log:                      log.New("openfeatureservice"),
 		provider:                 p,
-		stackID:                  stackID,
 		Client:                   client,
 		httpClientProvider:       httpClientProvider,
 		signerMiddlewareProvider: signerMiddlewareProvider,
 	}, nil
 }
 
-func createProvider(stackID string, providerType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider) (openfeature.FeatureProvider, error) {
+func createProvider(providerType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider) (openfeature.FeatureProvider, error) {
 	if providerType != setting.GOFFProviderType {
 		return newStaticProvider(staticFlags)
 	}
@@ -69,16 +68,14 @@ func createProvider(stackID string, providerType string, u *url.URL, staticFlags
 		return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
 	}
 
-	if stackID == "" {
-		return nil, fmt.Errorf("stackID is required for cloud use-case")
-	}
-
 	httpcli, err := httpClientProvider.New(sdkhttpclient.Options{
+		// TODO: remove this before merge
+		TLS: &sdkhttpclient.TLSOptions{InsecureSkipVerify: true},
 		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout: 10 * time.Second,
 		},
 		Middlewares: []sdkhttpclient.Middleware{
-			signerMiddlewareProvider.New(stackID, []string{cloudFeaturesProviderAudience}),
+			signerMiddlewareProvider.New([]string{cloudFeaturesProviderAudience}),
 		},
 	})
 

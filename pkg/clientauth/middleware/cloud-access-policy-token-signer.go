@@ -6,6 +6,7 @@ import (
 
 	authlib "github.com/grafana/authlib/authn"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	infralog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,7 +20,6 @@ type CloudAccessPolicyTokenSignerMiddlewareProvider struct {
 type cloudAccessPolicyTokenSignerMiddleware struct {
 	isCloud             bool
 	tokenExchangeClient authlib.TokenExchanger
-	namespace           string
 	audiences           []string
 	next                http.RoundTripper
 }
@@ -33,12 +33,11 @@ func ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(tokenExchangeClient a
 	}
 }
 
-func (p *CloudAccessPolicyTokenSignerMiddlewareProvider) New(namespace string, audiences []string) sdkhttpclient.MiddlewareFunc {
+func (p *CloudAccessPolicyTokenSignerMiddlewareProvider) New(audiences []string) sdkhttpclient.MiddlewareFunc {
 	return func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return &cloudAccessPolicyTokenSignerMiddleware{
 			tokenExchangeClient: p.tokenExchangeClient,
 			isCloud:             p.isCloud,
-			namespace:           namespace,
 			audiences:           audiences,
 			next:                next,
 		}
@@ -53,9 +52,18 @@ func (m cloudAccessPolicyTokenSignerMiddleware) RoundTrip(req *http.Request) (re
 		return m.next.RoundTrip(req)
 	}
 
-	log.Debug("signing request", "url", req.URL.Path, "audience", m.audiences, "namespace", m.namespace)
+	namespace, ok := request.NamespaceFrom(req.Context())
+	if !ok {
+		return nil, fmt.Errorf("namespace not found in request context")
+	}
+
+	if namespace == "" {
+		return nil, fmt.Errorf("cluster scoped resources are currently not supported")
+	}
+
+	log.Debug("signing request", "url", req.URL.Path, "audience", m.audiences, "namespace", namespace)
 	token, err := m.tokenExchangeClient.Exchange(req.Context(), authlib.TokenExchangeRequest{
-		Namespace: m.namespace,
+		Namespace: namespace,
 		Audiences: m.audiences,
 	})
 
