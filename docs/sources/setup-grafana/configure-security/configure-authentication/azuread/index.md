@@ -390,7 +390,11 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-### Group sync (Enterprise only)
+### Team Sync
+
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+{{< /admonition >}}
 
 With group sync you can map your Entra ID groups to teams and roles in Grafana. This allows users to automatically be added to
 the correct teams and be granted the correct roles in Grafana.
