@@ -1073,27 +1073,27 @@ func TestGitRepository_Update(t *testing.T) {
 
 func TestGitRepository_Delete(t *testing.T) {
 	tests := []struct {
-		name      string
-		setupMock func(*mocks.FakeClient)
-		gitConfig RepositoryConfig
-		path      string
-		ref       string
-		comment   string
-		wantError bool
-		errorType error
+		name       string
+		setupMock  func(*mocks.FakeClient, *mocks.FakeStagedWriter)
+		assertions func(*testing.T, *mocks.FakeClient, *mocks.FakeStagedWriter)
+		gitConfig  RepositoryConfig
+		path       string
+		ref        string
+		comment    string
+		wantError  bool
+		errorType  error
 	}{
 		{
 			name: "success - delete file",
-			setupMock: func(mockClient *mocks.FakeClient) {
+			setupMock: func(mockClient *mocks.FakeClient, mockWriter *mocks.FakeStagedWriter) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
 					Hash: hash.Hash{},
 				}, nil)
-				mockWriter := &mocks.FakeStagedWriter{}
+
 				mockWriter.DeleteBlobReturns(hash.Hash{}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
 				mockWriter.PushReturns(nil)
-				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},
 			gitConfig: RepositoryConfig{
 				Branch: "main",
@@ -1106,16 +1106,19 @@ func TestGitRepository_Delete(t *testing.T) {
 		},
 		{
 			name: "success - delete directory",
-			setupMock: func(mockClient *mocks.FakeClient) {
+			setupMock: func(mockClient *mocks.FakeClient, mockWriter *mocks.FakeStagedWriter) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
 					Hash: hash.Hash{},
 				}, nil)
-				mockWriter := &mocks.FakeStagedWriter{}
 				mockWriter.DeleteTreeReturns(hash.Hash{}, nil)
 				mockWriter.CommitReturns(&nanogit.Commit{}, nil)
 				mockWriter.PushReturns(nil)
-				mockClient.NewStagedWriterReturns(mockWriter, nil)
+			},
+			assertions: func(t *testing.T, fakeClient *mocks.FakeClient, mockWriter *mocks.FakeStagedWriter) {
+				require.Equal(t, 1, mockWriter.DeleteTreeCallCount(), "DeleteTree should be called once")
+				_, p := mockWriter.DeleteTreeArgsForCall(0)
+				require.Equal(t, "configs/testdir", p, "DeleteTree should be called with correct path")
 			},
 			gitConfig: RepositoryConfig{
 				Branch: "main",
@@ -1128,14 +1131,12 @@ func TestGitRepository_Delete(t *testing.T) {
 		},
 		{
 			name: "failure - file not found",
-			setupMock: func(mockClient *mocks.FakeClient) {
+			setupMock: func(mockClient *mocks.FakeClient, mockWriter *mocks.FakeStagedWriter) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
 					Hash: hash.Hash{},
 				}, nil)
-				mockWriter := &mocks.FakeStagedWriter{}
 				mockWriter.DeleteBlobReturns(hash.Hash{}, nanogit.ErrObjectNotFound)
-				mockClient.NewStagedWriterReturns(mockWriter, nil)
 			},
 			gitConfig: RepositoryConfig{
 				Branch: "main",
@@ -1152,7 +1153,10 @@ func TestGitRepository_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := &mocks.FakeClient{}
-			tt.setupMock(mockClient)
+			mockWriter := &mocks.FakeStagedWriter{}
+			mockClient.NewStagedWriterReturns(mockWriter, nil)
+
+			tt.setupMock(mockClient, mockWriter)
 
 			gitRepo := &gitRepository{
 				client:    mockClient,
@@ -1173,6 +1177,10 @@ func TestGitRepository_Delete(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
+			}
+
+			if tt.assertions != nil {
+				tt.assertions(t, mockClient, mockWriter)
 			}
 		})
 	}
