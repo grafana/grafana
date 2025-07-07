@@ -57,16 +57,37 @@ export class DashboardGridItem
   public constructor(state: DashboardGridItemState) {
     super(state);
 
-    this.addActivationHandler(() => this.handleVariableName());
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    this.handleVariableName();
+
+    return () => {
+      this._handleGridSizeUnsubscribe();
+    };
+  }
+
+  private _handleGridSizeSubscribe() {
+    if (!this._gridSizeSub) {
+      this._gridSizeSub = this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState));
+    }
+  }
+
+  private _handleGridSizeUnsubscribe() {
+    if (this._gridSizeSub) {
+      this._gridSizeSub.unsubscribe();
+      this._gridSizeSub = undefined;
+    }
   }
 
   private _handleGridResize(newState: DashboardGridItemState, prevState: DashboardGridItemState) {
-    const itemCount = this.state.repeatedPanels?.length ?? 1;
-    const stateChange: Partial<DashboardGridItemState> = {};
-
     if (newState.height === prevState.height) {
       return;
     }
+
+    const itemCount = this.state.repeatedPanels?.length ?? 1;
+    const stateChange: Partial<DashboardGridItemState> = {};
 
     if (this.getRepeatDirection() === 'v') {
       stateChange.itemHeight = Math.ceil(newState.height! / itemCount);
@@ -203,16 +224,9 @@ export class DashboardGridItem
 
   public handleVariableName() {
     if (this.state.variableName) {
-      if (!this._gridSizeSub) {
-        this._gridSizeSub = this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState));
-        this._subs.add(this._gridSizeSub);
-      }
+      this._handleGridSizeSubscribe();
     } else {
-      if (this._gridSizeSub) {
-        this._gridSizeSub.unsubscribe();
-        this._subs.remove(this._gridSizeSub);
-        this._gridSizeSub = undefined;
-      }
+      this._handleGridSizeUnsubscribe();
     }
 
     this.performRepeat();
