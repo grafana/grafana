@@ -21,31 +21,8 @@ type SecureValue struct {
 	Status SecureValueStatus `json:"status,omitempty"`
 }
 
-// +enum
-type SecureValuePhase string
-
-const (
-	// When the `SecureValue` is created, it will start in `Pending` phase to create the underlying secret asynchronously.
-	SecureValuePhasePending SecureValuePhase = "Pending"
-
-	// If the creation of the secret is successful, it will move to the `Succeeded` phase.
-	SecureValuePhaseSucceeded SecureValuePhase = "Succeeded"
-
-	// If the creation of the secret fails, it will move to the `Failed` phase.
-	// Check the additional `status` fields for more information on what caused the failure.
-	// This state is unrecoverable.
-	SecureValuePhaseFailed SecureValuePhase = "Failed"
-)
-
 type SecureValueStatus struct {
-	// High-level summary of where the `SecureValue` is in its lifecycle.
-	// One of: `Pending`, `Succeeded` or `Failed`.
-	Phase SecureValuePhase `json:"phase"`
-
-	// A human readable message indicating details about why the `SecureValue` is in this phase.
-	// Only applicable if the `phase=Failed`.
-	// +optional
-	Message string `json:"message,omitempty"`
+	Version int64 `json:"version"`
 
 	// +optional
 	ExternalID string `json:"externalId,omitempty"`

@@ -73,7 +73,6 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "default", createdSecureValue.Namespace)
 		require.Equal(t, "test description", createdSecureValue.Spec.Description)
 		require.Equal(t, keeperName, *createdSecureValue.Spec.Keeper)
-		require.Equal(t, secretv0alpha1.SecureValuePhasePending, createdSecureValue.Status.Phase)
 
 		// Read the secure value back
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test", contracts.ReadOpts{})
@@ -83,7 +82,6 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "default", readSecureValue.Namespace)
 		require.Equal(t, "test description", readSecureValue.Spec.Description)
 		require.Equal(t, keeperName, *readSecureValue.Spec.Keeper)
-		require.Equal(t, secretv0alpha1.SecureValuePhasePending, readSecureValue.Status.Phase)
 
 		// List secure values and verify our value is in the list
 		secureValues, err := secureValueStorage.List(ctx, xkube.Namespace("default"))
@@ -98,7 +96,6 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 				require.Equal(t, "default", sv.Namespace)
 				require.Equal(t, "test description", sv.Spec.Description)
 				require.Equal(t, keeperName, *sv.Spec.Keeper)
-				require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
 				break
 			}
 		}
@@ -132,7 +129,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "sv-test-2", readSecureValue.Name)
 
 		// Delete the secure value
-		err = secureValueStorage.Delete(ctx, xkube.Namespace("default"), "sv-test-2")
+		err = secureValueStorage.SetVersionToInactive(ctx, xkube.Namespace("default"), "sv-test-2", readSecureValue.Status.Version)
 		require.NoError(t, err)
 
 		// Try to read the deleted secure value - should return error
