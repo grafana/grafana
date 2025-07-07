@@ -18,23 +18,29 @@ import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: {
-    width: 30,
-    filter: (f) => f.type === FieldType.string,
-    placeholderText: 'Select text field',
-    noFieldsMessage: 'No text fields found',
-  },
-  name: '',
-  id: '',
-  editor: () => null,
-};
-
 function FormatStringTransfomerEditor({
   input,
   options,
   onChange,
 }: TransformerUIProps<FormatStringTransformerOptions>) {
+  const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+    settings: {
+      width: 30,
+      filter: (f) => f.type === FieldType.string,
+      placeholderText: t(
+        'transformers.format-string-transfomer-editor.field-name-picker-settings.placeholderText.select-text-field',
+        'Select text field'
+      ),
+      noFieldsMessage: t(
+        'transformers.format-string-transfomer-editor.field-name-picker-settings.noFieldsMessage.no-text-fields-found',
+        'No text fields found'
+      ),
+    },
+    name: '',
+    id: '',
+    editor: () => null,
+  };
+
   const onSelectField = useCallback(
     (value: string | undefined) => {
       const val = value ?? '';
