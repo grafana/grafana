@@ -128,24 +128,6 @@ func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID string) (*secureValueD
 	return row, nil
 }
 
-// toUpdateRow maps a Kubernetes resource into a DB row for existing resources being updated.
-func toUpdateRow(currentRow *secureValueDB, newSecureValue *secretv0alpha1.SecureValue, actorUID, externalID string) (*secureValueDB, error) {
-	row, err := toRow(newSecureValue, externalID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create: %w", err)
-	}
-
-	now := time.Now().UTC().Unix()
-
-	row.GUID = currentRow.GUID
-	row.Created = currentRow.Created
-	row.CreatedBy = currentRow.CreatedBy
-	row.Updated = now
-	row.UpdatedBy = actorUID
-
-	return row, nil
-}
-
 // toRow maps a Kubernetes resource into a DB row.
 func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, error) {
 	var annotations string
