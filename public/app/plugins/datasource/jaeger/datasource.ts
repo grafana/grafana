@@ -1,6 +1,5 @@
-import { identity, omit, pick, pickBy } from 'lodash';
-import { lastValueFrom, Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import {
   DataQueryRequest,
@@ -19,20 +18,16 @@ import {
 import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import {
   BackendSrvRequest,
-  config,
   DataSourceWithBackend,
   getBackendSrv,
   getTemplateSrv,
   TemplateSrv,
 } from '@grafana/runtime';
 
-import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
-import { mapJaegerDependenciesResponse } from './dependencyGraphTransform';
 import { createGraphFrames } from './graphTransform';
-import { createTableFrame, createTraceFrame } from './responseTransform';
+import { createTraceFrame } from './responseTransform';
 import { JaegerQuery } from './types';
-import { convertTagsLogfmt } from './util';
 
 export interface JaegerJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
