@@ -19,8 +19,9 @@ export const EMPTY_SELECTOR = '{}';
 
 export const DEFAULT_SERIES_LIMIT = 40000;
 
-export const MATCH_ALL_LABELS_STR = '__name__!=""';
-
+/**
+ * Only for /series endpoint. Don't use this anywhere else as it cause an expensive query
+ */
 export const MATCH_ALL_LABELS = '{__name__!=""}';
 
 export const METRIC_LABEL = '__name__';

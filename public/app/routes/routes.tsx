@@ -302,7 +302,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/admin/authentication',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component:
-        config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled || config.featureToggles.ssoSettingsApi
+        config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled
           ? SafeDynamicImport(
               () =>
                 import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/AuthProvidersListPage')
@@ -320,11 +320,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/authentication/:provider',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
-      component: config.featureToggles.ssoSettingsApi
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
-          )
-        : () => <Navigate replace to="/admin" />,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
+      ),
     },
     {
       path: '/admin/settings',

@@ -51,6 +51,10 @@ if (process.env.NODE_ENV === 'development') {
  */
 initialize({
   onUnhandledRequest: 'bypass',
+  serviceWorker: {
+    // Important! The path must be relative to work when we deploy storybook to subpaths (e.g. /ui/canary)
+    url: 'mockServiceWorker.js',
+  },
 });
 
 const preview: Preview = {
