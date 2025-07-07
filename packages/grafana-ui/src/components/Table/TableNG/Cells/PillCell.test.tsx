@@ -84,7 +84,7 @@ describe('PillCell', () => {
   describe('color mapping', () => {
     // These tests primarily ensure the color logic executes without throwing.
     // For true color verification, visual regression tests would be needed.
-    
+
     it('should use mapped colors when colorMode is mapped', () => {
       const mappedOptions: TablePillCellOptions = {
         type: TableCellDisplayMode.Pill,
@@ -186,7 +186,7 @@ describe('PillCell', () => {
 describe('inferPills', () => {
   // These tests verify the pill parsing logic handles various input formats correctly.
   // They ensure the function can extract pill values from different data structures.
-  
+
   it('should return empty array for null/undefined values', () => {
     expect(inferPills(null)).toEqual([]);
     expect(inferPills(undefined)).toEqual([]);
