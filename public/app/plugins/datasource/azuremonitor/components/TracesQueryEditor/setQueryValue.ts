@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 
-import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter, ResultFormat } from '../../types';
+import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter, ResultFormat } from '../../types/query';
 
 // Used when switching from a traces exemplar query to a standard Azure Traces query
 export function setDefaultTracesQuery(query: AzureMonitorQuery): AzureMonitorQuery {

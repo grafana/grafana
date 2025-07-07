@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"regexp"
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -42,7 +43,7 @@ type KV interface {
 	Get(ctx context.Context, section string, key string) (KVObject, error)
 
 	// Save a new value
-	Save(ctx context.Context, section string, key string, value io.ReadCloser) error
+	Save(ctx context.Context, section string, key string, value io.Reader) error
 
 	// Delete a value
 	Delete(ctx context.Context, section string, key string) error
@@ -51,6 +52,8 @@ type KV interface {
 	// This is used to ensure the server and client are not too far apart in time.
 	UnixTimestamp(ctx context.Context) (int64, error)
 }
+
+var _ KV = &badgerKV{}
 
 // Reference implementation of the KV interface using BadgerDB
 // This is only used for testing purposes, and will not work HA
@@ -97,7 +100,7 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObjec
 	return out, nil
 }
 
-func (k *badgerKV) Save(ctx context.Context, section string, key string, value io.ReadCloser) error {
+func (k *badgerKV) Save(ctx context.Context, section string, key string, value io.Reader) error {
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
@@ -129,7 +132,16 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 
 	key = section + "/" + key
 
-	err := txn.Delete([]byte(key))
+	// Check if key exists before deleting
+	_, err := txn.Get([]byte(key))
+	if err != nil {
+		if errors.Is(err, badger.ErrKeyNotFound) {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	err = txn.Delete([]byte(key))
 	if err != nil {
 		return err
 	}
@@ -204,4 +216,18 @@ func PrefixRangeEnd(prefix string) string {
 		}
 	}
 	return string(end)
+}
+
+var (
+	// validKeyRegex validates keys used in the unified storage
+	// Keys can contain lowercase alphanumeric characters, '-', '.', '/', and '~'
+	// Any combination of these characters is allowed as long as the key is not empty
+	validKeyRegex = regexp.MustCompile(`^[a-z0-9./~-]+$`)
+)
+
+func IsValidKey(key string) bool {
+	if key == "" {
+		return false
+	}
+	return validKeyRegex.MatchString(key)
 }

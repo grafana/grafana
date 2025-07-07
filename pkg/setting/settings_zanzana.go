@@ -44,6 +44,8 @@ type ZanzanaServerSettings struct {
 	UseStreamedListObjects bool
 	// URL for fetching signing keys.
 	SigningKeysURL string
+	// Allow insecure connections to the server for development purposes.
+	AllowInsecure bool
 }
 
 // Parameters to configure OpenFGA cache.
@@ -96,7 +98,7 @@ type OpenFgaCacheSettings struct {
 
 func (cfg *Cfg) readZanzanaSettings() {
 	zc := ZanzanaClientSettings{}
-	clientSec := cfg.Raw.Section("zanzana.client")
+	clientSec := cfg.SectionWithEnvOverrides("zanzana.client")
 
 	zc.Mode = ZanzanaMode(clientSec.Key("mode").MustString("embedded"))
 	validModes := []ZanzanaMode{ZanzanaModeEmbedded, ZanzanaModeClient}
@@ -114,13 +116,14 @@ func (cfg *Cfg) readZanzanaSettings() {
 	cfg.ZanzanaClient = zc
 
 	zs := ZanzanaServerSettings{}
-	serverSec := cfg.Raw.Section("zanzana.server")
+	serverSec := cfg.SectionWithEnvOverrides("zanzana.server")
 
 	zs.OpenFGAHttpAddr = serverSec.Key("http_addr").MustString("127.0.0.1:8080")
 	zs.ListObjectsDeadline = serverSec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	zs.ListObjectsMaxResults = uint32(serverSec.Key("list_objects_max_results").MustUint(1000))
 	zs.UseStreamedListObjects = serverSec.Key("use_streamed_list_objects").MustBool(false)
 	zs.SigningKeysURL = serverSec.Key("signing_keys_url").MustString("")
+	zs.AllowInsecure = serverSec.Key("allow_insecure").MustBool(false)
 
 	// Cache settings
 	zs.CacheSettings.CheckCacheLimit = uint32(serverSec.Key("check_cache_limit").MustUint(10000))

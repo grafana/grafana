@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { folderAPIv1beta1 as folderAPI } from 'app/api/clients/folder/v1beta1';
@@ -25,7 +25,7 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
-import { refetchChildren, refreshParents } from '../state';
+import { refetchChildren, refreshParents } from '../state/actions';
 import { DashboardTreeSelection } from '../types';
 
 import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
@@ -401,14 +401,47 @@ export const browseDashboardsAPI = createApi({
           folderUid,
         },
       }),
-      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async ({ dashboard, folderUid }, { queryFulfilled, dispatch }) => {
+        // Check if a dashboard with this UID already exists to find its current folder
+        let currentFolderUid: string | undefined;
+        if (dashboard.uid) {
+          try {
+            const existingDashboard = await getDashboardAPI().getDashboardDTO(dashboard.uid);
+            currentFolderUid = isDashboardV2Resource(existingDashboard)
+              ? existingDashboard.metadata?.name
+              : existingDashboard.meta?.folderUid;
+          } catch (error) {
+            if (isFetchError(error)) {
+              if (error.status !== 404) {
+                console.error('Error fetching dashboard', error);
+              } else {
+                // Do not show the error alert if the dashboard does not exist
+                // this is expected when importing a new dashboard
+                error.isHandled = true;
+              }
+            }
+          }
+        }
+
         queryFulfilled.then(async (response) => {
+          // Refresh destination folder
           dispatch(
             refetchChildren({
               parentUID: folderUid,
               pageSize: PAGE_SIZE,
             })
           );
+
+          // If the dashboard was moved from a different folder, refresh the source folder too
+          if (currentFolderUid && currentFolderUid !== folderUid) {
+            dispatch(
+              refetchChildren({
+                parentUID: currentFolderUid,
+                pageSize: PAGE_SIZE,
+              })
+            );
+          }
+
           const dashboardUrl = locationUtil.stripBaseFromUrl(response.data.importedUrl);
           locationService.push(dashboardUrl);
         });
