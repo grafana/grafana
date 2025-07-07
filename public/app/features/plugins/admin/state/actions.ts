@@ -203,11 +203,7 @@ export const install = createAsyncThunk<
 
   try {
     await installPlugin(id, version);
-    await getBackendSrv()
-      .get('/api/frontend/settings')
-      .then((settings: Settings) => {
-        config.panels = settings.panels;
-      });
+    await updatePanels();
 
     if (installType !== PluginStatus.INSTALL) {
       invalidatePluginInCache(id);
@@ -233,11 +229,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
   async (id, thunkApi) => {
     try {
       await uninstallPlugin(id);
-      await getBackendSrv()
-        .get('/api/frontend/settings')
-        .then((settings: Settings) => {
-          config.panels = settings.panels;
-        });
+      await updatePanels();
 
       invalidatePluginInCache(id);
 
@@ -287,3 +279,11 @@ export const loadPanelPlugin = (id: string): ThunkResult<Promise<PanelPlugin>> =
     return plugin;
   };
 };
+
+function updatePanels() {
+  return getBackendSrv()
+    .get('/api/frontend/settings')
+    .then((settings: Settings) => {
+      config.panels = settings.panels;
+    });
+}
