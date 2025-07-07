@@ -2415,8 +2415,6 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "Cannot find rule details for UID {{uid}}",
-      "cannot-load-rule-details-for": "Cannot load rule details for UID {{uid}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
       "ds-error": {
