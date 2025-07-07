@@ -721,7 +721,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 enable: true,
                 hide: false,
                 iconColor: 'purple',
-
                 legacyOptions: {
                   expr: 'rate(http_requests_total[5m])',
                   queryType: 'range',

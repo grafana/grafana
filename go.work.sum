@@ -708,14 +708,6 @@ github.com/grafana/grafana/apps/dashboard v0.0.0-20250616145019-8d27f12428cb/go.
 github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d/go.mod h1:HQprw3MmiYj5OUV9CZnkwA1FKDZBmYACuAB3oDvUOmI=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
-github.com/grafana/grafana/pkg/build v0.0.0-20250220114259-be81314e2118/go.mod h1:STVpVboMYeBAfyn6Zw6XHhTHqUxzMy7pzRiVgk1l0W0=
-github.com/grafana/grafana/pkg/build v0.0.0-20250227105625-8f465f124924/go.mod h1:Vw0LdoMma64VgIMVpRY3i0D156jddgUGjTQBOcyeF3k=
-github.com/grafana/grafana/pkg/build v0.0.0-20250227163402-d78c646f93bb/go.mod h1:Vw0LdoMma64VgIMVpRY3i0D156jddgUGjTQBOcyeF3k=
-github.com/grafana/grafana/pkg/build v0.0.0-20250403075254-4918d8720c61/go.mod h1:LGVnSwdrS0ZnJ2WXEl5acgDoYPm74EUSFavca1NKHI8=
-github.com/grafana/grafana/pkg/build v0.0.0-20250625151647-35f89a456cc6/go.mod h1:dIu5dZy00k2TBdpVBXkvSbxHNj5H7lW/sOTpJTtKIXg=
-github.com/grafana/grafana/pkg/build v0.0.0-20250703134522-185ce90a4b20/go.mod h1:uU3TK/cKf6IdO7ou7CKgNNb8GEnW761Ecdb8tk8DQLg=
-github.com/grafana/grafana/pkg/build v0.0.0-20250703142147-cfd3b9f58211/go.mod h1:uU3TK/cKf6IdO7ou7CKgNNb8GEnW761Ecdb8tk8DQLg=
-github.com/grafana/grafana/pkg/build v0.0.0-20250703171819-20f30462ad64/go.mod h1:uU3TK/cKf6IdO7ou7CKgNNb8GEnW761Ecdb8tk8DQLg=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod h1:tfLnBpPYgwrBMRz4EXqPCZJyCjEG4Ev37FSlXnocJ2c=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d/go.mod h1:CXpwZ3Mkw6xVlGKc0SqUxqXCP3Uv182q6qAQnLaLxRg=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250514132646-acbc7b54ed9e/go.mod h1:xrKQcxQxz+IUF90ybtfENFeEXtlj9nAsX/3Fw0KEIeQ=

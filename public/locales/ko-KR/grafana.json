@@ -352,6 +352,10 @@
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "활성 타이밍"
     },
+    "ad": {
+      "close": "",
+      "learn-more": ""
+    },
     "add-button": {
       "add-more": "더 추가하기"
     },
@@ -1519,8 +1523,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "시작하기",
       "label-insights": "인사이트",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "경고"
     },
     "import-to-gma": {
@@ -3877,6 +3893,7 @@
     "tooltip": "닫기"
   },
   "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "옵션을 불러오는 중에 오류가 발생했습니다."
