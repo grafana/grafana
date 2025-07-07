@@ -75,6 +75,8 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "test description", createdSecureValue.Spec.Description)
 		require.Equal(t, keeperName, *createdSecureValue.Spec.Keeper)
 
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
+
 		// Read the secure value back
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test", contracts.ReadOpts{})
 		require.NoError(t, err)
@@ -122,6 +124,8 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		createdSecureValue, err := secureValueStorage.Create(ctx, testSecureValue, "testuser")
 		require.NoError(t, err)
 		require.NotNil(t, createdSecureValue)
+
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
 
 		// Read the secure value to verify it exists
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2", contracts.ReadOpts{})
