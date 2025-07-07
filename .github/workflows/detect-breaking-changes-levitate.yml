@@ -158,7 +158,7 @@ jobs:
 
       - id: 'auth'
         uses: 'google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f'
-        if: github.event.pull_request.head.repo.fork != true
+        if: github.event.pull_request.head.repo.full_name == github.repository
         with:
           workload_identity_provider: projects/304398677251/locations/global/workloadIdentityPools/github/providers/github-provider
           service_account: github-plugins-data-levitate@grafanalabs-workload-identity.iam.gserviceaccount.com
@@ -166,7 +166,7 @@ jobs:
 
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@6189d56e4096ee891640bb02ac264be376592d6a'
-        if: github.event.pull_request.head.repo.fork != true
+        if: github.event.pull_request.head.repo.full_name == github.repository
         with:
           version: '>= 363.0.0'
           project_id: 'grafanalabs-global'
@@ -177,7 +177,7 @@ jobs:
         run: ./scripts/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }} # used in check-breaking-changes.sh and levitate-parse-json-report.js
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }} # used in check-breaking-changes.sh and levitate-parse-json-report.js
 
       - name: Persisting the check output
         run: |
@@ -202,7 +202,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event.pull_request.head.repo.fork != true
+    if: github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
       - id: get-secrets
