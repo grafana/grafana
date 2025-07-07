@@ -22,3 +22,28 @@ export function getFolderURL(uid: string) {
   }
   return url;
 }
+
+export function hasFolderNameCharactersToReplace(folderName: string): boolean {
+  if (typeof folderName !== 'string') {
+    return false;
+  }
+
+  // whitespace that need to be replaced with hyphens
+  const hasWhitespace = /\s+/.test(folderName);
+
+  // characters that are not lowercase letters, numbers, or hyphens
+  const hasInvalidCharacters = /[^a-z0-9-]/.test(folderName);
+
+  return hasWhitespace || hasInvalidCharacters;
+}
+
+export function formatFolderName(folderName: string): string {
+  if (typeof folderName !== 'string') {
+    console.error('Invalid folder name type:', typeof folderName);
+    return '';
+  }
+  return folderName
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+}
