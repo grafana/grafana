@@ -317,6 +317,11 @@ type DeleteUserCommand struct {
 	UID string
 }
 
+type DeleteUserQuery struct {
+	OrgID int64
+	UID   string
+}
+
 type DeleteUserResult struct {
 	Success bool
 }
@@ -482,12 +487,12 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	return &CreateUserResult{User: createdUser}, nil
 }
 
-func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteUserCommand) deleteUserQuery {
+func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, q *DeleteUserQuery) deleteUserQuery {
 	return deleteUserQuery{
 		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
 		UserTable:    sql.Table("user"),
 		OrgUserTable: sql.Table("org_user"),
-		Command:      cmd,
+		Query:        q,
 	}
 }
 
@@ -495,8 +500,7 @@ type deleteUserQuery struct {
 	sqltemplate.SQLTemplate
 	UserTable    string
 	OrgUserTable string
-	Command      *DeleteUserCommand
-	OrgID        int64
+	Query        *DeleteUserQuery
 }
 
 type deleteOrgUserQuery struct {
@@ -505,11 +509,18 @@ type deleteOrgUserQuery struct {
 	UserID       int64
 }
 
+func (r deleteOrgUserQuery) Validate() error {
+	if r.UserID == 0 {
+		return fmt.Errorf("user ID is required")
+	}
+	return nil
+}
+
 func (r deleteUserQuery) Validate() error {
-	if r.Command.UID == "" {
+	if r.Query.UID == "" {
 		return fmt.Errorf("user UID is required")
 	}
-	if r.OrgID == 0 {
+	if r.Query.OrgID == 0 {
 		return fmt.Errorf("org ID is required")
 	}
 	return nil
@@ -530,8 +541,12 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		return nil, err
 	}
 
-	req := newDeleteUser(sql, &cmd)
-	req.OrgID = ns.OrgID
+	query := &DeleteUserQuery{
+		OrgID: ns.OrgID,
+		UID:   cmd.UID,
+	}
+
+	req := newDeleteUser(sql, query)
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
@@ -541,7 +556,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		// First, get the user ID to use for org_user deletion
 		userLookupReq := newGetUserInternalID(sql, &GetUserInternalIDQuery{
 			OrgID: ns.OrgID,
-			UID:   cmd.UID,
+			UID:   req.Query.UID,
 		})
 
 		userQuery, err := sqltemplate.Execute(sqlQueryUserInternalIDTemplate, userLookupReq)
