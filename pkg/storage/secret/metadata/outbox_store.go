@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	unifiedsql "github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -20,15 +22,18 @@ type outboxStore struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
 	tracer  trace.Tracer
+	metrics *metrics.StorageMetrics
 }
 
 func ProvideOutboxQueue(
 	db contracts.Database,
 	tracer trace.Tracer,
+	reg prometheus.Registerer,
 ) contracts.OutboxQueue {
 	return &outboxStore{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		metrics: metrics.NewStorageMetrics(reg),
 		tracer:  tracer,
 	}
 }
@@ -68,10 +73,14 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 
 	assert.True(input.Type != "", "outboxStore.Append: outbox message type is required")
 
+	start := time.Now()
 	messageID, err = s.insertMessage(ctx, input)
 	if err != nil {
 		return messageID, fmt.Errorf("inserting message into outbox table: %+w", err)
 	}
+
+	s.metrics.OutboxAppendDuration.WithLabelValues(string(input.Type)).Observe(time.Since(start).Seconds())
+	s.metrics.OutboxAppendCount.WithLabelValues(string(input.Type)).Inc()
 
 	return messageID, nil
 }
@@ -160,6 +169,7 @@ func (s *outboxStore) ReceiveN(ctx context.Context, limit uint) ([]contracts.Out
 		MessageIDs:  messageIDs,
 	}
 
+	start := time.Now()
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxReceiveN, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxReceiveN.Name(), err)
@@ -223,6 +233,9 @@ func (s *outboxStore) ReceiveN(ctx context.Context, limit uint) ([]contracts.Out
 		return messages, fmt.Errorf("reading rows: %w", err)
 	}
 
+	s.metrics.OutboxReceiveDuration.Observe(time.Since(start).Seconds())
+	s.metrics.OutboxReceiveCount.Add(float64(len(messages)))
+
 	return messages, nil
 }
 
@@ -275,9 +288,13 @@ func (s *outboxStore) Delete(ctx context.Context, messageID int64) (err error) {
 
 	assert.True(messageID != 0, "outboxStore.Delete: messageID is required")
 
+	start := time.Now()
 	if err := s.deleteMessage(ctx, messageID); err != nil {
 		return fmt.Errorf("deleting message from outbox table %+w", err)
 	}
+
+	s.metrics.OutboxDeleteDuration.Observe(time.Since(start).Seconds())
+	s.metrics.OutboxDeleteCount.Inc()
 
 	return nil
 }
@@ -320,6 +337,9 @@ func (s *outboxStore) deleteMessage(ctx context.Context, messageID int64) error 
 		return fmt.Errorf("rows error: %w", err)
 	}
 
+	totalLifetime := time.Since(time.UnixMilli(timestamp))
+	s.metrics.OutboxTotalMessageLifetimeDuration.WithLabelValues(messageType).Observe(totalLifetime.Seconds())
+
 	// Then delete the object
 	delReq := deleteSecureValueOutbox{
 		SQLTemplate: sqltemplate.New(s.dialect),
@@ -359,6 +379,7 @@ func (s *outboxStore) IncrementReceiveCount(ctx context.Context, messageIDs []in
 		MessageIDs:  messageIDs,
 	}
 
+	start := time.Now()
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxUpdateReceiveCount, req)
 	if err != nil {
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxUpdateReceiveCount.Name(), err)
@@ -368,6 +389,9 @@ func (s *outboxStore) IncrementReceiveCount(ctx context.Context, messageIDs []in
 	if err != nil {
 		return fmt.Errorf("updating outbox messages receive count: %w", err)
 	}
+
+	s.metrics.OutboxIncrementReceiveCountDuration.Observe(time.Since(start).Seconds())
+	s.metrics.OutboxIncrementReceiveCountCount.Add(float64(len(messageIDs)))
 
 	return nil
 }

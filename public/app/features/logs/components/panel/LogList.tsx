@@ -191,6 +191,7 @@ export const LogList = ({
           initialScrollPosition={initialScrollPosition}
           loading={loading}
           loadMore={loadMore}
+          logOptionsStorageKey={logOptionsStorageKey}
           logs={logs}
           showControls={showControls}
           timeRange={timeRange}
@@ -209,6 +210,7 @@ const LogListComponent = ({
   initialScrollPosition = 'top',
   loading,
   loadMore,
+  logOptionsStorageKey,
   logs,
   showControls,
   timeRange,
@@ -459,7 +461,7 @@ const LogListComponent = ({
       {showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
-          getFieldLinks={getFieldLinks}
+          logOptionsStorageKey={logOptionsStorageKey}
           logs={filteredLogs}
           onResize={handleLogDetailsResize}
         />
