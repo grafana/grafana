@@ -122,6 +122,7 @@ func (ds *distributorServer) ListManagedObjects(ctx context.Context, r *resource
 }
 
 func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, namespace string, methodName string) (context.Context, ResourceClient, error) {
+	ds.log.Info("got request", "methodName", methodName, "namespace", namespace)
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {
@@ -143,7 +144,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 		md = make(metadata.MD)
 	}
 
-	ds.log.Info("distributing request to ", "methodName", methodName, "instanceId", rs.Instances[0].Id)
+	ds.log.Info("distributing request", "methodName", methodName, "instanceId", rs.Instances[0].Id, "namespace", namespace)
 
 	_ = grpc.SetHeader(ctx, metadata.Pairs("proxied-instance-id", rs.Instances[0].Id))
 
