@@ -34,7 +34,7 @@ export const CheckActions: FC<CheckActionsProps> = ({
     <div className={styles.actionsWrapper}>
       <LoaderButton
         variant="primary"
-        disabled={!!check.disabled}
+        disabled={!check.enabled}
         size="sm"
         loading={runCheckPending}
         onClick={handleRunIndividualCheckClick}
@@ -43,13 +43,13 @@ export const CheckActions: FC<CheckActionsProps> = ({
         {Messages.run}
       </LoaderButton>
       <LoaderButton
-        variant={!!check.disabled ? 'primary' : 'destructive'}
+        variant={check.enabled ? 'destructive' : 'primary'}
         size="sm"
         loading={intervalChangeLoading}
         onClick={handleChangeCheck}
         data-testid="check-table-loader-button"
       >
-        {!!check.disabled ? Messages.enable : Messages.disable}
+        {check.enabled ? Messages.disable : Messages.enable}
       </LoaderButton>
       <IconButton
         title={Messages.changeIntervalButtonTitle}

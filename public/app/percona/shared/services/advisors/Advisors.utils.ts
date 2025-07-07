@@ -9,7 +9,6 @@ export const groupAdvisorsIntoCategories = (advisors: Advisor[]): CategorizedAdv
     const modifiedChecks = checks.map((check) => ({
       ...check,
       family: check.family ? Family[check.family] : undefined,
-      disabled: check.disabled ? true : false,
     }));
 
     if (!result[category]) {

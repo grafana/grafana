@@ -90,7 +90,7 @@ export interface CheckDetails {
   category: string;
   family: string;
   description?: string;
-  disabled?: boolean;
+  enabled?: boolean;
   readMoreUrl?: string;
 }
 
@@ -103,7 +103,6 @@ export interface ChangeCheckBody {
     name: string;
     enable?: boolean;
     interval?: keyof typeof Interval;
-    disable?: boolean;
   }>;
 }
 

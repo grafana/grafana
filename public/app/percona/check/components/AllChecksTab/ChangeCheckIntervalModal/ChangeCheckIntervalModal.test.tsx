@@ -18,7 +18,7 @@ const TEST_CHECK: CheckDetails = {
   name: 'test',
   interval: 'ADVISOR_CHECK_INTERVAL_STANDARD',
   description: 'test description',
-  disabled: false,
+  enabled: true,
   category: '',
   family: 'ADVISOR_CHECK_FAMILY_MONGODB',
 };

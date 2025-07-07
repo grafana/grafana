@@ -186,7 +186,7 @@ export const allChecksStub: CheckDetails[] = [
     summary: 'Test 3',
     description: 'Test number 3',
     interval: 'ADVISOR_CHECK_INTERVAL_STANDARD',
-    disabled: true,
+    enabled: false,
     readMoreUrl: 'https://example.com',
     category: '',
     family: 'ADVISOR_CHECK_FAMILY_MONGODB',
@@ -201,7 +201,7 @@ export const allChecksStub: CheckDetails[] = [
   {
     name: 'test5',
     summary: 'Test 5',
-    disabled: true,
+    enabled: false,
     interval: 'ADVISOR_CHECK_INTERVAL_STANDARD',
     category: '',
     family: 'ADVISOR_CHECK_FAMILY_MONGODB',

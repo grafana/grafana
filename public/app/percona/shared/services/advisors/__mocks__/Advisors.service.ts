@@ -17,7 +17,7 @@ export const AdvisorsService = {
                 'This check returns errors if MongoDB or Percona Server for MongoDB version is less than the latest one with CVE fixes.',
               summary: 'MongoDB CVE Version',
               interval: 'RARE',
-              disabled: false,
+              enabled: true,
             },
           ],
         },
@@ -31,7 +31,7 @@ export const AdvisorsService = {
           checks: [
             {
               name: 'mongodb_version',
-              disabled: true,
+              enabled: false,
               description:
                 'This check returns warnings if MongoDB or Percona Server for MongoDB version is not the latest one.',
               summary: 'MongoDB Version',
@@ -39,7 +39,7 @@ export const AdvisorsService = {
             },
             {
               name: 'mysql_version',
-              disabled: true,
+              enabled: false,
               description:
                 'This check returns warnings if MySQL, Percona Server for MySQL, or MariaDB version is not the latest one.',
               summary: 'MySQL Version',
@@ -51,7 +51,7 @@ export const AdvisorsService = {
                 'This check returns warnings if PostgreSQL minor version is not the latest one.\nAdditionally notice is returned if PostgreSQL major version is not the latest one.\nError is returned if the major version of PostgreSQL is 9.4 or older.\n',
               summary: 'PostgreSQL Version',
               interval: 'STANDARD',
-              disabled: false,
+              enabled: true,
             },
           ],
         },

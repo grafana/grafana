@@ -27,7 +27,7 @@ export interface Advisor {
 
 export interface AdvisorCheck {
   name: string;
-  disabled: boolean;
+  enabled: boolean;
   description: string;
   summary: string;
   interval: keyof typeof Interval;

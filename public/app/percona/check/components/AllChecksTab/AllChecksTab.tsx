@@ -75,9 +75,8 @@ export const AllChecksTab: FC = () => {
   };
 
   const changeCheck = useCallback(async (check: CheckDetails) => {
-    const action = !!check.disabled ? 'enable' : 'disable';
     try {
-      await CheckService.changeCheck({ params: [{ name: check.name, [action]: true }] });
+      await CheckService.changeCheck({ params: [{ name: check.name, enable: !check.enabled }] });
       await dispatch(fetchAdvisors({}));
     } catch (e) {
       logger.error(e);
@@ -117,17 +116,17 @@ export const AllChecksTab: FC = () => {
       },
       {
         Header: Messages.table.columns.status,
-        accessor: 'disabled',
-        Cell: ({ value }) => <>{!!value ? Messages.disabled : Messages.enabled}</>,
+        accessor: 'enabled',
+        Cell: ({ value }) => <>{value ? Messages.enabled : Messages.disabled}</>,
         type: FilterFieldTypes.RADIO_BUTTON,
         options: [
           {
             label: Messages.enabled,
-            value: false,
+            value: true,
           },
           {
             label: Messages.disabled,
-            value: true,
+            value: false,
           },
         ],
       },
