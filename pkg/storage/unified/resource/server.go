@@ -1227,7 +1227,7 @@ func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchReque
 		return nil, fmt.Errorf("search index not configured")
 	}
 
-	fmt.Println("Handling Search")
+	fmt.Println("Handling Search for ", req.Options.Key.Namespace)
 
 	return s.search.Search(ctx, req)
 }
@@ -1238,7 +1238,12 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 		return nil, err
 	}
 
-	fmt.Println("Handling GetStats")
+	if req.Namespace == "" {
+		return &resourcepb.ResourceStatsResponse{
+			Error: NewBadRequestError("missing namespace"),
+		}, nil
+	}
+	fmt.Println("Handling GetStats for ", req.Namespace)
 
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
