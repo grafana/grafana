@@ -6,7 +6,7 @@ import { PostableRulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { notFoundToNullOrThrow } from '../../api/util';
-import { ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
+import { addRuleAction, ruleGroupReducer } from '../../reducers/ruler/ruleGroups';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 
 const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
@@ -56,6 +56,10 @@ export function useProduceNewRuleGroup() {
     })
       .unwrap()
       .catch(notFoundToNullOrThrow);
+
+    if (latestRuleGroupDefinition && addRuleAction.match(action)) {
+      action.payload.interval = latestRuleGroupDefinition.interval;
+    }
 
     const newRuleGroupDefinition = ruleGroupReducer(
       latestRuleGroupDefinition ?? createBlankRuleGroup(ruleGroup.groupName),

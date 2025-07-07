@@ -69,7 +69,7 @@ export const grafanaRulerGroup: RulerRuleGroupDTO = {
 
 export const grafanaRulerGroup2: RulerRuleGroupDTO = {
   name: grafanaRulerGroupName2,
-  interval: '1m',
+  interval: '5m',
   rules: [grafanaRulerRule],
 };
 
