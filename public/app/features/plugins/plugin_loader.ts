@@ -187,16 +187,21 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
   });
 }
 
-// Only successfully loaded plugins are cached
-const importedAppPlugins: Record<string, AppPlugin> = {};
+// Cache for import promises to prevent duplicate imports
+const importPromises: Record<string, Promise<AppPlugin>> = {};
 
 export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   const pluginId = meta.id;
 
-  if (importedAppPlugins[pluginId]) {
-    return importedAppPlugins[pluginId];
+  // We are caching the import promises to prevent duplicate imports
+  if (importPromises[pluginId] === undefined) {
+    importPromises[pluginId] = doImportAppPlugin(meta);
   }
 
+  return importPromises[pluginId];
+}
+
+async function doImportAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   throwIfAngular(meta);
 
   const pluginExports = await importPluginModule({
@@ -214,23 +219,21 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   plugin.setComponentsFromLegacyExports(pluginExports);
 
   exposedComponentsRegistry.register({
-    pluginId,
+    pluginId: meta.id,
     configs: plugin.exposedComponentConfigs || [],
   });
   addedComponentsRegistry.register({
-    pluginId,
+    pluginId: meta.id,
     configs: plugin.addedComponentConfigs || [],
   });
   addedLinksRegistry.register({
-    pluginId,
+    pluginId: meta.id,
     configs: plugin.addedLinkConfigs || [],
   });
   addedFunctionsRegistry.register({
-    pluginId,
+    pluginId: meta.id,
     configs: plugin.addedFunctionConfigs || [],
   });
-
-  importedAppPlugins[pluginId] = plugin;
 
   return plugin;
 }
