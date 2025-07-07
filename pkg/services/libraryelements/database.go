@@ -451,24 +451,22 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		}
 
 		folderHits, err := l.folderService.SearchFolders(c, searchQuery)
+		if err != nil && !strings.Contains(err.Error(), "cannot be called on the legacy folder service") {
+		   return model.LibraryElementSearchResult{}, err
+		}
+		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
+			OrgID:        signedInUser.GetOrgID(),
+			SignedInUser: signedInUser,
+		})
 		if err != nil {
-			if strings.Contains(err.Error(), "cannot be called on the legacy folder service") {
-				fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
-					OrgID:        signedInUser.GetOrgID(),
-					SignedInUser: signedInUser,
-				})
-				if err != nil {
-					return model.LibraryElementSearchResult{}, err
-				}
-				foldersWithMatchingTitles = make([]string, 0, len(fs))
-				for _, f := range fs {
-					if strings.Contains(strings.ToLower(f.Title), strings.ToLower(query.SearchString)) {
-						foldersWithMatchingTitles = append(foldersWithMatchingTitles, f.UID)
-					}
-				}
-			} else {
-				return model.LibraryElementSearchResult{}, err
+			return model.LibraryElementSearchResult{}, err
+		}
+		foldersWithMatchingTitles = make([]string, 0, len(fs))
+		for _, f := range fs {
+			if strings.Contains(strings.ToLower(f.Title), strings.ToLower(query.SearchString)) {
+				foldersWithMatchingTitles = append(foldersWithMatchingTitles, f.UID)
 			}
+		}
 		} else {
 			foldersWithMatchingTitles = make([]string, 0, len(folderHits))
 			for _, hit := range folderHits {
