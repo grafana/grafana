@@ -1,10 +1,9 @@
-import { useTranslate } from '@grafana/i18n';
-import { TFunction } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { CellProps } from '@grafana/ui';
 
 import { ResourceTableItem } from './types';
 
-export function prettyTypeName(type: ResourceTableItem['type'], t: TFunction) {
+export function prettyTypeName(type: ResourceTableItem['type']) {
   switch (type) {
     case 'DATASOURCE':
       return t('migrate-to-cloud.resource-type.datasource', 'Data source');
@@ -34,7 +33,6 @@ export function prettyTypeName(type: ResourceTableItem['type'], t: TFunction) {
 }
 
 export function TypeCell(props: CellProps<ResourceTableItem>) {
-  const { t } = useTranslate();
   const { type } = props.row.original;
-  return <>{prettyTypeName(type, t)}</>;
+  return <>{prettyTypeName(type)}</>;
 }

@@ -41,8 +41,32 @@ exports[`GrafanaReceiverForm Webhook contact point should properly remove TLS co
       {
         "disableResolveMessage": false,
         "name": "webhook-test",
-        "secureFields": {},
+        "secureFields": {
+          "http_config.oauth2.client_secret": true,
+        },
         "settings": {
+          "http_config": {
+            "oauth2": {
+              "client_id": "client-id",
+              "endpoint_params": {
+                "param1": "value1",
+                "param2": "value2",
+              },
+              "proxy_config": {
+                "no_proxy": "example.com",
+                "proxy_connect_header": {
+                  "X-Custom-Header": "custom-value",
+                },
+                "proxy_from_environment": true,
+                "proxy_url": "http://example.com/proxy",
+              },
+              "scopes": [
+                "scope1",
+                "scope2",
+              ],
+              "token_url": "http://example.com/oauth2/token",
+            },
+          },
           "url": "http://example.com",
         },
         "type": "webhook",

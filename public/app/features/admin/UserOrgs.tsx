@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import { createRef, PureComponent, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   ConfirmButton,
@@ -241,7 +240,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
         <td colSpan={1}>
           {canRemoveFromOrg && (
             <ConfirmButton
-              confirmText="Confirm removal"
+              confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
               confirmVariant="destructive"
               onCancel={this.onCancelClick}
               onConfirm={this.onOrgRemove}
@@ -465,7 +464,7 @@ export function ChangeOrgButton({
         </>
       ) : (
         <ConfirmButton
-          confirmText="Save"
+          confirmText={t('admin.change-org-button.confirmText-save', 'Save')}
           onClick={onChangeRoleClick}
           onCancel={onCancelClick}
           onConfirm={onOrgRoleSave}

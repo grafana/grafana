@@ -3,7 +3,7 @@ import { once } from 'lodash';
 import { useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
@@ -15,7 +15,7 @@ import {
   Icon,
   ScrollContainer,
 } from '@grafana/ui';
-import * as DFImport from 'app/features/dataframe-import';
+import { acceptedFiles, maxFileSize } from 'app/features/dataframe-import/constants';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
 
@@ -102,7 +102,7 @@ export function DataSourceModal({
   );
 
   const grafanaDS = useDatasource('-- Grafana --');
-  const { t } = useTranslate();
+
   const onFileDrop = getFileDropToQueryHandler((query, fileRejections) => {
     if (!grafanaDS) {
       return;
@@ -203,9 +203,9 @@ export function DataSourceModal({
               readAs="readAsArrayBuffer"
               fileListRenderer={() => undefined}
               options={{
-                maxSize: DFImport.maxFileSize,
+                maxSize: maxFileSize,
                 multiple: false,
-                accept: DFImport.acceptedFiles,
+                accept: acceptedFiles,
                 onDrop: onFileDrop,
               }}
             >

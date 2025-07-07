@@ -10,7 +10,6 @@ import {
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
-  SceneGridRow,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
@@ -45,7 +44,6 @@ import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -59,6 +57,7 @@ import {
   validateDashboardSchemaV2,
   getDataQueryKind,
   getAutoAssignedDSRef,
+  getVizPanelQueries,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -254,30 +253,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
               // repeatDirection?: RepeatDirection,
               // maxPerRow?: number,
             }),
-            new SceneGridRow({
-              key: 'panel-4',
-              title: 'Test Row',
-              y: 10,
-              $behaviors: [new RowRepeaterBehavior({ variableName: 'customVar' })],
-              children: [
-                new DashboardGridItem({
-                  y: 11,
-                  body: new VizPanel({
-                    key: 'panel-2',
-                    pluginId: 'graph',
-                    title: 'Test Panel 2',
-                    description: 'Test Description 2',
-                    fieldConfig: { defaults: {}, overrides: [] },
-                    pluginVersion: '7.0.0',
-                    $timeRange: new SceneTimeRange({
-                      timeZone: 'UTC',
-                      from: 'now-3h',
-                      to: 'now',
-                    }),
-                  }),
-                }),
-              ],
-            }),
           ],
         }),
       }),
@@ -436,9 +411,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result).toMatchSnapshot();
 
     // Check that the annotation layers are correctly transformed
-    expect(result.annotations).toHaveLength(3);
-    // Check annotation layer 3 without initial data source isn't updated with runtime default
-    expect(result.annotations?.[2].spec.datasource?.type).toBe(undefined);
+    expect(result.annotations).toHaveLength(2);
   });
 
   it('should transform the minimum scene to save model schema v2', () => {
@@ -860,6 +833,50 @@ describe('getElementDatasource', () => {
   });
 });
 
+describe('getVizPanelQueries', () => {
+  it('should handle panel query datasources correctly', () => {
+    const queryWithDS: SceneDataQuery = {
+      refId: 'B',
+      datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+    };
+
+    const queryWithoutDS: SceneDataQuery = {
+      refId: 'A',
+    };
+
+    // Mock query runner
+    const queryRunner = new SceneQueryRunner({
+      queries: [queryWithoutDS, queryWithDS],
+      datasource: { uid: 'default-ds', type: 'default' },
+    });
+    // Create test elements
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      $data: queryRunner,
+    });
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map(new Set([['panel-1', new Set<string>(['A'])]])),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    const result = getVizPanelQueries(vizPanel, dsReferencesMapping);
+    expect(result.length).toBe(2);
+    expect(result[0].spec.query.kind).toBe('DataQuery');
+    expect(result[0].spec.query.datasource).toBeUndefined(); // ignore datasource if it wasn't provided
+    expect(result[0].spec.query.group).toBe('default');
+    expect(result[0].spec.query.version).toBe('v0');
+
+    expect(result[1].spec.query.kind).toBe('DataQuery');
+    expect(result[1].spec.query.datasource?.name).toBe('prometheus-uid');
+    expect(result[1].spec.query.group).toBe('prometheus');
+    expect(result[1].spec.query.version).toBe('v0');
+  });
+});
+
 function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
   return {
     id: 1,
@@ -1088,18 +1105,6 @@ function createAnnotationLayers() {
         iconColor: 'blue',
       },
       name: 'layer2',
-      isEnabled: true,
-      isHidden: true,
-    }),
-    // this could happen if a dahboard was created from code and the datasource was not defined
-    new DashboardAnnotationsDataLayer({
-      key: 'layer3',
-      query: {
-        name: 'query3',
-        enable: true,
-        iconColor: 'green',
-      },
-      name: 'layer3',
       isEnabled: true,
       isHidden: true,
     }),

@@ -1,22 +1,20 @@
 import { useCallback } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
 import { PAGE_SIZE } from '../api/services';
+import { fetchNextChildrenPage } from '../state/actions';
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
-  setFolderOpenState,
-  setItemSelectionState,
   useChildrenByParentUIDState,
-  setAllSelection,
   useBrowseLoadingStatus,
   useLoadNextChildrenPage,
-  fetchNextChildrenPage,
-} from '../state';
+} from '../state/hooks';
+import { setFolderOpenState, setItemSelectionState, setAllSelection } from '../state/slice';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
@@ -112,7 +110,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
   );
 
   const handleLoadMore = useLoadNextChildrenPage();
-  const { t } = useTranslate();
+
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (
       <div style={{ width }}>

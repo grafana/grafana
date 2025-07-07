@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { FetchError } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
+import { config, FetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
 
@@ -31,8 +31,8 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-  const { t } = useTranslate();
-  const isRestoreDashboardsEnabled = false;
+
+  const isRestoreDashboardsEnabled = config.featureToggles.restoreDashboards;
 
   return (
     <>
@@ -49,7 +49,7 @@ export const SaveDashboardErrorProxy = ({
               </Trans>
             </div>
           }
-          confirmText="Save and overwrite"
+          confirmText={t('dashboard.save-dashboard-error-proxy.confirmText-save-and-overwrite', 'Save and overwrite')}
           onConfirm={async () => {
             await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
             onDismiss();
@@ -90,7 +90,10 @@ export const SaveDashboardErrorProxy = ({
                   </Trans>
                 </div>
               }
-              confirmText="Save and overwrite"
+              confirmText={t(
+                'dashboard.save-dashboard-error-proxy.confirmText-save-and-overwrite',
+                'Save and overwrite'
+              )}
               onConfirm={async () => {
                 await onDashboardSave(dashboardSaveModel, { overwrite: true }, dashboard);
                 onDismiss();
@@ -115,7 +118,7 @@ export const SaveDashboardErrorProxy = ({
 
 const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboardModalProps) => {
   const { onDashboardSave } = useDashboardSave();
-  const { t } = useTranslate();
+
   const styles = useStyles2(getConfirmPluginDashboardSaveModalStyles);
 
   return (

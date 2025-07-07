@@ -418,7 +418,7 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 	})
 }
 
-func TestDashboardAPIEndpoint(t *testing.T) {
+func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given two dashboards with the same title in different folders", func(t *testing.T) {
 		dashOne := dashboards.NewDashboard("dash")
 		dashOne.ID = 2
@@ -710,7 +710,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
 		mockSQLStore := dbtest.NewFakeDB()
 		dashboardStore := dashboards.NewFakeDashboardStore(t)
-		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{ExternalID: "/dashboard1.json"}, nil).Once()
+		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioningSearchResults{ExternalID: "/dashboard1.json"}, nil).Once()
 
 		dashboardService := dashboards.NewFakeDashboardService(t)
 

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -34,12 +33,6 @@ func TestBacktesting(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, grafanaPath)
-
-	userId := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -61,7 +54,7 @@ func TestBacktesting(t *testing.T) {
 			Type:   "testdata",
 			Access: datasources.DS_ACCESS_PROXY,
 			UID:    query.DatasourceUID,
-			UserID: userId,
+			UserID: 1,
 			OrgID:  1,
 		}
 		_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)

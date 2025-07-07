@@ -1,19 +1,22 @@
-import { cx } from '@emotion/css';
-import { ReactElement } from 'react';
+import { ReactElement, useState } from 'react';
 import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../../themes';
-import { getCellLinks } from '../../../utils';
-import { clearLinkButtonStyles } from '../../Button';
-import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
+import { getCellLinks } from '../../../utils/table';
 import { CellActions } from '../CellActions';
+import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableStyles } from '../TableRT/styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from '../types';
-import { getCellColors, getCellOptions } from '../utils';
+import {
+  DataLinksActionsTooltipCoords,
+  getCellColors,
+  getCellOptions,
+  getDataLinksActionsTooltipUtils,
+  tooltipOnClickHandler,
+} from '../utils';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
@@ -23,9 +26,6 @@ export const DefaultCell = (props: TableCellProps) => {
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
-  const cellLinks = getCellLinks(field, row);
-  const hasLinks = cellLinks?.some((link) => link.href || link.onClick != null);
-  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
   let value: string | ReactElement;
 
   const OG_TWEET_LENGTH = 140; // 🙏
@@ -76,28 +76,30 @@ export const DefaultCell = (props: TableCellProps) => {
   }
 
   const { key, ...rest } = cellProps;
+  const links = getCellLinks(field, row) || [];
+
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links);
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
   return (
-    <div key={key} {...rest} className={cellStyle}>
-      {hasLinks ? (
-        <DataLinksContextMenu
-          links={() => getCellLinks(field, row)?.filter((link) => link.href || link.onClick != null) || []}
-        >
-          {(api) => {
-            if (api.openMenu) {
-              return (
-                <button
-                  className={cx(clearButtonStyle, getLinkStyle(tableStyles, cellOptions, api.targetClassName))}
-                  onClick={api.openMenu}
-                >
-                  {value}
-                </button>
-              );
-            } else {
-              return <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
-            }
-          }}
-        </DataLinksContextMenu>
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
+    <div
+      key={key}
+      {...rest}
+      className={cellStyle}
+      style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
+    >
+      {shouldShowLink ? (
+        renderSingleLink(links[0], value, getLinkStyle(tableStyles, cellOptions))
+      ) : shouldShowTooltip ? (
+        <DataLinksActionsTooltip
+          links={links}
+          value={value}
+          coords={tooltipCoords}
+          onTooltipClose={() => setTooltipCoords(undefined)}
+        />
       ) : isStringValue ? (
         `${value}`
       ) : (
@@ -107,6 +109,14 @@ export const DefaultCell = (props: TableCellProps) => {
       {showActions && <CellActions {...props} previewMode={TableCellInspectorMode.text} showFilters={showFilters} />}
     </div>
   );
+};
+
+const getLinkStyle = (tableStyles: TableStyles, cellOptions: TableCellOptions) => {
+  if (cellOptions.type === TableCellDisplayMode.Auto) {
+    return tableStyles.cellLink;
+  }
+
+  return tableStyles.cellLinkForColoredCell;
 };
 
 function getCellStyle(
@@ -131,7 +141,7 @@ function getCellStyle(
   bgColor = colors.bgColor;
   bgHoverColor = colors.bgHoverColor;
 
-  // If we have definied colors return those styles
+  // If we have defined colors return those styles
   // Otherwise we return default styles
   return tableStyles.buildCellContainerStyle(
     textColor,
@@ -144,12 +154,4 @@ function getCellStyle(
     rowStyled,
     rowExpanded
   );
-}
-
-function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, targetClassName: string | undefined) {
-  if (cellOptions.type === TableCellDisplayMode.Auto) {
-    return cx(tableStyles.cellLink, targetClassName);
-  }
-
-  return cx(tableStyles.cellLinkForColoredCell, targetClassName);
 }

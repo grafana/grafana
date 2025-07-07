@@ -24,7 +24,7 @@ import (
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
-func TestListIter(t *testing.T) {
+func TestIntegrationListIter(t *testing.T) {
 	ctx := context.Background()
 
 	grafanaDB := db.InitTestDB(t)
@@ -219,7 +219,7 @@ func TestListIter(t *testing.T) {
 		require.Equal(t, expected, actual)
 	})
 
-	t.Run("ContinueTokenWithCurrentRV uses current row's RV", func(t *testing.T) {
+	t.Run("ContinueToken uses the current row's RV", func(t *testing.T) {
 		listReq := sqlResourceListRequest{
 			SQLTemplate: sqltemplate.New(dialect),
 			Request:     new(resourcepb.ListRequest),
@@ -229,14 +229,15 @@ func TestListIter(t *testing.T) {
 		require.NoError(t, err)
 
 		iter := &listIter{
-			rows:    rows,
-			listRV:  300,
-			sortAsc: true,
+			rows:         rows,
+			listRV:       300,
+			sortAsc:      true,
+			useCurrentRV: true, // use the current RV for the continue token instead of the listRV
 		}
 
 		require.True(t, iter.Next())
 
-		token := iter.ContinueTokenWithCurrentRV()
+		token := iter.ContinueToken()
 
 		var actual resource.ContinueToken
 		b, err := base64.StdEncoding.DecodeString(token)

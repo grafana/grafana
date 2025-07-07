@@ -11,8 +11,7 @@ export const defaultAnnotationQueryKind = (): AnnotationQueryKind => ({
 });
 
 export interface AnnotationQuerySpec {
-	datasource?: DataSourceRef;
-	query?: DataQueryKind;
+	query: DataQueryKind;
 	enable: boolean;
 	hide: boolean;
 	iconColor: string;
@@ -24,6 +23,7 @@ export interface AnnotationQuerySpec {
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
+	query: defaultDataQueryKind(),
 	enable: false,
 	hide: false,
 	iconColor: "",
@@ -31,24 +31,22 @@ export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	builtIn: false,
 });
 
-export interface DataSourceRef {
-	// The plugin type-id
-	type?: string;
-	// Specific datasource instance
-	uid?: string;
-}
-
-export const defaultDataSourceRef = (): DataSourceRef => ({
-});
-
 export interface DataQueryKind {
-	// The kind of a DataQueryKind is the datasource type
-	kind: string;
+	kind: "DataQuery";
+	group: string;
+	version: string;
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	datasource?: {
+		name?: string;
+	};
 	spec: Record<string, any>;
 }
 
 export const defaultDataQueryKind = (): DataQueryKind => ({
-	kind: "",
+	kind: "DataQuery",
+	group: "",
+	version: "v0",
 	spec: {},
 });
 
@@ -151,7 +149,6 @@ export const defaultPanelQueryKind = (): PanelQueryKind => ({
 
 export interface PanelQuerySpec {
 	query: DataQueryKind;
-	datasource?: DataSourceRef;
 	refId: string;
 	hidden: boolean;
 }
@@ -564,7 +561,7 @@ export const defaultGridLayoutKind = (): GridLayoutKind => ({
 });
 
 export interface GridLayoutSpec {
-	items: (GridLayoutItemKind | GridLayoutRowKind)[];
+	items: GridLayoutItemKind[];
 }
 
 export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
@@ -623,42 +620,6 @@ export const defaultRepeatOptions = (): RepeatOptions => ({
 
 // other repeat modes will be added in the future: label, frame
 export const RepeatMode = "variable";
-
-export interface GridLayoutRowKind {
-	kind: "GridLayoutRow";
-	spec: GridLayoutRowSpec;
-}
-
-export const defaultGridLayoutRowKind = (): GridLayoutRowKind => ({
-	kind: "GridLayoutRow",
-	spec: defaultGridLayoutRowSpec(),
-});
-
-export interface GridLayoutRowSpec {
-	y: number;
-	collapsed: boolean;
-	title: string;
-	// Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	elements: GridLayoutItemKind[];
-	repeat?: RowRepeatOptions;
-}
-
-export const defaultGridLayoutRowSpec = (): GridLayoutRowSpec => ({
-	y: 0,
-	collapsed: false,
-	title: "",
-	elements: [],
-});
-
-export interface RowRepeatOptions {
-	mode: "variable";
-	value: string;
-}
-
-export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
-	value: "",
-});
 
 export interface RowsLayoutKind {
 	kind: "RowsLayout";
@@ -779,6 +740,16 @@ export interface ConditionalRenderingTimeRangeSizeSpec {
 }
 
 export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
+	value: "",
+});
+
+export interface RowRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
+	mode: RepeatMode,
 	value: "",
 });
 
@@ -1020,7 +991,6 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
-	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
 	sort: VariableSort;
@@ -1290,6 +1260,7 @@ export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 export interface GroupByVariableSpec {
 	name: string;
 	datasource?: DataSourceRef;
+	defaultValue?: VariableOption;
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
@@ -1306,6 +1277,18 @@ export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	multi: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+});
+
+// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
+// This type is widely used in the codebase and changing it will have a big impact
+export interface DataSourceRef {
+	// The plugin type-id
+	type?: string;
+	// Specific datasource instance
+	uid?: string;
+}
+
+export const defaultDataSourceRef = (): DataSourceRef => ({
 });
 
 // Adhoc variable kind
@@ -1352,7 +1335,7 @@ export interface AdHocFilterWithLabels {
 	keyLabel?: string;
 	valueLabels?: string[];
 	forceEdit?: boolean;
-	origin?: FilterOrigin;
+	origin?: "dashboard";
 	// @deprecated
 	condition?: string;
 }
@@ -1364,10 +1347,7 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 });
 
 // Determine the origin of the adhoc variable filter
-// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
-export type FilterOrigin = "dashboard" | "scope";
-
-export const defaultFilterOrigin = (): FilterOrigin => ("dashboard");
+export const FilterOrigin = "dashboard";
 
 // Define the MetricFindValue type
 export interface MetricFindValue {

@@ -1,6 +1,7 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
 
 import { PanelPluginMeta } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -27,7 +28,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
 export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {
   const newPanel: Partial<PanelModel> = {
     type: widgetType,
-    title: 'Widget title',
+    title: t('dashboard.on-create-new-widget-panel.new-panel.title.widget-title', 'Widget title'),
     gridPos: calculateNewPanelGridPos(dashboard),
     datasource: null,
     isNew: true,
@@ -40,7 +41,7 @@ export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: st
 export function onCreateNewRow(dashboard: DashboardModel) {
   const newRow = {
     type: 'row',
-    title: 'Row title',
+    title: t('dashboard.on-create-new-row.new-row.title.row-title', 'Row title'),
     gridPos: { x: 0, y: 0 },
   };
 

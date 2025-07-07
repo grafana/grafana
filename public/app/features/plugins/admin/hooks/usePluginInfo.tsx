@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
 import { PageInfoItem } from '../../../../core/components/Page/types';
-import { PluginDisabledBadge } from '../components/Badges';
+import { PluginDisabledBadge } from '../components/Badges/PluginDisabledBadge';
 import { PluginDetailsHeaderDependencies } from '../components/PluginDetailsHeaderDependencies';
 import { PluginDetailsHeaderSignature } from '../components/PluginDetailsHeaderSignature';
 import { getLatestCompatibleVersion } from '../helpers';
 import { CatalogPlugin } from '../types';
 
 export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
-  const { t } = useTranslate();
   const info: PageInfoItem[] = [];
 
   if (!plugin) {

@@ -12,7 +12,7 @@ import {
   DataFrame,
   TimeRange,
 } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { TimeZone } from '@grafana/schema';
 import { Icon, SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -31,7 +31,9 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   annotations: DataFrame[];
-  toggleLegendRef?: React.MutableRefObject<(name: string, mode: SeriesVisibilityChangeMode) => void> | undefined;
+  toggleLegendRef?:
+    | React.MutableRefObject<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>
+    | undefined;
 };
 
 export function LogsVolumePanel(props: Props) {
@@ -46,7 +48,7 @@ export function LogsVolumePanel(props: Props) {
   } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 

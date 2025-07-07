@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
@@ -108,7 +108,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
 export function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { t } = useTranslate();
+
   const onRunQuery = () => {
     variable.refreshOptions();
   };
@@ -174,7 +174,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
-  const { t } = useTranslate();
+
   const { datasource: selectedDatasource, VariableQueryEditor } = dsConfig ?? {};
 
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
@@ -227,7 +227,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
 
       <VariableTextAreaField
         defaultValue={regex ?? ''}
-        name="Regex"
+        name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
         description={
           <div>
             <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
@@ -246,7 +246,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
             </Trans>
           </div>
         }
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
         onBlur={onRegExChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}

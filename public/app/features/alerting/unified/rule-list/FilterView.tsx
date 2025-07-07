@@ -2,7 +2,7 @@ import { bufferCountOrTime, tap } from 'ix/asynciterable/operators';
 import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
 import { useUnmount } from 'react-use';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EmptyState, Stack } from '@grafana/ui';
 
 import { withPerformanceLogging } from '../Analytics';
@@ -12,7 +12,7 @@ import { hashRule } from '../utils/rule-id';
 
 import { DataSourceRuleLoader } from './DataSourceRuleLoader';
 import { FilterProgressState, FilterStatus } from './FilterViewStatus';
-import { GrafanaRuleLoader } from './GrafanaRuleLoader';
+import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
@@ -22,13 +22,11 @@ import {
   RuleWithOrigin,
   useFilteredRulesIteratorProvider,
 } from './hooks/useFilteredRulesIterator';
+import { FRONTEND_LIST_PAGE_SIZE, getApiGroupPageSize } from './paginationLimits';
 
 interface FilterViewProps {
   filterState: RulesFilter;
 }
-
-const FRONTENT_PAGE_SIZE = 100;
-const API_PAGE_SIZE = 2000;
 
 export function FilterView({ filterState }: FilterViewProps) {
   // ⚠️ We use a key to force the component to unmount and remount when the filter state changes
@@ -79,10 +77,10 @@ function FilterViewResults({ filterState }: FilterViewProps) {
        * ⚠️ Make sure we are returning / using a "iterator" and not an "iterable" since the iterable is only a blueprint
        * and the iterator will allow us to exhaust the iterable in a stateful way
        */
-      const { iterable, abortController } = getFilteredRulesIterator(filterState, API_PAGE_SIZE);
+      const { iterable, abortController } = getFilteredRulesIterator(filterState, getApiGroupPageSize(true));
       const rulesBatchIterator = iterable
         .pipe(
-          bufferCountOrTime(FRONTENT_PAGE_SIZE, 1000),
+          bufferCountOrTime(FRONTEND_LIST_PAGE_SIZE, 1000),
           onFinished(() => setDoneSearching(true))
         )
         [Symbol.asyncIterator]();
@@ -98,7 +96,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
 
       let loadedRulesCount = 0;
 
-      while (loadedRulesCount < FRONTENT_PAGE_SIZE) {
+      while (loadedRulesCount < FRONTEND_LIST_PAGE_SIZE) {
         const nextRulesBatch = await rulesIterator.next();
         if (nextRulesBatch.done) {
           return;
@@ -135,7 +133,6 @@ function FilterViewResults({ filterState }: FilterViewProps) {
     }
     return 'searching';
   }, [doneSearching, loadingAborted]);
-  const { t } = useTranslate();
 
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
@@ -157,11 +154,11 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           switch (origin) {
             case 'grafana':
               return (
-                <GrafanaRuleLoader
-                  key={key}
-                  ruleIdentifier={{ ruleSourceName: 'grafana', uid: rule.uid }}
+                <GrafanaRuleListItem
+                  rule={rule}
                   groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}
+                  showLocation={true}
                 />
               );
             case 'datasource':

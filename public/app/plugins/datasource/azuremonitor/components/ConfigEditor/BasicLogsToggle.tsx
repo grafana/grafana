@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Switch, TextLink, useTheme2 } from '@grafana/ui';
 
-import { AzureMonitorDataSourceJsonData } from '../../types';
+import { AzureMonitorDataSourceJsonData } from '../../types/types';
 
 export interface Props {
   options: AzureMonitorDataSourceJsonData;
@@ -13,7 +13,6 @@ export interface Props {
 
 export const BasicLogsToggle = (props: Props) => {
   const { options, onBasicLogsEnabledChange } = props;
-  const { t } = useTranslate();
 
   const theme = useTheme2();
   const styles = {

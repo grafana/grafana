@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
 
@@ -44,7 +44,7 @@ export type TracePageActionsProps = {
 export default function TracePageActions(props: TracePageActionsProps) {
   const { traceId, data, app } = props;
   const theme = useTheme2();
-  const { t } = useTranslate();
+
   const styles = getStyles(theme);
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
 
@@ -88,7 +88,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
 
       <ActionButton
         onClick={copyTraceId}
-        ariaLabel={'Copy Trace ID'}
+        ariaLabel={t('explore.trace-page-actions.ariaLabel-copy-trace-id', 'Copy Trace ID')}
         label={
           copyTraceIdClicked
             ? t('explore.trace-page-actions.label-copied', 'Copied!')
@@ -98,7 +98,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
       />
       <ActionButton
         onClick={exportTrace}
-        ariaLabel={'Export Trace'}
+        ariaLabel={t('explore.trace-page-actions.ariaLabel-export-trace', 'Export Trace')}
         label={t('explore.trace-page-actions.label-export', 'Export')}
         icon={'save'}
       />

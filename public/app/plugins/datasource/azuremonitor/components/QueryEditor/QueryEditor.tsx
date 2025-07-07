@@ -3,19 +3,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import {
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorErrorish,
-  AzureMonitorOption,
-  AzureMonitorQuery,
-  AzureQueryType,
-} from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
+import { AzureMonitorDataSourceJsonData, AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
@@ -45,7 +40,6 @@ const QueryEditor = ({
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
   const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
   const [defaultSubscriptionId, setDefaultSubscriptionId] = useState('');
-  const { t } = useTranslate();
 
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
@@ -157,7 +151,6 @@ const EditorForQueryType = ({
   onQueryChange,
   range,
 }: EditorForQueryTypeProps) => {
-  const { t } = useTranslate();
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return (
@@ -238,7 +231,6 @@ const EditorForQueryType = ({
 };
 
 const UserAuthAlert = () => {
-  const { t } = useTranslate();
   return (
     <Alert
       title={t('components.user-auth-alert.title-unsupported-auth', 'Unsupported authentication provider')}
@@ -260,7 +252,6 @@ const UserAuthAlert = () => {
 };
 
 const UserAuthFallbackAlert = () => {
-  const { t } = useTranslate();
   return (
     <Alert
       title={t(

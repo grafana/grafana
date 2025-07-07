@@ -3,12 +3,14 @@ package provisioning
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash"
 	"hash/fnv"
 	"slices"
 	"unsafe"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/common/model"
 	"golang.org/x/exp/maps"
 
@@ -110,6 +112,15 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 	}
 
 	revision.Config.AlertmanagerConfig.Route = &tree
+
+	_, err = revision.Config.GetMergedAlertmanagerConfig()
+	if err != nil {
+		if errors.Is(err, definition.ErrSubtreeMatchersConflict) {
+			// TODO temporarily get the conflicting matchers
+			return definitions.Route{}, "", MakeErrRouteConflictingMatchers(fmt.Sprintf("%s", revision.Config.ExtraConfigs[0].MergeMatchers))
+		}
+		nps.log.Warn("Unable to validate the combined routing tree because of an error during merging. This could be a sign of broken external configuration. Skipping", "error", err)
+	}
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
@@ -272,7 +283,6 @@ func writeToHash(sum hash.Hash, r *definitions.Route) {
 	writeDuration(r.GroupWait)
 	writeDuration(r.GroupInterval)
 	writeDuration(r.RepeatInterval)
-	writeString(string(r.Provenance))
 	for _, route := range r.Routes {
 		writeToHash(sum, route)
 	}

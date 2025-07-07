@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
@@ -34,17 +34,6 @@ import { DeleteDashboardButton } from './DeleteDashboardButton';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
-
-const EDITABLE_OPTIONS = [
-  { label: 'Editable', value: true },
-  { label: 'Read-only', value: false },
-];
-
-const GRAPH_TOOLTIP_OPTIONS = [
-  { value: 0, label: 'Default' },
-  { value: 1, label: 'Shared crosshair' },
-  { value: 2, label: 'Shared Tooltip' },
-];
 
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
@@ -176,7 +165,38 @@ export class GeneralSettingsEditView
     const { intervals } = model.getRefreshPicker().useState();
     const { hideTimeControls } = model.getDashboardControls().useState();
     const { enabled: liveNow } = model.getLiveNowTimer().useState();
-    const { t } = useTranslate();
+    const EDITABLE_OPTIONS = [
+      {
+        label: t('dashboard-scene.general-settings-edit-view.editable_options.label.editable', 'Editable'),
+        value: true,
+      },
+      {
+        label: t('dashboard-scene.general-settings-edit-view.editable_options.label.readonly', 'Read-only'),
+        value: false,
+      },
+    ];
+
+    const GRAPH_TOOLTIP_OPTIONS = [
+      {
+        value: 0,
+        label: t('dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.default', 'Default'),
+      },
+      {
+        value: 1,
+        label: t(
+          'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-crosshair',
+          'Shared crosshair'
+        ),
+      },
+      {
+        value: 2,
+        label: t(
+          'dashboard-scene.general-settings-edit-view.graph_tooltip_options.label.shared-tooltip',
+          'Shared tooltip'
+        ),
+      },
+    ];
+
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
         <NavToolbarActions dashboard={dashboard} />
@@ -227,15 +247,7 @@ export class GeneralSettingsEditView
               {dashboard.isManagedRepository() ? (
                 <Input readOnly value={meta.folderTitle} />
               ) : (
-                <FolderPicker
-                  value={meta.folderUid}
-                  onChange={model.onFolderChange}
-                  // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
-                  initialTitle={meta.folderTitle}
-                  inputId="dashboard-folder-input"
-                  enableCreateNew
-                  skipInitialLoad
-                />
+                <FolderPicker value={meta.folderUid} onChange={model.onFolderChange} />
               )}
             </Field>
 

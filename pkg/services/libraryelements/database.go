@@ -57,9 +57,6 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 		modelLibraryElement = make(map[string]any)
 	}
 
-	if model.LibraryElementKind(libraryElement.Kind) == model.VariableElement {
-		modelLibraryElement["name"] = libraryElement.Name
-	}
 	if modelLibraryElement["type"] != nil {
 		libraryElement.Type = modelLibraryElement["type"].(string)
 	} else {
@@ -171,20 +168,12 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		if l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
-			allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
-			if !allowed {
-				return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", folderUID)
-			}
-			if err != nil {
-				return err
-			}
-		} else {
-			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-			// nolint:staticcheck
-			if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
-				return err
-			}
+		allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)))
+		if !allowed {
+			return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", folderUID)
+		}
+		if err != nil {
+			return err
 		}
 		if _, err := session.Insert(&element); err != nil {
 			if l.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
@@ -236,13 +225,6 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 			return err
 		}
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-
-		if !l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
-			// nolint:staticcheck
-			if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
-				return err
-			}
-		}
 
 		dashboardIDs := []int64{}
 		// get all connections for this element
@@ -584,20 +566,6 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 		toFolderID = fromFolderID
 	}
 
-	if !l.features.IsEnabled(ctx, featuremgmt.FlagLibraryPanelRBAC) {
-		// FolderID was provided in the PATCH request
-		if toFolderID != -1 && toFolderID != fromFolderID {
-			if err := l.requireEditPermissionsOnFolder(ctx, user, toFolderID); err != nil {
-				return err
-			}
-		}
-
-		// Always check permissions for the folder where library element resides
-		if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
-			return err
-		}
-	}
-
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// nolint:staticcheck
 	elementToPatch.FolderID = toFolderID
@@ -715,72 +683,37 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 	return dto, err
 }
 
-// getConnections gets all connections for a Library Element.
-func (l *LibraryElementService) getConnections(c context.Context, signedInUser identity.Requester, uid string) ([]model.LibraryElementConnectionDTO, error) {
-	connections := make([]model.LibraryElementConnectionDTO, 0)
+// getConnectionIDs returns a map[string]int64 with the key as elementID:connectionUID and the value as connectionID
+func (l *LibraryElementService) getConnectionIDs(c context.Context, signedInUser identity.Requester, uid string) (map[string]int64, error) {
+	connections := map[string]int64{}
 	recursiveQueriesAreSupported, err := l.SQLStore.RecursiveQueriesAreSupported()
 	if err != nil {
 		return nil, err
 	}
 
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		element, err := l.GetLibraryElement(c, signedInUser, session, uid)
-		if err != nil {
-			return err
-		}
 		var libraryElementConnections []model.LibraryElementConnectionWithMeta
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
-		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
-		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
-		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
-		builder.Write(` WHERE lec.element_id=?`, element.ID)
+		builder.Write("SELECT lec.id, lec.element_id, lec.connection_id")
+		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec ")
+		builder.Write(" INNER JOIN " + model.LibraryElementTableName + " AS le ON le.id = element_id")
+		builder.Write(" WHERE le.org_id=? AND le.uid=?", signedInUser.GetOrgID(), uid)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
 			return err
 		}
-
-		// getting all folders a user can see
-		fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{OrgID: signedInUser.GetOrgID(), SignedInUser: signedInUser})
-		if err != nil {
-			return err
-		}
-		// Every signed in user can see the general folder. The general folder might have "general" or the empty string as its UID.
-		var folderUIDS = []string{"general", ""}
-		for _, f := range fs {
-			folderUIDS = append(folderUIDS, f.UID)
-		}
 		// if the user is not an admin, we need to filter out elements that are not in folders the user can see
 		for _, connection := range libraryElementConnections {
-			if !signedInUser.HasRole(org.RoleAdmin) {
-				if !contains(folderUIDS, element.FolderUID) {
-					continue
-				}
-			}
-			ds, err := l.dashboardsService.GetDashboardUIDByID(c, &dashboards.GetDashboardRefByIDQuery{ID: connection.ConnectionID})
-			if err != nil {
-				if errors.Is(err, dashboards.ErrDashboardNotFound) {
-					continue
-				}
-				return err
-			}
-			connections = append(connections, model.LibraryElementConnectionDTO{
-				ID:            connection.ID,
-				Kind:          connection.Kind,
-				ElementID:     connection.ElementID,
-				ConnectionID:  connection.ConnectionID,
-				ConnectionUID: ds.UID,
-				Created:       connection.Created,
-				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
-					Id:        connection.CreatedBy,
-					Name:      connection.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, connection.CreatedByEmail),
-				},
-			})
+			connections[getConnectionKey(connection.ElementID, connection.ConnectionID)] = connection.ID
 		}
 
 		return nil
 	})
 
 	return connections, err
+}
+
+func getConnectionKey(elementID int64, connectionID int64) string {
+	return fmt.Sprintf("%d:%d", elementID, connectionID)
 }
 
 // getElementsForDashboardID gets all elements for a specific dashboard

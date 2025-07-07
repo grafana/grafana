@@ -1,4 +1,4 @@
-import { Spec } from './v2alpha1/types.spec.gen';
+import { defaultDataQueryKind, Spec } from './v2alpha1/types.spec.gen';
 
 export const handyTestingSchema: Spec = {
   title: 'Default Dashboard',
@@ -37,14 +37,15 @@ export const handyTestingSchema: Spec = {
       spec: {
         builtIn: false,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'uid',
+          },
           spec: {
             expr: 'test-query',
           },
-        },
-        datasource: {
-          type: 'prometheus',
-          uid: 'uid',
         },
         filter: { ids: [1] },
         enable: true,
@@ -57,15 +58,16 @@ export const handyTestingSchema: Spec = {
       kind: 'AnnotationQuery',
       spec: {
         builtIn: false,
-        datasource: {
-          type: 'grafana-testdata-datasource',
-          uid: 'uid',
-        },
         enable: true,
         iconColor: 'red',
         name: 'Enabled',
         query: {
-          kind: 'grafana-testdata-datasource',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'grafana-testdata-datasource',
+          datasource: {
+            name: 'uid',
+          },
           spec: {
             lines: 4,
             refId: 'Anno',
@@ -79,15 +81,16 @@ export const handyTestingSchema: Spec = {
       kind: 'AnnotationQuery',
       spec: {
         builtIn: false,
-        datasource: {
-          type: 'grafana-testdata-datasource',
-          uid: 'uid',
-        },
         enable: false,
         iconColor: 'yellow',
         name: 'Disabled',
         query: {
-          kind: 'grafana-testdata-datasource',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'grafana-testdata-datasource',
+          datasource: {
+            name: 'uid',
+          },
           spec: { lines: 5, refId: 'Anno', scenarioId: 'annotations' },
         },
         hide: false,
@@ -97,16 +100,17 @@ export const handyTestingSchema: Spec = {
       kind: 'AnnotationQuery',
       spec: {
         builtIn: false,
-        datasource: {
-          type: 'grafana-testdata-datasource',
-          uid: 'uid',
-        },
         enable: true,
         hide: true,
         iconColor: 'dark-purple',
         name: 'Hidden',
         query: {
-          kind: 'grafana-testdata-datasource',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'grafana-testdata-datasource',
+          datasource: {
+            name: 'uid',
+          },
           spec: {
             lines: 6,
             refId: 'Anno',
@@ -128,12 +132,13 @@ export const handyTestingSchema: Spec = {
                 kind: 'PanelQuery',
                 spec: {
                   refId: 'A',
-                  datasource: {
-                    type: 'prometheus',
-                    uid: 'datasource1',
-                  },
                   query: {
-                    kind: 'prometheus',
+                    kind: 'DataQuery',
+                    version: defaultDataQueryKind().version,
+                    group: 'prometheus',
+                    datasource: {
+                      name: 'datasource1',
+                    },
                     spec: {
                       expr: 'test-query',
                     },
@@ -202,60 +207,6 @@ export const handyTestingSchema: Spec = {
         },
       },
     },
-    'panel-3': {
-      kind: 'Panel',
-      spec: {
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries: [
-              {
-                kind: 'PanelQuery',
-                spec: {
-                  refId: 'A',
-                  datasource: {
-                    type: 'prometheus',
-                    uid: 'datasource1',
-                  },
-                  query: {
-                    kind: 'prometheus',
-                    spec: {
-                      expr: 'test-query',
-                    },
-                  },
-                  hidden: false,
-                },
-              },
-            ],
-            queryOptions: {
-              timeFrom: '1h',
-              maxDataPoints: 100,
-              timeShift: '1h',
-              queryCachingTTL: 60,
-              interval: '1m',
-              cacheTimeout: '1m',
-              hideTimeOverride: false,
-            },
-            transformations: [],
-          },
-        },
-        description: 'Test Description',
-        links: [],
-        title: 'Test Panel 3',
-        id: 3,
-        vizConfig: {
-          kind: 'timeseries',
-          spec: {
-            fieldConfig: {
-              defaults: {},
-              overrides: [],
-            },
-            options: {},
-            pluginVersion: '7.0.0',
-          },
-        },
-      },
-    },
   },
   layout: {
     kind: 'GridLayout',
@@ -292,30 +243,6 @@ export const handyTestingSchema: Spec = {
             y: 2,
           },
         },
-        {
-          kind: 'GridLayoutRow',
-          spec: {
-            y: 20,
-            collapsed: false,
-            title: 'Row 1',
-            repeat: { value: 'customVar', mode: 'variable' },
-            elements: [
-              {
-                kind: 'GridLayoutItem',
-                spec: {
-                  element: {
-                    kind: 'ElementReference',
-                    name: 'panel-3',
-                  },
-                  height: 10,
-                  width: 10,
-                  x: 0,
-                  y: 0,
-                },
-              },
-            ],
-          },
-        },
       ],
     },
   },
@@ -343,10 +270,6 @@ export const handyTestingSchema: Spec = {
           text: 'text1',
           value: 'value1',
         },
-        datasource: {
-          type: 'prometheus',
-          uid: 'datasource1',
-        },
         definition: 'definition1',
         description: 'A query variable',
         hide: 'dontHide',
@@ -356,7 +279,12 @@ export const handyTestingSchema: Spec = {
         name: 'queryVar',
         options: [],
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'datasource1',
+          },
           spec: {
             expr: 'test-query',
             refId: 'A',

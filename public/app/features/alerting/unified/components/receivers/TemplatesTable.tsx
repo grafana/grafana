@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { logError } from '@grafana/runtime';
 import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -35,7 +35,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   const tableStyles = useStyles2(getAlertTableStyles);
 
   const [templateToDelete, setTemplateToDelete] = useState<NotificationTemplate | undefined>();
-  const { t } = useTranslate();
+
   const onDeleteTemplate = async () => {
     if (templateToDelete) {
       try {
@@ -102,8 +102,12 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
         <ConfirmModal
           isOpen={true}
           title={t('alerting.templates-table.title-delete-template-group', 'Delete template group')}
-          body={`Are you sure you want to delete template group "${templateToDelete.title}"?`}
-          confirmText="Yes, delete"
+          body={t(
+            'alerting.templates-table.body-delete-template-group',
+            'Are you sure you want to delete template group "{{template}}"?',
+            { template: templateToDelete.title }
+          )}
+          confirmText={t('alerting.templates-table.confirmText-yes-delete', 'Yes, delete')}
           onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}
         />
@@ -125,7 +129,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
 
   const [isExpanded, setIsExpanded] = useState(false);
   const { isProvisioned } = useNotificationTemplateMetadata(notificationTemplate);
-  const { t } = useTranslate();
+
   const { uid, title: name, content: template, missing } = notificationTemplate;
   const misconfiguredBadgeText = t('alerting.templates.misconfigured-badge-text', 'Misconfigured');
   return (

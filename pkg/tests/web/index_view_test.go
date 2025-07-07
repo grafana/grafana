@@ -149,7 +149,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			name:           "okta only and last",
 			authModule:     login.OktaAuthModule,
 			setID:          "uuid-1234-5678-9101",
-			wantIdentifier: "admin@grafana.com@http://localhost:3000/",
+			wantIdentifier: "test@grafana.com@http://localhost:3000/",
 		},
 		{
 			name:           "gcom last",
@@ -167,9 +167,9 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			addr, env := testinfra.StartGrafanaEnv(t, grafDir, cfgPath)
 			store := env.SQLStore
 			createdUser := testinfra.CreateUser(t, store, env.Cfg, user.CreateUserCommand{
-				Login:    "admin",
-				Password: "admin",
-				Email:    "admin@grafana.com",
+				Login:    "test",
+				Password: "test",
+				Email:    "test@grafana.com",
 				OrgID:    1,
 			})
 
@@ -195,7 +195,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 			}
 
 			// perform login
-			session := loginUser(t, addr, "admin", "admin")
+			session := loginUser(t, addr, "test", "test")
 
 			// nolint:bodyclose
 			response, html := makeRequest(t, addr, session)

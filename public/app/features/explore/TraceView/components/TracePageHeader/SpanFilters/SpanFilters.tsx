@@ -16,14 +16,14 @@ import { css } from '@emotion/css';
 import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { defaultFilters, SearchProps } from '../../../useSearch';
 import { getTraceServiceNames, getTraceSpanNames } from '../../../utils/tags';
 import SearchBarInput from '../../common/SearchBarInput';
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 import NextPrevResult from '../SearchBar/NextPrevResult';
 import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
 
@@ -71,8 +71,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   useEffect(() => {
     clear();
   }, [clear, trace]);
-
-  const { t } = useTranslate();
 
   const setShowSpanFilterMatchesOnly = useCallback(
     (showMatchesOnly: boolean) => {
@@ -213,10 +211,10 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
               />
               <div className={styles.intervalInput}>
                 <IntervalInput
-                  ariaLabel="Select min span duration"
+                  ariaLabel={t('explore.span-filters.ariaLabel-select-min-span-duration', 'Select min span duration')}
                   onChange={(val) => setSpanFiltersSearch({ ...search, from: val })}
                   isInvalidError="Invalid duration"
-                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   placeholder="e.g. 100ms, 1.2s"
                   width={18}
                   value={search.from || ''}
@@ -230,10 +228,10 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 value={search.toOperator}
               />
               <IntervalInput
-                ariaLabel="Select max span duration"
+                ariaLabel={t('explore.span-filters.ariaLabel-select-max-span-duration', 'Select max span duration')}
                 onChange={(val) => setSpanFiltersSearch({ ...search, to: val })}
                 isInvalidError="Invalid duration"
-                // eslint-disable-next-line @grafana/no-untranslated-strings
+                // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 placeholder="e.g. 100ms, 1.2s"
                 width={18}
                 value={search.to || ''}

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 
 interface Props {
@@ -11,19 +11,19 @@ interface Props {
 }
 
 export function ConfirmDeleteModal({ varName, isOpen = false, onConfirm, onDismiss }: Props) {
-  const { t } = useTranslate();
-
   return (
     <ConfirmModal
       title={t('variables.confirm-delete-modal.title-delete-variable', 'Delete variable')}
       isOpen={isOpen}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
-      body={`
-      Are you sure you want to delete variable "${varName}"?
-    `}
+      body={t(
+        'variables.confirm-delete-modal.body-delete-variable',
+        'Are you sure you want to delete variable "{{variableToDelete}}"?',
+        { variableToDelete: varName }
+      )}
       modalClass={styles.modal}
-      confirmText="Delete"
+      confirmText={t('variables.confirm-delete-modal.confirmText-delete', 'Delete')}
     />
   );
 }

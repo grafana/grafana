@@ -1,3 +1,4 @@
+import { FetchError } from '@grafana/runtime';
 import {
   createExploreLink,
   makeDashboardLink,
@@ -124,12 +125,12 @@ describe('create links', () => {
 
 describe('stringifyErrorLike', () => {
   it('should stringify error with cause', () => {
-    const error = new Error('Something went strong', { cause: new Error('database did not respond') });
-    expect(stringifyErrorLike(error)).toBe('Something went strong, cause: database did not respond');
+    const error = new Error('Something went wrong', { cause: new Error('database did not respond') });
+    expect(stringifyErrorLike(error)).toBe('Something went wrong, cause: database did not respond');
   });
 
   it('should stringify error with cause being a code', () => {
-    const error = new Error('Something went strong', { cause: ERROR_NEWER_CONFIGURATION });
+    const error = new Error('Something went wrong', { cause: ERROR_NEWER_CONFIGURATION });
     expect(stringifyErrorLike(error)).toBe(getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION));
   });
 
@@ -140,7 +141,7 @@ describe('stringifyErrorLike', () => {
 
   it('should stringify Fetch error with message embedded in HTTP response', () => {
     const error = { status: 404, data: { message: 'message from the API' } };
-    expect(stringifyErrorLike(error)).toBe('message from the API');
+    expect(stringifyErrorLike(error)).toBe('request failed with 404: message from the API');
   });
 
   it('should stringify Fetch error with status text as fallback', () => {
@@ -164,7 +165,7 @@ describe('stringifyErrorLike', () => {
       reason: 'Conflict',
     };
 
-    expect(stringifyErrorLike({ status: 409, data: error })).toBe('some message');
+    expect(stringifyErrorLike({ status: 409, data: error })).toBe('request failed with 409: some message');
   });
 
   it('should stringify ApiMachineryError with known code', () => {
@@ -179,5 +180,20 @@ describe('stringifyErrorLike', () => {
     };
 
     expect(stringifyErrorLike({ status: 409, data: error })).toBe(getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION));
+  });
+
+  it('should stringify fetchh error with status code and URL', () => {
+    const error = {
+      status: 404,
+      data: {
+        message: 'not found',
+      },
+      config: {
+        url: '/my/url',
+        method: 'POST',
+      },
+    } satisfies FetchError;
+
+    expect(stringifyErrorLike(error)).toBe('POST /my/url failed with 404: not found');
   });
 });

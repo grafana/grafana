@@ -33,8 +33,8 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 - [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/github/#configure-team-synchronization)
 - [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/gitlab/#configure-team-synchronization)
 - [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/#configure-team-synchronization)
-- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION/setup-grafana/configure-security/configure-authentication/enhanced-ldap/)
-- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/)
+- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/enhanced-ldap/)
+- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/okta/#configure-team-synchronization-enterprise-only)
 - [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/)
 
 ## Synchronize a Grafana team with an external group

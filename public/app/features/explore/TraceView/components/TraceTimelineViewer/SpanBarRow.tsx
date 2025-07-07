@@ -21,7 +21,10 @@ import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanBarOptions, SpanLinkFunc, TraceSpan, TNil, CriticalPathSection } from '../types';
+import { SpanBarOptions } from '../settings/SpanBarSettings';
+import TNil from '../types/TNil';
+import { SpanLinkFunc } from '../types/links';
+import { TraceSpan, CriticalPathSection } from '../types/trace';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
@@ -39,7 +42,6 @@ const nameColumnClassName = 'nameColumn';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean) => {
   const animations = {
-    label: 'flash',
     flash: keyframes`
     from {
       background-color: ${autoColor(theme, '#68b9ff')};

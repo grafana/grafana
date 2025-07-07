@@ -55,9 +55,9 @@ To switch between the editor modes, select the corresponding **Builder** and **C
 
 To run a query, select **Run queries** located at the top of the editor.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To run Loki queries in [Explore](ref:explore), select **Run query**.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Each mode is synchronized, so you can switch between them without losing your work, although there are some limitations. Builder mode doesn't support some complex queries.
 When you switch from Code mode to Builder mode with such a query, the editor displays a warning message that explains how you might lose parts of the query if you continue.

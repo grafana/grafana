@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
@@ -78,7 +78,7 @@ export function QueryVariableEditorForm({
 
     return { datasource, VariableQueryEditor };
   }, [datasourceRef]);
-  const { t } = useTranslate();
+
   const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
   return (
@@ -106,7 +106,7 @@ export function QueryVariableEditorForm({
 
       <VariableTextAreaField
         defaultValue={regex ?? ''}
-        name="Regex"
+        name={t('dashboard-scene.query-variable-editor-form.name-regex', 'Regex')}
         description={
           <div>
             <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
@@ -125,7 +125,7 @@ export function QueryVariableEditorForm({
             </Trans>
           </div>
         }
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
         onBlur={onRegExChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}

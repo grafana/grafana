@@ -3,7 +3,7 @@ import { ChangeEvent, FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
@@ -39,7 +39,7 @@ export function IntervalVariableForm({
     value: count,
   }));
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
+
   const stepCount = STEP_OPTIONS.find((option) => option.value === autoStepCount) ?? STEP_OPTIONS[0];
 
   return (
@@ -51,8 +51,8 @@ export function IntervalVariableForm({
       )}
       <VariableTextField
         defaultValue={intervals}
-        name="Values"
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        name={t('dashboard-scene.interval-variable-form.name-values', 'Values')}
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="1m,10m,1h,6h,1d,7d"
         onBlur={onIntervalsChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.intervalsValueInput}
@@ -62,9 +62,9 @@ export function IntervalVariableForm({
 
       <VariableCheckboxField
         value={autoEnabled}
-        name="Auto option"
+        name={t('dashboard-scene.interval-variable-form.name-auto-option', 'Auto option')}
         description={t(
-          'dashbaord-scene.interval-variable-form.description-auto-option',
+          'dashboard-scene.interval-variable-form.description-auto-option',
           'Dynamically calculates interval by dividing time range by the count specified'
         )}
         onChange={onAutoEnabledChange}
@@ -73,7 +73,7 @@ export function IntervalVariableForm({
       {autoEnabled && (
         <div className={styles.autoFields}>
           <VariableSelectField
-            name="Step count"
+            name={t('dashboard-scene.interval-variable-form.name-step-count', 'Step count')}
             description={t(
               'dashboard-scene.interval-variable-form.description-step-count',
               'How many times the current time range should be divided to calculate the value'
@@ -86,12 +86,12 @@ export function IntervalVariableForm({
           />
           <VariableTextField
             value={autoMinInterval}
-            name="Min interval"
+            name={t('dashboard-scene.interval-variable-form.name-min-interval', 'Min interval')}
             description={t(
               'dashboard-scene.interval-variable-form.description-calculated-value-below-threshold',
               'The calculated value will not go below this threshold'
             )}
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="10s"
             onChange={onAutoMinIntervalChanged}
             width={11}

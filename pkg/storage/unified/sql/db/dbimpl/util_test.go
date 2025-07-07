@@ -28,11 +28,13 @@ func TestSectionGetter(t *testing.T) {
 	t.Parallel()
 
 	var (
-		key          = "the key"
-		keyBoolTrue  = "I'm true"
-		keyBoolFalse = "not me!"
-		prefix       = "this is some prefix"
-		val          = string(invalidUTF8ByteSequence)
+		key           = "the key"
+		keyBoolTrue   = "I'm true"
+		keyBoolFalse  = "not me!"
+		keyIntValid   = "valid_int"
+		keyIntMissing = "missing_int"
+		prefix        = "this is some prefix"
+		val           = string(invalidUTF8ByteSequence)
 	)
 
 	t.Run("with prefix", func(t *testing.T) {
@@ -42,6 +44,8 @@ func TestSectionGetter(t *testing.T) {
 			prefix + key:          val,
 			prefix + keyBoolTrue:  "YES",
 			prefix + keyBoolFalse: "0",
+			prefix + keyIntValid:  "42",
+			// Note: keyIntMissing is intentionally not included to test default behavior
 		}, prefix)
 
 		require.False(t, g.Bool("whatever bool"))
@@ -51,6 +55,15 @@ func TestSectionGetter(t *testing.T) {
 		require.NoError(t, g.Err())
 
 		require.True(t, g.Bool(keyBoolTrue))
+		require.NoError(t, g.Err())
+
+		require.Equal(t, 999, g.Int("whatever int", 999))
+		require.NoError(t, g.Err())
+
+		require.Equal(t, 42, g.Int(keyIntValid, 100))
+		require.NoError(t, g.Err())
+
+		require.Equal(t, 200, g.Int(keyIntMissing, 200))
 		require.NoError(t, g.Err())
 
 		require.Empty(t, g.String("whatever string"))
@@ -68,6 +81,8 @@ func TestSectionGetter(t *testing.T) {
 			key:          val,
 			keyBoolTrue:  "true",
 			keyBoolFalse: "f",
+			keyIntValid:  "123",
+			// Note: keyIntMissing is intentionally not included to test default behavior
 		}, "")
 
 		require.False(t, g.Bool("whatever bool"))
@@ -77,6 +92,15 @@ func TestSectionGetter(t *testing.T) {
 		require.NoError(t, g.Err())
 
 		require.True(t, g.Bool(keyBoolTrue))
+		require.NoError(t, g.Err())
+
+		require.Equal(t, 500, g.Int("whatever int", 500))
+		require.NoError(t, g.Err())
+
+		require.Equal(t, 123, g.Int(keyIntValid, 0))
+		require.NoError(t, g.Err())
+
+		require.Equal(t, 300, g.Int(keyIntMissing, 300))
 		require.NoError(t, g.Err())
 
 		require.Empty(t, g.String("whatever string"))

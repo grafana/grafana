@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 
@@ -16,7 +16,6 @@ interface MetricNameProps extends AzureQueryEditorFieldProps {
 }
 
 const MetricNameField = ({ metricNames, query, variableOptionGroup, onQueryChange }: MetricNameProps) => {
-  const { t } = useTranslate();
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {

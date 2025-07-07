@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { CoreApp, getDefaultTimeRange, SelectableValue, TimeRange } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, ComboboxOption, Label, useStyles2 } from '@grafana/ui';
 
@@ -15,7 +15,8 @@ import {
   BuilderQueryEditorWhereExpressionItems,
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { FilterItem } from './FilterItem';
 import { BuildAndUpdateOptions } from './utils';
@@ -43,7 +44,6 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   datasource,
   timeRange,
 }) => {
-  const { t } = useTranslate();
   const styles = useStyles2(() => ({ filters: css({ marginBottom: '8px' }) }));
   const builderQuery = query.azureLogAnalytics?.builderQuery;
 

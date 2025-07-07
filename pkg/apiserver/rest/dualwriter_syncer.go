@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -40,8 +39,6 @@ type SyncerConfig struct {
 
 	DataSyncerInterval     time.Duration
 	DataSyncerRecordsLimit int
-
-	Reg prometheus.Registerer
 }
 
 func (s *SyncerConfig) Validate() error {
@@ -69,15 +66,12 @@ func (s *SyncerConfig) Validate() error {
 	if s.DataSyncerRecordsLimit == 0 {
 		s.DataSyncerRecordsLimit = 1000
 	}
-	if s.Reg == nil {
-		s.Reg = prometheus.DefaultRegisterer
-	}
 	return nil
 }
 
 // StartPeriodicDataSyncer starts a background job that will execute the DataSyncer, syncing the data
 // from the hosted grafana backend into the unified storage backend. This is run in the grafana instance.
-func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
+func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig, metrics *DualWriterMetrics) error {
 	if err := cfg.Validate(); err != nil {
 		return fmt.Errorf("invalid syncer config: %w", err)
 	}
@@ -95,14 +89,14 @@ func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
 		time.Sleep(time.Second * time.Duration(jitterSeconds))
 
 		// run it immediately
-		syncOK, err := runDataSyncer(ctx, cfg)
+		syncOK, err := runDataSyncer(ctx, cfg, metrics)
 		log.Info("data syncer finished", "syncOK", syncOK, "error", err)
 
 		ticker := time.NewTicker(cfg.DataSyncerInterval)
 		for {
 			select {
 			case <-ticker.C:
-				syncOK, err = runDataSyncer(ctx, cfg)
+				syncOK, err = runDataSyncer(ctx, cfg, metrics)
 				log.Info("data syncer finished", "syncOK", syncOK, ", error", err)
 			case <-ctx.Done():
 				return
@@ -114,7 +108,7 @@ func StartPeriodicDataSyncer(ctx context.Context, cfg *SyncerConfig) error {
 
 // runDataSyncer will ensure that data between legacy storage and unified storage are in sync.
 // The sync implementation depends on the DualWriter mode
-func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
+func runDataSyncer(ctx context.Context, cfg *SyncerConfig, metrics *DualWriterMetrics) (bool, error) {
 	if err := cfg.Validate(); err != nil {
 		return false, fmt.Errorf("invalid syncer config: %w", err)
 	}
@@ -126,19 +120,17 @@ func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
 	// implementation depends on the current DualWriter mode
 	switch cfg.Mode {
 	case Mode1, Mode2:
-		return legacyToUnifiedStorageDataSyncer(ctx, cfg)
+		return legacyToUnifiedStorageDataSyncer(ctx, cfg, metrics)
 	default:
 		klog.Info("data syncer not implemented for mode:", cfg.Mode)
 		return false, nil
 	}
 }
 
-func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
+func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig, metrics *DualWriterMetrics) (bool, error) {
 	if err := cfg.Validate(); err != nil {
 		return false, fmt.Errorf("invalid syncer config: %w", err)
 	}
-	metrics := &dualWriterMetrics{}
-	metrics.init(cfg.Reg)
 
 	log := klog.NewKlogr().WithName("legacyToUnifiedStorageDataSyncer").WithValues("mode", cfg.Mode, "resource", cfg.Kind)
 

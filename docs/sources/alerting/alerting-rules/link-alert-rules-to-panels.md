@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Create and link alert rules to panels
-weight: 300
+weight: 200
 refs:
   time-series-visualizations:
     - pattern: /docs/grafana/
@@ -81,9 +81,9 @@ You can then [view the alert state on the panel](ref:view-alert-state-on-panels)
 
 By default, notification messages include a link to the dashboard panel. Additionally, you can [enable displaying panel screenshots in notifications](ref:images-in-notifications).
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Changes to panel and alert rule queries aren't synchronized. If you change a query, you have to update it in both the panel and the alert rule.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Access linked alert rules from panels
 
@@ -94,5 +94,5 @@ This option is available only in [time series panels](ref:time-series-visualizat
 1. Click the **Alert** tab to view existing alert rules or create a new one.
 
 {{< admonition type="tip" >}}
-For a practical example that links a panel to an alert rule, refer to [Part 5 of our Get Started with Grafana Alerting tutorial](http://www.grafana.com/tutorials/alerting-get-started-pt5/).
-{{% /admonition %}}
+For a practical example, refer to our [Getting started: Link alerts to visualizations tutorial](http://www.grafana.com/tutorials/alerting-get-started-pt6/).
+{{< /admonition >}}

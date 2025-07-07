@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Avatar,
@@ -68,7 +68,7 @@ export const OrgUsersTable = ({
 }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const { t } = useTranslate();
+
   useEffect(() => {
     async function fetchOptions() {
       try {
@@ -250,7 +250,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [rolesLoading, orgId, roleOptions, onUserRolesChange, onRoleChange, t]
+    [rolesLoading, orgId, roleOptions, onUserRolesChange, onRoleChange]
   );
 
   return (
@@ -261,8 +261,10 @@ export const OrgUsersTable = ({
       </Stack>
       {Boolean(userToRemove) && (
         <ConfirmModal
-          body={`Are you sure you want to delete user ${userToRemove?.login}?`}
-          confirmText="Delete"
+          body={t('admin.org-users-table.body-delete', 'Are you sure you want to delete user {{user}}?', {
+            user: userToRemove?.login,
+          })}
+          confirmText={t('admin.org-users-table.confirmText-delete', 'Delete')}
           title={t('admin.org-users-table.title-delete', 'Delete')}
           onDismiss={() => {
             setUserToRemove(null);

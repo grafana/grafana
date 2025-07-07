@@ -14,6 +14,7 @@ const esModules = [
   'robust-predicates',
   'leven',
   'nanoid',
+  'marked',
   'monaco-promql',
   '@kusto/monaco-kusto',
   'monaco-editor',
@@ -21,6 +22,9 @@ const esModules = [
   'lodash-es',
   'vscode-languageserver-types',
   '@bsull/augurs',
+  'react-data-grid',
+  '@grafana/llm',
+  'pkce-challenge',
 ].join('|');
 
 module.exports = {
@@ -35,7 +39,7 @@ module.exports = {
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'cjs'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
   testTimeout: 30000,
   resolver: `<rootDir>/public/test/jest-resolver.js`,

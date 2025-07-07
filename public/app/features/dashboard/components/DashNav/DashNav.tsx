@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import {
   ButtonGroup,
@@ -93,7 +93,7 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const notifyApp = useAppNotification();
-  const { t } = useTranslate();
+
   const onOpenSnapshotOriginal = () => {
     try {
       const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
@@ -103,7 +103,10 @@ export const DashNav = memo<Props>((props) => {
           new ShowModalReactEvent({
             component: ConfirmModal,
             props: {
-              title: 'Proceed to external site?',
+              title: t(
+                'dashboard.dash-nav.on-open-snapshot-original.title.proceed-to-external-site',
+                'Proceed to external site?'
+              ),
               modalClass: modalStyles,
               body: (
                 <>
@@ -114,7 +117,7 @@ export const DashNav = memo<Props>((props) => {
                 </>
               ),
               confirmVariant: 'primary',
-              confirmText: 'Proceed',
+              confirmText: t('dashboard.dash-nav.on-open-snapshot-original.confirmText.proceed', 'Proceed'),
               onConfirm: gotoSnapshotOrigin,
             },
           })

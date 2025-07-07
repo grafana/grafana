@@ -1,16 +1,11 @@
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button } from '@grafana/ui';
 
 import { LINK_ICON_MAP, NEW_LINK } from './utils';
-
-const linkTypeOptions = [
-  { value: 'dashboards', label: 'Dashboards' },
-  { value: 'link', label: 'Link' },
-];
 
 const linkIconOptions = Object.keys(LINK_ICON_MAP).map((key) => ({ label: key, value: key }));
 
@@ -21,8 +16,13 @@ interface DashboardLinkFormProps {
 }
 
 export function DashboardLinkForm({ link, onUpdate, onGoBack }: DashboardLinkFormProps) {
-  const { t } = useTranslate();
-
+  const linkTypeOptions = [
+    {
+      value: 'dashboards',
+      label: t('dashboard-scene.dashboard-link-form.link-type-options.label.dashboards', 'Dashboards'),
+    },
+    { value: 'link', label: t('dashboard-scene.dashboard-link-form.link-type-options.label.link', 'Link') },
+  ];
   const onTagsChange = (tags: string[]) => {
     onUpdate({ ...link, tags: tags });
   };

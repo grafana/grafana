@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import { PureComponent, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, UserDTO } from 'app/types';
@@ -28,7 +27,7 @@ export function UserProfile({
 }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
-  const { t } = useTranslate();
+
   const deleteUserRef = useRef<HTMLButtonElement | null>(null);
   const showDeleteUserModal = (show: boolean) => () => {
     setShowDeleteModal(show);
@@ -143,8 +142,8 @@ export function UserProfile({
               <ConfirmModal
                 isOpen={showDeleteModal}
                 title={t('admin.user-profile.title-delete-user', 'Delete user')}
-                body="Are you sure you want to delete this user?"
-                confirmText="Delete user"
+                body={t('admin.user-profile.body-delete', 'Are you sure you want to delete this user?')}
+                confirmText={t('admin.user-profile.confirmText-delete-user', 'Delete user')}
                 onConfirm={handleUserDelete}
                 onDismiss={showDeleteUserModal(false)}
               />
@@ -163,8 +162,8 @@ export function UserProfile({
               <ConfirmModal
                 isOpen={showDisableModal}
                 title={t('admin.user-profile.title-disable-user', 'Disable user')}
-                body="Are you sure you want to disable this user?"
-                confirmText="Disable user"
+                body={t('admin.user-profile.body-disable', 'Are you sure you want to disable this user?')}
+                confirmText={t('admin.user-profile.confirmText-disable-user', 'Disable user')}
                 onConfirm={handleUserDisable}
                 onDismiss={showDisableUserModal(false)}
               />
@@ -291,7 +290,7 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
         </td>
         <td>
           <ConfirmButton
-            confirmText="Save"
+            confirmText={t('admin.user-profile-row.confirmText-save', 'Save')}
             onClick={this.onEditClick}
             onConfirm={this.onSave}
             onCancel={this.onCancelClick}

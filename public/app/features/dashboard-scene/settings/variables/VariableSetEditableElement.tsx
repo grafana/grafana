@@ -4,14 +4,13 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
+import { Trans, t } from '@grafana/i18n';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -29,8 +28,11 @@ export class VariableSetEditableElement implements EditableDashboardElement {
       typeName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
       icon: 'x',
       instanceName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren() {
+    return this.set.state.variables;
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -65,8 +67,12 @@ function VariableList({ set }: { set: SceneVariableSet }) {
     const { variables } = set.state;
     const nextName = getNextAvailableId(type, variables);
     const newVar = getVariableScene(type, { name: nextName });
-    set.setState({ variables: [...variables, newVar] });
-    set.publishEvent(new NewObjectAddedToCanvasEvent(newVar), true);
+
+    dashboardEditActions.addVariable({
+      source: set,
+      addedObject: newVar,
+    });
+
     setIsAdding(false);
   };
 
@@ -80,7 +86,6 @@ function VariableList({ set }: { set: SceneVariableSet }) {
         // TODO fix keyboard a11y here
         // eslint-disable-next-line jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events
         <div className={styles.variableItem} key={variable.state.name} onClick={() => onEditVariable(variable)}>
-          {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
           <Text>${variable.state.name}</Text>
           <Stack direction="row" gap={1} alignItems="center">
             <Button variant="primary" size="sm" fill="outline">
@@ -114,7 +119,6 @@ interface VariableTypeSelectionProps {
 function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
   const options = getVariableTypeSelectOptions();
   const styles = useStyles2(getStyles);
-  const { t } = useTranslate();
 
   return (
     <Stack direction={'column'} gap={0}>

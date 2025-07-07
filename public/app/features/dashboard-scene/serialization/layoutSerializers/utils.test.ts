@@ -1,4 +1,7 @@
-import { PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import {
+  defaultDataQueryKind,
+  PanelQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getRuntimePanelDataSource } from './utils';
 
@@ -9,12 +12,12 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     bootData: {
       settings: {
-        defaultDatasource: 'default-ds-grafana',
+        defaultDatasource: 'default-ds-prometheus',
         datasources: {
-          'default-ds-grafana': {
-            uid: 'default-ds-uid',
-            name: 'Default DS',
-            meta: { id: 'default-ds-grafana' },
+          'default-ds-prometheus': {
+            uid: 'default-prometheus-uid',
+            name: 'Default Prometheus',
+            meta: { id: 'prometheus' },
             type: 'datasource',
           },
           prometheus: {
@@ -27,6 +30,12 @@ jest.mock('@grafana/runtime', () => ({
             uid: 'loki-uid',
             name: 'Loki',
             meta: { id: 'loki' },
+            type: 'datasource',
+          },
+          '-- Grafana --': {
+            uid: 'grafana',
+            name: 'Grafana',
+            meta: { id: 'grafana' },
             type: 'datasource',
           },
         },
@@ -42,40 +51,19 @@ describe('getRuntimePanelDataSource', () => {
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: {
-          uid: 'test-ds-uid',
-          type: 'test-ds-type',
-        },
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'prometheus-uid',
+          },
           spec: {},
         },
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
-
-    expect(result).toEqual({
-      uid: 'test-ds-uid',
-      type: 'test-ds-type',
-    });
-  });
-
-  it('should infer datasource based on query kind when datasource is not specified', () => {
-    const query: PanelQueryKind = {
-      kind: 'PanelQuery',
-      spec: {
-        refId: 'A',
-        hidden: false,
-        datasource: undefined,
-        query: {
-          kind: 'prometheus',
-          spec: {},
-        },
-      },
-    };
-
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
       uid: 'prometheus-uid',
@@ -83,26 +71,78 @@ describe('getRuntimePanelDataSource', () => {
     });
   });
 
-  it('should use default datasource when no datasource is specified and query kind does not match any available datasource', () => {
+  it('should prioritize default datasource when it matches the query kind', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: undefined,
         query: {
-          kind: 'unknown-type',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
           spec: {},
         },
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
-      uid: 'default-ds-uid',
-      type: 'default-ds-grafana',
+      uid: 'default-prometheus-uid',
+      type: 'prometheus',
     });
+  });
+
+  it('should fall back to first available datasource when default datasource type does not match query kind', () => {
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'loki',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      uid: 'loki-uid',
+      type: 'loki',
+    });
+  });
+
+  it('should use default datasource when no datasource is specified and query kind does not match any available datasource', () => {
+    jest.spyOn(console, 'warn').mockImplementation();
+    const query: PanelQueryKind = {
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'unknown-type',
+          spec: {},
+        },
+      },
+    };
+
+    const result = getRuntimePanelDataSource(query.spec.query);
+
+    expect(result).toEqual({
+      uid: 'default-prometheus-uid',
+      type: 'prometheus',
+    });
+
+    expect(console.warn).toHaveBeenCalledWith(
+      'Could not find datasource for query kind unknown-type, defaulting to prometheus'
+    );
   });
 
   it('should handle the case when datasource uid is empty string', () => {
@@ -111,21 +151,22 @@ describe('getRuntimePanelDataSource', () => {
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: {
-          uid: '',
-          type: 'test-ds-type',
-        },
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: '',
+          },
           spec: {},
         },
       },
     };
 
-    const result = getRuntimePanelDataSource(query);
+    const result = getRuntimePanelDataSource(query.spec.query);
 
     expect(result).toEqual({
-      uid: 'prometheus-uid',
+      uid: 'default-prometheus-uid',
       type: 'prometheus',
     });
   });

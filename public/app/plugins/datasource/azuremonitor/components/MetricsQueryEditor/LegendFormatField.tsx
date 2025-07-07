@@ -1,17 +1,16 @@
 import { useCallback, useState } from 'react';
 import * as React from 'react';
 
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Input } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+import { AzureQueryEditorFieldProps } from '../../types/types';
 import { Field } from '../shared/Field';
 
 import { setLegendAlias } from './setQueryValue';
 
 const LegendFormatField = ({ onQueryChange, query }: AzureQueryEditorFieldProps) => {
   const [value, setValue] = useState<string>(query.azureMonitor?.alias ?? '');
-  const { t } = useTranslate();
 
   // As calling onQueryChange initiates a the datasource refresh, we only want to call it once
   // the field loses focus

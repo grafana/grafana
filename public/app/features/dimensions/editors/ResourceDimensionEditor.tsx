@@ -2,21 +2,15 @@ import { useCallback } from 'react';
 import * as React from 'react';
 
 import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
-import { useTranslate } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
-import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../types';
+import { getPublicOrAbsoluteUrl } from '../resource';
+import { MediaType, ResourceDimensionOptions, ResourceFolderName, ResourcePickerSize } from '../types';
 
 import { ResourcePicker } from './ResourcePicker';
-
-const resourceOptions = [
-  { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
-  { label: 'Field', value: ResourceDimensionMode.Field, description: 'Use a string field result' },
-  //  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
-];
 
 const dummyFieldSettings = {
   settings: {},
@@ -27,6 +21,19 @@ export const ResourceDimensionEditor = (
 ) => {
   const { value, context, onChange, item } = props;
   const labelWidth = 9;
+  const resourceOptions = [
+    {
+      label: t('dimensions.resource-dimension-editor.label-fixed', 'Fixed'),
+      value: ResourceDimensionMode.Fixed,
+      description: t('dimensions.resource-dimension-editor.description-fixed', 'Fixed value'),
+    },
+    {
+      label: t('dimensions.resource-dimension-editor.label-field', 'Field'),
+      value: ResourceDimensionMode.Field,
+      description: t('dimensions.resource-dimension-editor.description-field', 'Use a string field result'),
+    },
+    //  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
+  ];
 
   const onModeChange = useCallback(
     (mode: ResourceDimensionMode) => {
@@ -57,7 +64,6 @@ export const ResourceDimensionEditor = (
     },
     [onChange, value]
   );
-  const { t } = useTranslate();
 
   const onClear = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -128,7 +134,7 @@ export const ResourceDimensionEditor = (
             labelWidth={labelWidth}
             grow={true}
           >
-            {/* eslint-disable-next-line @grafana/no-untranslated-strings*/}
+            {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings*/}
             <div>TODO mappings editor!</div>
           </InlineField>
         </InlineFieldRow>

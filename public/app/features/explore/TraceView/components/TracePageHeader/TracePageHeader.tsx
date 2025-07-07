@@ -18,7 +18,7 @@ import { memo, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
 import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -27,7 +27,7 @@ import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
-import { Trace } from '../types';
+import { Trace } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
@@ -75,8 +75,6 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     }
     return getTraceLinks(trace);
   }, [trace]);
-
-  const { t } = useTranslate();
 
   if (!trace) {
     return null;
@@ -157,7 +155,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           )}
           {method && method.length > 0 && (
             <Tooltip
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               content="http.method"
               interactive={true}
             >
@@ -168,7 +166,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           )}
           {status && status.length > 0 && (
             <Tooltip
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               content="http.status_code"
               interactive={true}
             >

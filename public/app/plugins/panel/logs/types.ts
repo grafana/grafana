@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 
 import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
+import { LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 
 export type { Options } from './panelcfg.gen';
@@ -65,4 +66,8 @@ export function isReactNodeArray(node: unknown): node is ReactNode[] {
 export function isCoreApp(app: unknown): app is CoreApp {
   const apps = Object.values(CoreApp).map((coreApp) => coreApp.toString());
   return typeof app === 'string' && apps.includes(app);
+}
+
+export function isLogLineMenuCustomItems(items: unknown): items is LogLineMenuCustomItem[] {
+  return Array.isArray(items) && items.every((item) => 'divider' in item || ('onClick' in item && 'label' in item));
 }

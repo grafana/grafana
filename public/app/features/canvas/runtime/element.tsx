@@ -11,11 +11,11 @@ import {
   OneClickMode,
   ActionModel,
 } from '@grafana/data';
-import { t } from '@grafana/i18n/internal';
+import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { DimensionContext } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions/context';
 import {
   BackgroundImageSize,
   Constraint,
@@ -752,7 +752,7 @@ export class ElementState implements LayerElement {
           <ConfirmModal
             isOpen={true}
             title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
-            body={action.confirmation}
+            body={action.confirmation(/** TODO: implement actionVars */)}
             confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
             confirmButtonVariant="primary"
             onConfirm={() => {

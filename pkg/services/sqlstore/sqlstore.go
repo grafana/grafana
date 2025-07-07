@@ -47,7 +47,6 @@ type SQLStore struct {
 	engine                       *xorm.Engine
 	log                          log.Logger
 	dialect                      migrator.Dialect
-	skipEnsureDefaultOrgAndUser  bool
 	migrations                   registry.DatabaseMigrator
 	tracer                       tracing.Tracer
 	recursiveQueriesAreSupported *bool
@@ -62,7 +61,7 @@ func ProvideService(cfg *setting.Cfg,
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-	s, err := newStore(cfg, nil, features, migrations, bus, tracer, false)
+	s, err := newStore(cfg, nil, features, migrations, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +78,8 @@ func ProvideService(cfg *setting.Cfg,
 	return s, nil
 }
 
-func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(t, cfg, features, migrations, bus, InitTestDBOpt{})
 }
 
 // NewSQLStoreWithoutSideEffects creates a new *SQLStore without side-effects such as
@@ -88,20 +87,20 @@ func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featur
 func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
-	return newStore(cfg, nil, features, nil, bus, tracer, true)
+	cfgDBSection := cfg.Raw.Section("database")
+	cfgDBSection.Key("ensure_default_org_and_user").SetValue("false")
+	return newStore(cfg, nil, features, nil, bus, tracer)
 }
 
 func newStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
-	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer,
-	skipEnsureDefaultOrgAndUser bool) (*SQLStore, error) {
+	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	ss := &SQLStore{
-		cfg:                         cfg,
-		log:                         log.New("sqlstore"),
-		skipEnsureDefaultOrgAndUser: skipEnsureDefaultOrgAndUser,
-		migrations:                  migrations,
-		bus:                         bus,
-		tracer:                      tracer,
-		features:                    features,
+		cfg:        cfg,
+		log:        log.New("sqlstore"),
+		migrations: migrations,
+		bus:        bus,
+		tracer:     tracer,
+		features:   features,
 	}
 
 	if err := ss.initEngine(engine); err != nil {
@@ -148,11 +147,10 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 // Reset resets database state.
 // If default org and user creation is enabled, it will be ensured they exist in the database.
 func (ss *SQLStore) Reset() error {
-	if ss.skipEnsureDefaultOrgAndUser {
-		return nil
+	if ss.dbCfg.EnsureDefaultOrgAndUser {
+		return ss.ensureMainOrgAndAdminUser(false)
 	}
-
-	return ss.ensureMainOrgAndAdminUser(false)
+	return nil
 }
 
 // Quote quotes the value in the used SQL dialect
@@ -373,11 +371,6 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 		return *ss.recursiveQueriesAreSupported, nil
 	}
 	recursiveQueriesAreSupported := func() (bool, error) {
-		if ss.GetDBType() == migrator.Spanner {
-			// no need to try...
-			return false, nil
-		}
-
 		var result []int
 		if err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 			recQry := `WITH RECURSIVE cte (n) AS
@@ -414,14 +407,11 @@ var testSQLStoreSetup = false
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
 var testSQLStoreCleanup []func()
-var testSQLStoreSkipTestsOnBackend string // When not empty and matches DB type, test is skipped.
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
-	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
-	EnsureDefaultOrgAndUser bool
-	FeatureFlags            []string
-	Cfg                     *setting.Cfg
+	FeatureFlags []string
+	Cfg          *setting.Cfg
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
@@ -429,7 +419,7 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
-	store, err := initTestDB(t, cfg, features, migration, opts...)
+	store, err := initTestDB(t, cfg, features, migration, bus.ProvideBus(tracing.InitializeTracerForTest()), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -442,7 +432,8 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.C
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
 
-	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(t, cfg, features, migrations.ProvideOSSMigrations(features),
+		bus.ProvideBus(tracing.InitializeTracerForTest()), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -457,12 +448,6 @@ func SetupTestDB() {
 		os.Exit(1)
 	}
 	testSQLStoreSetup = true
-}
-
-func SkipTestsOnSpanner() {
-	testSQLStoreMutex.Lock()
-	defer testSQLStoreMutex.Unlock()
-	testSQLStoreSkipTestsOnBackend = "spanner"
 }
 
 func CleanupTestDB() {
@@ -514,6 +499,7 @@ func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	migration registry.DatabaseMigrator,
+	bus bus.Bus,
 	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
@@ -543,69 +529,33 @@ func TestMain(m *testing.M) {
 	}
 
 	if len(opts) == 0 {
-		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
+		cfgDBSec := testCfg.Raw.Section("database")
+		cfgDBSec.Key("ensure_default_org_and_user").SetValue("false")
 	}
 
 	if testSQLStore == nil {
 		dbType := sqlutil.GetTestDBType()
 
-		if testSQLStoreSkipTestsOnBackend != "" && testSQLStoreSkipTestsOnBackend == dbType {
-			t.Skipf("test skipped when using DB type %s", testSQLStoreSkipTestsOnBackend)
-		}
-
-		// set test db config
-		cfg := setting.NewCfg()
-		// nolint:staticcheck
-		cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
-
-		sec, err := cfg.Raw.NewSection("database")
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err := sec.NewKey("type", dbType); err != nil {
-			return nil, err
-		}
+		cfgDBSec := testCfg.Raw.Section("database")
+		cfgDBSec.Key("type").SetValue(dbType)
 
 		testDB, err := sqlutil.GetTestDB(dbType)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, err := sec.NewKey("connection_string", testDB.ConnStr); err != nil {
-			return nil, err
-		}
-		if _, err := sec.NewKey("path", testDB.Path); err != nil {
-			return nil, err
-		}
+		cfgDBSec.Key("connection_string").SetValue(testDB.ConnStr)
+		cfgDBSec.Key("path").SetValue(testDB.Path)
 
 		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
 
 		// useful if you already have a database that you want to use for tests.
 		// cannot just set it on testSQLStore as it overrides the config in Init
 		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
-			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
-				return nil, err
-			}
+			cfgDBSec.Key("skip_migrations").SetValue("true")
 		}
-
-		if testCfg.Raw.HasSection("database") {
-			testSec, err := testCfg.Raw.GetSection("database")
-			if err == nil {
-				// copy from testCfg to the Cfg keys that do not exist
-				for _, k := range testSec.Keys() {
-					if sec.HasKey(k.Name()) {
-						continue
-					}
-					if _, err := sec.NewKey(k.Name(), k.Value()); err != nil {
-						return nil, err
-					}
-				}
-			}
-		}
-
 		// need to get engine to clean db before we init
-		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
+		engine, err := xorm.NewEngine(dbType, testDB.ConnStr)
 		if err != nil {
 			return nil, err
 		}
@@ -613,17 +563,8 @@ func TestMain(m *testing.M) {
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
-		skipEnsureDefaultOrgAndUser := false
-		for _, opt := range opts {
-			if !opt.EnsureDefaultOrgAndUser {
-				skipEnsureDefaultOrgAndUser = true
-				break
-			}
-		}
-
 		tracer := tracing.InitializeTracerForTest()
-		bus := bus.ProvideBus(tracer)
-		testSQLStore, err = newStore(cfg, engine, features, migration, bus, tracer, skipEnsureDefaultOrgAndUser)
+		testSQLStore, err = newStore(testCfg, engine, features, migration, bus, tracer)
 		if err != nil {
 			return nil, err
 		}

@@ -1,14 +1,16 @@
 import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-import { createLogLine, createLogRow } from '../__mocks__/logRow';
+import { createLogLine, createLogRow } from '../mocks/logRow';
 
+import { LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';
-import { getTruncationLength, init } from './virtualization';
+import { LogLineVirtualization } from './virtualization';
 
 describe('preProcessLogs', () => {
   let logFmtLog: LogRowModel, nginxLog: LogRowModel, jsonLog: LogRowModel;
   let processedLogs: LogListModel[];
+  const fontSizes: LogListFontSize[] = ['default', 'small'];
 
   beforeEach(() => {
     const getFieldLinks = jest.fn().mockImplementationOnce((field: Field) => ({
@@ -77,6 +79,66 @@ describe('preProcessLogs', () => {
       getFieldLinks,
       order: LogsSortOrder.Descending,
       timeZone: 'browser',
+      wrapLogMessage: true,
+    });
+  });
+
+  describe('LogListModel', () => {
+    test('Extends a LogRowModel', () => {
+      const logRowModel = createLogRow({
+        uid: '2',
+        datasourceUid: 'test',
+        timeEpochMs: 2,
+        labels: { method: 'POST', status: '200' },
+        entry: `35.191.12.195 - accounts.google.com:test@grafana.com [18/Mar/2025:08:58:38 +0000] 200 "POST /grafana/api/ds/query?ds_type=prometheus&requestId=SQR461 HTTP/1.1" 59460 "https://test.example.com/?orgId=1" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36" "95.91.240.90, 34.107.247.24"`,
+        logLevel: LogLevel.critical,
+      });
+      const logListModel = new LogListModel(logRowModel, { escape: false, timeZone: 'browser ', wrapLogMessage: true });
+      expect(logListModel).toMatchObject(logRowModel);
+    });
+
+    test('Unwrapped log lines strip new lines', () => {
+      const logListModel = createLogLine(
+        { labels: { place: `lu\nna` }, entry: `log\n message\n 1` },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false, // unwrapped
+        }
+      );
+      expect(logListModel.getDisplayedFieldValue('place')).toBe('luna');
+      expect(logListModel.body).toBe('log message 1');
+    });
+
+    test('Wrapped log lines do not modify new lines', () => {
+      const logListModel = createLogLine(
+        { labels: { place: `lu\nna` }, entry: `log\n message\n 1` },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true, // wrapped
+        }
+      );
+      expect(logListModel.getDisplayedFieldValue('place')).toBe(logListModel.labels['place']);
+      expect(logListModel.body).toBe(logListModel.raw);
+    });
+
+    test('Strips ansi colors for measurement', () => {
+      const logListModel = createLogLine(
+        { entry: `log \u001B[31mmessage\u001B[0m 1` },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: true,
+        }
+      );
+      expect(logListModel.getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME, false)).toBe(
+        `log \u001B[31mmessage\u001B[0m 1`
+      );
+      expect(logListModel.getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME, true)).toBe('log message 1');
     });
   });
 
@@ -150,14 +212,17 @@ describe('preProcessLogs', () => {
     expect(processedLogs[2].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[2].body);
   });
 
-  describe('Collapsible log lines', () => {
-    let longLog: LogListModel, entry: string, container: HTMLDivElement;
+  describe.each(fontSizes)('Collapsible log lines', (fontSize: LogListFontSize) => {
+    let longLog: LogListModel, entry: string, container: HTMLDivElement, virtualization: LogLineVirtualization;
     beforeEach(() => {
-      init(createTheme());
+      virtualization = new LogLineVirtualization(createTheme(), fontSize);
       container = document.createElement('div');
       jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(200);
-      entry = new Array(2 * getTruncationLength(null)).fill('e').join('');
-      longLog = createLogLine({ entry, labels: { field: 'value' } });
+      entry = new Array(2 * virtualization.getTruncationLength(null)).fill('e').join('');
+      longLog = createLogLine(
+        { entry, labels: { field: 'value' } },
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
+      );
     });
 
     test('Long lines that are not truncated are not modified', () => {

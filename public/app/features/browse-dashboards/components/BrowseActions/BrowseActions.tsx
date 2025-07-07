@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -9,7 +9,8 @@ import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
-import { setAllSelection, useActionSelectionState } from '../../state';
+import { useActionSelectionState } from '../../state/hooks';
+import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
@@ -29,7 +30,6 @@ export function BrowseActions() {
     () => !config.featureToggles.nestedFolders && Object.values(selectedItems.folder).some((v) => v),
     [selectedItems]
   );
-  const { t } = useTranslate();
 
   const isSearching = stateManager.hasSearchFilters();
 
@@ -116,6 +116,6 @@ function trackAction(action: keyof typeof actionMap, selectedItems: Omit<Dashboa
       dashboard: selectedDashboards.length,
     },
     source: 'tree_actions',
-    restore_enabled: false,
+    restore_enabled: Boolean(config.featureToggles.restoreDashboards),
   });
 }

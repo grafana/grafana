@@ -7,38 +7,38 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "AnnotationQuery",
       "spec": {
         "builtIn": false,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --",
-        },
         "enable": true,
         "hide": false,
         "iconColor": "red",
         "name": "query1",
+        "query": {
+          "datasource": {
+            "name": "-- Grafana --",
+          },
+          "group": "grafana",
+          "kind": "DataQuery",
+          "spec": {},
+          "version": "v0",
+        },
       },
     },
     {
       "kind": "AnnotationQuery",
       "spec": {
         "builtIn": false,
-        "datasource": {
-          "type": "prometheus",
-          "uid": "abcdef",
-        },
         "enable": true,
         "hide": true,
         "iconColor": "blue",
         "name": "query2",
-      },
-    },
-    {
-      "kind": "AnnotationQuery",
-      "spec": {
-        "builtIn": false,
-        "enable": true,
-        "hide": true,
-        "iconColor": "green",
-        "name": "query3",
+        "query": {
+          "datasource": {
+            "name": "abcdef",
+          },
+          "group": "prometheus",
+          "kind": "DataQuery",
+          "spec": {},
+          "version": "v0",
+        },
       },
     },
   ],
@@ -85,44 +85,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
       },
     },
-    "panel-2": {
-      "kind": "Panel",
-      "spec": {
-        "data": {
-          "kind": "QueryGroup",
-          "spec": {
-            "queries": [],
-            "queryOptions": {},
-            "transformations": [],
-          },
-        },
-        "description": "Test Description 2",
-        "id": 2,
-        "links": [
-          {
-            "targetBlank": true,
-            "title": "Test Link 1",
-            "url": "http://test1.com",
-          },
-          {
-            "title": "Test Link 2",
-            "url": "http://test2.com",
-          },
-        ],
-        "title": "Test Panel 2",
-        "vizConfig": {
-          "kind": "graph",
-          "spec": {
-            "fieldConfig": {
-              "defaults": {},
-              "overrides": [],
-            },
-            "options": {},
-            "pluginVersion": "7.0.0",
-          },
-        },
-      },
-    },
   },
   "layout": {
     "kind": "GridLayout",
@@ -139,33 +101,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
             "width": 0,
             "x": 0,
             "y": 0,
-          },
-        },
-        {
-          "kind": "GridLayoutRow",
-          "spec": {
-            "collapsed": false,
-            "elements": [
-              {
-                "kind": "GridLayoutItem",
-                "spec": {
-                  "element": {
-                    "kind": "ElementReference",
-                    "name": "panel-2",
-                  },
-                  "height": 0,
-                  "width": 0,
-                  "x": 0,
-                  "y": 0,
-                },
-              },
-            ],
-            "repeat": {
-              "mode": "variable",
-              "value": "customVar",
-            },
-            "title": "Test Row",
-            "y": 10,
           },
         },
       ],
@@ -217,10 +152,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           "text": "text1",
           "value": "value1",
         },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "datasource1",
-        },
         "definition": "definition1",
         "description": "A query variable",
         "hide": "hideLabel",
@@ -230,11 +161,16 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "name": "queryVar",
         "options": [],
         "query": {
-          "kind": "prometheus",
+          "datasource": {
+            "name": "datasource1",
+          },
+          "group": "prometheus",
+          "kind": "DataQuery",
           "spec": {
             "expr": "label_values(node_boot_time_seconds)",
             "refId": "A",
           },
+          "version": "v0",
         },
         "refresh": "onDashboardLoad",
         "regex": "regex1",

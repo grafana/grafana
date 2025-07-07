@@ -244,6 +244,8 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
 	if err := ps.provisionDatasources(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "Datasource provisioning error", err)
@@ -254,6 +256,8 @@ func (ps *ProvisioningServiceImpl) ProvisionDatasources(ctx context.Context) err
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
+	ps.mutex.Lock()
+	defer ps.mutex.Unlock()
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
 	if err := ps.provisionPlugins(ctx, appPath, ps.pluginStore, ps.pluginsSettings, ps.orgService); err != nil {
 		err = fmt.Errorf("%v: %w", "app provisioning error", err)
@@ -290,7 +294,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.alertingStore,
 		ps.alertingStore,
 		ps.folderService,
-		//ps.dashboardService,
+		// ps.dashboardService,
 		ps.quotaService,
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
@@ -300,7 +304,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		notifier.NewCachedNotificationSettingsValidationService(ps.alertingStore),
 		alertingauthz.NewRuleService(ps.ac),
 	)
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ps.alertingStore, notifier.NewExtraConfigsCrypto(ps.secretService))
 	receiverSvc := notifier.NewReceiverService(
 		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
 		configStore,

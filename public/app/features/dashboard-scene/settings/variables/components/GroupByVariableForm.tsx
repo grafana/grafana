@@ -2,9 +2,10 @@ import { FormEvent, useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, useTranslate } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
+import { EditorField } from '@grafana/plugin-ui';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
+import { Alert, Box, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
@@ -18,6 +19,8 @@ export interface GroupByVariableFormProps {
   defaultOptions?: MetricFindValue[];
   allowCustomValue: boolean;
   onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
+  inline?: boolean;
+  datasourceSupported: boolean;
 }
 
 export function GroupByVariableForm({
@@ -28,6 +31,8 @@ export function GroupByVariableForm({
   onDefaultOptionsChange,
   allowCustomValue,
   onAllowCustomValueChange,
+  inline,
+  datasourceSupported,
 }: GroupByVariableFormProps) {
   const updateDefaultOptions = useCallback(
     (csvContent: string) => {
@@ -41,74 +46,88 @@ export function GroupByVariableForm({
     },
     [onDefaultOptionsChange]
   );
-  const { t } = useTranslate();
 
   return (
     <>
-      <VariableLegend>
-        <Trans i18nKey="dashboard-scene.group-by-variable-form.group-by-options">Group by options</Trans>
-      </VariableLegend>
-      <Field
-        label={t('dashboard-scene.group-by-variable-form.label-data-source', 'Data source')}
-        htmlFor="data-source-picker"
-      >
-        <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
-      </Field>
+      {!inline && (
+        <VariableLegend>
+          <Trans i18nKey="dashboard-scene.group-by-variable-form.group-by-options">Group by options</Trans>
+        </VariableLegend>
+      )}
 
-      {infoText ? (
+      <Box marginBottom={2}>
+        <EditorField
+          label={t('dashboard-scene.group-by-variable-form.label-data-source', 'Data source')}
+          htmlFor="data-source-picker"
+          tooltip={infoText}
+        >
+          <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
+        </EditorField>
+      </Box>
+
+      {!datasourceSupported ? (
         <Alert
-          title={infoText}
-          severity="info"
+          title={t(
+            'dashboard-scene.group-by-variable-form.alert-not-supported',
+            'This data source does not support group by variables'
+          )}
+          severity="warning"
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.infoText}
         />
       ) : null}
 
-      <Field
-        label={t(
-          'dashboard-scene.group-by-variable-form.label-use-static-group-by-dimensions',
-          'Use static group dimensions'
-        )}
-        description={t(
-          'dashboard-scene.group-by-variable-form.description-provide-dimensions-as-csv-dimension-name-dimension-id',
-          'Provide dimensions as CSV: {{name}}, {{value}}',
-          { name: 'dimensionName', value: 'dimensionId' }
-        )}
-      >
-        <Switch
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle}
-          value={defaultOptions !== undefined}
-          onChange={(e) => {
-            if (defaultOptions === undefined) {
-              onDefaultOptionsChange([]);
-            } else {
-              onDefaultOptionsChange(undefined);
-            }
-          }}
-        />
-      </Field>
+      {datasourceSupported && (
+        <>
+          <Field
+            label={t(
+              'dashboard-scene.group-by-variable-form.label-use-static-group-by-dimensions',
+              'Use static group dimensions'
+            )}
+            description={t(
+              'dashboard-scene.group-by-variable-form.description-provide-dimensions-as-csv-dimension-name-dimension-id',
+              'Provide dimensions as CSV: {{name}}, {{value}}',
+              { name: 'dimensionName', value: 'dimensionId' }
+            )}
+          >
+            <Switch
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle}
+              value={defaultOptions !== undefined}
+              onChange={(e) => {
+                if (defaultOptions === undefined) {
+                  onDefaultOptionsChange([]);
+                } else {
+                  onDefaultOptionsChange(undefined);
+                }
+              }}
+            />
+          </Field>
 
-      {defaultOptions !== undefined && (
-        <CodeEditor
-          height={300}
-          language="csv"
-          value={defaultOptions.map((o) => `${o.text},${o.value}`).join('\n')}
-          onBlur={updateDefaultOptions}
-          onSave={updateDefaultOptions}
-          showMiniMap={false}
-          showLineNumbers={true}
-        />
+          {defaultOptions !== undefined && (
+            <CodeEditor
+              height={300}
+              language="csv"
+              value={defaultOptions.map((o) => `${o.text},${o.value}`).join('\n')}
+              onBlur={updateDefaultOptions}
+              onSave={updateDefaultOptions}
+              showMiniMap={false}
+              showLineNumbers={true}
+            />
+          )}
+        </>
       )}
 
-      <VariableCheckboxField
-        value={allowCustomValue}
-        name="Allow custom values"
-        description={t(
-          'dashboard-scene.group-by-variable-form.description-enables-users-custom-values',
-          'Enables users to add custom values to the list'
-        )}
-        onChange={onAllowCustomValueChange}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
-      />
+      {datasourceSupported && !inline && onAllowCustomValueChange && (
+        <VariableCheckboxField
+          value={allowCustomValue}
+          name={t('dashboard-scene.group-by-variable-form.name-allow-custom-values', 'Allow custom values')}
+          description={t(
+            'dashboard-scene.group-by-variable-form.description-enables-users-custom-values',
+            'Enables users to add custom values to the list'
+          )}
+          onChange={onAllowCustomValueChange}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
+        />
+      )}
     </>
   );
 }
