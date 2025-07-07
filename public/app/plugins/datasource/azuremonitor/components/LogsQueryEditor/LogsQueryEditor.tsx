@@ -9,14 +9,9 @@ import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 import { LogsEditorMode } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import {
-  AzureMonitorErrorish,
-  AzureMonitorOption,
-  AzureMonitorQuery,
-  ResultFormat,
-  EngineSchema,
-  AzureLogAnalyticsMetadataTable,
-} from '../../types';
+import { AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery, ResultFormat } from '../../types/query';
+import { AzureMonitorErrorish, AzureMonitorOption, EngineSchema } from '../../types/types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
