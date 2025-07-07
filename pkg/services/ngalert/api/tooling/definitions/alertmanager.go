@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
@@ -267,8 +269,31 @@ type (
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
 	ReceiverType              = definition.ReceiverType
-	MergeResult               = definition.MergeResult
 )
+
+type MergeResult definition.MergeResult
+
+func (m MergeResult) LogContext() []any {
+	if len(m.RenamedReceivers) == 0 && len(m.RenamedTimeIntervals) == 0 {
+		return nil
+	}
+	logCtx := make([]any, 0, 4)
+	if len(m.RenamedTimeIntervals) > 0 {
+		rcvBuilder := strings.Builder{}
+		for from, to := range m.RenamedReceivers {
+			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+		}
+		logCtx = append(logCtx, "renamedReceivers", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+	}
+	if len(m.RenamedTimeIntervals) > 0 {
+		rcvBuilder := strings.Builder{}
+		for from, to := range m.RenamedTimeIntervals {
+			rcvBuilder.WriteString(fmt.Sprintf("'%s'->'%s',", from, to))
+		}
+		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", rcvBuilder.String()[0:rcvBuilder.Len()-1]))
+	}
+	return logCtx
+}
 
 const (
 	GrafanaReceiverType      = definition.GrafanaReceiverType
@@ -779,7 +804,11 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 		return MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
 
-	return definition.Merge(c.AlertmanagerConfig, mcfg, opts)
+	m, err := definition.Merge(c.AlertmanagerConfig, mcfg, opts)
+	if err != nil {
+		return MergeResult{}, fmt.Errorf("failed to merge alertmanager config: %w", err)
+	}
+	return MergeResult(m), nil
 }
 
 // GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
