@@ -83,6 +83,7 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
 		return nil, err
 	} else if !has {
+		ss.logger.Debug("Data source not found", "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
 		return nil, datasources.ErrDataSourceNotFound
 	}
 
