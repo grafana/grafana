@@ -734,9 +734,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(modal).toHaveTextContent('Version: 1.0.0');
     });
 
-    it('should add data-plugin-sandbox attribute to the wrapper div when sandbox is enabled', async () => {
-      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(true);
-
+    it('should add a wrapper div with a "data-plugin-sandbox" attribute', async () => {
       const pluginId = 'grafana-worldmap-panel';
       const openModal = createOpenModalFunction({
         pluginId,
@@ -755,26 +753,6 @@ describe('Plugin Extensions / Utils', () => {
         'data-plugin-sandbox',
         'grafana-worldmap-panel'
       );
-    });
-
-    it('should add data-plugin-sandbox attribute to the wrapper div when sandbox is enabled', async () => {
-      jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(false);
-
-      const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction({
-        pluginId,
-        extensionPointId: 'myorg-extensions-app/link/v1',
-        title: 'Title in modal',
-      });
-
-      openModal({
-        title: 'Title in modal',
-        body: () => <div>Text in body</div>,
-      });
-
-      expect(await screen.findByRole('dialog')).toBeVisible();
-
-      expect(screen.getByTestId('plugin-sandbox-wrapper')).not.toHaveAttribute('data-plugin-sandbox');
     });
 
     it('should show an error alert in the modal IN DEV MODE if the extension throws an error', async () => {
