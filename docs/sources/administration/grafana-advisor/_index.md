@@ -92,7 +92,7 @@ Click the cogwheel in this section to access Grafana Advisor settings, where you
 
 ### Enable LLM suggestions
 
-If the [Grafana LLM app](https://grafana.com/grafana/plugins/grafana-llm-app/) is installed, the Advisor can use it to generate suggestions for issues. Once enabled, click the magic (✨) button to generate a suggestion for an issue.
+If the [Grafana LLM app](https://grafana.com/grafana/plugins/grafana-llm-app/) is installed, the Advisor can use it to generate suggestions for issues. Enable the LLM app and click the magic (✨) button to generate a suggestion for an issue.
 
 ![<Grafana Advisor - LLM suggestions>](/media/docs/grafana-advisor/llm-suggestions.png)
 
