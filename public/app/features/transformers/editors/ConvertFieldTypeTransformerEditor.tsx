@@ -268,5 +268,5 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   description: standardTransformers.convertFieldTypeTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
   help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
-  tags: new Set(['Time format']),
+  tags: new Set(['Format field']),
 };
