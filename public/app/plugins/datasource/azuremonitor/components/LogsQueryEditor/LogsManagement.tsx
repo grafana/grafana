@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { t } from '@grafana/i18n';
 import { ConfirmModal, InlineField, RadioButtonGroup } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+import { AzureQueryEditorFieldProps } from '../../types/types';
 
 import { setBasicLogsQuery, setDashboardTime, setKustoQuery } from './setQueryValue';
 

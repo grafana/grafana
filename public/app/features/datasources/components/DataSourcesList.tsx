@@ -10,7 +10,8 @@ import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { ROUTES } from '../../connections/constants';
-import { getDataSources, getDataSourcesCount, useLoadDataSources } from '../state';
+import { useLoadDataSources } from '../state/hooks';
+import { getDataSources, getDataSourcesCount } from '../state/selectors';
 import { trackDataSourcesListViewed } from '../tracking';
 
 import { DataSourcesListCard } from './DataSourcesListCard';

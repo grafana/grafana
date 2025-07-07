@@ -16,9 +16,6 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
 import {
-  dataSourceLoaded,
-  setDataSourceName,
-  setIsDefault,
   useDataSource,
   useDataSourceExploreUrl,
   useDataSourceMeta,
@@ -28,7 +25,8 @@ import {
   useInitDataSourceSettings,
   useTestDataSource,
   useUpdateDatasource,
-} from '../state';
+} from '../state/hooks';
+import { setIsDefault, setDataSourceName, dataSourceLoaded } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { DataSourceRights } from '../types';
 

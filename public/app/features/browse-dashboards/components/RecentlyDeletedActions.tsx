@@ -12,7 +12,8 @@ import { ShowModalReactEvent } from 'app/types/events';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { useListDeletedDashboardsQuery, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
-import { clearFolders, setAllSelection, useActionSelectionState } from '../state';
+import { useActionSelectionState } from '../state/hooks';
+import { clearFolders, setAllSelection } from '../state/slice';
 
 import { RestoreModal } from './RestoreModal';
 

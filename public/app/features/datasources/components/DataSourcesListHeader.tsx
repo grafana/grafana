@@ -5,7 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { StoreState, useSelector, useDispatch } from 'app/types';
 
-import { getDataSourcesSearchQuery, getDataSourcesSort, setDataSourcesSearchQuery, setIsSortAscending } from '../state';
+import { setDataSourcesSearchQuery, setIsSortAscending } from '../state/reducers';
+import { getDataSourcesSearchQuery, getDataSourcesSort } from '../state/selectors';
 import { trackDsSearched } from '../tracking';
 
 const ascendingSortValue = 'alpha-asc';

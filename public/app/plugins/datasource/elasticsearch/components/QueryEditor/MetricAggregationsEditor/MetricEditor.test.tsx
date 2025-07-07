@@ -5,12 +5,11 @@ import { from } from 'rxjs';
 
 import { getDefaultTimeRange } from '@grafana/data';
 
+import { Average, Count, ElasticsearchDataQuery, UniqueCount } from '../../../dataquery.gen';
 import { ElasticDatasource } from '../../../datasource';
 import { defaultBucketAgg } from '../../../queryDef';
-import { ElasticsearchQuery } from '../../../types';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 
-import { Average, Count, UniqueCount } from './../../../types';
 import { MetricEditor } from './MetricEditor';
 
 describe('Metric Editor', () => {
@@ -20,7 +19,7 @@ describe('Metric Editor', () => {
       type: 'avg',
     };
 
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: 'A',
       query: '',
       metrics: [avg],
@@ -56,7 +55,7 @@ describe('Metric Editor', () => {
       type: 'cardinality',
     };
 
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: 'A',
       query: '',
       metrics: [avg],
@@ -93,7 +92,7 @@ describe('Metric Editor', () => {
       type: 'count',
     };
 
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: 'A',
       query: '',
       metrics: [count],

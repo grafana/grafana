@@ -8,7 +8,7 @@ import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery, AzureQueryType } from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;
