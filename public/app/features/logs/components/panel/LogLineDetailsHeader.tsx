@@ -187,8 +187,8 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
         )}
         <IconButton
           name={detailsMode === 'inline' ? 'columns' : 'gf-layout-simple'}
-          aria-label={
-            detailsMode
+          tooltip={
+            detailsMode === 'inline'
               ? t('logs.log-line-details.sidebar-mode', 'Anchor to the right')
               : t('logs.log-line-details.inline-mode', 'Display inline')
           }

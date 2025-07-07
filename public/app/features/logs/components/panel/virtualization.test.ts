@@ -21,8 +21,10 @@ describe('Virtualization', () => {
   let TWO_LINES_OF_CHARACTERS: number;
 
   const defaultOptions: DisplayOptions = {
+    detailsMode: 'sidebar',
     wrap: false,
     showTime: false,
+    showDetails: [],
     showDuplicates: false,
     hasLogsWithErrors: false,
     hasSampledLogs: false,
