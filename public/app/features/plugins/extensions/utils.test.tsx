@@ -6,8 +6,6 @@ import { config, AppPluginConfig } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandbox_plugin_loader_registry';
-
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import {
@@ -30,11 +28,6 @@ import {
 jest.mock('app/features/plugins/pluginSettings', () => ({
   ...jest.requireActual('app/features/plugins/pluginSettings'),
   getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
-}));
-
-jest.mock('../sandbox/sandbox_plugin_loader_registry', () => ({
-  ...jest.requireActual('../sandbox/sandbox_plugin_loader_registry'),
-  shouldLoadPluginInFrontendSandbox: jest.fn().mockResolvedValue(false),
 }));
 
 describe('Plugin Extensions / Utils', () => {
@@ -850,7 +843,6 @@ describe('Plugin Extensions / Utils', () => {
 
     beforeEach(() => {
       resetLogMock(log);
-      jest.mocked(shouldLoadPluginInFrontendSandbox).mockClear();
     });
 
     it('should make the plugin context available for the wrapped component', async () => {
