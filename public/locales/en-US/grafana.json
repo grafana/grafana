@@ -3081,6 +3081,16 @@
       "info-box-content-2": "Checkout the <2>Annotations documentation</2> for more information.",
       "title": "There are no custom annotation queries added yet"
     },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "When this field is defined, the annotation will be treated as a range",
+        "results-split-on-comma": "The results will be split on comma (,)"
+      },
+      "placeholder": {
+        "text-or-the-first-field": "{{defaultField}}, or the first text field",
+        "time-or-the-first-field": "{{defaultField}}, or the first time field"
+      }
+    },
     "standard-annotation-query-editor": {
       "events-found": "{{numEvents}} events (from {{numFields}} fields)",
       "no-events-found": "No events found",
@@ -4604,6 +4614,18 @@
         "transform-data": "Transform data"
       }
     },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Do not send annotation data to the following panels",
+        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
+        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
+      },
+      "label": {
+        "all-panels": "All panels",
+        "all-panels-except": "All panels except",
+        "selected-panels": "Selected panels"
+      }
+    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5496,6 +5518,18 @@
         "interval": "Interval",
         "query": "Query",
         "textbox": "Textbox"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Do not send annotation data to the following panels",
+        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
+        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
+      },
+      "label": {
+        "all-panels": "All panels",
+        "all-panels-except": "All panels except",
+        "selected-panels": "Selected panels"
       }
     },
     "get-panel-frame-options": {
