@@ -352,6 +352,10 @@
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
     },
+    "ad": {
+      "close": "Close",
+      "learn-more": "Learn more"
+    },
     "add-button": {
       "add-more": "Add more"
     },
@@ -1525,8 +1529,20 @@
       }
     },
     "home": {
+      "irm-card-description": "Unify on-call, alerting, and incident response with Grafana Cloud IRM.",
+      "irm-card-item-1": "Manage on-call schedules with your calendar or Terraform.",
+      "irm-card-item-2": "Respond to incidents via web, app, Slack, or other channels.",
+      "irm-card-item-3": "Pinpoint root causes with AI-powered Grafana SIFT.",
+      "irm-card-item-4": "Analyze past incidents to improve response and resilience.",
+      "irm-card-title": "Incident response and management",
       "label-get-started": "Get started",
       "label-insights": "Insights",
+      "synthetic-monitoring-card-description": "Monitor critical user flows, websites, and APIs externally, from global locations.",
+      "synthetic-monitoring-card-item-1": "Simulate end-to-end user journeys with browser checks.",
+      "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
+      "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
+      "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
+      "synthetic-monitoring-card-title": "Synthetic Monitoring",
       "title-alerting": "Alerting"
     },
     "import-to-gma": {
@@ -2079,9 +2095,11 @@
       "update-errors": {
         "conflict": "The notification policy tree has been updated by another user.",
         "error-code": "Error message: \"{{error}}\"",
-        "fallback": "Something went wrong when updating your notification policies.",
+        "routes": {
+          "conflictingMatchers": "Cannot add or update route: matchers conflict with an external routing tree if we merged matchers {{-matchers}}. This would make the route unreachable."
+        },
         "suffix": "Please refresh the page and try again.",
-        "title": "Error saving notification policy"
+        "title": "Failed to add or update notification policy"
       }
     },
     "policy": {
@@ -2399,8 +2417,6 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "Cannot find rule details for UID {{uid}}",
-      "cannot-load-rule-details-for": "Cannot load rule details for UID {{uid}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
       "ds-error": {
@@ -3894,7 +3910,8 @@
   "close-button": {
     "tooltip": "Close"
   },
-  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise",
+  "cloud-feature-badge": "Cloud",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
@@ -6295,6 +6312,11 @@
       }
     },
     "scale-dimension-editor": {
+      "fixed-value-option": {
+        "label": {
+          "fixed-value": "Fixed value"
+        }
+      },
       "label-max": "Max",
       "label-min": "Min",
       "label-value": "Value"
@@ -7144,7 +7166,53 @@
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
     "send-custom-feedback": "Send"
   },
+  "geo": {
+    "get-geometry-field": {
+      "warning-gazetteer-not-found": "Gazetteer not found",
+      "warning-no-geometry": "unable to find geometry",
+      "warning-select-geohash": "Select geohash field",
+      "warning-select-lat-long": "Select latitude/longitude fields",
+      "warning-select-lookup": "Select lookup field",
+      "warning-unable-to-find": "Unable to find location fields"
+    },
+    "location-editor": {
+      "geohash-field": {
+        "no-fields-message": "No strings fields found"
+      },
+      "latitude-field": {
+        "no-fields-message": "No numeric fields found"
+      },
+      "longitude-field": {
+        "no-fields-message": "No numeric fields found"
+      },
+      "lookup-field": {
+        "no-fields-message": "No strings fields found"
+      },
+      "name-gazetteer": "Gazetteer",
+      "name-geohash-field": "Geohash field",
+      "name-latitude-field": "Latitude field",
+      "name-location-mode": "Location Mode",
+      "name-longitude-field": "Longitude field",
+      "name-lookup-field": "Lookup field"
+    },
+    "location-more-editor": {
+      "mode-options": {
+        "description-auto": "Automatically identify location data based on default field names",
+        "description-coords": "Specify latitude and longitude fields",
+        "description-geohash": "Specify geohash field",
+        "description-lookup": "Specify Gazetteer and lookup field",
+        "label-auto": "Auto",
+        "label-coords": "Coords",
+        "label-geohash": "Geohash",
+        "label-lookup": "Lookup"
+      }
+    }
+  },
   "geomap": {
+    "category-basemap-layer": "Basemap layer",
+    "category-map-controls": "Map controls",
+    "category-map-layers": "Map layers",
+    "category-map-view": "Map view",
     "coordinates-map-view-editor": {
       "label-latitude": "Latitude",
       "label-longitude": "Longitude"
@@ -7153,6 +7221,14 @@
       "center": "Center:",
       "zoom": "Zoom:"
     },
+    "description-initial-view": "This location will show when the panel first loads.",
+    "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
+    "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
+    "description-show-attribution": "Show the map source attribution info in the lower right",
+    "description-show-debug": "Show map info",
+    "description-show-measure": "Show tools for making measurements on the map",
+    "description-show-scale": "Indicate map scale",
+    "description-show-zoom": "Show zoom control buttons in the upper left corner",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Layer"
@@ -7175,6 +7251,14 @@
     "geomap-style-rules-editor": {
       "aria-label-add-geomap-style-rule": "Add geomap style rule"
     },
+    "layer-editor": {
+      "category-base-layer": "Base layer",
+      "description-display-tooltip": "Show the tooltip for layer",
+      "name-data": "Data",
+      "name-display-tooltip": "Display tooltip",
+      "name-layer-type": "Layer type",
+      "name-opacity": "Opacity"
+    },
     "layers-editor": {
       "label-add-layer": "Add layer",
       "no-layers": "No layers?"
@@ -7185,16 +7269,35 @@
       "label-zoom": "Zoom",
       "use-current-map-settings": "Use current map settings"
     },
+    "markers-layer": {
+      "description-show-legend": "Show map legend",
+      "name-show-legend": "Show legend",
+      "name-styles": "Styles"
+    },
     "markers-legend": {
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
       "tooltip-show-measure-tools": "Show measure tools"
     },
+    "name-initial-view": "Initial view",
+    "name-mouse-wheel-zoom": "Mouse wheel zoom",
+    "name-share-view": "Share view",
+    "name-show-attribution": "Show attribution",
+    "name-show-debug": "Show debug",
+    "name-show-measure": "Show measure tools",
+    "name-show-scale": "Show scale",
+    "name-show-zoom": "Show zoom control",
+    "name-tooltip": "Tooltip",
     "plugin": {
       "basemap-layer-configured-server-admin": "The basemap layer is configured by the server admin."
     },
     "style-editor": {
+      "horizontal-align-options": {
+        "label-center": "Center",
+        "label-left": "Left",
+        "label-right": "Right"
+      },
       "label-align": "Align",
       "label-baseline": "Baseline",
       "label-color": "Color",
@@ -7208,7 +7311,12 @@
       "label-symbol-vertical-align": "Symbol vertical align",
       "label-text-label": "Text label",
       "label-x-offset": "X offset",
-      "label-y-offset": "Y offset"
+      "label-y-offset": "Y offset",
+      "vertical-align-options": {
+        "label-bottom": "Bottom",
+        "label-center": "Center",
+        "label-top": "Top"
+      }
     },
     "style-rule-editor": {
       "aria-label-comparison-operator": "Comparison operator",
@@ -7219,6 +7327,15 @@
       "placeholder-feature-property": "Feature property",
       "placeholder-numeric-value": "Numeric value",
       "placeholder-value": "value"
+    },
+    "tooltip-options": {
+      "description-details": "Show popup on hover",
+      "description-none": "Show contents on click, not hover",
+      "label-details": "Details",
+      "label-none": "None"
+    },
+    "utils": {
+      "get-next-layer-name": "Layer {{name}}"
     }
   },
   "get-enterprise": {
@@ -8356,6 +8473,18 @@
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "Indexed label",
+          "indexed-label-plural": "Indexed labels",
+          "parsed-label-plural": "Parsed fields",
+          "parsedl-label": "Parsed field",
+          "structured-metadata": "Structured metadata",
+          "structured-metadata-plural": "Structured metadata"
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "Default",
       "label-small": "Small"
@@ -8379,7 +8508,6 @@
       "label-wrap-lines": "Wrap lines"
     },
     "log-details": {
-      "close": "Close log details",
       "fields": "Fields",
       "links": "Links",
       "log-line": "Log line",
@@ -8404,6 +8532,35 @@
       "show-less": "show less",
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "Clear",
+      "close": "Close log details",
+      "copy-shortlink": "Copy shortlink",
+      "copy-to-clipboard": "Copy to clipboard",
+      "fields": {
+        "adhoc-statistics": "Ad-hoc statistics",
+        "copy-value-to-clipboard": "Copy value to clipboard",
+        "filter-out": "Filter out value",
+        "filter-out-query": "Filter out value in query {{query}}",
+        "toggle-field-button": {
+          "field-instead-message": "Show this field instead of the message",
+          "hide-this-field": "Hide this field"
+        }
+      },
+      "fields-section": "Fields",
+      "hide-log-line": "Hide log line",
+      "links-section": "Links",
+      "log-line-section": "Log line",
+      "no-details": "No fields to display.",
+      "pin-line": "Pin log",
+      "search": {
+        "no-results": "No results to display."
+      },
+      "search-placeholder": "Search field names and values",
+      "show-context": "Show context",
+      "show-log-line": "Show log line",
+      "unpin-line": "Unpin log"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
@@ -8531,6 +8688,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
       "aria-label-fields": "Fields",
+      "aria-label-line": "Log line",
       "aria-label-log-level": "Log level",
       "aria-label-no-details": "No details"
     },
@@ -9669,6 +9827,7 @@
         "permission": "You do not have permission to see this page.",
         "title-access-denied": "Access denied"
       },
+      "error-loading-plugin": "Plugin failed to load",
       "no-root-app-page-component-found": "No root app page component found"
     },
     "browse": {
@@ -9766,6 +9925,10 @@
     },
     "empty-state": {
       "message": "No plugins found"
+    },
+    "extensions": {
+      "extension-error-alert-description": "Check the console for more details on the error.",
+      "extension-error-alert-title": "Extension failed to load: \"{{pluginId}}/{{extensionTitle}}\""
     },
     "extensions-log-data-source": {
       "message": {
@@ -11388,6 +11551,7 @@
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-wrap-header-text": "Enables text wrapping for the field name in the table header",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -11408,6 +11572,7 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
+    "name-wrap-header-text": "Wrap header text",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },
