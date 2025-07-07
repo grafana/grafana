@@ -161,7 +161,7 @@ func getBaseDir(class plugins.Class, fs plugins.FS) string {
 	baseDir := filepath.Base(pluginDir)
 	// Decoupled core plugins will be suffixed with "dist" if they have been built
 	if isDecoupledCorePlugin(class, fs) {
-		return filepath.Base(pluginDir)
+		return filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
 	}
 	return baseDir
 }
