@@ -105,7 +105,7 @@ TableFieldOptions: {
 	filterable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
-  // Enables text wrapping for the display name in the table header.
+  // Enables text wrapping for column headers
   wrapHeaderText?: bool
 } @cuetsy(kind="interface")
 
