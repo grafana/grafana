@@ -2095,9 +2095,11 @@
       "update-errors": {
         "conflict": "The notification policy tree has been updated by another user.",
         "error-code": "Error message: \"{{error}}\"",
-        "fallback": "Something went wrong when updating your notification policies.",
+        "routes": {
+          "conflictingMatchers": "Cannot add or update route: matchers conflict with an external routing tree if we merged matchers {{-matchers}}. This would make the route unreachable."
+        },
         "suffix": "Please refresh the page and try again.",
-        "title": "Error saving notification policy"
+        "title": "Failed to add or update notification policy"
       }
     },
     "policy": {

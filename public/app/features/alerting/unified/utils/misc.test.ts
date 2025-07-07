@@ -125,12 +125,12 @@ describe('create links', () => {
 
 describe('stringifyErrorLike', () => {
   it('should stringify error with cause', () => {
-    const error = new Error('Something went strong', { cause: new Error('database did not respond') });
-    expect(stringifyErrorLike(error)).toBe('Something went strong, cause: database did not respond');
+    const error = new Error('Something went wrong', { cause: new Error('database did not respond') });
+    expect(stringifyErrorLike(error)).toBe('Something went wrong, cause: database did not respond');
   });
 
   it('should stringify error with cause being a code', () => {
-    const error = new Error('Something went strong', { cause: ERROR_NEWER_CONFIGURATION });
+    const error = new Error('Something went wrong', { cause: ERROR_NEWER_CONFIGURATION });
     expect(stringifyErrorLike(error)).toBe(getErrorMessageFromCode(ERROR_NEWER_CONFIGURATION));
   });
 
