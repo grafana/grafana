@@ -1678,11 +1678,11 @@ var (
 		{
 			Name:              "skipTokenRotationIfRecent",
 			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
-			Stage:             FeatureStagePrivatePreview,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-			Expression:        "false",
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:              "alertEnrichment",
@@ -1733,6 +1733,16 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 			Expression:        "false", // extensions will be disabled by default
+		},
+		{
+			Name:              "foldersAppPlatformAPI",
+			Description:       "Enables use of app platform API for folders",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendSearchNavOrganise,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false",
 		},
 	}
 )

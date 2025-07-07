@@ -18,7 +18,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { DEFAULT_SERIES_LIMIT, MATCH_ALL_LABELS_STR, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
@@ -796,11 +796,11 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
  * Handles UTF8 metrics by properly escaping them.
  *
  * @param {PromQuery[]} queries - Array of Prometheus queries
- * @returns {string} Metric names as a regex matcher
+ * @returns {string[]} Metric names as a regex matcher inside the array for easy handling
  */
-export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string => {
+export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string[] => {
   if (!queries) {
-    return MATCH_ALL_LABELS_STR;
+    return [];
   }
 
   const metrics = (queries ?? []).reduce<string[]>((params, query) => {
@@ -818,5 +818,5 @@ export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string =>
     return params;
   }, []);
 
-  return metrics.length === 0 ? MATCH_ALL_LABELS_STR : `__name__=~"${metrics.join('|')}"`;
+  return metrics.length === 0 ? [] : [`__name__=~"${metrics.join('|')}"`];
 };

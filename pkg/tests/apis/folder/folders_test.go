@@ -89,6 +89,15 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					]
 				},
 				{
+					"name": "folders/children",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderList",
+					"verbs": [
+						"get"
+					]
+				},
+				{
 					"name": "folders/counts",
 					"singularName": "",
 					"namespaced": true,

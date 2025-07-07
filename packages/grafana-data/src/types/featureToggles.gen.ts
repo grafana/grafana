@@ -979,7 +979,7 @@ export interface FeatureToggles {
   restoreDashboards?: boolean;
   /**
   * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default false
+  * @default true
   */
   skipTokenRotationIfRecent?: boolean;
   /**
@@ -1012,4 +1012,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
+  /**
+  * Enables use of app platform API for folders
+  * @default false
+  */
+  foldersAppPlatformAPI?: boolean;
 }

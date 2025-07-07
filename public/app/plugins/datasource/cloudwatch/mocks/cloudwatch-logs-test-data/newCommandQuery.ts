@@ -3,7 +3,7 @@ import { monacoTypes } from '@grafana/ui';
 import { LogsTokenTypes } from '../../language/logs/completion/types';
 import { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../../language/logs/definition';
 
-export const newCommandQuery = {
+export const logsTestDataNewCommandQuery = {
   query: `fields @timestamp | `,
   tokens: [
     [
