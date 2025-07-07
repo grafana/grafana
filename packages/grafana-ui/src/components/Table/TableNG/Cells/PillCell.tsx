@@ -8,48 +8,35 @@ import { TablePillCellOptions } from '@grafana/schema';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { TableCellRendererProps } from '../types';
 
+const DEFAULT_PILL_BG_COLOR = '#FF780A';
+
+interface Pill {
+  value: string;
+  key: string;
+  bgColor: string;
+  color: string;
+}
+
+function createPills(pillValues: string[], cellOptions: TableCellRendererProps['cellOptions'], field: Field): Pill[] {
+  return pillValues.map((pill, index) => {
+    const bgColor = getPillColor(pill, cellOptions, field);
+    const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
+    return {
+      value: pill,
+      key: `${pill}-${index}`,
+      bgColor,
+      color: textColor,
+    };
+  });
+}
+
 export function PillCell({ value, field, justifyContent, cellOptions }: TableCellRendererProps) {
   const styles = useStyles2(getStyles, justifyContent);
 
-  const pills = useMemo(() => {
-    if (!value) {
-      return [];
-    }
-
-    // Handle DataFrame - not supported for pills
-    if (isDataFrame(value)) {
-      return [];
-    }
-
-    // Handle different value types
-    const stringValue = String(value);
-
-    // Try to parse as JSON first
-    try {
-      const parsed = JSON.parse(stringValue);
-      if (Array.isArray(parsed)) {
-        // JSON array of strings
-        return parsed
-          .filter((item) => item != null && item !== '')
-          .map(String)
-          .map((text) => text.trim())
-          .filter((item) => item !== '');
-      }
-    } catch {
-      // Not valid JSON, continue with other parsing
-    }
-
-    // Handle CSV string
-    if (stringValue.includes(',')) {
-      return stringValue
-        .split(',')
-        .map((text) => text.trim())
-        .filter((item) => item !== '');
-    }
-
-    // Single value - strip quotes
-    return [stringValue.replace(/["'`]/g, '').trim()];
-  }, [value]);
+  const pills: Pill[] = useMemo(() => {
+    const pillValues = inferPills(value);
+    return createPills(pillValues, cellOptions, field);
+  }, [value, cellOptions, field]);
 
   if (pills.length === 0) {
     return <div className={styles.cell}>-</div>;
@@ -58,26 +45,61 @@ export function PillCell({ value, field, justifyContent, cellOptions }: TableCel
   return (
     <div className={styles.cell}>
       <div className={styles.pillsContainer}>
-        {pills.map((pill, index) => {
-          const bgColor = getPillColor(pill, cellOptions, field);
-          const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
-
-          return (
-            <span
-              key={`${pill}-${index}`}
-              className={styles.pill}
-              style={{
-                backgroundColor: bgColor,
-                color: textColor,
-              }}
-            >
-              {pill}
-            </span>
-          );
-        })}
+        {pills.map((pill) => (
+          <span
+            key={pill.key}
+            className={styles.pill}
+            style={{
+              backgroundColor: pill.bgColor,
+              color: pill.color,
+            }}
+          >
+            {pill.value}
+          </span>
+        ))}
       </div>
     </div>
   );
+}
+
+export function inferPills(value: unknown): string[] {
+  if (!value) {
+    return [];
+  }
+
+  // Handle DataFrame - not supported for pills
+  if (isDataFrame(value)) {
+    return [];
+  }
+
+  // Handle different value types
+  const stringValue = String(value);
+
+  // Try to parse as JSON first
+  try {
+    const parsed = JSON.parse(stringValue);
+    if (Array.isArray(parsed)) {
+      // JSON array of strings
+      return parsed
+        .filter((item) => item != null && item !== '')
+        .map(String)
+        .map((text) => text.trim())
+        .filter((item) => item !== '');
+    }
+  } catch {
+    // Not valid JSON, continue with other parsing
+  }
+
+  // Handle CSV string
+  if (stringValue.includes(',')) {
+    return stringValue
+      .split(',')
+      .map((text) => text.trim())
+      .filter((item) => item !== '');
+  }
+
+  // Single value - strip quotes
+  return [stringValue.replace(/["'`]/g, '').trim()];
 }
 
 function isPillCellOptions(cellOptions: TableCellRendererProps['cellOptions']): cellOptions is TablePillCellOptions {
@@ -107,7 +129,7 @@ function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOpt
       }
     }
     // Fallback to default color for unmapped values
-    return cellOptions.color || '#FF780A';
+    return cellOptions.color || DEFAULT_PILL_BG_COLOR;
   }
 
   // Auto mode - deterministic color assignment based on string hash
@@ -116,7 +138,7 @@ function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOpt
   }
 
   // Default color for unknown values or fallback
-  return '#FF780A';
+  return DEFAULT_PILL_BG_COLOR;
 }
 
 function getDeterministicColor(text: string): string {
