@@ -11,14 +11,14 @@ type SecureValue struct {
 	// Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	// This is the actual secure value schema.
 	Spec SecureValueSpec `json:"spec"`
 
 	// Read-only observed status of the `SecureValue`.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-	Status SecureValueStatus `json:"status,omitempty"`
+	Status SecureValueStatus `json:"status"`
 }
 
 type SecureValueStatus struct {
@@ -71,7 +71,7 @@ type SecureValueList struct {
 	// Standard list's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	// Slice containing all secure values. This will NOT output decrypted values.
 	Items []SecureValue `json:"items"`

@@ -13,6 +13,7 @@ SELECT
   {{ .Ident "decrypters" }},
   {{ .Ident "ref" }},
   {{ .Ident "external_id" }},
+  {{ .Ident "version" }},
   {{ .Ident "active" }}
 FROM
   {{ .Ident "secret_secure_value" }}

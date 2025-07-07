@@ -351,7 +351,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 			&row.Created, &row.CreatedBy,
 			&row.Updated, &row.UpdatedBy,
 			&row.Description, &row.Keeper, &row.Decrypters,
-			&row.Ref, &row.ExternalID, &row.Active,
+			&row.Ref, &row.ExternalID, &row.Version, &row.Active,
 		)
 
 		if err != nil {
@@ -409,7 +409,7 @@ func (s *secureValueMetadataStorage) SetVersionToActive(ctx context.Context, nam
 	if err != nil {
 		return fmt.Errorf("fetching number of modified rows: %w", err)
 	}
-	if modifiedCount != 1 {
+	if modifiedCount == 0 {
 		return fmt.Errorf("expected to modify at least one row but modified 0: modifiedCount=%d", modifiedCount)
 	}
 

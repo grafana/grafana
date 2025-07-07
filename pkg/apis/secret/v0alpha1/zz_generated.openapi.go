@@ -554,7 +554,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValue(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"spec"},
+				Required: []string{"spec", "status"},
 			},
 		},
 		Dependencies: []string{
@@ -694,7 +694,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallb
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
 							Type:    []string{"integer"},
-							Format:  "int64",
+							Format:  "int32",
 						},
 					},
 					"externalId": {
