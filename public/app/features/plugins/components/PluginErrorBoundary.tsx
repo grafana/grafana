@@ -44,6 +44,6 @@ export class PluginErrorBoundary extends React.Component<PluginErrorBoundaryProp
       return Fallback ? <Fallback error={this.state.error} errorInfo={this.state.errorInfo} /> : null;
     }
 
-    return this.props.children as React.ReactElement;
+    return this.props.children;
   }
 }
