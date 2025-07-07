@@ -862,10 +862,6 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
 func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
@@ -902,7 +898,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:     "folder creation fails without permissions to create a folder",
 			input:           folderWithoutParentInput,
 			expectedCode:    http.StatusForbidden,
-			expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
+			expectedMessage: fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", "folders:create"),
 			permissions:     []resourcepermissions.SetResourcePermissionCommand{},
 		},
 		{
