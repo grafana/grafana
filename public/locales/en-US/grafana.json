@@ -5738,7 +5738,8 @@
       "label-folder": "Folder",
       "render-footer": {
         "title-failed-to-save-dashboard": "Failed to save dashboard"
-      }
+      },
+      "required": "Required"
     },
     "save-dashboard-drawer": {
       "tabs": {
