@@ -374,7 +374,7 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		decrypted,
+		PostableUserConfigToGrafanaAlertmanagerConfig(decrypted),
 		hash,
 		createdAt,
 		isDefault,
