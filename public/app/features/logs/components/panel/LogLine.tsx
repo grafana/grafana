@@ -51,7 +51,7 @@ export const LogLine = ({
   wrapLogMessage,
 }: Props) => {
   return (
-    <div style={style}>
+    <div style={{ ...style, width: 'max-content' }}>
       <LogLineComponent
         displayedFields={displayedFields}
         height={style.height}

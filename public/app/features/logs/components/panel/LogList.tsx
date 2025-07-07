@@ -502,6 +502,9 @@ function getStyles(
       '& .unwrapped-log-line': {
         display: 'grid',
         gridTemplateColumns: getGridTemplateColumns(columns, displayedFields),
+        '& .field': {
+          overflow: 'hidden',
+        },
       },
     }),
     logListContainer: css({
