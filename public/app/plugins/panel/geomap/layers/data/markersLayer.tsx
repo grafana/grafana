@@ -15,6 +15,7 @@ import {
   FrameGeometrySourceMode,
   EventBus,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -230,7 +231,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           .addCustomEditor({
             id: 'config.style',
             path: 'config.style',
-            name: 'Styles',
+            name: t('geomap.markers-layer.name-styles', 'Styles'),
             editor: StyleEditor,
             settings: {
               displayRotation: true,
@@ -239,8 +240,8 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           })
           .addBooleanSwitch({
             path: 'config.showLegend',
-            name: 'Show legend',
-            description: 'Show map legend',
+            name: t('geomap.markers-layer.name-show-legend', 'Show legend'),
+            description: t('geomap.markers-layer.description-show-legend', 'Show map legend'),
             defaultValue: defaultOptions.showLegend,
           });
       },
