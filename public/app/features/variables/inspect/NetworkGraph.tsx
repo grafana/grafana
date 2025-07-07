@@ -57,8 +57,10 @@ export const NetworkGraph = ({ nodes, edges, direction, width, height, onDoubleC
           dragNodes: false,
         },
       };
-      network.current = new visJs.Network(ref.current as HTMLElement, data, options);
-      network.current.on('doubleClick', onNodeDoubleClick);
+      if (ref.current) {
+        network.current = new visJs.Network(ref.current, data, options);
+        network.current.on('doubleClick', onNodeDoubleClick);
+      }
     };
 
     createNetwork();
