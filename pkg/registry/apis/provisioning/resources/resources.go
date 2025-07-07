@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"slices"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -206,6 +207,10 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	err = client.Delete(ctx, objName, metav1.DeleteOptions{})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return objName, schema.GroupVersionKind{}, nil // Already deleted or simply non-existing, nothing to do
+		}
+
 		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to delete: %w", err)
 	}
 
