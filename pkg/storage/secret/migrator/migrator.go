@@ -60,7 +60,6 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
 
 			// Kubernetes Status
-			{Name: "status_message", Type: migrator.DB_Text, Nullable: true},
 			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
 			{Name: "active", Type: migrator.DB_Bool, Nullable: false},
 			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
