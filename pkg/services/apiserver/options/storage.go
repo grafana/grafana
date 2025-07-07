@@ -22,10 +22,11 @@ import (
 type StorageType string
 
 const (
-	StorageTypeFile        StorageType = "file"
-	StorageTypeEtcd        StorageType = "etcd"
-	StorageTypeUnified     StorageType = "unified"
-	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
+	StorageTypeFile          StorageType = "file"
+	StorageTypeEtcd          StorageType = "etcd"
+	StorageTypeUnified       StorageType = "unified"
+	StorageTypeUnifiedGrpc   StorageType = "unified-grpc"
+	StorageTypeUnifiedKVGrpc StorageType = "unified-kv-grpc"
 
 	// Deprecated: legacy is a shim that is no longer necessary
 	StorageTypeLegacy StorageType = "legacy"
@@ -95,6 +96,8 @@ func (o *StorageOptions) Validate() []error {
 	// nolint:staticcheck
 	case StorageTypeLegacy:
 		// no-op
+	case StorageTypeUnifiedKVGrpc:
+		// no-op (enterprise only)
 	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
 		// no-op
 	default:
