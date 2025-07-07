@@ -139,18 +139,22 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
 	"teams:read",           // accesscontrol.ActionTeamsRead,
 	"serviceaccounts:read", // serviceaccounts.ActionRead,
+)
+
+var serviceIdentityTokenPermissions = func() []string {
+	perm := getTokenPermissions(
+		"folder.grafana.app",
+		"dashboard.grafana.app",
+		"secret.grafana.app",
+		"query.grafana.app",
+		"iam.grafana.app",
+	)
 
 	// Secrets Manager uses a custom verb for secret decryption
-	"secret.grafana.app/securevalues:decrypt",
-)
+	perm = append(perm, "secret.grafana.app/securevalues:decrypt")
 
-var serviceIdentityTokenPermissions = getTokenPermissions(
-	"folder.grafana.app",
-	"dashboard.grafana.app",
-	"secret.grafana.app",
-	"query.grafana.app",
-	"iam.grafana.app",
-)
+	return perm
+}()
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{
 	Rest: authn.AccessTokenClaims{

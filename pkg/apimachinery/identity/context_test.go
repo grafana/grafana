@@ -2,8 +2,6 @@ package identity_test
 
 import (
 	"context"
-	"maps"
-	"slices"
 	"testing"
 
 	"github.com/grafana/authlib/authn"
@@ -36,7 +34,7 @@ func TestWithServiceIdentity(t *testing.T) {
 		require.NotNil(t, requester)
 		require.Equal(t, orgID, requester.GetOrgID())
 		require.Equal(t, customName, requester.GetExtra()[string(authn.ServiceIdentityKey)][0])
-		require.Contains(t, slices.Collect(maps.Keys(requester.GetPermissions())), "secret.grafana.app/securevalues:decrypt")
+		require.Contains(t, requester.GetTokenPermissions(), "secret.grafana.app/securevalues:decrypt")
 
 		fromCtx, err := identity.GetRequester(ctx)
 		require.NoError(t, err)
