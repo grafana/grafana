@@ -426,7 +426,6 @@
     "uuid": "11.1.0",
     "vis-data": "^7.1.10",
     "vis-network": "9.1.13",
-    "vis-util": "^5.0.7",
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
