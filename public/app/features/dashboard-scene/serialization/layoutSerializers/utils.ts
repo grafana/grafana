@@ -19,6 +19,7 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TabsLayoutTabKind,
+  DataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -185,12 +186,15 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
-      if (!query.spec.datasource?.uid) {
-        datasource = getRuntimePanelDataSource(query);
+      if (!query.spec.query.datasource?.name) {
+        datasource = getRuntimePanelDataSource(query.spec.query);
       } else {
-        datasource = query.spec.datasource;
+        datasource = {
+          uid: query.spec.query.datasource?.name,
+          type: query.spec.query.group,
+        };
       }
-    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
+    } else if (datasource.uid !== query.spec.query.datasource?.name || datasource.type !== query.spec.query.group) {
       isMixedDatasource = true;
     }
   });
@@ -199,11 +203,19 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
 }
 
 export function getRuntimeVariableDataSource(variable: QueryVariableKind): DataSourceRef | undefined {
-  return getDataSourceForQuery(variable.spec.datasource, variable.spec.query.kind);
+  const ds: DataSourceRef = {
+    uid: variable.spec.query.datasource?.name,
+    type: variable.spec.query.group,
+  };
+  return getDataSourceForQuery(ds, variable.spec.query.group);
 }
 
-export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef | undefined {
-  return getDataSourceForQuery(query.spec.datasource, query.spec.query.kind);
+export function getRuntimePanelDataSource(query: DataQueryKind): DataSourceRef {
+  const ds: DataSourceRef = {
+    uid: query.datasource?.name,
+    type: query.group,
+  };
+  return getDataSourceForQuery(ds, query.group);
 }
 
 /**
@@ -211,10 +223,7 @@ export function getRuntimePanelDataSource(query: PanelQueryKind): DataSourceRef 
  * @param queryKind - The kind of query being performed
  * @returns The resolved DataSourceRef
  */
-function getDataSourceForQuery(
-  querySpecDS: DataSourceRef | undefined | null,
-  queryKind: string
-): DataSourceRef | undefined {
+function getDataSourceForQuery(querySpecDS: DataSourceRef | undefined | null, queryKind: string): DataSourceRef {
   // If datasource is specified and has a uid, use it
   if (querySpecDS?.uid) {
     return querySpecDS;
@@ -253,14 +262,22 @@ function getDataSourceForQuery(
     };
   }
 
-  // If we don't find a default datasource, return undefined
-  return undefined;
+  if (dsList && !dsList[defaultDatasource]) {
+    throw new Error(`Default datasource ${defaultDatasource} not found in datasource list`);
+  }
+
+  // In the datasource list from bootData "id" is the type and the uid could be uid or the name
+  // in cases like grafana, dashboard or mixed datasource
+  return {
+    uid: dsList[defaultDatasource].uid || dsList[defaultDatasource].name,
+    type: dsList[defaultDatasource].meta.id,
+  };
 }
 
 function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   return {
     refId: query.spec.refId,
-    datasource: getRuntimePanelDataSource(query),
+    datasource: getRuntimePanelDataSource(query.spec.query),
     hide: query.spec.hidden,
     ...query.spec.query.spec,
   };
