@@ -69,6 +69,14 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(cellOptions?.wrapText);
 }
 
+export function getMaxWrappedLines(field: Field): number | undefined {
+  const cellOptions = getCellOptions(field);
+  // @ts-ignore - a handful of cellTypes have maxWrappedLines, but not all of them.
+  // it's likely that this will be better in the future once some of the cell types fold into
+  // AutoCell, so we opt to just ts-ignore this.
+  return cellOptions?.maxWrappedLines;
+}
+
 // matches characters which CSS
 const spaceRegex = /[\s-]/;
 

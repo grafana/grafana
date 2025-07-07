@@ -5,6 +5,8 @@ import { Field, RadioButtonGroup, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
+import { AutoCellOptionsEditor } from './AutoCellOptionsEditor';
+
 const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>> = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
@@ -13,21 +15,13 @@ export const ColorBackgroundCellOptionsEditor = ({
   cellOptions,
   onChange,
 }: TableCellEditorProps<TableColoredBackgroundCellOptions>) => {
-  // Set the display mode on change
-
   const onCellOptionsChange = (v: TableCellBackgroundDisplayMode) => {
     cellOptions.mode = v;
     onChange(cellOptions);
   };
-  // Handle row coloring changes
+
   const onColorRowChange = () => {
     cellOptions.applyToRow = !cellOptions.applyToRow;
-    onChange(cellOptions);
-  };
-
-  // Handle row coloring changes
-  const onWrapTextChange = () => {
-    cellOptions.wrapText = !cellOptions.wrapText;
     onChange(cellOptions);
   };
 
@@ -51,9 +45,7 @@ export const ColorBackgroundCellOptionsEditor = ({
       >
         <Switch value={cellOptions.applyToRow} onChange={onColorRowChange} />
       </Field>
-      <Field label={t('table.color-background-cell-options-editor.label-wrap-text', 'Wrap text')}>
-        <Switch value={cellOptions.wrapText} onChange={onWrapTextChange} />
-      </Field>
+      <AutoCellOptionsEditor cellOptions={cellOptions} onChange={onChange} />
     </>
   );
 };

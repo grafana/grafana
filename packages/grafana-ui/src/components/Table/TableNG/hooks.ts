@@ -18,6 +18,7 @@ import {
   GetMaxWrapCellOptions,
   getMaxWrapCell,
   getCellLinks,
+  shouldTextWrap,
 } from './utils';
 
 // Helper function to get displayed value
@@ -463,7 +464,7 @@ export function useRowHeight({
         }
 
         const cellOptions = getCellOptions(field);
-        const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
+        const wrapText = shouldTextWrap(field);
         const type = cellOptions.type;
         const result = !!wrapText && type !== TableCellDisplayMode.Image;
         if (result === true) {

@@ -62,6 +62,7 @@ import {
   isCellInspectEnabled,
   getCellLinks,
   withDataLinksActionsTooltip,
+  getMaxWrappedLines,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -299,6 +300,7 @@ export function TableNG(props: TableNGProps) {
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
 
         result.colsWithTooltip[displayName] = withTooltip;
+        const maxWrappedLines = getMaxWrappedLines(field);
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
@@ -322,7 +324,7 @@ export function TableNG(props: TableNGProps) {
             colors = {};
           }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors);
+          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors, maxWrappedLines);
 
           return (
             <Cell
@@ -830,7 +832,8 @@ const getCellStyles = (
   shouldWrap: boolean,
   shouldOverflow: boolean,
   hasTooltip: boolean,
-  colors: CellColors
+  colors: CellColors,
+  maxWrappedLines?: number,
 ) => {
   return {
     cell: css({
@@ -843,6 +846,17 @@ const getCellStyles = (
       minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
       ...(shouldWrap && { whiteSpace: 'pre-line' }),
       ...(hasTooltip && { cursor: 'pointer' }),
+      ...(maxWrappedLines && {
+        // height properties need to override the default settings.
+        height: 'auto',
+        maxHeight: maxWrappedLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2,
+        minHeight: undefined,
+        // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
+        display: '-webkit-box',
+        '-webkit-line-clamp': String(maxWrappedLines),
+        '-webkit-box-orient': 'vertical',
+        overflowY: 'hidden',
+      }),
       '&:last-child': {
         borderInlineEnd: 'none',
       },
