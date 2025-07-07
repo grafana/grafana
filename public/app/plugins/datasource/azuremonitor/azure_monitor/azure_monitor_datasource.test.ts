@@ -13,7 +13,7 @@ import {
   Location,
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
-} from '../types';
+} from '../types/types';
 
 // We want replace to just return the value as is in general/
 // We declare this as a function so that we can overwrite it in each test
