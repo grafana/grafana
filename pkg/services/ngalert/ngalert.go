@@ -285,6 +285,17 @@ func (ng *AlertNG) init() error {
 		overrides = append(overrides, override)
 	}
 
+	notificationHistorian, err := configureNotificationHistorian(
+		initCtx,
+		ng.Cfg.UnifiedAlerting.NotificationHistory,
+		ng.Metrics.GetNotificationHistorianMetrics(),
+		ng.Log,
+		ng.tracer,
+	)
+	if err != nil {
+		return err
+	}
+
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 	moa, err := notifier.NewMultiOrgAlertmanager(
@@ -300,6 +311,7 @@ func (ng *AlertNG) init() error {
 		moaLogger,
 		ng.SecretsService,
 		ng.FeatureToggles,
+		notificationHistorian,
 		overrides...,
 	)
 	if err != nil {
@@ -716,6 +728,44 @@ func configureHistorianBackend(
 	}
 
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
+}
+
+func configureNotificationHistorian(
+	ctx context.Context,
+	cfg setting.UnifiedAlertingNotificationHistorySettings,
+	//ar annotations.Repository,
+	//ds dashboards.DashboardService,
+	//rs historian.RuleStore,
+	met *metrics.NotificationHistorian,
+	l log.Logger,
+	tracer tracing.Tracer,
+	// ac historian.AccessControl,
+	// datasourceService datasources.DataSourceService,
+	// httpClientProvider httpclient.Provider,
+	// pluginContextProvider *plugincontext.Provider,
+	// clock clock.Clock,
+	// mw *metrics.RemoteWriter,
+) (*notifier.NotificationHistorian, error) {
+	if !cfg.Enabled {
+		met.Info.Set(0)
+		return nil, nil
+	}
+
+	met.Info.Set(1)
+	lcfg, err := notifier.NewLokiConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
+	}
+	req := lokiclient.NewRequester()
+	logger := log.New("ngalert.notifier.historian").FromContext(ctx)
+	notificationHistorian := notifier.NewNotificationHistorian(logger, lcfg, req, met, tracer)
+
+	testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelFunc()
+	if err := notificationHistorian.TestConnection(testConnCtx); err != nil {
+		l.Error("Failed to communicate with configured remote Loki backend, notification history may not be persisted", "error", err)
+	}
+	return notificationHistorian, nil
 }
 
 func createRemoteAlertmanager(ctx context.Context, cfg remote.AlertmanagerConfig, kvstore kvstore.KVStore, crypto remote.Crypto, autogenFn remote.AutogenFn, m *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*remote.Alertmanager, error) {
