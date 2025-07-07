@@ -90,6 +90,12 @@ This collapsible section provides more details about which checks have been perf
 Click the cogwheel in this section to access Grafana Advisor settings, where you can enable or disable checks according to your preferences.
 {{< /admonition >}}
 
+### Enable LLM suggestions
+
+If the [Grafana LLM app](https://grafana.com/grafana/plugins/grafana-llm-app/) is installed, the Advisor can use it to generate suggestions for issues. Once enabled, click the magic (✨) button to generate a suggestion for an issue.
+
+![<Grafana Advisor - LLM suggestions>](/media/docs/grafana-advisor/llm-suggestions.png)
+
 ## Address issues
 
 To resolve issues flagged by Grafana Advisor and maintain system reliability, follow the best practices below. Regularly check the Advisor to keep your Grafana instance secure and up to date.
