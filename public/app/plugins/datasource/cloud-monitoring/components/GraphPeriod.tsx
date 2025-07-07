@@ -4,7 +4,7 @@ import { Stack, Switch } from '@grafana/ui';
 
 import { GRAPH_PERIODS } from '../constants';
 
-import { PeriodSelect } from './index';
+import { PeriodSelect } from './PeriodSelect';
 
 export interface Props {
   refId: string;

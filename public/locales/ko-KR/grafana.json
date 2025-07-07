@@ -352,6 +352,10 @@
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "활성 타이밍"
     },
+    "ad": {
+      "close": "",
+      "learn-more": ""
+    },
     "add-button": {
       "add-more": "더 추가하기"
     },
@@ -1519,8 +1523,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "시작하기",
       "label-insights": "인사이트",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "경고"
     },
     "import-to-gma": {
@@ -3877,6 +3893,7 @@
     "tooltip": "닫기"
   },
   "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "옵션을 불러오는 중에 오류가 발생했습니다."
@@ -8330,6 +8347,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8353,7 +8382,6 @@
       "label-wrap-lines": "줄 바꿈"
     },
     "log-details": {
-      "close": "로그 세부 정보 닫기",
       "fields": "필드",
       "links": "링크",
       "log-line": "로그 라인",
@@ -8378,6 +8406,35 @@
       "show-less": "접기",
       "show-more": "더 보기",
       "tooltip-error": "오류: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "링크를 로그 라인에 복사",
@@ -8505,6 +8562,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "데이터 링크",
       "aria-label-fields": "필드",
+      "aria-label-line": "",
       "aria-label-log-level": "로그 수준",
       "aria-label-no-details": "세부 정보 없음"
     },
@@ -11353,6 +11411,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "이미지를 표시할 수 없거나 화면 리더를 이용하는 사용자를 위해 표시되는 대체 텍스트",
       "description-title-text": "이미지에 커서를 가져갔을 때 표시되는 텍스트",
@@ -11373,6 +11432,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

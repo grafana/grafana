@@ -352,6 +352,10 @@
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "アクティブタイミング"
     },
+    "ad": {
+      "close": "",
+      "learn-more": ""
+    },
     "add-button": {
       "add-more": "さらに追加"
     },
@@ -1519,8 +1523,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "開始する",
       "label-insights": "インサイト",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "アラート"
     },
     "import-to-gma": {
@@ -3877,6 +3893,7 @@
     "tooltip": "閉じる"
   },
   "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "オプションの読み込み中にエラーが発生しました。"
@@ -8330,6 +8347,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8353,7 +8382,6 @@
       "label-wrap-lines": "行を折り返す"
     },
     "log-details": {
-      "close": "ログの詳細を閉じる",
       "fields": "フィールド",
       "links": "リンク",
       "log-line": "ログ行",
@@ -8378,6 +8406,35 @@
       "show-less": "表示を減らす",
       "show-more": "さらに表示する",
       "tooltip-error": "エラー：{{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "ログ行へのリンクをコピー",
@@ -8505,6 +8562,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "データリンク",
       "aria-label-fields": "フィールド",
+      "aria-label-line": "",
       "aria-label-log-level": "ログレベル",
       "aria-label-no-details": "詳細なし"
     },
@@ -11353,6 +11411,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "画像が表示できない場合やスクリーンリーダーを使用するユーザーのために表示される代替テキスト",
       "description-title-text": "画像にカーソルを合わせたときに表示されるテキスト",
@@ -11373,6 +11432,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
