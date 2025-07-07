@@ -443,42 +443,10 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	}
 
 	var foldersWithMatchingTitles []string
-	if len(strings.TrimSpace(query.SearchString)) > 0 {
-		searchQuery := folder.SearchFoldersQuery{
-			OrgID:        signedInUser.GetOrgID(),
-			Title:        query.SearchString,
-			SignedInUser: signedInUser,
-		}
-
-		folderHits, err := l.folderService.SearchFolders(c, searchQuery)
-		if err != nil {
-			if strings.Contains(err.Error(), "cannot be called on the legacy folder service") {
-				// Fallback to GetFolders
-				fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
-					OrgID:        signedInUser.GetOrgID(),
-					SignedInUser: signedInUser,
-				})
-				if err != nil {
-					return model.LibraryElementSearchResult{}, err
-				}
-				foldersWithMatchingTitles = make([]string, 0, len(fs))
-				for _, f := range fs {
-					if strings.Contains(strings.ToLower(f.Title), strings.ToLower(query.SearchString)) {
-						foldersWithMatchingTitles = append(foldersWithMatchingTitles, f.UID)
-					}
-				}
-			} else {
-				return model.LibraryElementSearchResult{}, err
-			}
-		} else {
-			// SearchFolders succeeded
-			foldersWithMatchingTitles = make([]string, 0, len(folderHits))
-			for _, hit := range folderHits {
-				foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
-			}
-		}
+	foldersWithMatchingTitles, err = getFoldersWithMatchingTitles(c, l, signedInUser, query)
+	if err != nil {
+		return model.LibraryElementSearchResult{}, err
 	}
-
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		builder := db.NewSqlBuilder(l.Cfg, l.features, l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		if folderFilter.includeGeneralFolder {
@@ -497,7 +465,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", le.folder_uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
-		builder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		builder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &builder)
 		writeSearchStringSQL(query, l.SQLStore, &builder, foldersWithMatchingTitles)
@@ -577,7 +544,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		if folderFilter.includeGeneralFolder {
 			countBuilder.Write(selectLibraryElementDTOWithMeta)
 			countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
-			countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 			countBuilder.Write(` WHERE le.org_id=? AND le.folder_id=0`, signedInUser.GetOrgID())
 			writeKindSQL(query, &countBuilder)
 			writeSearchStringSQL(query, l.SQLStore, &countBuilder, foldersWithMatchingTitles)
@@ -589,7 +555,6 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		}
 		countBuilder.Write(selectLibraryElementDTOWithMeta)
 		countBuilder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
-		countBuilder.Write(" LEFT JOIN folder f ON le.folder_uid = f.uid AND le.org_id = f.org_id")
 		countBuilder.Write(` WHERE le.org_id=? AND le.folder_id<>0`, signedInUser.GetOrgID())
 		writeKindSQL(query, &countBuilder)
 		writeSearchStringSQL(query, l.SQLStore, &countBuilder, foldersWithMatchingTitles)
@@ -986,4 +951,44 @@ func contains(slice []string, element string) bool {
 		}
 	}
 	return false
+}
+
+func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) ([]string, error) {
+	var foldersWithMatchingTitles []string
+	if len(strings.TrimSpace(query.SearchString)) > 0 {
+		searchQuery := folder.SearchFoldersQuery{
+			OrgID:        signedInUser.GetOrgID(),
+			Title:        query.SearchString,
+			SignedInUser: signedInUser,
+		}
+
+		if l.features.IsEnabled(c, featuremgmt.FlagKubernetesClientDashboardsFolders) {
+			folderHits, err := l.folderService.SearchFolders(c, searchQuery)
+
+			if err != nil {
+				return nil, err
+			}
+			foldersWithMatchingTitles = make([]string, 0, len(folderHits))
+			for _, hit := range folderHits {
+				foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
+			}
+		} else {
+			// Fallback to GetFolders
+			fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
+				OrgID:        signedInUser.GetOrgID(),
+				SignedInUser: signedInUser,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			foldersWithMatchingTitles = make([]string, 0, len(fs))
+			for _, f := range fs {
+				if strings.Contains(strings.ToLower(f.Title), strings.ToLower(query.SearchString)) {
+					foldersWithMatchingTitles = append(foldersWithMatchingTitles, f.UID)
+				}
+			}
+		}
+	}
+	return foldersWithMatchingTitles, nil
 }
