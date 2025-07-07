@@ -7,8 +7,6 @@ package server
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/clientauth/middleware"
-	"github.com/grafana/grafana/pkg/clientauth/signer"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
@@ -131,8 +129,6 @@ var wireExtsBasicSet = wire.NewSet(
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
-	signer.ProvideAccessTokenSigner,
-	middleware.ProvideCloudAccessPolicyTokenSignerMiddlewareProvider,
 )
 
 var wireExtsSet = wire.NewSet(
