@@ -540,10 +540,11 @@ export function TableNG(props: TableNGProps) {
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
-        onCellClick={(args, { clientX, clientY, preventGridDefault }) => {
+        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
           let frame = data;
-          let field = (args.column as unknown as TableColumn).field as Field;
-          let rowIdx = args.row.__index;
+          let rowIdx = row.__index;
+          // Note: could be column.field; JS says yes, but TS says no!
+          let field = columns[column.idx].field;
 
           let stuffCount = (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0);
 
