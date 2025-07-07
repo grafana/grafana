@@ -14,6 +14,7 @@ import TileSource from 'ol/source/Tile';
 import VectorSource from 'ol/source/Vector';
 
 import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getColorDimension } from 'app/features/dimensions/color';
 import { getScalarDimension } from 'app/features/dimensions/scalar';
@@ -132,13 +133,13 @@ export const notifyPanelEditor = (geomapPanel: GeomapPanel, layers: MapLayerStat
 export const getNextLayerName = (panel: GeomapPanel) => {
   let idx = panel.layers.length; // since basemap is 0, this looks right
   while (true && idx < 100) {
-    const name = `Layer ${idx++}`;
+    const name = t('geomap.utils.get-next-layer-name', 'Layer {{name}}', { name: idx++ });
     if (!panel.byName.has(name)) {
       return name;
     }
   }
 
-  return `Layer ${Date.now()}`;
+  return t('geomap.utils.get-next-layer-name', 'Layer {{name}}', { name: Date.now() });
 };
 
 export function isSegmentVisible(
