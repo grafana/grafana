@@ -6,27 +6,19 @@
 //          0
 //      ],
 //      "custom": {
-//          "resultType": "exemplar"
-//      }
+//          "calculatedMinStep": 15000
+//      },
+//      "executedQueryString": "Expr: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))\nStep: 15s"
 //  }
-//  Name: exemplar
-//  Dimensions: 14 Fields by 62 Rows
-//  +-----------------------------------+-----------------+--------------------------------------------+----------------+-------------------+-------------------+----------------+----------------+--------------------+----------------+------------------+-----------------+-------------------+----------------------------------+
-//  | Name: Time                        | Name: Value     | Name: __name__                             | Name: group    | Name: http_method | Name: http_target | Name: instance | Name: le       | Name: service      | Name: source   | Name: span_kind  | Name: span_name | Name: span_status | Name: traceID                    |
-//  | Labels:                           | Labels:         | Labels:                                    | Labels:        | Labels:           | Labels:           | Labels:        | Labels:        | Labels:            | Labels:        | Labels:          | Labels:         | Labels:           | Labels:                          |
-//  | Type: []time.Time                 | Type: []float64 | Type: []string                             | Type: []string | Type: []string    | Type: []string    | Type: []string | Type: []string | Type: []string     | Type: []string | Type: []string   | Type: []string  | Type: []string    | Type: []string                   |
-//  +-----------------------------------+-----------------+--------------------------------------------+----------------+-------------------+-------------------+----------------+----------------+--------------------+----------------+------------------+-----------------+-------------------+----------------------------------+
-//  | 2022-06-01 12:28:31.809 +0000 UTC | 0.001162        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.002          | mythical-server    | tempo          | SPAN_KIND_CLIENT | pg.query:INSERT | STATUS_CODE_ERROR | 94809f37ec6cc984f2eb2b14a9f8036e |
-//  | 2022-06-01 12:28:36.81 +0000 UTC  | 0.134971        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.256          | mythical-requester | tempo          | SPAN_KIND_CLIENT | requester       | STATUS_CODE_OK    | 46e15ae41852149068aeb26c64643c29 |
-//  | 2022-06-01 12:28:36.81 +0000 UTC  | 0.090381        | traces_spanmetrics_duration_seconds_bucket | mythical       | POST              | /loki/api/v1/push | f1c32fe505c3   | 0.128          | mythical-server    | tempo          | SPAN_KIND_CLIENT | HTTP POST       | STATUS_CODE_OK    | 46e15ae41852149068aeb26c64643c29 |
-//  | 2022-06-01 12:28:36.81 +0000 UTC  | 0.029188        | traces_spanmetrics_duration_seconds_bucket | mythical       | GET               | /manticore        | f1c32fe505c3   | 0.032          | mythical-server    | tempo          | SPAN_KIND_SERVER | GET /:endpoint  | STATUS_CODE_OK    | 1e58dc2083eceb454846f9ab343a79ff |
-//  | 2022-06-01 12:28:41.809 +0000 UTC | 0.05719         | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.064          | mythical-requester | tempo          | SPAN_KIND_CLIENT | requester       | STATUS_CODE_OK    | d6ff032e85e6e5719a1f6b923042765f |
-//  | 2022-06-01 12:28:46.809 +0000 UTC | 0.071953        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.128          | mythical-requester | tempo          | SPAN_KIND_CLIENT | requester       | STATUS_CODE_OK    | b12280a11924d98f7001f9b03779c6bc |
-//  | 2022-06-01 12:28:46.809 +0000 UTC | 0.041812        | traces_spanmetrics_duration_seconds_bucket | mythical       | GET               | /unicorn          | f1c32fe505c3   | 0.064          | mythical-server    | tempo          | SPAN_KIND_SERVER | GET /:endpoint  | STATUS_CODE_OK    | b12280a11924d98f7001f9b03779c6bc |
-//  | 2022-06-01 12:28:56.809 +0000 UTC | 0.013244        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.016          | mythical-requester | tempo          | SPAN_KIND_CLIENT | log_to_loki     | STATUS_CODE_OK    | 43cd491719146ad9c706d73b4870512c |
-//  | 2022-06-01 12:29:06.809 +0000 UTC | 0.070504        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.128          | mythical-requester | tempo          | SPAN_KIND_CLIENT | requester       | STATUS_CODE_OK    | e08c737b2dc96959a8dda2cb76c91de7 |
-//  | ...                               | ...             | ...                                        | ...            | ...               | ...               | ...            | ...            | ...                | ...            | ...              | ...             | ...               | ...                              |
-//  +-----------------------------------+-----------------+--------------------------------------------+----------------+-------------------+-------------------+----------------+----------------+--------------------+----------------+------------------+-----------------+-------------------+----------------------------------+
+//  Name: 
+//  Dimensions: 3 Fields by 1 Rows
+//  +-----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------+
+//  | Name: Time                        | Name: traces_spanmetrics_duration_seconds_bucket                                                                                                                                                                                                                                    | Name: traceID                    |
+//  | Labels:                           | Labels: __name__=traces_spanmetrics_duration_seconds_bucket, group=mythical, http_method=DELETE, http_target=/beholder, instance=f1c32fe505c3, le=0.002, service=mythical-server, source=tempo, span_kind=SPAN_KIND_SERVER, span_name=DELETE /:endpoint, span_status=STATUS_CODE_OK | Labels:                          |
+//  | Type: []time.Time                 | Type: []float64                                                                                                                                                                                                                                                                     | Type: []string                   |
+//  +-----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------+
+//  | 2022-06-01 12:29:01.809 +0000 UTC | 0.001117                                                                                                                                                                                                                                                                            | 7b46b8c92ab746e7b0d245c28b960423 |
+//  +-----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------+
 //  
 //  
 //  
@@ -59,10 +51,131 @@
 //  +-----------------------------------+-----------------+--------------------------------------------+----------------+-------------------+-------------------+----------------+----------------+--------------------+----------------+------------------+-----------------+-------------------+----------------------------------+
 //  
 //  
+//  
+//  Frame[2] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "calculatedMinStep": 15000
+//      },
+//      "executedQueryString": "Expr: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))\nStep: 15s"
+//  }
+//  Name: 
+//  Dimensions: 3 Fields by 1 Rows
+//  +-----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------+
+//  | Name: Time                        | Name: traces_spanmetrics_duration_seconds_bucket                                                                                                                                                                                                                                    | Name: traceID                    |
+//  | Labels:                           | Labels: __name__=traces_spanmetrics_duration_seconds_bucket, group=mythical, http_method=DELETE, http_target=/beholder, instance=f1c32fe505c3, le=0.002, service=mythical-server, source=tempo, span_kind=SPAN_KIND_SERVER, span_name=DELETE /:endpoint, span_status=STATUS_CODE_OK | Labels:                          |
+//  | Type: []time.Time                 | Type: []float64                                                                                                                                                                                                                                                                     | Type: []string                   |
+//  +-----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------+
+//  | 2022-06-01 12:29:01.809 +0000 UTC | 0.001117                                                                                                                                                                                                                                                                            | 7b46b8c92ab746e7b0d245c28b960423 |
+//  +-----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------------+
+//  
+//  
+//  
+//  Frame[3] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "exemplar"
+//      }
+//  }
+//  Name: exemplar
+//  Dimensions: 14 Fields by 62 Rows
+//  +-----------------------------------+-----------------+--------------------------------------------+----------------+-------------------+-------------------+----------------+----------------+--------------------+----------------+------------------+-----------------+-------------------+----------------------------------+
+//  | Name: Time                        | Name: Value     | Name: __name__                             | Name: group    | Name: http_method | Name: http_target | Name: instance | Name: le       | Name: service      | Name: source   | Name: span_kind  | Name: span_name | Name: span_status | Name: traceID                    |
+//  | Labels:                           | Labels:         | Labels:                                    | Labels:        | Labels:           | Labels:           | Labels:        | Labels:        | Labels:            | Labels:        | Labels:          | Labels:         | Labels:           | Labels:                          |
+//  | Type: []time.Time                 | Type: []float64 | Type: []string                             | Type: []string | Type: []string    | Type: []string    | Type: []string | Type: []string | Type: []string     | Type: []string | Type: []string   | Type: []string  | Type: []string    | Type: []string                   |
+//  +-----------------------------------+-----------------+--------------------------------------------+----------------+-------------------+-------------------+----------------+----------------+--------------------+----------------+------------------+-----------------+-------------------+----------------------------------+
+//  | 2022-06-01 12:28:31.809 +0000 UTC | 0.001162        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.002          | mythical-server    | tempo          | SPAN_KIND_CLIENT | pg.query:INSERT | STATUS_CODE_ERROR | 94809f37ec6cc984f2eb2b14a9f8036e |
+//  | 2022-06-01 12:28:36.81 +0000 UTC  | 0.134971        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.256          | mythical-requester | tempo          | SPAN_KIND_CLIENT | requester       | STATUS_CODE_OK    | 46e15ae41852149068aeb26c64643c29 |
+//  | 2022-06-01 12:28:36.81 +0000 UTC  | 0.090381        | traces_spanmetrics_duration_seconds_bucket | mythical       | POST              | /loki/api/v1/push | f1c32fe505c3   | 0.128          | mythical-server    | tempo          | SPAN_KIND_CLIENT | HTTP POST       | STATUS_CODE_OK    | 46e15ae41852149068aeb26c64643c29 |
+//  | 2022-06-01 12:28:36.81 +0000 UTC  | 0.029188        | traces_spanmetrics_duration_seconds_bucket | mythical       | GET               | /manticore        | f1c32fe505c3   | 0.032          | mythical-server    | tempo          | SPAN_KIND_SERVER | GET /:endpoint  | STATUS_CODE_OK    | 1e58dc2083eceb454846f9ab343a79ff |
+//  | 2022-06-01 12:28:41.809 +0000 UTC | 0.05719         | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.064          | mythical-requester | tempo          | SPAN_KIND_CLIENT | requester       | STATUS_CODE_OK    | d6ff032e85e6e5719a1f6b923042765f |
+//  | 2022-06-01 12:28:46.809 +0000 UTC | 0.071953        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.128          | mythical-requester | tempo          | SPAN_KIND_CLIENT | requester       | STATUS_CODE_OK    | b12280a11924d98f7001f9b03779c6bc |
+//  | 2022-06-01 12:28:46.809 +0000 UTC | 0.041812        | traces_spanmetrics_duration_seconds_bucket | mythical       | GET               | /unicorn          | f1c32fe505c3   | 0.064          | mythical-server    | tempo          | SPAN_KIND_SERVER | GET /:endpoint  | STATUS_CODE_OK    | b12280a11924d98f7001f9b03779c6bc |
+//  | 2022-06-01 12:28:56.809 +0000 UTC | 0.013244        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.016          | mythical-requester | tempo          | SPAN_KIND_CLIENT | log_to_loki     | STATUS_CODE_OK    | 43cd491719146ad9c706d73b4870512c |
+//  | 2022-06-01 12:29:06.809 +0000 UTC | 0.070504        | traces_spanmetrics_duration_seconds_bucket | mythical       |                   |                   | f1c32fe505c3   | 0.128          | mythical-requester | tempo          | SPAN_KIND_CLIENT | requester       | STATUS_CODE_OK    | e08c737b2dc96959a8dda2cb76c91de7 |
+//  | ...                               | ...             | ...                                        | ...            | ...               | ...               | ...            | ...            | ...                | ...            | ...              | ...             | ...               | ...                              |
+//  +-----------------------------------+-----------------+--------------------------------------------+----------------+-------------------+-------------------+----------------+----------------+--------------------+----------------+------------------+-----------------+-------------------+----------------------------------+
+//  
+//  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
   "status": 200,
   "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "calculatedMinStep": 15000
+          },
+          "executedQueryString": "Expr: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))\nStep: 15s"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "interval": 15000
+            }
+          },
+          {
+            "name": "traces_spanmetrics_duration_seconds_bucket",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "__name__": "traces_spanmetrics_duration_seconds_bucket",
+              "group": "mythical",
+              "http_method": "DELETE",
+              "http_target": "/beholder",
+              "instance": "f1c32fe505c3",
+              "le": "0.002",
+              "service": "mythical-server",
+              "source": "tempo",
+              "span_kind": "SPAN_KIND_SERVER",
+              "span_name": "DELETE /:endpoint",
+              "span_status": "STATUS_CODE_OK"
+            },
+            "config": {
+              "displayNameFromDS": "traces_spanmetrics_duration_seconds_bucket{group=\"mythical\", http_method=\"DELETE\", http_target=\"/beholder\", instance=\"f1c32fe505c3\", le=\"0.002\", service=\"mythical-server\", source=\"tempo\", span_kind=\"SPAN_KIND_SERVER\", span_name=\"DELETE /:endpoint\", span_status=\"STATUS_CODE_OK\"}"
+            }
+          },
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1654086541809
+          ],
+          [
+            0.001117
+          ],
+          [
+            "7b46b8c92ab746e7b0d245c28b960423"
+          ]
+        ]
+      }
+    },
     {
       "schema": {
         "name": "exemplar",
@@ -1073,6 +1186,75 @@
             "a11a727138a3de7ca030687340bd19b0",
             "a11c1d3d300f07b1e5d688e96069f76b",
             "83bf586cc62842c3187106bb40a6793d"
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "calculatedMinStep": 15000
+          },
+          "executedQueryString": "Expr: histogram_quantile(0.99, sum(rate(traces_spanmetrics_duration_seconds_bucket[15s])) by (le))\nStep: 15s"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "interval": 15000
+            }
+          },
+          {
+            "name": "traces_spanmetrics_duration_seconds_bucket",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "__name__": "traces_spanmetrics_duration_seconds_bucket",
+              "group": "mythical",
+              "http_method": "DELETE",
+              "http_target": "/beholder",
+              "instance": "f1c32fe505c3",
+              "le": "0.002",
+              "service": "mythical-server",
+              "source": "tempo",
+              "span_kind": "SPAN_KIND_SERVER",
+              "span_name": "DELETE /:endpoint",
+              "span_status": "STATUS_CODE_OK"
+            },
+            "config": {
+              "displayNameFromDS": "traces_spanmetrics_duration_seconds_bucket{group=\"mythical\", http_method=\"DELETE\", http_target=\"/beholder\", instance=\"f1c32fe505c3\", le=\"0.002\", service=\"mythical-server\", source=\"tempo\", span_kind=\"SPAN_KIND_SERVER\", span_name=\"DELETE /:endpoint\", span_status=\"STATUS_CODE_OK\"}"
+            }
+          },
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1654086541809
+          ],
+          [
+            0.001117
+          ],
+          [
+            "7b46b8c92ab746e7b0d245c28b960423"
           ]
         ]
       }
