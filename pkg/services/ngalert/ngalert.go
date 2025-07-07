@@ -412,7 +412,7 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService))
 	receiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false),
 		configStore,

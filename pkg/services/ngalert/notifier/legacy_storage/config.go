@@ -9,6 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+type crypto interface {
+	EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+	DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error
+}
+
 type amConfigStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
@@ -31,9 +36,17 @@ type ConfigRevision struct {
 	ConcurrencyToken string
 	Version          string
 }
+type alertmanagerConfigStoreImpl struct {
+	store  amConfigStore
+	crypto crypto
+}
 
-func getLastConfiguration(ctx context.Context, orgID int64, store amConfigStore) (*ConfigRevision, error) {
-	alertManagerConfig, err := store.GetLatestAlertmanagerConfiguration(ctx, orgID)
+func NewAlertmanagerConfigStore(store amConfigStore, crypto crypto) *alertmanagerConfigStoreImpl {
+	return &alertmanagerConfigStoreImpl{store: store, crypto: crypto}
+}
+
+func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {
+	alertManagerConfig, err := a.store.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -48,6 +61,11 @@ func getLastConfiguration(ctx context.Context, orgID int64, store amConfigStore)
 		return nil, err
 	}
 
+	err = a.crypto.DecryptExtraConfigs(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt extra configurations: %w", err)
+	}
+
 	return &ConfigRevision{
 		Config:           cfg,
 		ConcurrencyToken: concurrencyToken,
@@ -55,38 +73,21 @@ func getLastConfiguration(ctx context.Context, orgID int64, store amConfigStore)
 	}, nil
 }
 
-type alertmanagerConfigStoreImpl struct {
-	store amConfigStore
-}
-
-func NewAlertmanagerConfigStore(store amConfigStore) *alertmanagerConfigStoreImpl {
-	return &alertmanagerConfigStoreImpl{store: store}
-}
-
-func (a alertmanagerConfigStoreImpl) Get(ctx context.Context, orgID int64) (*ConfigRevision, error) {
-	return getLastConfiguration(ctx, orgID, a.store)
-}
-
 func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigRevision, orgID int64) error {
+	err := a.crypto.EncryptExtraConfigs(ctx, revision.Config)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt extra configurations: %w", err)
+	}
+
 	serialized, err := SerializeAlertmanagerConfig(*revision.Config)
 	if err != nil {
 		return err
 	}
-	cmd := models.SaveAlertmanagerConfigurationCmd{
+	return a.store.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(serialized),
 		ConfigurationVersion:      revision.Version,
 		FetchedConfigurationHash:  revision.ConcurrencyToken,
 		Default:                   false,
 		OrgID:                     orgID,
-	}
-	return a.PersistConfig(ctx, &cmd)
-}
-
-// PersistConfig validates to config before eventually persisting it if no error occurs
-func (a alertmanagerConfigStoreImpl) PersistConfig(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	cfg := &definitions.PostableUserConfig{}
-	if err := json.Unmarshal([]byte(cmd.AlertmanagerConfiguration), cfg); err != nil {
-		return fmt.Errorf("change would result in an invalid configuration state: %w", err)
-	}
-	return a.store.UpdateAlertmanagerConfiguration(ctx, cmd)
+	})
 }
