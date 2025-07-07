@@ -174,7 +174,7 @@ interface TransformationsGridProps {
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
   const styles = useStyles2(getTransformationGridStyles);
-  const { t } = useTheme2();
+
   return (
     <div className={styles.grid}>
       {transformations.map((transform) => {
