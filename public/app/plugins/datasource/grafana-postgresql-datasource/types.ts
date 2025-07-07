@@ -11,7 +11,11 @@ export enum PostgresTLSMethods {
   filePath = 'file-path',
   fileContent = 'file-content',
 }
+
+export type PostgresConnectionType = 'default' | 'connectionString';
+
 export interface PostgresOptions extends SQLOptions {
+  connectionType: PostgresConnectionType;
   tlsConfigurationMethod?: PostgresTLSMethods;
   sslmode?: PostgresTLSModes;
   sslRootCertFile?: string;
@@ -24,4 +28,5 @@ export interface PostgresOptions extends SQLOptions {
 
 export interface SecureJsonData {
   password?: string;
+  connectionString?: string;
 }

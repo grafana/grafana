@@ -17,6 +17,7 @@ import {
   SecretInput,
   Field,
   Tooltip,
+  RadioButtonGroup,
   Label,
   Icon,
   Switch,
@@ -24,7 +25,13 @@ import {
   Collapse,
 } from '@grafana/ui';
 
-import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
+import {
+  PostgresConnectionType,
+  PostgresOptions,
+  PostgresTLSMethods,
+  PostgresTLSModes,
+  SecureJsonData,
+} from '../types';
 
 import { useAutoDetectFeatures } from './useAutoDetectFeatures';
 
@@ -58,6 +65,10 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
     updateDatasourcePluginResetOption(props, 'password');
   };
 
+  const onResetConnectionString = () => {
+    updateDatasourcePluginResetOption(props, 'connectionString');
+  };
+
   const tlsModes: Array<SelectableValue<PostgresTLSModes>> = [
     { value: PostgresTLSModes.disable, label: 'disable' },
     { value: PostgresTLSModes.require, label: 'require' },
@@ -80,6 +91,13 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
     updateDatasourcePluginJsonDataOption(props, 'timescaledb', event.currentTarget.checked);
   };
 
+  const onConnectionTypeChanged = (connectionType: PostgresConnectionType) => {
+    updateDatasourcePluginJsonDataOption(props, 'connectionType', connectionType);
+    if (connectionType === 'connectionString') {
+      onOptionsChange({ ...options, url: options.url || 'localhost:5432', jsonData: { ...jsonData, connectionType } });
+    }
+  };
+
   const onDSOptionChanged = (property: keyof PostgresOptions) => {
     return (event: SyntheticEvent<HTMLInputElement>) => {
       onOptionsChange({ ...options, ...{ [property]: event.currentTarget.value } });
@@ -87,6 +105,8 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
   };
 
   const WIDTH_LONG = 40;
+
+  const EXAMPLE_CONNECTION_STRING = 'postgresql://username:password@localhost:5432/database_name?connect_timeout=10';
 
   return (
     <>
@@ -110,49 +130,91 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
       <Divider />
 
       <ConfigSection title="Connection">
-        <Field label="Host URL" required>
-          <Input
-            width={WIDTH_LONG}
-            name="host"
-            type="text"
-            value={options.url || ''}
-            placeholder="localhost:5432"
-            onChange={onDSOptionChanged('url')}
+        <Field label="Connection Type" noMargin={false}>
+          <RadioButtonGroup<PostgresConnectionType>
+            value={jsonData.connectionType || 'default'}
+            options={[
+              { value: 'default', label: 'Default' },
+              { value: 'connectionString', label: 'Connection String' },
+            ]}
+            onChange={onConnectionTypeChanged}
           />
         </Field>
-
-        <Field label="Database name" required>
-          <Input
-            width={WIDTH_LONG}
-            name="database"
-            value={jsonData.database || ''}
-            placeholder="Database"
-            onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
-          />
-        </Field>
-      </ConfigSection>
-
-      <Divider />
-
-      <ConfigSection title="Authentication">
-        <Field label="Username" required>
-          <Input
-            width={WIDTH_LONG}
-            value={options.user || ''}
-            placeholder="Username"
-            onChange={onDSOptionChanged('user')}
-          />
-        </Field>
-
-        <Field label="Password" required>
-          <SecretInput
-            width={WIDTH_LONG}
-            placeholder="Password"
-            isConfigured={options.secureJsonFields && options.secureJsonFields.password}
-            onReset={onResetPassword}
-            onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
-          />
-        </Field>
+        {jsonData.connectionType === 'connectionString' && (
+          <Field
+            noMargin={false}
+            label={
+              <Label>
+                <EditorStack gap={0.5}>
+                  <span>Connection String</span>
+                  <Tooltip
+                    content={
+                      <span>
+                        Postgres connection string.
+                        <br />
+                        Example: "{EXAMPLE_CONNECTION_STRING}".
+                        <br />
+                        Note: Don't include the TLS/SSL related settings here. Use "TLS/SSL Auth Details" section
+                        instead.
+                      </span>
+                    }
+                  >
+                    <Icon name="info-circle" size="sm" />
+                  </Tooltip>
+                </EditorStack>
+              </Label>
+            }
+            required
+          >
+            <SecretInput
+              width={WIDTH_LONG}
+              placeholder={EXAMPLE_CONNECTION_STRING}
+              isConfigured={options.secureJsonFields && options.secureJsonFields.connectionString}
+              onReset={onResetConnectionString}
+              onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'connectionString')}
+            />
+          </Field>
+        )}
+        {jsonData.connectionType !== 'connectionString' && (
+          <>
+            <Field label="Host URL" required>
+              <Input
+                width={WIDTH_LONG}
+                name="host"
+                type="text"
+                value={options.url || ''}
+                placeholder="localhost:5432"
+                onChange={onDSOptionChanged('url')}
+              />
+            </Field>
+            <Field label="Database name" required>
+              <Input
+                width={WIDTH_LONG}
+                name="database"
+                value={jsonData.database || ''}
+                placeholder="Database"
+                onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
+              />
+            </Field>
+            <Field label="Username" required>
+              <Input
+                width={WIDTH_LONG}
+                value={options.user || ''}
+                placeholder="Username"
+                onChange={onDSOptionChanged('user')}
+              />
+            </Field>
+            <Field label="Password" required>
+              <SecretInput
+                width={WIDTH_LONG}
+                placeholder="Password"
+                isConfigured={options.secureJsonFields && options.secureJsonFields.password}
+                onReset={onResetPassword}
+                onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
+              />
+            </Field>
+          </>
+        )}
       </ConfigSection>
 
       <Divider />

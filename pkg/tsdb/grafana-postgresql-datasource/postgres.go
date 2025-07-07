@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -172,6 +173,26 @@ func escape(input string) string {
 
 func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	logger := s.logger
+	connStr, err := getInitialConnectionString(dsInfo, logger)
+	if err != nil {
+		return connStr, err
+	}
+	connStr, err = getTLSIncludedConnectionString(connStr, s.tlsManager, dsInfo, logger)
+	if err != nil {
+		return connStr, err
+	}
+	logger.Debug("Generated Postgres connection string successfully")
+	return connStr, nil
+}
+
+func getInitialConnectionString(dsInfo sqleng.DataSourceInfo, logger log.Logger) (string, error) {
+	if dsInfo.JsonData.ConnectionType == sqleng.ConnectionTypeConnectionString {
+		connStr := dsInfo.DecryptedSecureJSONData["connectionString"]
+		if connStr == "" {
+			return connStr, errors.New("Invalid/Empty connection string")
+		}
+		return connStr, nil
+	}
 	var host string
 	var port int
 	if strings.HasPrefix(dsInfo.URL, "/") {
@@ -216,8 +237,11 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
+	return connStr, nil
+}
 
-	tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
+func getTLSIncludedConnectionString(connStr string, tlsManager tlsSettingsProvider, dsInfo sqleng.DataSourceInfo, logger log.Logger) (string, error) {
+	tlsSettings, err := tlsManager.getTLSSettings(dsInfo)
 	if err != nil {
 		return "", err
 	}
@@ -246,7 +270,6 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 		return "", fmt.Errorf("TLS/SSL client certificate and key must both be specified")
 	}
 
-	logger.Debug("Generated Postgres connection string successfully")
 	return connStr, nil
 }
 
