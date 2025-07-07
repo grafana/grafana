@@ -13,13 +13,10 @@ import {
   MutableDataFrame,
   ScopedVars,
   toDataFrame,
-  urlUtil,
 } from '@grafana/data';
 import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import {
-  BackendSrvRequest,
   DataSourceWithBackend,
-  getBackendSrv,
   getTemplateSrv,
   TemplateSrv,
 } from '@grafana/runtime';
@@ -40,7 +37,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
   traceIdTimeParams?: TraceIdTimeParamsOptions;
   spanBar?: SpanBarOptions;
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
+    instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
@@ -138,21 +135,6 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
 
   getQueryDisplayText(query: JaegerQuery) {
     return query.query || '';
-  }
-
-  private _request(
-    apiUrl: string,
-    data?: Record<string, unknown>,
-    options?: Partial<BackendSrvRequest>
-  ): Observable<Record<string, any>> {
-    const params = data ? urlUtil.serializeParams(data) : '';
-    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
-    const req = {
-      ...options,
-      url,
-    };
-
-    return getBackendSrv().fetch(req);
   }
 }
 
