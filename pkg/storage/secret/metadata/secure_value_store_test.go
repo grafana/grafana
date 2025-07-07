@@ -129,7 +129,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "sv-test-2", readSecureValue.Name)
 
 		// Delete the secure value
-		err = secureValueStorage.Delete(ctx, xkube.Namespace("default"), "sv-test-2")
+		err = secureValueStorage.SetVersionToInactive(ctx, xkube.Namespace("default"), "sv-test-2", readSecureValue.Status.Version)
 		require.NoError(t, err)
 
 		// Try to read the deleted secure value - should return error

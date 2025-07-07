@@ -27,8 +27,6 @@ var (
 	sqlSecureValueRead             = mustTemplate("secure_value_read.sql")
 	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
 	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
-	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
-	sqlSecureValueUpdate           = mustTemplate("secure_value_update.sql")
 	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
 	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
 
@@ -198,18 +196,6 @@ func (r createSecureValue) Validate() error {
 	return nil // TODO
 }
 
-// Delete
-type deleteSecureValue struct {
-	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r deleteSecureValue) Validate() error {
-	return nil // TODO
-}
-
 // Update externalId
 type updateExternalIdSecureValue struct {
 	sqltemplate.SQLTemplate
@@ -221,31 +207,6 @@ type updateExternalIdSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r updateExternalIdSecureValue) Validate() error {
-	return nil // TODO
-}
-
-// Update secure value
-type updateSecureValue struct {
-	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
-	Row       *secureValueDB
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r updateSecureValue) Validate() error {
-	return nil // TODO
-}
-
-// update status message
-type updateStatusSecureValue struct {
-	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r updateStatusSecureValue) Validate() error {
 	return nil // TODO
 }
 

@@ -1,12 +1,10 @@
 package metadata
 
 import (
-	"os/exec"
 	"testing"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
-	"github.com/stretchr/testify/require"
 	"k8s.io/utils/ptr"
 )
 
@@ -219,66 +217,6 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlSecureValueDelete: {
-				{
-					Name: "delete",
-					Data: &deleteSecureValue{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Name:        "name",
-						Namespace:   "ns",
-					},
-				},
-			},
-			sqlSecureValueUpdate: {
-				{
-					Name: "update-null",
-					Data: &updateSecureValue{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Name:        "name",
-						Namespace:   "ns",
-						Row: &secureValueDB{
-							GUID:        "abc",
-							Name:        "name",
-							Namespace:   "ns",
-							Annotations: `{"x":"XXXX"}`,
-							Labels:      `{"a":"AAA", "b", "BBBB"}`,
-							Created:     1234,
-							CreatedBy:   "user:ryan",
-							Updated:     5678,
-							UpdatedBy:   "user:cameron",
-							Description: "description",
-							Keeper:      toNullString(nil),
-							Decrypters:  toNullString(nil),
-							Ref:         toNullString(nil),
-							ExternalID:  "extId",
-						},
-					},
-				},
-				{
-					Name: "update-not-null",
-					Data: &updateSecureValue{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Name:        "name",
-						Namespace:   "ns",
-						Row: &secureValueDB{
-							GUID:        "abc",
-							Name:        "name",
-							Namespace:   "ns",
-							Annotations: `{"x":"XXXX"}`,
-							Labels:      `{"a":"AAA", "b", "BBBB"}`,
-							Created:     1234,
-							CreatedBy:   "user:ryan",
-							Updated:     5678,
-							UpdatedBy:   "user:cameron",
-							Description: "description",
-							Keeper:      toNullString(ptr.To("keeper_test")),
-							Decrypters:  toNullString(ptr.To("decrypters_test")),
-							Ref:         toNullString(ptr.To("ref_test")),
-							ExternalID:  "extId",
-						},
-					},
-				},
-			},
 			sqlSecureValueUpdateExternalId: {
 				{
 					Name: "updateExternalId",
@@ -302,29 +240,4 @@ func TestSecureValueQueries(t *testing.T) {
 			},
 		},
 	})
-}
-
-func TestFoo(t *testing.T) {
-	const n = 10_000
-
-	for range n {
-		t.Run("", func(t *testing.T) {
-			t.Parallel()
-			cmd := exec.Command("curl", "-X", "POST", "-H", "Content-Type: application/yaml", "--data-binary", "@/Users/brunofelipefrancisco/dev/grafana/pkg/extensions/apiserver/tests/secret/testdata/secure-value-default-generate.yaml", "http://admin:admin@localhost:3000/apis/secret.grafana.app/v0alpha1/namespaces/default/securevalues")
-			require.NoError(t, cmd.Run())
-		})
-	}
-
-	// wg := sync.WaitGroup{}
-	// wg.Add(n)
-
-	// for range n {
-	// 	go func(wg *sync.WaitGroup) {
-	// 		defer wg.Done()
-	// 		cmd := exec.Command("curl", "-X", "POST", "-H", "Content-Type: application/yaml", "--data-binary", "@/Users/brunofelipefrancisco/dev/grafana/pkg/extensions/apiserver/tests/secret/testdata/secure-value-default-generate.yaml", "http://admin:admin@localhost:3000/apis/secret.grafana.app/v0alpha1/namespaces/default/securevalues")
-	// 		require.NoError(t, cmd.Run())
-	// 	}(&wg)
-	// }
-
-	// wg.Wait()
 }
