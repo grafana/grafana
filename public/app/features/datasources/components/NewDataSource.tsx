@@ -10,12 +10,9 @@ import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from '
 import { ROUTES } from '../../connections/constants';
 import { DataSourceCategories } from '../components/DataSourceCategories';
 import { DataSourceTypeCardList } from '../components/DataSourceTypeCardList';
-import {
-  useAddDatasource,
-  useLoadDataSourcePlugins,
-  getFilteredDataSourcePlugins,
-  setDataSourceTypeSearchQuery,
-} from '../state';
+import { useAddDatasource, useLoadDataSourcePlugins } from '../state/hooks';
+import { setDataSourceTypeSearchQuery } from '../state/reducers';
+import { getFilteredDataSourcePlugins } from '../state/selectors';
 
 export function NewDataSource() {
   useLoadDataSourcePlugins();

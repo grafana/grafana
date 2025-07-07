@@ -16,7 +16,7 @@ import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@gr
 import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
-import { findField } from 'app/features/dimensions';
+import { findField } from 'app/features/dimensions/utils';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';

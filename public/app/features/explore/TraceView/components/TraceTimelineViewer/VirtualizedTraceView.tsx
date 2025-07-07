@@ -26,9 +26,11 @@ import { TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
+import { SpanBarOptions } from '../settings/SpanBarSettings';
+import TNil from '../types/TNil';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceSpan, Trace, TraceSpanReference } from '../types/trace';
+import { SpanLinkFunc } from '../types/links';
+import { TraceSpan, Trace, TraceSpanReference, CriticalPathSection } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 
 import ListView from './ListView';
