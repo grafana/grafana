@@ -5,8 +5,8 @@ import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
-import { FolderDTO } from 'app/types/folders';
 import { ShowModalReactEvent } from 'app/types/events';
+import { FolderDTO } from 'app/types/folders';
 
 import { ManagerKind } from '../../apiserver/types';
 import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
