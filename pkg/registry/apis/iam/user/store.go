@@ -63,7 +63,6 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 		return nil, false, err
 	}
 
-	// First, get the user to ensure it exists and to return the deleted object
 	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 		OrgID:      ns.OrgID,
 		UID:        name,
@@ -78,7 +77,6 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 
 	userToDelete := &found.Users[0]
 
-	// Validate the delete operation if validation is provided
 	if deleteValidation != nil {
 		userObj := toUserItem(userToDelete, ns.Value)
 		if err := deleteValidation(ctx, &userObj); err != nil {
@@ -86,18 +84,15 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 		}
 	}
 
-	// Create the delete command
 	deleteCmd := legacy.DeleteUserCommand{
 		UID: name,
 	}
 
-	// Delete the user
 	_, err = s.store.DeleteUser(ctx, ns, deleteCmd)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to delete user: %w", err)
 	}
 
-	// Return the deleted user object
 	deletedUser := toUserItem(userToDelete, ns.Value)
 	return &deletedUser, true, nil
 }
@@ -188,25 +183,21 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, err
 	}
 
-	// Convert the runtime object to IAM User
 	userObj, ok := obj.(*iamv0alpha.User)
 	if !ok {
 		return nil, fmt.Errorf("expected User object, got %T", obj)
 	}
 
-	// Validate the user object
 	if createValidation != nil {
 		if err := createValidation(ctx, obj); err != nil {
 			return nil, err
 		}
 	}
 
-	// Basic validation
 	if userObj.Spec.Login == "" && userObj.Spec.Email == "" {
 		return nil, fmt.Errorf("user must have either login or email")
 	}
 
-	// Create the user command based on the IAM user spec
 	createCmd := legacy.CreateUserCommand{
 		UID:           "", // Always generate a new UID, don't use metadata.name
 		Login:         userObj.Spec.Login,
@@ -221,13 +212,11 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	// Always generate a new UID instead of using metadata.name
 	createCmd.UID = util.GenerateShortUID()
 
-	// Create the user
 	result, err := s.store.CreateUser(ctx, ns, createCmd)
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert back to IAM User object
 	iamUser := toUserItem(&result.User, ns.Value)
 	return &iamUser, nil
 }

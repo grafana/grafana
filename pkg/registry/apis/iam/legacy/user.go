@@ -313,6 +313,14 @@ type CreateUserResult struct {
 	User user.User
 }
 
+type CreateOrgUserCommand struct {
+	OrgID   int64
+	UserID  int64
+	Role    string
+	Created time.Time
+	Updated time.Time
+}
+
 type DeleteUserCommand struct {
 	UID string
 }
@@ -360,8 +368,28 @@ func (r createUserQuery) Validate() error {
 type createOrgUserQuery struct {
 	sqltemplate.SQLTemplate
 	OrgUserTable string
-	Command      *CreateUserCommand
-	UserID       int64
+	Command      *CreateOrgUserCommand
+}
+
+func newCreateOrgUser(sql *legacysql.LegacyDatabaseHelper, cmd *CreateOrgUserCommand) createOrgUserQuery {
+	return createOrgUserQuery{
+		SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
+		OrgUserTable: sql.Table("org_user"),
+		Command:      cmd,
+	}
+}
+
+func (r createOrgUserQuery) Validate() error {
+	if r.Command.OrgID == 0 {
+		return fmt.Errorf("org ID is required")
+	}
+	if r.Command.UserID == 0 {
+		return fmt.Errorf("user ID is required")
+	}
+	if r.Command.Role == "" {
+		return fmt.Errorf("role is required")
+	}
+	return nil
 }
 
 // CreateUser implements LegacyIdentityStore.
@@ -371,7 +399,6 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	// Generate UID if not provided
 	if cmd.UID == "" {
 		cmd.UID = util.GenerateShortUID()
 	}
@@ -380,16 +407,13 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	cmd.Login = strings.ToLower(cmd.Login)
 	cmd.Email = strings.ToLower(cmd.Email)
 
-	// If login is empty, use email
 	if cmd.Login == "" {
 		cmd.Login = cmd.Email
 	}
-	// If email is empty, use login
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
 	}
 
-	// Generate salt and rands
 	salt, err := util.GetRandomString(10)
 	if err != nil {
 		return nil, err
@@ -402,13 +426,12 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	now := time.Now()
 	lastSeenAt := now.AddDate(-10, 0, 0) // Set last seen 10 years ago like in user service
 
-	// Set additional fields
 	cmd.Salt = salt
 	cmd.Rands = rands
 	cmd.Created = now
 	cmd.Updated = now
 	cmd.LastSeenAt = lastSeenAt
-	cmd.Role = "Viewer" // Default role
+	cmd.Role = "Viewer" // TODO: use auto_assign_org_role ???
 
 	sql, err := s.sql(ctx)
 	if err != nil {
@@ -420,10 +443,8 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 		return nil, err
 	}
 
-	// Execute in transaction
 	var createdUser user.User
 	err = sql.DB.InTransaction(ctx, func(ctx context.Context) error {
-		// First, create the user
 		userQuery, err := sqltemplate.Execute(sqlCreateUserTemplate, req)
 		if err != nil {
 			return fmt.Errorf("execute user template %q: %w", sqlCreateUserTemplate.Name(), err)
@@ -439,12 +460,17 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to get user ID: %w", err)
 		}
 
-		// Now create the org_user relationship using a separate template
-		orgUserReq := createOrgUserQuery{
-			SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
-			OrgUserTable: sql.Table("org_user"),
-			Command:      &cmd,
-			UserID:       userID,
+		orgUserCmd := &CreateOrgUserCommand{
+			OrgID:   cmd.OrgID,
+			UserID:  userID,
+			Role:    cmd.Role,
+			Created: cmd.Created,
+			Updated: cmd.Updated,
+		}
+		orgUserReq := newCreateOrgUser(sql, orgUserCmd)
+
+		if err := orgUserReq.Validate(); err != nil {
+			return fmt.Errorf("invalid org user command: %w", err)
 		}
 
 		orgUserQuery, err := sqltemplate.Execute(sqlCreateOrgUserTemplate, orgUserReq)
@@ -457,7 +483,6 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to create org_user relationship: %w", err)
 		}
 
-		// Set the created user data
 		createdUser = user.User{
 			ID:               userID,
 			UID:              cmd.UID,
@@ -551,9 +576,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		return nil, err
 	}
 
-	// Execute in a transaction with separate operations to avoid locking issues
 	err = sql.DB.InTransaction(ctx, func(ctx context.Context) error {
-		// First, get the user ID to use for org_user deletion
 		userLookupReq := newGetUserInternalID(sql, &GetUserInternalIDQuery{
 			OrgID: ns.OrgID,
 			UID:   req.Query.UID,
@@ -579,7 +602,6 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		}
 		rows.Close()
 
-		// Delete from org_user table first using the template
 		orgUserReq := deleteOrgUserQuery{
 			SQLTemplate:  sqltemplate.New(sql.DialectForDriver()),
 			OrgUserTable: sql.Table("org_user"),
@@ -596,7 +618,6 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to delete from org_user: %w", err)
 		}
 
-		// Now delete the user using the SQL template
 		deleteQuery, err := sqltemplate.Execute(sqlDeleteUserTemplate, req)
 		if err != nil {
 			return fmt.Errorf("execute delete template %q: %w", sqlDeleteUserTemplate.Name(), err)

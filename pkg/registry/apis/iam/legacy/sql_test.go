@@ -3,6 +3,7 @@ package legacy
 import (
 	"testing"
 	"text/template"
+	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -42,6 +43,18 @@ func TestIdentityQueries(t *testing.T) {
 			OrgUserTable: nodb.Table("org_user"),
 			UserID:       userID,
 		}
+		return &v
+	}
+
+	createOrgUser := func(cmd *CreateOrgUserCommand) sqltemplate.SQLTemplate {
+		v := newCreateOrgUser(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	createUser := func(cmd *CreateUserCommand) sqltemplate.SQLTemplate {
+		v := newCreateUser(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
 
@@ -339,6 +352,70 @@ func TestIdentityQueries(t *testing.T) {
 				{
 					Name: "delete_org_user_different_id",
 					Data: deleteOrgUser(456),
+				},
+			},
+			sqlCreateOrgUserTemplate: {
+				{
+					Name: "create_org_user_basic",
+					Data: createOrgUser(&CreateOrgUserCommand{
+						OrgID:   1,
+						UserID:  123,
+						Role:    "Viewer",
+						Created: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+						Updated: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+					}),
+				},
+				{
+					Name: "create_org_user_admin",
+					Data: createOrgUser(&CreateOrgUserCommand{
+						OrgID:   2,
+						UserID:  456,
+						Role:    "Admin",
+						Created: time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
+						Updated: time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
+					}),
+				},
+			},
+			sqlCreateUserTemplate: {
+				{
+					Name: "create_user_basic",
+					Data: createUser(&CreateUserCommand{
+						UID:           "user-1",
+						Email:         "user1@example.com",
+						Login:         "user1",
+						Name:          "User One",
+						OrgID:         1,
+						IsAdmin:       false,
+						IsDisabled:    false,
+						EmailVerified: true,
+						IsProvisioned: false,
+						Salt:          "randomsalt",
+						Rands:         "randomrands",
+						Created:       time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+						Updated:       time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+						LastSeenAt:    time.Date(2013, 1, 1, 12, 0, 0, 0, time.UTC),
+						Role:          "Viewer",
+					}),
+				},
+				{
+					Name: "create_user_admin",
+					Data: createUser(&CreateUserCommand{
+						UID:           "admin-1",
+						Email:         "admin@example.com",
+						Login:         "admin",
+						Name:          "Admin User",
+						OrgID:         2,
+						IsAdmin:       true,
+						IsDisabled:    false,
+						EmailVerified: true,
+						IsProvisioned: true,
+						Salt:          "adminsalt",
+						Rands:         "adminrands",
+						Created:       time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
+						Updated:       time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC),
+						LastSeenAt:    time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
+						Role:          "Admin",
+					}),
 				},
 			},
 		},
