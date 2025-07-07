@@ -21,7 +21,7 @@ export type LogLineDetailsMode = 'inline' | 'sidebar';
 
 export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize }: Props) => {
   const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, 'sidebar');
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -69,7 +69,7 @@ export interface InlineLogLineDetailsProps {
 
 export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
   const { showDetails } = useLogListContext();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, 'inline');
 
   if (!showDetails.length) {
     return null;
@@ -86,18 +86,19 @@ export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
     height: '30vh',
     paddingBottom: theme.spacing(0.5),
+    marginRight: 1,
   }),
   container: css({
     overflow: 'auto',
     height: '100%',
     boxShadow: theme.shadows.z1,
     border: `1px solid ${theme.colors.border.medium}`,
-    borderRight: 'none',
+    borderRight: mode === 'sidebar' ? 'none' : undefined,
   }),
   scrollContainer: css({
     overflow: 'auto',
