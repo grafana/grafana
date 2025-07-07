@@ -3254,7 +3254,7 @@
       "team-ids-github": "Integer list of Team IDs.",
       "team-ids-label": "Team IDs",
       "team-ids-numbers": "Team IDs must be numbers.",
-      "team-ids-other": "String list of Team Ids.",
+      "team-ids-other": "String list of Team IDs.",
       "team-ids-placeholder": "Enter Team IDs and press Enter to add",
       "teams-url-description": "The URL used to query for Team IDs. If not set, the default value is /teams.",
       "teams-url-description-oauth": "If you configure \"{{ teamsURLLabel }}\", you must also configure \"{{ teamIDsAttributePathLabel }}\".",
@@ -6454,6 +6454,11 @@
       }
     },
     "scale-dimension-editor": {
+      "fixed-value-option": {
+        "label": {
+          "fixed-value": "Fixed value"
+        }
+      },
       "label-max": "Max",
       "label-min": "Min",
       "label-value": "Value",
@@ -7310,14 +7315,52 @@
     "send-custom-feedback": "Send"
   },
   "geo": {
-    "add-location-fields": {
-      "noFieldsMessage": {
-        "no-numeric-fields-found": "No numeric fields found",
-        "no-strings-fields-found": "No strings fields found"
+    "get-geometry-field": {
+      "warning-gazetteer-not-found": "Gazetteer not found",
+      "warning-no-geometry": "unable to find geometry",
+      "warning-select-geohash": "Select geohash field",
+      "warning-select-lat-long": "Select latitude/longitude fields",
+      "warning-select-lookup": "Select lookup field",
+      "warning-unable-to-find": "Unable to find location fields"
+    },
+    "location-editor": {
+      "geohash-field": {
+        "no-fields-message": "No strings fields found"
+      },
+      "latitude-field": {
+        "no-fields-message": "No numeric fields found"
+      },
+      "longitude-field": {
+        "no-fields-message": "No numeric fields found"
+      },
+      "lookup-field": {
+        "no-fields-message": "No strings fields found"
+      },
+      "name-gazetteer": "Gazetteer",
+      "name-geohash-field": "Geohash field",
+      "name-latitude-field": "Latitude field",
+      "name-location-mode": "Location Mode",
+      "name-longitude-field": "Longitude field",
+      "name-lookup-field": "Lookup field"
+    },
+    "location-more-editor": {
+      "mode-options": {
+        "description-auto": "Automatically identify location data based on default field names",
+        "description-coords": "Specify latitude and longitude fields",
+        "description-geohash": "Specify geohash field",
+        "description-lookup": "Specify Gazetteer and lookup field",
+        "label-auto": "Auto",
+        "label-coords": "Coords",
+        "label-geohash": "Geohash",
+        "label-lookup": "Lookup"
       }
     }
   },
   "geomap": {
+    "category-basemap-layer": "Basemap layer",
+    "category-map-controls": "Map controls",
+    "category-map-layers": "Map layers",
+    "category-map-view": "Map view",
     "coordinates-map-view-editor": {
       "label-latitude": "Latitude",
       "label-longitude": "Longitude"
@@ -7326,6 +7369,14 @@
       "center": "Center:",
       "zoom": "Zoom:"
     },
+    "description-initial-view": "This location will show when the panel first loads.",
+    "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
+    "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
+    "description-show-attribution": "Show the map source attribution info in the lower right",
+    "description-show-debug": "Show map info",
+    "description-show-measure": "Show tools for making measurements on the map",
+    "description-show-scale": "Indicate map scale",
+    "description-show-zoom": "Show zoom control buttons in the upper left corner",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Layer"
@@ -7348,6 +7399,14 @@
     "geomap-style-rules-editor": {
       "aria-label-add-geomap-style-rule": "Add geomap style rule"
     },
+    "layer-editor": {
+      "category-base-layer": "Base layer",
+      "description-display-tooltip": "Show the tooltip for layer",
+      "name-data": "Data",
+      "name-display-tooltip": "Display tooltip",
+      "name-layer-type": "Layer type",
+      "name-opacity": "Opacity"
+    },
     "layers-editor": {
       "label-add-layer": "Add layer",
       "no-layers": "No layers?"
@@ -7358,12 +7417,26 @@
       "label-zoom": "Zoom",
       "use-current-map-settings": "Use current map settings"
     },
+    "markers-layer": {
+      "description-show-legend": "Show map legend",
+      "name-show-legend": "Show legend",
+      "name-styles": "Styles"
+    },
     "markers-legend": {
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
       "tooltip-show-measure-tools": "Show measure tools"
     },
+    "name-initial-view": "Initial view",
+    "name-mouse-wheel-zoom": "Mouse wheel zoom",
+    "name-share-view": "Share view",
+    "name-show-attribution": "Show attribution",
+    "name-show-debug": "Show debug",
+    "name-show-measure": "Show measure tools",
+    "name-show-scale": "Show scale",
+    "name-show-zoom": "Show zoom control",
+    "name-tooltip": "Tooltip",
     "photos-layer": {
       "noFieldsMessage-no-string-fields": "No string fields found"
     },
@@ -7371,6 +7444,11 @@
       "basemap-layer-configured-server-admin": "The basemap layer is configured by the server admin."
     },
     "style-editor": {
+      "horizontal-align-options": {
+        "label-center": "Center",
+        "label-left": "Left",
+        "label-right": "Right"
+      },
       "label-align": "Align",
       "label-baseline": "Baseline",
       "label-color": "Color",
@@ -7386,7 +7464,12 @@
       "label-x-offset": "X offset",
       "label-y-offset": "Y offset",
       "placeholderText-select-symbol": "Select a symbol",
-      "placeholderText-select-symbol-or-add-text": "Select a symbol or add a text label"
+      "placeholderText-select-symbol-or-add-text": "Select a symbol or add a text label",
+      "vertical-align-options": {
+        "label-bottom": "Bottom",
+        "label-center": "Center",
+        "label-top": "Top"
+      }
     },
     "style-rule-editor": {
       "aria-label-comparison-operator": "Comparison operator",
@@ -7397,6 +7480,15 @@
       "placeholder-feature-property": "Feature property",
       "placeholder-numeric-value": "Numeric value",
       "placeholder-value": "value"
+    },
+    "tooltip-options": {
+      "description-details": "Show popup on hover",
+      "description-none": "Show contents on click, not hover",
+      "label-details": "Details",
+      "label-none": "None"
+    },
+    "utils": {
+      "get-next-layer-name": "Layer {{name}}"
     }
   },
   "get-enterprise": {
@@ -9544,7 +9636,7 @@
     "marker": {
       "100-node-count": ">100 nodes",
       "aria-label-hidden-marker": "Hidden nodes marker: {{marker}}",
-      "node-count_one": "{{count}} node",
+      "node-count_one": "{{count}} nodes",
       "node-count_other": "{{count}} nodes"
     },
     "node": {
@@ -9554,10 +9646,10 @@
       "aria-label-layered-layout-performance-warning": "Layered layout performance warning",
       "aria-label-nodes-hidden-warning": "Nodes hidden warning",
       "computing-layout": "Computing layout",
-      "hidden-nodes_one": "<0></0> {{count}} node is hidden for performance reasons.",
+      "hidden-nodes_one": "<0></0> {{count}} nodes are hidden for performance reasons.",
       "hidden-nodes_other": "<0></0> {{count}} nodes are hidden for performance reasons.",
       "no-data": "No data",
-      "processed-nodes_one": "<0></0> Layered layout may be slow with {{count}} node.",
+      "processed-nodes_one": "<0></0> Layered layout may be slow with {{count}} nodes.",
       "processed-nodes_other": "<0></0> Layered layout may be slow with {{count}} nodes."
     },
     "node-graph-panel": {
@@ -11167,7 +11259,7 @@
     },
     "service-accounts-list-page-unconnected": {
       "add-service-account": "Add service account",
-      "body-delete_one": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying token?",
+      "body-delete_one": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
       "body-delete_other": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
       "body-delete-with-tokens": "Are you sure you want to delete {{serviceAccountName}}?",
       "body-disable-service-account": "Are you sure you want to disable '{{accountToDisable}}'?",
@@ -11568,7 +11660,7 @@
       "label-never": "Never"
     },
     "status-history-panel": {
-      "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} point received)",
+      "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)",
       "too-many-points_other": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)"
     }
   },
