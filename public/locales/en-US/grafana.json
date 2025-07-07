@@ -84,6 +84,7 @@
     "admin-feature-toggles-table": {
       "confirm-modal-body-1": "Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary Beta phase, available for early adoption.",
       "confirm-modal-body-2": "We advise understanding the implications of each feature change before making modifications.",
+      "confirmText-save-changes": "Save changes",
       "get-stage-cell": {
         "beta": "Beta",
         "content-general-availability": "General availability",
@@ -96,13 +97,20 @@
     },
     "admin-orgs-table": {
       "aria-label-delete-org": "Delete org",
+      "confirmText-delete": "Delete",
       "title-delete": "Delete"
     },
     "anon-users": {
       "not-found": "No anonymous users found."
     },
     "base-user-sessions": {
+      "body-force-logout-from-all-devices": "Are you sure you want to force logout from all devices?",
+      "confirmText-confirm-logout": "Confirm logout",
+      "confirmText-force-logout": "Force logout",
       "title-force-logout-from-all-devices": "Force logout from all devices"
+    },
+    "change-org-button": {
+      "confirmText-save": "Save"
     },
     "edit-org": {
       "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
@@ -208,9 +216,11 @@
       "not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
     },
     "org-users-table": {
+      "body-delete": "Are you sure you want to delete user {{user}}?",
       "columns": {
         "aria-label-role": "Role"
       },
+      "confirmText-delete": "Delete",
       "delete-aria-label": "Delete user: {{name}}",
       "title-delete": "Delete"
     },
@@ -240,6 +250,9 @@
     },
     "settings": {
       "info-description": "These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change these you currently need to restart Grafana."
+    },
+    "un-themed-org-row": {
+      "confirmText-confirm-removal": "Confirm removal"
     },
     "upgrade-info": {
       "title": "Enterprise license"
@@ -293,12 +306,17 @@
     },
     "user-permissions": {
       "change-button": "Change",
+      "confirmText-change": "Change",
       "grafana-admin-key": "Grafana Admin",
       "grafana-admin-no": "No",
       "grafana-admin-yes": "Yes",
       "title": "Permissions"
     },
     "user-profile": {
+      "body-delete": "Are you sure you want to delete this user?",
+      "body-disable": "Are you sure you want to disable this user?",
+      "confirmText-delete-user": "Delete user",
+      "confirmText-disable-user": "Disable user",
       "delete-button": "Delete user",
       "disable-button": "Disable user",
       "edit-button": "Edit",
@@ -311,6 +329,9 @@
       "title": "User information",
       "title-delete-user": "Delete user",
       "title-disable-user": "Disable user"
+    },
+    "user-profile-row": {
+      "confirmText-save": "Save"
     },
     "user-sessions": {
       "browser-column": "Browser and OS",
@@ -351,6 +372,10 @@
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Active timings"
+    },
+    "ad": {
+      "close": "Close",
+      "learn-more": "Learn more"
     },
     "add-button": {
       "add-more": "Add more"
@@ -457,6 +482,9 @@
       "label-muting-grouping-and-timings-optional": "Muting, grouping and timings (optional)",
       "title-muting-grouping-and-timings": "Muting, grouping, and timings"
     },
+    "alert-manager-picker": {
+      "noOptionsMessage-no-datasources-found": "No datasources found"
+    },
     "alert-menu": {
       "copy-link": "Copy link",
       "duplicate": "Duplicate",
@@ -546,6 +574,7 @@
       "view-configuration": "View configuration"
     },
     "alertmanager-config": {
+      "confirmText-yes-reset-configuration": "Yes, reset configuration",
       "gma-manual-configuration-description": "The internal Grafana Alertmanager configuration cannot be manually changed. To change this configuration, edit the individual resources through the UI.",
       "gma-manual-configuration-is-not-supported": "Manual configuration changes not supported",
       "message": {
@@ -560,11 +589,13 @@
       "title-resetting-alertmanager-configuration": "Resetting Alertmanager configuration"
     },
     "alertmanager-configuration-version-manager": {
+      "body-restore-configuration-version-unsaved-changes": "Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.",
       "columns": {
         "compare": "Compare",
         "restore": "Restore",
         "text-latest": "Latest"
       },
+      "confirmText-yes-restore-configuration": "Yes, restore configuration",
       "loading": "Loading...",
       "no-previous-configurations": "No previous configurations",
       "this-might-take-a-while": "This might take a while...",
@@ -844,8 +875,10 @@
     },
     "contact-point-header": {
       "aria-label-more-actions": "More actions for contact point \"{{contactPointName}}\"",
+      "ariaLabel-delete": "Delete",
       "button-edit": "Edit",
       "button-view": "View",
+      "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
@@ -1380,6 +1413,7 @@
       "label-disable-resolved-message": "Disable resolved message"
     },
     "grafana-evaluation-behavior-step": {
+      "loadingMessage-loading-groups": "Loading groups...",
       "message": {
         "must-be-a-positive-integer": "Must be a positive integer.",
         "must-enter-a-group-name": "Must enter a group name"
@@ -1525,8 +1559,20 @@
       }
     },
     "home": {
+      "irm-card-description": "Unify on-call, alerting, and incident response with Grafana Cloud IRM.",
+      "irm-card-item-1": "Manage on-call schedules with your calendar or Terraform.",
+      "irm-card-item-2": "Respond to incidents via web, app, Slack, or other channels.",
+      "irm-card-item-3": "Pinpoint root causes with AI-powered Grafana SIFT.",
+      "irm-card-item-4": "Analyze past incidents to improve response and resilience.",
+      "irm-card-title": "Incident response and management",
       "label-get-started": "Get started",
       "label-insights": "Insights",
+      "synthetic-monitoring-card-description": "Monitor critical user flows, websites, and APIs externally, from global locations.",
+      "synthetic-monitoring-card-item-1": "Simulate end-to-end user journeys with browser checks.",
+      "synthetic-monitoring-card-item-2": "Run ping, DNS, HTTP/S, and TCP checks at every network layer.",
+      "synthetic-monitoring-card-item-3": "Use 20+ global probes or private probes behind your firewall.",
+      "synthetic-monitoring-card-item-4": "Track SLOs with built-in Prometheus-style alerts — right from the UI.",
+      "synthetic-monitoring-card-title": "Synthetic Monitoring",
       "title-alerting": "Alerting"
     },
     "import-to-gma": {
@@ -1826,7 +1872,11 @@
             "other-data-sources": "Other data sources"
           }
         }
-      }
+      },
+      "noOptionsMessage-no-datasources-found": "No datasources found"
+    },
+    "mute-timing-actions-button": {
+      "body-delete-mute-timing": "Are you sure you would like to delete \"{{muteTiming}}\"?"
     },
     "mute-timing-actions-buttons": {
       "text-disabled": "Disabled",
@@ -2079,9 +2129,11 @@
       "update-errors": {
         "conflict": "The notification policy tree has been updated by another user.",
         "error-code": "Error message: \"{{error}}\"",
-        "fallback": "Something went wrong when updating your notification policies.",
+        "routes": {
+          "conflictingMatchers": "Cannot add or update route: matchers conflict with an external routing tree if we merged matchers {{-matchers}}. This would make the route unreachable."
+        },
         "suffix": "Please refresh the page and try again.",
-        "title": "Error saving notification policy"
+        "title": "Failed to add or update notification policy"
       }
     },
     "policy": {
@@ -2135,6 +2187,7 @@
     "query-and-expressions-step": {
       "add-query": "Add query",
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
+      "confirmText-deactivate": "Deactivate",
       "expressions": "Expressions",
       "loading-data-sources": "Loading data sources...",
       "manipulate-returned-queries-other-operations": "Manipulate data returned from queries with math and other operations.",
@@ -2202,6 +2255,7 @@
     "redirect-to-clone-rule": {
       "body-evaluation-group": "You will need to set a new evaluation group for the copied rule because the original one has been provisioned and cannot be used for rules created in the UI.",
       "body-not-provisioned": "The new rule will <1>not</1> be marked as a provisioned rule.",
+      "confirmText-copy": "Copy",
       "title-copy-provisioned-alert-rule": "Copy provisioned alert rule"
     },
     "redirect-to-rule-viewer": {
@@ -2399,8 +2453,6 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "Cannot find rule details for UID {{uid}}",
-      "cannot-load-rule-details-for": "Cannot load rule details for UID {{uid}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
       "ds-error": {
@@ -2750,6 +2802,9 @@
       "existing-templates-selector-placeholder-choose-notification-template": "Choose notification template",
       "loading": "Loading...",
       "template-options": {
+        "ariaLabel": {
+          "select-notification-template": "Select notification template"
+        },
         "label": {
           "select-notification-template": "Select notification template"
         }
@@ -2776,6 +2831,8 @@
     },
     "templates-table": {
       "actions": "Actions",
+      "body-delete-template-group": "Are you sure you want to delete template group \"{{template}}\"?",
+      "confirmText-yes-delete": "Yes, delete",
       "no-templates-defined": "No templates defined.",
       "template-group": "Template group",
       "title-delete-template-group": "Delete template group"
@@ -2901,6 +2958,11 @@
         "delete-contact-point": "Are you sure you want to delete this contact point?",
         "deleting-contact-point-permanently-remove": "Deleting this contact point will permanently remove it.",
         "title-delete-contact-point": "Delete contact point"
+      }
+    },
+    "use-delete-modal": {
+      "modal": {
+        "confirmText-yes-delete": "Yes, delete"
       }
     },
     "use-delete-policy-modal": {
@@ -3059,7 +3121,8 @@
     "annotation-field-mapper": {
       "annotation": "Annotation",
       "first-value": "First value",
-      "from": "From"
+      "from": "From",
+      "noOptionsMessage-unknown-field-names": "Unknown field names"
     },
     "empty-state": {
       "button-title": "Add annotation query",
@@ -3193,7 +3256,7 @@
       "team-ids-github": "Integer list of Team IDs.",
       "team-ids-label": "Team IDs",
       "team-ids-numbers": "Team IDs must be numbers.",
-      "team-ids-other": "String list of Team Ids.",
+      "team-ids-other": "String list of Team IDs.",
       "team-ids-placeholder": "Enter Team IDs and press Enter to add",
       "teams-url-description": "The URL used to query for Team IDs. If not set, the default value is /teams.",
       "teams-url-description-oauth": "If you configure \"{{ teamsURLLabel }}\", you must also configure \"{{ teamIDsAttributePathLabel }}\".",
@@ -3237,6 +3300,7 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "Reset to default values"
       },
+      "confirmText-reset": "Reset",
       "disable": "Disable",
       "disabling": "Disabling...",
       "discard": "Discard",
@@ -3894,7 +3958,8 @@
   "close-button": {
     "tooltip": "Close"
   },
-  "cloud-enterprise-feature-badge": "Cloud & Enterprise ",
+  "cloud-enterprise-feature-badge": "Cloud & Enterprise",
+  "cloud-feature-badge": "Cloud",
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
@@ -4163,8 +4228,8 @@
     }
   },
   "dashbaord-scene": {
-    "interval-variable-form": {
-      "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified"
+    "variable-editor-form": {
+      "run-query": "Run query"
     }
   },
   "dashboard": {
@@ -4326,6 +4391,9 @@
     },
     "dash-nav": {
       "on-open-snapshot-original": {
+        "confirmText": {
+          "proceed": "Proceed"
+        },
         "title": {
           "proceed-to-external-site": "Proceed to external site?"
         }
@@ -4539,6 +4607,13 @@
         "label": {
           "editable": "Editable",
           "readonly": "Read-only"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "Default",
+          "shared-crosshair": "Shared crosshair",
+          "shared-tooltip": "Shared tooltip"
         }
       }
     },
@@ -4844,6 +4919,7 @@
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
+      "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
     "row-options-button": {
@@ -4894,6 +4970,9 @@
         "title-not-unique": "This title is not unique"
       }
     },
+    "save-dashboard": {
+      "message-dashboard-saved": "Dashboard saved"
+    },
     "save-dashboard-as-button": {
       "save-as": "Save as"
     },
@@ -4928,6 +5007,7 @@
     "save-dashboard-error-proxy": {
       "body-name-exists": "A dashboard with the same name in selected folder already exists.<1></1><2>Would you still like to save this dashboard?</2>",
       "body-version-mismatch": "Someone else has updated this dashboard<1></1><2>Would you still like to save this dashboard?</2>",
+      "confirmText-save-and-overwrite": "Save and overwrite",
       "title-name-exists": "Conflict",
       "title-version-mismatch": "Conflict"
     },
@@ -5124,7 +5204,9 @@
       "label-apply-transformation-to": "Apply transformation to"
     },
     "transformation-operation-row": {
+      "body-delete": "Note that removing one transformation may break others. If there is only a single transformation, you will go back to the main selection screen.",
       "render-actions": {
+        "confirmText-delete": "Delete",
         "title-debug": "Debug",
         "title-disable-transformation": "Disable transformation",
         "title-filter": "Filter",
@@ -5146,10 +5228,14 @@
       "show-images": "Show images",
       "title-add-another-transformation": "Add another transformation"
     },
+    "un-theme-transformations-editor": {
+      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
+    },
     "un-themed-transformations-editor": {
       "actions": {
         "add-another-transformation": "Add another transformation"
       },
+      "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?",
       "tooltip-clear-search": "Clear search",
@@ -5186,6 +5272,7 @@
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
       "date": "Date",
+      "name-latest": "Latest",
       "notes": "Notes",
       "restore": "Restore",
       "updated-by": "Updated by",
@@ -5262,7 +5349,8 @@
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
-      "label-use-static-key-dimensions": "Use static key dimensions"
+      "label-use-static-key-dimensions": "Use static key dimensions",
+      "name-allow-custom-values": "Allow custom values"
     },
     "add-to-dashboard": {
       "message": {
@@ -5335,6 +5423,9 @@
       }
     },
     "config-public-dashboard": {
+      "confirmText": {
+        "revoke-public-url": "Revoke public URL"
+      },
       "title": {
         "revoke-public-url": "Revoke public URL"
       }
@@ -5346,6 +5437,7 @@
     },
     "custom-variable-form": {
       "custom-options": "Custom options",
+      "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
     },
     "dashboard-edit-pane-renderer": {
@@ -5364,6 +5456,12 @@
       "label-type": "Type",
       "label-url": "URL",
       "label-with-tags": "With tags",
+      "link-type-options": {
+        "label": {
+          "dashboards": "Dashboards",
+          "link": "Link"
+        }
+      },
       "placeholder-open-dashboard": "Open dashboard"
     },
     "dashboard-link-list": {
@@ -5410,6 +5508,8 @@
       "data-source-options": "Data source options",
       "description-instance-name-filter": "Regex filter for which data source instances to choose from in the variable value list. Leave empty for all.",
       "example-instance-name-filter": "Example: <codeExample />",
+      "name-instance-name-filter": "Instance name filter",
+      "name-type": "Type",
       "selection-options": "Selection options"
     },
     "default-grid-layout-manager": {
@@ -5455,6 +5555,21 @@
     "empty-transformations-message": {
       "add-transformation": "Add transformation"
     },
+    "general-settings-edit-view": {
+      "editable_options": {
+        "label": {
+          "editable": "Editable",
+          "readonly": "Read-only"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "Default",
+          "shared-crosshair": "Shared crosshair",
+          "shared-tooltip": "Shared tooltip"
+        }
+      }
+    },
     "get-edit-options": {
       "title": {
         "column-options": "Column options",
@@ -5485,7 +5600,8 @@
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "group-by-options": "Group by options",
       "label-data-source": "Data source",
-      "label-use-static-group-by-dimensions": "Use static group dimensions"
+      "label-use-static-group-by-dimensions": "Use static group dimensions",
+      "name-allow-custom-values": "Allow custom values"
     },
     "help-wizard": {
       "copy-to-clipboard": "Copy to clipboard",
@@ -5521,9 +5637,14 @@
       "apply": "Apply"
     },
     "interval-variable-form": {
+      "description-auto-option": "Dynamically calculates interval by dividing time range by the count specified",
       "description-calculated-value-below-threshold": "The calculated value will not go below this threshold",
       "description-step-count": "How many times the current time range should be divided to calculate the value",
-      "interval-options": "Interval options"
+      "interval-options": "Interval options",
+      "name-auto-option": "Auto option",
+      "name-min-interval": "Min interval",
+      "name-step-count": "Step count",
+      "name-values": "Values"
     },
     "json-model-edit-view": {
       "cancel-button": {
@@ -5548,6 +5669,9 @@
       "title-name-already-exists": "Name already exists"
     },
     "on-open-snapshot-original-dashboard": {
+      "confirmText": {
+        "proceed": "Proceed"
+      },
       "title": {
         "proceed-to-external-site": "Proceed to external site?"
       }
@@ -5583,6 +5707,8 @@
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "Add another transformation",
+      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen.",
+      "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?"
     },
@@ -5636,6 +5762,7 @@
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
       "label-target-data-source": "Target data source",
+      "name-regex": "Regex",
       "query-options": "Query options",
       "selection-options": "Selection options"
     },
@@ -5650,6 +5777,7 @@
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
+      "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
     "save-button": {
@@ -5743,7 +5871,11 @@
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Enables multiple values to be selected at the same time",
       "description-enables-option-include-variables": "Enables an option to include all values",
-      "description-enables-users-custom-values": "Enables users to add custom values to the list"
+      "description-enables-users-custom-values": "Enables users to add custom values to the list",
+      "name-allow-custom-values": "Allow custom values",
+      "name-custom-all-value": "Custom all value",
+      "name-include-all-option": "Include All option",
+      "name-multi-value": "Multi-value"
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Toggle share menu"
@@ -5762,6 +5894,9 @@
       "title": {
         "copy-to-clipboard-failed": "Copy to clipboard failed"
       }
+    },
+    "text-box-variable": {
+      "name-default-value": "Default value"
     },
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "(optional)",
@@ -5786,6 +5921,8 @@
       }
     },
     "unlink-modal": {
+      "body-unlink-panel": "If you unlink this panel, you will be able to edit it without affecting any other dashboards. However, once you make a change you will not be able to revert to its original reusable panel.",
+      "confirmText-yes-unlink": "Yes, unlink",
       "title-really-unlink-panel": "Do you really want to unlink this panel?"
     },
     "unsaved-changes-modal": {
@@ -5802,6 +5939,9 @@
         }
       }
     },
+    "use-save-dashboard": {
+      "message-dashboard-saved": "Dashboard saved"
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard.",
@@ -5811,10 +5951,16 @@
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
       "back-to-list": "Back to list",
+      "confirmText": {
+        "delete-variable": "Delete variable"
+      },
       "delete": "Delete",
       "description-optional-display-name": "Optional display name",
       "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
       "general": "General",
+      "name-description": "Description",
+      "name-label": "Label",
+      "name-name": "Name",
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
@@ -5829,12 +5975,24 @@
       "variable": "Variable"
     },
     "variable-editor-list-row": {
+      "body-delete-variable": "Are you sure you want to delete: {{variable}}?",
+      "confirmText-delete-variable": "Delete variable",
       "title-delete-variable": "Delete variable",
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
     },
     "variable-hide-select": {
+      "hide_options": {
+        "label": {
+          "label": "Label",
+          "nothing": "Nothing",
+          "variable": "Variable"
+        }
+      },
       "label": "Hide"
+    },
+    "variable-type-select": {
+      "name-variable-type": "Variable type"
     },
     "variable-usages-button": {
       "title-show-usages": "Showing usages for: {{variableId}}",
@@ -5862,6 +6020,7 @@
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
       "date": "Date",
+      "name-latest": "Latest",
       "notes": "Notes",
       "restore": "Restore",
       "updated-by": "Updated by",
@@ -6249,7 +6408,8 @@
       }
     },
     "color-dimension-editor": {
-      "label-fixed-color": "Fixed color"
+      "label-fixed-color": "Fixed color",
+      "noOptionsMessage-no-fields-found": "No fields found"
     },
     "file-dropzone-custom-children": {
       "upload": "Upload"
@@ -6287,6 +6447,7 @@
       },
       "label-limit": "Limit",
       "label-value": "Value",
+      "noOptionsMessage-no-fields-found": "No fields found",
       "scalar-options": {
         "description-clamped": "Use field values, clamped to max and min",
         "description-mod": "Use field values, mod from max",
@@ -6295,9 +6456,15 @@
       }
     },
     "scale-dimension-editor": {
+      "fixed-value-option": {
+        "label": {
+          "fixed-value": "Fixed value"
+        }
+      },
       "label-max": "Max",
       "label-min": "Min",
-      "label-value": "Value"
+      "label-value": "Value",
+      "noOptionsMessage-no-fields-found": "No fields found"
     },
     "text-dimension-editor": {
       "description-field": "Display field value",
@@ -6869,6 +7036,8 @@
       "aria-label-select-service-name-operator": "Select service name operator",
       "aria-label-select-span-name": "Select span name",
       "aria-label-select-span-name-operator": "Select span name operator",
+      "ariaLabel-select-max-span-duration": "Select max span duration",
+      "ariaLabel-select-min-span-duration": "Select min span duration",
       "label-collapse": "Span Filters",
       "label-duration": "Duration",
       "label-service-name": "Service name",
@@ -6939,6 +7108,8 @@
       "split-widen": "Widen pane"
     },
     "trace-page-actions": {
+      "ariaLabel-copy-trace-id": "Copy Trace ID",
+      "ariaLabel-export-trace": "Export Trace",
       "give-feedback": "Give feedback",
       "label-copied": "Copied!",
       "label-export": "Export",
@@ -7076,6 +7247,7 @@
   },
   "folder-filter": {
     "clear-folder-button": "Clear folders",
+    "noOptionsMessage-no-folders-found": "No folders found",
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
@@ -7144,7 +7316,53 @@
     "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
     "send-custom-feedback": "Send"
   },
+  "geo": {
+    "get-geometry-field": {
+      "warning-gazetteer-not-found": "Gazetteer not found",
+      "warning-no-geometry": "unable to find geometry",
+      "warning-select-geohash": "Select geohash field",
+      "warning-select-lat-long": "Select latitude/longitude fields",
+      "warning-select-lookup": "Select lookup field",
+      "warning-unable-to-find": "Unable to find location fields"
+    },
+    "location-editor": {
+      "geohash-field": {
+        "no-fields-message": "No strings fields found"
+      },
+      "latitude-field": {
+        "no-fields-message": "No numeric fields found"
+      },
+      "longitude-field": {
+        "no-fields-message": "No numeric fields found"
+      },
+      "lookup-field": {
+        "no-fields-message": "No strings fields found"
+      },
+      "name-gazetteer": "Gazetteer",
+      "name-geohash-field": "Geohash field",
+      "name-latitude-field": "Latitude field",
+      "name-location-mode": "Location Mode",
+      "name-longitude-field": "Longitude field",
+      "name-lookup-field": "Lookup field"
+    },
+    "location-more-editor": {
+      "mode-options": {
+        "description-auto": "Automatically identify location data based on default field names",
+        "description-coords": "Specify latitude and longitude fields",
+        "description-geohash": "Specify geohash field",
+        "description-lookup": "Specify Gazetteer and lookup field",
+        "label-auto": "Auto",
+        "label-coords": "Coords",
+        "label-geohash": "Geohash",
+        "label-lookup": "Lookup"
+      }
+    }
+  },
   "geomap": {
+    "category-basemap-layer": "Basemap layer",
+    "category-map-controls": "Map controls",
+    "category-map-layers": "Map layers",
+    "category-map-view": "Map view",
     "coordinates-map-view-editor": {
       "label-latitude": "Latitude",
       "label-longitude": "Longitude"
@@ -7153,6 +7371,14 @@
       "center": "Center:",
       "zoom": "Zoom:"
     },
+    "description-initial-view": "This location will show when the panel first loads.",
+    "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
+    "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
+    "description-show-attribution": "Show the map source attribution info in the lower right",
+    "description-show-debug": "Show map info",
+    "description-show-measure": "Show tools for making measurements on the map",
+    "description-show-scale": "Indicate map scale",
+    "description-show-zoom": "Show zoom control buttons in the upper left corner",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Layer"
@@ -7175,6 +7401,14 @@
     "geomap-style-rules-editor": {
       "aria-label-add-geomap-style-rule": "Add geomap style rule"
     },
+    "layer-editor": {
+      "category-base-layer": "Base layer",
+      "description-display-tooltip": "Show the tooltip for layer",
+      "name-data": "Data",
+      "name-display-tooltip": "Display tooltip",
+      "name-layer-type": "Layer type",
+      "name-opacity": "Opacity"
+    },
     "layers-editor": {
       "label-add-layer": "Add layer",
       "no-layers": "No layers?"
@@ -7185,16 +7419,38 @@
       "label-zoom": "Zoom",
       "use-current-map-settings": "Use current map settings"
     },
+    "markers-layer": {
+      "description-show-legend": "Show map legend",
+      "name-show-legend": "Show legend",
+      "name-styles": "Styles"
+    },
     "markers-legend": {
       "title-symbol": "Symbol"
     },
     "measure-overlay": {
       "tooltip-show-measure-tools": "Show measure tools"
     },
+    "name-initial-view": "Initial view",
+    "name-mouse-wheel-zoom": "Mouse wheel zoom",
+    "name-share-view": "Share view",
+    "name-show-attribution": "Show attribution",
+    "name-show-debug": "Show debug",
+    "name-show-measure": "Show measure tools",
+    "name-show-scale": "Show scale",
+    "name-show-zoom": "Show zoom control",
+    "name-tooltip": "Tooltip",
+    "photos-layer": {
+      "noFieldsMessage-no-string-fields": "No string fields found"
+    },
     "plugin": {
       "basemap-layer-configured-server-admin": "The basemap layer is configured by the server admin."
     },
     "style-editor": {
+      "horizontal-align-options": {
+        "label-center": "Center",
+        "label-left": "Left",
+        "label-right": "Right"
+      },
       "label-align": "Align",
       "label-baseline": "Baseline",
       "label-color": "Color",
@@ -7208,7 +7464,14 @@
       "label-symbol-vertical-align": "Symbol vertical align",
       "label-text-label": "Text label",
       "label-x-offset": "X offset",
-      "label-y-offset": "Y offset"
+      "label-y-offset": "Y offset",
+      "placeholderText-select-symbol": "Select a symbol",
+      "placeholderText-select-symbol-or-add-text": "Select a symbol or add a text label",
+      "vertical-align-options": {
+        "label-bottom": "Bottom",
+        "label-center": "Center",
+        "label-top": "Top"
+      }
     },
     "style-rule-editor": {
       "aria-label-comparison-operator": "Comparison operator",
@@ -7219,6 +7482,15 @@
       "placeholder-feature-property": "Feature property",
       "placeholder-numeric-value": "Numeric value",
       "placeholder-value": "value"
+    },
+    "tooltip-options": {
+      "description-details": "Show popup on hover",
+      "description-none": "Show contents on click, not hover",
+      "label-details": "Details",
+      "label-none": "None"
+    },
+    "utils": {
+      "get-next-layer-name": "Layer {{name}}"
     }
   },
   "get-enterprise": {
@@ -7468,7 +7740,8 @@
       "aria-label-selected-color": "{{colorLabel}} color"
     },
     "confirm-button": {
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "confirmText-delete": "Delete"
     },
     "confirm-content": {
       "placeholder": "Type \"{{confirmPromptText}}\" to confirm"
@@ -7650,6 +7923,8 @@
     },
     "panel-chrome": {
       "aria-label-toggle-collapse": "toggle collapse panel",
+      "ariaLabel-panel-loading": "Panel loading bar",
+      "ariaLabel-panel-status": "Panel status",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -7817,6 +8092,12 @@
       "footer-click-to-action": "Click to {{actionTitle}}",
       "footer-click-to-navigate": "Click to open {{linkTitle}}",
       "timestamp": "Timestamp"
+    },
+    "week-start-picker": {
+      "weekStarts-label-default": "Default",
+      "weekStarts-label-monday": "Monday",
+      "weekStarts-label-saturday": "Saturday",
+      "weekStarts-label-sunday": "Sunday"
     }
   },
   "graph": {
@@ -8195,6 +8476,10 @@
     "add-library-panel-modal": {
       "title-create-library-panel": "Create library panel"
     },
+    "change-library-panel-modal": {
+      "confirmText-change": "Change",
+      "confirmText-replace": "Replace"
+    },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
     },
@@ -8356,6 +8641,18 @@
     "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
     "description-enable-syntax-highlighting": "Use a predefined syntax coloring grammar to highlight relevant parts of the log lines",
     "description-show-controls": "Display controls to jump to the last or first log line, and filters by log level",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "Indexed label",
+          "indexed-label-plural": "Indexed labels",
+          "parsed-label-plural": "Parsed fields",
+          "parsedl-label": "Parsed field",
+          "structured-metadata": "Structured metadata",
+          "structured-metadata-plural": "Structured metadata"
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "Default",
       "label-small": "Small"
@@ -8379,7 +8676,6 @@
       "label-wrap-lines": "Wrap lines"
     },
     "log-details": {
-      "close": "Close log details",
       "fields": "Fields",
       "links": "Links",
       "log-line": "Log line",
@@ -8404,6 +8700,35 @@
       "show-less": "show less",
       "show-more": "show more",
       "tooltip-error": "Error: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "Clear",
+      "close": "Close log details",
+      "copy-shortlink": "Copy shortlink",
+      "copy-to-clipboard": "Copy to clipboard",
+      "fields": {
+        "adhoc-statistics": "Ad-hoc statistics",
+        "copy-value-to-clipboard": "Copy value to clipboard",
+        "filter-out": "Filter out value",
+        "filter-out-query": "Filter out value in query {{query}}",
+        "toggle-field-button": {
+          "field-instead-message": "Show this field instead of the message",
+          "hide-this-field": "Hide this field"
+        }
+      },
+      "fields-section": "Fields",
+      "hide-log-line": "Hide log line",
+      "links-section": "Links",
+      "log-line-section": "Log line",
+      "no-details": "No fields to display.",
+      "pin-line": "Pin log",
+      "search": {
+        "no-results": "No results to display."
+      },
+      "search-placeholder": "Search field names and values",
+      "show-context": "Show context",
+      "show-log-line": "Show log line",
+      "unpin-line": "Unpin log"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
@@ -8531,6 +8856,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Data links",
       "aria-label-fields": "Fields",
+      "aria-label-line": "Log line",
       "aria-label-log-level": "Log level",
       "aria-label-no-details": "No details"
     },
@@ -8598,6 +8924,8 @@
       "updated-on": "Updated on"
     },
     "snapshot-list-table": {
+      "body-delete": "Are you sure you want to delete '{{snapshotToRemove}}'?",
+      "confirmText-delete": "Delete",
       "title-delete": "Delete"
     },
     "unthemed-dashboard-import": {
@@ -8608,6 +8936,9 @@
         "import-dashboard": "Import dashboard"
       }
     }
+  },
+  "metric-select": {
+    "noOptionsMessage-no-options-found": "No options found"
   },
   "migrate-to-cloud": {
     "build-snapshot": {
@@ -9307,7 +9638,7 @@
     "marker": {
       "100-node-count": ">100 nodes",
       "aria-label-hidden-marker": "Hidden nodes marker: {{marker}}",
-      "node-count_one": "{{count}} node",
+      "node-count_one": "{{count}} nodes",
       "node-count_other": "{{count}} nodes"
     },
     "node": {
@@ -9317,10 +9648,10 @@
       "aria-label-layered-layout-performance-warning": "Layered layout performance warning",
       "aria-label-nodes-hidden-warning": "Nodes hidden warning",
       "computing-layout": "Computing layout",
-      "hidden-nodes_one": "<0></0> {{count}} node is hidden for performance reasons.",
+      "hidden-nodes_one": "<0></0> {{count}} nodes are hidden for performance reasons.",
       "hidden-nodes_other": "<0></0> {{count}} nodes are hidden for performance reasons.",
       "no-data": "No data",
-      "processed-nodes_one": "<0></0> Layered layout may be slow with {{count}} node.",
+      "processed-nodes_one": "<0></0> Layered layout may be slow with {{count}} nodes.",
       "processed-nodes_other": "<0></0> Layered layout may be slow with {{count}} nodes."
     },
     "node-graph-panel": {
@@ -9447,6 +9778,7 @@
     }
   },
   "org-picker": {
+    "noOptionsMessage-no-organizations-found": "No organizations found",
     "select-placeholder": "Select organization"
   },
   "page": {
@@ -9669,6 +10001,7 @@
         "permission": "You do not have permission to see this page.",
         "title-access-denied": "Access denied"
       },
+      "error-loading-plugin": "Plugin failed to load",
       "no-root-app-page-component-found": "No root app page component found"
     },
     "browse": {
@@ -9712,8 +10045,7 @@
         "update-status-text": "plugins updated"
       },
       "versions": {
-        "confirmation-text-1": "Are you really sure you want to downgrade to version",
-        "confirmation-text-2": "You should normally not be doing this",
+        "confirmation-text": "Are you really sure you want to downgrade to version {{version}}? You should normally not be doing this",
         "downgrade-confirm": "Downgrade",
         "downgrade-title": "Downgrade plugin version"
       }
@@ -9767,6 +10099,10 @@
     "empty-state": {
       "message": "No plugins found"
     },
+    "extensions": {
+      "extension-error-alert-description": "Check the console for more details on the error.",
+      "extension-error-alert-title": "Extension failed to load: \"{{pluginId}}/{{extensionTitle}}\""
+    },
     "extensions-log-data-source": {
       "message": {
         "ok": "OK"
@@ -9800,7 +10136,11 @@
       "updating": "Updating"
     },
     "install-controls-button": {
-      "title-uninstall-modal": "Uninstall {{plugin}}"
+      "title-uninstall-modal": "Uninstall {{plugin}}",
+      "uninstall-controls": {
+        "body-uninstall-plugin": "Are you sure you want to uninstall this plugin?",
+        "confirmText-confirm": "Confirm"
+      }
     },
     "install-controls-warning": {
       "body-not-published": "This plugin is not published to <2>grafana.com/plugins</2> and can't be managed via the catalog.",
@@ -10836,6 +11176,7 @@
     }
   },
   "service-account-picker": {
+    "noOptionsMessage-no-service-accounts-found": "No service accounts found",
     "select-aria-label": "Service account picker",
     "select-placeholder": "Start typing to search for service accounts"
   },
@@ -10881,6 +11222,10 @@
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "Add service account token",
+      "body-delete-service-account": "Are you sure you want to delete this service account?",
+      "body-disable-service-account": "Are you sure you want to disable this service account?",
+      "confirmText-delete-service-account": "Delete service account",
+      "confirmText-disable-service-account": "Disable service account",
       "delete-service-account": "Delete service account",
       "disable-service-account": "Disable service account",
       "enable-service-account": "Enable service account",
@@ -10907,6 +11252,7 @@
       "used-by": "Used by"
     },
     "service-account-profile-row": {
+      "confirmText-save": "Save",
       "edit": "Edit"
     },
     "service-account-role-row": {
@@ -10920,6 +11266,12 @@
     },
     "service-accounts-list-page-unconnected": {
       "add-service-account": "Add service account",
+      "body-delete_one": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
+      "body-delete_other": "Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?",
+      "body-delete-with-tokens": "Are you sure you want to delete {{serviceAccountName}}?",
+      "body-disable-service-account": "Are you sure you want to disable '{{accountToDisable}}'?",
+      "confirmText-delete": "Delete",
+      "confirmText-disable-service-account": "Disable service account",
       "placeholder-search-service-account-by-name": "Search service account by name",
       "sub-title": "Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our <2>documentation.</2>",
       "title-delete-service-account": "Delete service account",
@@ -11315,7 +11667,7 @@
       "label-never": "Never"
     },
     "status-history-panel": {
-      "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} point received)",
+      "too-many-points_one": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)",
       "too-many-points_other": "Too many points to visualize properly. <1></1>Update the query to return fewer points. <3></3>({{count}} points received)"
     }
   },
@@ -11388,7 +11740,7 @@
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
     "description-min-column-width": "The minimum width for column auto resizing",
-    "description-wrap-header-text": "Enables text wrapping for the field name in the table header",
+    "description-wrap-header-text": "Enables text wrapping for column headers",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -11468,6 +11820,7 @@
     "tag-option-label": "Tag option"
   },
   "team-picker": {
+    "noOptionsMessage-no-teams-found": "No teams found",
     "select-aria-label": "Team picker",
     "select-placeholder": "Select a team"
   },
@@ -11793,6 +12146,7 @@
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Add a convert field type transformer",
       "aria-label-remove-convert-field-type-transformer": "Remove convert field type transformer",
+      "convert-field-type": "Convert field type",
       "label": {
         "browser": "Browser",
         "utc": "UTC"
@@ -11835,6 +12189,11 @@
       "remove-enum-row-tooltip-delete": "Delete"
     },
     "extract-fields-transformer-editor": {
+      "field-name-picker-settings": {
+        "placeholderText": {
+          "select-field": "Select field"
+        }
+      },
       "label-delimiter": "Delimiter",
       "label-format": "Format",
       "label-keep-time": "Keep time",
@@ -11848,6 +12207,14 @@
       "aria-label-threshold-color": "Threshold color"
     },
     "field-lookup-transformer-editor": {
+      "field-name-picker-settings": {
+        "noFieldsMessage": {
+          "no-text-fields-found": "No text fields found"
+        },
+        "placeholderText": {
+          "select-text-field": "Select text field"
+        }
+      },
       "label-field": "Field",
       "label-lookup": "Lookup"
     },
@@ -11873,10 +12240,30 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Add condition",
+      "filter-match": {
+        "label": {
+          "match-all": "Match all",
+          "match-any": "Match any"
+        }
+      },
+      "filter-types": {
+        "label": {
+          "exclude": "Exclude",
+          "include": "Include"
+        }
+      },
       "label-conditions": "Conditions",
       "label-filter-type": "Filter type"
     },
     "format-string-transfomer-editor": {
+      "field-name-picker-settings": {
+        "noFieldsMessage": {
+          "no-text-fields-found": "No text fields found"
+        },
+        "placeholderText": {
+          "select-text-field": "Select text field"
+        }
+      },
       "label-field": "Field",
       "label-format": "Format",
       "label-substring-range": "Substring range"
@@ -12187,6 +12574,7 @@
     "title": "Organizations"
   },
   "user-picker": {
+    "noOptionsMessage-no-users-found": "No users found",
     "select-aria-label": "User picker",
     "select-placeholder": "Start typing to search for user"
   },
@@ -12272,6 +12660,8 @@
       }
     },
     "confirm-delete-modal": {
+      "body-delete-variable": "Are you sure you want to delete variable \"{{variableToDelete}}\"?",
+      "confirmText-delete": "Delete",
       "title-delete-variable": "Delete variable"
     },
     "create-ad-hoc-variable-adapter": {
@@ -12320,9 +12710,24 @@
       "label-refresh": "Refresh"
     },
     "query-variable-sort-select": {
-      "description-values-variable": "How to sort the values of this variable"
+      "description-values-variable": "How to sort the values of this variable",
+      "name-sort": "Sort",
+      "sort_options": {
+        "label": {
+          "alphabetical-asc": "Alphabetical (asc)",
+          "alphabetical-caseinsensitive-asc": "Alphabetical (case-insensitive, asc)",
+          "alphabetical-caseinsensitive-desc": "Alphabetical (case-insensitive, desc)",
+          "alphabetical-desc": "Alphabetical (desc)",
+          "disabled": "Disabled",
+          "natural-asc": "Natural (asc)",
+          "natural-desc": "Natural (desc)",
+          "numerical-asc": "Numerical (asc)",
+          "numerical-desc": "Numerical (desc)"
+        }
+      }
     },
     "text-box-variable-editor": {
+      "name-default-value": "Default value",
       "placeholder-default-value-if-any": "default value, if any",
       "text-options": "Text options"
     },
@@ -12351,6 +12756,8 @@
       "description-optional-display-name": "Optional display name",
       "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
       "general": "General",
+      "name-label": "Label",
+      "name-name": "Name",
       "placeholder-descriptive-text": "Descriptive text",
       "placeholder-label-name": "Label name",
       "placeholder-variable-name": "Variable name",
@@ -12365,8 +12772,14 @@
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
     },
+    "variable-editor-un-connected": {
+      "name-description": "Description"
+    },
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
+    },
+    "variable-type-select": {
+      "name-select-variable-type": "Select variable type"
     },
     "variable-usages-button": {
       "tooltip-show-usages": "Show usages"
