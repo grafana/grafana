@@ -8,6 +8,7 @@ import { IconButton, Input, useStyles2 } from '@grafana/ui';
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
+import { LogLineDetailsMode } from './LogLineDetails';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
@@ -20,6 +21,7 @@ interface Props {
 export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
   const {
     closeDetails,
+    detailsMode,
     displayedFields,
     getRowContextQuery,
     logSupportsContext,
@@ -29,9 +31,10 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
     onPermalinkClick,
     onPinLine,
     onUnpinLine,
+    wrapLogMessage,
   } = useLogListContext();
   const pinned = useLogIsPinned(log);
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, detailsMode, wrapLogMessage);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -179,7 +182,7 @@ export const LogLineDetailsHeader = ({ log, search, onSearch }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode, wrapLogMessage: boolean) => ({
   container: css({
     overflow: 'auto',
     height: '100%',
@@ -192,7 +195,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     background: theme.colors.background.canvas,
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: !wrapLogMessage && mode === 'inline' ? 'row-reverse' : 'row',
     gap: theme.spacing(0.75),
     zIndex: theme.zIndex.navbarFixed,
     height: theme.spacing(5.5),

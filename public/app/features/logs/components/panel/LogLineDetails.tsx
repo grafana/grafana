@@ -86,10 +86,12 @@ export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
   );
 };
 
+export const LOG_LINE_DETAILS_HEIGHT = 30;
+
 const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
   inlineWrapper: css({
     gridColumn: '1 / -1',
-    height: '30vh',
+    height: `${LOG_LINE_DETAILS_HEIGHT}vh`,
     paddingBottom: theme.spacing(0.5),
     marginRight: 1,
   }),

@@ -460,6 +460,7 @@ const LogListComponent = ({
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
+                showDetails,
                 showTime,
                 wrap: wrapLogMessage,
               })}
