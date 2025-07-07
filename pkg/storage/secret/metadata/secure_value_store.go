@@ -409,7 +409,7 @@ func (s *secureValueMetadataStorage) SetVersionToActive(ctx context.Context, nam
 	if err != nil {
 		return fmt.Errorf("fetching number of modified rows: %w", err)
 	}
-	if modifiedCount == 0 {
+	if modifiedCount != 1 {
 		return fmt.Errorf("expected to modify at least one row but modified 0: modifiedCount=%d", modifiedCount)
 	}
 
