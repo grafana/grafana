@@ -247,7 +247,7 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
     pluginsLogger.logError(error);
     console.error(error);
   }
-} 
+}
 
 export function getAppPluginPageError(meta: AppPluginMeta) {
   if (!meta) {

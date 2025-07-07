@@ -26,7 +26,7 @@ export function AppChromeExtensionPoint(): JSX.Element | null {
   return <InternalAppChromeExtensionPoint />;
 }
 
-// We have this "internal" component so we can prevent pre-loading the plugins associated with the extension-point if the feature is not enabled. 
+// We have this "internal" component so we can prevent pre-loading the plugins associated with the extension-point if the feature is not enabled.
 function InternalAppChromeExtensionPoint(): JSX.Element | null {
   const { components, isLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.AppChrome,
