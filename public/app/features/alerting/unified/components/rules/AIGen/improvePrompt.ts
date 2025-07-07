@@ -13,27 +13,35 @@ Guidelines for label improvements:
 2. **Template Labels**: Use when query labels are insufficient. They can:
    - Group alerts differently for notifications
    - Be used in notification policies to alter contact points
-   - Create dynamic severity based on query values
-   - Example conditional severity: \`{{ if (gt \\$values.A.Value 90.0) -}}critical{{ else if (gt \\$values.A.Value 80.0) -}}high{{ else -}}low{{- end }}\`
+   - Create dynamic labels based on query values if user request is to improve labels this way
+   - Example conditional severity: \`{{- if gt \\$values.A.Value 90.0 -}}critical{{- else if gt \\$values.A.Value 80.0 -}}warning{{- else if gt \\$values.A.Value 70.0 -}}minor{{- else -}}none{{- end -}}\`
 
-**Important**: 
+**Important Template Syntax**: 
 - Alert instances are uniquely identified by their set of labels
 - Avoid displaying query values in labels (creates many instances)
 - Labels should be stable identifiers for grouping and routing
 - Use conditional logic in labels for dynamic categorization
+- Use \\$values.QueryRef.Value for numeric query results (e.g., \\$values.A.Value, \\$values.B.Value)
+- Use \\$labels.labelname for label values from queries (e.g., \\$labels.instance, \\$labels.job)
+
+**Dynamic Severity Example**:
+Instead of creating separate rules for different thresholds, use one rule with dynamic severity:
+- Query condition: \\$B > 70 (to prevent firing when severity=none)
+- Severity label template: \`{{- if gt \\$values.B.Value 90.0 -}}critical{{- else if gt \\$values.B.Value 80.0 -}}warning{{- else if gt \\$values.B.Value 70.0 -}}minor{{- else -}}none{{- end -}}\`
 
 Important notes:
 - Only suggest improvements that add value
 - Don't change existing labels unless they need improvement
 - Focus on making alerts better categorized and routable
 - Use consistent naming conventions for labels
-- Ensure severity levels are appropriate (critical, warning, info)
+- Ensure severity levels are appropriate (critical, warning, minor, info, none)
 - Add team/service ownership when possible
+- Use wider threshold bands to prevent label flapping
 
 Response format: Return ONLY a JSON object with labels:
 {
   "labels": [
-    {"key": "severity", "value": "{{ if (gt \\$values.A.Value 90.0) -}}critical{{ else if (gt \\$values.A.Value 80.0) -}}high{{ else -}}low{{- end }}"},
+    {"key": "severity", "value": "{{- if gt \\$values.A.Value 90.0 -}}critical{{- else if gt \\$values.A.Value 80.0 -}}warning{{- else if gt \\$values.A.Value 70.0 -}}minor{{- else -}}none{{- end -}}"},
     {"key": "team", "value": "platform"},
     {"key": "service", "value": "api"}
   ]
@@ -129,7 +137,7 @@ Consider improving:
 - Clear, concise summary annotation
 - Detailed description annotation with troubleshooting steps
 - Runbook URL annotation if relevant
-- Dynamic severity labels using conditional logic based on query values
+- Dynamic labels using conditional logic based on query values if user request is to improve labels this way
 - Team ownership labels
 - Environment or service labels
 - Additional custom annotations if needed (use meaningful key names like "escalation_contact", "troubleshooting_guide", etc.)
@@ -170,16 +178,27 @@ Current Evaluation:
 ${currentRuleContext}
 
 Focus specifically on improving the labels. Consider adding:
-- Dynamic severity labels using conditional logic based on query values
+- Dynamic labels using conditional logic based on query values if user request is to improve labels this way
 - Team ownership labels
 - Environment or service labels
 - Categorization labels for better routing and grouping
 
+**Template Syntax Guidelines**:
+- Use \\$values.QueryRef.Value for numeric query results (e.g., \\$values.A.Value, \\$values.B.Value where A, B are query references)
+- Use \\$labels.labelname for label values from queries (e.g., \\$labels.instance, \\$labels.job)
+- Use conditional logic with {{- if gt \\$values.A.Value 90.0 -}}critical{{- else if gt \\$values.A.Value 80.0 -}}warning{{- else -}}minor{{- end -}}
+- Use wider threshold bands to prevent label flapping
+
+**ExampleDynamic Severity Pattern**:
+Instead of separate rules, use one rule with dynamic severity:
+\`{{- if gt \\$values.QueryRef.Value 90.0 -}}critical{{- else if gt \\$values.QueryRef.Value 80.0 -}}warning{{- else if gt \\$values.QueryRef.Value 70.0 -}}minor{{- else -}}none{{- end -}}\`
+
 Remember:
-- Use template labels for grouping and routing (e.g., conditional severity)
 - Labels should be stable identifiers, not constantly changing values
+- Avoid displaying raw query values in labels (creates many instances)
 - Use conditional logic in labels for dynamic categorization
-- Avoid displaying query values in labels (creates many instances)
+- Each unique label combination creates a separate alert instance
+- if the label key already exists, improve the value, do not add a new label
 
 Return only the JSON object with the label improvements.`,
   };
