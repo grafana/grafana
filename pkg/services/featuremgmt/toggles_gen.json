@@ -2865,16 +2865,19 @@
     {
       "metadata": {
         "name": "skipTokenRotationIfRecent",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-03T06:59:40Z"
+        "resourceVersion": "1751872762065",
+        "creationTimestamp": "2025-06-03T06:59:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-07 07:19:22.065046 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Skip token rotation if it was already rotated less than 5 seconds ago",
-        "stage": "privatePreview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

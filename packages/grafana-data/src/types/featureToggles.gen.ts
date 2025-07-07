@@ -979,7 +979,7 @@ export interface FeatureToggles {
   restoreDashboards?: boolean;
   /**
   * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default false
+  * @default true
   */
   skipTokenRotationIfRecent?: boolean;
   /**
