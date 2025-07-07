@@ -114,7 +114,7 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
     render: () => {
-      return <PublicDashboardBadge dashboard={dashboard} />;
+      return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
     },
   });
 
