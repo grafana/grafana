@@ -53,80 +53,20 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
-  /**
-   * Migrated to backend with feature toggle `jaegerBackendMigration`
-   */
   async metadataRequest(url: string, params?: Record<string, unknown>) {
-    if (config.featureToggles.jaegerBackendMigration) {
-      return await this.getResource(url, params);
-    }
-
-    const res = await lastValueFrom(this._request('/api/' + url, params, { hideFromInspector: true }));
-    return res.data.data;
+    return await this.getResource(url, params);
   }
 
   isSearchFormValid(query: JaegerQuery): boolean {
     return !!query.service;
   }
 
-  /**
-   * Migrated to backend with feature toggle `jaegerBackendMigration`
-   */
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
-    }
-
-    if (config.featureToggles.jaegerBackendMigration && target.queryType !== 'upload') {
-      return super.query({ ...options, targets: [target] }).pipe(
-        map((response) => {
-          // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response
-          if (this.nodeGraph?.enabled && !target.queryType) {
-            return addNodeGraphFramesToResponse(response);
-          }
-          return response;
-        })
-      );
-    }
-
-    // Use the internal Jaeger /dependencies API for rendering the dependency graph.
-    if (target.queryType === 'dependencyGraph') {
-      const timeRange = options.range ?? getDefaultTimeRange();
-      const endTs = getTime(timeRange.to, true) / 1000;
-      const lookback = endTs - getTime(timeRange.from, false) / 1000;
-      return this._request('/api/dependencies', { endTs, lookback }).pipe(map(mapJaegerDependenciesResponse));
-    }
-
-    if (target.queryType === 'search' && !this.isSearchFormValid(target)) {
-      return of({ error: { message: 'You must select a service.' }, data: [] });
-    }
-
-    let { start, end } = this.getTimeRange(options.range);
-
-    if (target.queryType !== 'search' && target.query) {
-      let url = `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query.trim(), options.scopedVars))}`;
-      if (this.traceIdTimeParams) {
-        url += `?start=${start}&end=${end}`;
-      }
-
-      return this._request(url).pipe(
-        map((response) => {
-          const traceData = response?.data?.data?.[0];
-          if (!traceData) {
-            return { data: [emptyTraceDataFrame] };
-          }
-          let data = [createTraceFrame(traceData)];
-          if (this.nodeGraph?.enabled) {
-            data.push(...createGraphFrames(traceData));
-          }
-          return {
-            data,
-          };
-        })
-      );
     }
 
     if (target.queryType === 'upload') {
@@ -146,38 +86,13 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       }
     }
 
-    let jaegerInterpolated = pick(this.applyTemplateVariables(target, options.scopedVars), [
-      'service',
-      'operation',
-      'tags',
-      'minDuration',
-      'maxDuration',
-      'limit',
-    ]);
-    // remove empty properties
-    let jaegerQuery = pickBy(jaegerInterpolated, identity);
-
-    if (jaegerQuery.operation === ALL_OPERATIONS_KEY) {
-      jaegerQuery = omit(jaegerQuery, 'operation');
-    }
-
-    if (jaegerQuery.tags) {
-      jaegerQuery = {
-        ...jaegerQuery,
-        tags: convertTagsLogfmt(jaegerQuery.tags.toString()),
-      };
-    }
-
-    // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
-    return this._request(`/api/traces`, {
-      ...jaegerQuery,
-      ...this.getTimeRange(options.range),
-      lookback: 'custom',
-    }).pipe(
+    return super.query({ ...options, targets: [target] }).pipe(
       map((response) => {
-        return {
-          data: [createTableFrame(response.data.data, this.instanceSettings)],
-        };
+        // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response
+        if (this.nodeGraph?.enabled && !target.queryType) {
+          return addNodeGraphFramesToResponse(response);
+        }
+        return response;
       })
     );
   }
@@ -215,49 +130,8 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     };
   }
 
-  /**
-   * Migrated to backend with feature toggle `jaegerBackendMigration`
-   */
   async testDatasource() {
-    if (config.featureToggles.jaegerBackendMigration) {
-      return await super.testDatasource();
-    }
-
-    return lastValueFrom(
-      this._request('/api/services').pipe(
-        map((res) => {
-          const values = res?.data?.data || [];
-          const testResult =
-            values.length > 0
-              ? { status: 'success', message: 'Data source connected and services found.' }
-              : {
-                  status: 'error',
-                  message:
-                    'Data source connected, but no services received. Verify that Jaeger is configured properly.',
-                };
-          return testResult;
-        }),
-        catchError((err) => {
-          let message = 'Jaeger: ';
-          if (err.statusText) {
-            message += err.statusText;
-          } else {
-            message += 'Cannot connect to Jaeger';
-          }
-
-          if (err.status) {
-            message += `. ${err.status}`;
-          }
-
-          if (err.data && err.data.message) {
-            message += `. ${err.data.message}`;
-          } else if (err.data) {
-            message += `. ${JSON.stringify(err.data)}`;
-          }
-          return of({ status: 'error', message: message });
-        })
-      )
-    );
+    return await super.testDatasource();
   }
 
   getTimeRange(range = getDefaultTimeRange()): { start: number; end: number } {
