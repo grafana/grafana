@@ -177,8 +177,7 @@ jobs:
         run: ./scripts/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
-          # IS_FORK will be used to check if affected plugins section can be printed or not
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }} # used in check-breaking-changes.sh and levitate-parse-json-report.js
 
       - name: Persisting the check output
         run: |
