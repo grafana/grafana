@@ -9276,13 +9276,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/diff@npm:^7.0.0":
-  version: 7.0.1
-  resolution: "@types/diff@npm:7.0.1"
-  checksum: 10/ef8c5fe0ea56737e8967c3db5e78518134f704e8e2971cb4ba6f2ed46ed5e13b4bbe41a6b2b78122b8f47c618ac25550f85a681633636a3a020369042523295d
-  languageName: node
-  linkType: hard
-
 "@types/doctrine@npm:^0.0.9":
   version: 0.0.9
   resolution: "@types/doctrine@npm:0.0.9"
@@ -15074,10 +15067,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"diff@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "diff@npm:7.0.0"
-  checksum: 10/e9b8e48d054c9c0c093c65ce8e2637af94b35f2427001607b14e5e0589e534ea3413a7f91ebe6d7c5a1494ace49cb7c7c3972f442ddd96a4767ff091999a082e
+"diff@npm:^8.0.0":
+  version: 8.0.2
+  resolution: "diff@npm:8.0.2"
+  checksum: 10/82a2120d3418f97822e17a6044ccd4b99a91e26e145e8698353673d7146bd2d092bbebb79c112aae7badc7b9c526f9098cbe342f96174feb6beabdd2587b3c42
   languageName: node
   linkType: hard
 
@@ -18190,7 +18183,6 @@ __metadata:
     "@types/d3-force": "npm:^3.0.0"
     "@types/d3-scale-chromatic": "npm:3.1.0"
     "@types/debounce-promise": "npm:3.1.9"
-    "@types/diff": "npm:^7.0.0"
     "@types/eslint": "npm:9.6.1"
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/file-saver": "npm:2.0.7"
@@ -18274,7 +18266,7 @@ __metadata:
     dangerously-set-html-content: "npm:1.1.0"
     date-fns: "npm:4.1.0"
     debounce-promise: "npm:3.1.2"
-    diff: "npm:^7.0.0"
+    diff: "npm:^8.0.0"
     esbuild: "npm:0.25.0"
     esbuild-loader: "npm:4.3.0"
     esbuild-plugin-browserslist: "npm:^1.0.0"
