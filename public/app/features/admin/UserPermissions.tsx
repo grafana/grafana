@@ -75,7 +75,7 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
                   onClick={onChangeClick}
                   onConfirm={handleGrafanaAdminChange}
                   onCancel={onCancelClick}
-                  confirmText="Change"
+                  confirmText={t('admin.user-permissions.confirmText-change', 'Change')}
                 >
                   {t('admin.user-permissions.change-button', 'Change')}
                 </ConfirmButton>
