@@ -243,10 +243,17 @@ org_attribute_path = groups
 org_mapping = ["Group 1:org_foo:Viewer", "Group 2:org_bar:Editor", "*:3:Editor"]
 ```
 
+<<<<<<< HEAD
 ### Configure group synchronization (Enterprise only)
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
+=======
+### Configure team synchronization
+
+{{< admonition type="note" >}}
+Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+>>>>>>> 6c2574848f5 (Docs: Updating team sync availability (#107721))
 {{< /admonition >}}
 
 By using group synchronization, you can link your Okta groups to teams and roles within Grafana. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.

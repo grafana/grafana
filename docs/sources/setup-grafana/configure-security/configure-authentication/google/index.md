@@ -168,8 +168,15 @@ auto_login = true
 ### Configure group synchronization
 
 {{< admonition type="note" >}}
+<<<<<<< HEAD
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
+=======
+Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+{{< /admonition >}}
+
+With team sync, you can easily add users to teams by utilizing their Google groups. To set up team sync for Google OAuth, refer to the following example.
+>>>>>>> 6c2574848f5 (Docs: Updating team sync availability (#107721))
 
 Grafana supports syncing users to teams and roles based on their Google groups.
 
