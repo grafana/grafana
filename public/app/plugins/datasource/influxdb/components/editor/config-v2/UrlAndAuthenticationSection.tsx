@@ -41,7 +41,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   const requiresDrbpMapping =
     options.jsonData.product &&
     options.jsonData.version === InfluxVersion.InfluxQL &&
-    ['InfluxDB OSS 1.x', 'InfluxDB OSS 2.x'].includes(options.jsonData.product);
+    ['InfluxDB OSS 1.x', 'InfluxDB OSS 2.x', 'InfluxDB Enterprise 1.x', 'InfluxDB Cloud (TSM)', 'InfluxDB Cloud Serverless'].includes(options.jsonData.product);
 
   const onProductChange = ({ value }: ComboboxOption) => {
     trackInfluxDBConfigV2ProductSelected({ product: value });
