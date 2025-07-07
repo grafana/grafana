@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,6 +27,8 @@ type PluginManagementCfg struct {
 	Features Features
 
 	HideAngularDeprecation []string
+
+	PluginAssetCDNFunc func(fs plugins.FS, assetPath ...string) (string, error)
 }
 
 // Features contains the feature toggles used for the plugin management system.
@@ -41,6 +44,7 @@ type Features struct {
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features,
 	grafanaComAPIURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, grafanaComAPIToken string,
+	pluginAssetCDNFunc func(fs plugins.FS, assetPath ...string) (string, error),
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
 		PluginsPath:            pluginsPath,
@@ -55,5 +59,10 @@ func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings set
 		HideAngularDeprecation: hideAngularDeprecation,
 		ForwardHostEnvVars:     forwardHostEnvVars,
 		GrafanaComAPIToken:     grafanaComAPIToken,
+		PluginAssetCDNFunc:     pluginAssetCDNFunc,
 	}
+}
+
+var PluginAssetNoop = func(fs plugins.FS, assetPath ...string) (string, error) {
+	return "", nil
 }

@@ -1,25 +1,29 @@
 package pluginconfig
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
+	"path/filepath"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ProvidePluginManagementConfig returns a new config.PluginManagementCfg.
 // It is used to provide configuration to Grafana's implementation of the plugin management system.
-func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles) (*config.PluginManagementCfg, error) {
-	plugins := settingProvider.Section("plugins")
+func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Provider, features featuremgmt.FeatureToggles,
+	pluginLicensing plugins.Licensing) (*config.PluginManagementCfg, error) {
+	pluginsSection := settingProvider.Section("plugins")
 	allowedUnsigned := cfg.PluginsAllowUnsigned
-	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
-		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
+	if len(pluginsSection.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
+		allowedUnsigned = strings.Split(pluginsSection.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
 	}
 
 	return config.NewPluginManagementCfg(
@@ -41,6 +45,32 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.HideAngularDeprecation,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComSSOAPIToken,
+		func(fs plugins.FS, assetPath ...string) (string, error) {
+			cdnURL, err := cfg.GetContentDeliveryURL(pluginLicensing.ContentDeliveryPrefix())
+			if err != nil {
+				return "", err
+			}
+
+			if cdnURL == "" {
+				return "", errors.New("content delivery URL is empty")
+			}
+
+			relativePath, err := filepath.Rel(cfg.StaticRootPath, fs.Base())
+			if err != nil {
+				return "", err
+			}
+
+			if strings.Contains(relativePath, "..") {
+				return "", errors.New("path escapes root directory")
+			}
+
+			base, err := url.JoinPath(cdnURL, relativePath)
+			if err != nil {
+				return "", err
+			}
+
+			return url.JoinPath(base, assetPath...)
+		},
 	), nil
 }
 

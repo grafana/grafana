@@ -47,7 +47,11 @@ func DefaultService(cfg *config.PluginManagementCfg) *Service {
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		baseDir := getBaseDir(n.fs.Base())
+		if u, err := s.cfg.PluginAssetCDNFunc(n.fs); err == nil {
+			return u, nil
+		}
+
+		baseDir := getBaseDir(n.class, n.fs)
 		return path.Join("public/app/plugins", string(n.pluginJSON.Type), baseDir), nil
 	}
 	if n.class == plugins.ClassCDN {
@@ -73,10 +77,12 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		if filepath.Base(n.fs.Base()) == "dist" {
-			// The core plugin has been built externally, use the module from the dist folder
+		if isDecoupledCorePlugin(n.class, n.fs) {
+			if u, err := s.cfg.PluginAssetCDNFunc(n.fs, "module.js"); err == nil {
+				return u, nil
+			}
 		} else {
-			baseDir := getBaseDir(n.fs.Base())
+			baseDir := getBaseDir(n.class, n.fs)
 			return path.Join("core:plugin", baseDir), nil
 		}
 	}
@@ -103,6 +109,11 @@ func (s *Service) Module(n PluginInfo) (string, error) {
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
 func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
+	if isDecoupledCorePlugin(n.class, n.fs) {
+		if u, err := s.cfg.PluginAssetCDNFunc(n.fs, pathStr); err == nil {
+			return u, nil
+		}
+	}
 	if n.class == plugins.ClassCDN {
 		return pluginscdn.JoinPath(n.fs.Base(), pathStr)
 	}
@@ -145,13 +156,18 @@ func (s *Service) DefaultLogoPath(pluginType plugins.Type) string {
 	return path.Join("public/img", fmt.Sprintf("icn-%s.svg", string(pluginType)))
 }
 
-func getBaseDir(pluginDir string) string {
+func getBaseDir(class plugins.Class, fs plugins.FS) string {
+	pluginDir := fs.Base()
 	baseDir := filepath.Base(pluginDir)
 	// Decoupled core plugins will be suffixed with "dist" if they have been built
-	if baseDir == "dist" {
-		return filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
+	if isDecoupledCorePlugin(class, fs) {
+		return filepath.Base(pluginDir)
 	}
 	return baseDir
+}
+
+func isDecoupledCorePlugin(class plugins.Class, fs plugins.FS) bool {
+	return class == plugins.ClassCore && filepath.Base(fs.Base()) == "dist"
 }
 
 func (s *Service) GetTranslations(n PluginInfo) (map[string]string, error) {

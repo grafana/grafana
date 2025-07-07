@@ -400,6 +400,10 @@ func (s *FakeLicensingService) Environment() []string {
 	return []string{fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", s.TokenRaw)}
 }
 
+func (l *FakeLicensingService) ContentDeliveryPrefix() string {
+	return ""
+}
+
 type FakeRoleRegistry struct {
 	ExpectedErr error
 }

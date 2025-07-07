@@ -316,7 +316,10 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	ossImpl := setting.ProvideProvider(cfg)
-	pluginManagementCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, ossImpl, featureToggles)
+	hooksService := hooks.ProvideService()
+	ossLicensingService := licensing.ProvideService(cfg, hooksService)
+	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
+	pluginManagementCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, ossImpl, featureToggles, licensingService)
 	if err != nil {
 		return nil, err
 	}
@@ -324,9 +327,6 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	hooksService := hooks.ProvideService()
-	ossLicensingService := licensing.ProvideService(cfg, hooksService)
-	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
 	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService)
 	inMemory := registry.ProvideService()
 	rendererManager, err := renderer.ProvideService(pluginManagementCfg, envVarsProvider, inMemory, tracingService)
@@ -859,7 +859,10 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	ossImpl := setting.ProvideProvider(cfg)
-	pluginManagementCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, ossImpl, featureToggles)
+	hooksService := hooks.ProvideService()
+	ossLicensingService := licensing.ProvideService(cfg, hooksService)
+	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
+	pluginManagementCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, ossImpl, featureToggles, licensingService)
 	if err != nil {
 		return nil, err
 	}
@@ -867,9 +870,6 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	hooksService := hooks.ProvideService()
-	ossLicensingService := licensing.ProvideService(cfg, hooksService)
-	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
 	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService)
 	inMemory := registry.ProvideService()
 	rendererManager, err := renderer.ProvideService(pluginManagementCfg, envVarsProvider, inMemory, tracingService)
