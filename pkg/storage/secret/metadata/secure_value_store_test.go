@@ -1,4 +1,4 @@
-package metadata
+package metadata_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -43,11 +44,11 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the secure value storage
-	secureValueStorage, err := ProvideSecureValueMetadataStorage(db, tracer, features, nil)
+	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 
 	// Initialize the keeper storage
-	keeperStorage, err := ProvideKeeperMetadataStorage(db, tracer, features, nil)
+	keeperStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 
 	t.Run("create and read a secure value", func(t *testing.T) {

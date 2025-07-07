@@ -1,4 +1,4 @@
-package metadata
+package metadata_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -340,7 +341,7 @@ func initStorage(t *testing.T) contracts.KeeperMetadataStorage {
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the keeper storage
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, tracer, features, nil)
+	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 	return keeperMetadataStorage
 }

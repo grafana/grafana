@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
@@ -27,21 +28,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type setupConfig struct {
-	keeperService contracts.KeeperService
+type SetupConfig struct {
+	KeeperService contracts.KeeperService
+	AllowList     map[string]struct{}
 }
 
-func defaultSetupCfg() setupConfig {
-	return setupConfig{}
+func defaultSetupCfg() SetupConfig {
+	return SetupConfig{}
 }
 
-func WithKeeperService(keeperService contracts.KeeperService) func(*setupConfig) {
-	return func(setupCfg *setupConfig) {
-		setupCfg.keeperService = keeperService
+func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig) {
+	return func(setupCfg *SetupConfig) {
+		setupCfg.KeeperService = keeperService
 	}
 }
 
-func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
+func WithMutateCfg(f func(*SetupConfig)) func(*SetupConfig) {
+	return func(cfg *SetupConfig) {
+		f(cfg)
+	}
+}
+
+func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	setupCfg := defaultSetupCfg()
 	for _, opt := range opts {
 		opt(&setupCfg)
@@ -93,18 +101,23 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 
-	if setupCfg.keeperService != nil {
-		keeperService = setupCfg.keeperService
+	if setupCfg.KeeperService != nil {
+		keeperService = setupCfg.KeeperService
 	}
 
 	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
 
-	return Sut{SecureValueService: secureValueService, SecureValueMetadataStorage: secureValueMetadataStorage, Database: database}
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, setupCfg.AllowList)
+
+	decryptStorage, err := metadata.ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
+
+	return Sut{SecureValueService: secureValueService, SecureValueMetadataStorage: secureValueMetadataStorage, Database: database, DecryptStorage: decryptStorage}
 }
 
 type Sut struct {
 	SecureValueService         *service.SecureValueService
 	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
+	DecryptStorage             contracts.DecryptStorage
 	Database                   *database.Database
 }
 
