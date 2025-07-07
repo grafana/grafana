@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
@@ -48,12 +49,12 @@ type LegacyStore struct {
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	panic("unimplemented")
+	return nil, false, fmt.Errorf("method not yet implemented")
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
 func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	panic("unimplemented")
+	return nil, apierrors.NewMethodNotSupported(resource.GroupResource(), "deletecollection")
 }
 
 // Delete implements rest.GracefulDeleter.

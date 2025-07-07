@@ -10,6 +10,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -444,13 +445,13 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	var createdUser user.User
-	err = sql.DB.InTransaction(ctx, func(ctx context.Context) error {
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		userQuery, err := sqltemplate.Execute(sqlCreateUserTemplate, req)
 		if err != nil {
 			return fmt.Errorf("execute user template %q: %w", sqlCreateUserTemplate.Name(), err)
 		}
 
-		result, err := sql.DB.GetSqlxSession().Exec(ctx, userQuery, req.GetArgs()...)
+		result, err := st.Exec(ctx, userQuery, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to create user: %w", err)
 		}
@@ -478,7 +479,7 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("execute org_user template %q: %w", sqlCreateOrgUserTemplate.Name(), err)
 		}
 
-		_, err = sql.DB.GetSqlxSession().Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...)
+		_, err = st.Exec(ctx, orgUserQuery, orgUserReq.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to create org_user relationship: %w", err)
 		}
@@ -576,7 +577,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		return nil, err
 	}
 
-	err = sql.DB.InTransaction(ctx, func(ctx context.Context) error {
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
 		userLookupReq := newGetUserInternalID(sql, &GetUserInternalIDQuery{
 			OrgID: ns.OrgID,
 			UID:   req.Query.UID,
@@ -587,7 +588,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("execute user lookup template: %w", err)
 		}
 
-		rows, err := sql.DB.GetSqlxSession().Query(ctx, userQuery, userLookupReq.GetArgs()...)
+		rows, err := st.Query(ctx, userQuery, userLookupReq.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to check if user exists: %w", err)
 		}
@@ -616,7 +617,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("execute org_user delete template: %w", err)
 		}
 
-		_, err = sql.DB.GetSqlxSession().Exec(ctx, orgUserDeleteQuery, orgUserReq.GetArgs()...)
+		_, err = st.Exec(ctx, orgUserDeleteQuery, orgUserReq.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to delete from org_user: %w", err)
 		}
@@ -626,7 +627,7 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("execute delete template %q: %w", sqlDeleteUserTemplate.Name(), err)
 		}
 
-		result, err := sql.DB.GetSqlxSession().Exec(ctx, deleteQuery, req.GetArgs()...)
+		result, err := st.Exec(ctx, deleteQuery, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to delete user: %w", err)
 		}

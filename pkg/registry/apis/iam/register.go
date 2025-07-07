@@ -129,11 +129,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		return err
 	}
 
-	dw, err := opts.DualWriteBuilder(
-		userResource.GroupResource(),
-		user.NewLegacyStore(b.store, b.accessClient),
-		store,
-	)
+	legacyStore := user.NewLegacyStore(b.store, b.accessClient)
+
+	dw, err := opts.DualWriteBuilder(userResource.GroupResource(), legacyStore, store)
 	if err != nil {
 		return err
 	}
