@@ -16,7 +16,8 @@ import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
 import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { setAllSelection, useHasSelection } from './state';
+import { useHasSelection } from './state/hooks';
+import { setAllSelection } from './state/slice';
 
 const RecentlyDeletedPage = memo(() => {
   const dispatch = useDispatch();

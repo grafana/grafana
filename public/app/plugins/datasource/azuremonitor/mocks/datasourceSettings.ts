@@ -1,6 +1,6 @@
 import { KeyValue } from '@grafana/data';
 
-import { AzureMonitorDataSourceSettings } from '../types';
+import { AzureMonitorDataSourceSettings } from '../types/types';
 
 import { DeepPartial } from './utils';
 

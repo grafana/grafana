@@ -3,13 +3,11 @@ import { PluginSignatureBadge, Stack } from '@grafana/ui';
 import { isPluginUpdatable } from '../helpers';
 import { CatalogPlugin } from '../types';
 
-import {
-  PluginEnterpriseBadge,
-  PluginDisabledBadge,
-  PluginInstalledBadge,
-  PluginUpdateAvailableBadge,
-  PluginDeprecatedBadge,
-} from './Badges';
+import { PluginDeprecatedBadge } from './Badges/PluginDeprecatedBadge';
+import { PluginDisabledBadge } from './Badges/PluginDisabledBadge';
+import { PluginEnterpriseBadge } from './Badges/PluginEnterpriseBadge';
+import { PluginInstalledBadge } from './Badges/PluginInstallBadge';
+import { PluginUpdateAvailableBadge } from './Badges/PluginUpdateAvailableBadge';
 
 type PluginBadgeType = {
   plugin: CatalogPlugin;

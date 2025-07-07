@@ -2,7 +2,7 @@ import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import './module';
-import { AzureMonitorQuery } from './types';
+import { AzureMonitorQuery } from './types/query';
 
 jest.mock('@grafana/runtime', () => {
   return {

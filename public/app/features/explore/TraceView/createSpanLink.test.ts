@@ -14,8 +14,8 @@ import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
-import { Trace, TraceSpan } from './components';
 import { SpanLinkType } from './components/types/links';
+import { Trace, TraceSpan } from './components/types/trace';
 import { createSpanLinkFactory, pyroscopeProfileIdTagKey } from './createSpanLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;

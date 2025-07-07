@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 
-import { MetricAggregation } from '../types';
+import { MetricAggregation } from '../dataquery.gen';
 import { describeMetric } from '../utils';
 
 const noWrap = css({

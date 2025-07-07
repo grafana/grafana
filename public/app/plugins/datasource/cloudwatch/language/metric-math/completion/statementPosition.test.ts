@@ -1,6 +1,11 @@
 import { monacoTypes } from '@grafana/ui';
 
-import * as MetricMathTestQueries from '../../../mocks/metric-math-test-data';
+import { afterFunctionQuery } from '../../../mocks/metric-math-test-data/afterFunctionQuery';
+import { secondArgAfterSearchQuery } from '../../../mocks/metric-math-test-data/secondArgAfterSearchQuery';
+import { secondArgQuery } from '../../../mocks/metric-math-test-data/secondArgQuery';
+import { singleLineEmptyQuery } from '../../../mocks/metric-math-test-data/singleLineEmptyQuery';
+import { thirdArgAfterSearchQuery } from '../../../mocks/metric-math-test-data/thirdArgAfterSearchQuery';
+import { withinStringQuery } from '../../../mocks/metric-math-test-data/withinStringQuery';
 import MonacoMock from '../../../mocks/monarch/Monaco';
 import TextModel from '../../../mocks/monarch/TextModel';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
@@ -23,49 +28,31 @@ describe('statementPosition', () => {
   }
 
   it('returns PredefinedFunction when at the beginning of an empty query', () => {
-    const token = createToken(
-      MetricMathTestQueries.singleLineEmptyQuery.query,
-      MetricMathTestQueries.singleLineEmptyQuery.position
-    );
+    const token = createToken(singleLineEmptyQuery.query, singleLineEmptyQuery.position);
     expect(getStatementPosition(token)).toEqual(StatementPosition.PredefinedFunction);
   });
 
   it('returns PredefinedFuncSecondArg when in the second arg of a predefined function', () => {
-    const token = createToken(
-      MetricMathTestQueries.secondArgQuery.query,
-      MetricMathTestQueries.secondArgQuery.position
-    );
+    const token = createToken(secondArgQuery.query, secondArgQuery.position);
     expect(getStatementPosition(token)).toEqual(StatementPosition.PredefinedFuncSecondArg);
   });
 
   it('returns SearchFuncSecondArg when in the second arg of a Search function', () => {
-    const token = createToken(
-      MetricMathTestQueries.secondArgAfterSearchQuery.query,
-      MetricMathTestQueries.secondArgAfterSearchQuery.position
-    );
+    const token = createToken(secondArgAfterSearchQuery.query, secondArgAfterSearchQuery.position);
     expect(getStatementPosition(token)).toEqual(StatementPosition.SearchFuncSecondArg);
   });
 
   it('returns SearchFuncThirdArg when in the third arg of a Search function', () => {
-    const token = createToken(
-      MetricMathTestQueries.thirdArgAfterSearchQuery.query,
-      MetricMathTestQueries.thirdArgAfterSearchQuery.position
-    );
+    const token = createToken(thirdArgAfterSearchQuery.query, thirdArgAfterSearchQuery.position);
     expect(getStatementPosition(token)).toEqual(StatementPosition.SearchFuncThirdArg);
   });
   it('returns AfterFunction when after a function', () => {
-    const token = createToken(
-      MetricMathTestQueries.afterFunctionQuery.query,
-      MetricMathTestQueries.afterFunctionQuery.position
-    );
+    const token = createToken(afterFunctionQuery.query, afterFunctionQuery.position);
     expect(getStatementPosition(token)).toEqual(StatementPosition.AfterFunction);
   });
 
   it('returns WithinString when within a string', () => {
-    const token = createToken(
-      MetricMathTestQueries.withinStringQuery.query,
-      MetricMathTestQueries.withinStringQuery.position
-    );
+    const token = createToken(withinStringQuery.query, withinStringQuery.position);
     expect(getStatementPosition(token)).toEqual(StatementPosition.WithinString);
   });
 });

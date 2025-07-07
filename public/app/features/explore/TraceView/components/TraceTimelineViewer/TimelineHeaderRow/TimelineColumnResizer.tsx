@@ -16,8 +16,9 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { TNil } from '../../types';
-import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
+import TNil from '../../types/TNil';
+import DraggableManager from '../../utils/DraggableManager/DraggableManager';
+import { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager/types';
 
 export const getStyles = () => ({
   TimelineColumnResizer: css({

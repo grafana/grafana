@@ -3,7 +3,7 @@ import {
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
   RawAzureSubscriptionItem,
-} from '../types';
+} from '../types/types';
 
 export const createMockARGSubscriptionResponse = (): AzureGraphResponse<RawAzureSubscriptionItem[]> => ({
   data: [

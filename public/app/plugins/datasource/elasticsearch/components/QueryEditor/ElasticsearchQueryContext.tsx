@@ -2,21 +2,21 @@ import { Context, createContext, PropsWithChildren, useCallback, useContext, use
 
 import { TimeRange } from '@grafana/data';
 
+import { ElasticsearchDataQuery } from '../../dataquery.gen';
 import { ElasticDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
-import { ElasticsearchQuery } from '../../types';
 
 import { createReducer as createBucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
-const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
+const QueryContext = createContext<ElasticsearchDataQuery | undefined>(undefined);
 const RangeContext = createContext<TimeRange | undefined>(undefined);
 
 interface Props {
-  query: ElasticsearchQuery;
-  onChange: (query: ElasticsearchQuery) => void;
+  query: ElasticsearchDataQuery;
+  onChange: (query: ElasticsearchDataQuery) => void;
   onRunQuery: () => void;
   datasource: ElasticDatasource;
   range: TimeRange;
@@ -31,7 +31,7 @@ export const ElasticsearchProvider = ({
   range,
 }: PropsWithChildren<Props>) => {
   const onStateChange = useCallback(
-    (query: ElasticsearchQuery, prevQuery: ElasticsearchQuery) => {
+    (query: ElasticsearchDataQuery, prevQuery: ElasticsearchDataQuery) => {
       onChange(query);
       if (query.query === prevQuery.query || prevQuery.query === undefined) {
         onRunQuery();
@@ -40,7 +40,7 @@ export const ElasticsearchProvider = ({
     [onChange, onRunQuery]
   );
 
-  const reducer = combineReducers<Pick<ElasticsearchQuery, 'query' | 'alias' | 'metrics' | 'bucketAggs'>>({
+  const reducer = combineReducers<Pick<ElasticsearchDataQuery, 'query' | 'alias' | 'metrics' | 'bucketAggs'>>({
     query: queryReducer,
     alias: aliasPatternReducer,
     metrics: metricsReducer,

@@ -21,7 +21,7 @@ import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
 
 import { SearchProps } from '../../../useSearch';
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 import { convertTimeFilter } from '../../utils/filter-spans';
 
 import NextPrevResult from './NextPrevResult';

@@ -39,7 +39,7 @@ import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc } from '../../types';
+import { SpanLinkFunc } from '../../types/links';
 import { TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 

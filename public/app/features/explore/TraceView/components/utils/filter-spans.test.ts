@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { defaultFilters, defaultTagFilter } from '../../useSearch';
-import { TraceSpan } from '../types';
+import { TraceSpan } from '../types/trace';
 
 import { filterSpans } from './filter-spans';
 

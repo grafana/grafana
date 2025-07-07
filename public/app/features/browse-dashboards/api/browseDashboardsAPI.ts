@@ -25,7 +25,7 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
-import { refetchChildren, refreshParents } from '../state';
+import { refetchChildren, refreshParents } from '../state/actions';
 import { DashboardTreeSelection } from '../types';
 
 import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';

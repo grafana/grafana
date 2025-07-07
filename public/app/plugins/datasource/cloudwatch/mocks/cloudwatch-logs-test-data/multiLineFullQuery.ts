@@ -3,7 +3,7 @@ import { monacoTypes } from '@grafana/ui';
 import { LogsTokenTypes } from '../../language/logs/completion/types';
 import { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../../language/logs/definition';
 
-export const multiLineFullQuery = {
+export const logsTestDataMultiLineFullQuery = {
   query: `fields @timestamp, unmask(@message) as msg, @memorySize
   | filter (@message like /error/ and bytes > 1000)
   | parse @message /(?<NetworkInterface>eni-.*?)/

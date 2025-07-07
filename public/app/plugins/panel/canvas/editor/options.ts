@@ -3,8 +3,10 @@ import { PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { ConnectionDirection } from 'app/features/canvas/element';
 import { SVGElements } from 'app/features/canvas/runtime/element';
-import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
+import { ResourceDimensionEditor } from 'app/features/dimensions/editors/ResourceDimensionEditor';
+import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
 
 import { CanvasConnection, CanvasElementOptions } from '../panelcfg.gen';
 import { LineStyle } from '../types';

@@ -1,6 +1,8 @@
 import { createAction } from '@reduxjs/toolkit';
 
-import { MetricAggregationWithMeta, MetricAggregation, MetricAggregationWithSettings } from '../../../../types';
+import { MetricAggregation, MetricAggregationWithSettings } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+
+import { MetricAggregationWithMeta } from '../../../../types';
 
 export const addMetric = createAction<MetricAggregation['id']>('@metrics/add');
 export const removeMetric = createAction<MetricAggregation['id']>('@metrics/remove');

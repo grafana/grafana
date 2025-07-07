@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { TraceSpan } from './components';
+import { TraceSpan } from './components/types/trace';
 import { defaultFilters, useSearch } from './useSearch';
 
 describe('useSearch', () => {

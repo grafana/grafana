@@ -15,7 +15,7 @@ import {
   Icon,
   ScrollContainer,
 } from '@grafana/ui';
-import * as DFImport from 'app/features/dataframe-import';
+import { acceptedFiles, maxFileSize } from 'app/features/dataframe-import/constants';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
 
@@ -203,9 +203,9 @@ export function DataSourceModal({
               readAs="readAsArrayBuffer"
               fileListRenderer={() => undefined}
               options={{
-                maxSize: DFImport.maxFileSize,
+                maxSize: maxFileSize,
                 multiple: false,
-                accept: DFImport.acceptedFiles,
+                accept: acceptedFiles,
                 onDrop: onFileDrop,
               }}
             >

@@ -7,7 +7,7 @@ import { createMockInstanceSetttings } from '../mocks/instanceSettings';
 import createMockQuery from '../mocks/query';
 import { createTemplateVariables } from '../mocks/utils';
 import { multiVariable, singleVariable, subscriptionsVariable } from '../mocks/variables';
-import { AzureQueryType } from '../types';
+import { AzureQueryType } from '../types/query';
 
 import AzureResourceGraphDatasource from './azure_resource_graph_datasource';
 

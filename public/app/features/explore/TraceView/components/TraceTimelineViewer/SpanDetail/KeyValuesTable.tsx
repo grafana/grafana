@@ -21,7 +21,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
-import { TNil } from '../../types';
+import TNil from '../../types/TNil';
 
 import jsonMarkup from './jsonMarkup';
 

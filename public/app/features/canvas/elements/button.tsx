@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { TextDimensionMode } from '@grafana/schema';
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
-import { ColorDimensionEditor } from 'app/features/dimensions/editors';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';

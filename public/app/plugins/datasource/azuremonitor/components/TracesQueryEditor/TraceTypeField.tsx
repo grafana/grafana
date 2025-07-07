@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types/types';
 import { findOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 

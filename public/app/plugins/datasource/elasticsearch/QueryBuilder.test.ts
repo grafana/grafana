@@ -1,5 +1,6 @@
 import { ElasticQueryBuilder } from './QueryBuilder';
-import { ElasticsearchQuery, TermsQuery } from './types';
+import { ElasticsearchDataQuery } from './dataquery.gen';
+import { TermsQuery } from './types';
 
 describe('ElasticQueryBuilder', () => {
   const builder = new ElasticQueryBuilder({ timeField: '@timestamp' }); // es2
@@ -59,7 +60,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('term agg and order by term', () => {
-    const target: ElasticsearchQuery = {
+    const target: ElasticsearchDataQuery = {
       refId: 'A',
       metrics: [
         { type: 'count', id: '1' },
@@ -262,7 +263,7 @@ describe('ElasticQueryBuilder', () => {
   });
 
   it('should return correct query for raw_document metric', () => {
-    const target: ElasticsearchQuery = {
+    const target: ElasticsearchDataQuery = {
       refId: 'A',
       metrics: [{ type: 'raw_document', id: '1', settings: {} }],
       timeField: '@timestamp',

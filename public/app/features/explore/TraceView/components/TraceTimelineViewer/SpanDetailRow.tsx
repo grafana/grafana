@@ -22,7 +22,7 @@ import { TimeZone } from '@grafana/schema';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanLinkFunc } from '../types';
+import { SpanLinkFunc } from '../types/links';
 import { TraceSpan, TraceSpanReference } from '../types/trace';
 
 import SpanDetail, { TraceFlameGraphs } from './SpanDetail';

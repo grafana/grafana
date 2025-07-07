@@ -23,7 +23,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
 
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 
 export type NextPrevResultProps = {
   trace: Trace;

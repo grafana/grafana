@@ -15,10 +15,16 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 // Mock the dimensions module since it's imported by utils.ts
-jest.mock('app/features/dimensions', () => ({
+jest.mock('app/features/dimensions/color', () => ({
   getColorDimension: jest.fn(),
+}));
+jest.mock('app/features/dimensions/scalar', () => ({
   getScalarDimension: jest.fn(),
+}));
+jest.mock('app/features/dimensions/scale', () => ({
   getScaledDimension: jest.fn(),
+}));
+jest.mock('app/features/dimensions/text', () => ({
   getTextDimension: jest.fn(),
 }));
 

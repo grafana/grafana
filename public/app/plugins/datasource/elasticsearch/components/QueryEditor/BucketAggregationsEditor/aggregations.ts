@@ -1,4 +1,4 @@
-import { BucketAggregationType, BucketAggregationWithField, BucketAggregation } from '../../../types';
+import { BucketAggregation, BucketAggregationWithField, BucketAggregationType } from '../../../dataquery.gen';
 
 import { bucketAggregationConfig } from './utils';
 

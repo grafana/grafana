@@ -1,6 +1,7 @@
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
-import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata';
+import { logsResourceTypes } from '../azureMetadata/logsResourceTypes';
+import { resourceTypeDisplayNames, resourceTypes } from '../azureMetadata/resourceTypes';
 import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
@@ -12,14 +13,13 @@ import {
   parseResourceURI,
   resourceToString,
 } from '../components/ResourcePicker/utils';
+import { AzureMonitorQuery, AzureMonitorResource } from '../types/query';
 import {
   AzureMonitorDataSourceInstanceSettings,
   AzureMonitorDataSourceJsonData,
-  AzureMonitorResource,
-  AzureMonitorQuery,
   AzureResourceSummaryItem,
   RawAzureResourceItem,
-} from '../types';
+} from '../types/types';
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
 

@@ -6,7 +6,7 @@ import Photo from 'ol-ext/style/Photo';
 
 import { MapLayerRegistryItem, PanelData, GrafanaTheme2, EventBus, PluginState, FieldType, Field } from '@grafana/data';
 import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema';
-import { findField } from 'app/features/dimensions';
+import { findField } from 'app/features/dimensions/utils';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
