@@ -9,6 +9,7 @@ import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 
 import { LogMessages, logInfo } from '../../../Analytics';
 import { RuleFormValues } from '../../../types/rule-form';
+import { callLLM, extractJsonFromLLMResponse, formatLLMError } from '../../../utils/llmUtils';
 
 import { createAnnotationsSystemPrompt, createAnnotationsUserPrompt } from './improvePrompt';
 
@@ -92,22 +93,6 @@ export const GenAIImproveAnnotationsButton = ({ disabled }: GenAIImproveAnnotati
     }
   }, []);
 
-  const extractJsonFromLLMResponse = (response: string): string => {
-    let cleaned = response.replace(/^"|"$/g, '');
-
-    const codeBlockMatch = cleaned.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (codeBlockMatch) {
-      cleaned = codeBlockMatch[1];
-    }
-
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      cleaned = jsonMatch[0];
-    }
-
-    return cleaned.trim();
-  };
-
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
       return;
@@ -117,31 +102,15 @@ export const GenAIImproveAnnotationsButton = ({ disabled }: GenAIImproveAnnotati
     setError(null);
 
     try {
-      const enabled = await llm.enabled();
-      if (!enabled) {
-        throw new Error('LLM service is not configured or enabled');
-      }
-
       const messages: llm.Message[] = [
         createAnnotationsSystemPrompt(),
         createAnnotationsUserPrompt(prompt, currentValues),
       ];
-
-      const response = await llm.chatCompletions({
-        model: llm.Model.LARGE,
-        messages,
-        temperature: 0.3,
-      });
-
-      const content = response.choices[0]?.message?.content;
-      if (content) {
-        handleParsedResponse(content);
-      } else {
-        throw new Error('No response content from LLM');
-      }
+      const content = await callLLM(messages);
+      handleParsedResponse(content);
     } catch (error) {
       console.error('Failed to generate annotation improvements with LLM:', error);
-      setError(`LLM request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError(formatLLMError(error));
     } finally {
       setIsGenerating(false);
     }

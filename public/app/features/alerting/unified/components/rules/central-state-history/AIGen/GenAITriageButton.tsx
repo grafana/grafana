@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { llm } from '@grafana/llm';
 import { Button, Modal, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
+import { callLLM, formatLLMError } from '../../../../utils/llmUtils';
 import { LogRecord } from '../../state-history/common';
 
 import { createSystemPrompt, createUserPrompt } from './prompt';
@@ -61,33 +62,14 @@ export const GenAITriageButton = ({ className, logRecords, timeRange }: GenAITri
     setError(null);
 
     try {
-      // Check if LLM service is available
-      const enabled = await llm.enabled();
-      if (!enabled) {
-        throw new Error('LLM service is not configured or enabled');
-      }
-
       // Create the user prompt with the log records and the custom question
       const userPrompt = createUserPrompt(logRecords, timeRange, customQuestion.trim() || undefined);
-
       const messages: llm.Message[] = [systemPrompt, userPrompt];
-
-      // Call the LLM with the system prompt and the user prompt
-      const response = await llm.chatCompletions({
-        model: llm.Model.LARGE, // Use LARGE model for better analysis
-        messages,
-        temperature: 0.1, // Lower temperature for more consistent analysis
-      });
-
-      const content = response.choices[0]?.message?.content;
-      if (content) {
-        setAnalysis(content);
-      } else {
-        throw new Error('No analysis content received from LLM');
-      }
+      const content = await callLLM(messages);
+      setAnalysis(content);
     } catch (error) {
       console.error('Failed to analyze alerts with LLM:', error);
-      setError(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError(formatLLMError(error));
     } finally {
       setIsAnalyzing(false);
     }

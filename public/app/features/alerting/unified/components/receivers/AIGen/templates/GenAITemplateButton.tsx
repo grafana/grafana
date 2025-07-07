@@ -6,6 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { llm } from '@grafana/llm';
 import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 
+import { callLLM, formatLLMError } from '../../../../utils/llmUtils';
+
 import { createSystemPrompt, createUserPrompt } from './prompt';
 
 export interface GenAITemplateButtonProps {
@@ -67,29 +69,12 @@ export const GenAITemplateButton = ({ onTemplateGenerated, disabled, className }
     setError(null);
 
     try {
-      // Check if LLM service is available
-      const enabled = await llm.enabled();
-      if (!enabled) {
-        throw new Error('LLM service is not configured or enabled');
-      }
-
       const messages: llm.Message[] = [createSystemPrompt(), createUserPrompt(prompt)];
-
-      const response = await llm.chatCompletions({
-        model: llm.Model.LARGE, // Use LARGE model for better results
-        messages,
-        temperature: 0.3,
-      });
-
-      const content = response.choices[0]?.message?.content;
-      if (content) {
-        handleParsedResponse(content);
-      } else {
-        throw new Error('No response content from LLM');
-      }
+      const content = await callLLM(messages);
+      handleParsedResponse(content);
     } catch (error) {
       console.error('Failed to generate template with LLM:', error);
-      setError(`LLM request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setError(formatLLMError(error));
     } finally {
       setIsGenerating(false);
     }

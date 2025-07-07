@@ -12,6 +12,7 @@ import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 import { LogMessages, logInfo } from '../../../Analytics';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { DEFAULT_LLM_MODEL, DEFAULT_LLM_TEMPERATURE, ensureLLMEnabled, formatLLMError } from '../../../utils/llmUtils';
 
 import {
   GET_CONTACT_POINTS_TOOL,
@@ -155,14 +156,7 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
 
       try {
         // Check if LLM service is available
-        const enabled = await llm.enabled();
-        if (!enabled) {
-          throw new Error('LLM service is not configured or enabled');
-        }
-        // 1. Make LLM call
-        // 2. If tool calls exist → Process them → Add results to messages → Repeat step 1
-        // 3. If no tool calls → Process the content (JSON) → Done
-        // 4. If max iterations reached → Throw error
+        await ensureLLMEnabled();
 
         const currentMessages = [...messages];
         const maxIterations = 5; // Prevent infinite loops
@@ -170,10 +164,10 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
 
         while (iteration < maxIterations) {
           const response = await llm.chatCompletions({
-            model: llm.Model.LARGE, // Use LARGE model for better results
+            model: DEFAULT_LLM_MODEL, // Use configurable model
             messages: currentMessages,
             tools: [GET_CONTACT_POINTS_TOOL, GET_DATA_SOURCES_TOOL, GET_DATASOURCE_METRICS_TOOL],
-            temperature: 0.3,
+            temperature: DEFAULT_LLM_TEMPERATURE,
           });
 
           // Check if there are tool calls to process
@@ -236,7 +230,7 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
         }
       } catch (error) {
         console.error('Failed to generate alert rule with LLM:', error);
-        setError(`LLM request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setError(formatLLMError(error));
       } finally {
         setIsGenerating(false);
       }
