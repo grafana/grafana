@@ -132,6 +132,7 @@ interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {
   folderUid: string;
   isPaused: boolean;
   queriedDatasourceUIDs?: string[];
+  provenance?: string;
 }
 
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {
