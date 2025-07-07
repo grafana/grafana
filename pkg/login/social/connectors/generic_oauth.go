@@ -79,9 +79,7 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		allowedOrganizations: allowedOrganizations,
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.GenericOAuthProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.GenericOAuthProviderName, provider)
 
 	return provider
 }

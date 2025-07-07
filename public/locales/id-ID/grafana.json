@@ -110,6 +110,12 @@
       "update-button": "Perbarui",
       "users-heading": "Pengguna organisasi"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Audit",
       "title-custom-branding": "Branding kustom",
@@ -345,6 +351,10 @@
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Pengaturan waktu aktif"
+    },
+    "ad": {
+      "close": "",
+      "learn-more": ""
     },
     "add-button": {
       "add-more": "Tambah lagi"
@@ -1513,8 +1523,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "Mulai",
       "label-insights": "Wawasan",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "Alerting"
     },
     "import-to-gma": {
@@ -3209,6 +3231,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Aktif",
       "text-badge-not-enabled": "Tidak diaktifkan"
     },
@@ -3241,6 +3265,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Kelola pengaturan autentikasi Anda dan konfigurasikan single sign-on. Cari tahu selengkapnya di <2>dokumentasi</2> kami."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3441,18 +3471,12 @@
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
-      "description-branch-name-in-git-hub": "Nama cabang di GitHub",
       "error-invalid-folder-name": "Nama folder tidak valid",
       "error-required": "Nama folder wajib diisi",
-      "folder-comment-input-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
       "folder-name-input-placeholder-enter-folder-name": "Masukkan nama folder",
-      "label-branch": "Cabang",
-      "label-comment": "Komentar",
       "label-folder-name": "Nama folder",
-      "label-workflow": "Alur kerja",
       "text-pull-request-created": "Permintaan pull telah dibuat dengan perubahan pada folder ini:",
       "title-pull-request-created": "Permintaan pull dibuat",
-      "title-repository-not-found": "Repositori tidak ditemukan",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
     "no-results": {
@@ -3462,7 +3486,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana."
+    "text-this-repository-is-read-only": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3862,6 +3892,8 @@
   "close-button": {
     "tooltip": "Tutup"
   },
+  "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Terjadi kesalahan saat memuat opsi."
@@ -8315,6 +8347,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8338,7 +8382,6 @@
       "label-wrap-lines": "Terapkan wrap pada baris"
     },
     "log-details": {
-      "close": "Tutup detail log",
       "fields": "Bidang",
       "links": "Tautan",
       "log-line": "Baris log",
@@ -8363,6 +8406,35 @@
       "show-less": "tampilkan lebih sedikit",
       "show-more": "tampilkan lebih banyak",
       "tooltip-error": "Kesalahan: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Salin tautan ke baris log",
@@ -8490,6 +8562,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Tautan data",
       "aria-label-fields": "Bidang",
+      "aria-label-line": "",
       "aria-label-log-level": "Level log",
       "aria-label-no-details": "Tidak ada detail"
     },
@@ -9465,6 +9538,15 @@
       "view": "Lihat"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Buka saran visualisasi",
       "switch-to-table": "Alihkan ke tabel"
     },
@@ -11329,6 +11411,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Teks alternatif yang akan ditampilkan jika gambar tidak dapat ditampilkan atau untuk pengguna yang menggunakan pembaca layar",
       "description-title-text": "Teks yang akan ditampilkan saat gambar diarahkan oleh kursor",
@@ -11349,6 +11432,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11557,6 +11641,12 @@
     "zone": {
       "select-aria-label": "Pemilih zona waktu",
       "select-search-input": "Ketik untuk mencari (negara, kota, singkatan)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
@@ -12008,6 +12098,7 @@
           "polynomial": "Polinomial"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Jumlah poin X,Y untuk diprediksi"
     },
     "rename-by-regex-transformer-editor": {

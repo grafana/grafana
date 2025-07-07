@@ -726,6 +726,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     cacheLevel: PrometheusCacheLevel.None,
     getIntervalVars: () => ({}),
     getRangeScopedVars: () => ({}),
+    seriesLimit: DEFAULT_SERIES_LIMIT,
   } as unknown as PrometheusDatasource;
 
   describe('constructor', () => {
@@ -770,19 +771,125 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
       expect(provider.metricsMetadata).toEqual(mockMetadata); // Check backward compatibility
     });
+
+    it('should call queryMetricsMetadata with datasource seriesLimit during start', async () => {
+      const customSeriesLimit = 5000;
+      const datasourceWithCustomLimit = {
+        ...defaultDatasource,
+        seriesLimit: customSeriesLimit,
+      } as PrometheusDatasource;
+
+      const provider = new PrometheusLanguageProvider(datasourceWithCustomLimit);
+      const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
+
+      // Mock the resource client's start method
+      const resourceClientStartSpy = jest.spyOn(provider['resourceClient'], 'start').mockResolvedValue();
+      const queryMetricsMetadataSpy = jest.spyOn(provider, 'queryMetricsMetadata').mockResolvedValue(mockMetadata);
+
+      await provider.start();
+
+      expect(resourceClientStartSpy).toHaveBeenCalled();
+      expect(queryMetricsMetadataSpy).toHaveBeenCalledWith(customSeriesLimit);
+    });
   });
 
   describe('queryMetricsMetadata', () => {
-    it('should fetch and store metadata', async () => {
+    it('should fetch and store metadata without limit', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
       const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
       const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
 
       const result = await provider.queryMetricsMetadata();
 
-      expect(queryMetadataSpy).toHaveBeenCalled();
+      expect(queryMetadataSpy).toHaveBeenCalledWith(undefined);
       expect(result).toEqual(mockMetadata);
       expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
+    });
+
+    it('should fetch and store metadata with custom limit', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
+      const customLimit = 1000;
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
+
+      const result = await provider.queryMetricsMetadata(customLimit);
+
+      expect(queryMetadataSpy).toHaveBeenCalledWith(customLimit);
+      expect(result).toEqual(mockMetadata);
+      expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
+    });
+
+    it('should pass limit parameter to the metadata API endpoint', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const requestSpy = jest.spyOn(provider, 'request').mockResolvedValue({
+        metric1: { type: 'counter', help: 'help text' },
+      });
+      const customLimit = 500;
+
+      await provider.queryMetricsMetadata(customLimit);
+
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/metadata',
+        { limit: customLimit },
+        expect.objectContaining({
+          showErrorAlert: false,
+        })
+      );
+    });
+
+    it('should use DEFAULT_SERIES_LIMIT when no limit is provided', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const requestSpy = jest.spyOn(provider, 'request').mockResolvedValue({
+        metric1: { type: 'counter', help: 'help text' },
+      });
+
+      await provider.queryMetricsMetadata();
+
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/metadata',
+        { limit: DEFAULT_SERIES_LIMIT },
+        expect.objectContaining({
+          showErrorAlert: false,
+        })
+      );
+    });
+
+    it('should pass zero limit when explicitly set', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const requestSpy = jest.spyOn(provider, 'request').mockResolvedValue({
+        metric1: { type: 'counter', help: 'help text' },
+      });
+
+      await provider.queryMetricsMetadata(0);
+
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/metadata',
+        { limit: 0 },
+        expect.objectContaining({
+          showErrorAlert: false,
+        })
+      );
+    });
+
+    it('should include cache headers in the request', async () => {
+      const provider = new PrometheusLanguageProvider({
+        ...defaultDatasource,
+        cacheLevel: PrometheusCacheLevel.Medium,
+      } as PrometheusDatasource);
+      const requestSpy = jest.spyOn(provider, 'request').mockResolvedValue({});
+
+      await provider.queryMetricsMetadata(1000);
+
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/metadata',
+        { limit: 1000 },
+        expect.objectContaining({
+          showErrorAlert: false,
+          headers: expect.objectContaining({
+            'X-Grafana-Cache': expect.stringMatching(/private, max-age=\d+/),
+          }),
+        })
+      );
     });
 
     it('should handle undefined metadata response', async () => {
@@ -796,17 +903,51 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(provider.retrieveMetricsMetadata()).toEqual({});
     });
 
+    it('should handle null metadata response', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(null);
+
+      const result = await provider.queryMetricsMetadata(1000);
+
+      expect(queryMetadataSpy).toHaveBeenCalledWith(1000);
+      expect(result).toEqual({});
+      expect(provider.retrieveMetricsMetadata()).toEqual({});
+    });
+
     it('should handle endpoint errors and set empty metadata', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
       const queryMetadataSpy = jest
         .spyOn(provider as any, '_queryMetadata')
         .mockRejectedValue(new Error('Endpoint not found'));
 
-      const result = await provider.queryMetricsMetadata();
+      const result = await provider.queryMetricsMetadata(1000);
 
-      expect(queryMetadataSpy).toHaveBeenCalled();
+      expect(queryMetadataSpy).toHaveBeenCalledWith(1000);
       expect(result).toEqual({});
       expect(provider.retrieveMetricsMetadata()).toEqual({});
+    });
+
+    it('should handle network timeout errors gracefully', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const timeoutError = new Error('Request timeout');
+      timeoutError.name = 'TimeoutError';
+      const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockRejectedValue(timeoutError);
+
+      const result = await provider.queryMetricsMetadata(500);
+
+      expect(queryMetadataSpy).toHaveBeenCalledWith(500);
+      expect(result).toEqual({});
+      expect(provider.retrieveMetricsMetadata()).toEqual({});
+    });
+
+    it('should maintain backward compatibility by setting deprecated metricsMetadata property', async () => {
+      const provider = new PrometheusLanguageProvider(defaultDatasource);
+      const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
+      jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
+
+      await provider.queryMetricsMetadata(250);
+
+      expect(provider.retrieveMetricsMetadata()).toEqual(mockMetadata);
     });
   });
 
@@ -901,18 +1042,18 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         { expr: 'metric2', refId: '2' },
       ];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe(`__name__=~"metric1|metric2"`);
+      expect(result).toEqual([`__name__=~"metric1|metric2"`]);
     });
 
     it('should handle binary queries', () => {
       const queries: PromQuery[] = [{ expr: 'binary{label="val"} + second{}', refId: '1' }];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe(`__name__=~"binary|second"`);
+      expect(result).toEqual([`__name__=~"binary|second"`]);
     });
 
     it('should handle undefined queries', () => {
       const result = populateMatchParamsFromQueries(undefined);
-      expect(result).toBe('__name__!=""');
+      expect(result).toEqual([]);
     });
 
     it('should handle UTF8 metrics', () => {
@@ -930,13 +1071,13 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should return match-all matcher if there is no expr in queries', () => {
       const queries: PromQuery[] = [{ expr: '', refId: '1' }];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe('__name__!=""');
+      expect(result).toEqual([]);
     });
 
     it('should return match-all matcher if there is no query', () => {
       const queries: PromQuery[] = [];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe('__name__!=""');
+      expect(result).toEqual([]);
     });
 
     it('should extract the correct matcher for queries with `... or vector(0)`', () => {
@@ -947,7 +1088,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         },
       ];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe('__name__=~"go_cpu_classes_idle_cpu_seconds_total"');
+      expect(result).toEqual(['__name__=~"go_cpu_classes_idle_cpu_seconds_total"']);
     });
   });
 });

@@ -110,6 +110,12 @@
       "update-button": "Uppdatera",
       "users-heading": "Organisationsanvändare"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Revision",
       "title-custom-branding": "Anpassad marknadsföring",
@@ -345,6 +351,10 @@
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktiva tidsinställningar"
+    },
+    "ad": {
+      "close": "",
+      "learn-more": ""
     },
     "add-button": {
       "add-more": "Lägg till fler"
@@ -1519,8 +1529,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "Kom igång nu",
       "label-insights": "Insikter",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "Varnar"
     },
     "import-to-gma": {
@@ -3222,6 +3244,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Aktiverad",
       "text-badge-not-enabled": "Ej aktiverat"
     },
@@ -3254,6 +3278,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Hantera dina autentiseringsinställningar och konfigurera enkel inloggning. Läs mer i vår <2>dokumentation</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3489,12 @@
       "button-create": "Skapa",
       "button-creating": "Skapar …",
       "cancel": "Avbryt",
-      "description-branch-name-in-git-hub": "Grennamn i GitHub",
       "error-invalid-folder-name": "Ogiltigt mappnamn",
       "error-required": "Mappnamn krävs",
-      "folder-comment-input-placeholder-describe-changes-optional": "Lägg till en anteckning för att beskriva dina ändringar (valfritt)",
       "folder-name-input-placeholder-enter-folder-name": "Ange mappnamn",
-      "label-branch": "Gren",
-      "label-comment": "Kommentar",
       "label-folder-name": "Mappnamn",
-      "label-workflow": "Arbetsflöde",
       "text-pull-request-created": "En pull-begäran har skapats med ändringar i den här mappen:",
       "title-pull-request-created": "Pull-begäran skapad",
-      "title-repository-not-found": "Lagringsplatsen hittades inte",
       "title-this-repository-is-read-only": "Den här databasen är skrivskyddad"
     },
     "no-results": {
@@ -3480,7 +3504,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Om du har direkt åtkomst till målet kopierar du JSON och klistrar in den där."
+    "text-this-repository-is-read-only": "Om du har direkt åtkomst till målet kopierar du JSON och klistrar in den där.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3910,8 @@
   "close-button": {
     "tooltip": "Stäng"
   },
+  "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Ett fel uppstod vid inläsning av alternativ."
@@ -8341,6 +8373,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8364,7 +8408,6 @@
       "label-wrap-lines": "Radbryt linjer"
     },
     "log-details": {
-      "close": "Stäng loggdetaljer",
       "fields": "Fält",
       "links": "Länkar",
       "log-line": "Loggrad",
@@ -8389,6 +8432,35 @@
       "show-less": "visa mindre",
       "show-more": "visa mer",
       "tooltip-error": "Fel: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Kopiera länk till loggrad",
@@ -8516,6 +8588,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Datalänkar",
       "aria-label-fields": "Fält",
+      "aria-label-line": "",
       "aria-label-log-level": "Loggnivå",
       "aria-label-no-details": "Inga uppgiftger"
     },
@@ -9494,6 +9567,15 @@
       "view": "Visa"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Öppna visualiseringsförslag",
       "switch-to-table": "Byt till tabell"
     },
@@ -11364,6 +11446,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Alternativ text som kommer att visas om en bild inte kan visas eller för användare som använder en skärmläsare",
       "description-title-text": "Text som visas när muspekaren hålls över bilden",
@@ -11384,6 +11467,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11592,6 +11676,12 @@
     "zone": {
       "select-aria-label": "Väljare av tidszon",
       "select-search-input": "Skriv för att söka (land, stad, förkortning)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
@@ -12043,6 +12133,7 @@
           "polynomial": "Polynom"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Antal X,Y-poäng att förutsäga"
     },
     "rename-by-regex-transformer-editor": {

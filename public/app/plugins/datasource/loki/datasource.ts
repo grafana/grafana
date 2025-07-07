@@ -147,7 +147,6 @@ export class LokiDatasource
   private logContextProvider: LogContextProvider;
   languageProvider: LanguageProvider;
   maxLines: number;
-  predefinedOperations: string;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -158,7 +157,6 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
-    this.predefinedOperations = settingsData.predefinedOperations ?? '';
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
@@ -301,7 +299,14 @@ export class LokiDatasource
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const queries = request.targets
       .map(getNormalizedLokiQuery) // used to "fix" the deprecated `.queryType` prop
-      .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
+      .map((q) => ({
+        ...q,
+        maxLines: q.maxLines ?? this.maxLines,
+        scopes:
+          config.featureToggles.scopeFilters && config.featureToggles.logQLScope
+            ? request.scopes?.flatMap((scope) => scope.spec.filters)
+            : undefined,
+      }));
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
@@ -342,11 +347,7 @@ export class LokiDatasource
     }
 
     const startTime = new Date();
-    return this.runQuery(fixedRequest).pipe(
-      tap((response) =>
-        trackQuery(response, fixedRequest, startTime, { predefinedOperations: this.predefinedOperations })
-      )
-    );
+    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
   }
 
   /**
