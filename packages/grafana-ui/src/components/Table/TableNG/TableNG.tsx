@@ -460,7 +460,7 @@ export function TableNG(props: TableNGProps) {
         }
 
         // Type guard to check if data exists as it's optional
-        let nestedData = row.data;
+        const nestedData = row.data;
         if (!nestedData) {
           return null;
         }
