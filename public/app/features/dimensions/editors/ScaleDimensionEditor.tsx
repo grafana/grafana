@@ -11,15 +11,18 @@ import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { validateScaleOptions, validateScaleConfig } from '../scale';
 import { ScaleDimensionOptions } from '../types';
 
-const fixedValueOption: SelectableValue<string> = {
-  label: 'Fixed value',
-  value: '_____fixed_____',
-};
-
 export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionConfig, ScaleDimensionOptions>) => {
   const { value, context, onChange, item } = props;
   const { settings } = item;
   const styles = useStyles2(getStyles);
+
+  const fixedValueOption: SelectableValue<string> = useMemo(
+    () => ({
+      label: t('dimensions.scale-dimension-editor.fixed-value-option.label.fixed-value', 'Fixed value'),
+      value: '_____fixed_____',
+    }),
+    []
+  );
 
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
@@ -53,7 +56,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
         });
       }
     },
-    [validateAndDoChange, value]
+    [validateAndDoChange, value, fixedValueOption.value]
   );
 
   const onMinChange = useCallback(
