@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/clientauth/middleware"
+	"github.com/grafana/grafana/pkg/clientauth/signer"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -623,15 +625,20 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	dataSourceSecretMigrationService := migrations2.ProvideDataSourceMigrationService(service13, kvStore, featureToggles)
 	secretMigrationProviderImpl := migrations2.ProvideSecretMigrationProvider(serverLockService, dataSourceSecretMigrationService)
 	publicDashboardServiceImpl := service3.ProvideService(cfg, featureToggles, publicDashboardStoreImpl, queryServiceImpl, repositoryImpl, accessControl, publicDashboardServiceWrapperImpl, dashboardService, ossLicensingService)
-	middleware := api2.ProvideMiddleware()
-	apiApi := api2.ProvideApi(publicDashboardServiceImpl, routeRegisterImpl, accessControl, featureToggles, middleware, cfg, ossLicensingService)
+	apiMiddleware := api2.ProvideMiddleware()
+	apiApi := api2.ProvideApi(publicDashboardServiceImpl, routeRegisterImpl, accessControl, featureToggles, apiMiddleware, cfg, ossLicensingService)
 	loginattemptimplService := loginattemptimpl.ProvideService(sqlStore, cfg, serverLockService)
 	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl)
 	if err != nil {
 		return nil, err
 	}
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
-	openFeatureService, err := featuremgmt.ProvideOpenFeatureService(cfg, httpclientProvider)
+	tokenExchanger, err := signer.ProvideAccessTokenSigner(cfg)
+	if err != nil {
+		return nil, err
+	}
+	cloudAccessPolicyTokenSignerMiddlewareProvider := middleware.ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(tokenExchanger, cfg)
+	openFeatureService, err := featuremgmt.ProvideOpenFeatureService(cfg, httpclientProvider, cloudAccessPolicyTokenSignerMiddlewareProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1168,15 +1175,20 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	dataSourceSecretMigrationService := migrations2.ProvideDataSourceMigrationService(service13, kvStore, featureToggles)
 	secretMigrationProviderImpl := migrations2.ProvideSecretMigrationProvider(serverLockService, dataSourceSecretMigrationService)
 	publicDashboardServiceImpl := service3.ProvideService(cfg, featureToggles, publicDashboardStoreImpl, queryServiceImpl, repositoryImpl, accessControl, publicDashboardServiceWrapperImpl, dashboardService, ossLicensingService)
-	middleware := api2.ProvideMiddleware()
-	apiApi := api2.ProvideApi(publicDashboardServiceImpl, routeRegisterImpl, accessControl, featureToggles, middleware, cfg, ossLicensingService)
+	apiMiddleware := api2.ProvideMiddleware()
+	apiApi := api2.ProvideApi(publicDashboardServiceImpl, routeRegisterImpl, accessControl, featureToggles, apiMiddleware, cfg, ossLicensingService)
 	loginattemptimplService := loginattemptimpl.ProvideService(sqlStore, cfg, serverLockService)
 	deletionService, err := orgimpl.ProvideDeletionService(sqlStore, cfg, dashboardService, accessControl)
 	if err != nil {
 		return nil, err
 	}
 	authnService := authnimpl.ProvideAuthnService(authnimplService)
-	openFeatureService, err := featuremgmt.ProvideOpenFeatureService(cfg, httpclientProvider)
+	tokenExchanger, err := signer.ProvideAccessTokenSigner(cfg)
+	if err != nil {
+		return nil, err
+	}
+	cloudAccessPolicyTokenSignerMiddlewareProvider := middleware.ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(tokenExchanger, cfg)
+	openFeatureService, err := featuremgmt.ProvideOpenFeatureService(cfg, httpclientProvider, cloudAccessPolicyTokenSignerMiddlewareProvider)
 	if err != nil {
 		return nil, err
 	}
