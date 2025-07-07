@@ -17,10 +17,17 @@ export const ensureLLMEnabled = async (): Promise<void> => {
  * Extract JSON from LLM response by cleaning up markdown formatting
  */
 export const extractJsonFromLLMResponse = (response: string): string => {
-  let cleaned = response.trim();
+  // Remove leading/trailing quotes
+  let cleaned = response.replace(/^"|"$/g, '').trim();
 
-  // Remove markdown code blocks
-  cleaned = cleaned.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+  // Try to extract JSON from markdown code blocks first (more precise)
+  const codeBlockMatch = cleaned.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+  if (codeBlockMatch) {
+    cleaned = codeBlockMatch[1];
+  } else {
+    // Fallback: remove markdown code block markers
+    cleaned = cleaned.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+  }
 
   // Remove any leading/trailing whitespace
   cleaned = cleaned.trim();

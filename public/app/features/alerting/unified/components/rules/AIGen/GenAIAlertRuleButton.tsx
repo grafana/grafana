@@ -12,7 +12,13 @@ import { Button, Field, Modal, Stack, TextArea, useStyles2 } from '@grafana/ui';
 import { LogMessages, logInfo } from '../../../Analytics';
 import { getDefaultFormValues } from '../../../rule-editor/formDefaults';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { DEFAULT_LLM_MODEL, DEFAULT_LLM_TEMPERATURE, ensureLLMEnabled, formatLLMError } from '../../../utils/llmUtils';
+import {
+  DEFAULT_LLM_MODEL,
+  DEFAULT_LLM_TEMPERATURE,
+  ensureLLMEnabled,
+  extractJsonFromLLMResponse,
+  formatLLMError,
+} from '../../../utils/llmUtils';
 
 import {
   GET_CONTACT_POINTS_TOOL,
@@ -119,34 +125,6 @@ export const GenAIAlertRuleButton = ({ className }: GenAIAlertRuleButtonProps) =
       setError('Failed to parse the generated alert rule. Please try again.');
     }
   }, []);
-
-  // Extract JSON from LLM response, handling markdown code blocks and other formatting
-  const extractJsonFromLLMResponse = (response: string): string => {
-    // Remove leading/trailing quotes
-    let cleaned = response.replace(/^"|"$/g, '');
-
-    // Try to extract JSON from markdown code blocks, sometimes the LLM response is formatted like this
-    // example: ```json
-    // {
-    //   "name": "Alert Rule",
-    //   "description": "Alert when CPU usage is above 80% for more than 5 minutes",
-    //   "query": "cpu_usage > 80",
-    // }
-    // ```
-    const codeBlockMatch = cleaned.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (codeBlockMatch) {
-      cleaned = codeBlockMatch[1];
-    }
-
-    // If no code block, try to find JSON object boundaries
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      cleaned = jsonMatch[0];
-    }
-
-    // Trim whitespace
-    return cleaned.trim();
-  };
 
   // Handle LLM call with tools: in this case we are using tools to get contact points and data sources
   const handleGenerateWithTools = useCallback(

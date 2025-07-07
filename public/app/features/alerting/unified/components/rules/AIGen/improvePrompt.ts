@@ -243,6 +243,7 @@ Remember:
 - Put query values in annotations (safe place for changing data)
 - Use templates like {{ \\$value }} and {{ \\$labels.instance }} for dynamic content
 - Standard annotations should be improved, not added
+- Only add or improve specific annotations if user request is to improve annotations
 
 Return only the JSON object with the annotation improvements.`,
   };
