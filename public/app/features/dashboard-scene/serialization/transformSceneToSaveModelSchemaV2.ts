@@ -427,7 +427,7 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
     if (!layerDs) {
       // This can happen only if we are transforming a scene that was created
       // from a v1 spec. In v1 annotation layer can contain no datasource ref, which is guaranteed
-      // for layers created for v2 schema. See transform see transformSaveModelSchemaV2ToScene.ts.
+      // for layers created for v2 schema. See transform transformSaveModelSchemaV2ToScene.ts.
       // In this case we will resolve default data source
       layerDs = getDefaultDataSourceRef();
       console.error(
