@@ -18409,7 +18409,7 @@ __metadata:
     style-loader: "npm:4.0.0"
     stylelint: "npm:16.14.1"
     stylelint-config-sass-guidelines: "npm:12.1.0"
-    swagger-ui-react: "npm:5.26.1"
+    swagger-ui-react: "npm:5.26.2"
     symbol-observable: "npm:4.0.0"
     systemjs: "npm:6.15.1"
     terser-webpack-plugin: "npm:5.3.11"
@@ -30242,9 +30242,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"swagger-ui-react@npm:5.26.1":
-  version: 5.26.1
-  resolution: "swagger-ui-react@npm:5.26.1"
+"swagger-ui-react@npm:5.26.2":
+  version: 5.26.2
+  resolution: "swagger-ui-react@npm:5.26.2"
   dependencies:
     "@babel/runtime-corejs3": "npm:^7.27.1"
     "@scarf/scarf": "npm:=1.4.0"
@@ -30282,7 +30282,7 @@ __metadata:
   peerDependencies:
     react: ">=16.8.0 <19"
     react-dom: ">=16.8.0 <19"
-  checksum: 10/978b366b6fe39b23533d5c7781b313a1350d6007eb4fba557d3dc36ee8541a27a7b5aefd37e155adb19755a9482b4ac245ba47a8130d6791bb587ef692cbaafd
+  checksum: 10/4ca99974df01fda16adcfd16458ee8703f1f1df5112e80dd2373bcaca0404f188ce1b96ae8ac4838311f2ec5b6073220966ba4089cc67ea378a84990976c6d40
   languageName: node
   linkType: hard
 
