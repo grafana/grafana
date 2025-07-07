@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
@@ -38,6 +38,8 @@ jest.mock('../sandbox/sandbox_plugin_loader_registry', () => ({
 }));
 
 describe('Plugin Extensions / Utils', () => {
+  const originalEnv = config.buildInfo.env;
+
   beforeEach(() => {
     jest.spyOn(log, 'error').mockImplementation(() => {});
     jest.spyOn(log, 'warning').mockImplementation(() => {});
@@ -48,7 +50,9 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+
+    config.buildInfo.env = originalEnv;
   });
 
   describe('deepFreeze()', () => {
@@ -631,7 +635,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with provided title and body', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -645,7 +653,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with default width if not specified', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -661,7 +673,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with specified width', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -677,7 +693,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with specified height', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -693,7 +713,11 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should open modal with the plugin context being available', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       const ModalContent = () => {
         const context = usePluginContext();
@@ -714,7 +738,11 @@ describe('Plugin Extensions / Utils', () => {
       jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(true);
 
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -733,7 +761,11 @@ describe('Plugin Extensions / Utils', () => {
       jest.mocked(shouldLoadPluginInFrontendSandbox).mockResolvedValue(false);
 
       const pluginId = 'grafana-worldmap-panel';
-      const openModal = createOpenModalFunction(pluginId);
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
 
       openModal({
         title: 'Title in modal',
@@ -743,6 +775,72 @@ describe('Plugin Extensions / Utils', () => {
       expect(await screen.findByRole('dialog')).toBeVisible();
 
       expect(screen.getByTestId('plugin-sandbox-wrapper')).not.toHaveAttribute('data-plugin-sandbox');
+    });
+
+    it('should show an error alert in the modal IN DEV MODE if the extension throws an error', async () => {
+      config.buildInfo.env = 'development';
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const pluginId = 'grafana-worldmap-panel';
+      const extensionTitle = 'Title in modal';
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: extensionTitle,
+      });
+
+      const ModalContent = () => {
+        throw new Error('Test error');
+      };
+
+      openModal({
+        title: extensionTitle,
+        body: ModalContent,
+      });
+
+      await screen.findByRole('dialog');
+
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
+        message: 'Test error',
+        componentStack: expect.any(String),
+        digest: expect.any(String),
+      });
+
+      expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
+    });
+
+    it('should also show an error alert in the modal IN PRODUCTION MODE if the extension throws an error', async () => {
+      config.buildInfo.env = 'production';
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const pluginId = 'grafana-worldmap-panel';
+      const extensionTitle = 'Title in modal';
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: extensionTitle,
+      });
+
+      const ModalContent = () => {
+        throw new Error('Test error');
+      };
+
+      openModal({
+        title: extensionTitle,
+        body: ModalContent,
+      });
+
+      await screen.findByRole('dialog');
+
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
+        message: 'Test error',
+        componentStack: expect.any(String),
+        digest: expect.any(String),
+      });
+
+      expect(screen.getByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
     });
   });
 
@@ -779,7 +877,12 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
 
       render(<Component a={{ b: { c: 'Grafana' } }} />);
 
@@ -789,7 +892,12 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should pass the properties into the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
 
       render(<Component a={{ b: { c: 'Grafana' } }} />);
 
@@ -800,7 +908,12 @@ describe('Plugin Extensions / Utils', () => {
     it('should not be possible to mutate the props in development mode, but it logs an error', async () => {
       config.buildInfo.env = 'development';
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
       const props = { a: { b: { c: 'Grafana' } } };
 
       render(<Component {...props} override />);
@@ -823,7 +936,12 @@ describe('Plugin Extensions / Utils', () => {
     it('should not be possible to mutate the props in production mode either, but it logs a warning', async () => {
       config.buildInfo.env = 'production';
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const Component = wrapWithPluginContext({
+        pluginId,
+        extensionTitle: 'ExampleComponent',
+        Component: ExampleComponent,
+        log,
+      });
       const props = { a: { b: { c: 'Grafana' } } };
 
       render(<Component {...props} override />);
@@ -841,6 +959,64 @@ describe('Plugin Extensions / Utils', () => {
 
       // Not able to mutate the props in production mode either
       expect(props.a.b.c).toBe('Grafana');
+    });
+
+    it('should render an error alert IN DEV MODE if the extension throws an error', async () => {
+      config.buildInfo.env = 'development';
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const pluginId = 'grafana-worldmap-panel';
+      const ComponentWithError = () => {
+        throw new Error('Test error');
+      };
+      const extensionTitle = 'ComponentWithError';
+      const WrappedComponent = wrapWithPluginContext({
+        pluginId,
+        extensionTitle,
+        Component: ComponentWithError,
+        log,
+      });
+
+      render(<WrappedComponent />);
+
+      expect(await screen.findByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).toBeVisible();
+
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
+        message: 'Test error',
+        componentStack: expect.any(String),
+        digest: expect.any(String),
+      });
+    });
+
+    it('should not render anything IN PRODUCTION MODE if the extension throws an error, but still logs an error', async () => {
+      config.buildInfo.env = 'production';
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const pluginId = 'grafana-worldmap-panel';
+      const ComponentWithError = () => {
+        throw new Error('Test error');
+      };
+      const extensionTitle = 'ComponentWithError';
+      const WrappedComponent = wrapWithPluginContext({
+        pluginId,
+        extensionTitle,
+        Component: ComponentWithError,
+        log,
+      });
+
+      render(<WrappedComponent />);
+
+      await waitFor(() =>
+        expect(screen.queryByText(`Extension failed to load: "${pluginId}/${extensionTitle}"`)).not.toBeInTheDocument()
+      );
+
+      expect(log.error).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledWith(`Extension "${pluginId}/${extensionTitle}" failed to load.`, {
+        message: 'Test error',
+        componentStack: expect.any(String),
+        digest: expect.any(String),
+      });
     });
   });
 

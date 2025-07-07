@@ -22,8 +22,7 @@ import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
-import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandbox_plugin_loader_registry';
-
+import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
@@ -40,17 +39,18 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   };
 }
 
-export function createOpenModalFunction(pluginId: string): PluginExtensionEventHelpers['openModal'] {
+export function createOpenModalFunction(config: AddedLinkRegistryItem): PluginExtensionEventHelpers['openModal'] {
   return async (options) => {
     const { title, body, width, height } = options;
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: wrapWithPluginContext<ModalWrapperProps>(
-          pluginId,
-          getModalWrapper({ title, body, width, height, pluginId }),
-          baseLog
-        ),
+        component: wrapWithPluginContext<ModalWrapperProps>({
+          pluginId: config.pluginId,
+          extensionTitle: config.title,
+          Component: getModalWrapper({ title, body, width, height, config }),
+          log: baseLog,
+        }),
       })
     );
   };
@@ -60,7 +60,17 @@ type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
-export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>, log: ExtensionsLog) => {
+export const wrapWithPluginContext = <T,>({
+  pluginId,
+  extensionTitle,
+  Component,
+  log,
+}: {
+  pluginId: string;
+  extensionTitle: string;
+  Component: React.ComponentType<T>;
+  log: ExtensionsLog;
+}) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const {
       error,
@@ -87,7 +97,9 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     return (
       <PluginContextProvider meta={pluginMeta}>
-        <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+        <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
+          <Component {...writableProxy(props, { log, source: 'extension', pluginId })} />
+        </ExtensionErrorBoundary>
       </PluginContextProvider>
     );
   };
@@ -104,18 +116,27 @@ const getModalWrapper = ({
   body: Body,
   width,
   height,
-  pluginId,
-}: PluginExtensionOpenModalOptions & { pluginId: string }) => {
+  config,
+}: PluginExtensionOpenModalOptions & { config: AddedLinkRegistryItem }) => {
   const className = css({ width, height });
 
   const ModalWrapper = ({ onDismiss }: ModalWrapperProps) => {
-    const { value: isSandboxEnabled } = useAsync(() => shouldLoadPluginInFrontendSandbox({ pluginId }), [pluginId]);
-
     return (
       <Modal title={title} className={className} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-        <div {...(isSandboxEnabled && { 'data-plugin-sandbox': pluginId })} data-testid="plugin-sandbox-wrapper">
-          <Body onDismiss={onDismiss} />
-        </div>
+        {/* 
+          We also add an error boundary here (apart from the one in the `wrapWithPluginContext`) 
+          so the error appears inside the modal (and not at the bottom of the page.)
+        */}
+        <ExtensionErrorBoundary
+          pluginId={config.pluginId}
+          extensionTitle={config.title}
+          fallbackAlwaysVisible={true}
+          log={baseLog}
+        >
+          <div data-plugin-sandbox={config.pluginId} data-testid="plugin-sandbox-wrapper">
+            <Body onDismiss={onDismiss} />
+          </div>
+        </ExtensionErrorBoundary>
       </Modal>
     );
   };
@@ -498,7 +519,7 @@ export function getLinkExtensionOnClick(
 
       const helpers: PluginExtensionEventHelpers = {
         context,
-        openModal: createOpenModalFunction(pluginId),
+        openModal: createOpenModalFunction(config),
         openSidebar: (componentTitle, context) => {
           appEvents.publish(
             new OpenExtensionSidebarEvent({
