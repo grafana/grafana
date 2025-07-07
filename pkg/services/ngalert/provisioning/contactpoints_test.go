@@ -35,7 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestContactPointService(t *testing.T) {
+func TestIntegrationContactPointService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
@@ -360,7 +360,7 @@ func TestContactPointService(t *testing.T) {
 	})
 }
 
-func TestContactPointServiceDecryptRedact(t *testing.T) {
+func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{

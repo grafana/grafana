@@ -15,7 +15,7 @@ import { render, screen } from '@testing-library/react';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
-import { Trace } from '../types';
+import { Trace } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
 import SpanTreeOffset from './SpanTreeOffset';

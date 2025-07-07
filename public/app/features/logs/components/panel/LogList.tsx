@@ -191,6 +191,7 @@ export const LogList = ({
           initialScrollPosition={initialScrollPosition}
           loading={loading}
           loadMore={loadMore}
+          logOptionsStorageKey={logOptionsStorageKey}
           logs={logs}
           showControls={showControls}
           timeRange={timeRange}
@@ -209,6 +210,7 @@ const LogListComponent = ({
   initialScrollPosition = 'top',
   loading,
   loadMore,
+  logOptionsStorageKey,
   logs,
   showControls,
   timeRange,
@@ -248,7 +250,7 @@ const LogListComponent = ({
     () => (wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields)),
     [displayedFields, processedLogs, virtualization, wrapLogMessage]
   );
-  const styles = useStyles2(getStyles, dimensions, { showTime });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -283,13 +285,13 @@ const LogListComponent = ({
     setProcessedLogs(
       preProcessLogs(
         logs,
-        { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone, virtualization },
+        { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone, virtualization, wrapLogMessage },
         grammar
       )
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone, virtualization]);
+  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -459,7 +461,7 @@ const LogListComponent = ({
       {showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
-          getFieldLinks={getFieldLinks}
+          logOptionsStorageKey={logOptionsStorageKey}
           logs={filteredLogs}
           onResize={handleLogDetailsResize}
         />
@@ -469,13 +471,18 @@ const LogListComponent = ({
   );
 };
 
-function getStyles(theme: GrafanaTheme2, dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }) {
+function getStyles(
+  theme: GrafanaTheme2,
+  dimensions: LogFieldDimension[],
+  displayedFields: string[],
+  { showTime }: { showTime: boolean }
+) {
   const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {
         display: 'grid',
-        gridTemplateColumns: getGridTemplateColumns(columns),
+        gridTemplateColumns: getGridTemplateColumns(columns, displayedFields),
       },
     }),
     logListContainer: css({

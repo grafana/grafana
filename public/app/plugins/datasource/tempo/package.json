@@ -54,7 +54,7 @@
     "glob": "11.0.1",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
-    "typescript": "5.7.3",
+    "typescript": "5.8.3",
     "webpack": "5.97.1"
   },
   "peerDependencies": {
@@ -66,5 +66,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.9.2"
 }

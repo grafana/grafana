@@ -9,9 +9,11 @@ import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { useListDeletedDashboardsQuery, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';
 import { useRecentlyDeletedStateManager } from '../api/useRecentlyDeletedStateManager';
-import { clearFolders, setAllSelection, useActionSelectionState } from '../state';
+import { useActionSelectionState } from '../state/hooks';
+import { clearFolders, setAllSelection } from '../state/slice';
 
 import { RestoreModal } from './RestoreModal';
 
@@ -45,6 +47,7 @@ export function RecentlyDeletedActions() {
   const onActionComplete = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
 
+    deletedDashboardsCache.clear();
     stateManager.doSearchWithDebounce();
   };
 

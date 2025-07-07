@@ -1,7 +1,7 @@
 import { AbstractLabelOperator, AbstractLabelMatcher, LanguageProvider, AbstractQuery } from '@grafana/data';
 
+import { ElasticsearchDataQuery } from './dataquery.gen';
 import { ElasticDatasource } from './datasource';
-import { ElasticsearchQuery } from './types';
 
 export default class ElasticsearchLanguageProvider extends LanguageProvider {
   declare request: (url: string, params?: any) => Promise<any>;
@@ -18,7 +18,7 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
   /**
    * Queries are transformed to an ES Logs query since it's the behaviour most users expect.
    **/
-  importFromAbstractQuery(abstractQuery: AbstractQuery): ElasticsearchQuery {
+  importFromAbstractQuery(abstractQuery: AbstractQuery): ElasticsearchDataQuery {
     return {
       metrics: [
         {
@@ -26,12 +26,12 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
           type: 'logs',
         },
       ],
-      query: this.getElasticsearchQuery(abstractQuery.labelMatchers),
+      query: this.getElasticsearchDataQuery(abstractQuery.labelMatchers),
       refId: abstractQuery.refId,
     };
   }
 
-  getElasticsearchQuery(labels: AbstractLabelMatcher[]): string {
+  getElasticsearchDataQuery(labels: AbstractLabelMatcher[]): string {
     return labels
       .map((label) => {
         switch (label.operator) {

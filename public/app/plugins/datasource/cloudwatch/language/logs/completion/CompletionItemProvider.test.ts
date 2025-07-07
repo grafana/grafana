@@ -1,10 +1,13 @@
 import { CustomVariableModel } from '@grafana/data';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
-import { setupMockedTemplateService, logGroupNamesVariable } from '../../../__mocks__/CloudWatchDataSource';
-import { emptyQuery, filterQuery, newCommandQuery, sortQuery } from '../../../__mocks__/cloudwatch-logs-test-data';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
+import { setupMockedTemplateService, logGroupNamesVariable } from '../../../mocks/CloudWatchDataSource';
+import { logsTestDataEmptyQuery } from '../../../mocks/cloudwatch-logs-test-data/empty';
+import { logsTestDataFilterQuery } from '../../../mocks/cloudwatch-logs-test-data/filterQuery';
+import { logsTestDataNewCommandQuery } from '../../../mocks/cloudwatch-logs-test-data/newCommandQuery';
+import { logsTestDataSortQuery } from '../../../mocks/cloudwatch-logs-test-data/sortQuery';
+import MonacoMock from '../../../mocks/monarch/Monaco';
+import TextModel from '../../../mocks/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { ResourceResponse } from '../../../resources/types';
 import { LogGroup, LogGroupField } from '../../../types';
@@ -45,39 +48,41 @@ const getSuggestions = async (
 describe('LogsCompletionItemProvider', () => {
   describe('getSuggestions', () => {
     it('returns commands for an empty query', async () => {
-      const suggestions = await getSuggestions(emptyQuery.query, emptyQuery.position);
+      const suggestions = await getSuggestions(logsTestDataEmptyQuery.query, logsTestDataEmptyQuery.position);
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(LOGS_COMMANDS));
     });
 
     it('returns commands for a query when a new command is started', async () => {
-      const suggestions = await getSuggestions(newCommandQuery.query, newCommandQuery.position);
+      const suggestions = await getSuggestions(logsTestDataNewCommandQuery.query, logsTestDataNewCommandQuery.position);
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(LOGS_COMMANDS));
     });
 
     it('returns sort order directions for the sort keyword', async () => {
-      const suggestions = await getSuggestions(sortQuery.query, sortQuery.position);
+      const suggestions = await getSuggestions(logsTestDataSortQuery.query, logsTestDataSortQuery.position);
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(SORT_DIRECTION_KEYWORDS));
     });
 
     it('returns function suggestions after a command', async () => {
-      const suggestions = await getSuggestions(sortQuery.query, sortQuery.position);
+      const suggestions = await getSuggestions(logsTestDataSortQuery.query, logsTestDataSortQuery.position);
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(LOGS_FUNCTION_OPERATORS));
     });
 
     it('returns `in []` snippet for the `in` keyword', async () => {
-      const suggestions = await getSuggestions(filterQuery.query, filterQuery.position);
+      const suggestions = await getSuggestions(logsTestDataFilterQuery.query, logsTestDataFilterQuery.position);
       const suggestionLabels = suggestions.map((s) => s.label);
       expect(suggestionLabels).toEqual(expect.arrayContaining(['in []']));
     });
 
     it('returns template variables appended to list of suggestions', async () => {
-      const suggestions = await getSuggestions(newCommandQuery.query, newCommandQuery.position, [
-        logGroupNamesVariable,
-      ]);
+      const suggestions = await getSuggestions(
+        logsTestDataNewCommandQuery.query,
+        logsTestDataNewCommandQuery.position,
+        [logGroupNamesVariable]
+      );
       const suggestionLabels = suggestions.map((s) => s.label);
       const expectedTemplateVariableLabel = `$${logGroupNamesVariable.name}`;
       const expectedLabels = [...LOGS_COMMANDS, expectedTemplateVariableLabel];
@@ -86,8 +91,8 @@ describe('LogsCompletionItemProvider', () => {
 
     it('fetches fields when logGroups are set', async () => {
       const suggestions = await getSuggestions(
-        sortQuery.query,
-        sortQuery.position,
+        logsTestDataSortQuery.query,
+        logsTestDataSortQuery.position,
         [],
         [{ arn: 'foo', name: 'bar' }],
         [{ value: { name: '@field' } }]

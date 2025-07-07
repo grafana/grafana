@@ -1743,11 +1743,6 @@
           {
             "group": "advisor.grafana.app",
             "kind": "Check",
-            "version": "__internal"
-          },
-          {
-            "group": "advisor.grafana.app",
-            "kind": "Check",
             "version": "v0alpha1"
           }
         ]
@@ -1810,11 +1805,6 @@
           {
             "group": "advisor.grafana.app",
             "kind": "CheckList",
-            "version": "__internal"
-          },
-          {
-            "group": "advisor.grafana.app",
-            "kind": "CheckList",
             "version": "v0alpha1"
           }
         ]
@@ -1850,6 +1840,10 @@
                 }
               ]
             }
+          },
+          "moreInfo": {
+            "description": "More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.",
+            "type": "string"
           },
           "severity": {
             "description": "Severity of the failure",
@@ -1956,11 +1950,6 @@
           {
             "group": "advisor.grafana.app",
             "kind": "CheckType",
-            "version": "__internal"
-          },
-          {
-            "group": "advisor.grafana.app",
-            "kind": "CheckType",
             "version": "v0alpha1"
           }
         ]
@@ -2001,11 +1990,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "advisor.grafana.app",
-            "kind": "CheckTypeList",
-            "version": "__internal"
-          },
           {
             "group": "advisor.grafana.app",
             "kind": "CheckTypeList",
