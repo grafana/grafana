@@ -8,7 +8,7 @@ import { InlineToast as InlineToastImpl, InlineToastProps } from './InlineToast'
 import mdx from './InlineToast.mdx';
 
 const story: Meta = {
-  title: 'InlineToast',
+  title: 'Information/InlineToast',
   component: InlineToastImpl,
   parameters: {
     docs: {
@@ -16,7 +16,6 @@ const story: Meta = {
     },
   },
   argTypes: {
-    // foo is the property we want to remove from the UI
     referenceElement: {
       table: {
         disable: true,

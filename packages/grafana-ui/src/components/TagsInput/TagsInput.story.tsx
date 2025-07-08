@@ -7,7 +7,7 @@ import { TagsInput } from './TagsInput';
 import mdx from './TagsInput.mdx';
 
 const meta: Meta<typeof TagsInput> = {
-  title: 'Forms/TagsInput',
+  title: 'Inputs/TagsInput',
   component: TagsInput,
   parameters: {
     docs: {

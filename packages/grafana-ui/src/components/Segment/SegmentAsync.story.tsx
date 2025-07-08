@@ -61,7 +61,7 @@ export const ArrayOptions = () => {
 };
 
 const meta: Meta<typeof SegmentAsync> = {
-  title: 'Data Source/Segment/SegmentAsync',
+  title: 'Inputs/SegmentAsync',
   component: SegmentAsync,
 };
 

@@ -3,7 +3,7 @@ import { StoryFn } from '@storybook/react';
 import { useDelayedSwitch } from './useDelayedSwitch';
 
 export default {
-  title: 'useDelayedSwitch',
+  title: 'Utilities/useDelayedSwitch',
 };
 
 export const Basic: StoryFn = ({ value, delay, duration }) => {

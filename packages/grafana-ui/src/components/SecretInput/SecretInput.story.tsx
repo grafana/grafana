@@ -5,7 +5,7 @@ import { SecretInput } from './SecretInput';
 import mdx from './SecretInput.mdx';
 
 const meta: Meta<typeof SecretInput> = {
-  title: 'Forms/SecretInput',
+  title: 'Inputs/SecretInput',
   component: SecretInput,
   parameters: {
     docs: {

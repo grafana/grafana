@@ -10,7 +10,7 @@ import { VizLegend } from './VizLegend';
 import { VizLegendItem } from './types';
 
 const meta: Meta = {
-  title: 'Visualizations/VizLegend',
+  title: 'Plugins/VizLegend',
   component: VizLegend,
   args: {
     containerWidth: '100%',

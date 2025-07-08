@@ -6,7 +6,7 @@ import { FeatureBadge } from './FeatureBadge';
 import mdx from './FeatureBadge.mdx';
 
 const meta: Meta<typeof FeatureBadge> = {
-  title: 'Data Display/FeatureBadge',
+  title: 'Information/FeatureBadge',
   component: FeatureBadge,
   parameters: {
     docs: { page: mdx },

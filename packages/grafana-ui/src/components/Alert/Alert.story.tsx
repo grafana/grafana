@@ -10,7 +10,7 @@ import mdx from './Alert.mdx';
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 
 const meta: Meta = {
-  title: 'Overlays/Alert/InlineBanner',
+  title: 'Information/Alert',
   component: Alert,
   parameters: {
     docs: {
@@ -76,6 +76,17 @@ export const Examples: StoryFn<typeof Alert> = () => {
       </StoryExample>
     </Stack>
   );
+};
+
+export const Toast: StoryFn<typeof Alert> = (args) => {
+  return <Alert {...args}>To use as a toast, set the elevated and onRemove props.</Alert>;
+};
+
+Toast.args = {
+  title: 'Toast',
+  severity: 'error',
+  onRemove: action('Remove button clicked'),
+  elevated: true,
 };
 
 export default meta;

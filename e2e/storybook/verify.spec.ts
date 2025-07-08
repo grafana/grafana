@@ -3,7 +3,7 @@
 // NOTE: storybook must already be running (`yarn storybook`) for this test to work
 describe('Verify storybook', () => {
   it('Loads the button story correctly', () => {
-    cy.visit('?path=/story/buttons-button--basic');
+    cy.visit('?path=/story/inputs-button--basic');
     getIframeBody().find('button:contains("Example button")').should('be.visible');
   });
 });

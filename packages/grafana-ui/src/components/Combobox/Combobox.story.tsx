@@ -16,7 +16,7 @@ type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> &
 type Story<T extends string | number = string> = StoryObj<PropsAndCustomArgs<T>>;
 
 const meta: Meta<PropsAndCustomArgs> = {
-  title: 'Forms/Combobox',
+  title: 'Inputs/Combobox',
   component: Combobox,
   parameters: {
     docs: {

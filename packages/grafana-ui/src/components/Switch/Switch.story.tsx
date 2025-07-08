@@ -10,7 +10,7 @@ import { InlineSwitch, Switch } from './Switch';
 import mdx from './Switch.mdx';
 
 const meta: Meta<typeof Switch> = {
-  title: 'Forms/Switch',
+  title: 'Inputs/Switch',
   component: Switch,
   parameters: {
     docs: {

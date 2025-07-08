@@ -5,7 +5,7 @@ import { TagList } from './TagList';
 import mdx from './TagList.mdx';
 
 const meta: Meta<typeof TagList> = {
-  title: 'Forms/Tags/TagList',
+  title: 'Information/TagList',
   component: TagList,
   parameters: {
     docs: {

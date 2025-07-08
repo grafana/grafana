@@ -7,13 +7,9 @@ import { HorizontalGroup, Layout, LayoutProps, VerticalGroup } from './Layout';
 import mdx from './Layout.mdx';
 
 const meta: Meta = {
-  title: 'Layout/Groups',
+  title: 'Layout/Deprecated/Groups',
   component: Layout,
   decorators: [withStoryContainer],
-  // SB7 has broken subcomponent types due to dropping support for the feature
-  // https://github.com/storybookjs/storybook/issues/20782
-  // @ts-ignore
-  subcomponents: { HorizontalGroup, VerticalGroup },
   parameters: {
     docs: {
       page: mdx,

@@ -5,7 +5,7 @@ import { Meta, StoryFn } from '@storybook/react';
 import { WeekStartPicker } from './WeekStartPicker';
 
 const meta: Meta<typeof WeekStartPicker> = {
-  title: 'Pickers and Editors/TimePickers/WeekStartPicker',
+  title: 'Date time pickers/WeekStartPicker',
   component: WeekStartPicker,
   parameters: {
     controls: {

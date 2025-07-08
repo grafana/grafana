@@ -9,7 +9,7 @@ import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 import { PageToolbar } from './PageToolbar';
 
 const meta: Meta<typeof PageToolbar> = {
-  title: 'Layout/PageToolbar',
+  title: 'Navigation/Deprecated/PageToolbar',
   component: PageToolbar,
   parameters: {},
 };

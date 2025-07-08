@@ -37,7 +37,7 @@ class WrapperWithState extends PureComponent<Props, State> {
 }
 
 const meta: Meta<typeof StatsPicker> = {
-  title: 'Pickers and Editors/StatsPicker',
+  title: 'Pickers/StatsPicker',
   component: StatsPicker,
   parameters: {
     controls: {
