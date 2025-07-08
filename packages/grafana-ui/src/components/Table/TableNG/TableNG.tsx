@@ -59,7 +59,7 @@ import {
   shouldTextWrap,
   isCellInspectEnabled,
   getCellLinks,
-  shouldShowDataLinksActionsTooltip,
+  withDataLinksActionsTooltip,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -264,13 +264,15 @@ export function TableNG(props: TableNGProps) {
   interface Schema {
     columns: TableColumn[];
     cellRootRenderers: Record<string, CellRootRenderer>;
+    colsWithTooltip: Record<string, boolean>;
   }
 
-  const { columns, cellRootRenderers } = useMemo(() => {
+  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
     const fromFields = (f: Field[], widths: number[]) => {
       const result: Schema = {
         columns: [],
         cellRootRenderers: {},
+        colsWithTooltip: {},
       };
 
       let lastRowIdx = -1;
@@ -301,6 +303,9 @@ export function TableNG(props: TableNGProps) {
         const cellType = cellOptions.type;
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
+        const withTooltip = withDataLinksActionsTooltip(field, cellType);
+
+        colsWithTooltip[displayName] = withTooltip;
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
@@ -324,15 +329,7 @@ export function TableNG(props: TableNGProps) {
             colors = {};
           }
 
-          const cellStyle = getCellStyles(
-            theme,
-            field,
-            _rowHeight,
-            shouldWrap,
-            shouldOverflow,
-            shouldShowDataLinksActionsTooltip(field, cellOptions),
-            colors
-          );
+          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors);
 
           return (
             <Cell
@@ -558,9 +555,8 @@ export function TableNG(props: TableNGProps) {
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
           // Note: could be column.field; JS says yes, but TS says no!
           let field = columns[column.idx].field;
-          let cellOptions = getCellOptions(field);
 
-          if (shouldShowDataLinksActionsTooltip(field, cellOptions)) {
+          if (colsWithTooltip[getDisplayName(field)]) {
             let rowIdx = row.__index;
             setTooltipState({
               coords: {

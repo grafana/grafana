@@ -616,10 +616,10 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
 }
 
 /** @internal */
-export function shouldShowDataLinksActionsTooltip(field: Field, cellOptions: TableCellOptions) {
+export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDisplayMode) {
   return (
-    cellOptions.type !== TableCellDisplayMode.DataLinks &&
-    cellOptions.type !== TableCellDisplayMode.Actions &&
+    cellType !== TableCellDisplayMode.DataLinks &&
+    cellType !== TableCellDisplayMode.Actions &&
     (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
   );
 }
