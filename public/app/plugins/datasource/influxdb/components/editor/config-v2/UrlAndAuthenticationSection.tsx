@@ -38,16 +38,25 @@ export const UrlAndAuthenticationSection = (props: Props) => {
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
 
   // Database + Retention Policy (DBRP) mapping is required for InfluxDB OSS 1.x and 2.x when using InfluxQL
-  const requiresDrbpMapping =
+  const requiresDbrpMapping =
     options.jsonData.product &&
     options.jsonData.version === InfluxVersion.InfluxQL &&
-    ['InfluxDB OSS 1.x', 'InfluxDB OSS 2.x'].includes(options.jsonData.product);
+    [
+      'InfluxDB OSS 1.x',
+      'InfluxDB OSS 2.x',
+      'InfluxDB Enterprise 1.x',
+      'InfluxDB Cloud (TSM)',
+      'InfluxDB Cloud Serverless',
+    ].includes(options.jsonData.product);
 
-  const onProductChange = ({ value }: ComboboxOption) =>
+  const onProductChange = ({ value }: ComboboxOption) => {
+    trackInfluxDBConfigV2ProductSelected({ product: value });
     onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value, version: undefined } });
+  };
 
   const onQueryLanguageChange = (option: ComboboxOption) => {
     const { value } = option;
+    trackInfluxDBConfigV2QueryLanguageSelected({ version: value });
 
     if (isInfluxVersion(value)) {
       onUpdateDatasourceJsonDataOptionSelect(props, 'version')(option);
@@ -92,7 +101,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     value={options.jsonData.product}
                     options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
                     onChange={onProductChange}
-                    onBlur={() => trackInfluxDBConfigV2ProductSelected({ product: options.jsonData.product! })}
                   />
                 </Field>
               </Box>
@@ -103,7 +111,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     value={options.jsonData.product !== '' ? options.jsonData.version : ''}
                     options={getQueryLanguageOptions(options.jsonData.product || '')}
                     onChange={onQueryLanguageChange}
-                    onBlur={() => trackInfluxDBConfigV2QueryLanguageSelected({ version: options.url })}
                   />
                 </Field>
               </Box>
@@ -112,8 +119,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
 
           <Space v={2} />
 
-          {requiresDrbpMapping && (
-            <Alert severity="warning" title="InfluxQL requires DRBP mapping">
+          {requiresDbrpMapping && (
+            <Alert severity="warning" title="InfluxQL requires DBRP mapping">
               InfluxDB OSS 1.x and 2.x users must configure a Database + Retention Policy (DBRP) mapping via the CLI or
               API before data can be queried.{' '}
               <TextLink href="https://docs.influxdata.com/influxdb/cloud/query-data/influxql/dbrp/" external>

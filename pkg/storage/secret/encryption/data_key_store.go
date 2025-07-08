@@ -20,6 +20,7 @@ type encryptionStoreImpl struct {
 	dialect sqltemplate.Dialect
 	tracer  trace.Tracer
 	log     log.Logger
+	metrics *DataKeyMetrics
 }
 
 func ProvideDataKeyStorage(
@@ -38,6 +39,7 @@ func ProvideDataKeyStorage(
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 		tracer:  tracer,
 		log:     log.New("encryption.store"),
+		metrics: NewDataKeyMetrics(registerer),
 	}
 
 	return store, nil

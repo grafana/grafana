@@ -30,7 +30,7 @@ interface Props {
 }
 
 function FormContent({ initialValues, repository, workflowOptions, folder, isGitHub, onDismiss }: FormProps) {
-  const prURL = usePullRequestParam();
+  const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
@@ -210,7 +210,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
   const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'create',
-    title: parentFolder?.title,
+    title: '', // Empty title for new folders
   });
 
   if (!initialValues) {

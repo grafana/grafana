@@ -52,6 +52,7 @@
       "button-use-query": "Utilizar esta consulta",
       "label-categories": "Categorias",
       "label-query-results": "Resultados da consulta: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Todas as categorias",
       "placeholder-search-logs": "Pesquisar consultas de registos",
       "text-loading": "A carregar..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "Restrinja o número de linhas devolvidas (a predefinição é 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "As consultas de registos básicos incorrem em custos com base na quantidade de dados lidos.",
       "label-logs": "Registos",
       "title-basic-logs-queries": "Consultas de registos básicos",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Botão de início de consulta de registos do Azure",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Dê início à sua consulta",
       "button-run-query": "Executar consulta",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Serviço",
       "placeholder-service": "Serviço...",
       "title-switch-mode": "Mudar o modo de editor?"
