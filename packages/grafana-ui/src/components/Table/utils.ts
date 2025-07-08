@@ -196,6 +196,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DataLinksCell;
     case TableCellDisplayMode.Actions:
       return ActionsCell;
+    case TableCellDisplayMode.Pill:
+      return DefaultCell; // Legacy table doesn't support pill cells, fallback to default
   }
 
   if (field.type === FieldType.geo) {
