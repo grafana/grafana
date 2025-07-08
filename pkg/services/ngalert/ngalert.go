@@ -258,30 +258,28 @@ func (ng *AlertNG) init() error {
 			// This function will be used by the MOA to create new Alertmanagers.
 			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-
 					// Create remote Alertmanager.
 					cfg.OrgID = orgID
 					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
 					if err != nil {
-						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+						if remoteSecondaryWithRemoteState {
+							// We can't start the internal Alertmanger without the remote state.
+							return nil, fmt.Errorf("failed to create remote Alertmanager: %w", err)
+						}
+						moaLogger.Warn("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
 					}
 
 					// Create internal Alertmanager.
 					internalAM, err := factoryFn(ctx, orgID)
 					if err != nil {
-						return nil, err
-					}
-
-					// Fall back to the internal AM in case of error creating the remote one.
-					if remoteAM == nil {
-						return internalAM, nil
+						return nil, fmt.Errorf("failed to create internal Alertmanager: %w", err)
 					}
 
 					if remoteSecondaryWithRemoteState {
 						// Pull remote state from the remote Alertmanager.
 						s, err := remoteAM.FetchRemoteState(ctx)
 						if err != nil {
-							return nil, err
+							return nil, fmt.Errorf("failed to fetch remote state: %w", err)
 						}
 
 						// Mimir state has two parts:
@@ -312,7 +310,6 @@ func (ng *AlertNG) init() error {
 					rsCfg := remote.RemoteSecondaryConfig{
 						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
 						OrgID:        orgID,
-						PullState:    remoteSecondaryWithRemoteState,
 						Store:        ng.store,
 						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}
