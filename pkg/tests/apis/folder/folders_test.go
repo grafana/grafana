@@ -861,7 +861,11 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 }
 
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
-func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
+func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
@@ -1018,7 +1022,11 @@ func testDescription(description string, expectedErr error) string {
 }
 
 // There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
-func TestFoldersGetAPIEndpointK8S(t *testing.T) {
+func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	type testCase struct {
 		description         string
 		expectedCode        int
