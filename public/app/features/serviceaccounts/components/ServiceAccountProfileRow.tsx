@@ -85,7 +85,7 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
         {onChange && (
           <ConfirmButton
             closeOnConfirm
-            confirmText="Save"
+            confirmText={t('serviceaccounts.service-account-profile-row.confirmText-save', 'Save')}
             onConfirm={onSave}
             onClick={onEditClick}
             onCancel={onCancelClick}

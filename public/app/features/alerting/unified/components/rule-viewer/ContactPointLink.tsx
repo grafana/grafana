@@ -1,7 +1,7 @@
 import { ComponentProps } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { alertingAPIv0alpha1 } from '@grafana/alerting/unstable';
+import { alertingAPI } from '@grafana/alerting/unstable';
 import { TextLink } from '@grafana/ui';
 
 import { makeEditContactPointLink } from '../../utils/misc';
@@ -12,7 +12,7 @@ interface ContactPointLinkProps extends Omit<ComponentProps<typeof TextLink>, 'h
 
 export const ContactPointLink = ({ name, ...props }: ContactPointLinkProps) => {
   // find receiver by name – since this is what we store in the alert rule definition
-  const { currentData, isLoading, isSuccess } = alertingAPIv0alpha1.endpoints.listReceiver.useQuery({
+  const { currentData, isLoading, isSuccess } = alertingAPI.endpoints.listReceiver.useQuery({
     fieldSelector: `spec.title=${name}`,
   });
 

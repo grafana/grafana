@@ -4,7 +4,7 @@ import { Meta, StoryFn } from '@storybook/react';
 import { UnitPicker, UnitPickerProps } from './UnitPicker';
 
 const meta: Meta<typeof UnitPicker> = {
-  title: 'Pickers and Editors/UnitPicker',
+  title: 'Pickers/UnitPicker',
   component: UnitPicker,
   parameters: {
     controls: {

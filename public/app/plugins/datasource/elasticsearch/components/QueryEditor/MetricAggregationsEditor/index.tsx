@@ -1,11 +1,11 @@
 import { Alert, Button } from '@grafana/ui';
 
+import { MetricAggregation } from '../../../dataquery.gen';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { QueryEditorSpecialMetricRow } from '../QueryEditorSpecialMetricRow';
 
-import { MetricAggregation } from './../../../types';
 import { MetricEditor } from './MetricEditor';
 import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
 import { metricAggregationConfig } from './utils';

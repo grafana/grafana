@@ -4,9 +4,9 @@ import { lastValueFrom, of } from 'rxjs';
 import { CustomVariableModel, ScopedVars } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
-import { createMockQuery } from './__mocks__/cloudMonitoringQuery';
 import Datasource from './datasource';
+import { createMockInstanceSetttings } from './mocks/cloudMonitoringInstanceSettings';
+import { createMockQuery } from './mocks/cloudMonitoringQuery';
 import { CloudMonitoringQuery, PreprocessorType, QueryType, MetricKind } from './types/query';
 
 let getTempVars = () => [] as CustomVariableModel[];

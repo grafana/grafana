@@ -2,8 +2,6 @@ import ansicolor from 'ansicolor';
 
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
-
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 
@@ -195,7 +193,7 @@ export class LogLineVirtualization {
         levelWidth = Math.round(width);
       }
       for (const field of displayedFields) {
-        width = this.measureTextWidth(logs[i].getDisplayedFieldValue(field));
+        width = this.measureTextWidth(logs[i].getDisplayedFieldValue(field, true));
         fieldWidths[field] = !fieldWidths[field] || width > fieldWidths[field] ? Math.round(width) : fieldWidths[field];
       }
     }
@@ -210,10 +208,6 @@ export class LogLineVirtualization {
       },
     ];
     for (const field in fieldWidths) {
-      // Skip the log line when it's a displayed field
-      if (field === LOG_LINE_BODY_FIELD_NAME) {
-        continue;
-      }
       dimensions.push({
         field,
         width: fieldWidths[field],
@@ -294,7 +288,7 @@ export function getLogLineSize(
     textToMeasure += logs[index].displayLevel ?? '';
   }
   for (const field of displayedFields) {
-    textToMeasure = logs[index].getDisplayedFieldValue(field) + textToMeasure;
+    textToMeasure = logs[index].getDisplayedFieldValue(field, true) + textToMeasure;
   }
   if (!displayedFields.length) {
     textToMeasure += ansicolor.strip(logs[index].body);

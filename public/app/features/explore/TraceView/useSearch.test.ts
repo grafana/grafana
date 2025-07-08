@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 
 import { DEFAULT_SPAN_FILTERS } from '../state/constants';
 
-import { TraceSpan } from './components';
+import { TraceSpan } from './components/types/trace';
 import { useSearch } from './useSearch';
 
 describe('useSearch', () => {

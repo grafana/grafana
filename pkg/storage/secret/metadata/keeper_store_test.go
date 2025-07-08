@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
@@ -39,7 +40,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		// get system keeper config
 		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, defaultKeeperNS, nil, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Nil(t, keeperConfig)
+		require.IsType(t, &secretv0alpha1.SystemKeeperConfig{}, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
@@ -334,11 +335,12 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 
 func initStorage(t *testing.T) contracts.KeeperMetadataStorage {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	db := database.ProvideDatabase(testDB)
+	tracer := noop.NewTracerProvider().Tracer("test")
+	db := database.ProvideDatabase(testDB, tracer)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the keeper storage
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, features)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 	return keeperMetadataStorage
 }

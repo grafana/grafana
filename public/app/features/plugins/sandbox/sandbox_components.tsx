@@ -2,7 +2,12 @@ import { isFunction } from 'lodash';
 import { ComponentType, FC } from 'react';
 import * as React from 'react';
 
-import { GrafanaPlugin, PluginType } from '@grafana/data';
+import {
+  GrafanaPlugin,
+  PluginExtensionAddedComponentConfig,
+  PluginExtensionExposedComponentConfig,
+  PluginType,
+} from '@grafana/data';
 
 import { SandboxPluginMeta, SandboxedPluginObject } from './types';
 import { isSandboxedPluginObject } from './utils';
@@ -56,6 +61,35 @@ export async function sandboxPluginComponents(
   // wrap app components
   if (Reflect.has(pluginObject, 'root')) {
     Reflect.set(pluginObject, 'root', withSandboxWrapper(Reflect.get(pluginObject, 'root'), meta));
+  }
+
+  // Extensions: added components
+  if (Reflect.has(pluginObject, 'addedComponentConfigs')) {
+    const addedComponents: PluginExtensionAddedComponentConfig[] = Reflect.get(pluginObject, 'addedComponentConfigs');
+    for (const addedComponent of addedComponents) {
+      if (Reflect.has(addedComponent, 'component')) {
+        Reflect.set(addedComponent, 'component', withSandboxWrapper(Reflect.get(addedComponent, 'component'), meta));
+      }
+    }
+    Reflect.set(pluginObject, 'addedComponentConfigs', addedComponents);
+  }
+
+  // Extensions: exposed components
+  if (Reflect.has(pluginObject, 'exposedComponentConfigs')) {
+    const exposedComponents: PluginExtensionExposedComponentConfig[] = Reflect.get(
+      pluginObject,
+      'exposedComponentConfigs'
+    );
+    for (const exposedComponent of exposedComponents) {
+      if (Reflect.has(exposedComponent, 'component')) {
+        Reflect.set(
+          exposedComponent,
+          'component',
+          withSandboxWrapper(Reflect.get(exposedComponent, 'component'), meta)
+        );
+      }
+    }
+    Reflect.set(pluginObject, 'exposedComponentConfigs', exposedComponents);
   }
 
   // config pages

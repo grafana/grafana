@@ -21,5 +21,3 @@ ResourcePermission: {
 	resource: #Resource
 	permissions: [...#Permission]
 }
-
-

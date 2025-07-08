@@ -2,7 +2,7 @@ import { DataSourceApi, dateTime, DataQuery } from '@grafana/data';
 
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { createDashboardModelFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';
-import { TestQuery, getMockDataSource } from '../query/state/__mocks__/mockDataSource';
+import { TestQuery, getMockDataSource } from '../query/state/mocks/mockDataSource';
 
 import { executeAnnotationQuery } from './executeAnnotationQuery';
 import { AnnotationQueryOptions } from './types';

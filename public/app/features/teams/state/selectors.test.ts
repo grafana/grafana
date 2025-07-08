@@ -1,5 +1,5 @@
 import { TeamState } from '../../../types';
-import { getMockTeam } from '../__mocks__/teamMocks';
+import { getMockTeam } from '../mocks/teamMocks';
 
 import { getTeam } from './selectors';
 

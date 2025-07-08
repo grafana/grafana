@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -40,7 +40,6 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	// testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
 func TestMain(m *testing.M) {
@@ -53,9 +52,9 @@ type dataSourceMockRetriever struct {
 
 func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, dataSource := range d.res {
-		idMatch := query.ID != 0 && query.ID == dataSource.ID
+		idMatch := query.ID != 0 && query.ID == dataSource.ID // nolint:staticcheck
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
-		nameMatch := query.Name != "" && query.Name == dataSource.Name
+		nameMatch := query.Name != "" && query.Name == dataSource.Name // nolint:staticcheck
 		if idMatch || nameMatch || uidMatch {
 			return dataSource, nil
 		}
@@ -420,6 +419,27 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("should update with UID", func(t *testing.T) {
+		dsService := initDSService(t)
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+			URL:   "http://before",
+		})
+		require.NoError(t, err)
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			UID:   ds.UID,
+			OrgID: ds.OrgID,
+			URL:   "http://after",
+		}
+
+		after, err := dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+		require.Equal(t, "http://after", after.URL)
+	})
+
 	t.Run("should return error if datasource with same name exist", func(t *testing.T) {
 		dsService := initDSService(t)
 
@@ -758,6 +778,28 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		updatedRules, ok := updatedDS.JsonData.CheckGet("teamHttpHeaders")
 		require.False(t, ok)
 		require.Nil(t, updatedRules)
+	})
+
+	t.Run("Should update with UID", func(t *testing.T) {
+		dsService := initDSService(t)
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+			Type:  "test",
+			URL:   "http://before",
+		})
+		require.NoError(t, err)
+
+		updateCmd := &datasources.UpdateDataSourceCommand{
+			UID:   ds.UID,
+			OrgID: ds.OrgID,
+			URL:   "http://after",
+		}
+
+		updatedDS, err := dsService.UpdateDataSource(context.Background(), updateCmd)
+		require.NoError(t, err)
+		require.Equal(t, "http://after", updatedDS.URL)
 	})
 }
 

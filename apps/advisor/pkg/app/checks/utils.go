@@ -39,6 +39,24 @@ func NewCheckReportFailure(
 	}
 }
 
+func NewCheckReportFailureWithMoreInfo(
+	severity advisor.CheckReportFailureSeverity,
+	stepID string,
+	item string,
+	itemID string,
+	links []advisor.CheckErrorLink,
+	moreInfo string,
+) advisor.CheckReportFailure {
+	return advisor.CheckReportFailure{
+		Severity: severity,
+		StepID:   stepID,
+		Item:     item,
+		ItemID:   itemID,
+		Links:    links,
+		MoreInfo: &moreInfo,
+	}
+}
+
 func GetNamespace(stackID string) (string, error) {
 	if stackID == "" {
 		return metav1.NamespaceDefault, nil

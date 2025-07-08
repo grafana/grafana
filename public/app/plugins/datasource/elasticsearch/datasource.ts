@@ -60,6 +60,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import { ElasticsearchDataQuery, BucketAggregation } from './dataquery.gen';
 import { isMetricAggregationWithMeta } from './guards';
 import {
   addAddHocFilter,
@@ -71,10 +72,8 @@ import {
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
-  BucketAggregation,
   DataLinkConfig,
   ElasticsearchOptions,
-  ElasticsearchQuery,
   TermsQuery,
   Interval,
   ElasticsearchAnnotationQuery,
@@ -103,13 +102,13 @@ const ELASTIC_META_FIELDS = [
 ];
 
 export class ElasticDatasource
-  extends DataSourceWithBackend<ElasticsearchQuery, ElasticsearchOptions>
+  extends DataSourceWithBackend<ElasticsearchDataQuery, ElasticsearchOptions>
   implements
     DataSourceWithLogsContextSupport,
-    DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
-    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchQuery>,
-    DataSourceWithQueryModificationSupport<ElasticsearchQuery>
+    DataSourceWithQueryImportSupport<ElasticsearchDataQuery>,
+    DataSourceWithSupplementaryQueriesSupport<ElasticsearchDataQuery>,
+    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchDataQuery>,
+    DataSourceWithQueryModificationSupport<ElasticsearchDataQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
@@ -182,7 +181,7 @@ export class ElasticDatasource
    * Imports queries from AbstractQuery objects when switching between different data source types.
    * @returns A Promise that resolves to an array of ES queries.
    */
-  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<ElasticsearchQuery[]> {
+  async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<ElasticsearchDataQuery[]> {
     return abstractQueries.map((abstractQuery) => this.languageProvider.importFromAbstractQuery(abstractQuery));
   }
 
@@ -434,10 +433,10 @@ export class ElasticDatasource
    * @returns An array of ES queries with interpolated variables and ad hoc filters using `applyTemplateVariables`.
    */
   interpolateVariablesInQueries(
-    queries: ElasticsearchQuery[],
+    queries: ElasticsearchDataQuery[],
     scopedVars: ScopedVars,
     filters?: AdHocVariableFilter[]
-  ): ElasticsearchQuery[] {
+  ): ElasticsearchDataQuery[] {
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
@@ -457,7 +456,7 @@ export class ElasticDatasource
    * Used, for example, in Query history.
    * @returns A text representation of the query.
    */
-  getQueryDisplayText(query: ElasticsearchQuery) {
+  getQueryDisplayText(query: ElasticsearchDataQuery) {
     // TODO: This might be refactored a bit.
     const metricAggs = query.metrics;
     const bucketAggs = query.bucketAggs;
@@ -535,8 +534,8 @@ export class ElasticDatasource
    */
   getSupplementaryRequest(
     type: SupplementaryQueryType,
-    request: DataQueryRequest<ElasticsearchQuery>
-  ): DataQueryRequest<ElasticsearchQuery> | undefined {
+    request: DataQueryRequest<ElasticsearchDataQuery>
+  ): DataQueryRequest<ElasticsearchDataQuery> | undefined {
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         return this.getLogsVolumeDataProvider(request);
@@ -561,7 +560,10 @@ export class ElasticDatasource
    * It retrieves supplementary queries based on the provided options and ES query.
    * @returns A supplemented ES query or undefined if unsupported.
    */
-  getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
+  getSupplementaryQuery(
+    options: SupplementaryQueryOptions,
+    query: ElasticsearchDataQuery
+  ): ElasticsearchDataQuery | undefined {
     let isQuerySuitable = false;
 
     if (query.hide) {
@@ -642,12 +644,12 @@ export class ElasticDatasource
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
   private getLogsVolumeDataProvider(
-    request: DataQueryRequest<ElasticsearchQuery>
-  ): DataQueryRequest<ElasticsearchQuery> | undefined {
+    request: DataQueryRequest<ElasticsearchDataQuery>
+  ): DataQueryRequest<ElasticsearchDataQuery> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
       .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
-      .filter((query): query is ElasticsearchQuery => !!query);
+      .filter((query): query is ElasticsearchDataQuery => !!query);
 
     if (!targets.length) {
       return undefined;
@@ -661,14 +663,14 @@ export class ElasticDatasource
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
   private getLogsSampleDataProvider(
-    request: DataQueryRequest<ElasticsearchQuery>
-  ): DataQueryRequest<ElasticsearchQuery> | undefined {
+    request: DataQueryRequest<ElasticsearchDataQuery>
+  ): DataQueryRequest<ElasticsearchDataQuery> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets;
     const queries = targets.map((query) => {
       return this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query);
     });
-    const elasticQueries = queries.filter((query): query is ElasticsearchQuery => !!query);
+    const elasticQueries = queries.filter((query): query is ElasticsearchDataQuery => !!query);
 
     if (!elasticQueries.length) {
       return undefined;
@@ -680,7 +682,7 @@ export class ElasticDatasource
    * Required by DataSourceApi. It executes queries based on the provided DataQueryRequest.
    * @returns An Observable of DataQueryResponse containing the query results.
    */
-  query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<ElasticsearchDataQuery>): Observable<DataQueryResponse> {
     const start = new Date();
     return super.query(request).pipe(
       tap((response) => trackQuery(response, request, start)),
@@ -698,7 +700,7 @@ export class ElasticDatasource
    * It is called from DatasourceWithBackend.
    * @returns `true` if the query is not hidden.
    */
-  filterQuery(query: ElasticsearchQuery): boolean {
+  filterQuery(query: ElasticsearchDataQuery): boolean {
     if (query.hide) {
       return false;
     }
@@ -952,7 +954,7 @@ export class ElasticDatasource
    * Implemented as part of the DataSourceAPI. Retrieves tag values that can be used for ad-hoc filtering.
    * @returns A Promise that resolves to an array of label values represented as MetricFindValue objects
    */
-  getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchQuery>) {
+  getTagValues(options: DataSourceGetTagValuesOptions<ElasticsearchDataQuery>) {
     return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange, true));
   }
 
@@ -960,7 +962,7 @@ export class ElasticDatasource
    * Implemented as part of the DataSourceAPI.
    * Used by alerting to check if query contains template variables.
    */
-  targetContainsTemplate(target: ElasticsearchQuery) {
+  targetContainsTemplate(target: ElasticsearchDataQuery) {
     if (this.templateSrv.containsTemplate(target.query) || this.templateSrv.containsTemplate(target.alias)) {
       return true;
     }
@@ -1025,7 +1027,7 @@ export class ElasticDatasource
    * It is used for example in Explore to toggle fields on and off trough log details.
    * @returns A new ES query with the filter toggled as specified.
    */
-  toggleQueryFilter(query: ElasticsearchQuery, filter: ToggleFilterAction): ElasticsearchQuery {
+  toggleQueryFilter(query: ElasticsearchDataQuery, filter: ToggleFilterAction): ElasticsearchDataQuery {
     let expression = query.query ?? '';
     switch (filter.type) {
       case 'FILTER_FOR': {
@@ -1052,7 +1054,7 @@ export class ElasticDatasource
    * Implemented for `DataSourceWithToggleableQueryFiltersSupport`. Checks if a query expression contains a filter based on the provided filter options.
    * @returns A boolean value indicating whether the filter exists in the query expression.
    */
-  queryHasFilter(query: ElasticsearchQuery, options: QueryFilterOptions): boolean {
+  queryHasFilter(query: ElasticsearchDataQuery, options: QueryFilterOptions): boolean {
     let expression = query.query ?? '';
     return queryHasFilter(expression, options.key, options.value);
   }
@@ -1062,7 +1064,7 @@ export class ElasticDatasource
    * It is used, for example, in the Query Builder to apply hints such as parsers, operations, etc.
    * @returns A new ES query with the specified modification applied.
    */
-  modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
+  modifyQuery(query: ElasticsearchDataQuery, action: QueryFixAction): ElasticsearchDataQuery {
     if (!action.options) {
       return query;
     }
@@ -1120,10 +1122,10 @@ export class ElasticDatasource
    * @returns A modified ES query with template variables and ad hoc filters applied.
    */
   applyTemplateVariables(
-    query: ElasticsearchQuery,
+    query: ElasticsearchDataQuery,
     scopedVars: ScopedVars,
     filters?: AdHocVariableFilter[]
-  ): ElasticsearchQuery {
+  ): ElasticsearchDataQuery {
     // We need a separate interpolation format for lucene queries, therefore we first interpolate any
     // lucene query string and then everything else
     const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
@@ -1211,7 +1213,7 @@ export class ElasticDatasource
       },
     };
 
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: `log-context-${row.dataFrame.refId}-${direction}`,
       metrics: [logQuery],
       query: '',
@@ -1226,7 +1228,7 @@ export class ElasticDatasource
 
     const interval = rangeUtil.calculateInterval(range, 1);
 
-    const contextRequest: DataQueryRequest<ElasticsearchQuery> = {
+    const contextRequest: DataQueryRequest<ElasticsearchDataQuery> = {
       requestId: `log-context-request-${row.dataFrame.refId}-${options?.direction}`,
       targets: [query],
       interval: interval.interval,

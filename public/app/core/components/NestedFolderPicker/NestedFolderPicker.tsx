@@ -20,8 +20,9 @@ import { PermissionLevelString } from 'app/types';
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
-import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
+import { useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
+import { ROOT_FOLDER_ITEM } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */

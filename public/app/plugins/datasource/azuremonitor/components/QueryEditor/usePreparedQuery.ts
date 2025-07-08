@@ -2,7 +2,7 @@ import deepEqual from 'fast-deep-equal';
 import { defaults } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types';
+import { AzureMonitorQuery, AzureQueryType, ResultFormat } from '../../types/query';
 import migrateQuery from '../../utils/migrateQuery';
 
 const DEFAULT_QUERY = {

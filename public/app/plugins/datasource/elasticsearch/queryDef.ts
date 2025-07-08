@@ -1,12 +1,12 @@
 import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
-  ElasticsearchQuery,
+  DateHistogram,
+  ElasticsearchDataQuery,
   ExtendedStat,
   MetricAggregation,
-  MovingAverageModelOption,
   MetricAggregationType,
-  DateHistogram,
-} from './types';
+  MovingAverageModelOption,
+} from './dataquery.gen';
 
 export const extendedStats: ExtendedStat[] = [
   { label: 'Avg', value: 'avg' },
@@ -45,7 +45,7 @@ export function defaultBucketAgg(id = '1'): DateHistogram {
 export const findMetricById = (metrics: MetricAggregation[], id: MetricAggregation['id']) =>
   metrics.find((metric) => metric.id === id);
 
-export function hasMetricOfType(target: ElasticsearchQuery, type: MetricAggregationType): boolean {
+export function hasMetricOfType(target: ElasticsearchDataQuery, type: MetricAggregationType): boolean {
   return !!target?.metrics?.some((m) => m.type === type);
 }
 

@@ -11,7 +11,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import store from 'app/core/store';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';

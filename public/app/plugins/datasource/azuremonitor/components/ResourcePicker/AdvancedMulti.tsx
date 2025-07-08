@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { Collapse, Space } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorResource } from '../../types';
+import { AzureMonitorResource } from '../../types/query';
 
 export interface ResourcePickerProps<T> {
   resources: T[];

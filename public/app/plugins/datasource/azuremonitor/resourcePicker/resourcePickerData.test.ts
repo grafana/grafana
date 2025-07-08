@@ -1,14 +1,14 @@
+import { resourceTypes } from '../azureMetadata/resourceTypes';
+import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
+import { ResourceRowType } from '../components/ResourcePicker/types';
 import {
   createARGResourcesResponse,
   createMockARGResourceGroupsResponse,
   createMockARGSubscriptionResponse,
-} from '../__mocks__/argResourcePickerResponse';
-import createMockDatasource from '../__mocks__/datasource';
-import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
-import { resourceTypes } from '../azureMetadata';
-import AzureResourceGraphDatasource from '../azure_resource_graph/azure_resource_graph_datasource';
-import { ResourceRowType } from '../components/ResourcePicker/types';
-import { AzureGraphResponse } from '../types';
+} from '../mocks/argResourcePickerResponse';
+import createMockDatasource from '../mocks/datasource';
+import { createMockInstanceSetttings } from '../mocks/instanceSettings';
+import { AzureGraphResponse } from '../types/types';
 
 import ResourcePickerData from './resourcePickerData';
 

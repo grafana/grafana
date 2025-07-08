@@ -3,7 +3,7 @@ import { take } from 'rxjs/operators';
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
-import { subscribeTester } from './__mocks__/subscribeTester';
+import { subscribeTester } from './mocks/subscribeTester';
 
 describe('FetchQueue', () => {
   describe('add', () => {

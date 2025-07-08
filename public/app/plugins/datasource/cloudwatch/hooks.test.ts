@@ -3,21 +3,21 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { config } from '@grafana/runtime';
 
 import {
-  accountIdVariable,
-  dimensionVariable,
-  metricVariable,
-  namespaceVariable,
-  regionVariable,
-  setupMockedDataSource,
-} from './__mocks__/CloudWatchDataSource';
-import { setupMockedResourcesAPI } from './__mocks__/ResourcesAPI';
-import {
   useAccountOptions,
   useDimensionKeys,
   useIsMonitoringAccount,
   useMetrics,
   useEnsureVariableHasSingleSelection,
 } from './hooks';
+import {
+  accountIdVariable,
+  dimensionVariable,
+  metricVariable,
+  namespaceVariable,
+  regionVariable,
+  setupMockedDataSource,
+} from './mocks/CloudWatchDataSource';
+import { setupMockedResourcesAPI } from './mocks/ResourcesAPI';
 
 const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 

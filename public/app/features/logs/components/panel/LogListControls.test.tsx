@@ -5,7 +5,7 @@ import { CoreApp, EventBusSrv, LogLevel, LogsDedupStrategy, LogsSortOrder } from
 import { config } from '@grafana/runtime';
 
 import { downloadLogs } from '../../utils';
-import { createLogRow } from '../__mocks__/logRow';
+import { createLogRow } from '../mocks/logRow';
 
 import { LogListFontSize } from './LogList';
 import { LogListContextProvider } from './LogListContext';

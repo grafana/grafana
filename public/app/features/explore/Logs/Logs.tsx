@@ -1035,6 +1035,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   onLogOptionsChange={onLogOptionsChange}
                   hasUnescapedContent={hasUnescapedContent}
+                  filterLevels={filterLevels}
                 />
               </div>
             )}
@@ -1143,6 +1144,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}
+                  setDisplayedFields={setDisplayedFields}
                   showControls
                   showTime={showTime}
                   sortOrder={logsSortOrder}

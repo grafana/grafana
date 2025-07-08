@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { setupMockedDataSource } from '../../../../__mocks__/CloudWatchDataSource';
 import { QueryEditorExpressionType, QueryEditorPropertyType } from '../../../../expressions';
+import { setupMockedDataSource } from '../../../../mocks/CloudWatchDataSource';
 import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType, SQLExpression } from '../../../../types';
 
 import { SQLBuilderEditor } from './SQLBuilderEditor';

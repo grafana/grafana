@@ -1,4 +1,5 @@
 import { map as _map, each, indexOf, isArray, isString } from 'lodash';
+import moment from 'moment';
 import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -12,16 +13,17 @@ import {
   DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
+  DateTime,
   dateTime,
   getSearchFilterScopedVar,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
   TimeRange,
-  TimeZone,
   toDataFrame,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
@@ -500,17 +502,32 @@ export class GraphiteDatasource
     return this.templateSrv.containsTemplate(target.target ?? '');
   }
 
-  translateTime(date: any, roundUp?: boolean, timezone?: TimeZone) {
-    if (isString(date)) {
-      if (date === 'now') {
-        return 'now';
-      } else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
-        date = date.substring(3);
-        date = date.replace('m', 'min');
-        date = date.replace('M', 'mon');
-        return date;
+  translateTime(date: DateTime | string, roundUp?: boolean, timezone?: TimeZone) {
+    const parseDate = () => {
+      if (isString(date)) {
+        if (date === 'now') {
+          return 'now';
+        } else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
+          return date.substring(3).replace('m', 'min').replace('M', 'mon');
+        }
+        const parsedDate = dateMath.toDateTime(date, { roundUp, timezone });
+
+        // If the date is invalid return the original string
+        // e.g. if an empty string is passed in or if the roundng is invalid e.g. now/2y
+        if (!parsedDate || parsedDate.isValid() === false) {
+          return date;
+        }
+
+        return moment(parsedDate.toDate());
+      } else {
+        return moment(date.toDate());
       }
-      date = dateMath.parse(date, roundUp, timezone);
+    };
+
+    const parsedDate = parseDate();
+
+    if (typeof parsedDate === 'string') {
+      return parsedDate;
     }
 
     // graphite' s from filter is exclusive
@@ -518,16 +535,16 @@ export class GraphiteDatasource
     // to guarantee that we get all the data that
     // exists for the specified range
     if (roundUp) {
-      if (date.get('s')) {
-        date.add(1, 's');
+      if (parsedDate.get('s')) {
+        parsedDate.add(1, 's');
       }
     } else if (roundUp === false) {
-      if (date.get('s')) {
-        date.subtract(1, 's');
+      if (parsedDate.get('s')) {
+        parsedDate.subtract(1, 's');
       }
     }
 
-    return date.unix();
+    return parsedDate.unix();
   }
 
   metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {

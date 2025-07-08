@@ -19,7 +19,7 @@ interface RepositoryViewData {
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
 export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRepositoryArgs): RepositoryViewData => {
   const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery();
-  const skipFolderQuery = name || !folderName;
+  const skipFolderQuery = !folderName;
   const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
     skipFolderQuery ? skipToken : { name: folderName }
   );

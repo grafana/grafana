@@ -73,7 +73,7 @@ export const defaultValue: LogListContextData = {
   setWrapLogMessage: jest.fn(),
   closeDetails: jest.fn(),
   detailsDisplayed: jest.fn(),
-  detailsWidth: 0,
+  detailsWidth: 300,
   downloadLogs: jest.fn(),
   enableLogDetails: false,
   filterLevels: [],
@@ -130,11 +130,12 @@ export const LogListContextProvider = ({
   onUnpinLine = jest.fn(),
   permalinkedLogId,
   pinnedLogs = [],
+  showDetails = [],
   showTime = true,
   sortOrder = LogsSortOrder.Descending,
   syntaxHighlighting = true,
   wrapLogMessage = true,
-}: Partial<Props>) => {
+}: Partial<Props> & { showDetails?: LogListModel[] }) => {
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
   const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
 
@@ -172,6 +173,7 @@ export const LogListContextProvider = ({
         setSortOrder: jest.fn(),
         setSyntaxHighlighting: jest.fn(),
         setWrapLogMessage: jest.fn(),
+        showDetails,
         showTime,
         sortOrder,
         syntaxHighlighting,

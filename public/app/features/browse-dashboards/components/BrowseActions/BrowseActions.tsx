@@ -9,7 +9,8 @@ import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
-import { setAllSelection, useActionSelectionState } from '../../state';
+import { useActionSelectionState } from '../../state/hooks';
+import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';

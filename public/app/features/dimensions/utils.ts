@@ -7,15 +7,13 @@ import {
   ColorDimensionConfig,
   ScalarDimensionConfig,
 } from '@grafana/schema';
-import {
-  getColorDimension,
-  getScaledDimension,
-  getTextDimension,
-  getResourceDimension,
-  DimensionSupplier,
-} from 'app/features/dimensions';
 
+import { getColorDimension } from './color';
+import { getResourceDimension } from './resource';
 import { getScalarDimension } from './scalar';
+import { getScaledDimension } from './scale';
+import { getTextDimension } from './text';
+import { DimensionSupplier } from './types';
 
 export function getColorDimensionFromData(
   data: PanelData | undefined,

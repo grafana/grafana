@@ -3,37 +3,11 @@ import { useEffect, useState } from 'react';
 
 import { StandardEditorProps, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 import { Alert, HorizontalGroup, Icon, Select, useStyles2 } from '@grafana/ui';
 
 import { FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
-
-const MODE_OPTIONS = [
-  {
-    value: FrameGeometrySourceMode.Auto,
-    label: 'Auto',
-    ariaLabel: selectors.components.Transforms.SpatialOperations.location.autoOption,
-    description: 'Automatically identify location data based on default field names',
-  },
-  {
-    value: FrameGeometrySourceMode.Coords,
-    label: 'Coords',
-    ariaLabel: selectors.components.Transforms.SpatialOperations.location.coords.option,
-    description: 'Specify latitude and longitude fields',
-  },
-  {
-    value: FrameGeometrySourceMode.Geohash,
-    label: 'Geohash',
-    ariaLabel: selectors.components.Transforms.SpatialOperations.location.geohash.option,
-    description: 'Specify geohash field',
-  },
-  {
-    value: FrameGeometrySourceMode.Lookup,
-    label: 'Lookup',
-    ariaLabel: selectors.components.Transforms.SpatialOperations.location.lookup.option,
-    description: 'Specify Gazetteer and lookup field',
-  },
-];
 
 interface ModeEditorSettings {
   data?: DataFrame[];
@@ -49,6 +23,39 @@ export const LocationModeEditor = ({
   item,
 }: StandardEditorProps<string, ModeEditorSettings, unknown, unknown>) => {
   const [info, setInfo] = useState<FrameGeometryField>();
+
+  const MODE_OPTIONS = [
+    {
+      value: FrameGeometrySourceMode.Auto,
+      label: t('geo.location-more-editor.mode-options.label-auto', 'Auto'),
+      ariaLabel: selectors.components.Transforms.SpatialOperations.location.autoOption,
+      description: t(
+        'geo.location-more-editor.mode-options.description-auto',
+        'Automatically identify location data based on default field names'
+      ),
+    },
+    {
+      value: FrameGeometrySourceMode.Coords,
+      label: t('geo.location-more-editor.mode-options.label-coords', 'Coords'),
+      ariaLabel: selectors.components.Transforms.SpatialOperations.location.coords.option,
+      description: t(
+        'geo.location-more-editor.mode-options.description-coords',
+        'Specify latitude and longitude fields'
+      ),
+    },
+    {
+      value: FrameGeometrySourceMode.Geohash,
+      label: t('geo.location-more-editor.mode-options.label-geohash', 'Geohash'),
+      ariaLabel: selectors.components.Transforms.SpatialOperations.location.geohash.option,
+      description: t('geo.location-more-editor.mode-options.description-geohash', 'Specify geohash field'),
+    },
+    {
+      value: FrameGeometrySourceMode.Lookup,
+      label: t('geo.location-more-editor.mode-options.label-lookup', 'Lookup'),
+      ariaLabel: selectors.components.Transforms.SpatialOperations.location.lookup.option,
+      description: t('geo.location-more-editor.mode-options.description-lookup', 'Specify Gazetteer and lookup field'),
+    },
+  ];
 
   useEffect(() => {
     if (item.settings?.source && item.settings?.data?.length && item.settings.data[0]) {

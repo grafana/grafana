@@ -19,7 +19,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { FALLBACK_TRACE_NAME } from '../constants';
-import { TNil } from '../types';
+import TNil from '../types/TNil';
 
 import BreakableText from './BreakableText';
 

@@ -2,7 +2,7 @@ import { PropsWithChildren, ReactElement, useMemo } from 'react';
 
 import { DataSourceInstanceSettings } from '../../types/datasource';
 
-import { Context, DataSourcePluginContextType } from './PluginContext';
+import { PluginContext, DataSourcePluginContextType } from './PluginContext';
 
 export type DataSourcePluginContextProviderProps = {
   instanceSettings: DataSourceInstanceSettings;
@@ -16,5 +16,5 @@ export function DataSourcePluginContextProvider(
     return { instanceSettings, meta: instanceSettings.meta };
   }, [instanceSettings]);
 
-  return <Context.Provider value={value}>{children}</Context.Provider>;
+  return <PluginContext.Provider value={value}>{children}</PluginContext.Provider>;
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
@@ -24,6 +25,9 @@ func QueueOptionsWithDefaults(opts *QueueOptions) *QueueOptions {
 	}
 	if opts.Registerer == nil {
 		opts.Registerer = prometheus.NewRegistry()
+	}
+	if opts.Logger == nil {
+		opts.Logger = log.New("qos.test")
 	}
 	return opts
 }
@@ -50,7 +54,7 @@ func TestQueue(t *testing.T) {
 
 		// Enqueue items
 		for i := 0; i < numItems; i++ {
-			err := q.Enqueue(ctx, tenantID, func(ctx context.Context) {
+			err := q.Enqueue(ctx, tenantID, func() {
 				processed.Add(1)
 			})
 			require.NoError(t, err, "Enqueue should succeed")
@@ -68,7 +72,7 @@ func TestQueue(t *testing.T) {
 				runnable, err := q.Dequeue(dequeueCtx)
 				require.NoError(t, err, "Dequeue should succeed")
 				require.NotNil(t, runnable, "Dequeued runnable should not be nil")
-				runnable(ctx)
+				runnable()
 			}()
 		}
 
@@ -82,7 +86,7 @@ func TestQueue(t *testing.T) {
 		require.NoError(t, services.StartAndAwaitRunning(ctx, qSimple))
 
 		for i := 0; i < numItems; i++ {
-			err := qSimple.Enqueue(ctx, tenantID, func(ctx context.Context) {})
+			err := qSimple.Enqueue(ctx, tenantID, func() {})
 			require.NoError(t, err)
 		}
 		require.Equal(t, numItems, qSimple.Len(), "Queue length after enqueue (simple)")
@@ -127,8 +131,8 @@ func TestQueue(t *testing.T) {
 		var results []string
 		var resultsMu sync.Mutex
 
-		makeRunnable := func(id string) func(ctx context.Context) {
-			return func(ctx context.Context) {
+		makeRunnable := func(id string) func() {
+			return func() {
 				resultsMu.Lock()
 				results = append(results, id)
 				resultsMu.Unlock()
@@ -159,7 +163,7 @@ func TestQueue(t *testing.T) {
 			cancel()
 			require.NoError(t, err, "Dequeue %d should succeed", i)
 			require.NotNil(t, runnable, "Dequeued runnable %d should not be nil", i)
-			runnable(ctx) // Execute to record the tenant ID
+			runnable() // Execute to record the tenant ID
 		}
 
 		// Check execution order - should alternate between tenants
@@ -183,16 +187,16 @@ func TestQueue(t *testing.T) {
 		tenantID := "tenant-limited"
 
 		// Enqueue up to the limit
-		err := q.Enqueue(ctx, tenantID, func(ctx context.Context) {})
+		err := q.Enqueue(ctx, tenantID, func() {})
 		require.NoError(t, err)
-		err = q.Enqueue(ctx, tenantID, func(ctx context.Context) {})
+		err = q.Enqueue(ctx, tenantID, func() {})
 		require.NoError(t, err)
 
 		require.Equal(t, 2, q.Len())
 		require.Equal(t, 1, q.ActiveTenantsLen())
 
 		// Enqueue one more, expect error
-		err = q.Enqueue(ctx, tenantID, func(ctx context.Context) {})
+		err = q.Enqueue(ctx, tenantID, func() {})
 		require.ErrorIs(t, err, ErrTenantQueueFull, "Expected ErrTenantQueueFull")
 
 		// Len should still be 2
@@ -206,7 +210,7 @@ func TestQueue(t *testing.T) {
 		require.Equal(t, 1, q.Len())
 
 		// Now enqueue should succeed again
-		err = q.Enqueue(ctx, tenantID, func(ctx context.Context) {})
+		err = q.Enqueue(ctx, tenantID, func() {})
 		require.NoError(t, err, "Enqueue should succeed after dequeueing one item")
 		require.Equal(t, 2, q.Len(), "Length should be back to 2")
 	})
@@ -260,7 +264,7 @@ func TestQueue(t *testing.T) {
 		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), q))
 
 		// Now try to enqueue - should return ErrQueueClosed
-		err := q.Enqueue(context.Background(), "tenant-id", func(ctx context.Context) {})
+		err := q.Enqueue(context.Background(), "tenant-id", func() {})
 		require.ErrorIs(t, err, ErrQueueClosed, "Enqueue after Stop should return ErrQueueClosed")
 	})
 
@@ -268,7 +272,7 @@ func TestQueue(t *testing.T) {
 		t.Parallel()
 		ctx := context.Background()
 		q := NewQueue(QueueOptionsWithDefaults(nil))
-		err := q.Enqueue(ctx, "tenant-id", func(ctx context.Context) {})
+		err := q.Enqueue(ctx, "tenant-id", func() {})
 		require.ErrorIs(t, err, ErrQueueClosed, "Enqueue before Start should return ErrQueueClosed")
 	})
 
@@ -333,7 +337,7 @@ func TestQueue(t *testing.T) {
 					}
 
 					// Execute the runnable which will update our tracking
-					runnable(ctx)
+					runnable()
 
 					// Check if we've processed all expected items
 					mu.Lock()
@@ -361,7 +365,7 @@ func TestQueue(t *testing.T) {
 				for j := 0; j < itemsPerProducer; j++ {
 					itemID := fmt.Sprintf("p%d-item%d", producerID, j)
 
-					err := q.Enqueue(ctx, tenantID, func(ctx context.Context) {
+					err := q.Enqueue(ctx, tenantID, func() {
 						mu.Lock()
 						processedItems[itemID] = 1
 						mu.Unlock()
@@ -416,7 +420,7 @@ func TestQueue(t *testing.T) {
 
 		// Enqueue a slow item for tenant A
 		wg.Add(1)
-		err := q.Enqueue(ctx, tenantA, func(ctx context.Context) {
+		err := q.Enqueue(ctx, tenantA, func() {
 			defer wg.Done()
 			time.Sleep(300 * time.Millisecond) // Simulate slow processing
 			completionOrder <- "A-slow"
@@ -426,14 +430,14 @@ func TestQueue(t *testing.T) {
 		// Enqueue regular items for other tenants
 		for i := 0; i < 2; i++ {
 			wg.Add(1)
-			err := q.Enqueue(ctx, tenantB, func(ctx context.Context) {
+			err := q.Enqueue(ctx, tenantB, func() {
 				defer wg.Done()
 				completionOrder <- fmt.Sprintf("B-%d", i)
 			})
 			require.NoError(t, err)
 
 			wg.Add(1)
-			err = q.Enqueue(ctx, tenantC, func(ctx context.Context) {
+			err = q.Enqueue(ctx, tenantC, func() {
 				defer wg.Done()
 				completionOrder <- fmt.Sprintf("C-%d", i)
 			})
@@ -442,7 +446,7 @@ func TestQueue(t *testing.T) {
 
 		// Enqueue another item for tenant A
 		wg.Add(1)
-		err = q.Enqueue(ctx, tenantA, func(ctx context.Context) {
+		err = q.Enqueue(ctx, tenantA, func() {
 			defer wg.Done()
 			completionOrder <- "A-fast"
 		})
@@ -458,7 +462,7 @@ func TestQueue(t *testing.T) {
 					if err != nil {
 						return
 					}
-					runnable(ctx)
+					runnable()
 				}
 			}()
 		}
@@ -519,9 +523,9 @@ func TestQueue(t *testing.T) {
 		require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
 
 		// Enqueue items for different tenants
-		err := q.Enqueue(context.Background(), "tenant1", func(ctx context.Context) {})
+		err := q.Enqueue(context.Background(), "tenant1", func() {})
 		require.NoError(t, err)
-		err = q.Enqueue(context.Background(), "tenant2", func(ctx context.Context) {})
+		err = q.Enqueue(context.Background(), "tenant2", func() {})
 		require.NoError(t, err)
 
 		// Check active tenants
@@ -540,9 +544,9 @@ func TestQueue(t *testing.T) {
 		require.NoError(t, q.AwaitRunning(context.Background()), "Queue should be running")
 
 		// Enqueue items
-		err := q.Enqueue(context.Background(), "tenant1", func(ctx context.Context) {})
+		err := q.Enqueue(context.Background(), "tenant1", func() {})
 		require.NoError(t, err)
-		err = q.Enqueue(context.Background(), "tenant1", func(ctx context.Context) {})
+		err = q.Enqueue(context.Background(), "tenant1", func() {})
 		require.NoError(t, err)
 
 		// Check queue length
@@ -563,7 +567,7 @@ func TestQueue(t *testing.T) {
 		processed := make(chan struct{})
 
 		// Enqueue an item that signals when processed
-		err := q.Enqueue(context.Background(), "tenant1", func(ctx context.Context) {
+		err := q.Enqueue(context.Background(), "tenant1", func() {
 			close(processed)
 		})
 		require.NoError(t, err)
@@ -578,7 +582,7 @@ func TestQueue(t *testing.T) {
 			runnable, err := q.Dequeue(ctx)
 			require.NoError(t, err)
 			require.NotNil(t, runnable)
-			runnable(ctx)
+			runnable()
 		}()
 
 		// Wait for the item to be processed
@@ -595,7 +599,7 @@ func TestQueue(t *testing.T) {
 		wg.Wait()
 
 		// Check that the queue is closed
-		err = q.Enqueue(context.Background(), "tenant1", func(ctx context.Context) {})
+		err = q.Enqueue(context.Background(), "tenant1", func() {})
 		require.ErrorIs(t, err, ErrQueueClosed)
 	})
 }

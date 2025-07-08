@@ -2,7 +2,6 @@ import { useLocation } from 'react-router-dom';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
-import { ErrorBoundaryAlert } from '@grafana/ui';
 
 const excludedRoutes: Record<string, boolean> = {
   '/login': true,
@@ -24,13 +23,10 @@ export function AppChromeExtensionPoint(): JSX.Element | null {
     return null;
   }
 
-  return (
-    <ErrorBoundaryAlert>
-      <InternalAppChromeExtensionPoint />
-    </ErrorBoundaryAlert>
-  );
+  return <InternalAppChromeExtensionPoint />;
 }
 
+// We have this "internal" component so we can prevent pre-loading the plugins associated with the extension-point if the feature is not enabled.
 function InternalAppChromeExtensionPoint(): JSX.Element | null {
   const { components, isLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.AppChrome,

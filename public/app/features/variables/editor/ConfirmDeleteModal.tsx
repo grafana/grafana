@@ -17,11 +17,13 @@ export function ConfirmDeleteModal({ varName, isOpen = false, onConfirm, onDismi
       isOpen={isOpen}
       onConfirm={onConfirm}
       onDismiss={onDismiss}
-      body={`
-      Are you sure you want to delete variable "${varName}"?
-    `}
+      body={t(
+        'variables.confirm-delete-modal.body-delete-variable',
+        'Are you sure you want to delete variable "{{variableToDelete}}"?',
+        { variableToDelete: varName }
+      )}
       modalClass={styles.modal}
-      confirmText="Delete"
+      confirmText={t('variables.confirm-delete-modal.confirmText-delete', 'Delete')}
     />
   );
 }

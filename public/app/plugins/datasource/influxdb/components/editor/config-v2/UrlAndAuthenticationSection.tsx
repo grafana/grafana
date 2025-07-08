@@ -41,13 +41,22 @@ export const UrlAndAuthenticationSection = (props: Props) => {
   const requiresDrbpMapping =
     options.jsonData.product &&
     options.jsonData.version === InfluxVersion.InfluxQL &&
-    ['InfluxDB OSS 1.x', 'InfluxDB OSS 2.x'].includes(options.jsonData.product);
+    [
+      'InfluxDB OSS 1.x',
+      'InfluxDB OSS 2.x',
+      'InfluxDB Enterprise 1.x',
+      'InfluxDB Cloud (TSM)',
+      'InfluxDB Cloud Serverless',
+    ].includes(options.jsonData.product);
 
-  const onProductChange = ({ value }: ComboboxOption) =>
+  const onProductChange = ({ value }: ComboboxOption) => {
+    trackInfluxDBConfigV2ProductSelected({ product: value });
     onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value, version: undefined } });
+  };
 
   const onQueryLanguageChange = (option: ComboboxOption) => {
     const { value } = option;
+    trackInfluxDBConfigV2QueryLanguageSelected({ version: value });
 
     if (isInfluxVersion(value)) {
       onUpdateDatasourceJsonDataOptionSelect(props, 'version')(option);
@@ -92,7 +101,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     value={options.jsonData.product}
                     options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
                     onChange={onProductChange}
-                    onBlur={() => trackInfluxDBConfigV2ProductSelected({ product: options.jsonData.product! })}
                   />
                 </Field>
               </Box>
@@ -103,7 +111,6 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     value={options.jsonData.product !== '' ? options.jsonData.version : ''}
                     options={getQueryLanguageOptions(options.jsonData.product || '')}
                     onChange={onQueryLanguageChange}
-                    onBlur={() => trackInfluxDBConfigV2QueryLanguageSelected({ version: options.url })}
                   />
                 </Field>
               </Box>

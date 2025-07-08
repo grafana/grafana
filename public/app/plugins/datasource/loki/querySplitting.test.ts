@@ -3,11 +3,11 @@ import { of } from 'rxjs';
 import { DataQueryRequest, dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { createLokiDatasource } from './__mocks__/datasource';
-import { getMockFrames } from './__mocks__/frames';
 import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
+import { createLokiDatasource } from './mocks/datasource';
+import { getMockFrames } from './mocks/frames';
 import { runSplitQuery } from './querySplitting';
 import { trackGroupedQueries } from './tracking';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
@@ -69,6 +69,21 @@ describe('runSplitQuery()', () => {
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       // 3 sub-requests + complete
       expect(emitted).toHaveLength(4);
+    });
+  });
+
+  test('Interpolates queries before execution', async () => {
+    const request = createRequest([{ expr: 'count_over_time({a="b"}[$__auto])', refId: 'A', step: '$step' }]);
+    datasource = createLokiDatasource({
+      replace: (input = '') => {
+        return input.replace('$__auto', '5m').replace('$step', '5m');
+      },
+      getVariables: () => [],
+    });
+    jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [] }));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      expect(jest.mocked(datasource.runQuery).mock.calls[0][0].targets[0].expr).toBe('count_over_time({a="b"}[5m])');
+      expect(jest.mocked(datasource.runQuery).mock.calls[0][0].targets[0].step).toBe('5m');
     });
   });
 

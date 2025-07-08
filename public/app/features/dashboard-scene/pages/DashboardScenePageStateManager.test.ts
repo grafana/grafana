@@ -37,6 +37,39 @@ jest.mock('@grafana/runtime', () => {
         ...original.config.featureToggles,
         dashboardNewLayouts: false, // Default value
       },
+
+      bootData: {
+        ...original.config.bootData,
+        settings: {
+          ...original.config.bootData.settings,
+          datasources: {
+            'gdev-testdata': {
+              id: 7,
+              uid: 'abc',
+              type: 'grafana-testdata-datasource',
+              name: 'gdev-testdata',
+              meta: {
+                id: 'grafana-testdata-datasource',
+                type: 'datasource',
+                name: 'TestData',
+                aliasIDs: ['testdata'],
+              },
+            },
+            '-- Grafana --': {
+              id: -1,
+              uid: 'grafana',
+              type: 'datasource',
+              name: '-- Grafana --',
+              meta: {
+                id: 'grafana',
+                type: 'datasource',
+                name: '-- Grafana --',
+              },
+            },
+          },
+          defaultDatasource: 'gdev-testdata',
+        },
+      },
     },
   };
 });
@@ -218,6 +251,39 @@ describe('DashboardScenePageStateManager v1', () => {
     });
 
     describe('caching', () => {
+      it('should return cached scene if updated_at matches', async () => {
+        const loader = new DashboardScenePageStateManager({});
+
+        // set cache
+        loader.setSceneCache(
+          'fake-dash',
+          new DashboardScene({ title: 'Dashboard 1', uid: 'fake-dash', meta: { created: '1' }, version: 0 }, 'v1')
+        );
+
+        // should return cached scene
+        expect(
+          loader.transformResponseToScene(
+            {
+              meta: { created: '1' },
+              dashboard: { title: 'Dashboard 1', uid: 'fake-dash', schemaVersion: 1, version: 0 },
+            },
+            { uid: 'fake-dash', route: DashboardRoutes.Normal }
+          )?.state.title
+        ).toBe('Dashboard 1');
+
+        // try loading new scene
+        loader.transformResponseToScene(
+          {
+            meta: { created: '2' },
+            dashboard: { title: 'Dashboard 2', uid: 'fake-dash', schemaVersion: 1, version: 0 },
+          },
+          { uid: 'fake-dash', route: DashboardRoutes.Normal }
+        );
+
+        // should update cache with new scene
+        expect(loader.getSceneFromCache('fake-dash').state.title).toBe('Dashboard 2');
+      });
+
       it('should take scene from cache if it exists', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 10 }, meta: {} });
 
@@ -1555,9 +1621,11 @@ const v2ProvisionedDashboardResource = {
             kind: 'AnnotationQuery',
             spec: {
               builtIn: true,
-              datasource: {
-                type: 'grafana',
-                uid: '-- Grafana --',
+              query: {
+                kind: 'DataQuery',
+                group: 'grafana',
+                spec: {},
+                version: 'v0',
               },
               enable: true,
               hide: true,
@@ -1580,13 +1648,14 @@ const v2ProvisionedDashboardResource = {
                     {
                       kind: 'PanelQuery',
                       spec: {
-                        datasource: {
-                          type: 'grafana-testdata-datasource',
-                          uid: 'PD8C576611E62080A',
-                        },
                         hidden: false,
                         query: {
-                          kind: 'grafana-testdata-datasource',
+                          kind: 'DataQuery',
+                          group: 'grafana-testdata-datasource',
+                          version: 'v0',
+                          datasource: {
+                            name: 'PD8C576611E62080A',
+                          },
                           spec: {
                             scenarioId: 'random_walk',
                             seriesCount: 2,

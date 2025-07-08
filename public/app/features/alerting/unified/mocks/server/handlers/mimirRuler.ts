@@ -53,6 +53,11 @@ export const rulerRuleGroupHandler = (options?: HandlerOptions) => {
       }
 
       const matchingGroup = namespace.find((group) => group.name === groupName);
+
+      if (!matchingGroup) {
+        return HttpResponse.json({ message: 'group does not exist' }, { status: 404 });
+      }
+
       return HttpResponse.json<RulerRuleGroupDTO>({
         name: groupName,
         interval: matchingGroup?.interval,

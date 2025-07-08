@@ -3,8 +3,8 @@ import { mockTimeRange } from '@grafana/plugin-ui';
 import { ExploreFieldLinkModel, getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { createLogRow } from './__mocks__/logRow';
 import { getAllFields, createLogLineLinks, FieldDef, getDataframeFields } from './logParser';
+import { createLogRow } from './mocks/logRow';
 
 describe('logParser', () => {
   describe('getAllFields', () => {

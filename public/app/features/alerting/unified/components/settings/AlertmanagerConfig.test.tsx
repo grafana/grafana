@@ -16,7 +16,7 @@ import {
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
   mockDataSources,
   setupVanillaAlertmanagerServer,
-} from './__mocks__/server';
+} from './mocks/server';
 
 const renderConfiguration = (
   alertManagerSourceName: string,

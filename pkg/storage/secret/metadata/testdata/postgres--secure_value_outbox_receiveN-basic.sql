@@ -1,6 +1,6 @@
 SELECT
   "request_id",
-  "uid",
+  "id",
   "message_type",
   "name",
   "namespace",
@@ -11,9 +11,9 @@ SELECT
   "created"
 FROM
   "secret_secure_value_outbox"
+WHERE 
+  "id" IN (1, 2, 3)
 ORDER BY
-  "created" ASC
-LIMIT
-  10
+  "id" ASC
 FOR UPDATE SKIP LOCKED
 ;

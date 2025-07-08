@@ -121,7 +121,11 @@ export const VersionInstallButton = ({
       <ConfirmModal
         isOpen={isModalOpen}
         title={t('plugins.catalog.versions.downgrade-title', 'Downgrade plugin version')}
-        body={`${t('plugins.catalog.versions.confirmation-text-1', 'Are you really sure you want to downgrade to version')} ${version.version}? ${t('plugins.catalog.versions.confirmation-text-2', 'You should normally not be doing this')}`}
+        body={t(
+          'plugins.catalog.versions.confirmation-text',
+          'Are you really sure you want to downgrade to version {{version}}? You should normally not be doing this',
+          { version: version.version }
+        )}
         confirmText={t('plugins.catalog.versions.downgrade-confirm', 'Downgrade')}
         onConfirm={onConfirm}
         onDismiss={onDismiss}

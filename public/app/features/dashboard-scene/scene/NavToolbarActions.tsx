@@ -5,17 +5,7 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import {
-  Badge,
-  Button,
-  ButtonGroup,
-  Dropdown,
-  Icon,
-  Menu,
-  ToolbarButton,
-  ToolbarButtonRow,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import grafanaConfig from 'app/core/config';
@@ -39,6 +29,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import ManagedDashboardNavBarBadge from './ManagedDashboardNavBarBadge';
 import { LeftActions } from './new-toolbar/LeftActions';
 import { RightActions } from './new-toolbar/RightActions';
+import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
   dashboard: DashboardScene;
@@ -119,23 +110,13 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
-  if (meta.publicDashboardEnabled) {
-    toolbarActions.push({
-      group: 'icon-actions',
-      condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
-      render: () => {
-        return (
-          <Badge
-            color="blue"
-            text={t('dashboard.toolbar.public-dashboard', 'Public')}
-            key="public-dashboard-button-badge"
-            className={styles.publicBadge}
-            data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
-          />
-        );
-      },
-    });
-  }
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && Boolean(meta.canStar) && isShowingDashboard && !isEditing,
+    render: () => {
+      return <PublicDashboardBadge key="public-dashboard-badge" dashboard={dashboard} />;
+    },
+  });
 
   if (dashboard.isManaged() && meta.canEdit) {
     toolbarActions.push({

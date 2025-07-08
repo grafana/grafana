@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 
-import { AzureMonitorErrorish } from '../types';
+import { AzureMonitorErrorish } from '../types/types';
 
 import { messageFromElement } from './messageFromError';
 

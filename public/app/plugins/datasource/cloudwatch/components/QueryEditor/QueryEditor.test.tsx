@@ -5,16 +5,16 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
+import { CloudWatchDatasource } from '../../datasource';
+import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
+import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
 import {
   validLogsQuery,
   validMetricQueryBuilderQuery,
   validMetricQueryCodeQuery,
   validMetricSearchBuilderQuery,
   validMetricSearchCodeQuery,
-} from '../../__mocks__/queries';
-import { CloudWatchDatasource } from '../../datasource';
-import { DEFAULT_CWLI_QUERY_STRING, DEFAULT_SQL_QUERY_STRING } from '../../defaultQueries';
+} from '../../mocks/queries';
 import { CloudWatchQuery, CloudWatchJsonData, MetricEditorMode, MetricQueryType, LogsQueryLanguage } from '../../types';
 
 import { QueryEditor } from './QueryEditor';

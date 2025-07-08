@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@floating-ui/react": "0.27.12",
+    "@floating-ui/react": "0.27.13",
     "@grafana/data": "12.1.0-pre",
     "@grafana/e2e-selectors": "12.1.0-pre",
     "@grafana/i18n": "12.1.0-pre",
@@ -53,10 +53,10 @@
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
-    "@prometheus-io/lezer-promql": "0.304.1",
+    "@prometheus-io/lezer-promql": "0.304.2",
     "@reduxjs/toolkit": "2.5.1",
     "@types/debounce-promise": "3.1.9",
-    "@types/lodash": "4.17.15",
+    "@types/lodash": "4.17.20",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@types/react-highlight-words": "0.20.0",
@@ -82,7 +82,7 @@
     "@rollup/plugin-dynamic-import-vars": "2.1.5",
     "@rollup/plugin-image": "3.0.3",
     "@rollup/plugin-json": "6.1.0",
-    "@rollup/plugin-node-resolve": "16.0.0",
+    "@rollup/plugin-node-resolve": "16.0.1",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.2.0",
     "@testing-library/user-event": "14.6.1",
@@ -102,7 +102,7 @@
     "rollup-plugin-esbuild": "6.2.0",
     "rollup-plugin-node-externals": "^8.0.0",
     "testing-library-selector": "0.3.1",
-    "typescript": "5.7.3"
+    "typescript": "5.8.3"
   },
   "peerDependencies": {
     "react": "^18.0.0",

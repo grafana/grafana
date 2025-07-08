@@ -41,6 +41,7 @@ export * from '../common/common.gen';
 export const defaultTableFieldOptions: raw.TableFieldOptions = {
   align: 'auto',
   inspect: false,
+  wrapHeaderText: false,
   cellOptions: {
     type: raw.TableCellDisplayMode.Auto,
   },

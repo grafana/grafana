@@ -8,7 +8,8 @@ import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';
 import { setSpanFilters } from '../state/main';
 import { getSpanFiltersSelector } from '../state/selectors';
 
-import { filterSpans, TraceSpan } from './components';
+import { TraceSpan } from './components/types/trace';
+import { filterSpans } from './components/utils/filter-spans';
 
 /**
  * Controls the state of search input that highlights spans if they match the search string.

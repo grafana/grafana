@@ -12,7 +12,7 @@ import { hashRule } from '../utils/rule-id';
 
 import { DataSourceRuleLoader } from './DataSourceRuleLoader';
 import { FilterProgressState, FilterStatus } from './FilterViewStatus';
-import { GrafanaRuleLoader } from './GrafanaRuleLoader';
+import { GrafanaRuleListItem } from './GrafanaRuleListItem';
 import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
@@ -154,11 +154,11 @@ function FilterViewResults({ filterState }: FilterViewProps) {
           switch (origin) {
             case 'grafana':
               return (
-                <GrafanaRuleLoader
-                  key={key}
-                  ruleIdentifier={{ ruleSourceName: 'grafana', uid: rule.uid }}
+                <GrafanaRuleListItem
+                  rule={rule}
                   groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}
+                  showLocation={true}
                 />
               );
             case 'datasource':

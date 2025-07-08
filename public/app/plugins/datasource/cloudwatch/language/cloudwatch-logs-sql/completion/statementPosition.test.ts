@@ -1,14 +1,14 @@
 import { monacoTypes } from '@grafana/ui';
 
-import { commentOnlyQuery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/commentOnlyQuery';
-import { multiLineFullQuery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/multiLineFullQuery';
-import { multiLineFullQueryWithCaseClause } from '../../../__mocks__/cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause';
-import { partialQueryWithFunction } from '../../../__mocks__/cloudwatch-logs-sql-test-data/partialQueryWithFunction';
-import { partialQueryWithSubquery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/partialQueryWithSubquery';
-import { singleLineFullQuery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/singleLineFullQuery';
-import { whitespaceQuery } from '../../../__mocks__/cloudwatch-logs-sql-test-data/whitespaceQuery';
-import MonacoMock from '../../../__mocks__/monarch/Monaco';
-import TextModel from '../../../__mocks__/monarch/TextModel';
+import { commentOnlyQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/commentOnlyQuery';
+import { multiLineFullQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQuery';
+import { multiLineFullQueryWithCaseClause } from '../../../mocks/cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause';
+import { partialQueryWithFunction } from '../../../mocks/cloudwatch-logs-sql-test-data/partialQueryWithFunction';
+import { partialQueryWithSubquery } from '../../../mocks/cloudwatch-logs-sql-test-data/partialQueryWithSubquery';
+import { singleLineFullQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/singleLineFullQuery';
+import { whitespaceQuery } from '../../../mocks/cloudwatch-logs-sql-test-data/whitespaceQuery';
+import MonacoMock from '../../../mocks/monarch/Monaco';
+import TextModel from '../../../mocks/monarch/TextModel';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
 import { StatementPosition } from '../../monarch/types';
 import cloudWatchLogsSqlLanguageDefinition from '../definition';

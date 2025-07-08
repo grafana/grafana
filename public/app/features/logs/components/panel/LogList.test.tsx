@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
-import { createLogRow } from '../__mocks__/logRow';
+import { createLogRow } from '../mocks/logRow';
 
 import { LogList, Props } from './LogList';
 

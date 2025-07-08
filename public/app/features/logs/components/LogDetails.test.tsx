@@ -17,8 +17,8 @@ import { setPluginLinksHook } from '@grafana/runtime';
 
 import { LogDetails, Props } from './LogDetails';
 import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
-import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
+import { createLogRow } from './mocks/logRow';
 
 jest.mock('@grafana/runtime', () => {
   return {

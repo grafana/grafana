@@ -30,7 +30,7 @@ const nullRange = {
 };
 
 const meta: Meta<typeof TimeRangeInput> = {
-  title: 'Pickers and Editors/TimePickers/TimeRangeInput',
+  title: 'Date time pickers/TimeRangeInput',
   component: TimeRangeInput,
   parameters: {
     controls: {

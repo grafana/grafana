@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
 import { TableCellDisplayMode } from '../../types';
-import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
+import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils, tooltipOnClickHandler } from '../../utils';
 import { ImageCellProps } from '../types';
 import { getCellLinks } from '../utils';
 
@@ -33,9 +33,7 @@ export const ImageCell = ({ cellOptions, field, height, justifyContent, value, r
     <div
       className={styles.imageContainer}
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
-      onClick={({ clientX, clientY }) => {
-        setTooltipCoords({ clientX, clientY });
-      }}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
     >
       {shouldShowLink ? (
         renderSingleLink(links[0], img)

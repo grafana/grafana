@@ -4,24 +4,15 @@ import { ComponentProps } from 'react';
 
 import { DataSourceApi } from '@grafana/data';
 import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiDatasource } from '../../datasource';
+import { createLokiDatasource } from '../../mocks/datasource';
 import { LokiQueryModeller } from '../LokiQueryModeller';
 import { LokiOperationId } from '../types';
 
 import { LabelParamEditor } from './LabelParamEditor';
 
 describe('LabelParamEditor', () => {
-  const queryHintsFeatureToggle = config.featureToggles.lokiQueryHints;
-  beforeAll(() => {
-    config.featureToggles.lokiQueryHints = true;
-  });
-  afterAll(() => {
-    config.featureToggles.lokiQueryHints = queryHintsFeatureToggle;
-  });
-
   it('shows label options', async () => {
     const props = createProps({}, ['label1', 'label2']);
     render(<LabelParamEditor {...props} />);

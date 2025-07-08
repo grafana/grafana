@@ -153,7 +153,11 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
           />
         </Field>
+      </ConfigSection>
 
+      <Divider />
+
+      <ConfigSection title="TLS/SSL Auth Details" isCollapsible>
         <Field
           label={
             <Label>
@@ -180,7 +184,6 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             width={WIDTH_LONG}
           />
         </Field>
-
         {options.jsonData.sslmode !== PostgresTLSModes.disable ? (
           <Field
             label={
@@ -217,12 +220,8 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             />
           </Field>
         ) : null}
-      </ConfigSection>
-
-      {jsonData.sslmode !== PostgresTLSModes.disable ? (
-        <>
-          <Divider />
-          <ConfigSection title="TLS/SSL Auth Details">
+        {jsonData.sslmode !== PostgresTLSModes.disable ? (
+          <>
             {jsonData.tlsConfigurationMethod === PostgresTLSMethods.fileContent ? (
               <TLSSecretsConfig
                 showCACert={
@@ -314,9 +313,9 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
                 </Field>
               </>
             )}
-          </ConfigSection>
-        </>
-      ) : null}
+          </>
+        ) : null}
+      </ConfigSection>
 
       <Divider />
 

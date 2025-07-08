@@ -1042,18 +1042,18 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         { expr: 'metric2', refId: '2' },
       ];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe(`__name__=~"metric1|metric2"`);
+      expect(result).toEqual([`__name__=~"metric1|metric2"`]);
     });
 
     it('should handle binary queries', () => {
       const queries: PromQuery[] = [{ expr: 'binary{label="val"} + second{}', refId: '1' }];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe(`__name__=~"binary|second"`);
+      expect(result).toEqual([`__name__=~"binary|second"`]);
     });
 
     it('should handle undefined queries', () => {
       const result = populateMatchParamsFromQueries(undefined);
-      expect(result).toBe('__name__!=""');
+      expect(result).toEqual([]);
     });
 
     it('should handle UTF8 metrics', () => {
@@ -1071,13 +1071,13 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should return match-all matcher if there is no expr in queries', () => {
       const queries: PromQuery[] = [{ expr: '', refId: '1' }];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe('__name__!=""');
+      expect(result).toEqual([]);
     });
 
     it('should return match-all matcher if there is no query', () => {
       const queries: PromQuery[] = [];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe('__name__!=""');
+      expect(result).toEqual([]);
     });
 
     it('should extract the correct matcher for queries with `... or vector(0)`', () => {
@@ -1088,7 +1088,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
         },
       ];
       const result = populateMatchParamsFromQueries(queries);
-      expect(result).toBe('__name__=~"go_cpu_classes_idle_cpu_seconds_total"');
+      expect(result).toEqual(['__name__=~"go_cpu_classes_idle_cpu_seconds_total"']);
     });
   });
 });

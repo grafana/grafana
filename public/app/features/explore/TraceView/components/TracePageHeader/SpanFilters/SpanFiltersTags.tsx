@@ -9,7 +9,7 @@ import { Input, Select, Stack, useStyles2 } from '@grafana/ui';
 
 import { randomId } from '../../../../state/constants';
 import { getTraceTagKeys, getTraceTagValues } from '../../../utils/tags';
-import { Trace } from '../../types';
+import { Trace } from '../../types/trace';
 
 interface Props {
   search: TraceSearchProps;
