@@ -11,10 +11,10 @@ import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
 const logPrefix = 'Could not register function extension. Reason:';
 
-export type AddedFunctionsRegistryItem = {
+export type AddedFunctionsRegistryItem<Signature = unknown> = {
   pluginId: string;
   title: string;
-  fn: unknown;
+  fn: Signature;
   description?: string;
 };
 
