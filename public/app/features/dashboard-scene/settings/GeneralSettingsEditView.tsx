@@ -18,11 +18,13 @@ import {
   TextArea,
   WeekStart,
 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -31,6 +33,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DeleteDashboardButton } from './DeleteDashboardButton';
+import { MoveProvisionedDashboardDrawer } from './MoveProvisionedDashboardDrawer';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
@@ -156,6 +159,32 @@ export class GeneralSettingsEditView
 
   public onDeleteDashboard = () => {};
 
+  public onProvisionedFolderChange = async (newUID: string | undefined, newTitle: string | undefined) => {
+    if (newUID !== this._dashboard.state.meta.folderUid) {
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: MoveProvisionedDashboardDrawer,
+          props: {
+            dashboard: this._dashboard,
+            targetFolderUID: newUID,
+            targetFolderTitle: newTitle,
+            onDismiss: () => {}, // Modal auto-closes
+            onSuccess: this.onMoveSuccess,
+          },
+        })
+      );
+    }
+  };
+
+  private onMoveSuccess = (folderUID: string, folderTitle: string) => {
+    const newMeta = {
+      ...this._dashboard.state.meta,
+      folderUid: folderUID,
+      folderTitle: folderTitle,
+    };
+    this._dashboard.setState({ meta: newMeta });
+  };
+
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const dashboard = model.getDashboard();
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
@@ -245,7 +274,7 @@ export class GeneralSettingsEditView
             </Field>
             <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
               {dashboard.isManagedRepository() ? (
-                <Input readOnly value={meta.folderTitle} />
+                <FolderPicker value={meta.folderUid} onChange={model.onProvisionedFolderChange} />
               ) : (
                 <FolderPicker value={meta.folderUid} onChange={model.onFolderChange} />
               )}
