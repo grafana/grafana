@@ -1145,6 +1145,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   permalinkedLogId={panelState?.logs?.id}
                   pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
                   pinnedLogs={pinnedLogs}
+                  setDisplayedFields={setDisplayedFields}
                   showControls
                   showTime={showTime}
                   sortOrder={logsSortOrder}
