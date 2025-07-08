@@ -9,12 +9,14 @@ import {
   VizTooltipWrapper,
   getContentItems,
   VizTooltipItem,
+  FILTER_FOR_OPERATOR,
 } from '@grafana/ui/internal';
 
 import { getFieldActions } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 
 import { isTooltipScrollable } from './utils';
+import { AdHocFilterItem } from '@grafana/ui';
 
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
@@ -41,6 +43,7 @@ export interface TimeSeriesTooltipProps {
   replaceVariables?: InterpolateFunction;
   dataLinks: LinkModel[];
   hideZeros?: boolean;
+  onAddAdHocFilter?: (item: AdHocFilterItem) => void;
 }
 
 export const TimeSeriesTooltip = ({
@@ -56,6 +59,7 @@ export const TimeSeriesTooltip = ({
   replaceVariables = (str) => str,
   dataLinks,
   hideZeros,
+  onAddAdHocFilter,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -86,11 +90,22 @@ export const TimeSeriesTooltip = ({
     const field = series.fields[seriesIdx];
     const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
+    // create the filter click handler based on hovered series index and row index:
+    const onFilterClick = () => {
+      onAddAdHocFilter?.({
+        key: xField.name,
+        operator: FILTER_FOR_OPERATOR,
+        value: String(xField.values[dataIdxs[0]!]),
+      });
+    };
+
     if (isPinned || hasOneClickLink) {
       const dataIdx = dataIdxs[seriesIdx]!;
       const actions = getFieldActions(series, field, replaceVariables, dataIdx);
 
-      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+      footer = (
+        <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} onFilterClick={onFilterClick} />
+      );
     }
   }
 

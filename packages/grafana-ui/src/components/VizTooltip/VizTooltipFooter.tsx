@@ -16,6 +16,7 @@ interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   actions?: Array<ActionModel<Field>>;
   annotate?: () => void;
+  onFilterClick?: () => void;
 }
 
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
@@ -79,7 +80,7 @@ const renderActions = makeRenderLinksOrActions<ActionModel>(
   (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
-export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({ dataLinks, actions = [], annotate, onFilterClick }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
   const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
@@ -88,6 +89,11 @@ export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizToolt
     <div className={styles.wrapper}>
       {!hasOneClickAction && renderDataLinks(dataLinks, styles)}
       {!hasOneClickLink && renderActions(actions, styles)}
+      {onFilterClick && (
+        <Button icon="filter" variant="secondary" size="sm" onClick={onFilterClick}>
+          Filter for value
+        </Button>
+      )}
       {!hasOneClickLink && !hasOneClickAction && annotate != null && (
         <div className={styles.addAnnotations}>
           <Button icon="comment-alt" variant="secondary" size="sm" id={ADD_ANNOTATION_ID} onClick={annotate}>
