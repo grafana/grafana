@@ -4,11 +4,12 @@ import { ReactNode } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
-import PromQlLanguageProvider from '../../language_provider';
-import { getMockTimeRange } from '../../test/__mocks__/datasource';
+import { DEFAULT_SERIES_LIMIT, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
+import { PrometheusDatasource } from '../../datasource';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
+import { getMockTimeRange } from '../../test/mocks/datasource';
 
 import { MetricsBrowserProvider, useMetricsBrowser } from './MetricsBrowserContext';
-import { LAST_USED_LABELS_KEY, METRIC_LABEL } from './types';
 
 const setupLocalStorageMock = () => {
   let store: Record<string, string> = {};
@@ -32,20 +33,14 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 const setupLanguageProviderMock = () => {
   const mockTimeRange = getMockTimeRange();
   const mockLanguageProvider = {
-    metrics: ['metric1', 'metric2', 'metric3'],
-    labelKeys: ['__name__', 'instance', 'job', 'service'],
-    metricsMetadata: {
+    retrieveMetrics: () => ['metric1', 'metric2', 'metric3'],
+    retrieveLabelKeys: () => ['__name__', 'instance', 'job', 'service'],
+    retrieveMetricsMetadata: () => ({
       metric1: { type: 'counter', help: 'Test metric 1' },
       metric2: { type: 'gauge', help: 'Test metric 2' },
-    },
-    fetchLabels: jest.fn().mockResolvedValue(['__name__', 'instance', 'job', 'service']),
-    fetchSeriesLabelsMatch: jest.fn().mockResolvedValue({
-      __name__: ['metric1', 'metric2'],
-      instance: ['instance1', 'instance2'],
-      job: ['job1', 'job2'],
-      service: ['service1', 'service2'],
     }),
-    fetchSeriesValuesWithMatch: jest.fn().mockImplementation((_timeRange: TimeRange, label: string) => {
+    queryLabelKeys: jest.fn().mockResolvedValue(['__name__', 'instance', 'job', 'service']),
+    queryLabelValues: jest.fn().mockImplementation((_timeRange: TimeRange, label: string) => {
       if (label === 'job') {
         return Promise.resolve(['grafana', 'prometheus']);
       }
@@ -57,11 +52,9 @@ const setupLanguageProviderMock = () => {
       }
       return Promise.resolve([]);
     }),
-    fetchLabelsWithMatch: jest.fn().mockResolvedValue({
-      job: ['job1', 'job2'],
-      instance: ['instance1', 'instance2'],
-    }),
-  } as unknown as PromQlLanguageProvider;
+  } as unknown as PrometheusLanguageProviderInterface;
+
+  mockLanguageProvider.datasource = { seriesLimit: DEFAULT_SERIES_LIMIT } as unknown as PrometheusDatasource;
 
   return { mockTimeRange, mockLanguageProvider };
 };
@@ -298,34 +291,54 @@ describe('MetricsBrowserContext', () => {
   describe('selector operations', () => {
     it('should clear all selections', async () => {
       const user = userEvent.setup();
-      const { renderWithProvider } = setupTest();
+      const { renderWithProvider, mockLanguageProvider } = setupTest();
       renderWithProvider(<TestComponent />);
 
-      // Wait for component to be ready
+      // Wait for initial data load
       await waitFor(() => {
         expect(screen.getByTestId('metrics-count').textContent).toBe('3');
       });
 
-      // Make selections
+      // Step 1: Select a metric
       await user.click(screen.getByTestId('select-metric'));
-      await user.click(screen.getByTestId('select-label'));
-      await user.click(screen.getByTestId('select-label-value'));
-
-      // Verify selections
       await waitFor(() => {
+        expect(mockLanguageProvider.queryLabelKeys).toHaveBeenCalled();
         expect(screen.getByTestId('selected-metric').textContent).toBe('metric1');
-        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
-        expect(screen.getByTestId('selector').textContent).not.toBe('{}');
       });
 
-      // Clear all selections
+      // Step 2: Select a label
+      await user.click(screen.getByTestId('select-label'));
+      await waitFor(() => {
+        expect(mockLanguageProvider.queryLabelValues).toHaveBeenCalledWith(
+          expect.anything(),
+          'job',
+          expect.anything(),
+          expect.anything()
+        );
+        expect(screen.getByTestId('selected-label-keys').textContent).toBe('job');
+      });
+
+      // Step 3: Select a label value
+      await user.click(screen.getByTestId('select-label-value'));
+      await waitFor(() => {
+        expect(screen.getByTestId('selector').textContent).toContain('job="grafana"');
+      });
+
+      // Step 4: Clear all selections
       await user.click(screen.getByTestId('clear'));
 
-      // Verify all fields are cleared
+      // Verify everything is cleared
       await waitFor(() => {
+        // Check that all selections are cleared
         expect(screen.getByTestId('selected-metric').textContent).toBe('');
         expect(screen.getByTestId('selected-label-keys').textContent).toBe('');
         expect(screen.getByTestId('selector').textContent).toBe('{}');
+
+        // Verify localStorage was cleared
+        const mockCalls = localStorageMock.setItem.mock.calls;
+        const lastCall = mockCalls[mockCalls.length - 1];
+        expect(lastCall[0]).toBe(LAST_USED_LABELS_KEY);
+        expect(JSON.parse(lastCall[1])).toEqual([]);
       });
     });
 

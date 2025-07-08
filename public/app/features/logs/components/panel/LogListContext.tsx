@@ -162,6 +162,7 @@ export interface Props {
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   prettifyJSON?: boolean;
+  setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showUniqueLabels?: boolean;
   showTime: boolean;
@@ -204,6 +205,7 @@ export const LogListContextProvider = ({
   pinLineButtonTooltipTitle,
   pinnedLogs,
   prettifyJSON,
+  setDisplayedFields,
   showControls,
   showTime,
   showUniqueLabels,
@@ -261,10 +263,13 @@ export const LogListContextProvider = ({
     if (filterLevels === undefined) {
       return;
     }
-    if (!shallowCompare(logListState.filterLevels, filterLevels)) {
-      setLogListState({ ...logListState, filterLevels });
-    }
-  }, [filterLevels, logListState]);
+    setLogListState((logListState) => {
+      if (!shallowCompare(logListState.filterLevels, filterLevels)) {
+        return { ...logListState, filterLevels };
+      }
+      return logListState;
+    });
+  }, [filterLevels]);
 
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
@@ -489,6 +494,7 @@ export const LogListContextProvider = ({
         getRowContextQuery,
         logSupportsContext,
         logLineMenuCustomItems,
+        logOptionsStorageKey,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
@@ -506,6 +512,7 @@ export const LogListContextProvider = ({
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
         setDetailsWidth,
+        setDisplayedFields,
         setFilterLevels,
         setFontSize,
         setForceEscape,

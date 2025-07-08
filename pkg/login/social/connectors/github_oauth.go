@@ -85,9 +85,7 @@ func NewGitHubProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 		provider.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.GitHubProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.GitHubProviderName, provider)
 
 	return provider
 }

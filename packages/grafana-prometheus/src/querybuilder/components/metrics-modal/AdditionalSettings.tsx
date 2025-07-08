@@ -5,17 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Switch, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { metricsModaltestIds } from './MetricsModal';
+import { metricsModaltestIds } from './shared/testIds';
+import { AdditionalSettingsProps } from './shared/types';
 import { placeholders } from './state/helpers';
-import { MetricsModalState } from './state/state';
-
-type AdditionalSettingsProps = {
-  state: MetricsModalState;
-  onChangeFullMetaSearch: () => void;
-  onChangeIncludeNullMetadata: () => void;
-  onChangeDisableTextWrap: () => void;
-  onChangeUseBackend: () => void;
-};
 
 export function AdditionalSettings(props: AdditionalSettingsProps) {
   const { state, onChangeFullMetaSearch, onChangeIncludeNullMetadata, onChangeDisableTextWrap, onChangeUseBackend } =
@@ -46,7 +38,9 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
       <div className={styles.selectItem}>
         <Switch value={state.disableTextWrap} onChange={() => onChangeDisableTextWrap()} />
         <div className={styles.selectItemLabel}>
-          <Trans i18nKey="querybuilder.additional-settings.disable-text-wrap">Disable text wrap</Trans>
+          <Trans i18nKey="grafana-prometheus.querybuilder.additional-settings.disable-text-wrap">
+            Disable text wrap
+          </Trans>
         </div>
       </div>
       <div className={styles.selectItem}>
@@ -58,7 +52,7 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
         <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
         <Tooltip
           content={t(
-            'querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
+            'grafana-prometheus.querybuilder.additional-settings.content-filter-metric-names-regex-search-using',
             'Filter metric names by regex search, using an additional call on the Prometheus API.'
           )}
           placement="bottom-end"

@@ -4,8 +4,8 @@ import { PureComponent } from 'react';
 
 import { SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { ButtonGroup } from '../Button/ButtonGroup';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
@@ -118,8 +118,8 @@ export class RefreshPicker extends PureComponent<Props> {
         {!noIntervalPicker && (
           <ButtonSelect
             className={css({
-              borderTopLeftRadius: 0,
-              borderBottomLeftRadius: 0,
+              borderTopLeftRadius: 'unset',
+              borderBottomLeftRadius: 'unset',
             })}
             value={selectedValue}
             options={options}

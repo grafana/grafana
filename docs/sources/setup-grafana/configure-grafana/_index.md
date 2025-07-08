@@ -390,8 +390,8 @@ The database user's password (not applicable for `sqlite3`). If the password con
 
 #### `url`
 
-Use either URL or the other fields below to configure the database
-Example: `mysql://user:secret@host:port/database`
+Use either URL or the previous fields to configure the database
+Example: `type://user:password@host:port/name`
 
 #### `max_idle_conn`
 
@@ -479,7 +479,11 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 ### `[remote_cache]`
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
+Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).
+
+{{< admonition type="note" >}}
+This setting doesn't control user session storage. User sessions are _always_ stored in the main database configured in `[database]` regardless of your `[remote_cache]` settings.
+{{< /admonition >}}
 
 #### `type`
 
@@ -883,6 +887,10 @@ Increasing this value allows processing more dashboards in each cleanup cycle bu
 #### `default_manage_alerts_ui_toggle`
 
 Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source. It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
+
+#### `default_allow_recording_rules_target_alerts_ui_toggle`
+
+Default behavior for the "Allow as recording rules target" toggle when configuring a data source. It only works if the data source's `jsonData.allowAsRecordingRulesTarget` prop does not contain a previously configured value.
 
 ### `[sql_datasources]`
 
@@ -1539,7 +1547,7 @@ Use spaces to separate multiple modes, for example, `console file`.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is `info`.
+Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`. Default is `info`.
 
 #### `filters`
 
@@ -1568,7 +1576,7 @@ Only applicable when `console` is used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1582,7 +1590,7 @@ Only applicable when `file` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1617,7 +1625,7 @@ Only applicable when `syslog` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 

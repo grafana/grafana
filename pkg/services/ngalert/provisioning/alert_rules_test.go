@@ -41,7 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestAlertRuleService(t *testing.T) {
+func TestIntegrationAlertRuleService(t *testing.T) {
 	ruleService := createAlertRuleService(t, nil)
 	var orgID int64 = 1
 	u := &user.SignedInUser{
@@ -754,7 +754,7 @@ func TestAlertRuleService(t *testing.T) {
 	})
 }
 
-func TestCreateAlertRule(t *testing.T) {
+func TestIntegrationCreateAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID, UserUID: util.GenerateShortUID()}
 	groupKey := models.GenerateGroupKey(orgID)
@@ -1983,7 +1983,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 	})
 }
 
-func TestProvisiongWithFullpath(t *testing.T) {
+func TestIntegrationProvisiongWithFullpath(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
 	sqlStore, cfg := db.InitTestDBWithCfg(t)

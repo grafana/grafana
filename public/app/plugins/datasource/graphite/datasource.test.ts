@@ -1,4 +1,5 @@
 import { isArray } from 'lodash';
+import moment from 'moment';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
@@ -6,6 +7,7 @@ import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
   DataQueryRequest,
+  dateMath,
   dateTime,
   getFrameDisplayName,
   MetricFindValue,
@@ -462,6 +464,94 @@ describe('graphiteDatasource', () => {
       expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(aMetricName,sumSeries(aMetricName))'));
     });
 
+    it('should use scoped variables when nesting query references', () => {
+      ctx.templateSrv.init([{ type: 'query', name: 'metric', current: { value: ['globalValue'] } }]);
+
+      const originalTargetMap = {
+        A: '$metric',
+        B: 'sumSeries(#A)',
+      };
+
+      const scopedVars = {
+        metric: { text: 'scopedValue', value: 'scopedValue' },
+      };
+
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: '$metric' }, { target: 'sumSeries(#A)' }],
+        },
+        originalTargetMap,
+        scopedVars
+      );
+
+      expect(results[1]).toBe('target=' + encodeURIComponent('sumSeries(scopedValue)'));
+    });
+
+    it('should apply scoped variables to nested references with hidden targets', () => {
+      ctx.templateSrv.init([{ type: 'query', name: 'server', current: { value: ['global'] } }]);
+
+      const originalTargetMap = {
+        A: '$server.cpu',
+        B: 'avg(#A)',
+      };
+
+      const scopedVars = {
+        server: { text: 'web01', value: 'web01' },
+      };
+
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: '$server.cpu', hide: true }, { target: 'avg(#A)' }],
+        },
+        originalTargetMap,
+        scopedVars
+      );
+
+      expect(results[0]).toBe('target=' + encodeURIComponent('avg(web01.cpu)'));
+    });
+
+    it('should not recursively replace queries that reference themselves', () => {
+      const originalTargetMap = {
+        A: 'sumSeries(carbon.test.test-host.cpuUsage, #A)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'sumSeries(carbon.test.test-host.cpuUsage, #A)' }],
+        },
+        originalTargetMap
+      );
+      expect(results[0]).toBe(
+        'target=' +
+          encodeURIComponent('sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A))')
+      );
+    });
+
+    it('should not recursively replace queries that reference themselves, but will replace nested references', () => {
+      const originalTargetMap = {
+        A: 'sumSeries(carbon.test.test-host.cpuUsage, #A, #B)',
+        B: 'add(carbon.test.test-host.cpuUsage, 1.5)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [
+            {
+              target: 'sumSeries(carbon.test.test-host.cpuUsage, #A, #B)',
+            },
+            {
+              target: 'add(carbon.test.test-host.cpuUsage, 1.5)',
+            },
+          ],
+        },
+        originalTargetMap
+      );
+      expect(results[0]).toBe(
+        'target=' +
+          encodeURIComponent(
+            'sumSeries(carbon.test.test-host.cpuUsage, sumSeries(carbon.test.test-host.cpuUsage, #A, #B), add(carbon.test.test-host.cpuUsage, 1.5))'
+          )
+      );
+    });
+
     it('should fix wrong minute interval parameters', () => {
       const originalTargetMap = {
         A: "summarize(prod.25m.count, '25m', 'sum')",
@@ -866,6 +956,31 @@ describe('graphiteDatasource', () => {
     it('does not extract metrics when the config does not match', async () => {
       await assertQueryExport('interpolate(alias(test.west.001.cpu))', []);
       await assertQueryExport('interpolate(alias(servers.west.001))', []);
+    });
+  });
+
+  describe('translateTime', () => {
+    it('does not mutate passed in date', async () => {
+      const date = new Date('2025-06-30T00:00:59.000Z');
+      const functionDate = moment(date);
+      const updatedDate = ctx.ds.translateTime(
+        dateMath.toDateTime(functionDate.toDate(), { roundUp: undefined, timezone: undefined })!,
+        true
+      );
+
+      expect(functionDate.toDate()).toEqual(date);
+      expect(updatedDate).not.toEqual(date.getTime());
+    });
+    it('does not mutate passed in relative date - string', async () => {
+      const date = 'now-1m';
+      const updatedDate = ctx.ds.translateTime(date, true);
+
+      expect(updatedDate).not.toEqual(date);
+    });
+    it('returns the input if the input is invalid', async () => {
+      const updatedDate = ctx.ds.translateTime('', true);
+
+      expect(updatedDate).toBe('');
     });
   });
 });

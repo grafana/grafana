@@ -115,6 +115,8 @@ DashboardLink: {
 	keepTime: bool | *false
 }
 
+// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
+// This type is widely used in the codebase and changing it will have a big impact
 DataSourceRef: {
 	// The plugin type-id
 	type?: string
@@ -389,15 +391,14 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-	datasource?: DataSourceRef
-	query?:      DataQueryKind
+	query:      DataQueryKind
 	enable:      bool
 	hide:        bool
 	iconColor:   string
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
-	legacyOptions?:     [string]: _ //Catch-all field for datasource-specific properties
+	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 }
 
 AnnotationQueryKind: {
@@ -416,15 +417,19 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-	// The kind of a DataQueryKind is the datasource type
-	kind: string
+	kind: "DataQuery"
+	group: string
+	version: string | *"v0"
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	datasource?: {
+		name?: string
+	}
 	spec: [string]: _
 }
 
 PanelQuerySpec: {
 	query:       DataQueryKind
-	datasource?: DataSourceRef
-
 	refId:  string
 	hidden: bool
 }
@@ -696,8 +701,7 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
 // Determine the origin of the adhoc variable filter
-// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
-FilterOrigin: "dashboard" | "scope"
+FilterOrigin: "dashboard"
 
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {
@@ -728,7 +732,6 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
-	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""
 	sort:         VariableSort

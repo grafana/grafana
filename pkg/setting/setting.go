@@ -341,6 +341,9 @@ type Cfg struct {
 	// Default behavior for the "Manage alerts via Alerting UI" toggle when configuring a data source.
 	// It only works if the data source's `jsonData.manageAlerts` prop does not contain a previously configured value.
 	DefaultDatasourceManageAlertsUIToggle bool
+	// Default behavior for the "Allow as recording rules target" toggle when configuring a data source.
+	// It only works if the data source's `jsonData.allowAsRecordingRulesTarget` prop does not contain a previously configured value.
+	DefaultAllowRecordingRulesTargetAlertsUIToggle bool
 
 	// IP range access control
 	IPRangeACEnabled     bool
@@ -476,6 +479,9 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
+	// Open feature settings
+	OpenFeature OpenFeatureSettings
+
 	Storage StorageSettings
 
 	Search SearchSettings
@@ -557,10 +563,16 @@ type Cfg struct {
 	IndexMaxBatchSize                          int
 	IndexFileThreshold                         int
 	IndexMinCount                              int
+	IndexMaxCount                              int
 	IndexRebuildInterval                       time.Duration
+	IndexCacheTTL                              time.Duration
 	EnableSharding                             bool
+	QOSEnabled                                 bool
+	QOSNumberWorker                            int
+	QOSMaxSizePerTenant                        int
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string
+	MemberlistAdvertisePort                    int
 	MemberlistJoinMember                       string
 	MemberlistClusterLabel                     string
 	MemberlistClusterLabelVerificationDisabled bool
@@ -1319,6 +1331,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := cfg.readOpenFeatureSettings(); err != nil {
+		cfg.Logger.Error("Failed to read open feature settings", "error", err)
+		return err
+	}
+
 	cfg.readDataSourcesSettings()
 	cfg.readDataSourceSecuritySettings()
 	cfg.readK8sDashboardCleanupSettings()
@@ -1960,6 +1977,7 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
 	cfg.DefaultDatasourceManageAlertsUIToggle = datasources.Key("default_manage_alerts_ui_toggle").MustBool(true)
+	cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle = datasources.Key("default_allow_recording_rules_target_alerts_ui_toggle").MustBool(true)
 }
 
 func (cfg *Cfg) readDataSourceSecuritySettings() {

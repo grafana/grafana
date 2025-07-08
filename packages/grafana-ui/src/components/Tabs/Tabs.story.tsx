@@ -10,7 +10,7 @@ import { TabsBar } from './TabsBar';
 import mdx from './TabsBar.mdx';
 
 const meta: Meta = {
-  title: 'Layout/Tabs',
+  title: 'Navigation/Tabs',
   parameters: {
     docs: {
       page: mdx,

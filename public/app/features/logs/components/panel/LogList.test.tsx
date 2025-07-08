@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
-import { createLogRow } from '../__mocks__/logRow';
+import { createLogRow } from '../mocks/logRow';
 
 import { LogList, Props } from './LogList';
 
@@ -258,6 +258,34 @@ describe('LogList', () => {
       await userEvent.keyboard('{Escape}');
 
       expect(screen.queryByPlaceholderText('Search in logs')).not.toBeInTheDocument();
+    });
+
+    test('Does not conflict with search words', async () => {
+      logs = [
+        createLogRow({ uid: '1' }),
+        createLogRow({ uid: '2', entry: '(?i)some text', searchWords: ['some text'] }),
+      ];
+
+      render(<LogList {...defaultProps} logs={logs} />);
+
+      expect(screen.queryByPlaceholderText('Search in logs')).not.toBeInTheDocument();
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('some text')).toBeInTheDocument();
+
+      await userEvent.keyboard('{Control>}{f}{/Control}');
+
+      expect(screen.getByPlaceholderText('Search in logs')).toBeInTheDocument();
+
+      await userEvent.type(screen.getByPlaceholderText('Search in logs'), '(?i)');
+
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('(?i)')).toBeInTheDocument();
+      expect(screen.getByText('some text')).toBeInTheDocument();
+
+      await userEvent.clear(screen.getByPlaceholderText('Search in logs'));
+
+      expect(screen.getByText('log message 1')).toBeInTheDocument();
+      expect(screen.getByText('some text')).toBeInTheDocument();
     });
   });
 });

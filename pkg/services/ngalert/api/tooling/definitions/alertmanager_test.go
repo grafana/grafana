@@ -259,20 +259,10 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 								Value: "prod",
 							},
 						},
-						AlertmanagerConfig: PostableApiAlertingConfig{
-							Config: Config{
-								Route: &Route{
-									Receiver: "mimir-receiver",
-								},
-							},
-							Receivers: []*PostableApiReceiver{
-								{
-									Receiver: config.Receiver{
-										Name: "mimir-receiver",
-									},
-								},
-							},
-						},
+						AlertmanagerConfig: `route:
+  receiver: mimir-receiver
+receivers:
+  - name: mimir-receiver`,
 					},
 				},
 			},
@@ -285,13 +275,11 @@ func TestPostableUserConfig_GetMergedAlertmanagerConfig(t *testing.T) {
 					{
 						Identifier:    "",
 						MergeMatchers: config.Matchers{},
-						AlertmanagerConfig: PostableApiAlertingConfig{
-							Config: Config{
-								Route: &Route{
-									Receiver: "test",
-								},
-							},
-						},
+						AlertmanagerConfig: `{
+							"route": {
+								"receiver": "test"
+							}
+						}`,
 					},
 				},
 			},

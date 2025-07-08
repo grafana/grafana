@@ -13,6 +13,7 @@ package dataquery
 
 import (
 	json "encoding/json"
+	fmt "fmt"
 )
 
 type AzureMonitorQuery struct {
@@ -407,12 +408,21 @@ type AzureResourceGraphQuery struct {
 	Query *string `json:"query,omitempty"`
 	// Specifies the format results should be returned as. Defaults to table.
 	ResultFormat *string `json:"resultFormat,omitempty"`
+	// Specifies the scope of the query. Defaults to subscription.
+	Scope *ARGScope `json:"scope,omitempty"`
 }
 
 // NewAzureResourceGraphQuery creates a new AzureResourceGraphQuery object.
 func NewAzureResourceGraphQuery() *AzureResourceGraphQuery {
 	return &AzureResourceGraphQuery{}
 }
+
+type ARGScope string
+
+const (
+	ARGScopeSubscription ARGScope = "subscription"
+	ARGScopeDirectory    ARGScope = "directory"
+)
 
 // Application Insights Traces sub-query properties
 type AzureTracesQuery struct {
@@ -825,4 +835,59 @@ type StringOrBoolOrFloat64OrSelectableValue struct {
 // NewStringOrBoolOrFloat64OrSelectableValue creates a new StringOrBoolOrFloat64OrSelectableValue object.
 func NewStringOrBoolOrFloat64OrSelectableValue() *StringOrBoolOrFloat64OrSelectableValue {
 	return &StringOrBoolOrFloat64OrSelectableValue{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrBoolOrFloat64OrSelectableValue` as JSON.
+func (resource StringOrBoolOrFloat64OrSelectableValue) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+	if resource.SelectableValue != nil {
+		return json.Marshal(resource.SelectableValue)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode StringOrBoolOrFloat64OrSelectableValue from JSON.
+func (resource *StringOrBoolOrFloat64OrSelectableValue) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+	fields := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+
+	if fields["String"] != nil {
+		if err := json.Unmarshal(fields["String"], &resource.String); err != nil {
+			return fmt.Errorf("error decoding field 'String': %w", err)
+		}
+	}
+
+	if fields["Bool"] != nil {
+		if err := json.Unmarshal(fields["Bool"], &resource.Bool); err != nil {
+			return fmt.Errorf("error decoding field 'Bool': %w", err)
+		}
+	}
+
+	if fields["Float64"] != nil {
+		if err := json.Unmarshal(fields["Float64"], &resource.Float64); err != nil {
+			return fmt.Errorf("error decoding field 'Float64': %w", err)
+		}
+	}
+
+	if fields["SelectableValue"] != nil {
+		if err := json.Unmarshal(fields["SelectableValue"], &resource.SelectableValue); err != nil {
+			return fmt.Errorf("error decoding field 'SelectableValue': %w", err)
+		}
+	}
+
+	return nil
 }

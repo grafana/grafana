@@ -52,6 +52,7 @@
       "button-use-query": "Use this query",
       "label-categories": "Categories",
       "label-query-results": "Query results: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "Unable to list all categories",
       "placeholder-all-categories": "All categories",
       "placeholder-search-logs": "Search Logs queries",
       "text-loading": "Loading..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "Restrict the number of rows returned (default is 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "Are you sure you want to switch to Basic Logs?",
+      "confirmText-confirm": "Confirm",
       "description-basic-logs-queries": "Basic Logs queries incur cost based on the amount of data scanned.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Basic Logs Queries",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure logs kick start your query button",
+      "body-switching-to-builder": "Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?",
+      "body-switching-to-kql": "Switching to KQL will discard your current builder settings. Are you sure?",
       "button-kick-start-your-query": "Kick start your query",
       "button-run-query": "Run query",
+      "confirmText-switch-to": "Switch to {{newMode}}",
+      "editor-modes": {
+        "label-builder": "Builder",
+        "label-kql": "KQL"
+      },
       "label-service": "Service",
       "placeholder-service": "Service...",
       "title-switch-mode": "Switch editor mode?"
@@ -221,6 +231,9 @@
       "text-loading": "Loading...",
       "text-no-resources": "No resources found",
       "title-error-occurred": "An error occurred while requesting resources from Azure Monitor"
+    },
+    "scope-selector": {
+      "label": "Scope"
     },
     "search": {
       "aria-label-resource-search": "Resource search",

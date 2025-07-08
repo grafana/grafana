@@ -24,6 +24,7 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
+  defaultDataQueryKind,
   AdHocFilterWithLabels,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
@@ -167,6 +168,14 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         query: variable.state.value,
       });
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
+      // @ts-expect-error
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
+        ? {
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
+          }
+        : undefined;
+
       variables.push({
         ...commonProperties,
         datasource: variable.state.datasource,
@@ -181,6 +190,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
+        defaultValue: defaultVariableOption,
         allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isAdHocVariable(variable)) {
@@ -189,8 +199,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
-        baseFilters: validateFiltersOrigin(variable.state.baseFilters),
-        filters: validateFiltersOrigin(variable.state.filters),
+        baseFilters: variable.state.baseFilters || [],
+        filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
         defaultKeys: variable.state.defaultKeys,
       });
     } else if (variable.state.type === 'system') {
@@ -285,14 +295,30 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
+      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
+
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type ?? getDataQueryKind(query),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: getDataQuerySpec(query),
         };
       } else {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type ?? getDataQueryKind(query),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: {
             [LEGACY_STRING_VALUE_KEY]: query,
           },
@@ -306,7 +332,6 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,
@@ -413,6 +438,14 @@ export function sceneVariablesSetToSchemaV2Variables(
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
       options = variableValueOptionsToVariableOptions(variable.state);
 
+      // @ts-expect-error
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
+        ? {
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
+          }
+        : undefined;
+
       const groupVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
         spec: {
@@ -425,6 +458,7 @@ export function sceneVariablesSetToSchemaV2Variables(
               value: String(option.value),
             })) || [],
           current: currentVariableOption,
+          defaultValue: defaultVariableOption,
           multi: variable.state.isMulti || false,
         },
       };
@@ -436,8 +470,11 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           name: variable.state.name,
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: validateFiltersOrigin(variable.state.baseFilters),
-          filters: validateFiltersOrigin(variable.state.filters),
+          baseFilters: validateFiltersOrigin(variable.state.baseFilters) || [],
+          filters: [
+            ...validateFiltersOrigin(variable.state.originFilters),
+            ...validateFiltersOrigin(variable.state.filters),
+          ],
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
           allowCustomValue: variable.state.allowCustomValue ?? true,
         },
@@ -453,21 +490,9 @@ export function sceneVariablesSetToSchemaV2Variables(
   return variables;
 }
 
-function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
-  return (
-    filters?.map((filter) => {
-      const { origin: initialOrigin, ...restOfFilter } = filter;
-
-      if (initialOrigin === 'dashboard' || initialOrigin === 'scope') {
-        return {
-          ...restOfFilter,
-          origin: initialOrigin,
-        };
-      }
-
-      return restOfFilter;
-    }) || []
-  );
+export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+  // Only keep dashboard originated filters in the schema
+  return filters?.filter((f): f is AdHocFilterWithLabels => !f.origin || f.origin === 'dashboard') || [];
 }
 
 export function isVariableEditable(variable: SceneVariable) {
