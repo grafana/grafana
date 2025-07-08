@@ -81,20 +81,24 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
   }
 
   return (
-    <Portal>
-      <div
-        ref={refCallback}
-        {...getReferenceProps()}
-        {...getFloatingProps()}
-        style={floatingStyles}
-        className={styles.tooltipWrapper}
-        data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
-      >
-        <VizTooltipWrapper>
-          <VizTooltipFooter dataLinks={links} actions={actions} />
-        </VizTooltipWrapper>
-      </div>
-    </Portal>
+    <>
+      {/* TODO: we can remove `value` from this component when tableNextGen is fully rolled out */}
+      {value}
+      <Portal>
+        <div
+          ref={refCallback}
+          {...getReferenceProps()}
+          {...getFloatingProps()}
+          style={floatingStyles}
+          className={styles.tooltipWrapper}
+          data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
+        >
+          <VizTooltipWrapper>
+            <VizTooltipFooter dataLinks={links} actions={actions} />
+          </VizTooltipWrapper>
+        </div>
+      </Portal>
+    </>
   );
 };
 
