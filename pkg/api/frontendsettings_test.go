@@ -38,7 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -93,13 +93,13 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		SQLStore:              db.InitTestDB(t),
 		SettingsProvider:      setting.ProvideProvider(cfg),
 		pluginStore:           pluginStore,
-		grafanaUpdateChecker:  &updatechecker.GrafanaService{},
+		grafanaUpdateChecker:  &updatemanager.GrafanaService{},
 		AccessControl:         accesscontrolmock.New(),
 		PluginSettings:        pluginsSettings,
 		pluginsCDNService:     pluginsCDN,
 		pluginAssets:          pluginsAssets,
 		namespacer:            request.GetNamespaceMapper(cfg),
-		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, &ssosettingstests.MockService{}),
+		SocialService:         socialimpl.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage(), nil, ssosettingstests.NewFakeService()),
 		managedPluginsService: managedplugins.NewNoop(),
 		tracer:                tracing.InitializeTracerForTest(),
 		DataSourcesService:    &datafakes.FakeDataSourceService{},
@@ -113,7 +113,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 	return m, hs
 }
 
-func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
+func TestIntegrationHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	type buildInfo struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`
@@ -182,7 +182,7 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 	}
 }
 
-func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
+func TestIntegrationHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 	type settings struct {
 		PluginsCDNBaseURL string `json:"pluginsCDNBaseURL"`
 	}
@@ -232,7 +232,7 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 	}
 }
 
-func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
+func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	type settings struct {
 		Apps map[string]*plugins.AppDTO `json:"apps"`
 	}
@@ -462,7 +462,7 @@ func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
 	}
 }
 
-func TestHTTPServer_GetFrontendSettings_translations(t *testing.T) {
+func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 	type settings struct {
 		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
 		Panels      map[string]*plugins.PanelDTO     `json:"panels"`

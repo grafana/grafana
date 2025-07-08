@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
-import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiDatasource } from '../../datasource';
+import { createLokiDatasource } from '../../mocks/datasource';
 import { LokiQuery } from '../../types';
 
 import { LabelBrowserModal, Props } from './LabelBrowserModal';

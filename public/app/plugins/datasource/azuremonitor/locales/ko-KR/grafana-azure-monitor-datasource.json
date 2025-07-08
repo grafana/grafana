@@ -1,0 +1,304 @@
+{
+  "components": {
+    "advanced-multi": {
+      "label-advanced": "고급"
+    },
+    "advanced-resource-picker": {
+      "aria-label-add": "추가",
+      "aria-label-remove": "제거",
+      "button-add-resource": "리소스 추가",
+      "button-add-resource-uri": "리소스 URI 추가",
+      "label-namespace": "네임스페이스",
+      "label-region": "리전",
+      "label-resource-group": "리소스 그룹",
+      "label-resource-name": "리소스 이름",
+      "label-resource-number": "리소스 {{resourceNum}}개",
+      "label-resource-uri": "리소스 URI ",
+      "label-subscription": "구독",
+      "placeholder-resource-name": "이름",
+      "tooltip-region": "리소스의 코드 리전입니다. 하나의 리소스에 대해서는 선택 사항이지만 여러 리소스를 선택할 때는 필수입니다.",
+      "tooltip-resource-uri": "<2>리소스 URI</2>를 수동으로 편집합니다. 여러 템플릿 변수 사용 지원(예: /subscriptions/$subId/resourceGroups/$rg)"
+    },
+    "aggregate-item": {
+      "aria-label-aggregate-function": "집계 함수",
+      "aria-label-column": "열",
+      "aria-label-remove": "제거",
+      "label-percentile": "의"
+    },
+    "aggregate-section": {
+      "label-aggregate": "집계",
+      "tooltip-aggregate": "개수, 합계, 평균, 최소, 최대, 표준 편차 또는 백분위와 같이 여러 데이터 행에 걸친 계산을 수행합니다."
+    },
+    "aggregation-field": {
+      "label-aggregation": "집계"
+    },
+    "app-registration-credentials": {
+      "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-id": "클라이언트 ID",
+      "aria-label-client-secret": "클라이언트 시크릿",
+      "aria-label-symbol-client-secret": "클라이언트 시크릿",
+      "aria-label-tenant-id": "테넌트 ID",
+      "label-azure-cloud": "Azure Cloud",
+      "label-client-id": "애플리케이션(클라이언트) ID",
+      "label-client-secret": "클라이언트 시크릿",
+      "label-symbol-client-secret": "클라이언트 시크릿",
+      "label-tenant-id": "디렉터리(테넌트) ID",
+      "placeholder-symbol-client-secret": "구성됨",
+      "reset-symbol-client-secret": "재설정"
+    },
+    "azure-cheat-sheet": {
+      "aria-label-raw-query": "{{queryDisplayName}} 원시 쿼리",
+      "aria-label-use-query": "이 쿼리 사용 버튼",
+      "button-use-query": "이 쿼리 사용",
+      "label-categories": "범주",
+      "label-query-results": "쿼리 결과: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
+      "placeholder-all-categories": "모든 범주",
+      "placeholder-search-logs": "로그 쿼리 검색",
+      "text-loading": "로딩 중..."
+    },
+    "azure-cheat-sheet-modal": {
+      "aria-label-kick-start": "쿼리 모달 시작하기",
+      "title-kick-start": "쿼리 시작하기"
+    },
+    "azure-credentials-form": {
+      "description-authentication": "Azure 서비스에 대한 인증 유형을 선택하세요",
+      "label-authentication": "인증",
+      "title-authentication": "인증"
+    },
+    "basic-logs-toggle": {
+      "aria-label-enable-basic-logs": "기본 로그",
+      "description-basic-logs": "이 기능을 활성화하면 <2>기본 로그</2>에 구성된 테이블을 쿼리하는 대시보드 패널에서 Azure Monitor 쿼리당 비용이 발생합니다.",
+      "label-enable-basic-logs": "기본 로그 활성화"
+    },
+    "config-editor": {
+      "description-additional-settings": "추가 설정은 데이터 소스를 보다 세부적으로 제어하기 위해 구성할 수 있는 선택적 설정입니다. 여기에는 보안 SOCKS 프록시가 포함됩니다.",
+      "description-request-timeout": "요청 타임아웃을 초 단위로 설정합니다. 기본값은 30초입니다.",
+      "title-additional-settings": "추가 설정",
+      "title-request-timeout": "요청 타임아웃"
+    },
+    "current-user-fallback-credentials": {
+      "alert-fallback-credentials-disabled": "예비 자격 증명이 비활성화되었습니다. 사용자 기반 인증은 본질적으로 적용 범위 내의 사용자가 있는 요청만 지원하므로 알림, 기록된 쿼리 또는 보고와 같은 기능은 예상대로 작동하지 않습니다. 자세한 내용은 <2>문서</2>를 참고하세요.",
+      "body-service-credentials": "사용자 기반 인증은 기본적으로 사용자 세부 정보 없이 데이터 소스에 요청을 보내는 Grafana 기능을 지원하지 않습니다. 경고 또한 그런 사례입니다. 요청 컨텍스트에 사용자가 없는 기능이 계속 작동하게 하려면 아래에 예비 자격 증명을 제공하세요.",
+      "description-authentication": "Azure 서비스에 대한 인증 유형을 선택하세요",
+      "description-service-credentials": "이 데이터 소스에 대해 예비 서비스 자격 증명을 활성화하거나 비활성화할지 선택합니다",
+      "label-authentication": "인증",
+      "label-service-credentials": "서비스 자격 증명",
+      "note-service-credentials": "참고: 경고와 같은 기능은 사용자가 아닌 예비 자격 증명의 액세스 수준으로 제한됩니다. 따라서 사용자가 혼동을 겪지 않도록 명확하게 설명해야 합니다.",
+      "title-fallback-credentials-disabled": "예비 자격 증명 비활성화됨",
+      "title-fallback-service-credentials": "예비 서비스 자격 증명",
+      "title-service-credentials": "서비스 자격 증명"
+    },
+    "default-subscription": {
+      "aria-label-default-subscription": "기본 구독",
+      "label-default-subscription": "기본 구독",
+      "load-subscriptions": "구독 불러오기"
+    },
+    "dimension-fields": {
+      "aria-label-remove": "제거",
+      "label-dimensions": "차원",
+      "placeholder-field": "필드",
+      "placeholder-operation": "연산",
+      "placeholder-select-value": "값 선택",
+      "placeholder-select-values": "값 선택"
+    },
+    "editor-for-query-type": {
+      "body-unknown-query-type": "{{type}}은(는) Grafana 9에서 사용 중단되었습니다. 쿼리를 마이그레이션하는 방법에 대한 자세한 정보는 <3>사용 중단 공지</3>를 참조하세요. 현재 쿼리 정의는 다음과 같습니다.",
+      "title-unknown-query-type": "알 수 없는 쿼리 유형"
+    },
+    "filter": {
+      "aria-label-remove-filter": "필터 제거",
+      "placeholder-property": "속성",
+      "placeholder-value": "값"
+    },
+    "filter-item": {
+      "aria-label-column": "열",
+      "aria-label-column-value": "열 값",
+      "aria-label-operator": "작업 수행자",
+      "label-or": "또는"
+    },
+    "filter-section": {
+      "label-add-group": "그룹 추가",
+      "label-and": "그리고",
+      "label-filters": "필터",
+      "tooltip-filters": "특정 열에 조건을 적용하여 결과를 좁힙니다."
+    },
+    "filters": {
+      "label-filters": "필터"
+    },
+    "format-as-field": {
+      "label-format-as": "형식:"
+    },
+    "fuzzy-search": {
+      "aria-label-select-column": "열 선택",
+      "label-fuzzy-search": "퍼지 검색",
+      "placeholder-search-team": "검색어 입력",
+      "tooltip-fuzzy-search": "철자 변형으로 인한 차이를 허용하여 유사한 텍스트를 찾습니다. 기본적으로 퍼지 검색은 특정 필드뿐만 아니라 전체 테이블의 열(*)을 모두 검색합니다."
+    },
+    "grafana-template-variable-fn-input": {
+      "label-grafana-template-variable": "Grafana 템플릿 변수 함수",
+      "placeholder-grafana-template-variable": "Grafana 템플릿 변수 함수를 입력합니다(예: {{example}})"
+    },
+    "group-by-item": {
+      "aria-label-column": "열",
+      "aria-label-remove": "제거"
+    },
+    "group-by-section": {
+      "label-group-by": "그룹화 기준",
+      "tooltip-group-by": "지정된 열을 기준으로 결과를 카테고리별로 분류합니다. 그룹화 기준은 선택한 열의 고유 값을 나열하는 데 독립적으로 사용하거나 집계 함수와 결합하여 각 그룹에 대한 요약 통계를 생성하는 데 사용할 수 있습니다. 단독으로 사용하면 지정된 열의 고유한 조합을 반환합니다."
+    },
+    "kql-preview": {
+      "button-hide": "숨기기",
+      "button-show": "표시",
+      "label-query-preview": "쿼리 미리보기"
+    },
+    "legend-format-field": {
+      "label-legend-format": "범례 형식",
+      "placeholder-legend-format": "별칭 패턴"
+    },
+    "limit-section": {
+      "label-limit": "제한",
+      "placeholder-limit": "한도 입력",
+      "tooltip-limit": "반환되는 행 수를 제한합니다(기본값은 1000)."
+    },
+    "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
+      "description-basic-logs-queries": "기본 로그 쿼리는 스캔된 데이터 양에 따라 비용이 발생합니다.",
+      "label-logs": "로그",
+      "title-basic-logs-queries": "기본 로그 쿼리",
+      "tooltip-logs": "기본 또는 분석 로그 쿼리를 실행할지 여부를 지정합니다."
+    },
+    "logs-query-builder": {
+      "title-no-tables": "리소스를 성공적으로 불러왔지만 테이블이 없습니다"
+    },
+    "logs-query-editor": {
+      "learn-more": "자세히 알아보기",
+      "view-query": "Azure Portal에서 쿼리 보기"
+    },
+    "metric-name-field": {
+      "label-metric": "메트릭"
+    },
+    "metric-namespace-field": {
+      "label-metric-namespace": "메트릭 네임스페이스"
+    },
+    "nested-row": {
+      "text-loading": "로딩 중..."
+    },
+    "order-by-section": {
+      "aria-label-order-by-column": "열을 기준으로 정렬",
+      "aria-label-order-direction": "정렬 방향",
+      "label-by": "기준",
+      "label-order-by": "정렬 기준",
+      "tooltip-order-by": "하나 이상의 열을 기준으로 결과를 오름차순 또는 내림차순으로 정렬합니다."
+    },
+    "query-editor": {
+      "alert-error-occurred": "Azure Monitor에서 메타데이터를 요청하는 동안 오류가 발생했습니다"
+    },
+    "query-header": {
+      "aria-label-kick-start": "Azure 로그 쿼리 시작 버튼",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
+      "button-kick-start-your-query": "쿼리 시작하기",
+      "button-run-query": "쿼리 실행",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
+      "label-service": "서비스",
+      "placeholder-service": "서비스...",
+      "title-switch-mode": "편집기 모드를 전환하시겠어요?"
+    },
+    "raw-query": {
+      "aria-label-selector": "선택기"
+    },
+    "resource-field": {
+      "label-resource": "리소스",
+      "title-select-resource": "리소스 선택"
+    },
+    "resource-label": {
+      "select-resource": "리소스 선택"
+    },
+    "resource-picker": {
+      "button-apply": "적용",
+      "button-cancel": "취소",
+      "header-location": "위치",
+      "header-scope": "적용 범위",
+      "header-type": "유형",
+      "heading-selection": "선택",
+      "result-limit": "처음 {{numResults}}건의 결과 표시 중",
+      "text-loading": "로딩 중...",
+      "text-no-resources": "리소스를 찾을 수 없음",
+      "title-error-occurred": "Azure Monitor에서 리소스를 요청하는 동안 오류가 발생했습니다."
+    },
+    "scope-selector": {
+      "label": ""
+    },
+    "search": {
+      "aria-label-resource-search": "리소스 검색",
+      "placeholder-resource-search": "리소스 검색"
+    },
+    "subscription-field": {
+      "label-subscriptions": "구독",
+      "validation-subscriptions": "구독을 하나 이상 선택해야 합니다."
+    },
+    "table-section": {
+      "aria-label-columns": "열",
+      "aria-label-table": "표",
+      "label-columns": "열",
+      "label-table": "표",
+      "placeholder-select-columns": "열 선택",
+      "placeholder-select-table": "테이블 선택"
+    },
+    "time-grain-field": {
+      "label-time-grain": "시간 단위"
+    },
+    "time-management": {
+      "label-time-column": "시간 열",
+      "label-time-range": "시간 범위",
+      "tooltip-time-column": "<0>필터링에 사용할 시간 열을 지정합니다. 기본값은 첫 번째 테이블 <1>timeSpan</1> 열, 처음 찾은 <3>datetime</3> 열 또는 <5>TimeGenerated</5>입니다.</0>",
+      "tooltip-time-range": "<0>쿼리에 사용할 시간 범위를 지정합니다. <1>쿼리</1> 옵션은 쿼리에 지정된 시간 범위만 사용합니다. <3>대시보드</3>는 Grafana 시간 범위만 사용합니다. 로그 빌더 모드에서는 대시보드 시간만 사용됩니다.</0>"
+    },
+    "top-field": {
+      "label-top": "상단"
+    },
+    "trace-type-field": {
+      "label-event-type": "이벤트 유형",
+      "placeholder-event-type": "이벤트 유형 선택"
+    },
+    "traces-query-editor": {
+      "label-operation-id": "작업 ID"
+    },
+    "user-auth-alert": {
+      "body-unsupported-auth": "이 데이터 소스를 사용하려면 Azure Entra(이전 명칭 Azure Active Directory)를 통해 인증을 받아야 합니다. 자세한 내용은 <2>문서</2>를 참고하세요.",
+      "title-unsupported-auth": "지원되지 않는 인증 제공자"
+    },
+    "user-auth-fallback-alert": {
+      "body-no-fallback-credentials": "데이터 소스 백엔드 기능(예: 경고)을 사용하려면 서비스 자격 증명이 필요합니다. 이 데이터 소스는 예비 서비스 자격 증명 없이 구성되었거나, 예비 기능이 비활성화되어 있습니다. 자세한 내용은 <2>문서</2>를 참고하세요.",
+      "title-no-fallback-credentials": "이용 가능한 예비 자격 증명 없음"
+    },
+    "variable-editor": {
+      "aria-label-select-custom-namespace": "사용자 지정 네임스페이스 선택",
+      "aria-label-select-namespace": "네임스페이스 선택",
+      "aria-label-select-query-type": "쿼리 유형 선택",
+      "aria-label-select-region": "리전 선택",
+      "aria-label-select-resource": "리소스 선택",
+      "aria-label-select-resource-group": "리소스 그룹 선택",
+      "aria-label-select-subscription": "구독 선택",
+      "label-custom-namespace": "사용자 지정 네임스페이스",
+      "label-namespace": "네임스페이스",
+      "label-query-type": "쿼리 유형",
+      "label-region": "리전",
+      "label-resource": "리소스",
+      "label-resource-group": "리소스 그룹",
+      "label-resource-type": "리소스 유형",
+      "label-subscription": "구독",
+      "placeholder-custom-namespace": "선택 사항",
+      "placeholder-namespace": "선택 사항",
+      "placeholder-region": "선택 사항",
+      "placeholder-resource-group": "선택 사항",
+      "title-error-occurred": "Azure Monitor에서 메타데이터를 요청하는 동안 오류가 발생했습니다"
+    }
+  }
+}

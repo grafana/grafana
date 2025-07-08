@@ -1,7 +1,7 @@
 import Skeleton from 'react-loading-skeleton';
 
+import { t } from '@grafana/i18n';
 import { Alert, Text } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';

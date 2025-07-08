@@ -20,6 +20,7 @@ type TestRemoteWriteTarget struct {
 	mtx             sync.Mutex
 	RequestsCount   int
 	LastRequestBody string
+	LastHeaders     http.Header
 
 	ExpectedPath string
 }
@@ -30,6 +31,7 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 	target := &TestRemoteWriteTarget{
 		RequestsCount:   0,
 		LastRequestBody: "",
+		LastHeaders:     http.Header{},
 		ExpectedPath:    RemoteWriteEndpoint,
 	}
 
@@ -41,6 +43,7 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 		target.mtx.Lock()
 		defer target.mtx.Unlock()
 		target.RequestsCount += 1
+		target.LastHeaders = r.Header.Clone()
 		bd, err := io.ReadAll(r.Body)
 		defer func() {
 			_ = r.Body.Close()
@@ -68,10 +71,7 @@ func (s *TestRemoteWriteTarget) DatasourceURL() string {
 
 func (s *TestRemoteWriteTarget) ClientSettings() setting.RecordingRuleSettings {
 	return setting.RecordingRuleSettings{
-		URL:               s.srv.URL + RemoteWriteEndpoint,
-		Timeout:           1 * time.Second,
-		BasicAuthUsername: "",
-		BasicAuthPassword: "",
+		Timeout: 1 * time.Second,
 	}
 }
 
@@ -81,4 +81,5 @@ func (s *TestRemoteWriteTarget) Reset() {
 	defer s.mtx.Unlock()
 	s.RequestsCount = 0
 	s.LastRequestBody = ""
+	s.LastHeaders = http.Header{}
 }

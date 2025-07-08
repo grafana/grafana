@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Button,
@@ -14,7 +15,6 @@ import {
   RadioButtonGroup,
   useStyles2,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 const EXPIRATION_OPTIONS = [
   { label: 'No expiration', value: false },

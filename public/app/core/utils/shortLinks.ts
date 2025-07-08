@@ -1,6 +1,7 @@
 import memoizeOne from 'memoize-one';
 
 import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
 import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { notifyApp } from 'app/core/actions';
@@ -10,7 +11,6 @@ import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboard
 import { dispatch } from 'app/store/store';
 
 import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
-import { t } from '../internationalization';
 
 import { copyStringToClipboard } from './explore';
 

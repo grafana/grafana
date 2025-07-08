@@ -16,7 +16,7 @@ runs:
   steps:
     - name: Retrieve GitHub App secrets
       id: get-secrets
-      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
+      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
       with:
         repo_secrets: |
           APP_ID=${{ inputs.github-app-name }}:app-id
@@ -36,9 +36,10 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        BRANCH: ${{ inputs.branch }}
       run: |
         git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-bench.git ../grafana-bench
 
         cd ../grafana-bench
-        git switch ${{ inputs.branch }}
+        git switch "$BRANCH"
         go install .

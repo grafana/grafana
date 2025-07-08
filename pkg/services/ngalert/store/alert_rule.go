@@ -11,7 +11,7 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -114,10 +114,10 @@ func (st DBstore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64,
 		rows, err := sess.SQL(fmt.Sprintf(`
 		SELECT v1.* FROM alert_rule_version AS v1
 			INNER JOIN (
-			    SELECT rule_guid, MAX(id) AS id 
-			    FROM alert_rule_version 
-			    WHERE rule_org_id = ? 
-			      AND rule_uid IN (%s) 
+			    SELECT rule_guid, MAX(id) AS id
+			    FROM alert_rule_version
+			    WHERE rule_org_id = ?
+			      AND rule_uid IN (%s)
 			    GROUP BY rule_guid
 			) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
 		`, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
@@ -373,7 +373,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(rules[i], err)
+						return ngmodels.ErrAlertRuleConflict(newRules[i].UID, newRules[i].OrgID, err)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
@@ -431,7 +431,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Omit("rule_guid").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(r.New, err)
+						return ngmodels.ErrAlertRuleConflict(r.New.UID, r.New.OrgID, err)
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
@@ -632,8 +632,8 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			}
 		}
 
-		if query.ImportedPrometheusRule != nil {
-			q, err = st.filterImportedPrometheusRules(*query.ImportedPrometheusRule, q)
+		if query.HasPrometheusRuleDefinition != nil {
+			q, err = st.filterWithPrometheusRuleDefinition(*query.HasPrometheusRuleDefinition, q)
 			if err != nil {
 				return err
 			}
@@ -673,13 +673,13 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			}
 			if query.TimeIntervalName != "" {
 				if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-					return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName)
+					return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) || slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName)
 				}) {
 					continue
 				}
 			}
-			if query.ImportedPrometheusRule != nil { // remove false-positive hits from the result
-				if *query.ImportedPrometheusRule != converted.ImportedFromPrometheus() {
+			if query.HasPrometheusRuleDefinition != nil { // remove false-positive hits from the result
+				if *query.HasPrometheusRuleDefinition != converted.HasPrometheusRuleDefinition() {
 					continue
 				}
 			}
@@ -985,7 +985,7 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 			if q.ReceiverName != "" && q.ReceiverName != setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
 				continue
 			}
-			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) {
+			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) && !slices.Contains(setting.ActiveTimeIntervals, q.TimeIntervalName) {
 				continue
 			}
 			ns = append(ns, setting)
@@ -1015,10 +1015,11 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 		// this escapes escaped double quote (\") to \\\"
 		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
 	}
-	return sess.And(fmt.Sprintf("notification_settings %s ?", st.SQLStore.GetDialect().LikeStr()), "%"+search+"%"), nil
+	sql, param := st.SQLStore.GetDialect().LikeOperator("notification_settings", true, search, true)
+	return sess.And(sql, param), nil
 }
 
-func (st DBstore) filterImportedPrometheusRules(value bool, sess *xorm.Session) (*xorm.Session, error) {
+func (st DBstore) filterWithPrometheusRuleDefinition(value bool, sess *xorm.Session) (*xorm.Session, error) {
 	if value {
 		// Filter for rules that have both prometheus_style_rule and original_rule_definition in metadata
 		return sess.And(
@@ -1156,6 +1157,11 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 					r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] = newTimeInterval
 				}
 			}
+			for mtIdx := range r.NotificationSettings[idx].ActiveTimeIntervals {
+				if r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] == oldTimeInterval {
+					r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] = newTimeInterval
+				}
+			}
 		}
 
 		updates = append(updates, ngmodels.UpdateRule{
@@ -1172,18 +1178,6 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 	// Provide empty user identifier to ensure it's clear that the rule update was made by the system
 	// and not by the user who changed the receiver's title.
 	return result, nil, st.UpdateAlertRules(ctx, &ngmodels.AlertingUserUID, updates)
-}
-
-func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
-	msg := err.Error()
-	if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
-		// return verbose conflicting alert rule error response
-		// see: https://github.com/grafana/grafana/issues/89755
-		existingPartialAlertRule := ngmodels.AlertRule{UID: rule.UID}
-		return ngmodels.ErrAlertRuleConflictVerbose(existingPartialAlertRule, rule, errors.New("rule UID under the same organisation should be unique"))
-	} else {
-		return ngmodels.ErrAlertRuleConflict(rule, err)
-	}
 }
 
 // GetNamespacesByRuleUID returns a map of rule UIDs to their namespace UID.

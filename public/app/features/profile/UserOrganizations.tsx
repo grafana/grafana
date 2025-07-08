@@ -1,8 +1,8 @@
 import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Button, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { UserDTO, UserOrg } from 'app/types';
 
 export interface Props {

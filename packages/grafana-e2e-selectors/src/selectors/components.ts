@@ -23,6 +23,51 @@ export const versionedComponents = {
       '9.4.0': (title: string) => `data-testid ${title} breadcrumb`,
     },
   },
+  CanvasGridAddActions: {
+    addPanel: {
+      '12.1.0': 'data-testid CanvasGridAddActions add-panel',
+    },
+    groupPanels: {
+      '12.1.0': 'data-testid CanvasGridAddActions group-panels',
+    },
+    ungroup: {
+      '12.1.0': 'data-testid CanvasGridAddActions ungroup',
+    },
+    addRow: {
+      '12.1.0': 'data-testid CanvasGridAddActions add-row',
+    },
+    pasteRow: {
+      '12.1.0': 'data-testid CanvasGridAddActions paste-row',
+    },
+    addTab: {
+      '12.1.0': 'data-testid CanvasGridAddActions add-tab',
+    },
+    pasteTab: {
+      '12.1.0': 'data-testid CanvasGridAddActions paste-tab',
+    },
+  },
+  DashboardEditPaneSplitter: {
+    primaryBody: {
+      '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
+    },
+  },
+  EditPaneHeader: {
+    deleteButton: {
+      '12.1.0': 'data-testid EditPaneHeader delete panel',
+    },
+    copyDropdown: {
+      '12.1.0': 'data-testid EditPaneHeader copy dropdown',
+    },
+    copy: {
+      '12.1.0': 'data-testid EditPaneHeader copy',
+    },
+    duplicate: {
+      '12.1.0': 'data-testid EditPaneHeader duplicate',
+    },
+    backButton: {
+      '12.1.0': 'data-testid EditPaneHeader back',
+    },
+  },
   TimePicker: {
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
@@ -134,6 +179,9 @@ export const versionedComponents = {
         manageAlerts: {
           '10.4.0': 'prometheus-alerts-manager', // id for switch component
         },
+        allowAsRecordingRulesTarget: {
+          '12.1.0': 'prometheus-recording-rules-target',
+        },
         scrapeInterval: {
           '10.4.0': 'data-testid scrape interval',
         },
@@ -181,6 +229,9 @@ export const versionedComponents = {
         codeModeMetricNamesSuggestionLimit: {
           '11.1.0': 'data-testid code mode metric names suggestion limit',
         },
+        seriesLimit: {
+          '12.0.2': 'data-testid maximum series limit',
+        },
       },
       queryEditor: {
         explain: {
@@ -199,13 +250,13 @@ export const versionedComponents = {
           '10.4.0': 'data-testid prometheus format',
         },
         step: {
-          '10.4.0': 'prometheus-step', // id for autosize component
+          '10.4.0': 'data-testid prometheus-step', // id for autosize component
         },
         type: {
           '10.4.0': 'data-testid prometheus type', //wrapper for radio button group
         },
         exemplars: {
-          '10.4.0': 'prometheus-exemplars', // id for editor switch component
+          '10.4.0': 'data-testid prometheus-exemplars', // id for editor switch component
         },
         builder: {
           // see QueryBuilder below for commented selectors
@@ -298,7 +349,7 @@ export const versionedComponents = {
       },
       annotations: {
         minStep: {
-          '10.4.0': 'prometheus-annotation-min-step', // id for autosize input
+          '10.4.0': 'data-testid prometheus-annotation-min-step', // id for autosize input
         },
         title: {
           '10.4.0': 'data-testid prometheus annotation title',
@@ -343,6 +394,9 @@ export const versionedComponents = {
       },
       content: {
         '11.1.0': 'data-testid panel content',
+      },
+      headerContainer: {
+        '9.5.0': 'data-testid header-container',
       },
       headerItems: {
         '10.2.0': (item: string) => `data-testid Panel header item ${item}`,
@@ -530,7 +584,60 @@ export const versionedComponents = {
     },
 
     measureButton: {
+      '12.1.0': 'data-testid panel-editor-measure-button',
       '9.2.0': 'show measure tools',
+    },
+
+    Outline: {
+      section: {
+        '12.0.0': 'data-testid Outline section',
+      },
+      node: {
+        '12.0.0': (type: string) => `data-testid outline node ${type}`,
+      },
+      item: {
+        '12.0.0': (type: string) => `data-testid outline item ${type}`,
+      },
+    },
+    ElementEditPane: {
+      variableType: {
+        '12.0.0': (type?: string) => `data-testid variable type ${type}`,
+      },
+      addVariableButton: {
+        '12.0.0': 'data-testid add variable button',
+      },
+      variableNameInput: {
+        '12.0.0': 'data-testid variable name input',
+      },
+      variableLabelInput: {
+        '12.0.0': 'data-testid variable label input',
+      },
+      AutoGridLayout: {
+        minColumnWidth: {
+          '12.1.0': 'data-testid min column width selector',
+        },
+        customMinColumnWidth: {
+          '12.1.0': 'data-testid custom min column width input',
+        },
+        clearCustomMinColumnWidth: {
+          '12.1.0': 'data-testid clear custom min column width input',
+        },
+        maxColumns: {
+          '12.1.0': 'data-testid max columns selector',
+        },
+        rowHeight: {
+          '12.1.0': 'data-testid row height selector',
+        },
+        customRowHeight: {
+          '12.1.0': 'data-testid custom row height input',
+        },
+        clearCustomRowHeight: {
+          '12.1.0': 'data-testid clear custom row height input',
+        },
+        fillScreen: {
+          '12.1.0': 'data-testid fill screen switch',
+        },
+      },
     },
   },
   PanelInspector: {
@@ -1065,6 +1172,16 @@ export const versionedComponents = {
     singleLink: {
       '10.3.0': 'data-testid Data link',
       [MIN_GRAFANA_VERSION]: 'Data link',
+    },
+  },
+  DataLinksActionsTooltip: {
+    tooltipWrapper: {
+      '12.1.0': 'data-testid Data links actions tooltip wrapper',
+    },
+  },
+  TablePanel: {
+    autoCell: {
+      '12.1.0': 'data-testid Table panel auto cell',
     },
   },
   CodeEditor: {

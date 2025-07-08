@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { Folder, useGetFolderQuery } from 'app/api/clients/folder';
-import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
+import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
+import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
 interface GetResourceRepositoryArgs {
@@ -19,7 +19,7 @@ interface RepositoryViewData {
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
 export const useGetResourceRepositoryView = ({ name, folderName }: GetResourceRepositoryArgs): RepositoryViewData => {
   const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery();
-  const skipFolderQuery = name || !folderName;
+  const skipFolderQuery = !folderName;
   const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
     skipFolderQuery ? skipToken : { name: folderName }
   );

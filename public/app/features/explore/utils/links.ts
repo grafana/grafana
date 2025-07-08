@@ -21,6 +21,7 @@ import {
   urlUtil,
   DataFrameType,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -118,7 +119,7 @@ export const getFieldLinksForExplore = (options: {
     value: {
       raw: field.values[rowIndex],
     },
-    text: 'Raw value',
+    text: t('explore.get-field-links-for-explore.text.raw-value', 'Raw value'),
   };
 
   let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = undefined;
@@ -136,7 +137,7 @@ export const getFieldLinksForExplore = (options: {
         refId: dataFrame.refId,
         fields: fieldDisplayValuesProxy,
       },
-      text: 'Data',
+      text: t('explore.get-field-links-for-explore.text.data', 'Data'),
     };
 
     if (dataFrame.meta?.type === DataFrameType.LogLines) {

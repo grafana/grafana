@@ -3,10 +3,10 @@ import { ErrorInfo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, ErrorWithStack, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../components/Page/Page';
-import { t, Trans } from '../internationalization';
 
 interface Props {
   error: Error | null;

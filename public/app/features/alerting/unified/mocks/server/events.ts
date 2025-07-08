@@ -1,7 +1,7 @@
 import { HttpHandler, matchRequestUrl } from 'msw';
 import { JsonValue } from 'type-fest';
 
-import server from 'app/features/alerting/unified/mockApi';
+import server from '@grafana/test-utils/server';
 
 type PredicateFn = (request: Request) => boolean;
 

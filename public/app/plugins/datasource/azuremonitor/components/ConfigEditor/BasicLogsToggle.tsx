@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { Field, Switch, useTheme2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Field, Switch, TextLink, useTheme2 } from '@grafana/ui';
 
-import { AzureMonitorDataSourceJsonData } from '../../types';
+import { AzureMonitorDataSourceJsonData } from '../../types/types';
 
 export interface Props {
   options: AzureMonitorDataSourceJsonData;
@@ -31,21 +32,29 @@ export const BasicLogsToggle = (props: Props) => {
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => onBasicLogsEnabledChange(e.target.checked);
   const description = (
     <p className={styles.text}>
-      Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for{' '}
-      <a
-        href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
-        target="__blank"
-        rel="noreferrer"
-      >
-        Basic Logs
-      </a>
-      .
+      <Trans i18nKey="components.basic-logs-toggle.description-basic-logs">
+        Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for{' '}
+        <TextLink
+          href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
+          external
+        >
+          Basic Logs
+        </TextLink>
+        .
+      </Trans>
     </p>
   );
   return (
-    <Field description={description} label="Enable Basic Logs">
+    <Field
+      description={description}
+      label={t('components.basic-logs-toggle.label-enable-basic-logs', 'Enable Basic Logs')}
+    >
       <div>
-        <Switch aria-label="Basic Logs" onChange={onChange} value={options.basicLogsEnabled ?? false} />
+        <Switch
+          aria-label={t('components.basic-logs-toggle.aria-label-enable-basic-logs', 'Basic Logs')}
+          onChange={onChange}
+          value={options.basicLogsEnabled ?? false}
+        />
       </div>
     </Field>
   );

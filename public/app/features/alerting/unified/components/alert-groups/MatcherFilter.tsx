@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';

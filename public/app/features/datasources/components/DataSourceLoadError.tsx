@@ -1,5 +1,5 @@
+import { Trans } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { DataSourceRights } from '../types';
 
@@ -13,7 +13,7 @@ export type Props = {
 export function DataSourceLoadError({ dataSourceRights, onDelete }: Props) {
   const { readOnly, hasDeleteRights } = dataSourceRights;
   const canDelete = !readOnly && hasDeleteRights;
-  const navigateBack = () => history.back();
+  const navigateBack = () => window.history.back();
 
   return (
     <>

@@ -2,6 +2,7 @@ import { get as lodashGet, isEqual } from 'lodash';
 
 import { FrameGeometrySourceMode, getFrameMatchers, MapLayerOptions } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
@@ -69,7 +70,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
 
       builder.addSelect({
         path: 'type',
-        name: 'Layer type', // required, but hide space
+        name: t('geomap.layer-editor.name-layer-type', 'Layer type'), // required, but hide space
         settings: {
           options: layerTypes.options,
         },
@@ -80,7 +81,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         builder.addCustomEditor({
           id: 'filterData',
           path: 'filterData',
-          name: 'Data',
+          name: t('geomap.layer-editor.name-data', 'Data'),
           editor: FrameSelectionEditor,
           defaultValue: undefined,
         });
@@ -108,11 +109,11 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
       if (handler.registerOptionsUI) {
         handler.registerOptionsUI(builder, context);
       }
-      if (!isEqual(opts.category, ['Base layer'])) {
+      if (!isEqual(opts.category, [t('geomap.layer-editor.category-base-layer', 'Base layer')])) {
         if (!layer.hideOpacity) {
           builder.addSliderInput({
             path: 'opacity',
-            name: 'Opacity',
+            name: t('geomap.layer-editor.name-opacity', 'Opacity'),
             defaultValue: 1,
             settings: {
               min: 0,
@@ -122,9 +123,9 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
           });
         }
         builder.addBooleanSwitch({
-          path: 'tooltip',
-          name: 'Display tooltip',
-          description: 'Show the tooltip for layer',
+          path: 'layer-tooltip',
+          name: t('geomap.layer-editor.name-display-tooltip', 'Display tooltip'),
+          description: t('geomap.layer-editor.description-display-tooltip', 'Show the tooltip for layer'),
           defaultValue: true,
         });
       }

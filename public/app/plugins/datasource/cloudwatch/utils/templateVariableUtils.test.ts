@@ -1,6 +1,6 @@
 import { CustomVariableModel } from '@grafana/data';
 
-import { logGroupNamesVariable, setupMockedTemplateService, regionVariable } from '../__mocks__/CloudWatchDataSource';
+import { logGroupNamesVariable, setupMockedTemplateService, regionVariable } from '../mocks/CloudWatchDataSource';
 
 import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from './templateVariableUtils';
 

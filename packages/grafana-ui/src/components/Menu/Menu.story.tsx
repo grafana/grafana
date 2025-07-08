@@ -1,6 +1,6 @@
 import { Meta } from '@storybook/react';
 
-import { GraphContextMenuHeader } from '..';
+import { GraphContextMenuHeader } from '../../graveyard/Graph/GraphContextMenu';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -8,7 +8,7 @@ import { Menu } from './Menu';
 import mdx from './Menu.mdx';
 
 const meta: Meta<typeof Menu> = {
-  title: 'General/Menu',
+  title: 'Overlays/Menu',
   component: Menu,
   argTypes: {},
   parameters: {

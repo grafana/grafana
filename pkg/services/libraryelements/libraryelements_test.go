@@ -37,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -106,14 +105,17 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID+"xxxx")
-			require.EqualError(t, err, guardian.ErrGuardianFolderNotFound.Errorf("failed to get folder by UID: %w", dashboards.ErrFolderNotFound).Error())
+			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			sc.service.AccessControl.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(sc.service.folderService))
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.folder.UID + "xxxx"})
+			resp := sc.service.deleteHandler(sc.reqContext)
+			require.Equal(t, http.StatusNotFound, resp.Status())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
-			command := getCreateVariableCommand(sc.folder.ID, sc.folder.UID, "query0")
+			command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "query0")
 			sc.reqContext.Req.Body = mockRequestBody(command)
 			resp := sc.service.createHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -208,11 +210,85 @@ func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 			}
 		})
 
+	scenarioWithPanel(t, "When a user tries to get connections of library panel, dashboards in inaccessible folders should not be returned",
+		func(t *testing.T, sc scenarioContext) {
+			accessibleFolder := createFolder(t, sc, "AccessibleFolder", sc.service.folderService)
+			inaccessibleFolder := createFolder(t, sc, "InAccessibleFolder", sc.service.folderService)
+			restrictedUser := user.SignedInUser{
+				UserID:     2,
+				Name:       "Non-Admin User",
+				Login:      "non-admin-user",
+				OrgID:      sc.user.OrgID,
+				OrgRole:    org.RoleViewer,
+				LastSeenAt: time.Now(),
+				Permissions: map[int64]map[string][]string{
+					sc.user.OrgID: {
+						dashboards.ActionFoldersRead: {
+							dashboards.ScopeFoldersProvider.GetResourceScopeUID(accessibleFolder.UID),
+						},
+						dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsProvider.GetResourceScopeUID("*")},
+					},
+				},
+			}
+
+			command := getCreatePanelCommand(accessibleFolder.ID, accessibleFolder.UID, "Accessible Library Panel") // nolint:staticcheck
+			sc.reqContext.Req.Body = mockRequestBody(command)
+			resp := sc.service.createHandler(sc.reqContext)
+			libraryElement := validateAndUnMarshalResponse(t, resp)
+
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
+						"id": int64(1),
+						"gridPos": map[string]any{
+							"h": 6,
+							"w": 6,
+							"x": 0,
+							"y": 0,
+						},
+						"libraryPanel": map[string]any{
+							"uid":  libraryElement.Result.UID,
+							"name": libraryElement.Result.Name,
+						},
+					},
+				},
+			}
+			accessibleDash := dashboards.Dashboard{
+				Title: "Accessible Dashboard",
+				Data:  simplejson.NewFromAny(dashJSON),
+			}
+
+			// create the dashboard in the general folder, an accessible folder, and an inaccessible folder
+			dashInGeneral := createDashboard(t, sc.sqlStore, restrictedUser, &accessibleDash, 0, "")
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{libraryElement.Result.UID}, dashInGeneral.ID)
+			require.NoError(t, err)
+
+			dashInAccessibleFolder := createDashboard(t, sc.sqlStore, restrictedUser, &accessibleDash, 0, accessibleFolder.UID)
+			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{libraryElement.Result.UID}, dashInAccessibleFolder.ID)
+			require.NoError(t, err)
+
+			dashInInaccessibleFolder := createDashboard(t, sc.sqlStore, restrictedUser, &accessibleDash, 0, inaccessibleFolder.UID)
+			err = sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{libraryElement.Result.UID}, dashInInaccessibleFolder.ID)
+			require.NoError(t, err)
+
+			sc.reqContext.SignedInUser = &restrictedUser
+			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": libraryElement.Result.UID})
+
+			// connections should return the general folder one and the accessible folder one
+			connectionsResp := sc.service.getConnectionsHandler(sc.reqContext)
+			var result = validateAndUnMarshalConnectionResponse(t, connectionsResp)
+			require.Len(t, result.Result, 2)
+			uids := []string{result.Result[0].ConnectionUID, result.Result[1].ConnectionUID}
+			require.Contains(t, uids, dashInGeneral.UID)
+			require.Contains(t, uids, dashInAccessibleFolder.UID)
+			require.NotContains(t, uids, dashInInaccessibleFolder.UID)
+		})
+
 	scenarioWithPanel(t, "When an admin tries to create a connection with an element that exists, but the original folder does not, it should still succeed",
 		func(t *testing.T, sc scenarioContext) {
 			b, err := json.Marshal(map[string]string{"test": "test"})
 			require.NoError(t, err)
-			newFolder := createFolder(t, sc, "NewFolder", nil)
+			newFolder := createFolder(t, sc, "NewFolder", sc.folderSvc)
 			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 			sc.reqContext.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersDelete] = []string{dashboards.ScopeFoldersAll}
 			_, err = sc.service.createLibraryElement(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, model.CreateLibraryElementCommand{
@@ -291,19 +367,6 @@ func getCreatePanelCommand(folderID int64, folderUID string, name string) model.
 	return command
 }
 
-func getCreateVariableCommand(folderID int64, folderUID, name string) model.CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, folderUID, name, model.VariableElement, []byte(`
-			{
-			  "datasource": "${DS_GDEV-TESTDATA}",
-			  "name": "query0",
-			  "type": "query",
-			  "description": "A description"
-			}
-		`))
-
-	return command
-}
-
 func getCreateCommandWithModel(folderID int64, folderUID, name string, kind model.LibraryElementKind, byteModel []byte) model.CreateLibraryElementCommand {
 	command := model.CreateLibraryElementCommand{
 		FolderUID: &folderUID,
@@ -324,6 +387,7 @@ type scenarioContext struct {
 	initialResult libraryElementResult
 	sqlStore      db.DB
 	log           log.Logger
+	folderSvc     folder.Service
 }
 
 func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64, folderUID string) *dashboards.Dashboard {
@@ -382,21 +446,6 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 
 func createFolder(t *testing.T, sc scenarioContext, title string, folderSvc folder.Service) *folder.Folder {
 	t.Helper()
-
-	if folderSvc == nil {
-		features := featuremgmt.WithFeatures()
-		cfg := setting.NewCfg()
-		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-		dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore))
-		require.NoError(t, err)
-
-		folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-		store := folderimpl.ProvideStore(sc.sqlStore)
-		folderSvc = folderimpl.ProvideService(
-			store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-			nil, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-		t.Logf("Creating folder with title %q and UID uid_for_%s", title, title)
-	}
 	ctx := identity.WithRequester(context.Background(), &sc.user)
 	folder, err := folderSvc.Create(ctx, &folder.CreateFolderCommand{
 		OrgID: sc.user.OrgID, Title: title, UID: "uid_for_" + title, SignedInUser: &sc.user,
@@ -443,34 +492,126 @@ func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) lib
 	return result
 }
 
-func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+// setupTestScenario performs the common setup for library element tests
+func setupTestScenario(t *testing.T) scenarioContext {
 	t.Helper()
 
+	orgID := int64(1)
+	role := org.RoleAdmin
+	usr := user.SignedInUser{
+		UserID:     1,
+		Name:       "Signed In User",
+		Login:      "signed_in_user",
+		Email:      "signed.in.user@test.com",
+		OrgID:      orgID,
+		OrgRole:    role,
+		LastSeenAt: time.Now(),
+		// Allow user to create folders and library elements
+		Permissions: map[int64]map[string][]string{
+			1: {
+				dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
+				dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+				ActionLibraryPanelsCreate:      {dashboards.ScopeFoldersAll},
+				ActionLibraryPanelsRead:        {ScopeLibraryPanelsAll},
+				ActionLibraryPanelsWrite:       {ScopeLibraryPanelsAll},
+				ActionLibraryPanelsDelete:      {ScopeLibraryPanelsAll},
+			},
+		},
+	}
+	req := &http.Request{
+		Header: http.Header{
+			"Content-Type": []string{"application/json"},
+		},
+	}
+	ctx := identity.WithRequester(context.Background(), &usr)
+	req = req.WithContext(ctx)
+	webCtx := web.Context{Req: req}
+
 	features := featuremgmt.WithFeatures()
+	tracer := tracing.InitializeTracerForTest()
 	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	ac := actest.FakeAccessControl{}
+	t.Cleanup(db.CleanupTestDB)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
 	require.NoError(t, err)
+	ac := acimpl.ProvideAccessControl(features)
 	folderPermissions := acmock.NewMockedPermissionsService()
+	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
+	publicDash := &publicdashboards.FakePublicDashboardServiceWrapper{}
+	publicDash.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	folderSvc := folderimpl.ProvideService(
 		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDash, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	require.NoError(t, err)
+	err = folderSvc.RegisterService(alertStore)
+	require.NoError(t, err)
+	dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, ac, actest.FakeService{}, folderSvc,
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 	)
-	require.NoError(t, svcErr)
-	dashboardService.RegisterDashboardPermissions(dashboardPermissions)
-	guardian.InitAccessControlGuardian(cfg, ac, dashboardService, folderSvc, log.NewNopLogger())
+	require.NoError(t, dashSvcErr)
+	dashService.RegisterDashboardPermissions(dashboardPermissions)
+	service := LibraryElementService{
+		Cfg:               cfg,
+		features:          featuremgmt.WithFeatures(),
+		SQLStore:          sqlStore,
+		folderService:     folderSvc,
+		dashboardsService: dashService,
+		AccessControl:     ac,
+		log:               log.NewNopLogger(),
+	}
 
-	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
+	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))
+
+	// deliberate difference between signed in user and user in db to make it crystal clear
+	// what to expect in the tests
+	// In the real world these are identical
+	cmd := user.CreateUserCommand{
+		Email: "user.in.db@test.com",
+		Name:  "User In DB",
+		Login: userInDbName,
+	}
+	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(
+		sqlStore, orgSvc, cfg, nil, nil, tracer,
+		quotaService, supportbundlestest.NewFakeBundleService(),
+	)
+	require.NoError(t, err)
+	_, err = usrSvc.Create(context.Background(), &cmd)
+	require.NoError(t, err)
+
+	sc := scenarioContext{
+		user:     usr,
+		ctx:      &webCtx,
+		service:  &service,
+		sqlStore: sqlStore,
+		reqContext: &contextmodel.ReqContext{
+			Context:      &webCtx,
+			SignedInUser: &usr,
+		},
+		folderSvc: folderSvc,
+	}
+
+	sc.folder = createFolder(t, sc, "ScenarioFolder", folderSvc)
+
+	return sc
+}
+
+func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+	t.Helper()
+
+	t.Run(desc, func(t *testing.T) {
+		sc := setupTestScenario(t)
+
 		// nolint:staticcheck
 		command := getCreatePanelCommand(sc.folder.ID, sc.folder.UID, "Text - Library Panel")
 		sc.reqContext.Req.Body = mockRequestBody(command)
@@ -488,100 +629,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		orgID := int64(1)
-		role := org.RoleAdmin
-		usr := user.SignedInUser{
-			UserID:     1,
-			Name:       "Signed In User",
-			Login:      "signed_in_user",
-			Email:      "signed.in.user@test.com",
-			OrgID:      orgID,
-			OrgRole:    role,
-			LastSeenAt: time.Now(),
-			// Allow user to create folders
-			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
-			},
-		}
-		req := &http.Request{
-			Header: http.Header{
-				"Content-Type": []string{"application/json"},
-			},
-		}
-		ctx := identity.WithRequester(context.Background(), &usr)
-		req = req.WithContext(ctx)
-		webCtx := web.Context{Req: req}
-
-		features := featuremgmt.WithFeatures()
-		tracer := tracing.InitializeTracerForTest()
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
-		require.NoError(t, err)
-		ac := acimpl.ProvideAccessControl(features)
-		folderPermissions := acmock.NewMockedPermissionsService()
-		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-		dashboardPermissions := acmock.NewMockedPermissionsService()
-		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		fStore := folderimpl.ProvideStore(sqlStore)
-		publicDash := &publicdashboards.FakePublicDashboardServiceWrapper{}
-		publicDash.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		folderSvc := folderimpl.ProvideService(
-			fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore,
-			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), publicDash, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-		alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-		require.NoError(t, err)
-		err = folderSvc.RegisterService(alertStore)
-		require.NoError(t, err)
-		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore,
-			features, folderPermissions, ac, actest.FakeService{}, folderSvc,
-			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
-			serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
-			kvstore.NewFakeKVStore(),
-		)
-		require.NoError(t, dashSvcErr)
-		dashService.RegisterDashboardPermissions(dashboardPermissions)
-		guardian.InitAccessControlGuardian(cfg, ac, dashService, folderSvc, log.NewNopLogger())
-		service := LibraryElementService{
-			Cfg:               cfg,
-			features:          featuremgmt.WithFeatures(),
-			SQLStore:          sqlStore,
-			folderService:     folderSvc,
-			dashboardsService: dashService,
-			log:               log.NewNopLogger(),
-		}
-
-		// deliberate difference between signed in user and user in db to make it crystal clear
-		// what to expect in the tests
-		// In the real world these are identical
-		cmd := user.CreateUserCommand{
-			Email: "user.in.db@test.com",
-			Name:  "User In DB",
-			Login: userInDbName,
-		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
-		require.NoError(t, err)
-		usrSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, cfg, nil, nil, tracer,
-			quotaService, supportbundlestest.NewFakeBundleService(),
-		)
-		require.NoError(t, err)
-		_, err = usrSvc.Create(context.Background(), &cmd)
-		require.NoError(t, err)
-
-		sc := scenarioContext{
-			user:     usr,
-			ctx:      &webCtx,
-			service:  &service,
-			sqlStore: sqlStore,
-			reqContext: &contextmodel.ReqContext{
-				Context:      &webCtx,
-				SignedInUser: &usr,
-			},
-		}
-
-		sc.folder = createFolder(t, sc, "ScenarioFolder", folderSvc)
+		sc := setupTestScenario(t)
 
 		fn(t, sc)
 	})

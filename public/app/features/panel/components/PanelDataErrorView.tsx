@@ -8,12 +8,12 @@ import {
   VisualizationSuggestion,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t, Trans } from '@grafana/i18n';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
-import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
@@ -132,22 +132,22 @@ function getMessageFor(
   }
 
   if (!data.series || data.series.length === 0 || data.series.every((frame) => frame.length === 0)) {
-    return fieldConfig?.defaults.noValue ?? 'No data';
+    return fieldConfig?.defaults.noValue ?? t('panel.panel-data-error-view.no-value.default', 'No data');
   }
 
   if (needsStringField && !dataSummary.hasStringField) {
-    return 'Data is missing a string field';
+    return t('panel.panel-data-error-view.missing-value.string', 'Data is missing a string field');
   }
 
   if (needsNumberField && !dataSummary.hasNumberField) {
-    return 'Data is missing a number field';
+    return t('panel.panel-data-error-view.missing-value.number', 'Data is missing a number field');
   }
 
   if (needsTimeField && !dataSummary.hasTimeField) {
-    return 'Data is missing a time field';
+    return t('panel.panel-data-error-view.missing-value.time', 'Data is missing a time field');
   }
 
-  return 'Cannot visualize data';
+  return t('panel.panel-data-error-view.missing-value.unknown', 'Cannot visualize data');
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

@@ -2,6 +2,7 @@ import { useObservable } from 'react-use';
 import { Subject } from 'rxjs';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, InlineField, InlineFieldRow, Select, Stack } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -13,32 +14,44 @@ import { CanvasEditorOptions } from './elementEditor';
 
 const places: Array<keyof Placement> = ['top', 'left', 'bottom', 'right', 'width', 'height', 'rotation'];
 
-const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
-  { label: 'Left', value: HorizontalConstraint.Left },
-  { label: 'Right', value: HorizontalConstraint.Right },
-  { label: 'Left & right', value: HorizontalConstraint.LeftRight },
-  { label: 'Center', value: HorizontalConstraint.Center },
-  { label: 'Scale', value: HorizontalConstraint.Scale },
-];
-
-const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
-  { label: 'Top', value: VerticalConstraint.Top },
-  { label: 'Bottom', value: VerticalConstraint.Bottom },
-  { label: 'Top & bottom', value: VerticalConstraint.TopBottom },
-  { label: 'Center', value: VerticalConstraint.Center },
-  { label: 'Scale', value: VerticalConstraint.Scale },
-];
-
 type Props = StandardEditorProps<unknown, CanvasEditorOptions, Options>;
 
 export function PlacementEditor({ item }: Props) {
   const settings = item.settings;
+  const horizontalOptions: Array<SelectableValue<HorizontalConstraint>> = [
+    { label: t('canvas.placement-editor.horizontal-options.label-left', 'Left'), value: HorizontalConstraint.Left },
+    { label: t('canvas.placement-editor.horizontal-options.label-right', 'Right'), value: HorizontalConstraint.Right },
+    {
+      label: t('canvas.placement-editor.horizontal-options.label-left-and-right', 'Left & right'),
+      value: HorizontalConstraint.LeftRight,
+    },
+    {
+      label: t('canvas.placement-editor.horizontal-options.label-center', 'Center'),
+      value: HorizontalConstraint.Center,
+    },
+    { label: t('canvas.placement-editor.horizontal-options.label-scale', 'Scale'), value: HorizontalConstraint.Scale },
+  ];
+
+  const verticalOptions: Array<SelectableValue<VerticalConstraint>> = [
+    { label: t('canvas.placement-editor.vertical-options.label-top', 'Top'), value: VerticalConstraint.Top },
+    { label: t('canvas.placement-editor.vertical-options.label-bottom', 'Bottom'), value: VerticalConstraint.Bottom },
+    {
+      label: t('canvas.placement-editor.vertical-options.label-top-and-bottom', 'Top & bottom'),
+      value: VerticalConstraint.TopBottom,
+    },
+    { label: t('canvas.placement-editor.vertical-options.label-center', 'Center'), value: VerticalConstraint.Center },
+    { label: t('canvas.placement-editor.vertical-options.label-scale', 'Scale'), value: VerticalConstraint.Scale },
+  ];
 
   // Will force a rerender whenever the subject changes
   useObservable(settings?.scene ? settings.scene.moved : new Subject());
 
   if (!settings) {
-    return <div>Loading...</div>;
+    return (
+      <div>
+        <Trans i18nKey="canvas.placement-editor.loading">Loading...</Trans>
+      </div>
+    );
   }
 
   const element = settings.element;
@@ -95,7 +108,7 @@ export function PlacementEditor({ item }: Props) {
     <div>
       <QuickPositioning onPositionChange={onPositionChange} settings={settings} element={element} />
       <br />
-      <Field label="Constraints">
+      <Field label={t('canvas.placement-editor.label-constraints', 'Constraints')}>
         <Stack direction="row">
           <ConstraintSelectionBox
             onVerticalConstraintChange={onVerticalConstraintChange}
@@ -121,7 +134,7 @@ export function PlacementEditor({ item }: Props) {
 
       <br />
 
-      <Field label="Position">
+      <Field label={t('canvas.placement-editor.label-position', 'Position')}>
         <>
           {places.map((p) => {
             const v = placement![p];

@@ -85,6 +85,8 @@ export interface CatalogPluginDetails {
   lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  sponsorshipUrl?: string;
+  repositoryUrl?: string;
   raiseAnIssueUrl?: string;
   signatureType?: PluginSignatureType;
   signature?: PluginSignatureStatus;
@@ -154,6 +156,8 @@ export type RemotePlugin = {
   lastCommitDate?: string;
   licenseUrl?: string;
   documentationUrl?: string;
+  sponsorshipUrl?: string;
+  repositoryUrl?: string;
   raiseAnIssueUrl?: string;
 };
 

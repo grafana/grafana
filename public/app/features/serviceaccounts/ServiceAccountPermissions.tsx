@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { Permissions } from 'app/core/components/AccessControl';
-import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { AccessControlAction, ServiceAccountDTO } from '../../types';

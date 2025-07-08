@@ -48,17 +48,17 @@ func (_m *FakeDashboardService) BuildSaveDashboardCommand(ctx context.Context, d
 	return r0, r1
 }
 
-// CleanUpDashboard provides a mock function with given fields: ctx, dashboardUID, orgId
-func (_m *FakeDashboardService) CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error {
-	ret := _m.Called(ctx, dashboardUID, orgId)
+// CleanUpDashboard provides a mock function with given fields: ctx, dashboardUID, dashboardId, orgId
+func (_m *FakeDashboardService) CleanUpDashboard(ctx context.Context, dashboardUID string, dashboardId int64, orgId int64) error {
+	ret := _m.Called(ctx, dashboardUID, dashboardId, orgId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CleanUpDashboard")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
-		r0 = rf(ctx, dashboardUID, orgId)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) error); ok {
+		r0 = rf(ctx, dashboardUID, dashboardId, orgId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -87,6 +87,36 @@ func (_m *FakeDashboardService) CountDashboardsInOrg(ctx context.Context, orgID 
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
 		r1 = rf(ctx, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetDashboardsByLibraryPanelUID provides a mock function with given fields: ctx, libraryPanelUID, orgID
+func (_m *FakeDashboardService) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*DashboardRef, error) {
+	ret := _m.Called(ctx, libraryPanelUID, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDashboardsByLibraryPanelUID")
+	}
+
+	var r0 []*DashboardRef
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) ([]*DashboardRef, error)); ok {
+		return rf(ctx, libraryPanelUID, orgID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64) []*DashboardRef); ok {
+		r0 = rf(ctx, libraryPanelUID, orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*DashboardRef)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = rf(ctx, libraryPanelUID, orgID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -181,36 +211,6 @@ func (_m *FakeDashboardService) FindDashboards(ctx context.Context, query *FindP
 
 	if rf, ok := ret.Get(1).(func(context.Context, *FindPersistedDashboardsQuery) error); ok {
 		r1 = rf(ctx, query)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetAllDashboards provides a mock function with given fields: ctx
-func (_m *FakeDashboardService) GetAllDashboards(ctx context.Context) ([]*Dashboard, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllDashboards")
-	}
-
-	var r0 []*Dashboard
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]*Dashboard, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) []*Dashboard); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*Dashboard)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}

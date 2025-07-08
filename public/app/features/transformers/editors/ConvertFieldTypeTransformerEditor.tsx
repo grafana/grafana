@@ -13,10 +13,10 @@ import {
   getTimeZones,
 } from '@grafana/data';
 import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
+import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
-import { findField } from 'app/features/dimensions';
+import { findField } from 'app/features/dimensions/utils';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';
@@ -37,8 +37,14 @@ export const ConvertFieldTypeTransformerEditor = ({
 
   // Format timezone options
   const tzs = getTimeZones();
-  timeZoneOptions.push({ label: 'Browser', value: 'browser' });
-  timeZoneOptions.push({ label: 'UTC', value: 'utc' });
+  timeZoneOptions.push({
+    label: t('transformers.convert-field-type-transformer-editor.label.browser', 'Browser'),
+    value: 'browser',
+  });
+  timeZoneOptions.push({
+    label: t('transformers.convert-field-type-transformer-editor.label.utc', 'UTC'),
+    value: 'utc',
+  });
   for (const tz of tzs) {
     timeZoneOptions.push({ label: tz, value: tz });
   }
@@ -129,6 +135,14 @@ export const ConvertFieldTypeTransformerEditor = ({
     <>
       {options.conversions.map((c: ConvertFieldTypeOptions, idx: number) => {
         const targetField = findField(input?.[0], c.targetField);
+
+        // Show "Join with" input when:
+        // - A join value exists (maintains backward compatibility)
+        // - Target field type is 'other' (Grafana 10) or 'string' (Grafana 11)
+        // This ensures consistent UI across versions where arrays may be classified differently.
+        const shouldRenderJoinWith =
+          c.joinWith?.length || (targetField?.type && [FieldType.other, FieldType.string].includes(targetField.type));
+
         return (
           <div key={`${c.targetField}-${idx}`}>
             <InlineFieldRow>
@@ -159,7 +173,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                 >
                   <Input
                     value={c.dateFormat}
-                    // eslint-disable-next-line @grafana/no-untranslated-strings
+                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                     placeholder={'e.g. YYYY-MM-DD'}
                     onChange={onInputFormat(idx)}
                     width={24}
@@ -168,7 +182,7 @@ export const ConvertFieldTypeTransformerEditor = ({
               )}
               {c.destinationType === FieldType.string && (
                 <>
-                  {(c.joinWith?.length || targetField?.type === FieldType.other) && (
+                  {shouldRenderJoinWith && (
                     <InlineField
                       label={t('transformers.convert-field-type-transformer-editor.label-join-with', 'Join with')}
                       tooltip={t(
@@ -178,10 +192,10 @@ export const ConvertFieldTypeTransformerEditor = ({
                     >
                       <Input
                         value={c.joinWith}
-                        // eslint-disable-next-line @grafana/no-untranslated-strings
+                        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                         placeholder={'JSON'}
                         onChange={onJoinWithChange(idx)}
-                        width={9}
+                        width={16}
                       />
                     </InlineField>
                   )}
@@ -196,7 +210,7 @@ export const ConvertFieldTypeTransformerEditor = ({
                       >
                         <Input
                           value={c.dateFormat}
-                          // eslint-disable-next-line @grafana/no-untranslated-strings
+                          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                           placeholder={'e.g. YYYY-MM-DD'}
                           onChange={onInputFormat(idx)}
                           width={24}
@@ -245,7 +259,9 @@ export const ConvertFieldTypeTransformerEditor = ({
           'Add a convert field type transformer'
         )}
       >
-        {'Convert field type'}
+        <Trans i18nKey="transformers.convert-field-type-transformer-editor.convert-field-type">
+          Convert field type
+        </Trans>
       </Button>
     </>
   );

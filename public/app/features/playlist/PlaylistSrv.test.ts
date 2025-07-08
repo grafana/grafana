@@ -4,7 +4,7 @@ import configureMockStore from 'redux-mock-store';
 import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
-import { Playlist } from '../../api/clients/playlist';
+import { Playlist } from '../../api/clients/playlist/v0alpha1';
 import { DashboardQueryResult } from '../search/service/types';
 
 import { PlaylistSrv } from './PlaylistSrv';
@@ -50,15 +50,16 @@ function createPlaylistSrv(): PlaylistSrv {
 }
 
 const mockWindowLocation = (): [jest.Mock, () => void] => {
-  const oldLocation = window.location;
+  const win: typeof globalThis = window;
+  const oldLocation = win.location;
   const hrefMock = jest.fn();
 
   // JSDom defines window in a way that you cannot tamper with location so this seems to be the only way to change it.
   // https://github.com/facebook/jest/issues/5124#issuecomment-446659510
   //@ts-ignore
-  delete window.location;
+  delete win.location;
 
-  window.location = {} as Location;
+  win.location = {} as Location;
 
   // Only mocking href as that is all this test needs, but otherwise there is lots of things missing, so keep that
   // in mind if this is reused.
@@ -67,7 +68,7 @@ const mockWindowLocation = (): [jest.Mock, () => void] => {
     get: hrefMock,
   });
   const unmock = () => {
-    window.location = oldLocation;
+    win.location = oldLocation;
   };
   return [hrefMock, unmock];
 };

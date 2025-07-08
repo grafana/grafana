@@ -6,10 +6,10 @@ import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { IconButton, useStyles2, Text } from '@grafana/ui';
 import { Indent } from 'app/core/components/Indent/Indent';
-import { Trans } from 'app/core/internationalization';
-import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
+import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types';

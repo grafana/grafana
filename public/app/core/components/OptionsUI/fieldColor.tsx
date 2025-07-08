@@ -13,9 +13,8 @@ import {
   FieldColorSeriesByMode,
   getFieldColorMode,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
-
-import { t } from '../../internationalization';
 
 import { ColorValueEditor } from './color';
 
@@ -140,7 +139,7 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
       if (gradient === '') {
         gradient = `linear-gradient(90deg, ${color} 0%`;
       } else {
-        const valuePercent = i / (colors.length - 1);
+        const valuePercent = i / colors.length;
         const pos = valuePercent * 100;
         gradient += `, ${lastColor} ${pos}%, ${color} ${pos}%`;
       }

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef } from 'react';
 
+import { t } from '@grafana/i18n';
 import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -21,10 +21,10 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All option'),
+          title: t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All value'),
           description: t(
             'dashboard.edit-pane.variable.selection-options.include-all-description',
-            'Enables an option to include all values'
+            'Enables a single option that represent all values'
           ),
           render: () => <IncludeAllSwitch variable={variable} />,
         })

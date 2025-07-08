@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { Fragment, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
@@ -100,7 +100,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         <Menu.Item
           icon="download-alt"
           label={t('alerting.contact-point-header.export-label-export', 'Export')}
-          ariaLabel="export"
+          ariaLabel={t('alerting.contact-point-header.export-ariaLabel-export', 'Export')}
           disabled={!exportAllowed}
           data-testid="export"
           onClick={() => openExportDrawer(name)}
@@ -159,7 +159,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
       >
         <Menu.Item
           label={t('alerting.contact-point-header.label-delete', 'Delete')}
-          ariaLabel="delete"
+          ariaLabel={t('alerting.contact-point-header.ariaLabel-delete', 'Delete')}
           icon="trash-alt"
           destructive
           disabled={!canBeDeleted}

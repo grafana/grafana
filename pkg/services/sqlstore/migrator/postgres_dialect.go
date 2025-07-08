@@ -9,7 +9,7 @@ import (
 
 	"github.com/lib/pq"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 type PostgresDialect struct {
@@ -29,10 +29,6 @@ func (db *PostgresDialect) SupportEngine() bool {
 
 func (db *PostgresDialect) Quote(name string) string {
 	return "\"" + name + "\""
-}
-
-func (db *PostgresDialect) LikeStr() string {
-	return "ILIKE"
 }
 
 func (db *PostgresDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {

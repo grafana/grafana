@@ -20,7 +20,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { TNil } from '../types';
+import TNil from '../types/TNil';
 
 import { formatDuration } from './utils';
 
@@ -43,6 +43,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'TicksTickLabel',
     left: '0.25rem',
     position: 'absolute',
+    whiteSpace: 'nowrap',
   }),
   TicksTickLabelEndAnchor: css({
     label: 'TicksTickLabelEndAnchor',

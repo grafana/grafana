@@ -111,6 +111,8 @@ DashboardLink: {
 	keepTime: bool | *false
 }
 
+// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
+// This type is widely used in the codebase and changing it will have a big impact
 DataSourceRef: {
 	// The plugin type-id
 	type?: string
@@ -385,15 +387,14 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-	datasource?: DataSourceRef
-	query?:      DataQueryKind
+	query:      DataQueryKind
 	enable:      bool
 	hide:        bool
 	iconColor:   string
 	name:        string
 	builtIn?:    bool | *false
 	filter?:     AnnotationPanelFilter
-	options?:     [string]: _ //Catch-all field for datasource-specific properties
+	legacyOptions?:     [string]: _ // Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 }
 
 AnnotationQueryKind: {
@@ -412,15 +413,19 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-	// The kind of a DataQueryKind is the datasource type
-	kind: string
+	kind: "DataQuery"
+	group: string
+	version: string | *"v0"
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	datasource?: {
+		name?: string
+	}
 	spec: [string]: _
 }
 
 PanelQuerySpec: {
 	query:       DataQueryKind
-	datasource?: DataSourceRef
-
 	refId:  string
 	hidden: bool
 }
@@ -518,21 +523,8 @@ GridLayoutItemKind: {
 	spec: GridLayoutItemSpec
 }
 
-GridLayoutRowKind: {
-	kind: "GridLayoutRow"
-	spec: GridLayoutRowSpec
-}
-
-GridLayoutRowSpec: {
-	y:         int
-	collapsed: bool
-	title:     string
-	elements:  [...GridLayoutItemKind] // Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.
-	repeat?:   RowRepeatOptions
-}
-
 GridLayoutSpec: {
-	items: [...GridLayoutItemKind | GridLayoutRowKind]
+	items: [...GridLayoutItemKind]
 }
 
 GridLayoutKind: {
@@ -705,8 +697,7 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
 // Determine the origin of the adhoc variable filter
-// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
-FilterOrigin: "dashboard" | "scope"
+FilterOrigin: "dashboard"
 
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {
@@ -737,7 +728,6 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
-	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""
 	sort:         VariableSort
@@ -747,6 +737,7 @@ QueryVariableSpec: {
 	includeAll:   bool | *false
 	allValue?:    string
 	placeholder?: string
+	allowCustomValue: bool | *true
 }
 
 // Query variable kind
@@ -813,6 +804,7 @@ DatasourceVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Datasource variable kind
@@ -859,6 +851,7 @@ CustomVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Custom variable kind
@@ -871,6 +864,7 @@ CustomVariableKind: {
 GroupByVariableSpec: {
 	name:        string | *""
 	datasource?: DataSourceRef
+	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
 		value: ""
@@ -900,6 +894,7 @@ AdhocVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
+	allowCustomValue: bool | *true
 }
 
 // Define the MetricFindValue type

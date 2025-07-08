@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { ScopeDashboardBinding } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -113,6 +113,9 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
   public groupSuggestedItems = (
     navigationItems: Array<ScopeDashboardBinding | ScopeNavigation>
   ): SuggestedNavigationsFoldersMap => {
+    const currentPath = locationService.getLocation().pathname;
+    const isCurrentDashboard = currentPath.startsWith('/d/');
+
     const folders: SuggestedNavigationsFoldersMap = {
       '': {
         title: '',
@@ -127,14 +130,32 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       const rootNode = folders[''];
       const groups = navigation.status.groups ?? [];
 
+      // If the current URL matches an item, expand the parent folders.
+      let expanded = false;
+
+      if (isCurrentDashboard && 'dashboard' in navigation.spec) {
+        const dashboardId = currentPath.split('/')[2];
+        expanded = navigation.spec.dashboard === dashboardId;
+      }
+
+      if ('url' in navigation.spec) {
+        expanded = currentPath.startsWith(navigation.spec.url);
+      }
+
       groups.forEach((group) => {
-        if (group && !rootNode.folders[group]) {
+        const groupExists = !!rootNode.folders[group];
+        const groupCurrentlyExpanded = groupExists && rootNode.folders[group].expanded;
+
+        if (group && !groupExists) {
           rootNode.folders[group] = {
             title: group,
-            expanded: false,
+            expanded,
             folders: {},
             suggestedNavigations: {},
           };
+        }
+        if (group && expanded && !groupCurrentlyExpanded) {
+          rootNode.folders[group].expanded = true;
         }
       });
 

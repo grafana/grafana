@@ -8,9 +8,9 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { SortByField, SortByTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';

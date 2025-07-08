@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { t } from 'app/core/internationalization';
 
 import { Branding } from '../../Branding/Branding';
 import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
@@ -22,6 +22,7 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
   const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
+
   const styles = getStyles(theme);
 
   return (

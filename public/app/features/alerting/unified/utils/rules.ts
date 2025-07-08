@@ -168,6 +168,10 @@ export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
   return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
 }
 
+export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
+  return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
+}
+
 export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
   return group.rules.some((rule) => isProvisionedRule(rule));
 }
@@ -206,6 +210,10 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   }
 
   return undefined;
+}
+
+export function getPendingPeriodFromRulerRule(rule: RulerRuleDTO) {
+  return rulerRuleType.any.alertingRule(rule) ? rule.for : undefined;
 }
 
 export function getKeepFiringfor(rule: CombinedRule): string | undefined {

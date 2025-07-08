@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { DataQuery } from '@grafana/schema';
 import { Button } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useQueryLibraryContext } from '../QueryLibrary/QueryLibraryContext';
 

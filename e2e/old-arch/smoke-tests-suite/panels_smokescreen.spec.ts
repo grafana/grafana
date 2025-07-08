@@ -14,17 +14,13 @@ describe('Panels smokescreen', () => {
   it('Tests each panel type in the panel edit view to ensure no crash', () => {
     e2e.flows.addDashboard();
 
-    // TODO: Try and use e2e.flows.addPanel() instead of block below
-    try {
-      e2e.components.PageToolbar.itemButton('Add button').should('be.visible');
-      e2e.components.PageToolbar.itemButton('Add button').click();
-    } catch (e) {
-      // Depending on the screen size, the "Add panel" button might be hidden
-      e2e.components.PageToolbar.item('Show more items').click();
-      e2e.components.PageToolbar.item('Add button').last().click();
-    }
-    e2e.pages.AddDashboard.itemButton('Add new visualization menu item').should('be.visible');
-    e2e.pages.AddDashboard.itemButton('Add new visualization menu item').click();
+    e2e.pages.Dashboard.DashNav.shareButton().should('be.visible');
+
+    e2e.flows.addPanel({
+      dataSourceName: 'gdev-testdata',
+      timeout: 10000,
+      visitDashboardAtStart: false,
+    });
 
     cy.window().then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
       // Loop through every panel type and ensure no crash

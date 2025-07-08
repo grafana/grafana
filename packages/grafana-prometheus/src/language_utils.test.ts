@@ -3,9 +3,8 @@ import { Moment } from 'moment';
 
 import { AbstractLabelOperator, AbstractQuery, DateTime, dateTime, TimeRange } from '@grafana/data';
 
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from './escaping';
 import {
-  escapeLabelValueInExactSelector,
-  escapeLabelValueInRegexSelector,
   expandRecordingRules,
   fixSummariesMetadata,
   getPrometheusTime,

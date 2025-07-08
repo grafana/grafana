@@ -1,7 +1,8 @@
 import { capitalize } from 'lodash';
 
+import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import alertmanagerLogo from 'app/plugins/datasource/alertmanager/img/logo.svg';
 
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { ProvisioningBadge } from '../Provisioning';
@@ -28,7 +29,7 @@ export function AlertmanagerCard({
   name,
   href,
   url,
-  logo = 'public/app/plugins/datasource/alertmanager/img/logo.svg',
+  logo = alertmanagerLogo,
   provisioned = false,
   readOnly = provisioned,
   showStatus = true,

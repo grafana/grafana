@@ -8,7 +8,7 @@ import { historySrv } from 'app/features/dashboard-scene/settings/version-histor
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
-import { versions, diffs } from './__mocks__/versions';
+import { versions, diffs } from './mocks/versions';
 
 jest.mock('app/features/dashboard-scene/settings/version-history/HistorySrv');
 

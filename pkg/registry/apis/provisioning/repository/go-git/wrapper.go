@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
 
 const (
@@ -36,7 +37,7 @@ const (
 
 func init() {
 	// Create a size-limited writer that will cancel the context if size is exceeded
-	limitedTransport := NewByteLimitedTransport(http.DefaultTransport, maxOperationBytes)
+	limitedTransport := NewByteLimitedTransport(httpclient.NewHTTPTransport(), maxOperationBytes)
 	httpClient := githttp.NewClient(&http.Client{
 		Transport: limitedTransport,
 	})
@@ -90,6 +91,14 @@ func Clone(
 		return nil, fmt.Errorf("missing root config")
 	}
 
+	if config.Namespace == "" {
+		return nil, fmt.Errorf("config is missing namespace")
+	}
+
+	if config.Name == "" {
+		return nil, fmt.Errorf("config is missing name")
+	}
+
 	if opts.BeforeFn != nil {
 		if err := opts.BeforeFn(); err != nil {
 			return nil, err
@@ -113,7 +122,7 @@ func Clone(
 		return nil, fmt.Errorf("create root dir: %w", err)
 	}
 
-	dir, err := mkdirTempClone(root, config)
+	dir, err := os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 	if err != nil {
 		return nil, fmt.Errorf("create temp clone dir: %w", err)
 	}
@@ -144,7 +153,10 @@ func Clone(
 
 func clone(ctx context.Context, config *provisioning.Repository, opts repository.CloneOptions, decrypted []byte, dir string, progress io.Writer) (*git.Repository, *git.Worktree, error) {
 	gitcfg := config.Spec.GitHub
-	url := fmt.Sprintf("%s.git", gitcfg.URL)
+	url := gitcfg.URL
+	if !strings.HasPrefix(url, "file://") {
+		url = fmt.Sprintf("%s.git", url)
+	}
 
 	branch := plumbing.NewBranchReferenceName(gitcfg.Branch)
 	cloneOpts := &git.CloneOptions{
@@ -199,16 +211,6 @@ func clone(ctx context.Context, config *provisioning.Repository, opts repository
 	}
 
 	return repo, worktree, nil
-}
-
-func mkdirTempClone(root string, config *provisioning.Repository) (string, error) {
-	if config.Namespace == "" {
-		return "", fmt.Errorf("config is missing namespace")
-	}
-	if config.Name == "" {
-		return "", fmt.Errorf("config is missing name")
-	}
-	return os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 }
 
 // After making changes to the worktree, push changes
@@ -370,15 +372,21 @@ func (g *GoGitRepo) maybeCommit(ctx context.Context, message string) error {
 		return nil
 	}
 
-	opts := &git.CommitOptions{}
-	sig := repository.GetAuthorSignature(ctx)
-	if sig != nil {
-		opts.Author = &object.Signature{
-			Name:  sig.Name,
-			Email: sig.Email,
-			When:  sig.When,
-		}
+	opts := &git.CommitOptions{
+		Author: &object.Signature{
+			Name: "grafana",
+		},
 	}
+	sig := repository.GetAuthorSignature(ctx)
+	if sig != nil && sig.Name != "" {
+		opts.Author.Name = sig.Name
+		opts.Author.Email = sig.Email
+		opts.Author.When = sig.When
+	}
+	if opts.Author.When.IsZero() {
+		opts.Author.When = time.Now()
+	}
+
 	_, err := g.tree.Commit(message, opts)
 	if errors.Is(err, git.ErrEmptyCommit) {
 		return nil // empty commit is fine -- no change
@@ -457,14 +465,4 @@ func (g *GoGitRepo) History(ctx context.Context, path string, ref string) ([]pro
 // Validate implements repository.Repository.
 func (g *GoGitRepo) Validate() field.ErrorList {
 	return nil
-}
-
-// Webhook implements repository.Repository.
-func (g *GoGitRepo) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "history is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
-	}
 }

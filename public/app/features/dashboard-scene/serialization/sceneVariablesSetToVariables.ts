@@ -1,5 +1,11 @@
 import { config } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
+import {
+  AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
+  MultiValueVariable,
+  SceneVariables,
+  sceneUtils,
+  SceneVariable,
+} from '@grafana/scenes';
 import {
   VariableModel,
   VariableRefresh as OldVariableRefresh,
@@ -18,6 +24,8 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
+  defaultDataQueryKind,
+  AdHocFilterWithLabels,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
@@ -41,6 +49,7 @@ import {
 
 export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptions?: boolean) {
   const variables: VariableModel[] = [];
+
   for (const variable of set.state.variables) {
     const commonProperties = {
       name: variable.state.name,
@@ -159,6 +168,14 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         query: variable.state.value,
       });
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
+      // @ts-expect-error
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
+        ? {
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
+          }
+        : undefined;
+
       variables.push({
         ...commonProperties,
         datasource: variable.state.datasource,
@@ -173,6 +190,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
+        defaultValue: defaultVariableOption,
         allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isAdHocVariable(variable)) {
@@ -181,10 +199,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
-        baseFilters: variable.state.baseFilters,
-        filters: variable.state.filters,
+        baseFilters: variable.state.baseFilters || [],
+        filters: [...validateFiltersOrigin(variable.state.originFilters), ...variable.state.filters],
         defaultKeys: variable.state.defaultKeys,
       });
+    } else if (variable.state.type === 'system') {
+      // Not persisted
     } else {
       throw new Error('Unsupported variable type');
     }
@@ -275,14 +295,30 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
+      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
+
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type ?? getDataQueryKind(query),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: getDataQuerySpec(query),
         };
       } else {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type ?? getDataQueryKind(query),
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: {
             [LEGACY_STRING_VALUE_KEY]: query,
           },
@@ -296,7 +332,6 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,
@@ -304,6 +339,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,
           skipUrlSync: variable.state.skipUrlSync || false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(queryVariable);
@@ -319,6 +355,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           multi: variable.state.isMulti || false,
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll ?? false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(customVariable);
@@ -334,6 +371,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           pluginId: variable.state.pluginId,
           multi: variable.state.isMulti || false,
           includeAll: variable.state.includeAll || false,
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
 
@@ -400,6 +438,14 @@ export function sceneVariablesSetToSchemaV2Variables(
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
       options = variableValueOptionsToVariableOptions(variable.state);
 
+      // @ts-expect-error
+      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
+        ? {
+            value: variable.state.defaultValue.value,
+            text: variable.state.defaultValue.text,
+          }
+        : undefined;
+
       const groupVariable: GroupByVariableKind = {
         kind: 'GroupByVariable',
         spec: {
@@ -412,6 +458,7 @@ export function sceneVariablesSetToSchemaV2Variables(
               value: String(option.value),
             })) || [],
           current: currentVariableOption,
+          defaultValue: defaultVariableOption,
           multi: variable.state.isMulti || false,
         },
       };
@@ -423,16 +470,31 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           name: variable.state.name,
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: variable.state.baseFilters || [],
-          filters: variable.state.filters,
+          baseFilters: validateFiltersOrigin(variable.state.baseFilters) || [],
+          filters: [
+            ...validateFiltersOrigin(variable.state.originFilters),
+            ...validateFiltersOrigin(variable.state.filters),
+          ],
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
+          allowCustomValue: variable.state.allowCustomValue ?? true,
         },
       };
       variables.push(adhocVariable);
+    } else if (variable.state.type === 'system') {
+      // Do nothing
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);
     }
   }
 
   return variables;
+}
+
+export function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+  // Only keep dashboard originated filters in the schema
+  return filters?.filter((f): f is AdHocFilterWithLabels => !f.origin || f.origin === 'dashboard') || [];
+}
+
+export function isVariableEditable(variable: SceneVariable) {
+  return variable.state.type !== 'system';
 }

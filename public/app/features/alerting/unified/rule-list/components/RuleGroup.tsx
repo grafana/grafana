@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
+import { t } from '@grafana/i18n';
 import { Alert, LoadingBar, Pagination } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

@@ -12,8 +12,8 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { GroupByFieldOptions, GroupByOperationID, GroupByTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -93,6 +93,7 @@ const options = [
 
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
+
   const styles = getStyles(theme);
 
   const onChange = useCallback(

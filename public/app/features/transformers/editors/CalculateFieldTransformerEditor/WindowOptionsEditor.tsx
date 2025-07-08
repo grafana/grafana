@@ -6,9 +6,9 @@ import {
   WindowOptions,
   WindowSizeMode,
 } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -21,12 +21,24 @@ export const WindowOptionsEditor = (props: {
   const { window } = options;
   const selectOptions = names.map((v) => ({ label: v, value: v }));
   const typeOptions = [
-    { label: 'Trailing', value: WindowAlignment.Trailing },
-    { label: 'Centered', value: WindowAlignment.Centered },
+    {
+      label: t('transformers.window-options-editor.type-options.label.trailing', 'Trailing'),
+      value: WindowAlignment.Trailing,
+    },
+    {
+      label: t('transformers.window-options-editor.type-options.label.centered', 'Centered'),
+      value: WindowAlignment.Centered,
+    },
   ];
   const windowSizeModeOptions = [
-    { label: 'Percentage', value: WindowSizeMode.Percentage },
-    { label: 'Fixed', value: WindowSizeMode.Fixed },
+    {
+      label: t('transformers.window-options-editor.window-size-mode-options.label.percentage', 'Percentage'),
+      value: WindowSizeMode.Percentage,
+    },
+    {
+      label: t('transformers.window-options-editor.window-size-mode-options.label.fixed', 'Fixed'),
+      value: WindowSizeMode.Fixed,
+    },
   ];
 
   const updateWindowOptions = (v: WindowOptions) => {

@@ -8,10 +8,10 @@ import {
   urlUtil,
   serializeStateToUrlParam,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 

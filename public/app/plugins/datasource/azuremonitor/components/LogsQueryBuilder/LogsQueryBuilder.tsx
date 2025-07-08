@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorRows } from '@grafana/plugin-ui';
 import { Alert } from '@grafana/ui';
 
@@ -16,12 +17,9 @@ import {
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import {
-  AzureLogAnalyticsMetadataTable,
-  AzureLogAnalyticsMetadataColumn,
-  AzureMonitorQuery,
-  EngineSchema,
-} from '../../types';
+import { AzureLogAnalyticsMetadataTable, AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
+import { EngineSchema } from '../../types/types';
 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';
@@ -136,7 +134,13 @@ export const LogsQueryBuilder: React.FC<LogsQueryBuilderProps> = (props) => {
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
       <EditorRows>
         {schema && tables.length === 0 && (
-          <Alert severity="warning" title="Resource loaded successfully but without any tables" />
+          <Alert
+            severity="warning"
+            title={t(
+              'components.logs-query-builder.title-no-tables',
+              'Resource loaded successfully but without any tables'
+            )}
+          />
         )}
         <TableSection
           {...props}
