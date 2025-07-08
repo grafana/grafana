@@ -588,7 +588,7 @@ function getQueryForVictoriaLogs(span: TraceSpan, options: TraceToLogsOptionsV2,
   if (customQuery) {
     return {
       expr: customQuery,
-      refId: ''
+      refId: '',
     };
   }
 
