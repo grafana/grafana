@@ -1,11 +1,9 @@
-import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
-import { Folder } from 'app/api/clients/folder/v1beta1';
 import {
   DeleteRepositoryFilesWithPathApiArg,
   RepositoryView,
@@ -14,16 +12,13 @@ import {
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
-import { useDefaultValues } from 'app/features/dashboard-scene/saving/provisioned/hooks';
-import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
+import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
 
-import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 import { DashboardTreeSelection } from '../types';
 
 import { DescendantCount } from './BrowseActions/DescendantCount';
-import { getFolderURL } from './utils';
 
 interface BulkDeleteFormData {
   comment: string;
@@ -54,8 +49,6 @@ function FormContent({
   isGitHub,
   onDismiss,
 }: FormProps) {
-  //   const resourceId = parentFolder?.uid || '';
-
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
 
   const methods = useForm<BulkDeleteFormData>({ defaultValues: initialValues });
@@ -87,8 +80,8 @@ function FormContent({
     try {
       const results = await Promise.allSettled(deleteRequests.map((params) => deleteRepoFile(params).unwrap()));
 
-      const successes = [];
-      const failures = [];
+      const successes: Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; data: unknown }> = [];
+      const failures: Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; error: unknown }> = [];
 
       results.forEach((result, index) => {
         const item = deleteRequests[index];
@@ -140,7 +133,7 @@ function FormContent({
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
           <Box paddingBottom={2}>
-            <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.delete-warning">
+            <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.delete-warning">
               This will delete selected folders and their descendants. In total, this will affect:
             </Trans>
             <DescendantCount selectedItems={selectedItems} />
@@ -159,11 +152,11 @@ function FormContent({
           <Stack gap={2}>
             <Button type="submit" disabled={request.isLoading} variant="destructive">
               {request.isLoading
-                ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
-                : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
+                ? t('browse-dashboards.bulk-delete-resources-form.button-deleting', 'Deleting...')
+                : t('browse-dashboards.bulk-delete-resources-form.button-delete', 'Delete')}
             </Button>
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
-              <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
+              <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.button-cancel">Cancel</Trans>
             </Button>
           </Stack>
         </Stack>
@@ -177,27 +170,23 @@ export function BulkDeleteProvisionedResource({
   selectedItems,
   onDismiss,
 }: BulkDeleteProvisionResourceProps) {
-  // const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
-  //   folderUid: parentFolder?.uid,
-  //   action: 'delete',
-  //   title: parentFolder?.title,
-  // });
   const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
-  console.log('folderUid', folderUid);
-  console.log('repository', repository, folder);
 
   const workflowOptions = getWorkflowOptions(repository);
   const isGitHub = repository?.type === 'github';
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
+  const timestamp = generateTimestamp();
 
-  //   if (!initialValues) {
-  //     return null;
-  //   }
   const initialValues = {
     comment: '',
-    ref: '',
+    ref: `bulk-delete/${timestamp}`,
     workflow: getDefaultWorkflow(repository),
   };
+
+  if (!repository) {
+    console.error('Repository not found');
+    return null;
+  }
 
   return (
     <FormContent

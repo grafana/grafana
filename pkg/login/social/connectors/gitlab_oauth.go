@@ -275,7 +275,7 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 		return nil, nil
 	}
 
-	rawJSON, err := s.retrieveRawIDToken(idToken)
+	rawJSON, err := s.retrieveRawJWTPayload(idToken)
 	if err != nil {
 		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
 		return nil, nil

@@ -133,7 +133,9 @@ const getModalWrapper = ({
           fallbackAlwaysVisible={true}
           log={baseLog}
         >
-          <Body onDismiss={onDismiss} />
+          <div data-plugin-sandbox={config.pluginId} data-testid="plugin-sandbox-wrapper">
+            <Body onDismiss={onDismiss} />
+          </div>
         </ExtensionErrorBoundary>
       </Modal>
     );

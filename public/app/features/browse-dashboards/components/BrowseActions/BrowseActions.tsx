@@ -23,15 +23,14 @@ export interface Props {
 }
 
 export function BrowseActions({ folderDTO }: Props) {
-  console.log('BrowseActions', folderDTO);
+  const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
+
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
   const isProvisionedInstance = useIsProvisionedInstance();
-
-  const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
 
   // Folders can only be moved if nested folders is enabled
   const moveIsInvalid = useMemo(
