@@ -24,7 +24,7 @@ import (
 
 // MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
 type MimirClient interface {
-	GetGrafanaAlertmanagerState(ctx context.Context) (*UserState, error)
+	GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error)
 	CreateGrafanaAlertmanagerState(ctx context.Context, state string) error
 	DeleteGrafanaAlertmanagerState(ctx context.Context) error
 

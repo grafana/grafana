@@ -57,6 +57,7 @@ type Alertmanager interface {
 	DeleteSilence(context.Context, string) error
 	GetSilence(context.Context, string) (apimodels.GettableSilence, error)
 	ListSilences(context.Context, []string) (apimodels.GettableSilences, error)
+	MergeSilences([]byte) error
 
 	// SilenceState returns the current state of silences in the Alertmanager. This is used to persist the state
 	// to the kvstore.
@@ -66,6 +67,7 @@ type Alertmanager interface {
 	GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
 	GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 	PutAlerts(context.Context, apimodels.PostableAlerts) error
+	MergeNflog([]byte) error
 
 	// Receivers
 	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)

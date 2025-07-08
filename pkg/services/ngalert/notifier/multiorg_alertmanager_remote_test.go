@@ -108,7 +108,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 
 	// It should send config and state on startup.
 	var lastConfig *remoteClient.UserGrafanaConfig
-	var lastState *remoteClient.UserState
+	var lastState *remoteClient.UserGrafanaState
 	{
 		// We should start with no config and no state in the external Alertmanager.
 		require.Empty(t, fakeAM.config)
@@ -174,7 +174,7 @@ func newFakeRemoteAlertmanager(t *testing.T, user, pass string) *fakeRemoteAlert
 type fakeRemoteAlertmanager struct {
 	t        *testing.T
 	config   *remoteClient.UserGrafanaConfig
-	state    *remoteClient.UserState
+	state    *remoteClient.UserGrafanaState
 	username string
 	password string
 }
@@ -240,7 +240,7 @@ func (f *fakeRemoteAlertmanager) getConfig(w http.ResponseWriter) {
 }
 
 func (f *fakeRemoteAlertmanager) postState(w http.ResponseWriter, r *http.Request) {
-	var state remoteClient.UserState
+	var state remoteClient.UserGrafanaState
 	require.NoError(f.t, json.NewDecoder(r.Body).Decode(&state))
 
 	f.state = &state
