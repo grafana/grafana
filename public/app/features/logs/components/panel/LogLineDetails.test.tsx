@@ -479,10 +479,10 @@ describe('LogLineDetails', () => {
         { displayedFields: ['key1', 'key2'], setDisplayedFields, onClickHideField }
       );
 
-      expect(screen.getByText('Displayed fields')).toBeInTheDocument();
+      expect(screen.getByText('Organize displayed fields')).toBeInTheDocument();
       expect(screen.queryAllByLabelText('Remove field')).toHaveLength(0);
 
-      await userEvent.click(screen.getByText('Displayed fields'));
+      await userEvent.click(screen.getByText('Organize displayed fields'));
 
       expect(screen.getAllByLabelText('Remove field')).toHaveLength(2);
 
