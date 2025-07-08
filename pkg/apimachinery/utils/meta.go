@@ -1,12 +1,9 @@
 package utils
 
 import (
-	"bytes"
 	"fmt"
-	"mime"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -15,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // LabelKeyGetHistory is used to select object history for an given resource
@@ -149,6 +148,12 @@ type GrafanaMetaAccessor interface {
 
 	// SetSourceProperties sets the source properties of the resource.
 	SetSourceProperties(SourceProperties)
+
+	// SetSourceProperties sets the source properties of the resource.
+	GetSecureValues() (common.InlineSecureValues, error)
+
+	// SetSourceProperties sets the source properties of the resource.
+	SetSecureValues(common.InlineSecureValues) error
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -825,81 +830,75 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 	m.obj.SetAnnotations(annot)
 }
 
-type BlobInfo struct {
-	UID      string `json:"uid"`
-	Size     int64  `json:"size,omitempty"`
-	Hash     string `json:"hash,omitempty"`
-	MimeType string `json:"mime,omitempty"`
-	Charset  string `json:"charset,omitempty"` // content type = mime+charset
+// GetSecureValues implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error reading spec")
+		}
+	}()
+
+	var property any // may be map or struct
+
+	f := m.r.FieldByName("Secure")
+	if f.IsValid() {
+		property = f.Interface()
+	} else {
+		// Unstructured
+		u, ok := m.raw.(*unstructured.Unstructured)
+		if ok {
+			property, _ = u.Object["secure"]
+		}
+	}
+
+	// Not found (and no error)
+	if property == nil {
+		return nil, nil
+	}
+
+	// Try directly casting the property
+	vals, ok := property.(common.InlineSecureValues)
+	if ok {
+		return vals, nil
+	}
+
+	fmt.Printf("TODO PROPERTY: (%t) %+v\n", property, property)
+
+	return nil, fmt.Errorf("support: %t", property)
 }
 
-// Content type is mime + charset
-func (b *BlobInfo) SetContentType(v string) {
-	var params map[string]string
-	var err error
+// SetSecureValues implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting spec")
+		}
+	}()
 
-	b.Charset = ""
-	b.MimeType, params, err = mime.ParseMediaType(v)
-	if err != nil {
+	f := m.r.FieldByName("Secure")
+	if f.IsValid() && f.CanSet() {
+		f.Set(reflect.ValueOf(vals))
 		return
 	}
-	b.Charset = params["charset"]
+
+	// Unstructured object
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["secure"] = vals
+		return
+	}
+
+	return fmt.Errorf("not yet supported on this object")
 }
 
-// Content type is mime + charset
-func (b *BlobInfo) ContentType() string {
-	sb := bytes.NewBufferString(b.MimeType)
-	if b.Charset != "" {
-		sb.WriteString("; charset=")
-		sb.WriteString(b.Charset)
+func ToResourceReference(obj GrafanaMetaAccessor) common.ResourceReference {
+	gvk := obj.GetGroupVersionKind()
+	return common.ResourceReference{
+		Group:     gvk.Group,
+		Version:   gvk.Version,
+		Kind:      gvk.Kind,
+		Namespace: obj.GetNamespace(),
+		Name:      obj.GetName(),
+		UID:       obj.GetUID(),
 	}
-	return sb.String()
-}
-
-func (b *BlobInfo) String() string {
-	sb := bytes.NewBufferString(b.UID)
-	if b.Size > 0 {
-		fmt.Fprintf(sb, "; size=%d", b.Size)
-	}
-	if b.Hash != "" {
-		sb.WriteString("; hash=")
-		sb.WriteString(b.Hash)
-	}
-	if b.MimeType != "" {
-		sb.WriteString("; mime=")
-		sb.WriteString(b.MimeType)
-	}
-	if b.Charset != "" {
-		sb.WriteString("; charset=")
-		sb.WriteString(b.Charset)
-	}
-	return sb.String()
-}
-
-func ParseBlobInfo(v string) *BlobInfo {
-	if v == "" {
-		return nil
-	}
-	info := &BlobInfo{}
-	for i, part := range strings.Split(v, ";") {
-		if i == 0 {
-			info.UID = part
-			continue
-		}
-		kv := strings.Split(strings.TrimSpace(part), "=")
-		if len(kv) == 2 {
-			val := kv[1]
-			switch kv[0] {
-			case "size":
-				info.Size, _ = strconv.ParseInt(val, 10, 64)
-			case "hash":
-				info.Hash = val
-			case "mime":
-				info.MimeType = val
-			case "charset":
-				info.Charset = val
-			}
-		}
-	}
-	return info
 }

@@ -2,11 +2,23 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
+
+// Similar to metav1.OwenerReference, but it includes the namespace
+type ResourceReference struct {
+	Group     string    `json:"group,omitempty"`
+	Version   string    `json:"version,omitempty"`
+	Kind      string    `json:"kind,omitempty"`      // or resource?
+	Namespace string    `json:"namespace,omitempty"` // This does not exist in metav1.OwnerReference
+	Name      string    `json:"name,omitempty"`
+	UID       types.UID `json:"uid,omitempty"`
+}
 
 // Similar to
 // https://dev-k8sref-io.web.app/docs/common-definitions/objectreference-/
 // ObjectReference contains enough information to let you inspect or modify the referred object.
+// Deprecated: this should be removed
 type ObjectReference struct {
 	Resource  string `json:"resource,omitempty"`
 	Namespace string `json:"namespace,omitempty"`

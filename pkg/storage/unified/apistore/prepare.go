@@ -92,6 +92,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(info.GetUID())
 	obj.SetGeneration(1) // the first time we write
 
+	_, err = handleSecureValues(ctx, s.opts.SecureValues, obj, nil)
+	if err != nil {
+		return nil, "", err
+	}
+
 	var buf bytes.Buffer
 	if err = s.codec.Encode(newObject, &buf); err != nil {
 		return nil, "", err
@@ -148,16 +153,21 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
 	}
 
+	changed, err := handleSecureValues(ctx, s.opts.SecureValues, obj, previous)
+	if err != nil {
+		return nil, err
+	}
+
 	// Check if we should bump the generation
-	changed := obj.GetFolder() != previous.GetFolder()
-	if changed {
+	if obj.GetFolder() != previous.GetFolder() {
 		if !s.opts.EnableFolderSupport {
 			return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 		}
 		// TODO: check that we can move the folder?
+		changed = true
 	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
 		changed = true // bump generation when deleted
-	} else {
+	} else if !changed {
 		spec, e1 := obj.GetSpec()
 		oldSpec, e2 := previous.GetSpec()
 		if e1 == nil && e2 == nil {

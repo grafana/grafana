@@ -61,6 +61,9 @@ type StorageOptions struct {
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
 
+	// Process inline secure values
+	SecureValues SecureValueStore
+
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
 }
