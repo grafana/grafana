@@ -1,5 +1,11 @@
 import { test, expect, Page } from '@playwright/test';
 
+test.use({
+  featureToggles: {
+    canvasPanelPanZoom: true,
+  },
+});
+
 test.describe('Canvas Panel - Scene Tests', () => {
   test.beforeEach(async ({ page }) => {
     await createCanvasPanel(page);
@@ -31,21 +37,85 @@ test.describe('Canvas Panel - Scene Tests', () => {
       await infiniteViewer.waitFor({ state: 'visible', timeout: 5000 });
       if (await infiniteViewer.isVisible()) {
         // Test zoom functionality
-        await page.mouse.wheel(0, -100);
+        // await infiniteViewer.hover();
+        // await page.mouse.wheel(0, -100);
 
-        // Test pan functionality
-        await page.mouse.move(100, 100);
-        await page.mouse.down();
-        await page.mouse.move(150, 150);
-        await page.mouse.up();
+        await infiniteViewer.hover();
+        const viewerBounds = await infiniteViewer.boundingBox();
+        if (viewerBounds) {
+          // Test pan functionality
+          const startX = viewerBounds.x + 50;
+          const startY = viewerBounds.y + 50;
+          const endX = viewerBounds.x + 250;
+          const endY = viewerBounds.y + 250;
+          await page.getByTestId('canvas-scene-pan-zoom');
+          await page.mouse.move(startX, startY);
+          await page.mouse.down({ button: 'middle' });
+          await page.mouse.move(endX, endY);
+          await page.mouse.up({ button: 'middle' });
 
-        // Test zoom reset with double-click
-        await infiniteViewer.dblclick();
+          // Check if canvas element is not visible after pan/zoom operations
+          let canvasElement = await page.getByRole('button', { name: 'Double click to set field' });
+          // await expect(canvasElement).not.toBeVisible();
+          // Get element bounds to check if it's outside viewport
+          let canvasSceneWrapper = page.locator('[data-testid="canvas-scene-wrapper"]');
+          let elementBounds = await canvasElement.boundingBox();
+          let viewportBounds = await canvasSceneWrapper.boundingBox();
+
+          if (elementBounds && viewportBounds) {
+            // Check if element is outside the viewport bounds
+            const isOutsideViewport =
+              elementBounds.x + elementBounds.width < viewportBounds.x ||
+              elementBounds.x > viewportBounds.x + viewportBounds.width ||
+              elementBounds.y + elementBounds.height < viewportBounds.y ||
+              elementBounds.y > viewportBounds.y + viewportBounds.height;
+
+            expect(isOutsideViewport).toBe(true);
+          }
+
+          // Test zoom reset with double-click
+          await page.mouse.dblclick(startX, startY);
+          // Verify canvas element is visible after pan/zoom operations
+          await expect(canvasElement).toBeVisible();
+
+          // Test zoom functionality
+          await page.mouse.move(startX, startY);
+          await page.keyboard.down('Control');
+          await page.mouse.wheel(0, -400); // Zoom in
+          await page.keyboard.up('Control');
+
+          // Check if canvas element is not visible after pan/zoom operations
+          // const canvasElement = page.locator('[data-testid="canvas-element"]');
+          canvasElement = await page.getByRole('button', { name: 'Double click to set field' });
+          // Check if element exists in DOM but is outside viewport
+          await expect(canvasElement).toBeAttached(); // Element should still exist in DOM
+
+          // Get element bounds to check if it's outside viewport
+          canvasSceneWrapper = page.locator('[data-testid="canvas-scene-wrapper"]');
+          elementBounds = await canvasElement.boundingBox();
+          viewportBounds = await canvasSceneWrapper.boundingBox();
+
+          if (elementBounds && viewportBounds) {
+            // Check if element is outside the viewport bounds
+            const isOutsideViewport =
+              elementBounds.x + elementBounds.width < viewportBounds.x ||
+              elementBounds.x > viewportBounds.x + viewportBounds.width ||
+              elementBounds.y + elementBounds.height < viewportBounds.y ||
+              elementBounds.y > viewportBounds.y + viewportBounds.height;
+
+            expect(isOutsideViewport).toBe(true);
+          }
+
+          // Test zoom reset with double-click
+          await page.mouse.dblclick(startX, startY);
+          // Verify canvas element is visible after pan/zoom operations
+          await expect(canvasElement).toBeVisible();
+        }
       }
 
-      // Verify canvas is still functional
-      const canvasScene = page.locator('[data-testid="canvas-scene-pan-zoom"]');
-      await expect(canvasScene).toBeVisible();
+      // // Verify canvas is still functional
+      // const canvasScene = page.locator('[data-testid="canvas-scene-pan-zoom"]');
+      // await expect(canvasScene).toBeVisible();
     }
   });
 
