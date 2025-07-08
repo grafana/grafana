@@ -340,7 +340,7 @@
     "fast-json-patch": "3.1.1",
     "file-saver": "2.0.5",
     "history": "4.10.1",
-    "i18next": "^24.0.0",
+    "i18next": "^25.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-pseudo": "^2.2.1",
     "immer": "10.1.1",
@@ -358,7 +358,7 @@
     "lru-cache": "11.1.0",
     "lru-memoize": "^1.1.0",
     "lucene": "^2.1.1",
-    "marked": "15.0.12",
+    "marked": "16.0.0",
     "memoize-one": "6.0.0",
     "micro-memoize": "^4.1.2",
     "ml-regression-polynomial": "^3.0.0",
@@ -424,7 +424,8 @@
     "type-fest": "^4.18.2",
     "uplot": "1.6.32",
     "uuid": "11.1.0",
-    "visjs-network": "4.25.0",
+    "vis-data": "^7.1.10",
+    "vis-network": "9.1.13",
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
