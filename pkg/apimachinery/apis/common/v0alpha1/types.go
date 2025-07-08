@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -13,6 +15,15 @@ type ResourceReference struct {
 	Namespace string    `json:"namespace,omitempty"` // This does not exist in metav1.OwnerReference
 	Name      string    `json:"name,omitempty"`
 	UID       types.UID `json:"uid,omitempty"`
+}
+
+func (r ResourceReference) ToOwnerReference() metav1.OwnerReference {
+	return metav1.OwnerReference{
+		APIVersion: fmt.Sprintf("%s/%s", r.Group, r.Version),
+		Kind:       r.Kind,
+		Name:       r.Name,
+		UID:        r.UID,
+	}
 }
 
 // Similar to

@@ -10,22 +10,11 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
-type SecureValueStore interface {
-	// Check that the request user can reference a secret in the context of a given resource (owner)
-	CanReference(ctx context.Context, owner common.ResourceReference, names ...string) (bool, error)
-
-	// Create inline secure value
-	CreateSecureValue(ctx context.Context, owner common.ResourceReference, value common.RawSecretValue) (string, error)
-
-	// Called when deleting the referenced values IFF they are owned by the owner
-	// for shared values, they are not deleted and no error is returned
-	DeleteValuesForOwner(ctx context.Context, owner common.ResourceReference, names ...string) error
-}
-
 // Mutation hook that will update secure values
-func handleSecureValues(ctx context.Context, store SecureValueStore, obj utils.GrafanaMetaAccessor, previousObject utils.GrafanaMetaAccessor) (changed bool, err error) {
+func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore, obj utils.GrafanaMetaAccessor, previousObject utils.GrafanaMetaAccessor) (changed bool, err error) {
 	secure, err := obj.GetSecureValues()
 	if err != nil {
 		return false, err
@@ -112,22 +101,12 @@ func handleSecureValues(ctx context.Context, store SecureValueStore, obj utils.G
 		}
 	}
 
-	if err = obj.SetSecureValues(secure); err != nil {
-		return changed, err
-	}
-
-	ok, err := store.CanReference(ctx, owner)
-	if err != nil {
-		return false, err
-	}
-	if !ok {
-		err = apierrors.NewBadRequest("not allowed to reference secure values")
-	}
+	err = obj.SetSecureValues(secure)
 	return changed, err
 }
 
 // Mutation hook that will update secure values
-func handleSecureValuesDelete(ctx context.Context, store SecureValueStore, obj utils.GrafanaMetaAccessor) error {
+func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValueStore, obj utils.GrafanaMetaAccessor) error {
 	secure, err := obj.GetSecureValues()
 	if err != nil {
 		return err
