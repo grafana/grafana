@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { Property } from 'csstype';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { renderSingleLink } from '../../DataLinksActionsTooltip';
@@ -18,7 +17,7 @@ export default function AutoCell({ value, field, justifyContent, rowIdx, cellOpt
   const link = useSingleLink(field, rowIdx);
 
   return (
-    <div className={styles.cell} data-testid={selectors.components.TablePanel.autoCell}>
+    <div className={styles.cell}>
       {link == null ? formattedValue : renderSingleLink(link, formattedValue, getLinkStyle(styles, cellOptions))}
     </div>
   );

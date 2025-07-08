@@ -554,10 +554,10 @@ export function TableNG(props: TableNGProps) {
         rows={paginatedRows}
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
           // Note: could be column.field; JS says yes, but TS says no!
-          let field = columns[column.idx].field;
+          const field = columns[column.idx].field;
 
           if (colsWithTooltip[getDisplayName(field)]) {
-            let rowIdx = row.__index;
+            const rowIdx = row.__index;
             setTooltipState({
               coords: {
                 clientX,
