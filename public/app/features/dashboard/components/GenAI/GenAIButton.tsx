@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { llm } from '@grafana/llm';
-import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text } from '@grafana/ui';
+import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text, Stack } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
 import { StreamStatus, useLLMStream } from './hooks';
@@ -208,7 +208,7 @@ export const GenAIButton = ({
   };
 
   return (
-    <div className={styles.wrapper}>
+    <Stack direction="row" gap={0.5} alignItems="center">
       {isGenerating && <Spinner size="sm" className={styles.spinner} />}
       {isFirstHistoryEntry ? (
         <Tooltip show={showTooltip} interactive content={tooltipContent}>
@@ -217,14 +217,11 @@ export const GenAIButton = ({
       ) : (
         renderButtonWithToggletip()
       )}
-    </div>
+    </Stack>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'flex',
-  }),
   spinner: css({
     color: theme.colors.text.link,
   }),
