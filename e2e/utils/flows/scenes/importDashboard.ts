@@ -17,5 +17,9 @@ export const importV2Dashboard = ({ title }: ImportDashboardConfig) => {
   if (title) {
     e2e.components.ImportDashboardForm.name().clear().type(title);
   }
+
+  e2e.components.DataSourcePicker.inputV2().click();
+  cy.get('div[data-testid="data-source-card"]').first().click();
+
   e2e.components.ImportDashboardForm.submit().click();
 };

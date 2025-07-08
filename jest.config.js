@@ -14,6 +14,7 @@ const esModules = [
   'robust-predicates',
   'leven',
   'nanoid',
+  'marked',
   'monaco-promql',
   '@kusto/monaco-kusto',
   'monaco-editor',
