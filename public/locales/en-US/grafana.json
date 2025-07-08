@@ -8495,7 +8495,7 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Search by name or description"
+      "placeholder-search-by-name-or-description": "Search by name, description or folder name"
     },
     "loading-indicator": {
       "loading-library-panel": "Loading library panel..."
