@@ -1505,15 +1505,11 @@
     "group-details": {
       "ds-features-error": "Error loading data source details",
       "edit": "Edit",
-      "evaluations-to-fire": "Evaluation cycles to fire",
       "export": "Export",
       "folder": "Folder",
       "group-loading-error": "Error loading the group",
       "interval": "Interval",
-      "namespace": "Namespace",
-      "pending-period": "Pending period",
-      "recording": "Recording",
-      "rule-name": "Rule name"
+      "namespace": "Namespace"
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -2884,6 +2880,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} ago)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": "Manage alert rules, recording rules and evaluation interval"
+      }
     },
     "to-gma": {
       "confirm-modal": {
