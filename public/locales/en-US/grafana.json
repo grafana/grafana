@@ -11569,7 +11569,7 @@
     "ai-suggestions-drawer-title": "AI SQL Suggestions",
     "ai-suggestions-title": "AI-powered SQL expression suggestions",
     "apply": "Apply",
-    "code-label": "{{language}}",
+    "code-label": "{{ language }}",
     "copy": "Copy",
     "generate-sql-suggestions": "Generate SQL Suggestions",
     "show-suggestions": "AI Suggestions",

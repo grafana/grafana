@@ -125,7 +125,9 @@ export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, sugges
                                   <Trans
                                     i18nKey="sql-expressions.code-label"
                                     values={{ language: language?.toUpperCase() || 'CODE' }}
-                                  />
+                                  >
+                                    {'{{ language }}'}
+                                  </Trans>
                                 </Text>
                                 <Stack direction="row" gap={1}>
                                   <Button
