@@ -2984,10 +2984,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant::locator=grafana%40workspace%3A.":
-  version: 1.0.0
-  resolution: "@grafana/assistant@file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant#/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant::hash=0677d0&locator=grafana%40workspace%3A."
-  checksum: 10/14ed0fa59dd20677fc6d4c35f2fc4416be31230d459a22dc9b33981ff3a683ff4c22b957e03cde5c555a07c5c94a562211fcfaf2f0365d82d24ea409e06a799d
+"@grafana/assistant@npm:0.0.1-alpha.2":
+  version: 0.0.1-alpha.2
+  resolution: "@grafana/assistant@npm:0.0.1-alpha.2"
+  peerDependencies:
+    "@grafana/scenes": ">=5.41.0"
+  checksum: 10/05153946e942b38ca21fd10816cfda2c1505bbfbef97fb4828978a64b3eadf05cf8e749202156e4812c9fd6a51ba6ab951762a63753dc334740cf4b6b43fdef5
   languageName: node
   linkType: hard
 
@@ -18148,7 +18150,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/alerting": "workspace:*"
-    "@grafana/assistant": "file:/Users/sven/repos/00_work/plugins/grafana-assistant-app/packages/@grafana/assistant"
+    "@grafana/assistant": "npm:0.0.1-alpha.2"
     "@grafana/aws-sdk": "npm:0.7.1"
     "@grafana/azure-sdk": "npm:0.0.7"
     "@grafana/data": "workspace:*"
