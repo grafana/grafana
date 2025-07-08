@@ -18,6 +18,9 @@ import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
+import darkImage from '../images/dark/formatString.svg';
+import lightImage from '../images/light/formatString.svg';
+
 function FormatStringTransfomerEditor({
   input,
   options,
@@ -131,4 +134,6 @@ export const getFormatStringTransformerRegistryItem: () => TransformerRegistryIt
       'Manipulate string fields formatting.'
     ),
     categories: new Set([TransformerCategory.Reformat]),
+    imageDark: darkImage,
+    imageLight: lightImage,
   });
