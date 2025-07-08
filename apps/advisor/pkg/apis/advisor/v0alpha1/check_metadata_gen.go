@@ -24,5 +24,8 @@ type CheckMetadata struct {
 
 // NewCheckMetadata creates a new CheckMetadata object.
 func NewCheckMetadata() *CheckMetadata {
-	return &CheckMetadata{}
+	return &CheckMetadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }
