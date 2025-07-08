@@ -137,6 +137,11 @@ func (s *Server) Init() error {
 		return err
 	}
 
+	// Initialize the OpenFeature feature flag system
+	if err := featuremgmt.InitOpenFeatureWithCfg(s.cfg); err != nil {
+		return err
+	}
+
 	return s.provisioningService.RunInitProvisioners(s.context)
 }
 
