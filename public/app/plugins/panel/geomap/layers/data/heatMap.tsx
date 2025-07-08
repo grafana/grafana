@@ -12,8 +12,8 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ScaleDimensionConfig } from '@grafana/schema';
-import { getScaledDimension } from 'app/features/dimensions';
-import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
+import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
+import { getScaledDimension } from 'app/features/dimensions/scale';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 

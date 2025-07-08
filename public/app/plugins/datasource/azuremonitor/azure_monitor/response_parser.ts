@@ -4,15 +4,16 @@ import { FetchResponse } from '@grafana/runtime';
 
 import TimeGrainConverter from '../time_grain_converter';
 import {
+  AzureAPIResponse,
   AzureMonitorLocalizedValue,
   AzureMonitorLocations,
   AzureMonitorMetricAvailabilityMetadata,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorOption,
-  AzureAPIResponse,
   Location,
   Subscription,
-} from '../types';
+} from '../types/types';
+
 export default class ResponseParser {
   static parseResponseValues<T>(
     result: AzureAPIResponse<T>,

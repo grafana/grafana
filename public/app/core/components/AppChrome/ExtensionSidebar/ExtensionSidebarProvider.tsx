@@ -18,7 +18,7 @@ const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-grafanadocsplugin-app',
 ];
 
-type ExtensionSidebarContextType = {
+export type ExtensionSidebarContextType = {
   /**
    * Whether the extension sidebar is enabled.
    */

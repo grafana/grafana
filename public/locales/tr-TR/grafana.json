@@ -352,6 +352,10 @@
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Aktif zamanlamalar"
     },
+    "ad": {
+      "close": "",
+      "learn-more": ""
+    },
     "add-button": {
       "add-more": "Daha fazlasını ekle"
     },
@@ -1525,8 +1529,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "Başlayalım",
       "label-insights": "İçgörüler",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "Uyarı sistemi"
     },
     "import-to-gma": {
@@ -3895,6 +3911,7 @@
     "tooltip": "Kapat"
   },
   "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Seçenekler yüklenirken bir hata oluştu."

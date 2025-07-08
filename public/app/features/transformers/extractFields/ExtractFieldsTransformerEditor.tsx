@@ -20,21 +20,24 @@ import { extractFieldsTransformer } from './extractFields';
 import { fieldExtractors } from './fieldExtractors';
 import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
 
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: {
-    width: 30,
-    placeholderText: 'Select field',
-  },
-  name: '',
-  id: '',
-  editor: () => null,
-};
-
 export const extractFieldsTransformerEditor = ({
   input,
   options = { delimiter: ',' },
   onChange,
 }: TransformerUIProps<ExtractFieldsOptions>) => {
+  const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+    settings: {
+      width: 30,
+      placeholderText: t(
+        'transformers.extract-fields-transformer-editor.field-name-picker-settings.placeholderText.select-field',
+        'Select field'
+      ),
+    },
+    name: '',
+    id: '',
+    editor: () => null,
+  };
+
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,

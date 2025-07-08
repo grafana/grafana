@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { getCredentials, updateCredentials } from '../../credentials';
-import { AzureMonitorDataSourceSettings } from '../../types';
+import { AzureMonitorDataSourceSettings } from '../../types/types';
 
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';

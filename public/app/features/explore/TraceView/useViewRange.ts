@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { ViewRangeTimeUpdate, ViewRange } from './components';
+import { ViewRange, ViewRangeTimeUpdate } from './components/TraceTimelineViewer/types';
 
 /**
  * Controls state of the zoom function that can be used through minimap in header or on the timeline. ViewRange contains
