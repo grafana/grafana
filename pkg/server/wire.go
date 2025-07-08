@@ -330,7 +330,6 @@ var wireBasicSet = wire.NewSet(
 	featuremgmt.ProvideToggles,
 	featuremgmt.ProvideOpenFeatureService,
 	featuremgmt.ProvideStaticEvaluator,
-	signer.ProvideAccessTokenSigner,
 	middleware.ProvideCloudAccessPolicyTokenSignerMiddlewareProvider,
 	dashboardservice.ProvideDashboardServiceImpl,
 	wire.Bind(new(dashboards.PermissionsRegistrationService), new(*dashboardservice.DashboardServiceImpl)),
