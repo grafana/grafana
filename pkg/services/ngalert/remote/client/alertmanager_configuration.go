@@ -43,10 +43,6 @@ type UserGrafanaConfig struct {
 	StaticHeaders map[string]string `json:"static_headers"`
 }
 
-func (mc *Mimir) ShouldPromoteConfig() bool {
-	return mc.promoteConfig
-}
-
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
 	gc := &UserGrafanaConfig{}
 	response := successResponse{
@@ -66,20 +62,8 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 	return gc, nil
 }
 
-func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
-	payload, err := definition.MarshalJSONWithSecrets(&UserGrafanaConfig{
-		GrafanaAlertmanagerConfig: cfg,
-		Hash:                      hash,
-		CreatedAt:                 createdAt,
-		Default:                   isDefault,
-		Promoted:                  mc.promoteConfig,
-		ExternalURL:               mc.externalURL,
-		SmtpConfig:                mc.smtpConfig,
-
-		// TODO: Remove once everything can be sent only in the 'smtp_config' field.
-		SmtpFrom:      mc.smtpFrom,
-		StaticHeaders: mc.staticHeaders,
-	})
+func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *UserGrafanaConfig) error {
+	payload, err := definition.MarshalJSONWithSecrets(cfg)
 	if err != nil {
 		return err
 	}

@@ -74,7 +74,10 @@ type Alertmanager struct {
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
 
-	smtp remoteClient.SmtpConfig
+	smtp          remoteClient.SmtpConfig
+	promoteConfig bool
+	externalURL   string
+	staticHeaders map[string]string
 }
 
 type AlertmanagerConfig struct {
@@ -134,18 +137,10 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	logger := log.New("ngalert.remote.alertmanager")
 
 	mcCfg := &remoteClient.Config{
-		Logger:        logger,
-		Password:      cfg.BasicAuthPassword,
-		TenantID:      cfg.TenantID,
-		URL:           u,
-		PromoteConfig: cfg.PromoteConfig,
-		ExternalURL:   cfg.ExternalURL,
-
-		Smtp: cfg.SmtpConfig,
-
-		// TODO: Remove once everything can be sent in the 'smtp_config' field.
-		SmtpFrom:      cfg.SmtpFrom,
-		StaticHeaders: cfg.StaticHeaders,
+		Logger:   logger,
+		Password: cfg.BasicAuthPassword,
+		TenantID: cfg.TenantID,
+		URL:      u,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
 	if err != nil {
@@ -200,8 +195,11 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		syncInterval:      cfg.SyncInterval,
 		tenantID:          cfg.TenantID,
 		url:               cfg.URL,
-		smtp:              cfg.SmtpConfig,
 
+		externalURL:   cfg.ExternalURL,
+		promoteConfig: cfg.PromoteConfig,
+		smtp:          cfg.SmtpConfig,
+		staticHeaders: cfg.StaticHeaders,
 		// TODO: Remove once it can be sent only in the 'smtp_config' field.
 		smtpFrom: cfg.SmtpFrom,
 	}
@@ -359,13 +357,21 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, raw []byte) (rem
 
 func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg remoteClient.GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
-	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
-		ctx,
-		cfg,
-		hash,
-		createdAt,
-		isDefault,
-	); err != nil {
+	payload := &remoteClient.UserGrafanaConfig{
+		GrafanaAlertmanagerConfig: cfg,
+		Hash:                      hash,
+		CreatedAt:                 createdAt,
+		Default:                   isDefault,
+		Promoted:                  am.promoteConfig,
+		ExternalURL:               am.externalURL,
+		SmtpConfig:                am.smtp,
+
+		// TODO: Remove once everything can be sent only in the 'smtp_config' field.
+		SmtpFrom:      am.smtpFrom,
+		StaticHeaders: am.staticHeaders,
+	}
+
+	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(ctx, payload); err != nil {
 		am.metrics.ConfigSyncErrorsTotal.Inc()
 		return err
 	}
@@ -718,7 +724,7 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool 
 		return true
 	}
 
-	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
+	if rc.Promoted != am.promoteConfig {
 		return true
 	}
 
