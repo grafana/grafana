@@ -12849,15 +12849,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chrome-remote-interface@npm:0.33.2":
-  version: 0.33.2
-  resolution: "chrome-remote-interface@npm:0.33.2"
+"chrome-remote-interface@npm:0.33.3":
+  version: 0.33.3
+  resolution: "chrome-remote-interface@npm:0.33.3"
   dependencies:
     commander: "npm:2.11.x"
     ws: "npm:^7.2.0"
   bin:
     chrome-remote-interface: bin/client.js
-  checksum: 10/fa82c76c5af629f5fbccb22c383604650f8679571385b8610783fde6f006b899c48e1522be551fd9670de59c1a2d93beb152a55651f24ba9c91ca0f8df3f581c
+  checksum: 10/65d07afc8f97fad6326bd94f0c4ef004d76b16841015c72d09aefbfa4df62b47407067a01c886535a706c36b23070b40fc3edb96444665438efa1d4f65cc3db8
   languageName: node
   linkType: hard
 
@@ -18246,7 +18246,7 @@ __metadata:
     browserslist: "npm:^4.21.4"
     centrifuge: "npm:5.3.5"
     chance: "npm:^1.1.13"
-    chrome-remote-interface: "npm:0.33.2"
+    chrome-remote-interface: "npm:0.33.3"
     classnames: "npm:2.5.1"
     codeowners: "npm:^5.1.1"
     combokeys: "npm:^3.0.0"
