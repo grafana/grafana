@@ -200,13 +200,12 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		cache := &MyCacheService{
 			legacy: b.parser.legacy,
 		}
-		zz, hasExpression, ex := sse_query.Parse(ctx, b.log, cache, dtos.MetricRequest{
+		zz, hasExpression, err := sse_query.Parse(ctx, b.log, cache, dtos.MetricRequest{
 			From:    raw.From,
 			To:      raw.To,
 			Queries: jsonQueries,
 		})
-		spew.Dump(zz)
-		spew.Dump(ex)
+		spew.Dump("1", zz)
 		if hasExpression {
 			qdr, err := sse_query.Handle(ctx, b.log, cache, zz, b.exprService)
 			if err != nil {

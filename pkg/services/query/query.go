@@ -201,16 +201,19 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
+// in the query service
 func Handle(ctx context.Context, log log.Logger, dscache datasources.CacheService, req *parsedRequest, exprService *expr.Service) (*backend.QueryDataResponse, error) {
 	s := &ServiceImpl{
 		log:               log,
 		dataSourceCache:   dscache,
 		expressionService: exprService,
-		//ExecutePipeline:   ExecutePipelineWithClient,
+		// pCtxProvider:      pCtxProvider, // todo??
+		//ExecutePipeline:   ExecutePipelineWithClient, <=== how does expecute pipeline work when we haven't defined it?
 	} // or however you initialize it
 	return s.handleExpressions(ctx, nil, req)
 }
 
+// QUESTION: is this comment accurate?
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
@@ -245,6 +248,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 		})
 	}
 
+	// inside query service but now calling a piece from single tenant grafana
 	qdr, err := s.expressionService.TransformData(ctx, time.Now(), &exprReq) // use time now because all queries have absolute time range
 	if err != nil {
 		return nil, fmt.Errorf("expression request error: %w", err)

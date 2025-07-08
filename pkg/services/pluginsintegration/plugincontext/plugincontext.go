@@ -77,6 +77,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 // PluginContext.DataSourceInstanceSettings will be resolved and appended to the returned context.
 // Note: identity.Requester can be nil.
 func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
+	// TODO REMOVE THIS COMMENT: p is nil here which causes the panic
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
