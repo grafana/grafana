@@ -427,7 +427,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		return model.LibraryElementSearchResult{}, folderFilter.parseError
 	}
 
-foldersWithMatchingTitles, err := getFoldersWithMatchingTitles(c, l, signedInUser, query)
+	foldersWithMatchingTitles, err := getFoldersWithMatchingTitles(c, l, signedInUser, query)
 	if err != nil {
 		return model.LibraryElementSearchResult{}, err
 	}
