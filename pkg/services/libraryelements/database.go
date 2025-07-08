@@ -890,40 +890,42 @@ func contains(slice []string, element string) bool {
 }
 
 func getFoldersWithMatchingTitles(c context.Context, l *LibraryElementService, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) ([]string, error) {
-	var foldersWithMatchingTitles []string
-	if len(strings.TrimSpace(query.SearchString)) > 0 {
+	if len(strings.TrimSpace(query.SearchString)) <= 0 {
+		return nil, nil
+	}
+
+	if l.features.IsEnabled(c, featuremgmt.FlagKubernetesClientDashboardsFolders) {
 		searchQuery := folder.SearchFoldersQuery{
 			OrgID:        signedInUser.GetOrgID(),
 			Title:        query.SearchString,
 			SignedInUser: signedInUser,
 		}
 
-		if l.features.IsEnabled(c, featuremgmt.FlagKubernetesClientDashboardsFolders) {
-			folderHits, err := l.folderService.SearchFolders(c, searchQuery)
+		folderHits, err := l.folderService.SearchFolders(c, searchQuery)
+		if err != nil {
+			return nil, err
+		}
 
-			if err != nil {
-				return nil, err
-			}
-			foldersWithMatchingTitles = make([]string, 0, len(folderHits))
-			for _, hit := range folderHits {
-				foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
-			}
-		} else {
-			// Fallback to GetFolders
-			fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
-				OrgID:        signedInUser.GetOrgID(),
-				SignedInUser: signedInUser,
-			})
-			if err != nil {
-				return nil, err
-			}
+		foldersWithMatchingTitles := make([]string, 0, len(folderHits))
+		for _, hit := range folderHits {
+			foldersWithMatchingTitles = append(foldersWithMatchingTitles, hit.UID)
+		}
+		return foldersWithMatchingTitles, nil
+	}
 
-			foldersWithMatchingTitles = make([]string, 0, len(fs))
-			for _, f := range fs {
-				if strings.Contains(strings.ToLower(f.Title), strings.ToLower(query.SearchString)) {
-					foldersWithMatchingTitles = append(foldersWithMatchingTitles, f.UID)
-				}
-			}
+	// Fallback to GetFolders
+	fs, err := l.folderService.GetFolders(c, folder.GetFoldersQuery{
+		OrgID:        signedInUser.GetOrgID(),
+		SignedInUser: signedInUser,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	foldersWithMatchingTitles := make([]string, 0, len(fs))
+	for _, f := range fs {
+		if strings.Contains(strings.ToLower(f.Title), strings.ToLower(query.SearchString)) {
+			foldersWithMatchingTitles = append(foldersWithMatchingTitles, f.UID)
 		}
 	}
 	return foldersWithMatchingTitles, nil
