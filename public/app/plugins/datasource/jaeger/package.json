@@ -29,7 +29,7 @@
     "@testing-library/react": "16.2.0",
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
-    "@types/lodash": "4.17.15",
+    "@types/lodash": "4.17.20",
     "@types/logfmt": "^1.2.3",
     "@types/node": "22.15.0",
     "@types/react": "18.3.18",

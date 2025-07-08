@@ -5,7 +5,7 @@ import { ScrollContainer } from './ScrollContainer';
 import mdx from './ScrollContainer.mdx';
 
 const meta: Meta<typeof ScrollContainer> = {
-  title: 'General/Layout/ScrollContainer',
+  title: 'Layout/ScrollContainer',
   component: ScrollContainer,
   parameters: {
     controls: {

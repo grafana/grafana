@@ -34,7 +34,7 @@ interface Props {
 }
 
 function FormContent({ initialValues, repository, workflowOptions, folder, isGitHub, onDismiss }: FormProps) {
-  const prURL = usePullRequestParam();
+  const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
