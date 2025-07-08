@@ -2,7 +2,7 @@
 
 This document provides a simple way to reproduce the bug where adding plugin permissions to built-in roles causes users to lose dashboard access after the June 13, 2024 upgrade.
 
-## Bug Summary
+## theory
 
 The issue occurs in `pkg/services/accesscontrol/resourcepermissions/service.go` in the `GetPermissions()` method where action set resolution logic incorrectly filters out non-dashboard/folder actions, causing managed roles to lose their permissions.
 
@@ -12,137 +12,7 @@ The issue occurs in `pkg/services/accesscontrol/resourcepermissions/service.go` 
 - Admin access to Grafana
 - Ability to create users and assign roles
 
-## Step-by-Step Reproduction
-
-### 1. Create Test Environment
-
-```bash
-# Start Grafana in development mode
-make run
-
-# Or using Docker
-docker run -d -p 3000:3000 --name grafana-test grafana/grafana:latest
-```
-
-### 2. Create Test User with Editor Role
-
-```bash
-# Using Grafana API
-curl -X POST \
-  http://admin:admin@localhost:3000/api/admin/users \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "name": "Test User",
-    "email": "test@example.com",
-    "login": "testuser",
-    "password": "testpass",
-    "OrgId": 1
-  }'
-
-# Set user role to Editor
-curl -X PATCH \
-  http://admin:admin@localhost:3000/api/org/users/2 \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "role": "Editor"
-  }'
-```
-
-### 3. Verify Dashboard Access (Before)
-
-```bash
-# Login as test user and verify dashboard access
-curl -u testuser:testpass \
-  http://localhost:3000/api/dashboards/home
-
-# Should return dashboard data successfully
-
-# Check folder permissions
-curl -u testuser:testpass \
-  http://localhost:3000/api/folders
-```
-
-### 4. Add Plugin Permission to Editor Role
-
-Using Terraform configuration:
-
-```hcl
-# main.tf
-terraform {
-  required_providers {
-    grafana = {
-      source  = "grafana/grafana"
-      version = "~> 3.0"
-    }
-  }
-}
-
-provider "grafana" {
-  url  = "http://localhost:3000"
-  auth = "admin:admin"
-}
-
-resource "grafana_builtin_role_assignment" "editor_plugin_access" {
-  builtin_role = "Editor"
-  
-  permissions {
-    action = "plugins.app:access"
-    scope  = "plugins:id:grafana-testdata-datasource"
-  }
-}
-```
-
-Or using API directly:
-
-```bash
-# Add plugin permission to Editor role
-curl -X POST \
-  http://admin:admin@localhost:3000/api/access-control/builtin-roles/Editor/role-permissions \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "permissions": [
-      {
-        "action": "plugins.app:access",
-        "scope": "plugins:id:grafana-testdata-datasource"
-      }
-    ]
-  }'
-```
-
-### 5. Verify Dashboard Access Loss (After)
-
-```bash
-# Test dashboard access - should now fail
-curl -u testuser:testuser \
-  http://localhost:3000/api/dashboards/home
-
-# Check specific permission endpoint
-curl -u testuser:testuser \
-  http://localhost:3000/api/access-control/user/permissions
-
-# Check folder access
-curl -u testuser:testuser \
-  http://localhost:3000/api/folders
-```
-
-Expected result: Dashboard access should be denied even though the user still has Editor role.
-
-### 6. Debug: Check Managed Role Creation
-
-```bash
-# Check if managed role was created
-curl -X GET \
-  http://admin:admin@localhost:3000/api/access-control/roles \
-  | jq '.[] | select(.name | contains("managed:builtins:editor"))'
-
-# Check permissions on the managed role
-curl -X GET \
-  http://admin:admin@localhost:3000/api/access-control/roles/managed:builtins:editor:permissions/permissions
-```
-
-Expected result: Managed role should only contain plugin permission, missing dashboard/folder permissions.
-
-## Alternative UI Reproduction
+ UI Reproduction
 
 ### 1. Use Grafana UI
 
@@ -213,13 +83,3 @@ resource "grafana_builtin_role_assignment" "editor_complete" {
   }
 }
 ```
-
-## Cleanup
-
-```bash
-# Remove test resources
-curl -X DELETE http://admin:admin@localhost:3000/api/admin/users/2
-docker stop grafana-test && docker rm grafana-test
-```
-
-This reproduction demonstrates how the action set resolution bug causes permission loss when plugin permissions are added to built-in roles.
