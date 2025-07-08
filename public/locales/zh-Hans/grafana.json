@@ -84,6 +84,7 @@
     "admin-feature-toggles-table": {
       "confirm-modal-body-1": "有些功能可以稳定运行（GA 正式版）并默认启用，而有些功能目前处于初步的 Beta 测试阶段，可供用户提前试用。",
       "confirm-modal-body-2": "我们建议在修改之前了解每个功能更改所带来的影响。",
+      "confirmText-save-changes": "",
       "get-stage-cell": {
         "beta": "Beta 测试版",
         "content-general-availability": "正式发布",
@@ -96,13 +97,20 @@
     },
     "admin-orgs-table": {
       "aria-label-delete-org": "删除组织",
+      "confirmText-delete": "",
       "title-delete": "删除"
     },
     "anon-users": {
       "not-found": "未找到匿名用户。"
     },
     "base-user-sessions": {
+      "body-force-logout-from-all-devices": "",
+      "confirmText-confirm-logout": "",
+      "confirmText-force-logout": "",
       "title-force-logout-from-all-devices": "强制从所有设备退出登录"
+    },
+    "change-org-button": {
+      "confirmText-save": ""
     },
     "edit-org": {
       "access-denied": "您没有权限查看此组织中的用户。要更新此组织，请与服务器管理员联系。",
@@ -208,9 +216,11 @@
       "not-editable": "此用户的角色不可编辑，因为它是从您的身份验证提供商同步而来的。有关详细信息，请参阅 <1>Grafana 身份验证文档</1>。"
     },
     "org-users-table": {
+      "body-delete": "",
       "columns": {
         "aria-label-role": "角色"
       },
+      "confirmText-delete": "",
       "delete-aria-label": "删除用户：{{name}}",
       "title-delete": "删除"
     },
@@ -240,6 +250,9 @@
     },
     "settings": {
       "info-description": "这些系统设置在 grafana.ini 或 custom.ini 中定义（或在 ENV 变量中覆盖）。要更改这些设置，您当前需要重新启动 Grafana。"
+    },
+    "un-themed-org-row": {
+      "confirmText-confirm-removal": ""
     },
     "upgrade-info": {
       "title": "企业许可"
@@ -293,12 +306,17 @@
     },
     "user-permissions": {
       "change-button": "更改",
+      "confirmText-change": "",
       "grafana-admin-key": "Grafana 管理员",
       "grafana-admin-no": "否",
       "grafana-admin-yes": "是",
       "title": "权限"
     },
     "user-profile": {
+      "body-delete": "",
+      "body-disable": "",
+      "confirmText-delete-user": "",
+      "confirmText-disable-user": "",
       "delete-button": "删除用户",
       "disable-button": "禁用用户",
       "edit-button": "编辑",
@@ -311,6 +329,9 @@
       "title": "用户信息",
       "title-delete-user": "删除用户",
       "title-disable-user": "禁用用户"
+    },
+    "user-profile-row": {
+      "confirmText-save": ""
     },
     "user-sessions": {
       "browser-column": "浏览器和操作系统",
@@ -351,6 +372,10 @@
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "活跃时间设定"
+    },
+    "ad": {
+      "close": "",
+      "learn-more": ""
     },
     "add-button": {
       "add-more": "添加更多"
@@ -453,6 +478,9 @@
       "label-muting-grouping-and-timings-optional": "静音、分组和时间设定（可选）",
       "title-muting-grouping-and-timings": "静音、分组和时间设定"
     },
+    "alert-manager-picker": {
+      "noOptionsMessage-no-datasources-found": ""
+    },
     "alert-menu": {
       "copy-link": "复制链接",
       "duplicate": "复制",
@@ -542,6 +570,7 @@
       "view-configuration": "视图配置"
     },
     "alertmanager-config": {
+      "confirmText-yes-reset-configuration": "",
       "gma-manual-configuration-description": "无法手动更改内部 Grafana Alertmanager 配置。要更改此配置，请通过用户界面编辑单个资源。",
       "gma-manual-configuration-is-not-supported": "不支持手动进行配置更改",
       "message": {
@@ -556,11 +585,13 @@
       "title-resetting-alertmanager-configuration": "重置 Alertmanager 配置"
     },
     "alertmanager-configuration-version-manager": {
+      "body-restore-configuration-version-unsaved-changes": "",
       "columns": {
         "compare": "比较",
         "restore": "还原",
         "text-latest": "最近"
       },
+      "confirmText-yes-restore-configuration": "",
       "loading": "加载中...",
       "no-previous-configurations": "没有以前的配置",
       "this-might-take-a-while": "这可能需要一点时间...",
@@ -840,8 +871,10 @@
     },
     "contact-point-header": {
       "aria-label-more-actions": "联络点“{{contactPointName}}“的更多操作",
+      "ariaLabel-delete": "",
       "button-edit": "编辑",
       "button-view": "查看",
+      "export-ariaLabel-export": "",
       "export-label-export": "导出",
       "label-delete": "删除",
       "label-manage-permissions": "管理权限",
@@ -1374,6 +1407,7 @@
       "label-disable-resolved-message": "禁用已解除消息"
     },
     "grafana-evaluation-behavior-step": {
+      "loadingMessage-loading-groups": "",
       "message": {
         "must-be-a-positive-integer": "必须是正整数。",
         "must-enter-a-group-name": "输入一个组名称"
@@ -1519,8 +1553,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "开始操作",
       "label-insights": "洞察",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "警报"
     },
     "import-to-gma": {
@@ -1819,7 +1865,11 @@
             "other-data-sources": "其他数据源"
           }
         }
-      }
+      },
+      "noOptionsMessage-no-datasources-found": ""
+    },
+    "mute-timing-actions-button": {
+      "body-delete-mute-timing": ""
     },
     "mute-timing-actions-buttons": {
       "text-disabled": "已禁用",
@@ -2069,9 +2119,11 @@
       "update-errors": {
         "conflict": "通知策略树已由其他用户更新。",
         "error-code": "错误消息：“{{error}}”",
-        "fallback": "更新通知策略时出错。",
+        "routes": {
+          "conflictingMatchers": ""
+        },
         "suffix": "请刷新页面并重试。",
-        "title": "保存通知策略时出错"
+        "title": ""
       },
       "n-more-policies_other": "其他 {{count}} 个策略"
     },
@@ -2126,6 +2178,7 @@
     "query-and-expressions-step": {
       "add-query": "添加查询",
       "body-queries-expressions-configured": "至少创建一个查询或表达式以发出警报",
+      "confirmText-deactivate": "",
       "expressions": "表达式",
       "loading-data-sources": "正在加载数据源...",
       "manipulate-returned-queries-other-operations": "使用数学和其他操作处理查询返回的数据。",
@@ -2193,6 +2246,7 @@
     "redirect-to-clone-rule": {
       "body-evaluation-group": "您需要为复制的规则设置一个新的评估组，因为原始规则已预配，无法用于在用户界面中创建的规则。",
       "body-not-provisioned": "新规则将<1>不会</1>被标记为预配规则。",
+      "confirmText-copy": "",
       "title-copy-provisioned-alert-rule": "复制已预置的警报规则"
     },
     "redirect-to-rule-viewer": {
@@ -2389,8 +2443,6 @@
       "title-inspect-alert-rule": "检查警报规则"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "找不到 UID {{uid}} 的规则详情",
-      "cannot-load-rule-details-for": "无法加载 UID {{uid}} 的规则详情",
       "configure-datasource": "配置",
       "draft-new-rule": "起草新规则",
       "ds-error": {
@@ -2737,6 +2789,9 @@
       "existing-templates-selector-placeholder-choose-notification-template": "选择通知模板",
       "loading": "加载中...",
       "template-options": {
+        "ariaLabel": {
+          "select-notification-template": ""
+        },
         "label": {
           "select-notification-template": "选择通知模板"
         }
@@ -2763,6 +2818,8 @@
     },
     "templates-table": {
       "actions": "操作",
+      "body-delete-template-group": "",
+      "confirmText-yes-delete": "",
       "no-templates-defined": "未定义模板。",
       "template-group": "模板组",
       "title-delete-template-group": "删除模板组"
@@ -2888,6 +2945,11 @@
         "delete-contact-point": "您确定要删除此联络点吗？",
         "deleting-contact-point-permanently-remove": "删除此联络点将永久移除它。",
         "title-delete-contact-point": "删除联络点"
+      }
+    },
+    "use-delete-modal": {
+      "modal": {
+        "confirmText-yes-delete": ""
       }
     },
     "use-delete-policy-modal": {
@@ -3046,7 +3108,8 @@
     "annotation-field-mapper": {
       "annotation": "注释",
       "first-value": "第一个值",
-      "from": ""
+      "from": "",
+      "noOptionsMessage-unknown-field-names": ""
     },
     "empty-state": {
       "button-title": "添加注释查询",
@@ -3180,7 +3243,7 @@
       "team-ids-github": "团队 ID 的整数列表。",
       "team-ids-label": "团队 ID",
       "team-ids-numbers": "团队 ID 必须是数字。",
-      "team-ids-other": "团队 ID 的字符串列表。",
+      "team-ids-other": "",
       "team-ids-placeholder": "输入团队 ID 并按 Enter 键添加",
       "teams-url-description": "用于查询团队 ID 的网址。如果未设置，则默认值为 /teams。",
       "teams-url-description-oauth": "如果配置了“{{ teamsURLLabel }}”，则还必须配置“{{ teamIDsAttributePathLabel }}”。",
@@ -3224,6 +3287,7 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "重置为默认值"
       },
+      "confirmText-reset": "",
       "disable": "禁用",
       "disabling": "正在禁用…",
       "discard": "丢弃",
@@ -3877,6 +3941,7 @@
     "tooltip": "关闭"
   },
   "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "加载选项时发生错误。"
@@ -4145,8 +4210,8 @@
     }
   },
   "dashbaord-scene": {
-    "interval-variable-form": {
-      "description-auto-option": "通过将时间范围除以指定的计数来动态计算间隔"
+    "variable-editor-form": {
+      "run-query": ""
     }
   },
   "dashboard": {
@@ -4308,6 +4373,9 @@
     },
     "dash-nav": {
       "on-open-snapshot-original": {
+        "confirmText": {
+          "proceed": ""
+        },
         "title": {
           "proceed-to-external-site": "继续前往外部网站？"
         }
@@ -4521,6 +4589,13 @@
         "label": {
           "editable": "可编辑",
           "readonly": "只读"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "",
+          "shared-crosshair": "",
+          "shared-tooltip": ""
         }
       }
     },
@@ -4825,6 +4900,7 @@
     },
     "revert-dashboard-modal": {
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
+      "confirmText-restore-version": "",
       "title-restore-version": "恢复版本"
     },
     "row-options-button": {
@@ -4875,6 +4951,9 @@
         "title-not-unique": "此标题并不唯一"
       }
     },
+    "save-dashboard": {
+      "message-dashboard-saved": ""
+    },
     "save-dashboard-as-button": {
       "save-as": "另存为"
     },
@@ -4909,6 +4988,7 @@
     "save-dashboard-error-proxy": {
       "body-name-exists": "所选文件夹中已存在具有相同名称的数据面板。<1></1><2>您仍然要保存此数据面板吗？。",
       "body-version-mismatch": "其他人已更新此数据面板<1></1><2>您仍然要保存此数据面板吗？。",
+      "confirmText-save-and-overwrite": "",
       "title-name-exists": "冲突",
       "title-version-mismatch": "冲突"
     },
@@ -5105,7 +5185,9 @@
       "label-apply-transformation-to": "将转换应用于"
     },
     "transformation-operation-row": {
+      "body-delete": "",
       "render-actions": {
+        "confirmText-delete": "",
         "title-debug": "调试",
         "title-disable-transformation": "禁用转换",
         "title-filter": "筛选条件",
@@ -5127,10 +5209,14 @@
       "show-images": "显示图像",
       "title-add-another-transformation": "添加其他转换"
     },
+    "un-theme-transformations-editor": {
+      "body-delete-all-transformations": ""
+    },
     "un-themed-transformations-editor": {
       "actions": {
         "add-another-transformation": "添加其他转换"
       },
+      "confirmText-delete-all": "",
       "delete-all-transformations": "删除所有转换",
       "title-delete-all-transformations": "删除所有转换？",
       "tooltip-clear-search": "清除搜索",
@@ -5167,6 +5253,7 @@
     "version-history-table": {
       "aria-label-toggle-selection": "切换版本 {{version}} 的选择",
       "date": "日期",
+      "name-latest": "",
       "notes": "备注",
       "restore": "还原",
       "updated-by": "更新人",
@@ -5243,7 +5330,8 @@
       "description-enables-users-custom-values": "允许用户向列表中添加自定义值",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "以 CSV 格式提供维度：{{name}}, {{value}}",
       "label-data-source": "数据源",
-      "label-use-static-key-dimensions": "使用静态键维度"
+      "label-use-static-key-dimensions": "使用静态键维度",
+      "name-allow-custom-values": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -5316,6 +5404,9 @@
       }
     },
     "config-public-dashboard": {
+      "confirmText": {
+        "revoke-public-url": ""
+      },
       "title": {
         "revoke-public-url": "撤销公共网址"
       }
@@ -5327,6 +5418,7 @@
     },
     "custom-variable-form": {
       "custom-options": "自定义选项",
+      "name-values-separated-comma": "",
       "selection-options": "选择内容选项"
     },
     "dashboard-edit-pane-renderer": {
@@ -5345,6 +5437,12 @@
       "label-type": "类型",
       "label-url": "URL",
       "label-with-tags": "带标记",
+      "link-type-options": {
+        "label": {
+          "dashboards": "",
+          "link": ""
+        }
+      },
       "placeholder-open-dashboard": "打开数据面板"
     },
     "dashboard-link-list": {
@@ -5391,6 +5489,8 @@
       "data-source-options": "数据源选项",
       "description-instance-name-filter": "正则表达式筛选器，用于在变量值列表中选择数据源实例。保留所有为空。",
       "example-instance-name-filter": "示例：<codeExample />",
+      "name-instance-name-filter": "",
+      "name-type": "",
       "selection-options": "选择内容选项"
     },
     "default-grid-layout-manager": {
@@ -5436,6 +5536,21 @@
     "empty-transformations-message": {
       "add-transformation": "添加转换"
     },
+    "general-settings-edit-view": {
+      "editable_options": {
+        "label": {
+          "editable": "",
+          "readonly": ""
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "",
+          "shared-crosshair": "",
+          "shared-tooltip": ""
+        }
+      }
+    },
     "get-edit-options": {
       "title": {
         "column-options": "列选项",
@@ -5466,7 +5581,8 @@
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "以 CSV 格式提供维度：{{name}}, {{value}}",
       "group-by-options": "分组选项",
       "label-data-source": "数据源",
-      "label-use-static-group-by-dimensions": "使用静态组维度"
+      "label-use-static-group-by-dimensions": "使用静态组维度",
+      "name-allow-custom-values": ""
     },
     "help-wizard": {
       "copy-to-clipboard": "复制到剪贴板",
@@ -5502,9 +5618,14 @@
       "apply": "应用"
     },
     "interval-variable-form": {
+      "description-auto-option": "",
       "description-calculated-value-below-threshold": "计算值不会低于此阈值",
       "description-step-count": "计算值时，应将当前时间范围除以多少倍",
-      "interval-options": "间隔选项"
+      "interval-options": "间隔选项",
+      "name-auto-option": "",
+      "name-min-interval": "",
+      "name-step-count": "",
+      "name-values": ""
     },
     "json-model-edit-view": {
       "cancel-button": {
@@ -5528,6 +5649,9 @@
       "title-name-already-exists": "名称已存在"
     },
     "on-open-snapshot-original-dashboard": {
+      "confirmText": {
+        "proceed": ""
+      },
       "title": {
         "proceed-to-external-site": "继续前往外部网站？"
       }
@@ -5563,6 +5687,8 @@
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "添加其他转换",
+      "body-delete-all-transformations": "",
+      "confirmText-delete-all": "",
       "delete-all-transformations": "删除所有转换",
       "title-delete-all-transformations": "删除所有转换？"
     },
@@ -5616,6 +5742,7 @@
       "description-optional": "可选，如果您想要提取序列名称或指标节点段的一部分。",
       "label-data-source": "数据源",
       "label-target-data-source": "目标数据源",
+      "name-regex": "",
       "query-options": "查询选项",
       "selection-options": "选择内容选项"
     },
@@ -5630,6 +5757,7 @@
     },
     "revert-dashboard-modal": {
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
+      "confirmText-restore-version": "",
       "title-restore-version": "恢复版本"
     },
     "save-button": {
@@ -5722,7 +5850,11 @@
     "selection-options-form": {
       "description-enables-multiple-values-selected": "允许同时选择多个值",
       "description-enables-option-include-variables": "启用选项以包含所有值",
-      "description-enables-users-custom-values": "允许用户向列表中添加自定义值"
+      "description-enables-users-custom-values": "允许用户向列表中添加自定义值",
+      "name-allow-custom-values": "",
+      "name-custom-all-value": "",
+      "name-include-all-option": "",
+      "name-multi-value": ""
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "切换共享菜单"
@@ -5741,6 +5873,9 @@
       "title": {
         "copy-to-clipboard-failed": "复制到剪贴板失败"
       }
+    },
+    "text-box-variable": {
+      "name-default-value": ""
     },
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "（可选）",
@@ -5765,6 +5900,8 @@
       }
     },
     "unlink-modal": {
+      "body-unlink-panel": "",
+      "confirmText-yes-unlink": "",
       "title-really-unlink-panel": "您确定要取消关联此面板吗？"
     },
     "unsaved-changes-modal": {
@@ -5781,6 +5918,9 @@
         }
       }
     },
+    "use-save-dashboard": {
+      "message-dashboard-saved": ""
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "此变量未被任何变量或数据面板引用。",
       "aria-label-variable-referenced-other-variables-dashboard": "此变量被其他变量或数据面板引用。",
@@ -5790,10 +5930,16 @@
     "variable-editor-form": {
       "aria-label-variable-editor-form": "变量编辑器表单",
       "back-to-list": "回到列表",
+      "confirmText": {
+        "delete-variable": ""
+      },
       "delete": "删除",
       "description-optional-display-name": "可选显示名称",
       "description-template-variable-characters": "模板变量的名称。（最多 50 个字符）",
       "general": "概况",
+      "name-description": "",
+      "name-label": "",
+      "name-name": "",
       "placeholder-descriptive-text": "描述性文本",
       "placeholder-label-name": "标签名称",
       "placeholder-variable-name": "变量名称",
@@ -5808,12 +5954,24 @@
       "variable": "变量"
     },
     "variable-editor-list-row": {
+      "body-delete-variable": "",
+      "confirmText-delete-variable": "",
       "title-delete-variable": "删除变量",
       "tooltip-duplicate-variable": "复制变量",
       "tooltip-remove-variable": "移除变量"
     },
     "variable-hide-select": {
+      "hide_options": {
+        "label": {
+          "label": "",
+          "nothing": "",
+          "variable": ""
+        }
+      },
       "label": "隐藏"
+    },
+    "variable-type-select": {
+      "name-variable-type": ""
     },
     "variable-usages-button": {
       "title-show-usages": "显示使用情况：{{variableId}}",
@@ -5841,6 +5999,7 @@
     "version-history-table": {
       "aria-label-toggle-selection": "切换版本 {{version}} 的选择",
       "date": "日期",
+      "name-latest": "",
       "notes": "备注",
       "restore": "还原",
       "updated-by": "更新人",
@@ -6228,7 +6387,8 @@
       }
     },
     "color-dimension-editor": {
-      "label-fixed-color": ""
+      "label-fixed-color": "",
+      "noOptionsMessage-no-fields-found": ""
     },
     "file-dropzone-custom-children": {
       "upload": "上传"
@@ -6266,6 +6426,7 @@
       },
       "label-limit": "限制",
       "label-value": "值",
+      "noOptionsMessage-no-fields-found": "",
       "scalar-options": {
         "description-clamped": "",
         "description-mod": "",
@@ -6274,9 +6435,15 @@
       }
     },
     "scale-dimension-editor": {
+      "fixed-value-option": {
+        "label": {
+          "fixed-value": ""
+        }
+      },
       "label-max": "最高",
       "label-min": "最小",
-      "label-value": "值"
+      "label-value": "值",
+      "noOptionsMessage-no-fields-found": ""
     },
     "text-dimension-editor": {
       "description-field": "",
@@ -6848,6 +7015,8 @@
       "aria-label-select-service-name-operator": "选择服务名称运算符",
       "aria-label-select-span-name": "选择跨度名称",
       "aria-label-select-span-name-operator": "选择跨度名称运算符",
+      "ariaLabel-select-max-span-duration": "",
+      "ariaLabel-select-min-span-duration": "",
       "label-collapse": "跨度筛选器",
       "label-duration": "持续时间",
       "label-service-name": "服务名称",
@@ -6918,6 +7087,8 @@
       "split-widen": "宽窗格"
     },
     "trace-page-actions": {
+      "ariaLabel-copy-trace-id": "",
+      "ariaLabel-export-trace": "",
       "give-feedback": "提供反馈",
       "label-copied": "已复制！",
       "label-export": "导出",
@@ -7055,6 +7226,7 @@
   },
   "folder-filter": {
     "clear-folder-button": "清除文件夹",
+    "noOptionsMessage-no-folders-found": "",
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
   },
@@ -7123,7 +7295,53 @@
     "incomplete-request-error": "很抱歉，我无法完成您的请求。请重试。",
     "send-custom-feedback": "发送"
   },
+  "geo": {
+    "get-geometry-field": {
+      "warning-gazetteer-not-found": "",
+      "warning-no-geometry": "",
+      "warning-select-geohash": "",
+      "warning-select-lat-long": "",
+      "warning-select-lookup": "",
+      "warning-unable-to-find": ""
+    },
+    "location-editor": {
+      "geohash-field": {
+        "no-fields-message": ""
+      },
+      "latitude-field": {
+        "no-fields-message": ""
+      },
+      "longitude-field": {
+        "no-fields-message": ""
+      },
+      "lookup-field": {
+        "no-fields-message": ""
+      },
+      "name-gazetteer": "",
+      "name-geohash-field": "",
+      "name-latitude-field": "",
+      "name-location-mode": "",
+      "name-longitude-field": "",
+      "name-lookup-field": ""
+    },
+    "location-more-editor": {
+      "mode-options": {
+        "description-auto": "",
+        "description-coords": "",
+        "description-geohash": "",
+        "description-lookup": "",
+        "label-auto": "",
+        "label-coords": "",
+        "label-geohash": "",
+        "label-lookup": ""
+      }
+    }
+  },
   "geomap": {
+    "category-basemap-layer": "",
+    "category-map-controls": "",
+    "category-map-layers": "",
+    "category-map-view": "",
     "coordinates-map-view-editor": {
       "label-latitude": "纬度",
       "label-longitude": "经度"
@@ -7132,6 +7350,14 @@
       "center": "居中：",
       "zoom": "缩放："
     },
+    "description-initial-view": "",
+    "description-mouse-wheel-zoom": "",
+    "description-share-view": "",
+    "description-show-attribution": "",
+    "description-show-debug": "",
+    "description-show-measure": "",
+    "description-show-scale": "",
+    "description-show-zoom": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "图层"
@@ -7154,6 +7380,14 @@
     "geomap-style-rules-editor": {
       "aria-label-add-geomap-style-rule": "添加地理图样式规则"
     },
+    "layer-editor": {
+      "category-base-layer": "",
+      "description-display-tooltip": "",
+      "name-data": "",
+      "name-display-tooltip": "",
+      "name-layer-type": "",
+      "name-opacity": ""
+    },
     "layers-editor": {
       "label-add-layer": "添加图层",
       "no-layers": "没有图层？"
@@ -7164,16 +7398,38 @@
       "label-zoom": "缩放",
       "use-current-map-settings": "使用当前地图设置"
     },
+    "markers-layer": {
+      "description-show-legend": "",
+      "name-show-legend": "",
+      "name-styles": ""
+    },
     "markers-legend": {
       "title-symbol": "符号"
     },
     "measure-overlay": {
       "tooltip-show-measure-tools": "显示测量工具"
     },
+    "name-initial-view": "",
+    "name-mouse-wheel-zoom": "",
+    "name-share-view": "",
+    "name-show-attribution": "",
+    "name-show-debug": "",
+    "name-show-measure": "",
+    "name-show-scale": "",
+    "name-show-zoom": "",
+    "name-tooltip": "",
+    "photos-layer": {
+      "noFieldsMessage-no-string-fields": ""
+    },
     "plugin": {
       "basemap-layer-configured-server-admin": "基础地图图层由服务器管理员配置。"
     },
     "style-editor": {
+      "horizontal-align-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-right": ""
+      },
       "label-align": "对齐",
       "label-baseline": "基线",
       "label-color": "颜色",
@@ -7187,7 +7443,14 @@
       "label-symbol-vertical-align": "符号垂直对齐",
       "label-text-label": "文本标签",
       "label-x-offset": "X 轴偏移量",
-      "label-y-offset": "Y 轴偏移量"
+      "label-y-offset": "Y 轴偏移量",
+      "placeholderText-select-symbol": "",
+      "placeholderText-select-symbol-or-add-text": "",
+      "vertical-align-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-top": ""
+      }
     },
     "style-rule-editor": {
       "aria-label-comparison-operator": "比较运算符",
@@ -7198,6 +7461,15 @@
       "placeholder-feature-property": "功能属性",
       "placeholder-numeric-value": "数字值",
       "placeholder-value": "值"
+    },
+    "tooltip-options": {
+      "description-details": "",
+      "description-none": "",
+      "label-details": "",
+      "label-none": ""
+    },
+    "utils": {
+      "get-next-layer-name": ""
     }
   },
   "get-enterprise": {
@@ -7447,7 +7719,8 @@
       "aria-label-selected-color": "{{colorLabel}} 颜色"
     },
     "confirm-button": {
-      "cancel": "取消"
+      "cancel": "取消",
+      "confirmText-delete": ""
     },
     "confirm-content": {
       "placeholder": "键入“{{confirmPromptText}}”以确认"
@@ -7629,6 +7902,8 @@
     },
     "panel-chrome": {
       "aria-label-toggle-collapse": "切换折叠面板",
+      "ariaLabel-panel-loading": "",
+      "ariaLabel-panel-status": "",
       "tooltip-cancel": "取消查询",
       "tooltip-cancel-loading": "取消查询",
       "tooltip-stop-streaming": "停止流媒体传输",
@@ -7796,6 +8071,12 @@
       "footer-click-to-action": "点击以 {{actionTitle}}",
       "footer-click-to-navigate": "点击打开 {{linkTitle}}",
       "timestamp": "时间戳"
+    },
+    "week-start-picker": {
+      "weekStarts-label-default": "",
+      "weekStarts-label-monday": "",
+      "weekStarts-label-saturday": "",
+      "weekStarts-label-sunday": ""
     }
   },
   "graph": {
@@ -8172,6 +8453,10 @@
     "add-library-panel-modal": {
       "title-create-library-panel": "创建库面板"
     },
+    "change-library-panel-modal": {
+      "confirmText-change": "",
+      "confirmText-replace": ""
+    },
     "confirm": {
       "delete-panel": "要删除这个面板吗？"
     },
@@ -8330,6 +8615,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8353,7 +8650,6 @@
       "label-wrap-lines": "多行显示"
     },
     "log-details": {
-      "close": "关闭日志详情",
       "fields": "字段",
       "links": "链接",
       "log-line": "日志行",
@@ -8378,6 +8674,35 @@
       "show-less": "收起",
       "show-more": "展开",
       "tooltip-error": "错误：{{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "将链接复制到日志行",
@@ -8505,6 +8830,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "数据关联",
       "aria-label-fields": "字段",
+      "aria-label-line": "",
       "aria-label-log-level": "日志级别",
       "aria-label-no-details": "没有详情"
     },
@@ -8572,6 +8898,8 @@
       "updated-on": "更新日期"
     },
     "snapshot-list-table": {
+      "body-delete": "",
+      "confirmText-delete": "",
       "title-delete": "删除"
     },
     "unthemed-dashboard-import": {
@@ -8582,6 +8910,9 @@
         "import-dashboard": "导入仪表板"
       }
     }
+  },
+  "metric-select": {
+    "noOptionsMessage-no-options-found": ""
   },
   "migrate-to-cloud": {
     "build-snapshot": {
@@ -9418,6 +9749,7 @@
     }
   },
   "org-picker": {
+    "noOptionsMessage-no-organizations-found": "",
     "select-placeholder": "选择组织"
   },
   "page": {
@@ -9640,6 +9972,7 @@
         "permission": "您无权查看此页面。",
         "title-access-denied": "访问被拒绝"
       },
+      "error-loading-plugin": "",
       "no-root-app-page-component-found": "找不到根应用页面组件"
     },
     "browse": {
@@ -9683,8 +10016,7 @@
         "update-status-text": "插件已更新"
       },
       "versions": {
-        "confirmation-text-1": "您确定要降级版本吗",
-        "confirmation-text-2": "您通常不应该这样做",
+        "confirmation-text": "",
         "downgrade-confirm": "降级",
         "downgrade-title": "降级插件版本"
       }
@@ -9738,6 +10070,10 @@
     "empty-state": {
       "message": "找不到插件"
     },
+    "extensions": {
+      "extension-error-alert-description": "",
+      "extension-error-alert-title": ""
+    },
     "extensions-log-data-source": {
       "message": {
         "ok": "好"
@@ -9771,7 +10107,11 @@
       "updating": "正在更新"
     },
     "install-controls-button": {
-      "title-uninstall-modal": "卸载 {{plugin}}"
+      "title-uninstall-modal": "卸载 {{plugin}}",
+      "uninstall-controls": {
+        "body-uninstall-plugin": "",
+        "confirmText-confirm": ""
+      }
     },
     "install-controls-warning": {
       "body-not-published": "此插件未发布到 <2>grafana.com/plugins</2>，无法通过目录管理。",
@@ -10802,6 +11142,7 @@
     }
   },
   "service-account-picker": {
+    "noOptionsMessage-no-service-accounts-found": "",
     "select-aria-label": "服务帐户选取器",
     "select-placeholder": "开始键入以搜索服务账户"
   },
@@ -10847,6 +11188,10 @@
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "添加服务账户令牌",
+      "body-delete-service-account": "",
+      "body-disable-service-account": "",
+      "confirmText-delete-service-account": "",
+      "confirmText-disable-service-account": "",
       "delete-service-account": "删除服务账户",
       "disable-service-account": "禁用服务账户",
       "enable-service-account": "启用服务账户",
@@ -10873,6 +11218,7 @@
       "used-by": "使用方"
     },
     "service-account-profile-row": {
+      "confirmText-save": "",
       "edit": "编辑"
     },
     "service-account-role-row": {
@@ -10886,10 +11232,15 @@
     },
     "service-accounts-list-page-unconnected": {
       "add-service-account": "添加服务账户",
+      "body-delete-with-tokens": "",
+      "body-disable-service-account": "",
+      "confirmText-delete": "",
+      "confirmText-disable-service-account": "",
       "placeholder-search-service-account-by-name": "按名称搜索服务账户",
       "sub-title": "服务账户及其令牌可用于对 Grafana API 进行身份验证。不妨在我们的<2>文档</2>中了解更多信息。",
       "title-delete-service-account": "删除服务账户",
-      "title-disable-service-account": "禁用服务账户"
+      "title-disable-service-account": "禁用服务账户",
+      "body-delete_other": ""
     },
     "token-expiration": {
       "content-this-token-has-expired": "此令牌已过期",
@@ -11353,6 +11704,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "在图片无法显示或用户使用屏幕阅读器时，将显示的替代文本",
       "description-title-text": "光标悬停在图片上时将显示的文本",
@@ -11373,6 +11725,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11423,6 +11776,7 @@
     "tag-option-label": "标记选项"
   },
   "team-picker": {
+    "noOptionsMessage-no-teams-found": "",
     "select-aria-label": "团队选择器",
     "select-placeholder": "选择一个团队"
   },
@@ -11748,6 +12102,7 @@
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "添加转换字段类型转换器",
       "aria-label-remove-convert-field-type-transformer": "移除转换字段类型转换器",
+      "convert-field-type": "",
       "label": {
         "browser": "浏览器",
         "utc": "UTC"
@@ -11790,6 +12145,11 @@
       "remove-enum-row-tooltip-delete": "删除"
     },
     "extract-fields-transformer-editor": {
+      "field-name-picker-settings": {
+        "placeholderText": {
+          "select-field": ""
+        }
+      },
       "label-delimiter": "分隔符",
       "label-format": "格式",
       "label-keep-time": "保持时间",
@@ -11803,6 +12163,14 @@
       "aria-label-threshold-color": "阈值颜色"
     },
     "field-lookup-transformer-editor": {
+      "field-name-picker-settings": {
+        "noFieldsMessage": {
+          "no-text-fields-found": ""
+        },
+        "placeholderText": {
+          "select-text-field": ""
+        }
+      },
       "label-field": "字段",
       "label-lookup": "查阅"
     },
@@ -11828,10 +12196,30 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "添加条件",
+      "filter-match": {
+        "label": {
+          "match-all": "",
+          "match-any": ""
+        }
+      },
+      "filter-types": {
+        "label": {
+          "exclude": "",
+          "include": ""
+        }
+      },
       "label-conditions": "条件",
       "label-filter-type": "筛选器类型"
     },
     "format-string-transfomer-editor": {
+      "field-name-picker-settings": {
+        "noFieldsMessage": {
+          "no-text-fields-found": ""
+        },
+        "placeholderText": {
+          "select-text-field": ""
+        }
+      },
       "label-field": "字段",
       "label-format": "格式",
       "label-substring-range": "子字符串范围"
@@ -12142,6 +12530,7 @@
     "title": "组织"
   },
   "user-picker": {
+    "noOptionsMessage-no-users-found": "",
     "select-aria-label": "用户选取器",
     "select-placeholder": "开始键入以搜索用户"
   },
@@ -12227,6 +12616,8 @@
       }
     },
     "confirm-delete-modal": {
+      "body-delete-variable": "",
+      "confirmText-delete": "",
       "title-delete-variable": "删除变量"
     },
     "create-ad-hoc-variable-adapter": {
@@ -12275,9 +12666,24 @@
       "label-refresh": "刷新"
     },
     "query-variable-sort-select": {
-      "description-values-variable": "如何对此变量的值进行排序"
+      "description-values-variable": "如何对此变量的值进行排序",
+      "name-sort": "",
+      "sort_options": {
+        "label": {
+          "alphabetical-asc": "",
+          "alphabetical-caseinsensitive-asc": "",
+          "alphabetical-caseinsensitive-desc": "",
+          "alphabetical-desc": "",
+          "disabled": "",
+          "natural-asc": "",
+          "natural-desc": "",
+          "numerical-asc": "",
+          "numerical-desc": ""
+        }
+      }
     },
     "text-box-variable-editor": {
+      "name-default-value": "",
       "placeholder-default-value-if-any": "默认值（如有）",
       "text-options": "文本选项"
     },
@@ -12306,6 +12712,8 @@
       "description-optional-display-name": "可选显示名称",
       "description-template-variable-characters": "模板变量的名称。（最多 50 个字符）",
       "general": "概况",
+      "name-label": "",
+      "name-name": "",
       "placeholder-descriptive-text": "描述性文本",
       "placeholder-label-name": "标签名称",
       "placeholder-variable-name": "变量名称",
@@ -12320,8 +12728,14 @@
       "tooltip-duplicate-variable": "复制变量",
       "tooltip-remove-variable": "移除变量"
     },
+    "variable-editor-un-connected": {
+      "name-description": ""
+    },
     "variable-options": {
       "aria-label-toggle-all-values": "切换所有值"
+    },
+    "variable-type-select": {
+      "name-select-variable-type": ""
     },
     "variable-usages-button": {
       "tooltip-show-usages": "显示使用情况"

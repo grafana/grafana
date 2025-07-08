@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } fr
 import { Column, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
-import { Field, fieldReducers, FieldType, formattedValueToString, reduceField } from '@grafana/data';
+import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
@@ -17,6 +17,7 @@ import {
   getColumnTypes,
   GetMaxWrapCellOptions,
   getMaxWrapCell,
+  getCellLinks,
 } from './utils';
 
 // Helper function to get displayed value
@@ -140,7 +141,7 @@ export interface PaginatedRowsOptions {
   headerHeight: number;
   footerHeight: number;
   paginationHeight?: number;
-  enabled?: boolean;
+  enabled: boolean;
 }
 
 export interface PaginatedRowsResult {
@@ -167,11 +168,17 @@ export function usePaginatedRows(
 
   // calculate average row height if row height is variable.
   const avgRowHeight = useMemo(() => {
+    if (!enabled) {
+      return 0;
+    }
+
     if (typeof rowHeight === 'number') {
       return rowHeight;
     }
-    return rows.reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
-  }, [rows, rowHeight]);
+
+    // we'll just measure 100 rows to estimate
+    return rows.slice(0, 100).reduce((avg, row, _, { length }) => avg + rowHeight(row) / length, 0);
+  }, [rows, rowHeight, enabled]);
 
   // using dimensions of the panel, calculate pagination parameters
   const { numPages, rowsPerPage, pageRangeStart, pageRangeEnd, smallPagination } = useMemo((): {
@@ -325,6 +332,7 @@ export function useTypographyCtx(): TypographyCtx {
     const txtWidth = ctx.measureText(txt).width;
     const avgCharWidth = txtWidth / txt.length + letterSpacing;
     const { count } = varPreLine(ctx);
+
     const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
       if (text === '') {
         return defaultHeight;
@@ -589,4 +597,11 @@ export function useColumnResize(
   );
 
   return dataGridResizeHandler;
+}
+
+export function useSingleLink(field: Field, rowIdx: number): LinkModel | undefined {
+  const linksCount = field.config.links?.length ?? 0;
+  const actionsCount = field.config.actions?.length ?? 0;
+  const shouldShowLink = linksCount === 1 && actionsCount === 0;
+  return useMemo(() => (shouldShowLink ? (getCellLinks(field, rowIdx) ?? []) : [])[0], [field, shouldShowLink, rowIdx]);
 }
