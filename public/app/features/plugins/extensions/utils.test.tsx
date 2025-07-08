@@ -7,6 +7,7 @@ import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { log } from './logs/log';
+import { resetLogMock } from './logs/testUtils';
 import {
   deepFreeze,
   handleErrorsInFn,
@@ -26,7 +27,7 @@ import {
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   ...jest.requireActual('app/features/plugins/pluginSettings'),
-  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' } }),
+  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
 }));
 
 describe('Plugin Extensions / Utils', () => {
@@ -36,6 +37,9 @@ describe('Plugin Extensions / Utils', () => {
     jest.spyOn(log, 'error').mockImplementation(() => {});
     jest.spyOn(log, 'warning').mockImplementation(() => {});
     jest.spyOn(log, 'debug').mockImplementation(() => {});
+    jest.spyOn(log, 'info').mockImplementation(() => {});
+    jest.spyOn(log, 'trace').mockImplementation(() => {});
+    jest.spyOn(log, 'fatal').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -723,6 +727,27 @@ describe('Plugin Extensions / Utils', () => {
       expect(modal).toHaveTextContent('Version: 1.0.0');
     });
 
+    it('should add a wrapper div with a "data-plugin-sandbox" attribute', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction({
+        pluginId,
+        extensionPointId: 'myorg-extensions-app/link/v1',
+        title: 'Title in modal',
+      });
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+      });
+
+      expect(await screen.findByRole('dialog')).toBeVisible();
+
+      expect(screen.getByTestId('plugin-sandbox-wrapper')).toHaveAttribute(
+        'data-plugin-sandbox',
+        'grafana-worldmap-panel'
+      );
+    });
+
     it('should show an error alert in the modal IN DEV MODE if the extension throws an error', async () => {
       config.buildInfo.env = 'development';
       jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -815,6 +840,10 @@ describe('Plugin Extensions / Utils', () => {
         </div>
       );
     };
+
+    beforeEach(() => {
+      resetLogMock(log);
+    });
 
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
