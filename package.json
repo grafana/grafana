@@ -164,7 +164,7 @@
     "@types/yargs": "17.0.33",
     "@typescript-eslint/eslint-plugin": "8.35.1",
     "@typescript-eslint/parser": "8.35.1",
-    "autoprefixer": "10.4.20",
+    "autoprefixer": "10.4.21",
     "babel-loader": "9.2.1",
     "blob-polyfill": "9.0.20240710",
     "browserslist": "^4.21.4",
