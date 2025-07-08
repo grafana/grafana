@@ -2,7 +2,7 @@ import { createAction } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { SearchProps, SplitOpenOptions, TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
+import { TraceSearchProps, SplitOpenOptions, TimeRange, EventBusSrv, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -66,7 +66,7 @@ export const clearPanes = createAction('explore/clearPanes');
  */
 export const setSpanFilters = createAction<{
   exploreId: string;
-  spanFilters: SearchProps;
+  spanFilters: TraceSearchProps;
 }>('explore/setSpanFilters');
 
 /**
@@ -337,13 +337,24 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       console.warn('setSpanFilters action dispatched without a valid exploreId');
       return state;
     }
+
+    const currentPane = state.panes[exploreId];
+    const currentPanelsState = currentPane.panelsState || {};
+    const currentTraceState = currentPanelsState.trace || {};
+
     return {
       ...state,
       panes: {
         ...state.panes,
         [exploreId]: {
-          ...state.panes[exploreId],
-          spanFilters: spanFilters ?? state.panes[exploreId].spanFilters,
+          ...currentPane,
+          panelsState: {
+            ...currentPanelsState,
+            trace: {
+              ...currentTraceState,
+              spanFilters: spanFilters ?? currentTraceState.spanFilters,
+            },
+          },
         },
       },
     };

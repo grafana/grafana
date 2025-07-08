@@ -33,7 +33,7 @@ import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
-import { DEFAULT_SPAN_FILTERS, DEFAULT_RANGE } from './constants';
+import { DEFAULT_RANGE } from './constants';
 
 export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
 
@@ -75,7 +75,6 @@ export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): Exp
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
-  spanFilters: DEFAULT_SPAN_FILTERS,
   ...overrides,
 });
 

@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
 
-import { GrafanaTheme2, SearchProps, SelectableValue, toOption } from '@grafana/data';
+import { GrafanaTheme2, TraceSearchProps, SelectableValue, toOption } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -31,8 +31,8 @@ import { SpanFiltersTags } from './SpanFiltersTags';
 
 export type SpanFilterProps = {
   trace: Trace;
-  search: SearchProps;
-  setSearch: (newSearch: SearchProps) => void;
+  search: TraceSearchProps;
+  setSearch: (newSearch: TraceSearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
@@ -100,7 +100,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
     return null;
   }
 
-  const setSpanFiltersSearch = (spanSearch: SearchProps) => {
+  const setSpanFiltersSearch = (spanSearch: TraceSearchProps) => {
     setFocusedSpanIndexForSearch(-1);
     setFocusedSpanIdForSearch('');
     setSearch(spanSearch);

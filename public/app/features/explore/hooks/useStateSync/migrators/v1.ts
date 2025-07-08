@@ -1,6 +1,6 @@
-import { ExploreUrlState, SearchProps } from '@grafana/data';
+import { ExploreUrlState } from '@grafana/data';
 import { ID_ALPHABET, generateExploreId } from 'app/core/utils/explore';
-import { DEFAULT_RANGE, DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
+import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
 
 import { hasKey } from '../../utils';
 
@@ -93,7 +93,6 @@ const DEFAULT_STATE: ExploreUrlState = {
   datasource: null,
   queries: [],
   range: DEFAULT_RANGE,
-  spanFilters: DEFAULT_SPAN_FILTERS,
 };
 
 function applyDefaults(input: unknown): ExploreUrlState {
@@ -119,24 +118,5 @@ function applyDefaults(input: unknown): ExploreUrlState {
       hasKey('to', input.range) &&
       typeof input.range.from === 'string' &&
       typeof input.range.to === 'string' && { range: { from: input.range.from, to: input.range.to } }),
-    // spanFilters
-    ...(hasKey('spanFilters', input) &&
-      !!input.spanFilters &&
-      typeof input.spanFilters === 'object' &&
-      isValidSpanFilters(input.spanFilters) && { spanFilters: input.spanFilters }),
   };
-}
-
-function isValidSpanFilters(input: unknown): input is SearchProps {
-  if (!input || typeof input !== 'object') {
-    return false;
-  }
-
-  // Basic validation - check if it has the required operator fields
-  return (
-    hasKey('serviceNameOperator', input) &&
-    hasKey('spanNameOperator', input) &&
-    hasKey('fromOperator', input) &&
-    hasKey('toOperator', input)
-  );
 }
