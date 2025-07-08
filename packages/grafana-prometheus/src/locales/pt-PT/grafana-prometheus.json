@@ -110,11 +110,11 @@
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-manage-alerts-via-alerting-ui": "",
         "label-allow-as-recording-rules-target": "",
+        "label-manage-alerts-via-alerting-ui": "",
         "title-alerting": "Alerta",
-        "tooltip-manage-alerts-via-alerting-ui": "Gerir regras de alerta para esta origem de dados. Para gerir outros recursos do Alerting, adicione uma origem de dados do Alertmanager.",
-        "tooltip-allow-as-recording-rules-target": ""
+        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-manage-alerts-via-alerting-ui": "Gerir regras de alerta para esta origem de dados. Para gerir outros recursos do Alerting, adicione uma origem de dados do Alertmanager."
       },
       "config-editor": {
         "browser-access-mode-error": "",
@@ -157,6 +157,10 @@
         "aria-label-prom-type-type": "",
         "aria-label-prometheus-type": "",
         "aria-label-select-http-method": "",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
         "label-cache-level": "",
         "label-custom-query-parameters": "",
         "label-default-editor": "",
@@ -170,6 +174,7 @@
         "label-query-overlap-window": "",
         "label-query-timeout": "",
         "label-scrape-interval": "",
+        "label-series-limit": "",
         "label-use-series-endpoint": "",
         "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "",
@@ -190,7 +195,18 @@
         "tooltip-query-overlap-window": "",
         "tooltip-query-timeout": "",
         "tooltip-scrape-interval": "",
+        "tooltip-series-limit": "",
         "tooltip-use-series-endpoint": ""
+      }
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
       }
     },
     "querybuilder": {
@@ -201,6 +217,13 @@
       "feedback-link": {
         "give-feedback": "Dar feedback",
         "title-give-feedback": ""
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
       },
       "handle-function": {
         "text": {
@@ -216,6 +239,10 @@
         "label-filters": "",
         "label-label-filters": "",
         "tooltip-label-filters": ""
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
       },
       "metric-combobox": {
         "async-select": {
@@ -272,6 +299,11 @@
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
         "label-exemplars": "",
         "label-format": "Formato",
         "label-min-step": "",
@@ -286,6 +318,8 @@
         "tooltip-autocomplete-suggestions-limited": ""
       },
       "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
         "kick-start-your-query": "Dê início à sua consulta",
         "label-explain": "",
         "run-queries": "",
@@ -301,6 +335,12 @@
       },
       "query-editor-hints": {
         "hint-details": ""
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
       },
       "query-pattern": {
         "apply-query": "",

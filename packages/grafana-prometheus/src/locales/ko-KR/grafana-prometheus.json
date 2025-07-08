@@ -110,11 +110,11 @@
     },
     "configuration": {
       "alerting-settings-overhaul": {
-        "label-manage-alerts-via-alerting-ui": "",
         "label-allow-as-recording-rules-target": "",
+        "label-manage-alerts-via-alerting-ui": "",
         "title-alerting": "경고",
-        "tooltip-manage-alerts-via-alerting-ui": "이 데이터 소스에 대한 경고 규칙을 관리합니다. 다른 Alerting 리소스를 관리하려면 Alertmanager 데이터 소스를 추가하세요.",
-        "tooltip-allow-as-recording-rules-target": ""
+        "tooltip-allow-as-recording-rules-target": "",
+        "tooltip-manage-alerts-via-alerting-ui": "이 데이터 소스에 대한 경고 규칙을 관리합니다. 다른 Alerting 리소스를 관리하려면 Alertmanager 데이터 소스를 추가하세요."
       },
       "config-editor": {
         "browser-access-mode-error": "",
@@ -157,6 +157,10 @@
         "aria-label-prom-type-type": "",
         "aria-label-prometheus-type": "",
         "aria-label-select-http-method": "",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
         "label-cache-level": "",
         "label-custom-query-parameters": "",
         "label-default-editor": "",
@@ -170,6 +174,7 @@
         "label-query-overlap-window": "",
         "label-query-timeout": "",
         "label-scrape-interval": "",
+        "label-series-limit": "",
         "label-use-series-endpoint": "",
         "more-info": "",
         "placeholder-example-maxsourceresolutionmtimeout": "",
@@ -190,7 +195,18 @@
         "tooltip-query-overlap-window": "",
         "tooltip-query-timeout": "",
         "tooltip-scrape-interval": "",
+        "tooltip-series-limit": "",
         "tooltip-use-series-endpoint": ""
+      }
+    },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
       }
     },
     "querybuilder": {
@@ -201,6 +217,13 @@
       "feedback-link": {
         "give-feedback": "피드백 제출하기",
         "title-give-feedback": ""
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
       },
       "handle-function": {
         "text": {
@@ -216,6 +239,10 @@
         "label-filters": "",
         "label-label-filters": "",
         "tooltip-label-filters": ""
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
       },
       "metric-combobox": {
         "async-select": {
@@ -271,6 +298,11 @@
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
         "label-exemplars": "",
         "label-format": "형식",
         "label-min-step": "",
@@ -285,6 +317,8 @@
         "tooltip-autocomplete-suggestions-limited": ""
       },
       "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
         "kick-start-your-query": "쿼리 시작하기",
         "label-explain": "",
         "run-queries": "",
@@ -300,6 +334,12 @@
       },
       "query-editor-hints": {
         "hint-details": ""
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
       },
       "query-pattern": {
         "apply-query": "",

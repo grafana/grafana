@@ -3,10 +3,10 @@ import selectEvent from 'react-select-event';
 
 import { config } from '@grafana/runtime';
 
-import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
-import { validLogsQuery, validMetricSearchBuilderQuery } from '../../__mocks__/queries';
 import { LogsQueryLanguage } from '../../dataquery.gen';
 import { DEFAULT_CWLI_QUERY_STRING } from '../../defaultQueries';
+import { setupMockedDataSource } from '../../mocks/CloudWatchDataSource';
+import { validLogsQuery, validMetricSearchBuilderQuery } from '../../mocks/queries';
 
 import QueryHeader from './QueryHeader';
 

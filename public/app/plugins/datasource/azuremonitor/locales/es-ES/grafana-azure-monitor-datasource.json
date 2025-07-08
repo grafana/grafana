@@ -52,6 +52,7 @@
       "button-use-query": "Utilizar esta consulta",
       "label-categories": "Categorías",
       "label-query-results": "Resultados de la consulta: {{numResults}}",
+      "noOptionsMessage-unable-to-list-categories": "",
       "placeholder-all-categories": "Todas las categorías",
       "placeholder-search-logs": "Buscar consultas de logs",
       "text-loading": "Cargando..."
@@ -161,6 +162,8 @@
       "tooltip-limit": "Restrinja el número de filas devueltas (el valor predeterminado es 1000)."
     },
     "logs-management": {
+      "body-basic-logs-queries": "",
+      "confirmText-confirm": "",
       "description-basic-logs-queries": "Las consultas de logs básicos incurren en un coste basado en la cantidad de datos escaneados.",
       "label-logs": "Logs",
       "title-basic-logs-queries": "Consultas de logs básicos",
@@ -194,8 +197,15 @@
     },
     "query-header": {
       "aria-label-kick-start": "Los logs de Azure inician su botón de consulta",
+      "body-switching-to-builder": "",
+      "body-switching-to-kql": "",
       "button-kick-start-your-query": "Inicie su consulta",
       "button-run-query": "Ejecutar consulta",
+      "confirmText-switch-to": "",
+      "editor-modes": {
+        "label-builder": "",
+        "label-kql": ""
+      },
       "label-service": "Servicio",
       "placeholder-service": "Servicio...",
       "title-switch-mode": "¿Cambiar al modo de edición?"
@@ -221,6 +231,9 @@
       "text-loading": "Cargando...",
       "text-no-resources": "No se han encontrado recursos",
       "title-error-occurred": "Se ha producido un error al solicitar recursos de Azure Monitor"
+    },
+    "scope-selector": {
+      "label": ""
     },
     "search": {
       "aria-label-resource-search": "Búsqueda de recursos",

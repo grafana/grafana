@@ -20,7 +20,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials":      schema_pkg_apis_secret_v0alpha1_AzureCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig":     schema_pkg_apis_secret_v0alpha1_AzureKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.CredentialValue":       schema_pkg_apis_secret_v0alpha1_CredentialValue(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope":              schema_pkg_apis_secret_v0alpha1_Envelope(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials":        schema_pkg_apis_secret_v0alpha1_GCPCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig":       schema_pkg_apis_secret_v0alpha1_GCPKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials":  schema_pkg_apis_secret_v0alpha1_HashiCorpCredentials(ref),
@@ -32,6 +31,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueList":       schema_pkg_apis_secret_v0alpha1_SecureValueList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec":       schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueStatus":     schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref),
+		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SystemKeeperConfig":    schema_pkg_apis_secret_v0alpha1_SystemKeeperConfig(ref),
 	}
 }
 
@@ -229,17 +229,6 @@ func schema_pkg_apis_secret_v0alpha1_CredentialValue(ref common.ReferenceCallbac
 						},
 					},
 				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_secret_v0alpha1_Envelope(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Envelope encrytion details.",
-				Type:        []string{"object"},
 			},
 		},
 	}
@@ -641,8 +630,9 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					},
 					"value": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The raw value is only valid for write. Read/List will always be empty. There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.",
+							Description: "The raw value is only valid for write. Read/List will always be empty. There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`. Minimum and maximum lengths in bytes.",
 							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](24576),
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -724,6 +714,17 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallb
 					},
 				},
 				Required: []string{"phase"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_secret_v0alpha1_SystemKeeperConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "System Keeper.",
+				Type:        []string{"object"},
 			},
 		},
 	}

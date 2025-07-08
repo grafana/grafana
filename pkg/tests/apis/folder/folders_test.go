@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -85,6 +84,15 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					"singularName": "",
 					"namespaced": true,
 					"kind": "FolderAccessInfo",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/children",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderList",
 					"verbs": [
 						"get"
 					]
@@ -583,7 +591,6 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("not working yet")
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 	folderWithParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
@@ -708,7 +715,6 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("not yet working")
 
 	type testCase struct {
 		description          string
@@ -735,10 +741,10 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			checkAccessControl: true,
 		},
 		{
-			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
+			description:          "get folder by UID should not return parent folders if nested folder are enabled and user does not have read access to parent folders",
 			expectedCode:         http.StatusOK,
-			expectedParentUIDs:   []string{api.REDACTED},
-			expectedParentTitles: []string{api.REDACTED},
+			expectedParentUIDs:   []string{},
+			expectedParentTitles: []string{},
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
 					Actions:           []string{dashboards.ActionFoldersRead},
@@ -856,10 +862,6 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
 func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
@@ -896,7 +898,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:     "folder creation fails without permissions to create a folder",
 			input:           folderWithoutParentInput,
 			expectedCode:    http.StatusForbidden,
-			expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
+			expectedMessage: fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", "folders:create"),
 			permissions:     []resourcepermissions.SetResourcePermissionCommand{},
 		},
 		{
@@ -1017,10 +1019,6 @@ func testDescription(description string, expectedErr error) string {
 
 // There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
 func TestFoldersGetAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	type testCase struct {
 		description         string
 		expectedCode        int
@@ -1056,6 +1054,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 			expectedOutput: []dtos.FolderSearchHit{
 				{UID: "foo", Title: "Folder 1"},
 				{UID: "qux", Title: "Folder 3"},
+				{UID: folder.SharedWithMeFolder.UID, Title: folder.SharedWithMeFolder.Title},
 			},
 			permissions: folderReadAndCreatePermission,
 		},
@@ -1101,7 +1100,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 	}
 
 	// test on all dualwriter modes
-	for mode := 1; mode <= 4; mode++ {
+	for mode := 0; mode <= 4; mode++ {
 		for _, tc := range tcs {
 			t.Run(fmt.Sprintf("Mode: %d, %s", mode, tc.description), func(t *testing.T) {
 				modeDw := grafanarest.DualWriterMode(mode)
@@ -1117,6 +1116,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 					},
 					EnableFeatureToggles: []string{
 						featuremgmt.FlagNestedFolders,
+						featuremgmt.FlagUnifiedStorageSearch,
 						featuremgmt.FlagKubernetesClientDashboardsFolders,
 					},
 				})

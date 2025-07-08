@@ -5,7 +5,7 @@ import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@g
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
 import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
-import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
+import { tooltipOnClickHandler, DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { BarGaugeCellProps } from '../types';
 import { extractPixelValue, getCellOptions, getAlignmentFactor, getCellLinks } from '../utils';
 
@@ -78,7 +78,7 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx, actio
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
     <div
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
-      onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
     >
       {shouldShowLink ? (
         renderSingleLink(links[0], renderComponent())
