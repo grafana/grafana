@@ -137,7 +137,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	storage[userResource.StoragePath()] = dw
-	// storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.legacyAccessClient)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceAccountResource := legacyiamv0.ServiceAccountResourceInfo

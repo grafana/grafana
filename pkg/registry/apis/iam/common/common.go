@@ -7,6 +7,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -55,7 +56,7 @@ type ListFunc[T Resource] func(ctx context.Context, ns authlib.NamespaceInfo, p 
 // prvovided with a authlib.AccessClient.
 func List[T Resource](
 	ctx context.Context,
-	resourceName string,
+	resource utils.ResourceInfo,
 	ac authlib.AccessClient,
 	p Pagination,
 	fn ListFunc[T],
@@ -64,6 +65,32 @@ func List[T Resource](
 	if err != nil {
 		return nil, err
 	}
+
+	// CURRENT
+
+	// ident, err := identity.GetRequester(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// check := func(_, _ string) bool { return true }
+	// if ac != nil {
+	// 	var err error
+	// 	check, err = ac.Compile(ctx, ident, authlib.ListRequest{
+	// 		Resource:  resource.GroupResource().Resource,
+	// 		Group:     resource.GroupResource().Group,
+	// 		Verb:      "get",
+	// 		Namespace: ns.Value,
+	// 	})
+
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+
+	// END OF CURRENT
+
+	// CHANGED
 
 	ident, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -74,9 +101,9 @@ func List[T Resource](
 	if ac != nil {
 		var err error
 		check, err = ac.Compile(ctx, ident, authlib.ListRequest{
-			Verb:      "get",
-			Group:     iamv0alpha1.GroupVersion.Group,
-			Resource:  resourceName,
+			Resource:  resource.GroupResource().Resource,
+			Group:     resource.GroupResource().Group,
+			Verb:      "list",
 			Namespace: ns.Value,
 		})
 
@@ -84,6 +111,8 @@ func List[T Resource](
 			return nil, err
 		}
 	}
+
+	// END OF CHANGED
 
 	res := &ListResponse[T]{Items: make([]T, 0, p.Limit)}
 

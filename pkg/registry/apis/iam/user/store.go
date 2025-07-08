@@ -122,7 +122,7 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	res, err := common.List(
-		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
+		ctx, resource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0alpha.User], error) {
 			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 				Pagination: p,
