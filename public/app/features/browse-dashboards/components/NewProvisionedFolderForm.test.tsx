@@ -161,7 +161,7 @@ describe('NewProvisionedFolderForm', () => {
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
     // Mock usePullRequestParam
-    (usePullRequestParam as jest.Mock).mockReturnValue(null);
+    (usePullRequestParam as jest.Mock).mockReturnValue({});
 
     // Mock useCreateRepositoryFilesWithPathMutation
     const mockCreate = jest.fn();
@@ -409,7 +409,7 @@ describe('NewProvisionedFolderForm', () => {
   });
 
   it('should show PR link when PR URL is available', () => {
-    (usePullRequestParam as jest.Mock).mockReturnValue('https://github.com/grafana/grafana/pull/1234');
+    (usePullRequestParam as jest.Mock).mockReturnValue({ prURL: 'https://github.com/grafana/grafana/pull/1234' });
 
     setup();
 
