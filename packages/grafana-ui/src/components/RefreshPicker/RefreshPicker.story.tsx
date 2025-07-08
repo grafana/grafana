@@ -6,7 +6,7 @@ import { RefreshPicker } from './RefreshPicker';
 import mdx from './RefreshPicker.mdx';
 
 const meta: Meta<typeof RefreshPicker> = {
-  title: 'Pickers and Editors/RefreshPicker',
+  title: 'Pickers/RefreshPicker',
   component: RefreshPicker,
   parameters: {
     docs: {

@@ -8,7 +8,7 @@ import mdx from './ConfirmButton.mdx';
 import { DeleteButton } from './DeleteButton';
 
 const meta: Meta = {
-  title: 'Buttons/ConfirmButton',
+  title: 'Inputs/ConfirmButton',
   component: ConfirmButton,
   // SB7 has broken subcomponent types due to dropping support for the feature
   // https://github.com/storybookjs/storybook/issues/20782
