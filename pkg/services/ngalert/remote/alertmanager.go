@@ -12,16 +12,15 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
+	alertingModels "github.com/grafana/alerting/models"
+	alertingNotify "github.com/grafana/alerting/notify"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/prometheus/client_golang/prometheus"
-
-	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
-	alertingModels "github.com/grafana/alerting/models"
-	alertingNotify "github.com/grafana/alerting/notify"
 
 	"gopkg.in/yaml.v3"
 
@@ -311,36 +310,6 @@ func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
 	}
 }
 
-// mergeExtraConfigs decrypts and applies merged configuration if extra configs exist.
-func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) (remoteClient.GrafanaAlertmanagerConfig, error) {
-	if len(config.ExtraConfigs) == 0 {
-		return remoteClient.GrafanaAlertmanagerConfig{
-			TemplateFiles:      config.TemplateFiles,
-			AlertmanagerConfig: config.AlertmanagerConfig,
-			Templates:          nil,
-		}, nil
-	}
-
-	if err := am.crypto.DecryptExtraConfigs(ctx, config); err != nil {
-		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to decrypt extra configs: %w", err)
-	}
-
-	mergeResult, err := config.GetMergedAlertmanagerConfig()
-	if err != nil {
-		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
-	}
-	if logctx := mergeResult.LogContext(); len(logctx) > 0 {
-		am.log.Debug("Configurations merged successfully but some resources were renamed", logctx...)
-	}
-	templates := definition.TemplatesMapToPostableAPITemplates(config.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)
-	return remoteClient.GrafanaAlertmanagerConfig{
-		// TODO keep sending Grafana templates as a map to not break old Mimir
-		TemplateFiles:      config.TemplateFiles,
-		AlertmanagerConfig: mergeResult.Config,
-		Templates:          templates,
-	}, nil
-}
-
 func (am *Alertmanager) loadConfig(ctx context.Context, raw []byte) (remoteClient.GrafanaAlertmanagerConfig, error) {
 	c, err := notifier.Load(raw)
 	if err != nil {
@@ -359,12 +328,25 @@ func (am *Alertmanager) loadConfig(ctx context.Context, raw []byte) (remoteClien
 	}
 	c.AlertmanagerConfig.Receivers = decryptedReceivers
 
-	payload, err := am.mergeExtraConfigs(ctx, c)
-	// Decrypt and merge extra configs
-	if err != nil {
-		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to merge extra configurations: %w", err)
+	if err := am.crypto.DecryptExtraConfigs(ctx, c); err != nil {
+		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to decrypt extra configs: %w", err)
 	}
-	return payload, nil
+
+	mergeResult, err := c.GetMergedAlertmanagerConfig()
+	if err != nil {
+		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
+	}
+
+	var templates []definition.PostableApiTemplate
+	if len(c.ExtraConfigs) > 0 && len(c.ExtraConfigs[0].TemplateFiles) > 0 {
+		templates = definition.TemplatesMapToPostableAPITemplates(c.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)
+	}
+
+	return remoteClient.GrafanaAlertmanagerConfig{
+		TemplateFiles:      c.TemplateFiles,
+		AlertmanagerConfig: mergeResult.Config,
+		Templates:          templates,
+	}, nil
 }
 
 func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg remoteClient.GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
