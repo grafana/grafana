@@ -11,7 +11,7 @@ import { generateOptions, fakeSearchAPI, generateGroupingOptions } from './story
 import { ComboboxOption } from './types';
 
 const meta: Meta<typeof MultiCombobox> = {
-  title: 'Forms/MultiCombobox',
+  title: 'Inputs/MultiCombobox',
   component: MultiCombobox,
   parameters: {
     docs: {
