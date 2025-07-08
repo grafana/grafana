@@ -58,10 +58,6 @@ type alertmanager struct {
 	crypto               Crypto
 }
 
-func (am *alertmanager) GetBase() *alertingNotify.GrafanaAlertmanager {
-	return am.Base
-}
-
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
 // It implements the alerting.MaintenanceOptions interface.
 type maintenanceOptions struct {
@@ -248,7 +244,6 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 
 // ApplyConfig applies the configuration to the Alertmanager.
 func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
-	fmt.Println("ApplyConfig() called")
 	var err error
 	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
 	if err != nil {

@@ -117,6 +117,10 @@ func (fam *RemotePrimaryForkedAlertmanager) ListSilences(ctx context.Context, fi
 	return fam.remote.ListSilences(ctx, filter)
 }
 
+func (fam *RemotePrimaryForkedAlertmanager) MergeSilences(b []byte) error {
+	return fam.remote.MergeSilences(b)
+}
+
 func (fam *RemotePrimaryForkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
 	return fam.remote.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
 }
@@ -127,6 +131,10 @@ func (fam *RemotePrimaryForkedAlertmanager) GetAlertGroups(ctx context.Context, 
 
 func (fam *RemotePrimaryForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
 	return fam.remote.PutAlerts(ctx, alerts)
+}
+
+func (fam *RemotePrimaryForkedAlertmanager) MergeNflog(b []byte) error {
+	return fam.remote.MergeNflog(b)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
@@ -143,10 +151,6 @@ func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c 
 
 func (fam *RemotePrimaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
 	return fam.remote.SilenceState(ctx)
-}
-
-func (fam *RemotePrimaryForkedAlertmanager) GetBase() *alertingNotify.GrafanaAlertmanager {
-	return fam.remote.GetBase()
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) StopAndWait() {

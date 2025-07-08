@@ -280,10 +280,10 @@ func (ng *AlertNG) init() error {
 						if err != nil {
 							return nil, fmt.Errorf("failed to fetch remote state: %w", err)
 						}
-						if err := internalAM.GetBase().MergeNflog(rs.Nflog); err != nil {
+						if err := internalAM.MergeNflog(rs.Nflog); err != nil {
 							return nil, fmt.Errorf("failed to merge remote nflog entries: %w", err)
 						}
-						if err := internalAM.GetBase().MergeSilences(rs.Silences); err != nil {
+						if err := internalAM.MergeSilences(rs.Silences); err != nil {
 							return nil, fmt.Errorf("failed to merge remote silences: %w", err)
 						}
 					}

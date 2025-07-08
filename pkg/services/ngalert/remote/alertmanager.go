@@ -690,8 +690,13 @@ func (am *Alertmanager) Ready() bool {
 	return am.ready
 }
 
-func (am *Alertmanager) GetBase() *alertingNotify.GrafanaAlertmanager {
-	return nil
+// It makes no sense for us to call these methods on the remote Alertmanager implementation.
+// TODO: Remove them, let the internal and remote Alertmanagers have different APIs.
+func (am *Alertmanager) MergeNflog(b []byte) error {
+	panic("Can't merge nflog on the remote Alertmanager")
+}
+func (am *Alertmanager) MergeSilences(b []byte) error {
+	panic("Can't merge silences on the remote Alertmanager")
 }
 
 // SilenceState returns the Alertmanager's silence state as a SilenceState. Currently, does not retrieve the state
