@@ -47,7 +47,7 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
         loadOptions={debouncedLoadOptions}
         maxMenuHeight={maxMenuHeight}
         placeholder={t('folder-filter.select-placeholder', 'Filter by folder')}
-        noOptionsMessage="No folders found"
+        noOptionsMessage={t('folder-filter.noOptionsMessage-no-folders-found', 'No folders found')}
         prefix={<Icon name="filter" />}
         aria-label={t('folder-filter.select-aria-label', 'Folder filter')}
         defaultOptions

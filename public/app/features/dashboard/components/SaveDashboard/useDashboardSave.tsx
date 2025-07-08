@@ -2,6 +2,7 @@ import { cloneDeep } from 'lodash';
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -54,7 +55,7 @@ export const useDashboardSave = (isCopy = false) => {
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
-        notifyApp.success('Dashboard saved');
+        notifyApp.success(t('dashboard.save-dashboard.message-dashboard-saved', 'Dashboard saved'));
 
         //Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(result.uid);

@@ -118,7 +118,7 @@ export const DashNav = memo<Props>((props) => {
                 </>
               ),
               confirmVariant: 'primary',
-              confirmText: 'Proceed',
+              confirmText: t('dashboard.dash-nav.on-open-snapshot-original.confirmText.proceed', 'Proceed'),
               onConfirm: gotoSnapshotOrigin,
             },
           })

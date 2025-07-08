@@ -67,7 +67,7 @@ export class UserPicker extends Component<Props, State> {
           loadOptions={this.search}
           onChange={onSelected}
           placeholder={t('user-picker.select-placeholder', 'Start typing to search for user')}
-          noOptionsMessage="No users found"
+          noOptionsMessage={t('user-picker.noOptionsMessage-no-users-found', 'No users found')}
           aria-label={t('user-picker.select-aria-label', 'User picker')}
         />
       </div>

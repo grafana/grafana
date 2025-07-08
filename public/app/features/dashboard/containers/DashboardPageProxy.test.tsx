@@ -33,6 +33,7 @@ const dashMock: DashboardDTO = {
   },
   meta: {
     canEdit: false,
+    created: 'Friday, 4 July 2025 07:56:41 GMT+05:30',
   },
 };
 

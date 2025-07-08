@@ -68,7 +68,7 @@ export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOr
       }}
       value={selected}
       placeholder={t('org-picker.select-placeholder', 'Select organization')}
-      noOptionsMessage="No organizations found"
+      noOptionsMessage={t('org-picker.noOptionsMessage-no-organizations-found', 'No organizations found')}
     />
   );
 }

@@ -242,7 +242,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
         <td colSpan={1}>
           {canRemoveFromOrg && (
             <ConfirmButton
-              confirmText="Confirm removal"
+              confirmText={t('admin.un-themed-org-row.confirmText-confirm-removal', 'Confirm removal')}
               confirmVariant="destructive"
               onCancel={this.onCancelClick}
               onConfirm={this.onOrgRemove}
@@ -466,7 +466,7 @@ export function ChangeOrgButton({
         </>
       ) : (
         <ConfirmButton
-          confirmText="Save"
+          confirmText={t('admin.change-org-button.confirmText-save', 'Save')}
           onClick={onChangeRoleClick}
           onCancel={onCancelClick}
           onConfirm={onOrgRoleSave}
