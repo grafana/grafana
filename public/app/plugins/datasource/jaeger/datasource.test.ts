@@ -34,19 +34,8 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('JaegerDatasource', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-
-    const fetchMock = jest.spyOn(Date, 'now');
-    fetchMock.mockImplementation(() => 1704106800000); // milliseconds for 2024-01-01 at 11:00am UTC
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   it.skip('returns trace and graph when queried', async () => {
-    setupFetchMockV2('trace');
+    setupFetchMock('trace');
 
     const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(ds.query(defaultQuery));
@@ -57,7 +46,7 @@ describe('JaegerDatasource', () => {
   });
 
   it('returns trace when traceId with special characters is queried', async () => {
-    const mock = setupFetchMockV2('trace');
+    const mock = setupFetchMock('trace');
 
     const ds = new JaegerDatasource(defaultSettings);
     const query = {
@@ -103,7 +92,7 @@ describe('JaegerDatasource', () => {
   });
 
   it('should return search results when the query type is search', async () => {
-    const mock = setupFetchMockV2('search');
+    const mock = setupFetchMock('search');
     const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(
       ds.query({
@@ -123,7 +112,7 @@ describe('JaegerDatasource', () => {
   });
 
   it.skip('should show the correct error message if no service name is selected', async () => {
-    setupFetchMockV2('search');
+    setupFetchMock('search');
     const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(
       ds.query({
@@ -135,7 +124,7 @@ describe('JaegerDatasource', () => {
   });
 
   it.skip('should resolve templates in traceID', async () => {
-    const mock = setupFetchMockV2('trace');
+    const mock = setupFetchMock('trace');
     const ds = new JaegerDatasource(defaultSettings);
 
     await lastValueFrom(
@@ -163,7 +152,7 @@ describe('JaegerDatasource', () => {
   });
 
   it.skip('should resolve templates in tags', async () => {
-    const mock = setupFetchMockV2('trace');
+    const mock = setupFetchMock('trace');
     const ds = new JaegerDatasource(defaultSettings);
     await lastValueFrom(
       ds.query({
@@ -183,7 +172,7 @@ describe('JaegerDatasource', () => {
   });
 
   it.skip('should interpolate variables correctly', async () => {
-    const mock = setupFetchMockV2('search');
+    const mock = setupFetchMock('search');
     const ds = new JaegerDatasource(defaultSettings);
     const text = 'interpolationText';
     await lastValueFrom(
@@ -212,141 +201,119 @@ describe('JaegerDatasource', () => {
     });
   });
 
-  describe('when jaegerBackendMigration feature toggle is enabled', () => {
-    it('should add node graph frames to response when nodeGraph is enabled and query is a trace ID query', async () => {
-      // Create a datasource with nodeGraph enabled
-      const settings = {
-        ...defaultSettings,
-        jsonData: {
-          ...defaultSettings.jsonData,
-          nodeGraph: { enabled: true },
-        },
-      };
+  it('should add node graph frames to response when nodeGraph is enabled and query is a trace ID query', async () => {
+    // Create a datasource with nodeGraph enabled
+    const settings = {
+      ...defaultSettings,
+      jsonData: {
+        ...defaultSettings.jsonData,
+        nodeGraph: { enabled: true },
+      },
+    };
 
-      const ds = new JaegerDatasource(settings);
+    const ds = new JaegerDatasource(settings);
 
-      // Mock the super.query method to return our mock response
-      jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
-        return of({
-          data: [
-            {
-              fields: testResponseDataFrameFields,
-              values: testResponseDataFrameFields.values,
-            },
-          ],
-        });
-      });
-
-      // Create a query without queryType (trace ID query)
-      const query = {
-        ...defaultQuery,
-        targets: [
+    // Mock the super.query method to return our mock response
+    jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
+      return of({
+        data: [
           {
-            query: '12345',
-            refId: '1',
+            fields: testResponseDataFrameFields,
+            values: testResponseDataFrameFields.values,
           },
         ],
-      };
-
-      // Execute the query
-      const response = await lastValueFrom(ds.query(query));
-      // Verify that the response contains the original data plus node graph frames
-      expect(response.data.length).toBe(3);
+      });
     });
 
-    it('should not add node graph frames when nodeGraph is disabled', async () => {
-      // Create a datasource with nodeGraph disabled
-      const settings = {
-        ...defaultSettings,
-        jsonData: {
-          ...defaultSettings.jsonData,
-          nodeGraph: { enabled: false },
+    // Create a query without queryType (trace ID query)
+    const query = {
+      ...defaultQuery,
+      targets: [
+        {
+          query: '12345',
+          refId: '1',
         },
-      };
+      ],
+    };
 
-      const ds = new JaegerDatasource(settings);
+    // Execute the query
+    const response = await lastValueFrom(ds.query(query));
+    // Verify that the response contains the original data plus node graph frames
+    expect(response.data.length).toBe(3);
+  });
 
-      // Mock the super.query method to return our mock response
-      jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
-        return of({
-          data: [
-            {
-              fields: testResponseDataFrameFields,
-              values: testResponseDataFrameFields.values,
-            },
-          ],
-        });
-      });
+  it('should not add node graph frames when nodeGraph is disabled', async () => {
+    // Create a datasource with nodeGraph disabled
+    const settings = {
+      ...defaultSettings,
+      jsonData: {
+        ...defaultSettings.jsonData,
+        nodeGraph: { enabled: false },
+      },
+    };
 
-      // Create a query without queryType (trace ID query)
-      const query = {
-        ...defaultQuery,
-        targets: [
+    const ds = new JaegerDatasource(settings);
+
+    // Mock the super.query method to return our mock response
+    jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
+      return of({
+        data: [
           {
-            query: '12345',
-            refId: '1',
+            fields: testResponseDataFrameFields,
+            values: testResponseDataFrameFields.values,
           },
         ],
-      };
-
-      // Execute the query
-      const response = await lastValueFrom(ds.query(query));
-      // Verify that the response contains only the original data
-      expect(response.data.length).toBe(1);
-      expect(response.data[0].fields).toMatchObject(testResponseDataFrameFields);
+      });
     });
-  });
-});
 
-describe('when performing testDataSource', () => {
-  describe('and call succeeds', () => {
-    it('should return successfully', async () => {
-      setupTestDatasourceMock('success');
+    // Create a query without queryType (trace ID query)
+    const query = {
+      ...defaultQuery,
+      targets: [
+        {
+          query: '12345',
+          refId: '1',
+        },
+      ],
+    };
 
-      const ds = new JaegerDatasource(defaultSettings);
-      const response = await ds.testDatasource();
-      expect(response.status).toEqual('success');
-      expect(response.message).toBe('Data source connected and services found.');
-    });
-  });
-
-  describe('and call succeeds, but returns no services', () => {
-    it('should display an error', async () => {
-      setupTestDatasourceMock('error');
-
-      const ds = new JaegerDatasource(defaultSettings);
-      const response = await ds.testDatasource();
-      expect(response.status).toEqual('error');
-      expect(response.message).toBe(
-        'Data source connected, but no services received. Verify that Jaeger is configured properly.'
-      );
-    });
-  });
-});
-
-describe('Test behavior with unmocked time', () => {
-  // Tolerance for checking timestamps.
-  // Using a lower number seems to cause flaky tests.
-  const numDigits = -4;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
+    // Execute the query
+    const response = await lastValueFrom(ds.query(query));
+    // Verify that the response contains only the original data
+    expect(response.data.length).toBe(1);
+    expect(response.data[0].fields).toMatchObject(testResponseDataFrameFields);
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
+  it('test datasource should return successfully', async () => {
+    setupTestDatasourceMock('success');
+
+    const ds = new JaegerDatasource(defaultSettings);
+    const response = await ds.testDatasource();
+    expect(response.status).toEqual('success');
+    expect(response.message).toBe('Data source connected and services found.');
+  });
+
+  it('test datasource should display an error', async () => {
+    setupTestDatasourceMock('error');
+
+    const ds = new JaegerDatasource(defaultSettings);
+    const response = await ds.testDatasource();
+    expect(response.status).toEqual('error');
+    expect(response.message).toBe(
+      'Data source connected, but no services received. Verify that Jaeger is configured properly.'
+    );
   });
 
   it('getTimeRange()', async () => {
     const ds = new JaegerDatasource(defaultSettings);
     const timeRange = ds.getTimeRange();
     const now = Date.now();
-    expect(timeRange.end).toBeCloseTo(now * 1000, numDigits);
-    expect(timeRange.start).toBeCloseTo((now - 6 * 3600 * 1000) * 1000, numDigits);
+    expect(timeRange.end).toBeCloseTo(now * 1000, -4);
+    expect(timeRange.start).toBeCloseTo((now - 6 * 3600 * 1000) * 1000, -4);
   });
 });
 
-function setupFetchMockV2(type: 'trace' | 'search') {
+function setupFetchMock(type: 'trace' | 'search') {
   return jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
     if (type === 'search') {
       return of(mockSearchResponse);
