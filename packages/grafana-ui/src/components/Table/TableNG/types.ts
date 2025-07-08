@@ -137,7 +137,7 @@ export interface BaseTableProps {
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
-  getActions: GetActionsFunction;
+  getActions?: GetActionsFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
 }
@@ -159,7 +159,7 @@ export interface TableCellRendererProps {
   cellInspect: boolean;
   showFilters: boolean;
   justifyContent: Property.JustifyContent;
-  getActions: GetActionsFunctionLocal;
+  getActions?: GetActionsFunctionLocal;
 }
 
 export type ContextMenuProps = {

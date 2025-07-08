@@ -72,7 +72,7 @@ export function TableNG(props: TableNGProps) {
     enableSharedCrosshair = false,
     enableVirtualization,
     footerOptions,
-    getActions,
+    getActions = () => [],
     height,
     initialSortBy,
     noHeader,
