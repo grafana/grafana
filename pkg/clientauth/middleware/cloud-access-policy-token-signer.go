@@ -22,12 +22,29 @@ type cloudAccessPolicyTokenSignerMiddleware struct {
 	next                http.RoundTripper
 }
 
+type signerSettings struct {
+	token            string
+	tokenExchangeURL string
+}
+
 var _ http.RoundTripper = &cloudAccessPolicyTokenSignerMiddleware{}
 
-func ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(tokenExchangeClient authlib.TokenExchanger, cfg *setting.Cfg) *CloudAccessPolicyTokenSignerMiddlewareProvider {
+func ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(cfg *setting.Cfg) (*CloudAccessPolicyTokenSignerMiddlewareProvider, error) {
+	clientCfg, err := readSignerSettings(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenExchangeClient, err := authlib.NewTokenExchangeClient(authlib.TokenExchangeConfig{
+		Token:            clientCfg.token,
+		TokenExchangeURL: clientCfg.tokenExchangeURL,
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &CloudAccessPolicyTokenSignerMiddlewareProvider{
 		tokenExchangeClient: tokenExchangeClient,
-	}
+	}, nil
 }
 
 func (p *CloudAccessPolicyTokenSignerMiddlewareProvider) New(audiences []string) sdkhttpclient.MiddlewareFunc {
@@ -63,4 +80,20 @@ func (m cloudAccessPolicyTokenSignerMiddleware) RoundTrip(req *http.Request) (re
 	}
 	req.Header.Set("X-Access-Token", "Bearer "+token.Token)
 	return m.next.RoundTrip(req)
+}
+
+func readSignerSettings(cfg *setting.Cfg) (*signerSettings, error) {
+	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
+
+	s := &signerSettings{}
+
+	s.token = grpcClientAuthSection.Key("token").MustString("")
+	s.tokenExchangeURL = grpcClientAuthSection.Key("token_exchange_url").MustString("")
+
+	// When running in cloud mode, the token and tokenExchangeURL are required.
+	if s.token == "" || s.tokenExchangeURL == "" {
+		return nil, fmt.Errorf("authorization:  missing token or tokenExchangeUrl")
+	}
+
+	return s, nil
 }
