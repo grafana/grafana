@@ -31,7 +31,7 @@ const (
 	twoDashboardsWithUID   = "testdata/test-dashboards/two-dashboards-with-uid"
 )
 
-func TestDuplicatesValidator(t *testing.T) {
+func TestIntegrationDuplicatesValidator(t *testing.T) {
 	fakeService := &dashboards.FakeDashboardProvisioning{}
 	defer fakeService.AssertExpectations(t)
 

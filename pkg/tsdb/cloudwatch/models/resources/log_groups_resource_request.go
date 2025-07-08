@@ -6,11 +6,11 @@ import (
 	"strconv"
 )
 
-const defaultLogGroupLimit = int64(50)
+const defaultLogGroupLimit = int32(50)
 
 type LogGroupsRequest struct {
 	ResourceRequest
-	Limit                                   int64
+	Limit                                   int32
 	LogGroupNamePrefix, LogGroupNamePattern *string
 	ListAllLogGroups                        bool
 }
@@ -45,11 +45,11 @@ func setIfNotEmptyString(paramValue string) *string {
 	return &paramValue
 }
 
-func getLimit(limit string) int64 {
+func getLimit(limit string) int32 {
 	logGroupLimit := defaultLogGroupLimit
-	intLimit, err := strconv.ParseInt(limit, 10, 64)
+	intLimit, err := strconv.ParseInt(limit, 10, 32)
 	if err == nil && intLimit > 0 {
-		logGroupLimit = intLimit
+		logGroupLimit = int32(intLimit)
 	}
 	return logGroupLimit
 }

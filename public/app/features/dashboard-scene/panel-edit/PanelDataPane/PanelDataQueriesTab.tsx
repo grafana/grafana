@@ -1,6 +1,6 @@
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   SceneObjectBase,
@@ -50,7 +50,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 
   public getTabLabel() {
-    return 'Queries';
+    return t('dashboard-scene.panel-data-queries-tab.tab-label', 'Queries');
   }
 
   public getItemsCount() {

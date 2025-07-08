@@ -14,6 +14,8 @@ describe('Panels smokescreen', () => {
   it('Tests each panel type in the panel edit view to ensure no crash', () => {
     e2e.flows.addDashboard();
 
+    e2e.pages.Dashboard.DashNav.shareButton().should('be.visible');
+
     e2e.flows.addPanel({
       dataSourceName: 'gdev-testdata',
       timeout: 10000,

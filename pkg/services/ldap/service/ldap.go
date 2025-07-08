@@ -56,7 +56,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, ssoSe
 		ssoSettings:  ssoSettings,
 	}
 
-	if s.features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) && s.features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
+	if s.features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsLDAP) {
 		s.ssoSettings.RegisterReloadable(social.LDAPProviderName, s)
 
 		ldapSettings, err := s.ssoSettings.GetForProvider(context.Background(), social.LDAPProviderName)

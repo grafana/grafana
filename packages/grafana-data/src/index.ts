@@ -258,8 +258,9 @@ export * as arrayUtils from './utils/arrayUtils';
 export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
+export { fuzzySearch } from './utils/fuzzySearch';
 
-// Tranformations
+// Transformations
 export { standardTransformers } from './transformations/transformers';
 export {
   fieldMatchers,
@@ -431,7 +432,11 @@ export {
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
-export { type PluginContextType, type DataSourcePluginContextType } from './context/plugins/PluginContext';
+export {
+  type PluginContextType,
+  type DataSourcePluginContextType,
+  Context as PluginContext,
+} from './context/plugins/PluginContext';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {
   type DataSourcePluginContextProviderProps,
