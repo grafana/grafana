@@ -6,6 +6,7 @@ import {
   type PluginExtension,
   type PluginExtensionLink,
   type PluginExtensionComponent,
+  PluginExtensionFunction,
 } from '@grafana/data';
 import {
   type GetObservablePluginLinks,
@@ -202,6 +203,30 @@ export const getPluginExtensions: GetExtensions = ({
 
     extensions.push(extension);
     extensionsByPlugin[addedComponent.pluginId] += 1;
+  }
+
+  const addedFunctions = addedFunctionsRegistry?.[extensionPointId] ?? [];
+  for (const addedFunction of addedFunctions) {
+    // Only limit if the `limitPerPlugin` is set
+    if (limitPerPlugin && extensionsByPlugin[addedFunction.pluginId] >= limitPerPlugin) {
+      continue;
+    }
+
+    if (extensionsByPlugin[addedFunction.pluginId] === undefined) {
+      extensionsByPlugin[addedFunction.pluginId] = 0;
+    }
+
+    const extension: PluginExtensionFunction = {
+      id: generateExtensionId(addedFunction.pluginId, extensionPointId, addedFunction.title),
+      type: PluginExtensionTypes.function,
+      pluginId: addedFunction.pluginId,
+      title: addedFunction.title,
+      description: addedFunction.description ?? '',
+      fn: addedFunction.fn,
+    };
+
+    extensions.push(extension);
+    extensionsByPlugin[addedFunction.pluginId] += 1;
   }
 
   return { extensions };
