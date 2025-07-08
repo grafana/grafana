@@ -51,7 +51,26 @@ type SlackIntegration = OverrideProperties<
   }
 >;
 
-export type Integration = EmailIntegration | SlackIntegration | GenericIntegration;
+// Based on https://github.com/grafana/alerting/blob/main/receivers/oncall/config.go#L14-L27
+type OnCallIntegration = OverrideProperties<
+  GenericIntegration,
+  {
+    type: 'OnCall';
+    settings: {
+      url: string;
+      httpMethod?: 'POST' | 'PUT';
+      maxAlerts?: number;
+      authorization_scheme?: string;
+      authorization_credentials?: string;
+      username?: string;
+      password?: string;
+      title?: string;
+      message?: string;
+    };
+  }
+>;
+
+export type Integration = EmailIntegration | SlackIntegration | OnCallIntegration | GenericIntegration;
 
 // Enhanced version of ContactPoint with typed integrations
 // ⚠️ MergeDeep does not check if the property you are overriding exists in the base type and there is no "DeepOverrideProperties" helper
