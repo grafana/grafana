@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { Key, ReactNode, useLayoutEffect, useMemo, useState } from 'react';
+import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -78,7 +78,6 @@ export function TableNG(props: TableNGProps) {
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
-    replaceVariables,
     showTypeIcons,
     structureRev,
     width,
@@ -90,6 +89,11 @@ export function TableNG(props: TableNGProps) {
     noHeader,
   });
   const panelContext = usePanelContext();
+
+  const getCellActions = useCallback(
+    (field: Field, rowIdx: number) => getActions(data, field, rowIdx),
+    [getActions, data]
+  );
 
   const hasHeader = !noHeader;
   const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
@@ -353,6 +357,7 @@ export function TableNG(props: TableNGProps) {
                 width,
                 cellInspect,
                 showFilters,
+                getActions: getCellActions,
               })}
               {showActions && (
                 <TableCellActions
@@ -516,6 +521,7 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
+    getCellActions,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
@@ -541,7 +547,6 @@ export function TableNG(props: TableNGProps) {
         columns={structureRevColumns}
         rows={paginatedRows}
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
-          let frame = data;
           let rowIdx = row.__index;
           // Note: could be column.field; JS says yes, but TS says no!
           let field = columns[column.idx].field;
@@ -555,7 +560,7 @@ export function TableNG(props: TableNGProps) {
                 clientY,
               },
               links: getCellLinks(field, rowIdx),
-              actions: getActions?.(frame, field, rowIdx, replaceVariables),
+              actions: getCellActions(field, rowIdx),
             });
 
             preventGridDefault();

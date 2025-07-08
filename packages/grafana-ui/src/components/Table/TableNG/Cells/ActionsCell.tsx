@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -6,13 +7,16 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { ActionButton } from '../../../Actions/ActionButton';
 import { ActionCellProps } from '../types';
 
-export const ActionsCell = ({ field, getActions }: ActionCellProps) => {
+export const ActionsCell = ({ field, rowIdx, getActions }: ActionCellProps) => {
   const styles = useStyles2(getStyles);
-  // const actions = getActions
+
+  const actions = useMemo(() => getActions(field, rowIdx), [getActions, field, rowIdx]);
 
   return (
     <div className={styles.buttonsGap}>
-      {actions && actions.map((action, i) => <ActionButton key={i} action={action} variant="secondary" />)}
+      {actions.map((action, i) => (
+        <ActionButton key={i} action={action} variant="secondary" />
+      ))}
     </div>
   );
 };
