@@ -52,8 +52,8 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const libPanelModel = new PanelModel(libPanel.model);
 
     // Use dashboard panel ID for data layer filtering
-    // const dashboardPanelId = getPanelIdForVizPanel(vizPanel);
-    // libPanelModel.id = dashboardPanelId;
+    const dashboardPanelId = getPanelIdForVizPanel(vizPanel);
+    libPanelModel.id = dashboardPanelId;
 
     const titleItems: SceneObject[] = [];
 
