@@ -19,25 +19,14 @@ type UserState struct {
 }
 
 func (mc *Mimir) GetFullState(ctx context.Context) (*UserState, error) {
-	gs := &UserState{}
-	response := successResponse{
-		Data: gs,
-	}
-	// nolint:bodyclose
-	// closed within `do`
-	_, err := mc.do(ctx, fullStatePath, http.MethodGet, nil, &response)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.Status != "success" {
-		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", response.Status)
-	}
-
-	return gs, nil
+	return mc.getState(ctx, fullStatePath)
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserState, error) {
+	return mc.getState(ctx, grafanaAlertmanagerStatePath)
+}
+
+func (mc *Mimir) getState(ctx context.Context, path string) (*UserState, error) {
 	gs := &UserState{}
 	response := successResponse{
 		Data: gs,
