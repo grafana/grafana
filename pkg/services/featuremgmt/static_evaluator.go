@@ -16,11 +16,11 @@ type StaticFlagEvaluator interface {
 	EvalAllFlags(ctx context.Context) (OFREPBulkResponse, error)
 }
 
-// CreateStaticEvaluator is a dependancy for ofrep APIBuilder
+// CreateStaticEvaluator is a dependency for ofrep APIBuilder
 func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 	noop := openfeature.NoopProvider{}
 	if openfeature.ProviderMetadata() == noop.Metadata() {
-		return nil, fmt.Errorf("No provider initialized, current provider is %s", openfeature.ProviderMetadata().Name)
+		return nil, fmt.Errorf("no provider initialized, current provider is %s", openfeature.ProviderMetadata().Name)
 	}
 
 	if cfg.OpenFeature.ProviderType != setting.StaticProviderType {
@@ -29,8 +29,7 @@ func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 
 	staticFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
-		panic("failed to read feature flags from config in static evaluator: " + err.Error())
-
+		return nil, fmt.Errorf("failed to read feature flags from config: %w", err)
 	}
 
 	staticProvider, err := newStaticProvider(staticFlags)
