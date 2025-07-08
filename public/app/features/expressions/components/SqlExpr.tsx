@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useRef, useEffect, useState } from 'react';
+import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -10,7 +10,13 @@ import { useStyles2, Stack, Button, Text } from '@grafana/ui';
 import { SqlExpressionQuery } from '../types';
 
 import { AISuggestionsDrawer } from './AISuggestionsDrawer';
-import { GenAISQLSuggestionsButton } from './GenAISQLSuggestionsButton';
+
+// Lazy load the GenAI component to avoid circular dependencies
+const GenAISQLSuggestionsButton = lazy(() =>
+  import('./GenAISQLSuggestionsButton').then((module) => ({
+    default: module.GenAISQLSuggestionsButton,
+  }))
+);
 
 // Account for Monaco editor's border to prevent clipping
 const EDITOR_BORDER_ADJUSTMENT = 2; // 1px border on top and bottom
@@ -94,12 +100,14 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
     <Stack direction="column" gap={1}>
       {config.featureToggles.dashgpt && (
         <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-          <GenAISQLSuggestionsButton
-            currentQuery={query.expression || ''}
-            onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
-            onHistoryUpdate={onHistoryUpdate}
-            refIds={vars}
-          />
+          <Suspense fallback={null}>
+            <GenAISQLSuggestionsButton
+              currentQuery={query.expression || ''}
+              onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
+              onHistoryUpdate={onHistoryUpdate}
+              refIds={vars}
+            />
+          </Suspense>
           {suggestions.length > 0 && (
             <Button variant="secondary" size="sm" onClick={() => setIsDrawerOpen(true)} icon="list-ul">
               <Stack direction="row" gap={1} alignItems="center">
