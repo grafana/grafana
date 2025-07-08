@@ -70,8 +70,8 @@ const IMAGE_RENDERER: TableCellRenderer = (props) => (
 
 const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />;
 
-const ACTIONS_RENDERER: TableCellRenderer = (props) => (
-  <ActionsCell field={props.field} rowIdx={props.rowIdx} getActions={props.getActions} />
+const ACTIONS_RENDERER: TableCellRenderer = ({ field, rowIdx, getActions = () => [] }) => (
+  <ActionsCell field={field} rowIdx={rowIdx} getActions={getActions} />
 );
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
