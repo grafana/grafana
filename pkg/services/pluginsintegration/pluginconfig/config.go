@@ -64,7 +64,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 				return "", errors.New("path escapes root directory")
 			}
 
-			base, err := url.JoinPath(cdnURL, relativePath)
+			base, err := url.JoinPath(cdnURL, "public", relativePath)
 			if err != nil {
 				return "", err
 			}
