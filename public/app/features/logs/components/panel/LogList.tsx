@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import { Grammar } from 'prismjs';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, MouseEvent } from 'react';
-import { VariableSizeList } from 'react-window';
+import { Align, VariableSizeList } from 'react-window';
 
 import {
   AbsoluteTimeRange,
@@ -20,7 +20,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
@@ -35,15 +35,7 @@ import { LogListSearchContextProvider, useLogListSearchContext } from './LogList
 import { preProcessLogs, LogListModel } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
-import {
-  calculateFieldDimensions,
-  getLogLineSize,
-  init as initVirtualization,
-  LogFieldDimension,
-  resetLogLineSizes,
-  ScrollToLogsEvent,
-  storeLogLineSize,
-} from './virtualization';
+import { LogLineVirtualization, getLogLineSize, LogFieldDimension, ScrollToLogsEvent } from './virtualization';
 
 export interface Props {
   app: CoreApp;
@@ -81,6 +73,7 @@ export interface Props {
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
@@ -100,6 +93,7 @@ type LogListComponentProps = Omit<
   | 'dedupStrategy'
   | 'displayedFields'
   | 'enableLogDetails'
+  | 'logOptionsStorageKey'
   | 'permalinkedLogId'
   | 'showTime'
   | 'sortOrder'
@@ -143,6 +137,7 @@ export const LogList = ({
   permalinkedLogId,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  setDisplayedFields,
   showControls,
   showTime,
   sortOrder,
@@ -184,6 +179,7 @@ export const LogList = ({
       permalinkedLogId={permalinkedLogId}
       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
       pinnedLogs={pinnedLogs}
+      setDisplayedFields={setDisplayedFields}
       showControls={showControls}
       showTime={showTime}
       sortOrder={sortOrder}
@@ -251,11 +247,12 @@ const LogListComponent = ({
   const widthRef = useRef(containerElement.clientWidth);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
-    () => (wrapLogMessage ? [] : calculateFieldDimensions(processedLogs, displayedFields)),
-    [displayedFields, processedLogs, wrapLogMessage]
+    () => (wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields)),
+    [displayedFields, processedLogs, virtualization, wrapLogMessage]
   );
-  const styles = getStyles(dimensions, { showTime }, theme);
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -276,9 +273,11 @@ const LogListComponent = ({
     }, 25);
   }, []);
 
-  useEffect(() => {
-    initVirtualization(theme, fontSize);
-  }, [fontSize, theme]);
+  const debouncedScrollToItem = useMemo(() => {
+    return debounce((index: number, align?: Align) => {
+      listRef.current?.scrollToItem(index, align);
+    }, 250);
+  }, []);
 
   useEffect(() => {
     const subscription = eventBus.subscribe(ScrollToLogsEvent, (e: ScrollToLogsEvent) =>
@@ -292,11 +291,15 @@ const LogListComponent = ({
       return;
     }
     setProcessedLogs(
-      preProcessLogs(logs, { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone }, grammar)
+      preProcessLogs(
+        logs,
+        { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone, virtualization, wrapLogMessage },
+        grammar
+      )
     );
-    resetLogLineSizes();
+    virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone]);
+  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -329,7 +332,7 @@ const LogListComponent = ({
   const handleOverflow = useCallback(
     (index: number, id: string, height?: number) => {
       if (height !== undefined) {
-        storeLogLineSize(id, widthContainer, height, fontSize);
+        virtualization.storeLogLineSize(id, widthContainer, height);
       }
       if (index === overflowIndexRef.current) {
         return;
@@ -337,7 +340,7 @@ const LogListComponent = ({
       overflowIndexRef.current = index < overflowIndexRef.current ? index : overflowIndexRef.current;
       debouncedResetAfterIndex(overflowIndexRef.current);
     },
-    [debouncedResetAfterIndex, fontSize, widthContainer]
+    [debouncedResetAfterIndex, virtualization, widthContainer]
   );
 
   const handleScrollPosition = useCallback(() => {
@@ -383,6 +386,16 @@ const LogListComponent = ({
         ? levelFilteredLogs.filter((log) => matchingUids.includes(log.uid))
         : levelFilteredLogs,
     [filterLogs, levelFilteredLogs, matchingUids]
+  );
+
+  const focusLogLine = useCallback(
+    (log: LogListModel) => {
+      const index = filteredLogs.indexOf(log);
+      if (index >= 0) {
+        debouncedScrollToItem(index, 'start');
+      }
+    },
+    [debouncedScrollToItem, filteredLogs]
   );
 
   return (
@@ -434,6 +447,7 @@ const LogListComponent = ({
           timeRange={timeRange}
           timeZone={timeZone}
           setInitialScrollPosition={handleScrollPosition}
+          virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
         >
           {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
@@ -441,8 +455,7 @@ const LogListComponent = ({
               className={styles.logList}
               height={listHeight}
               itemCount={itemCount}
-              itemSize={getLogLineSize.bind(null, filteredLogs, widthContainer, displayedFields, {
-                fontSize,
+              itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 hasLogsWithErrors,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
@@ -466,7 +479,7 @@ const LogListComponent = ({
       {showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
-          getFieldLinks={getFieldLinks}
+          focusLogLine={focusLogLine}
           logs={filteredLogs}
           onResize={handleLogDetailsResize}
         />
@@ -476,13 +489,18 @@ const LogListComponent = ({
   );
 };
 
-function getStyles(dimensions: LogFieldDimension[], { showTime }: { showTime: boolean }, theme: GrafanaTheme2) {
+function getStyles(
+  theme: GrafanaTheme2,
+  dimensions: LogFieldDimension[],
+  displayedFields: string[],
+  { showTime }: { showTime: boolean }
+) {
   const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {
         display: 'grid',
-        gridTemplateColumns: getGridTemplateColumns(columns),
+        gridTemplateColumns: getGridTemplateColumns(columns, displayedFields),
       },
     }),
     logListContainer: css({

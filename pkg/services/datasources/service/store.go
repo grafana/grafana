@@ -61,23 +61,29 @@ func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDat
 }
 
 func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
-	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
+	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) { // nolint:staticcheck
 		return nil, datasources.ErrDataSourceIdentifierNotSet
 	}
 
 	if len(query.UID) > 0 {
 		if err := util.ValidateUID(query.UID); err != nil {
-			logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, "read", fmt.Errorf("invalid UID"))
+			logDeprecatedInvalidDsUid(ss.logger, query.UID, query.Name, "read", fmt.Errorf("invalid UID")) // nolint:staticcheck
 		}
 	}
 
-	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
+	datasource := &datasources.DataSource{
+		OrgID: query.OrgID,
+		UID:   query.UID,
+		Name:  query.Name, // nolint:staticcheck
+		ID:    query.ID,   // nolint:staticcheck
+	}
 	has, err := sess.Get(datasource)
 
 	if err != nil {
-		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID)
+		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
 		return nil, err
 	} else if !has {
+		ss.logger.Debug("Data source not found", "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID) // nolint:staticcheck
 		return nil, datasources.ErrDataSourceNotFound
 	}
 
@@ -252,9 +258,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			cmd.UID = uid
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "create", err)
-			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagFailWrongDSUID) {
-				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
-			}
+			return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 		}
 
 		ds = &datasources.DataSource{
@@ -326,12 +330,14 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			cmd.JsonData = simplejson.New()
 		}
 
-		if cmd.UID != "" {
+		if cmd.ID == 0 || cmd.OrgID == 0 {
+			return datasources.ErrDataSourceIdentifierNotSet
+		}
+
+		if len(cmd.UID) > 0 {
 			if err := util.ValidateUID(cmd.UID); err != nil {
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
-				if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagFailWrongDSUID) {
-					return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
-				}
+				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 			}
 		}
 

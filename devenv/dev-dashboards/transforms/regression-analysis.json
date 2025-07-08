@@ -39,6 +39,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -70,7 +71,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -96,10 +97,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
@@ -144,6 +147,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -175,7 +179,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -201,10 +205,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
@@ -248,6 +254,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -279,7 +286,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -305,11 +312,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "csvContent": "time, val\n2023-11-20 12:09:00, 1\n2023-11-20 12:09:02, 2\n2023-11-20 12:09:03, 3\n2023-11-20 12:09:04, 4\n2023-11-20 12:09:05, 5\n2023-11-20 12:09:06, 6\n2023-11-20 12:09:07, 2\n2023-11-20 12:09:08, 3\n2023-11-20 12:09:09, 4\n2023-11-20 12:09:10, 1\n2023-11-20 12:09:11, 2\n2023-11-20 12:09:12, 3\n2023-11-20 12:09:13, 4",
@@ -328,6 +336,7 @@
           "options": {
             "conversions": [
               {
+                "dateFormat": "YYYY-MM-DD hh:mm:ss",
                 "destinationType": "time",
                 "targetField": "time"
               }
@@ -374,6 +383,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -405,7 +415,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -431,10 +441,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "csvContent": "time, val\n2023-11-20 12:09:00, 1\n2023-11-20 12:09:02, 2\n2023-11-20 12:09:03, 3\n2023-11-20 12:09:04, 4\n2023-11-20 12:09:05, null\n2023-11-20 12:09:06, 6\n2023-11-20 12:09:07, 2\n2023-11-20 12:09:08, null\n2023-11-20 12:09:09, 4\n2023-11-20 12:09:10, 1\n2023-11-20 12:09:11, 2\n2023-11-20 12:09:12, 3\n2023-11-20 12:09:13, 4",
@@ -453,6 +465,7 @@
           "options": {
             "conversions": [
               {
+                "dateFormat": "YYYY-MM-DD hh:mm:ss",
                 "destinationType": "time",
                 "targetField": "time"
               }
@@ -499,14 +512,17 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "fillOpacity": 50,
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
+            "pointShape": "circle",
             "pointSize": {
               "fixed": 5
             },
+            "pointStrokeWidth": 1,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -518,7 +534,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -562,22 +578,42 @@
       },
       "id": 3,
       "options": {
-        "dims": {
-          "frame": 0
-        },
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
-        "series": [],
-        "seriesMapping": "auto",
+        "mapping": "auto",
+        "series": [
+          {
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              }
+            }
+          }
+        ],
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "csvContent": "x,y\n1,4\n2,1\n3,2\n4,-2\n5,6\n3,2\n1,7\n3,9\n6,3\n5,-3\n2,-2\n7,15",
@@ -654,7 +690,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -677,6 +713,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -684,10 +721,16 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "12.1.0-pre",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
       "title": "stat panel",
       "transformations": [
         {
@@ -728,6 +771,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -758,7 +802,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -809,11 +854,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "csvContent": "x, val\n6,2\n8,1\n10,5\n15,1\n22,10\n",
@@ -877,14 +923,17 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "fillOpacity": 50,
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
+            "pointShape": "circle",
             "pointSize": {
               "fixed": 5
             },
+            "pointStrokeWidth": 1,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -895,7 +944,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -939,37 +989,42 @@
       },
       "id": 8,
       "options": {
-        "dims": {
-          "exclude": [],
-          "frame": 0,
-          "x": "foo"
-        },
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
           "showLegend": true
         },
+        "mapping": "auto",
         "series": [
           {
-            "pointColor": {},
-            "pointSize": {
-              "field": "baz",
-              "fixed": 50.5,
-              "max": 100,
-              "min": 1
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
             },
-            "x": "foo",
-            "y": "foo"
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "foo"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              }
+            }
           }
         ],
-        "seriesMapping": "auto",
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "12.1.0-pre",
       "targets": [
         {
           "datasource": {
@@ -1014,8 +1069,9 @@
       "type": "xychart"
     }
   ],
+  "preload": false,
   "refresh": "",
-  "schemaVersion": 39,
+  "schemaVersion": 41,
   "tags": [
     "gdev",
     "transform"
@@ -1031,6 +1087,5 @@
   "timezone": "",
   "title": "Transforms - Regression analysis",
   "uid": "d2d2bb99-42e4-44b8-b93e-3ad1aae31c6b",
-  "version": 39,
-  "weekStart": ""
+  "version": 1
 }

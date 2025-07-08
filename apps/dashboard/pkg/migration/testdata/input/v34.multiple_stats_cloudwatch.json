@@ -1,0 +1,366 @@
+{
+  "title": "CloudWatch Multiple Statistics Test Dashboard",
+  "schemaVersion": 33,
+  "annotations": {
+    "list": [
+      {
+        "name": "CloudWatch Annotation Single Statistic",
+        "enable": true,
+        "iconColor": "red",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        },
+        "dimensions": {
+          "InstanceId": "i-123456"
+        },
+        "namespace": "AWS/EC2",
+        "region": "us-east-1",
+        "prefixMatching": false,
+        "statistics": ["Average"]
+      },
+      {
+        "name": "CloudWatch Annotation Multiple Statistics",
+        "enable": true,
+        "iconColor": "blue",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        },
+        "dimensions": {
+          "InstanceId": "i-789012"
+        },
+        "namespace": "AWS/RDS",
+        "region": "us-west-2",
+        "prefixMatching": false,
+        "statistics": ["Maximum", "Minimum", "Sum"]
+      },
+      {
+        "name": "CloudWatch Annotation Empty Statistics",
+        "enable": true,
+        "iconColor": "green",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        },
+        "dimensions": {
+          "LoadBalancer": "my-lb"
+        },
+        "namespace": "AWS/ApplicationELB",
+        "region": "us-west-1",
+        "prefixMatching": false,
+        "statistics": []
+      },
+      {
+        "name": "CloudWatch Annotation Invalid Statistics",
+        "enable": true,
+        "iconColor": "yellow",
+        "datasource": {
+          "uid": "default-ds-uid",
+          "type": "prometheus",
+          "apiVersion": "v1"
+        },
+        "dimensions": {
+          "TableName": "my-table"
+        },
+        "namespace": "AWS/DynamoDB",
+        "region": "us-east-1",
+        "prefixMatching": false,
+        "statistics": ["InvalidStat", "Sum", null, "Average"]
+      },
+      {
+        "name": "Non-CloudWatch Annotation",
+        "enable": true,
+        "iconColor": "purple",
+        "datasource": {
+          "uid": "prometheus"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "CloudWatch Single Query Multiple Statistics",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "InstanceId": "i-123456"
+          },
+          "namespace": "AWS/EC2",
+          "region": "us-east-1",
+          "metricName": "CPUUtilization",
+          "statistics": ["Average", "Maximum", "Minimum"],
+          "period": "300"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "CloudWatch Single Query Single Statistic",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "LoadBalancer": "my-load-balancer"
+          },
+          "namespace": "AWS/ApplicationELB",
+          "region": "us-west-2",
+          "metricName": "RequestCount",
+          "statistics": ["Sum"]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "CloudWatch Query No Statistics Array",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "my-db"
+          },
+          "namespace": "AWS/RDS",
+          "region": "us-east-1",
+          "metricName": "DatabaseConnections",
+          "statistic": "Maximum"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Mixed CloudWatch and Non-CloudWatch Queries",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "QueueName": "my-queue"
+          },
+          "namespace": "AWS/SQS",
+          "region": "us-east-1",
+          "metricName": "ApproximateNumberOfMessages",
+          "statistics": ["Average", "Maximum"]
+        },
+        {
+          "refId": "B",
+          "expr": "up",
+          "datasource": {
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "TopicName": "my-topic"
+          },
+          "namespace": "AWS/SNS",
+          "region": "us-west-1",
+          "metricName": "NumberOfMessagesPublished",
+          "statistics": ["Sum"]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "CloudWatch Query Empty Statistics",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "BucketName": "my-bucket"
+          },
+          "namespace": "AWS/S3",
+          "region": "us-east-1",
+          "metricName": "BucketSizeBytes",
+          "statistics": []
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "CloudWatch Query Invalid Statistics",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "FunctionName": "my-function"
+          },
+          "namespace": "AWS/Lambda",
+          "region": "us-west-2",
+          "metricName": "Duration",
+          "statistics": ["InvalidStat", "Average", null, "Maximum", ""]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "collapsed": true,
+      "title": "Collapsed Row with CloudWatch",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          }
+        }
+      ],
+      "panels": [
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Nested CloudWatch Query Multiple Statistics",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": {
+                "uid": "default-ds-uid",
+                "type": "prometheus",
+                "apiVersion": "v1"
+              },
+              "dimensions": {
+                "StreamName": "my-stream"
+              },
+              "namespace": "AWS/Kinesis",
+              "region": "us-east-1",
+              "metricName": "IncomingRecords",
+              "statistics": ["Sum", "Average", "Maximum"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "CloudWatch Query with Existing Editor Mode",
+      "datasource": {
+        "uid": "default-ds-uid",
+        "type": "prometheus",
+        "apiVersion": "v1"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "uid": "default-ds-uid",
+            "type": "prometheus",
+            "apiVersion": "v1"
+          },
+          "dimensions": {
+            "ClusterName": "my-cluster"
+          },
+          "namespace": "AWS/ECS",
+          "region": "us-east-1",
+          "metricName": "CPUUtilization",
+          "statistics": ["Average", "Maximum"],
+          "metricEditorMode": 1,
+          "metricQueryType": 1,
+          "period": "300"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Non-CloudWatch Panel",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "cpu_usage",
+          "datasource": {
+            "uid": "prometheus"
+          }
+        }
+      ]
+    }
+  ]
+}

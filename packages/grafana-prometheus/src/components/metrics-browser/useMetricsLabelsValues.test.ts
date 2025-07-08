@@ -2,11 +2,12 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { TimeRange } from '@grafana/data';
 
-import { PrometheusLanguageProviderInterface } from '../../language_provider';
-import { getMockTimeRange } from '../../test/__mocks__/datasource';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from '../../constants';
+import { PrometheusDatasource } from '../../datasource';
+import { PrometheusLanguageProvider, PrometheusLanguageProviderInterface } from '../../language_provider';
+import { getMockTimeRange } from '../../test/mocks/datasource';
 
 import * as selectorBuilderModule from './selectorBuilder';
-import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, LAST_USED_LABELS_KEY, METRIC_LABEL } from './types';
 import { useMetricsLabelsValues } from './useMetricsLabelsValues';
 
 // Test utilities to reduce boilerplate
@@ -30,16 +31,18 @@ const setupMocks = () => {
   Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
   // Mock language provider
-  const mockLanguageProvider: PrometheusLanguageProviderInterface = {
-    retrieveMetrics: jest.fn().mockReturnValue(['metric1', 'metric2', 'metric3']),
-    retrieveLabelKeys: jest.fn().mockReturnValue(['__name__', 'instance', 'job', 'service']),
-    retrieveMetricsMetadata: jest.fn().mockReturnValue({
-      metric1: { type: 'counter', help: 'Test metric 1' },
-      metric2: { type: 'gauge', help: 'Test metric 2' },
-    }),
-    queryLabelValues: jest.fn(),
-    queryLabelKeys: jest.fn(),
-  } as unknown as PrometheusLanguageProviderInterface;
+  const mockLanguageProvider: PrometheusLanguageProviderInterface = new PrometheusLanguageProvider({
+    seriesLimit: DEFAULT_SERIES_LIMIT,
+  } as unknown as PrometheusDatasource);
+
+  mockLanguageProvider.retrieveMetrics = jest.fn().mockReturnValue(['metric1', 'metric2', 'metric3']);
+  mockLanguageProvider.retrieveLabelKeys = jest.fn().mockReturnValue(['__name__', 'instance', 'job', 'service']);
+  mockLanguageProvider.retrieveMetricsMetadata = jest.fn().mockReturnValue({
+    metric1: { type: 'counter', help: 'Test metric 1' },
+    metric2: { type: 'gauge', help: 'Test metric 2' },
+  });
+  mockLanguageProvider.queryLabelValues = jest.fn();
+  mockLanguageProvider.queryLabelKeys = jest.fn();
 
   // Mock standard responses
   (mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation((_timeRange: TimeRange, label: string) => {
@@ -549,7 +552,6 @@ describe('useMetricsLabelsValues', () => {
 
   describe('testing with invalid values or special characters', () => {
     it('should handle metric names with special characters', async () => {
-      // Mock fetchSeriesValuesWithMatch to return metrics with special characters
       (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation(
         (_timeRange: TimeRange, label: string) => {
           if (label === METRIC_LABEL) {
@@ -576,7 +578,6 @@ describe('useMetricsLabelsValues', () => {
     });
 
     it('should handle label values with special characters', async () => {
-      // Mock fetchSeriesValuesWithMatch to return label values with special characters
       (mocks.mockLanguageProvider.queryLabelValues as jest.Mock).mockImplementation(
         (_timeRange: TimeRange, label: string) => {
           if (label === 'job') {

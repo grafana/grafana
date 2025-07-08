@@ -152,9 +152,9 @@ By default, Grafana includes the `access_type=offline` parameter in the authoriz
 
 Refresh token fetching and access token expiration check is enabled by default for the Google provider since Grafana v10.1.0. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
-{{% /admonition %}}
+{{< /admonition >}}
 
 #### Configure automatic login
 
@@ -166,6 +166,10 @@ auto_login = true
 ```
 
 ### Configure team synchronization
+
+{{< admonition type="note" >}}
+Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+{{< /admonition >}}
 
 With team sync, you can easily add users to teams by utilizing their Google groups. To set up team sync for Google OAuth, refer to the following example.
 

@@ -22,11 +22,11 @@
     "@testing-library/react": "16.2.0",
     "@testing-library/user-event": "14.6.1",
     "@types/jest": "29.5.14",
-    "@types/lodash": "4.17.15",
+    "@types/lodash": "4.17.20",
     "@types/node": "22.15.0",
     "@types/react": "18.3.18",
     "ts-node": "10.9.2",
-    "typescript": "5.7.3",
+    "typescript": "5.8.3",
     "webpack": "5.97.1"
   },
   "peerDependencies": {
@@ -37,5 +37,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.9.2"
 }

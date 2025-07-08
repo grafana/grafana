@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
@@ -131,20 +131,20 @@ export const triangleItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = ['Triangle'];
+    const category = [t('canvas.triangle-item.category-triangle', 'Triangle')];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: 'Text',
+        name: t('canvas.triangle-item.name-text', 'Text'),
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: 'Text color',
+        name: t('canvas.triangle-item.name-text-color', 'Text color'),
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -152,7 +152,7 @@ export const triangleItem: CanvasElementItem = {
       .addRadio({
         category,
         path: 'config.align',
-        name: 'Align text',
+        name: t('canvas.triangle-item.name-align-text', 'Align text'),
         settings: {
           options: [
             { value: Align.Left, label: t('canvas.triangle-item.label.left', 'Left') },
@@ -165,7 +165,7 @@ export const triangleItem: CanvasElementItem = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: 'Vertical align',
+        name: t('canvas.triangle-item.name-vertical-align', 'Vertical align'),
         settings: {
           options: [
             { value: VAlign.Top, label: t('canvas.triangle-item.label.top', 'Top') },
@@ -178,7 +178,7 @@ export const triangleItem: CanvasElementItem = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: 'Text size',
+        name: t('canvas.triangle-item.name-text-size', 'Text size'),
         settings: {
           placeholder: t('canvas.triangle-item.placeholder.auto', 'Auto'),
         },

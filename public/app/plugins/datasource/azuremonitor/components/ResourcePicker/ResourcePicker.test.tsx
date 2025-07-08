@@ -2,16 +2,16 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 
-import createMockDatasource from '../../__mocks__/datasource';
-import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
+import Datasource from '../../datasource';
+import createMockDatasource from '../../mocks/datasource';
+import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
   mockResourcesByResourceGroup,
   mockSearchResults,
-} from '../../__mocks__/resourcePickerRows';
-import { DeepPartial } from '../../__mocks__/utils';
-import Datasource from '../../datasource';
+} from '../../mocks/resourcePickerRows';
+import { DeepPartial } from '../../mocks/utils';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
 import { ResourceRowType } from './types';
