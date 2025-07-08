@@ -709,6 +709,7 @@ export enum TableCellDisplayMode {
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
   Markdown = 'markdown',
+  Pill = 'pill',
   Sparkline = 'sparkline',
 }
 
@@ -826,6 +827,15 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 /**
+ * Pill options
+ */
+export interface TablePillCellOptions {
+  color?: string;
+  colorMode?: ('auto' | 'fixed' | 'mapped');
+  type: TableCellDisplayMode.Pill;
+}
+
+/**
  * Markdown options
  */
 export interface TableMarkdownCellOptions {
@@ -847,7 +857,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions);
 
 /**
  * Use UTC/GMT timezone
@@ -973,6 +983,10 @@ export interface TableFieldOptions {
   inspect: boolean;
   minWidth?: number;
   width?: number;
+  /**
+   * Enables text wrapping for column headers
+   */
+  wrapHeaderText?: boolean;
 }
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {

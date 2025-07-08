@@ -13,6 +13,7 @@ package dataquery
 
 import (
 	json "encoding/json"
+	fmt "fmt"
 )
 
 type BucketAggregation = DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested
@@ -1547,6 +1548,43 @@ type StringOrDataqueryInlineScript struct {
 // NewStringOrDataqueryInlineScript creates a new StringOrDataqueryInlineScript object.
 func NewStringOrDataqueryInlineScript() *StringOrDataqueryInlineScript {
 	return &StringOrDataqueryInlineScript{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrDataqueryInlineScript` as JSON.
+func (resource StringOrDataqueryInlineScript) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+	if resource.DataqueryInlineScript != nil {
+		return json.Marshal(resource.DataqueryInlineScript)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode StringOrDataqueryInlineScript from JSON.
+func (resource *StringOrDataqueryInlineScript) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+	fields := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+
+	if fields["String"] != nil {
+		if err := json.Unmarshal(fields["String"], &resource.String); err != nil {
+			return fmt.Errorf("error decoding field 'String': %w", err)
+		}
+	}
+
+	if fields["DataqueryInlineScript"] != nil {
+		if err := json.Unmarshal(fields["DataqueryInlineScript"], &resource.DataqueryInlineScript); err != nil {
+			return fmt.Errorf("error decoding field 'DataqueryInlineScript': %w", err)
+		}
+	}
+
+	return nil
 }
 
 type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -56,6 +57,42 @@ func (a *AlertmanagerConfigStoreFake) Save(ctx context.Context, revision *Config
 	})
 	if a.SaveFn != nil {
 		return a.SaveFn(ctx, revision)
+	}
+	return nil
+}
+
+type fakeCrypto struct {
+	Calls                   []methodCall
+	EncryptExtraConfigsFunc func(context.Context, *definitions.PostableUserConfig) error
+	DecryptExtraConfigsFunc func(context.Context, *definitions.PostableUserConfig) error
+}
+
+func newFakeCrypto() *fakeCrypto {
+	return &fakeCrypto{
+		Calls: []methodCall{},
+	}
+}
+
+func (f *fakeCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+	f.Calls = append(f.Calls, methodCall{
+		Method: "EncryptExtraConfigs",
+		Args:   []interface{}{ctx, config},
+	})
+
+	if f.EncryptExtraConfigsFunc != nil {
+		return f.EncryptExtraConfigsFunc(ctx, config)
+	}
+	return nil
+}
+
+func (f *fakeCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+	f.Calls = append(f.Calls, methodCall{
+		Method: "DecryptExtraConfigs",
+		Args:   []interface{}{ctx, config},
+	})
+
+	if f.DecryptExtraConfigsFunc != nil {
+		return f.DecryptExtraConfigsFunc(ctx, config)
 	}
 	return nil
 }

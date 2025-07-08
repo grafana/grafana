@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   ActionModel,
@@ -57,6 +57,11 @@ export function TablePanel(props: Props) {
 
   const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
 
+  const _getActions = useCallback(
+    (frame: DataFrame, field: Field, rowIndex: number) => getCellActions(frame, field, rowIndex, replaceVariables),
+    [replaceVariables]
+  );
+
   const tableElement = (
     <TableNG
       height={tableHeight}
@@ -76,8 +81,7 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}
-      getActions={getCellActions}
-      replaceVariables={replaceVariables}
+      getActions={_getActions}
       structureRev={data.structureRev}
     />
   );
@@ -160,28 +164,39 @@ const getCellActions = (
   field: Field,
   rowIndex: number,
   replaceVariables: InterpolateFunction | undefined
-) => {
-  const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
+): Array<ActionModel<Field>> => {
+  const numActions = field.config.actions?.length ?? 0;
 
-  const actionsModel = getActions(
-    dataFrame,
-    field,
-    field.state!.scopedVars!,
-    replaceVariables ?? replaceVars,
-    field.config.actions ?? [],
-    { valueRowIndex: rowIndex }
-  );
+  if (numActions > 0) {
+    const actions = getActions(
+      dataFrame,
+      field,
+      field.state!.scopedVars!,
+      replaceVariables ?? replaceVars,
+      field.config.actions ?? [],
+      { valueRowIndex: rowIndex }
+    );
 
-  actionsModel.forEach((action) => {
-    const key = `${action.title}`;
-    if (!actionLookup.has(key)) {
-      actions.push(action);
-      actionLookup.add(key);
+    if (actions.length === 1) {
+      return actions;
+    } else {
+      const actionsOut: Array<ActionModel<Field>> = [];
+      const actionLookup = new Set<string>();
+
+      actions.forEach((action) => {
+        const key = action.title;
+
+        if (!actionLookup.has(key)) {
+          actionsOut.push(action);
+          actionLookup.add(key);
+        }
+      });
+
+      return actionsOut;
     }
-  });
+  }
 
-  return actions;
+  return [];
 };
 
 const tableStyles = {

@@ -4,7 +4,7 @@ package common
 // in the table such as colored text, JSON, gauge, etc.
 // The color-background-solid, gradient-gauge, and lcd-gauge
 // modes are deprecated in favor of new cell subOptions
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "data-links" | "custom" | "actions" | "markdown" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|DataLinks|Custom|Actions|Markdown")
+TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" | "sparkline" | "data-links" | "custom" | "actions" | "pill" | "markdown" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge|Sparkline|DataLinks|Custom|Actions|Pill|Markdown")
 
 // Display mode to the "Colored Background" display
 // mode for table cells. Either displays a solid color (basic mode)
@@ -84,6 +84,13 @@ TableColoredBackgroundCellOptions: {
 	wrapText?: bool
 } @cuetsy(kind="interface")
 
+// Pill options
+TablePillCellOptions: {
+  type: TableCellDisplayMode & "pill"
+  color?: string
+  colorMode?: "auto" | "fixed" | "mapped"
+} @cuetsy(kind="interface")
+
 // Markdown options
 TableMarkdownCellOptions: {
 	type: TableCellDisplayMode & "markdown"
@@ -94,7 +101,7 @@ TableCellHeight: "sm" | "md" | "lg" | "custom" | "auto" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
-TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions @cuetsy(kind="type")
+TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TablePillCellOptions | TableDataLinksCellOptions | TableActionsCellOptions | TableJsonViewCellOptions | TableMarkdownCellOptions @cuetsy(kind="type")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.
@@ -110,5 +117,6 @@ TableFieldOptions: {
 	filterable?: bool
 	// Hides any header for a column, useful for columns that show some static content or buttons.
 	hideHeader?: bool
+  // Enables text wrapping for column headers
+  wrapHeaderText?: bool
 } @cuetsy(kind="interface")
-

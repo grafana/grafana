@@ -6,6 +6,7 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // OSSKeeperService is the OSS implementation of the Service interface.
@@ -19,10 +20,11 @@ func ProvideService(
 	tracer trace.Tracer,
 	store contracts.EncryptedValueStorage,
 	encryptionManager contracts.EncryptionManager,
+	reg prometheus.Registerer,
 ) (*OSSKeeperService, error) {
 	return &OSSKeeperService{
 		// TODO: rename to system keeper or something like that
-		systemKeeper: sqlkeeper.NewSQLKeeper(tracer, encryptionManager, store),
+		systemKeeper: sqlkeeper.NewSQLKeeper(tracer, encryptionManager, store, reg),
 	}, nil
 }
 

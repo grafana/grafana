@@ -13,6 +13,7 @@ import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONCell } from './JSONCell';
 import { MarkdownCell } from './MarkdownCell';
+import { PillCell } from './PillCell';
 import { SparklineCell } from './SparklineCell';
 
 export type TableCellRenderer = (props: TableCellRendererProps) => ReactNode;
@@ -25,7 +26,6 @@ const GAUGE_RENDERER: TableCellRenderer = (props) => (
     height={props.height}
     width={props.width}
     rowIdx={props.rowIdx}
-    actions={props.actions}
   />
 );
 
@@ -36,7 +36,6 @@ const AUTO_RENDERER: TableCellRenderer = (props) => (
     justifyContent={props.justifyContent}
     rowIdx={props.rowIdx}
     cellOptions={props.cellOptions}
-    actions={props.actions}
   />
 );
 
@@ -53,13 +52,7 @@ const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
 );
 
 const JSON_RENDERER: TableCellRenderer = (props) => (
-  <JSONCell
-    justifyContent={props.justifyContent}
-    value={props.value}
-    field={props.field}
-    rowIdx={props.rowIdx}
-    actions={props.actions}
-  />
+  <JSONCell justifyContent={props.justifyContent} value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
 const GEO_RENDERER: TableCellRenderer = (props) => (
@@ -74,13 +67,16 @@ const IMAGE_RENDERER: TableCellRenderer = (props) => (
     justifyContent={props.justifyContent}
     value={props.value}
     rowIdx={props.rowIdx}
-    actions={props.actions}
   />
 );
 
 const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />;
 
-const ACTIONS_RENDERER: TableCellRenderer = (props) => <ActionsCell actions={props.actions} />;
+const ACTIONS_RENDERER: TableCellRenderer = ({ field, rowIdx, getActions = () => [] }) => (
+  <ActionsCell field={field} rowIdx={rowIdx} getActions={getActions} />
+);
+
+const PILL_RENDERER: TableCellRenderer = (props) => <PillCell {...props} />;
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;
@@ -101,7 +97,6 @@ const MARKDOWN_RENDERER: TableCellRenderer = (props) => (
     justifyContent={props.justifyContent}
     rowIdx={props.rowIdx}
     cellOptions={props.cellOptions}
-    actions={props.actions}
     height={props.height}
   />
 );
@@ -118,6 +113,7 @@ const CELL_RENDERERS: Record<TableCellOptions['type'], TableCellRenderer> = {
   [TableCellDisplayMode.ColorBackground]: AUTO_RENDERER,
   [TableCellDisplayMode.Auto]: AUTO_RENDERER,
   [TableCellDisplayMode.Markdown]: MARKDOWN_RENDERER,
+  [TableCellDisplayMode.Pill]: PILL_RENDERER,
 };
 
 /** @internal */

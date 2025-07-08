@@ -107,7 +107,7 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}
-          noOptionsMessage="No fields found"
+          noOptionsMessage={t('dimensions.scalar-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
         />
       </div>
       <div className={styles.range}>

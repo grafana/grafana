@@ -4,9 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	awssdk "github.com/grafana/grafana-aws-sdk/pkg/sigv4"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/mwitkow/go-conntrack"
 
@@ -46,21 +44,7 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 
 	// SigV4 signing should be performed after all headers are added
 	if cfg.SigV4AuthEnabled {
-		authSettings := awsds.AuthSettings{
-			AllowedAuthProviders:      cfg.AWSAllowedAuthProviders,
-			AssumeRoleEnabled:         cfg.AWSAssumeRoleEnabled,
-			ExternalID:                cfg.AWSExternalId,
-			ListMetricsPageLimit:      cfg.AWSListMetricsPageLimit,
-			SecureSocksDSProxyEnabled: cfg.SecureSocksDSProxy.Enabled,
-		}
-		if cfg.AWSSessionDuration != "" {
-			sessionDuration, err := gtime.ParseDuration(cfg.AWSSessionDuration)
-			if err == nil {
-				authSettings.SessionDuration = &sessionDuration
-			}
-		}
-
-		middlewares = append(middlewares, awssdk.SigV4MiddlewareWithAuthSettings(cfg.SigV4VerboseLogging, authSettings))
+		middlewares = append(middlewares, awsauth.NewSigV4Middleware())
 	}
 
 	setDefaultTimeoutOptions(cfg)

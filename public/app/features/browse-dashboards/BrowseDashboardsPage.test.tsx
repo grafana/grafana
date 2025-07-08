@@ -163,17 +163,17 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   describe('at the root level', () => {
     it('displays "Dashboards" as the page title', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
     });
 
     it('displays a search input', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
     });
 
     it('shows the "New" button', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
     });
 
@@ -185,25 +185,25 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           canCreateFolders: false,
         };
       });
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
     });
 
     it('does not show "Folder actions"', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
 
     it('does not show an "Edit title" button', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('does not show any tabs', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
 
       expect(screen.queryByRole('tab', { name: 'Dashboards' })).not.toBeInTheDocument();
@@ -212,7 +212,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('displays the filters and hides the actions initially', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       await screen.findByPlaceholderText('Search for dashboards and folders');
 
       expect(await screen.findByText('Sort')).toBeInTheDocument();
@@ -223,7 +223,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('selecting an item hides the filters and shows the actions instead', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
 
       const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
       await userEvent.click(checkbox);
@@ -238,7 +238,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('navigating into a child item resets the selected state', async () => {
-      const { rerender } = render(<BrowseDashboardsPage />);
+      const { rerender } = render(<BrowseDashboardsPage queryParams={{}} />);
 
       const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA.item.uid));
       await userEvent.click(checkbox);
@@ -248,7 +248,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 
       (useParams as jest.Mock).mockReturnValue({ uid: folderA.item.uid });
-      rerender(<BrowseDashboardsPage />);
+      rerender(<BrowseDashboardsPage queryParams={{}} />);
 
       // Check the filters are now visible again
       expect(await screen.findByText('Filter by tag')).toBeInTheDocument();
@@ -266,17 +266,17 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('shows the folder name as the page title', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
     });
 
     it('displays a search input', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByPlaceholderText('Search for dashboards and folders')).toBeInTheDocument();
     });
 
     it('shows the "New" button', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'New' })).toBeInTheDocument();
     });
 
@@ -288,13 +288,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           canCreateFolders: false,
         };
       });
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
     });
 
     it('shows the "Folder actions" button', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
     });
 
@@ -308,13 +308,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           canViewPermissions: false,
         };
       });
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
 
     it('shows an "Edit title" button', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('button', { name: 'Edit title' })).toBeInTheDocument();
     });
 
@@ -325,13 +325,13 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           canEditFolders: false,
         };
       });
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       expect(await screen.findByRole('tab', { name: 'Dashboards' })).toBeInTheDocument();
       expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
 
@@ -343,7 +343,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('displays the filters and hides the actions initially', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
       await screen.findByPlaceholderText('Search for dashboards and folders');
 
       expect(await screen.findByText('Sort')).toBeInTheDocument();
@@ -354,7 +354,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('selecting an item hides the filters and shows the actions instead', async () => {
-      render(<BrowseDashboardsPage />);
+      render(<BrowseDashboardsPage queryParams={{}} />);
 
       const checkbox = await screen.findByTestId(
         selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)

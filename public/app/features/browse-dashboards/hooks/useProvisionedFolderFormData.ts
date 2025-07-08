@@ -39,7 +39,7 @@ export function useProvisionedFolderFormData({
 
   const initialValues = useMemo(() => {
     // Only create initial values when we have the data
-    if (!repository || !folder || isLoading) {
+    if (!repository || isLoading) {
       return undefined;
     }
 

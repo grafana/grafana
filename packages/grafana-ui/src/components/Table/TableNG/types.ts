@@ -10,7 +10,6 @@ import {
   TimeRange,
   FieldConfigSource,
   ActionModel,
-  InterpolateFunction,
   FieldType,
   DataFrameWithValue,
   SelectableValue,
@@ -30,12 +29,9 @@ export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: 
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (
-  frame: DataFrame,
-  field: Field,
-  rowIndex: number,
-  replaceVariables?: InterpolateFunction
-) => ActionModel[];
+export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
@@ -143,7 +139,6 @@ export interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  replaceVariables?: InterpolateFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
 }
@@ -152,7 +147,6 @@ export interface BaseTableProps {
 export interface TableNGProps extends BaseTableProps {}
 
 export interface TableCellRendererProps {
-  actions?: ActionModel[];
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -166,6 +160,7 @@ export interface TableCellRendererProps {
   cellInspect: boolean;
   showFilters: boolean;
   justifyContent: Property.JustifyContent;
+  getActions?: GetActionsFunctionLocal;
 }
 
 export type ContextMenuProps = {
@@ -206,7 +201,7 @@ export interface SparklineCellProps {
   width: number;
 }
 
-export interface BarGaugeCellProps extends ActionCellProps {
+export interface BarGaugeCellProps {
   field: Field;
   height: number;
   rowIdx: number;
@@ -215,7 +210,7 @@ export interface BarGaugeCellProps extends ActionCellProps {
   width: number;
 }
 
-export interface ImageCellProps extends ActionCellProps {
+export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
   height: number;
@@ -224,7 +219,7 @@ export interface ImageCellProps extends ActionCellProps {
   rowIdx: number;
 }
 
-export interface JSONCellProps extends ActionCellProps {
+export interface JSONCellProps {
   justifyContent: Property.JustifyContent;
   value: TableCellValue;
   field: Field;
@@ -242,31 +237,24 @@ export interface GeoCellProps {
   height: number;
 }
 
-export interface ActionCellProps {
-  actions?: ActionModel[];
-}
-
 export interface CellColors {
   textColor?: string;
   bgColor?: string;
   bgHoverColor?: string;
 }
 
-export interface AutoCellProps extends ActionCellProps {
-  value: TableCellValue;
+export interface AutoCellProps {
   field: Field;
+  value: TableCellValue;
   justifyContent: Property.JustifyContent;
   rowIdx: number;
   cellOptions: TableCellOptions;
 }
 
-export interface MarkdownCellProps extends ActionCellProps {
-  height: number;
-  value: TableCellValue;
+export interface ActionCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
-  cellOptions: TableCellOptions;
+  getActions: GetActionsFunctionLocal;
 }
 
 // Comparator for sorting table values
