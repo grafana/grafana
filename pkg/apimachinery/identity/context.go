@@ -111,14 +111,6 @@ func getWildcardPermissions(actions ...string) map[string][]string {
 	return permissions
 }
 
-func getTokenPermissions(groups ...string) []string {
-	out := make([]string, 0, len(groups))
-	for _, group := range groups {
-		out = append(out, group+":*")
-	}
-	return out
-}
-
 // serviceIdentityPermissions is a list of wildcard permissions for provided actions.
 // We should add every action required "internally" here.
 var serviceIdentityPermissions = getWildcardPermissions(
@@ -141,20 +133,16 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"serviceaccounts:read", // serviceaccounts.ActionRead,
 )
 
-var serviceIdentityTokenPermissions = func() []string {
-	perm := getTokenPermissions(
-		"folder.grafana.app",
-		"dashboard.grafana.app",
-		"secret.grafana.app",
-		"query.grafana.app",
-		"iam.grafana.app",
-	)
+var serviceIdentityTokenPermissions = []string{
+	"folder.grafana.app:*",
+	"dashboard.grafana.app:*",
+	"secret.grafana.app:*",
+	"query.grafana.app:*",
+	"iam.grafana.app:*",
 
-	// Secrets Manager uses a custom verb for secret decryption
-	perm = append(perm, "secret.grafana.app/securevalues:decrypt")
-
-	return perm
-}()
+	// Secrets Manager uses a custom verb for secret decryption, and its authorizer does not allow wildcard permissions.
+	"secret.grafana.app/securevalues:decrypt",
+}
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{
 	Rest: authn.AccessTokenClaims{
