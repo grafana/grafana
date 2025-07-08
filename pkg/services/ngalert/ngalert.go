@@ -276,7 +276,7 @@ func (ng *AlertNG) init() error {
 
 					if remoteSecondaryWithRemoteState {
 						// Pull and merge the remote Alertmanager state.
-						rs, err := remoteAM.FetchRemoteState(ctx)
+						rs, err := remoteAM.GetRemoteState(ctx)
 						if err != nil {
 							return nil, fmt.Errorf("failed to fetch remote state: %w", err)
 						}

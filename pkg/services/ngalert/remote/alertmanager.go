@@ -394,8 +394,8 @@ type RemoteState struct {
 	Nflog    []byte
 }
 
-// FetchRemoteState gets the remote Alertmanager's internal state.
-func (am *Alertmanager) FetchRemoteState(ctx context.Context) (RemoteState, error) {
+// GetRemoteState gets the remote Alertmanager's internal state.
+func (am *Alertmanager) GetRemoteState(ctx context.Context) (RemoteState, error) {
 	var rs RemoteState
 
 	s, err := am.mimirClient.GetFullState(ctx)
