@@ -3,7 +3,7 @@
 # Others can set up the YAML LSP manually, which supports schemas: https://github.com/redhat-developer/yaml-language-server
 
 # $schema: https://golangci-lint.run/jsonschema/golangci.jsonschema.json
-version: "2"
+version: '2'
 run:
   timeout: 15m
   concurrency: 10
@@ -107,6 +107,9 @@ linters:
             - '**/pkg/tsdb/zipkin/**/*'
             - '**/pkg/tsdb/jaeger/*'
             - '**/pkg/tsdb/jaeger/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apis/datasource
+            - github.com/grafana/grafana/pkg/apimachinery/apis
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages
@@ -267,16 +270,16 @@ linters:
         text: G306
       - linters:
           - gosec
-        text: "401"
+        text: '401'
       - linters:
           - gosec
-        text: "402"
+        text: '402'
       - linters:
           - gosec
-        text: "501"
+        text: '501'
       - linters:
           - gosec
-        text: "404"
+        text: '404'
       - linters:
           - errorlint
         text: non-wrapping format verb for fmt.Errorf
