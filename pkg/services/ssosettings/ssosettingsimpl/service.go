@@ -93,10 +93,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 
 	usageStats.RegisterMetricsFunc(svc.getUsageStats)
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
-		ssoSettingsApi.RegisterAPIEndpoints()
-	}
+	ssoSettingsApi := api.ProvideApi(svc, routeRegister, ac)
+	ssoSettingsApi.RegisterAPIEndpoints()
 
 	return svc
 }

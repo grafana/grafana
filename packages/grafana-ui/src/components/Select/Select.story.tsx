@@ -37,12 +37,8 @@ const manyGroupedOptions = [
 ];
 
 const meta: Meta = {
-  title: 'Forms/Select',
+  title: 'Inputs/Deprecated/Select',
   component: Select,
-  // SB7 has broken subcomponent types due to dropping support for the feature
-  // https://github.com/storybookjs/storybook/issues/20782
-  // @ts-ignore
-  subcomponents: { AsyncSelect, MultiSelect, AsyncMultiSelect },
   parameters: {
     docs: {
       page: mdx,
