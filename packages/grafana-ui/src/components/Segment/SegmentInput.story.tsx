@@ -30,7 +30,7 @@ export const BasicInput = () => {
 };
 
 const meta: Meta<typeof SegmentInput> = {
-  title: 'Data Source/Segment/SegmentInput',
+  title: 'Inputs/SegmentInput',
   component: SegmentInput,
 };
 
