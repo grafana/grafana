@@ -113,7 +113,7 @@ export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, sugges
               const isLatest = index === 0;
 
               return (
-                <Card key={index} className={isLatest ? styles.latestSuggestion : ''}>
+                <Card noMargin key={index} className={isLatest ? styles.latestSuggestion : ''}>
                   <div className={styles.suggestionContent}>
                     {parsedSuggestion.map(({ type, content, language }, partIndex) => (
                       <div key={partIndex} className={styles.suggestionPart}>
@@ -125,9 +125,7 @@ export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, sugges
                                   <Trans
                                     i18nKey="sql-expressions.code-label"
                                     values={{ language: language?.toUpperCase() || 'CODE' }}
-                                  >
-                                    {language?.toUpperCase() || 'CODE'}
-                                  </Trans>
+                                  />
                                 </Text>
                                 <Stack direction="row" gap={1}>
                                   <Button
