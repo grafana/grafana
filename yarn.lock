@@ -3714,7 +3714,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
-    "@types/chance": "npm:1.1.6"
+    "@types/chance": "npm:1.1.7"
     "@types/common-tags": "npm:^1.8.0"
     "@types/d3": "npm:7.4.3"
     "@types/hoist-non-react-statics": "npm:3.3.6"
@@ -3738,7 +3738,7 @@ __metadata:
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:10.0.0"
     calculate-size: "npm:1.1.1"
-    chance: "npm:1.1.12"
+    chance: "npm:1.1.13"
     classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
     core-js: "npm:3.40.0"
@@ -8902,14 +8902,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/chance@npm:1.1.6":
-  version: 1.1.6
-  resolution: "@types/chance@npm:1.1.6"
-  checksum: 10/f4366f1b3144d143af3e6f0fad2ed1db7b9bdfa7d82d40944e9619d57fe7e6b60e8c1452f47a8ededa6b2188932879518628ecd9aac81c40384ded39c26338ba
-  languageName: node
-  linkType: hard
-
-"@types/chance@npm:^1.1.3":
+"@types/chance@npm:1.1.7, @types/chance@npm:^1.1.3":
   version: 1.1.7
   resolution: "@types/chance@npm:1.1.7"
   checksum: 10/5b3bf4ef0b7a2f6554f7767d7f081b4f613b45e74e74450d4da9c10cd12162420fc6ff5bb0abea143d6f7c43b62776b7a0e75d242cbe25c729fe020a1735e16f
@@ -12684,14 +12677,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chance@npm:1.1.12":
-  version: 1.1.12
-  resolution: "chance@npm:1.1.12"
-  checksum: 10/8700d5a66e27b47f4bdcf68f48489e1a490f39cd8bc8e39cac67c089b3f8d04b4bbc6710db0e85e802ad698cf3440d92784861208d2c248820355404b85b3f30
-  languageName: node
-  linkType: hard
-
-"chance@npm:^1.0.10":
+"chance@npm:1.1.13, chance@npm:^1.0.10":
   version: 1.1.13
   resolution: "chance@npm:1.1.13"
   checksum: 10/968e31ce9b8ce554c8a84fb66d85f6d06a33517bf21355ab760e347a0aaaece0652a23c791406826d4efe619b1aa4e7b66fb42acbd07859ba36ec2498a167b8c
