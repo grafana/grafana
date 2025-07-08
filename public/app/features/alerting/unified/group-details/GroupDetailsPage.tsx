@@ -147,7 +147,7 @@ function GroupDetailsPage() {
         {!promGroup && !rulerGroup && <EntityNotFound entity={`${namespaceId}/${groupName}`} />}
 
         {ruleSourceName && (
-          <>
+          <ul role="tree">
             {isGrafanaRuleGroup ? (
               <GrafanaGroupLoader
                 groupIdentifier={{ groupName, groupOrigin: 'grafana', namespace: { uid: namespaceId } }}
@@ -169,7 +169,7 @@ function GroupDetailsPage() {
                 }}
               />
             )}
-          </>
+          </ul>
         )}
       </>
     </AlertingPageWrapper>
