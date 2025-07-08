@@ -126,8 +126,9 @@ type AddedComponent struct {
 }
 
 type AddedFunction struct {
-	Targets []string `json:"targets"`
-	Title   string   `json:"title"`
+	Targets     []string `json:"targets"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
 }
 
 type ExposedComponent struct {
