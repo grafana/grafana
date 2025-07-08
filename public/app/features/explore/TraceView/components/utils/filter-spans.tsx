@@ -14,7 +14,7 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
-import { TraceKeyValuePair, TraceSearchProps, Tag } from '@grafana/data';
+import { TraceKeyValuePair, TraceSearchProps, TraceSearchTag } from '@grafana/data';
 
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
 import TNil from '../types/TNil';
@@ -100,7 +100,7 @@ export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
   return spans.filter(isSpanAMatch);
 }
 
-const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
+const getTagMatches = (spans: TraceSpan[], tags: TraceSearchTag[]) => {
   // remove empty/default tags
   tags = tags.filter((tag) => {
     // tag.key === '' when it is cleared via pressing x icon in select field
@@ -110,7 +110,7 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
   if (tags.length > 0) {
     return spans.filter((span: TraceSpan) => {
       // match against every tag filter
-      return tags.every((tag: Tag) => {
+      return tags.every((tag: TraceSearchTag) => {
         if (tag.key && tag.value) {
           if (
             (tag.operator === '=' && checkKeyValConditionForMatch(tag, span)) ||
@@ -145,7 +145,7 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
   return undefined;
 };
 
-const checkKeyValConditionForRegex = (tag: Tag, span: TraceSpan) => {
+const checkKeyValConditionForRegex = (tag: TraceSearchTag, span: TraceSpan) => {
   return (
     span.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
     span.process.tags.some((kv) => checkKeyAndValueForRegex(tag, kv)) ||
@@ -166,7 +166,7 @@ const checkKeyValConditionForRegex = (tag: Tag, span: TraceSpan) => {
   );
 };
 
-const checkKeyValConditionForMatch = (tag: Tag, span: TraceSpan) => {
+const checkKeyValConditionForMatch = (tag: TraceSearchTag, span: TraceSpan) => {
   return (
     span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
     span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
@@ -189,11 +189,11 @@ const checkKeyForMatch = (tagKey: string, key: string) => {
   return tagKey === key.toString();
 };
 
-const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
+const checkKeyAndValueForMatch = (tag: TraceSearchTag, kv: TraceKeyValuePair) => {
   return tag.key === kv.key && tag.value === getStringValue(kv.value);
 };
 
-const checkKeyAndValueForRegex = (tag: Tag, kv: TraceKeyValuePair) => {
+const checkKeyAndValueForRegex = (tag: TraceSearchTag, kv: TraceKeyValuePair) => {
   return kv.key.includes(tag.key || '') && getStringValue(kv.value).includes(tag.value || '');
 };
 
