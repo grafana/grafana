@@ -156,7 +156,7 @@
     "@types/slate-plain-serializer": "0.7.5",
     "@types/slate-react": "0.22.9",
     "@types/swagger-ui-react": "5.18.0",
-    "@types/systemjs": "6.15.1",
+    "@types/systemjs": "6.15.3",
     "@types/tinycolor2": "1.4.6",
     "@types/uuid": "10.0.0",
     "@types/webpack-assets-manifest": "^5",
