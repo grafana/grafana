@@ -2,12 +2,12 @@ import { set, get } from 'lodash';
 
 import { CustomVariableModel } from '@grafana/data';
 
-import { Context, createContext } from '../__mocks__/datasource';
-import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
-import createMockQuery from '../__mocks__/query';
-import { createTemplateVariables } from '../__mocks__/utils';
-import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
-import { AzureQueryType } from '../types';
+import { Context, createContext } from '../mocks/datasource';
+import { createMockInstanceSetttings } from '../mocks/instanceSettings';
+import createMockQuery from '../mocks/query';
+import { createTemplateVariables } from '../mocks/utils';
+import { multiVariable, singleVariable, subscriptionsVariable } from '../mocks/variables';
+import { AzureQueryType } from '../types/query';
 
 import AzureResourceGraphDatasource from './azure_resource_graph_datasource';
 

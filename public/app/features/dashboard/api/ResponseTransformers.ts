@@ -38,6 +38,7 @@ import {
   LibraryPanelKind,
   PanelKind,
   GridLayoutItemKind,
+  defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
@@ -55,6 +56,7 @@ import {
   DeprecatedInternalId,
   ObjectMeta,
 } from 'app/features/apiserver/types';
+import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
 import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
@@ -502,9 +504,13 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
       spec: {
         refId: t.refId,
         hidden: t.hide ?? false,
-        datasource: t.datasource ? t.datasource : panelDatasource,
         query: {
-          kind: t.datasource?.type || panelDatasource.type!,
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: t.datasource?.type || panelDatasource.type!,
+          datasource: {
+            name: t.datasource?.uid || panelDatasource.uid!,
+          },
           spec: {
             ...query,
           },
@@ -568,7 +574,12 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             regex: v.regex || '',
             sort: transformSortVariableToEnum(v.sort),
             query: {
-              kind: v.datasource?.type || getDefaultDatasourceType(),
+              kind: 'DataQuery',
+              version: defaultDataQueryKind().version,
+              group: v.datasource?.type ?? getDefaultDatasourceType(),
+              datasource: {
+                name: v.datasource?.uid,
+              },
               spec: query,
             },
             allowCustomValue: v.allowCustomValue ?? true,
@@ -722,7 +733,12 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
         iconColor: a.iconColor,
         builtIn: Boolean(a.builtIn),
         query: {
-          kind: a.datasource?.type || getDefaultDatasourceType(),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: a.datasource?.type || getDefaultDatasourceType(),
+          datasource: {
+            name: a.datasource?.uid,
+          },
           spec: {
             ...a.target,
           },
@@ -757,7 +773,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
             LEGACY_STRING_VALUE_KEY in v.spec.query.spec
               ? v.spec.query.spec[LEGACY_STRING_VALUE_KEY]
               : v.spec.query.spec,
-          datasource: v.spec.datasource,
+          datasource: {
+            type: v.spec.query?.spec.group,
+            uid: v.spec.query?.spec.datasource?.name,
+          },
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           regex: v.spec.regex,
@@ -874,22 +893,6 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
   return variables;
 }
 
-function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): AnnotationQuery[] {
-  // @ts-expect-error - target v2 query is not compatible with v1 target
-  return annotations.map((a) => {
-    return {
-      name: a.spec.name,
-      datasource: a.spec.datasource,
-      enable: a.spec.enable,
-      hide: a.spec.hide,
-      iconColor: a.spec.iconColor,
-      builtIn: a.spec.builtIn ? 1 : 0,
-      target: a.spec.query?.spec,
-      filter: a.spec.filter,
-    };
-  });
-}
-
 interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos' | 'type'> {}
 
 function getPanelsV1(
@@ -950,7 +953,10 @@ function transformV2PanelToV1Panel(
         return {
           refId: q.spec.refId,
           hide: q.spec.hidden,
-          datasource: q.spec.datasource,
+          datasource: {
+            uid: q.spec.query.spec.datasource?.uid,
+            type: q.spec.query.spec.group,
+          },
           ...q.spec.query.spec,
         };
       }),
@@ -1134,7 +1140,8 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
 }
 
 export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
-  const annotations = getAnnotationsV1(spec.annotations);
+  const annotations = spec.annotations.map(transformV2ToV1AnnotationQuery);
+
   const variables = getVariablesV1(spec.variables);
   const panels = getPanelsV1(spec.elements, spec.layout);
   return {

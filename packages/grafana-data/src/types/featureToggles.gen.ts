@@ -397,11 +397,6 @@ export interface FeatureToggles {
   */
   pdfTables?: boolean;
   /**
-  * Enables the SSO settings API and the OAuth configuration UIs in Grafana
-  * @default true
-  */
-  ssoSettingsApi?: boolean;
-  /**
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
@@ -427,11 +422,6 @@ export interface FeatureToggles {
   * Enables regression analysis transformation
   */
   regressionTransformation?: boolean;
-  /**
-  * Enables query hints for Loki
-  * @default true
-  */
-  lokiQueryHints?: boolean;
   /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
@@ -671,6 +661,7 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
+  * @default true
   */
   improvedExternalSessionHandling?: boolean;
   /**
@@ -752,6 +743,7 @@ export interface FeatureToggles {
   crashDetection?: boolean;
   /**
   * Enables querying the Jaeger data source without the proxy
+  * @default true
   */
   jaegerBackendMigration?: boolean;
   /**
@@ -807,6 +799,7 @@ export interface FeatureToggles {
   k8SFolderMove?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
+  * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
@@ -980,10 +973,6 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
-  */
-  extensionsReadOnlyProxy?: boolean;
-  /**
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
@@ -994,7 +983,7 @@ export interface FeatureToggles {
   restoreDashboards?: boolean;
   /**
   * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default false
+  * @default true
   */
   skipTokenRotationIfRecent?: boolean;
   /**
@@ -1027,4 +1016,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
+  /**
+  * Enables use of app platform API for folders
+  * @default false
+  */
+  foldersAppPlatformAPI?: boolean;
 }

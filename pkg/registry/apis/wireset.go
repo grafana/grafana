@@ -46,19 +46,20 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
 
+	// Secrets
+	secret.RegisterDependencies,
+
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
 	dashboardsnapshot.RegisterAPIService,
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
-	WireSetExts, // this will be moved to wireexts_oss.go in a following PR
 	iam.RegisterAPIService,
 	ProvisioningExtras,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
-	secret.RegisterAPIService,
 	userstorage.RegisterAPIService,
 	ofrep.RegisterAPIService,
 )

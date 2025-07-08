@@ -106,9 +106,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
 
 	return provider
 }
