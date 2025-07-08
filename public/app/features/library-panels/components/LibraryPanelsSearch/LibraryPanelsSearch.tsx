@@ -69,7 +69,7 @@ export const LibraryPanelsSearch = ({
               onChange={setSearchQuery}
               placeholder={t(
                 'library-panels.library-panels-search.placeholder-search-by-name-or-description',
-                'Search by name or description'
+                'Search by name, description or folder name'
               )}
               width={0}
               escapeRegex={false}
