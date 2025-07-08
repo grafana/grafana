@@ -101,6 +101,7 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
   }
 }
 
+/** @deprecated */
 export const TableInputCSV = withTheme2(UnThemedTableInputCSV);
 TableInputCSV.displayName = 'TableInputCSV';
 
