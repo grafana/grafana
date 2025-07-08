@@ -66,32 +66,6 @@ func List[T Resource](
 		return nil, err
 	}
 
-	// CURRENT
-
-	// ident, err := identity.GetRequester(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// check := func(_, _ string) bool { return true }
-	// if ac != nil {
-	// 	var err error
-	// 	check, err = ac.Compile(ctx, ident, authlib.ListRequest{
-	// 		Resource:  resource.GroupResource().Resource,
-	// 		Group:     resource.GroupResource().Group,
-	// 		Verb:      "get",
-	// 		Namespace: ns.Value,
-	// 	})
-
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
-	// END OF CURRENT
-
-	// CHANGED
-
 	ident, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -111,8 +85,6 @@ func List[T Resource](
 			return nil, err
 		}
 	}
-
-	// END OF CHANGED
 
 	res := &ListResponse[T]{Items: make([]T, 0, p.Limit)}
 
