@@ -1640,8 +1640,6 @@ github.com/grafana/grafana/pkg/aggregator v0.0.0-20250627191313-2f1a6ae1712b h1:
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:+H4Va9jDJlGQJjAN+OFD/hLx2I/yEzDRMQLaKecvgAc=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250627191313-2f1a6ae1712b h1:e0dG1tPpuv4NHCAPP235Gip/MBQB8fQ2XW2bwHqoWh4=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:u0+k7KLCvGi6zHWsc2B7r+tmGcYjN/qR+gn51pl104E=
-github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250627191313-2f1a6ae1712b h1:rkQO7exsDLdr4KGA7kgEnkQnbJGePbDIP1SUQptLRs8=
-github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:9YjiHZzii2DZfocRDJbqSeC8M3GWenU5yexeHHxsZ4Y=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b h1:QyJLJn3xwFTIXu9KPZujsrIUN0X8DdiR9b2h75L0AfI=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b/go.mod h1:6OKkPWDB8PetDXqMVMOWL35iTCEUdpATwwpuew0k8+o=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
