@@ -96,7 +96,7 @@ const BrowseDashboardsPage = memo(() => {
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
-  const canSelect = (canEditFolders || canEditDashboards) && !isProvisionedFolder;
+  const canSelect = canEditFolders || canEditDashboards;
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -169,7 +169,7 @@ const BrowseDashboardsPage = memo(() => {
         </div>
 
         {hasSelection ? (
-          <BrowseActions />
+          <BrowseActions folderDTO={folderDTO} />
         ) : (
           <div className={styles.filters}>
             <BrowseFilters />
