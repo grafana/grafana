@@ -137,9 +137,11 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	)
 
 	permDenialKey := userPermDenialCacheKey(checkReq.Namespace.Value, checkReq.UserUID, checkReq.Action, checkReq.Name, checkReq.ParentFolder)
-	if _, ok := s.permDenialCache.Get(ctx, permDenialKey); ok {
+	var permDenyKey string
+	if keyFound, ok := s.permDenialCache.Get(ctx, permDenialKey); ok {
 		s.metrics.permissionCacheUsage.WithLabelValues("true", checkReq.Action).Inc()
 		s.metrics.requestCount.WithLabelValues("false", "true", req.GetVerb(), req.GetGroup(), req.GetResource()).Inc()
+		permDenyKey = keyFound.(string)
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
