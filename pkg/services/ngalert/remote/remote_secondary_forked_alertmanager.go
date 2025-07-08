@@ -135,6 +135,10 @@ func (fam *RemoteSecondaryForkedAlertmanager) ListSilences(ctx context.Context, 
 	return fam.internal.ListSilences(ctx, filter)
 }
 
+func (fam *RemoteSecondaryForkedAlertmanager) MergeSilences(b []byte) error {
+	return fam.internal.MergeSilences(b)
+}
+
 func (fam *RemoteSecondaryForkedAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
 	return fam.internal.GetAlerts(ctx, active, silenced, inhibited, filter, receiver)
 }
@@ -145,6 +149,10 @@ func (fam *RemoteSecondaryForkedAlertmanager) GetAlertGroups(ctx context.Context
 
 func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
 	return fam.internal.PutAlerts(ctx, alerts)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) MergeNflog(b []byte) error {
+	return fam.internal.MergeNflog(b)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {

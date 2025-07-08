@@ -12,13 +12,12 @@ const (
 	grafanaAlertmanagerStatePath = "/api/v1/grafana/state"
 )
 
-// UserState is used for both Grafana state and Mimir full state.
-type UserState struct {
+type UserGrafanaState struct {
 	State string `json:"state"`
 }
 
-func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserState, error) {
-	gs := &UserState{}
+func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error) {
+	gs := &UserGrafanaState{}
 	response := successResponse{
 		Data: gs,
 	}
@@ -37,7 +36,7 @@ func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserState, e
 }
 
 func (mc *Mimir) CreateGrafanaAlertmanagerState(ctx context.Context, state string) error {
-	payload, err := json.Marshal(&UserState{
+	payload, err := json.Marshal(&UserGrafanaState{
 		State: state,
 	})
 	if err != nil {
