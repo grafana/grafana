@@ -2,7 +2,6 @@ import { PayloadAction } from '@reduxjs/toolkit';
 
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
-import { ManagerKind } from '../../apiserver/types';
 import { isSharedWithMe } from '../components/utils';
 import { BrowseDashboardsState } from '../types';
 

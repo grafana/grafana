@@ -36,7 +36,7 @@ interface FormProps extends BulkDeleteProvisionResourceProps {
 
 interface BulkDeleteProvisionResourceProps {
   folderUid?: string;
-  selectedItems: DashboardTreeSelection;
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
   onDismiss?: () => void;
 }
 
@@ -118,12 +118,7 @@ function FormContent({
     } catch (error) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
-        payload: [
-          t(
-            'browse-dashboard.bulk-delete-resources-form.api-error',
-            `Bulk delete failed: ${(error as Error).message || error}`
-          ),
-        ],
+        payload: [t('browse-dashboard.bulk-delete-resources-form.api-error', `Bulk delete failed: ${error}`)],
       });
     }
   };
@@ -136,7 +131,7 @@ function FormContent({
             <Trans i18nKey="browse-dashboards.bulk-delete-resources-form.delete-warning">
               This will delete selected folders and their descendants. In total, this will affect:
             </Trans>
-            <DescendantCount selectedItems={selectedItems} />
+            <DescendantCount selectedItems={{ ...selectedItems, panel: {}, $all: false }} />
           </Box>
 
           <ResourceEditFormSharedFields
