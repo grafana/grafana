@@ -24,7 +24,10 @@ export function TableCellActions(props: TableCellActionsProps) {
   } = props;
 
   return (
-    <div className={className}>
+    // stopping propagation to prevent clicks within the actions menu from triggering the cell click events
+    // for things like the data links tooltip.
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div className={className} onClick={(ev) => ev.stopPropagation()}>
       {cellInspect && (
         <IconButton
           name="eye"

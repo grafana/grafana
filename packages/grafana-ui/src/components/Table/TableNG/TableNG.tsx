@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { Key, ReactNode, useLayoutEffect, useMemo, useState } from 'react';
+import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -22,8 +22,10 @@ import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
+import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { CellColors, TableCellDisplayMode } from '../types';
+import { DataLinksActionsTooltipState } from '../utils';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
@@ -56,6 +58,8 @@ import {
   getCellOptions,
   shouldTextWrap,
   isCellInspectEnabled,
+  getCellLinks,
+  withDataLinksActionsTooltip,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -68,14 +72,13 @@ export function TableNG(props: TableNGProps) {
     enableSharedCrosshair = false,
     enableVirtualization,
     footerOptions,
-    getActions,
+    getActions = () => [],
     height,
     initialSortBy,
     noHeader,
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
-    replaceVariables,
     showTypeIcons,
     structureRev,
     transparent,
@@ -88,6 +91,11 @@ export function TableNG(props: TableNGProps) {
     transparent,
   });
   const panelContext = usePanelContext();
+
+  const getCellActions = useCallback(
+    (field: Field, rowIdx: number) => getActions(data, field, rowIdx),
+    [getActions, data]
+  );
 
   const hasHeader = !noHeader;
   const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
@@ -245,13 +253,15 @@ export function TableNG(props: TableNGProps) {
   interface Schema {
     columns: TableColumn[];
     cellRootRenderers: Record<string, CellRootRenderer>;
+    colsWithTooltip: Record<string, boolean>;
   }
 
-  const { columns, cellRootRenderers } = useMemo(() => {
+  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
     const fromFields = (f: Field[], widths: number[]) => {
       const result: Schema = {
         columns: [],
         cellRootRenderers: {},
+        colsWithTooltip: {},
       };
 
       let lastRowIdx = -1;
@@ -269,7 +279,6 @@ export function TableNG(props: TableNGProps) {
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
         const showActions = cellInspect || showFilters;
         const width = widths[i];
-        const frame = data;
 
         // helps us avoid string cx and emotion per-cell
         const cellActionClassName = showActions
@@ -283,6 +292,9 @@ export function TableNG(props: TableNGProps) {
         const cellType = cellOptions.type;
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
+        const withTooltip = withDataLinksActionsTooltip(field, cellType);
+
+        result.colsWithTooltip[displayName] = withTooltip;
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
@@ -306,7 +318,7 @@ export function TableNG(props: TableNGProps) {
             colors = {};
           }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, colors);
+          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors);
 
           return (
             <Cell
@@ -324,14 +336,11 @@ export function TableNG(props: TableNGProps) {
         const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
           const rowIdx = props.row.__index;
           const value = props.row[props.column.key];
-
-          // TODO: defer until click?
-          const actions = getActions?.(frame, field, props.row.__index, replaceVariables);
+          const frame = data;
 
           return (
             <>
               {renderFieldCell({
-                actions,
                 cellOptions,
                 frame,
                 field,
@@ -343,6 +352,7 @@ export function TableNG(props: TableNGProps) {
                 width,
                 cellInspect,
                 showFilters,
+                getActions: getCellActions,
               })}
               {showActions && (
                 <TableCellActions
@@ -504,12 +514,10 @@ export function TableNG(props: TableNGProps) {
     expandedRows,
     filter,
     footerCalcs,
-    getActions,
     hasNestedFrames,
     isCountRowsSet,
     onCellFilterAdded,
     panelContext,
-    replaceVariables,
     rowHeight,
     rows,
     setFilter,
@@ -519,6 +527,7 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
+    getCellActions,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
@@ -534,6 +543,8 @@ export function TableNG(props: TableNGProps) {
     return cellRootRenderers[props.column.key](key, props);
   };
 
+  const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
+
   return (
     <>
       <DataGrid<TableRow, TableSummaryRow>
@@ -543,6 +554,24 @@ export function TableNG(props: TableNGProps) {
         rows={paginatedRows}
         headerRowClass={cx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
+        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
+          // Note: could be column.field; JS says yes, but TS says no!
+          const field = columns[column.idx].field;
+
+          if (colsWithTooltip[getDisplayName(field)]) {
+            const rowIdx = row.__index;
+            setTooltipState({
+              coords: {
+                clientX,
+                clientY,
+              },
+              links: getCellLinks(field, rowIdx),
+              actions: getCellActions(field, rowIdx),
+            });
+
+            preventGridDefault();
+          }
+        }}
         onCellKeyDown={
           hasNestedFrames
             ? (_, event) => {
@@ -577,6 +606,15 @@ export function TableNG(props: TableNGProps) {
             </div>
           )}
         </div>
+      )}
+
+      {tooltipState && (
+        <DataLinksActionsTooltip
+          links={tooltipState.links ?? []}
+          actions={tooltipState.actions}
+          coords={tooltipState.coords}
+          onTooltipClose={() => setTooltipState(undefined)}
+        />
       )}
 
       {isContextMenuOpen && (
@@ -786,32 +824,36 @@ const getCellStyles = (
   rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
+  hasTooltip: boolean,
   colors: CellColors
-) => ({
-  cell: css({
-    textOverflow: 'initial',
-    background: colors.bgColor ?? 'inherit',
-    alignContent: 'center',
-    justifyContent: getTextAlign(field),
-    paddingInline: TABLE.CELL_PADDING,
-    height: '100%',
-    minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
-    ...(shouldWrap && { whiteSpace: 'pre-line' }),
-    '&:last-child': {
-      borderInlineEnd: 'none',
-    },
-    '&:hover': {
-      background: colors.bgHoverColor,
-      '.table-cell-actions': {
-        display: 'flex',
+) => {
+  return {
+    cell: css({
+      textOverflow: 'initial',
+      background: colors.bgColor ?? 'inherit',
+      alignContent: 'center',
+      justifyContent: getTextAlign(field),
+      paddingInline: TABLE.CELL_PADDING,
+      height: '100%',
+      minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
+      ...(shouldWrap && { whiteSpace: 'pre-line' }),
+      ...(hasTooltip && { cursor: 'pointer' }),
+      '&:last-child': {
+        borderInlineEnd: 'none',
       },
-      ...(shouldOverflow && {
-        zIndex: theme.zIndex.tooltip - 2,
-        whiteSpace: 'pre-line',
-        height: 'fit-content',
-        paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
-        minWidth: 'fit-content',
-      }),
-    },
-  }),
-});
+      '&:hover': {
+        background: colors.bgHoverColor,
+        '.table-cell-actions': {
+          display: 'flex',
+        },
+        ...(shouldOverflow && {
+          zIndex: theme.zIndex.tooltip - 2,
+          whiteSpace: 'pre-line',
+          height: 'fit-content',
+          minWidth: 'fit-content',
+          paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
+        }),
+      },
+    }),
+  };
+};
