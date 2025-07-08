@@ -2,11 +2,7 @@ import path, { dirname, join } from 'node:path';
 import type { StorybookConfig } from '@storybook/react-webpack5';
 import { copyAssetsSync } from './copyAssets';
 
-const coreComponentsGlobs: StorybookConfig['stories'] = [
-  '../src/Intro.mdx',
-  '../src/components/**/*.story.tsx',
-  '../src/utils/**/*.story.tsx',
-];
+const coreComponentsGlobs: StorybookConfig['stories'] = ['../src/Intro.mdx', '../src/**/*.story.tsx'];
 
 const alertingComponentsGlobs: StorybookConfig['stories'] = [
   {
