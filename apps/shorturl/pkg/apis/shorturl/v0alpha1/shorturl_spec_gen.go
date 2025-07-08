@@ -6,6 +6,7 @@ package v0alpha1
 type ShortURLSpec struct {
 	Path       string `json:"path"`
 	LastSeenAt int64  `json:"lastSeenAt"`
+	ShortURL   string `json:"shortURL"`
 }
 
 // NewShortURLSpec creates a new ShortURLSpec object.

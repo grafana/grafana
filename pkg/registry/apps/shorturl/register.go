@@ -38,6 +38,9 @@ func RegisterApp(
 		OpenAPIDefGetter:    shorturlv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:        shorturlapp.GetKinds(),
 		LegacyStorageGetter: provider.legacyStorageGetter,
+		CustomConfig: any(&shorturlapp.ShortURLConfig{
+			AppURL: cfg.AppURL,
+		}),
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, shorturlapp.New)
 	return provider

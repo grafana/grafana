@@ -3,10 +3,12 @@
 export interface Spec {
 	path: string;
 	lastSeenAt: number;
+	shortURL: string;
 }
 
 export const defaultSpec = (): Spec => ({
 	path: "",
 	lastSeenAt: 0,
+	shortURL: "",
 });
 

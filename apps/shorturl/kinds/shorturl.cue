@@ -13,10 +13,21 @@ shorturl: {
 				frontend: true
 				backend:  true
 			}
+			validation: {
+				operations: [
+					"CREATE",
+				]
+			}
+			mutation: {
+				operations: [
+					"CREATE",
+				]
+			}
 			schema: {
 				spec: {
 					path: string
 					lastSeenAt: int64
+					shortURL: string
 				}
 			}
 		}

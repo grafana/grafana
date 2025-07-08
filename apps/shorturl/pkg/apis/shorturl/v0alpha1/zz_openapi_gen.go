@@ -136,8 +136,15 @@ func schema_pkg_apis_shorturl_v0alpha1_ShortURLSpec(ref common.ReferenceCallback
 							Format:  "int64",
 						},
 					},
+					"shortURL": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 				},
-				Required: []string{"path", "lastSeenAt"},
+				Required: []string{"path", "lastSeenAt", "shortURL"},
 			},
 		},
 	}
