@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { ReactElement, useCallback, useMemo, memo } from 'react';
 
 import { FeatureState, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import { Dropdown, FeatureBadge, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 
@@ -55,25 +54,9 @@ const ExpressionMenuItem = memo<ExpressionMenuItemProps>(({ item, onSelect }) =>
 ExpressionMenuItem.displayName = 'ExpressionMenuItem';
 
 export const ExpressionTypeDropdown = memo<ExpressionTypeDropdownProps>(({ handleOnSelect, children }) => {
-  const selectWithEventTracking = useCallback(
-    (value: ExpressionQueryType) => {
-      const selectedExpression = expressionTypes.find((expr) => expr.value === value);
-
-      handleOnSelect(value);
-      reportInteraction('grafana_expressions_type_selected', {
-        expression_type: selectedExpression?.label ?? 'unknown',
-        context: 'dashboard_panel_editor',
-      });
-    },
-    [handleOnSelect]
-  );
-
   const menuItems = useMemo(
-    () =>
-      expressionTypes.map((item) => (
-        <ExpressionMenuItem key={item.value} item={item} onSelect={selectWithEventTracking} />
-      )),
-    [selectWithEventTracking]
+    () => expressionTypes.map((item) => <ExpressionMenuItem key={item.value} item={item} onSelect={handleOnSelect} />),
+    [handleOnSelect]
   );
 
   const menuOverlay = useMemo(() => <Menu role="menu">{menuItems}</Menu>, [menuItems]);
