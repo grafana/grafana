@@ -1,4 +1,4 @@
-import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
+import { AzureMetricDimension, AzureMonitorQuery } from '../../types/query';
 
 export function setCustomNamespace(query: AzureMonitorQuery, selection: string | undefined): AzureMonitorQuery {
   if (query.azureMonitor?.customNamespace === selection) {
