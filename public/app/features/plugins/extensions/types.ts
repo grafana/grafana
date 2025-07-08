@@ -1,6 +1,7 @@
 import { PluginExtension } from '@grafana/data';
 
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistryItem } from './registry/AddedFunctionsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { RegistryType } from './registry/Registry';
 
@@ -10,6 +11,7 @@ export type GetExtensionsOptions = {
   limitPerPlugin?: number;
   addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]> | undefined;
   addedLinksRegistry: RegistryType<AddedLinkRegistryItem[]> | undefined;
+  addedFunctionsRegistry: RegistryType<AddedFunctionsRegistryItem[]> | undefined;
 };
 
 export type GetExtensions = (options: GetExtensionsOptions) => { extensions: PluginExtension[] };

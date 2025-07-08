@@ -4,6 +4,7 @@ import { first, firstValueFrom, take } from 'rxjs';
 import {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedComponentConfig,
+  type PluginExtensionAddedFunctionConfig,
   PluginExtensionTypes,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -17,6 +18,7 @@ import {
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { pluginExtensionRegistries } from './registry/setup';
 import { isReadOnlyProxy } from './utils';
@@ -44,12 +46,14 @@ async function createRegistries(
     pluginId: string;
     addedComponentConfigs: PluginExtensionAddedComponentConfig[];
     addedLinkConfigs: PluginExtensionAddedLinkConfig[];
+    addedFunctionConfigs?: PluginExtensionAddedFunctionConfig[];
   }>
 ) {
   const addedLinksRegistry = new AddedLinksRegistry();
   const addedComponentsRegistry = new AddedComponentsRegistry();
+  const addedFunctionsRegistry = new AddedFunctionsRegistry();
 
-  for (const { pluginId, addedLinkConfigs, addedComponentConfigs } of preloadResults) {
+  for (const { pluginId, addedLinkConfigs, addedComponentConfigs, addedFunctionConfigs = [] } of preloadResults) {
     addedLinksRegistry.register({
       pluginId,
       configs: addedLinkConfigs,
@@ -58,11 +62,16 @@ async function createRegistries(
       pluginId,
       configs: addedComponentConfigs,
     });
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: addedFunctionConfigs,
+    });
   }
 
   return {
     addedLinksRegistry: await addedLinksRegistry.getState(),
     addedComponentsRegistry: await addedComponentsRegistry.getState(),
+    addedFunctionsRegistry: await addedFunctionsRegistry.getState(),
   };
 }
 
@@ -583,6 +592,7 @@ describe('getObservablePluginExtensions()', () => {
   beforeEach(() => {
     pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
     pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedFunctionsRegistry = new AddedFunctionsRegistry();
     pluginExtensionRegistries.addedLinksRegistry.register({
       pluginId,
       configs: [
@@ -662,6 +672,7 @@ describe('getObservablePluginLinks()', () => {
   beforeEach(() => {
     pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
     pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedFunctionsRegistry = new AddedFunctionsRegistry();
     pluginExtensionRegistries.addedLinksRegistry.register({
       pluginId,
       configs: [
@@ -738,6 +749,7 @@ describe('getObservablePluginLinks()', () => {
   it('should receive an empty array if there are no links', async () => {
     pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
     pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedFunctionsRegistry = new AddedFunctionsRegistry();
 
     const observable = getObservablePluginLinks({ extensionPointId }).pipe(first());
     const links = await firstValueFrom(observable);
@@ -753,6 +765,7 @@ describe('getObservablePluginComponents()', () => {
   beforeEach(() => {
     pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
     pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedFunctionsRegistry = new AddedFunctionsRegistry();
     pluginExtensionRegistries.addedLinksRegistry.register({
       pluginId,
       configs: [
@@ -830,6 +843,7 @@ describe('getObservablePluginComponents()', () => {
   it('should receive an empty array if there are no components', async () => {
     pluginExtensionRegistries.addedLinksRegistry = new AddedLinksRegistry();
     pluginExtensionRegistries.addedComponentsRegistry = new AddedComponentsRegistry();
+    pluginExtensionRegistries.addedFunctionsRegistry = new AddedFunctionsRegistry();
 
     const observable = getObservablePluginComponents({ extensionPointId }).pipe(first());
     const components = await firstValueFrom(observable);

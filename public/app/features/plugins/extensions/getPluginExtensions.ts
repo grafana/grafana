@@ -7,10 +7,15 @@ import {
   type PluginExtensionLink,
   type PluginExtensionComponent,
 } from '@grafana/data';
-import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
+import {
+  type GetObservablePluginLinks,
+  type GetObservablePluginComponents,
+  type GetObservablePluginFunctions,
+} from '@grafana/runtime/internal';
 
 import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
+import { AddedFunctionsRegistryItem } from './registry/AddedFunctionsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { RegistryType } from './registry/Registry';
 import { pluginExtensionRegistries } from './registry/setup';
@@ -35,18 +40,20 @@ import {
  */
 
 export const getObservablePluginExtensions = (
-  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
+  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry' | 'addedFunctionsRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
   return combineLatest([
     pluginExtensionRegistries.addedComponentsRegistry.asObservable(),
     pluginExtensionRegistries.addedLinksRegistry.asObservable(),
+    pluginExtensionRegistries.addedFunctionsRegistry.asObservable(),
   ]).pipe(
-    filter(([components, links]) => Boolean(components) && Boolean(links)), // filter out uninitialized registries
-    map(([components, links]) =>
+    filter(([components, links, functions]) => Boolean(components) && Boolean(links) && Boolean(functions)), // filter out uninitialized registries
+    map(([components, links, functions]) =>
       getPluginExtensions({
         ...options,
         addedComponentsRegistry: components,
         addedLinksRegistry: links,
+        addedFunctionsRegistry: functions,
       })
     )
   );
@@ -64,9 +71,16 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
   );
 };
 
+export const getObservablePluginFunctions: GetObservablePluginFunctions = (options) => {
+  return getObservablePluginExtensions(options).pipe(
+    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.function))
+  );
+};
+
 export function createPluginExtensionsGetter(registries: PluginExtensionRegistries): GetPluginExtensions {
   let addedComponentsRegistry: RegistryType<AddedComponentRegistryItem[]>;
   let addedLinksRegistry: RegistryType<Array<AddedLinkRegistryItem<object>>>;
+  let addedFunctionsRegistry: RegistryType<AddedFunctionsRegistryItem[]>;
 
   // Create registry subscriptions to keep an copy of the registry state for use in the non-async
   // plugin extensions getter.
@@ -78,7 +92,12 @@ export function createPluginExtensionsGetter(registries: PluginExtensionRegistri
     addedLinksRegistry = linksRegistry;
   });
 
-  return (options) => getPluginExtensions({ ...options, addedComponentsRegistry, addedLinksRegistry });
+  registries.addedFunctionsRegistry.asObservable().subscribe((functionsRegistry) => {
+    addedFunctionsRegistry = functionsRegistry;
+  });
+
+  return (options) =>
+    getPluginExtensions({ ...options, addedComponentsRegistry, addedLinksRegistry, addedFunctionsRegistry });
 }
 
 // Returns with a list of plugin extensions for the given extension point
@@ -88,6 +107,7 @@ export const getPluginExtensions: GetExtensions = ({
   limitPerPlugin,
   addedLinksRegistry,
   addedComponentsRegistry,
+  addedFunctionsRegistry,
 }) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
