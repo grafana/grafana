@@ -47,7 +47,7 @@ func DefaultService(cfg *config.PluginManagementCfg) *Service {
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		if u, err := s.cfg.PluginAssetCDNFunc(n.fs); err == nil {
+		if u, err := s.cfg.PublicAssetURLFunc(n.fs); err == nil {
 			return u, nil
 		}
 
@@ -84,7 +84,7 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 func (s *Service) Module(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
 		if isDecoupledCorePlugin(n.class, n.fs) {
-			if u, err := s.cfg.PluginAssetCDNFunc(n.fs, "module.js"); err == nil {
+			if u, err := s.cfg.PublicAssetURLFunc(n.fs, "module.js"); err == nil {
 				return u, nil
 			}
 		} else {
@@ -115,7 +115,7 @@ func (s *Service) Module(n PluginInfo) (string, error) {
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
 func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
 	if isDecoupledCorePlugin(n.class, n.fs) {
-		if u, err := s.cfg.PluginAssetCDNFunc(n.fs, pathStr); err == nil {
+		if u, err := s.cfg.PublicAssetURLFunc(n.fs, pathStr); err == nil {
 			return u, nil
 		}
 	}
