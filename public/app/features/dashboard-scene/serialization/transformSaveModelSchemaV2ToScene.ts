@@ -1,6 +1,5 @@
 import { uniqueId } from 'lodash';
 
-import { AnnotationQuery } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -64,9 +63,10 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
+import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
-import { getRuntimePanelDataSource, getRuntimeVariableDataSource } from './layoutSerializers/utils';
+import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -92,47 +92,17 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   const { spec: dashboard, metadata, apiVersion } = dto;
 
   // annotations might not come with the builtIn Grafana annotation, we need to add it
-
   const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
   if (grafanaBuiltAnnotation) {
     dashboard.annotations.unshift(grafanaBuiltAnnotation);
   }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
-    let { query: dataQuery, ...annotationQuery } = annotation.spec;
-
-    // Mapping from AnnotationQueryKind to AnnotationQuery used by scenes.
-    let annoQuerySpec: AnnotationQuery = {
-      builtIn: annotation.spec.builtIn ? 1 : 0,
-      enable: annotation.spec.enable,
-      iconColor: annotation.spec.iconColor,
-      name: annotation.spec.name,
-      filter: annotation.spec.filter,
-      hide: annotation.spec.hide,
-      ...dataQuery?.spec,
-    };
-
-    // some annotations will contain in the legacyOptions properties that need to be
-    // added to the root level annotation spec
-    if (annotationQuery.legacyOptions) {
-      annoQuerySpec = {
-        ...annoQuerySpec,
-        ...annotationQuery.legacyOptions,
-        legacyOptions: {
-          ...annotationQuery.legacyOptions,
-        },
-      };
-    }
-
-    // get data source from annotation query
-    const datasource = getRuntimePanelDataSource(dataQuery);
+    const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
 
     const layerState = {
       key: uniqueId('annotations-'),
-      query: {
-        ...annoQuerySpec,
-        datasource,
-      },
+      query: annotationQuerySpec,
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
