@@ -29,16 +29,9 @@ export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: 
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (
-  frame: DataFrame,
-  field: Field,
-  rowIndex: number,
-) => ActionModel[];
+export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
 
-export type GetActionsFunctionLocal = (
-  field: Field,
-  rowIndex: number,
-) => ActionModel[];
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;

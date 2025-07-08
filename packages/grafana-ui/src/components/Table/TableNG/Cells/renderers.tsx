@@ -50,12 +50,7 @@ const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
 );
 
 const JSON_RENDERER: TableCellRenderer = (props) => (
-  <JSONCell
-    justifyContent={props.justifyContent}
-    value={props.value}
-    field={props.field}
-    rowIdx={props.rowIdx}
-  />
+  <JSONCell justifyContent={props.justifyContent} value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
 const GEO_RENDERER: TableCellRenderer = (props) => (
@@ -75,7 +70,9 @@ const IMAGE_RENDERER: TableCellRenderer = (props) => (
 
 const DATA_LINKS_RENDERER: TableCellRenderer = (props) => <DataLinksCell field={props.field} rowIdx={props.rowIdx} />;
 
-const ACTIONS_RENDERER: TableCellRenderer = (props) => <ActionsCell field={props.field} rowIdx={props.rowIdx} getActions={props.getActions} />;
+const ACTIONS_RENDERER: TableCellRenderer = (props) => (
+  <ActionsCell field={props.field} rowIdx={props.rowIdx} getActions={props.getActions} />
+);
 
 function isCustomCellOptions(options: TableCellOptions): options is TableCustomCellOptions {
   return options.type === TableCellDisplayMode.Custom;

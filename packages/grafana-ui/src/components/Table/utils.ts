@@ -773,7 +773,7 @@ export interface DataLinksActionsTooltipState {
 export interface DataLinksActionsTooltipCoords {
   clientX: number;
   clientY: number;
-};
+}
 
 export const getDataLinksActionsTooltipUtils = (links: LinkModel[], actions?: ActionModel[]) => {
   const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
