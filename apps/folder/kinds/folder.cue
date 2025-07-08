@@ -1,27 +1,14 @@
 package folder
 
-folder: {
-	kind:       "Folder"
-	pluralName: "Folders"
-	current:    "v1beta1"
-	codegen: {
-		ts: {
-			enabled: false // Not sure if it should be enabled or not, currently it is.
+folderv1beta1: {
+	kind:   "Folder"
+	plural: "folders"
+	scope:  "Namespaced"
+	schema: {
+		spec: {
+			title:        string
+			description?: string
 		}
-		go: {
-			enabled: true
-		}
-	}
-
-	versions: {
-		"v1beta1": {
-			schema: {
-				spec: {
-					title:    string
-					description?: string
-				}
-				status: {} // nothing
-			}
-		}
+		status: {} // nothing
 	}
 }

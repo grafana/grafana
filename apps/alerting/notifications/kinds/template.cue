@@ -4,25 +4,14 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
 )
 
-templateGroup: {
-	kind: "TemplateGroup"
-	apiResource: {
-		groupOverride: "notifications.alerting.grafana.app"
+templateGroupv0alpha1: {
+	kind:   "TemplateGroup"
+	plural: "templategroups"
+	scope:  "Namespaced"
+	schema: {
+		spec: v0alpha1.TemplateGroupSpec
 	}
-	pluralName: "TemplateGroups"
-	current:    "v0alpha1"
-	codegen: {
-		ts: {enabled: false}
-		go: {enabled: true}
-	}
-	versions: {
-		"v0alpha1": {
-			schema: {
-				spec: v0alpha1.TemplateGroupSpec
-			}
-			selectableFields: [
-				"spec.title",
-			]
-		}
-	}
+	selectableFields: [
+		"spec.title",
+	]
 }

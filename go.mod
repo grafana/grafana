@@ -97,16 +97,16 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.39.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.39.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-app-sdk/logging v0.39.1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-aws-sdk v1.0.3 // @grafana/aws-datasources
+	github.com/grafana/grafana-aws-sdk v1.0.2 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.1 // @grafana/partner-datasources
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.278.0 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
-	github.com/grafana/nanogit v0.0.0-20250709085038-55508a6a9f40 // @grafana-app-platform-squad
+	github.com/grafana/nanogit v0.0.0-20250625082556-a4828b879bbb // @grafana-app-platform-squad
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae // @grafana/observability-traces-and-profiling
@@ -227,13 +227,6 @@ require (
 )
 
 require (
-	github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-	github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/apps/iam v0.0.0-20250627191313-2f1a6ae1712b // @grafana/identity-access-team
-	github.com/grafana/grafana/apps/investigations v0.0.0-20250627191313-2f1a6ae1712b // @fcjack @matryer
-	github.com/grafana/grafana/apps/playlist v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-operator-experience-squad

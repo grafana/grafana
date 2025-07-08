@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/playlist/pkg/apis"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
@@ -21,8 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type PlaylistAppProvider struct {
-	app.Provider
+type PlaylistAppInstaller struct {
+	appsdkapiserver.AppInstaller
 	cfg     *setting.Cfg
 	service playlistsvc.Service
 }
@@ -31,25 +32,32 @@ func RegisterApp(
 	p playlistsvc.Service,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-) *PlaylistAppProvider {
-	provider := &PlaylistAppProvider{
+) (*PlaylistAppInstaller, error) {
+	installer := &PlaylistAppInstaller{
 		cfg:     cfg,
 		service: p,
 	}
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter:    playlistv0alpha1.GetOpenAPIDefinitions,
-		LegacyStorageGetter: provider.legacyStorageGetter,
+		LegacyStorageGetter: installer.legacyStorageGetter,
 		ManagedKinds:        playlistapp.GetKinds(),
 		CustomConfig: any(&playlistapp.PlaylistConfig{
 			EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
 		}),
 		AllowedV0Alpha1Resources: []string{playlistv0alpha1.PlaylistKind().Plural()},
 	}
-	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, playlistapp.New)
-	return provider
+	provider := simple.NewAppProvider(apis.LocalManifest(), appCfg, playlistapp.New)
+
+	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, app.Config{}, apis.ManifestGoTypeAssociator, apis.ManifestCustomRouteResponsesAssociator)
+	if err != nil {
+		return nil, err
+	}
+	installer.AppInstaller = i
+
+	return installer, nil
 }
 
-func (p *PlaylistAppProvider) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.Storage {
+func (p *PlaylistAppInstaller) legacyStorageGetter(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := schema.GroupVersionResource{
 		Group:    playlistv0alpha1.PlaylistKind().Group(),
 		Version:  playlistv0alpha1.PlaylistKind().Version(),

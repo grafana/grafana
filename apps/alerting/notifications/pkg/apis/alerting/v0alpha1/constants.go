@@ -4,7 +4,7 @@ import "k8s.io/apimachinery/pkg/runtime/schema"
 
 const (
 	// APIGroup is the API group used by all kinds in this package
-	APIGroup = "notifications.alerting.grafana.app"
+	APIGroup = "alerting.ext.grafana.com"
 	// APIVersion is the API version used by all kinds in this package
 	APIVersion = "v0alpha1"
 )

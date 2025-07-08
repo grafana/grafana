@@ -7,12 +7,12 @@ RoleSpec: {
 		// RBAC scope (e.g: "dashboards:uid:dash1")
 		scope: string
 	}
-	
+
 	// Display name of the role
 	title: string
-	
+
 	version: int
-	group: string
+	group:   string
 	permissions: [...#Permission]
 
 	// TODO:

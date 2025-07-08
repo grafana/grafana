@@ -78,7 +78,7 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		return fmt.Errorf("error running steps: %w", err)
 	}
 
-	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
+	report := &advisorv0alpha1.CheckReport{
 		Failures: failures,
 		Count:    int64(len(items)),
 	}
@@ -157,7 +157,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		}
 	}
 	// Pull failures from the report for the items to retry
-	c.CheckStatus.Report.Failures = slices.DeleteFunc(c.CheckStatus.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
+	c.Status.Report.Failures = slices.DeleteFunc(c.Status.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
 		if f.ItemID == itemToRetry {
 			for _, newFailure := range failures {
 				if newFailure.StepID == f.StepID {
@@ -177,7 +177,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		Operations: []resource.PatchOperation{{
 			Operation: resource.PatchOpAdd,
 			Path:      "/status/report",
-			Value:     c.CheckStatus.Report,
+			Value:     c.Status.Report,
 		}, {
 			Operation: resource.PatchOpAdd,
 			Path:      "/metadata/annotations",

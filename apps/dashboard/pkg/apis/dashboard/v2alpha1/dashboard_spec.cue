@@ -568,10 +568,10 @@ AutoGridLayoutKind: {
 AutoGridLayoutSpec: {
 	maxColumnCount?: number | *3
 	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
-	columnWidth?: number
-	rowHeightMode: "short" | *"standard" | "tall" | "custom"
-	rowHeight?: number
-	fillScreen?: bool | *false
+	columnWidth?:    number
+	rowHeightMode:   "short" | *"standard" | "tall" | "custom"
+	rowHeight?:      number
+	fillScreen?:     bool | *false
 	items: [...AutoGridLayoutItemKind]
 }
 
@@ -737,10 +737,10 @@ QueryVariableSpec: {
 	sort:         VariableSort
 	definition?:  string
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	placeholder?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	placeholder?:     string
 	allowCustomValue: bool | *true
 }
 
@@ -801,13 +801,13 @@ DatasourceVariableSpec: {
 		value: ""
 	}
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
 }
 
@@ -848,13 +848,13 @@ CustomVariableSpec: {
 	query:   string | *""
 	current: VariableOption
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
 }
 
@@ -866,8 +866,8 @@ CustomVariableKind: {
 
 // GroupBy variable specification
 GroupByVariableSpec: {
-	name:        string | *""
-	datasource?: DataSourceRef
+	name:          string | *""
+	datasource?:   DataSourceRef
 	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
@@ -894,10 +894,10 @@ AdhocVariableSpec: {
 	baseFilters: [...AdHocFilterWithLabels] | *[]
 	filters: [...AdHocFilterWithLabels] | *[]
 	defaultKeys: [...MetricFindValue] | *[]
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
 }
 
@@ -918,7 +918,7 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
-	origin?: FilterOrigin
+	origin?:    FilterOrigin
 	// @deprecated
 	condition?: string
 }
@@ -936,7 +936,7 @@ ConditionalRenderingGroupKind: {
 
 ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
-	condition: "and" | "or"
+	condition:  "and" | "or"
 	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 

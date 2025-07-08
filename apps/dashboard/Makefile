@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 APP_SDK_VERSION := v0.39.2
+=======
+APP_SDK_VERSION := apiserver-custom-routes
+>>>>>>> 0c6d6cec30f (K8s: Add App SDK installer)
 APP_SDK_DIR     := $(shell go env GOPATH)/bin/app-sdk-$(APP_SDK_VERSION)
 APP_SDK_BIN     := $(APP_SDK_DIR)/grafana-app-sdk
 

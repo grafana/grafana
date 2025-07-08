@@ -2,11 +2,18 @@ package kinds
 
 manifest: {
 	appName:       "alerting"
-	groupOverride: "notifications.alerting.grafana.app"
-	kinds: [
-		receiver,
-		routeTree,
-		templateGroup,
-		timeInterval,
-	]
+	versions: {
+		"v0alpha1": {
+			codegen: {
+				frontend: false
+				backend:  true
+			}
+			kinds: [
+				receiverv0alpha1,
+				routeTreev0alpha1,
+				templateGroupv0alpha1,
+				timeIntervalv0alpha1,
+			]
+		}
+	}
 }

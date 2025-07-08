@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,6 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func ProvideAppInstallers(
+	playlistAppInstaller *playlist.PlaylistAppInstaller,
+) []appsdkapiserver.AppInstaller {
+	return []appsdkapiserver.AppInstaller{playlistAppInstaller}
+}
+
 var (
 	_ registry.BackgroundService = (*Service)(nil)
 )
@@ -34,7 +41,6 @@ func ProvideRegistryServiceSink(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
 	features featuremgmt.FeatureToggles,
-	playlistAppProvider *playlist.PlaylistAppProvider,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
 	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
@@ -56,7 +62,7 @@ func ProvideRegistryServiceSink(
 	logger := log.New("app-registry")
 	var apiGroupRunner *runner.APIGroupRunner
 	var err error
-	providers := []app.Provider{playlistAppProvider}
+	providers := []app.Provider{}
 	if features.IsEnabledGlobally(featuremgmt.FlagInvestigationsBackend) {
 		logger.Debug("Investigations backend is enabled")
 		providers = append(providers, investigationAppProvider)

@@ -27,3 +27,5 @@ use (
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250604130045-92c8f6389b36
 
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
+
+replace github.com/grafana/grafana-app-sdk => github.com/grafana/grafana-app-sdk v0.38.3-0.20250703141616-834fcede4017

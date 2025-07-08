@@ -679,7 +679,12 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service13, cacheServiceImpl, plugincontextProvider)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner)
+	playlistAppInstaller, err := playlist.RegisterApp(playlistService, cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(playlistAppInstaller)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2)
 	if err != nil {
 		return nil, err
 	}
@@ -692,12 +697,11 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 		return nil, err
 	}
 	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, client, sqlStore, serverLockService, folderimplService)
-	playlistAppProvider := playlist.RegisterApp(playlistService, cfg, featureToggles)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	checkregistryService := checkregistry.ProvideService(service13, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
 	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -738,8 +742,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v2 := apiregistry.MergeProvisioningExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, secretsService, v2)
+	v3 := apiregistry.MergeProvisioningExtras(webhookExtraBuilder)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, secretsService, v3)
 	if err != nil {
 		return nil, err
 	}
@@ -1192,7 +1196,12 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	scopedPluginDatasourceProvider := datasource.ProvideDefaultPluginConfigs(service13, cacheServiceImpl, plugincontextProvider)
 	v := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner)
+	playlistAppInstaller, err := playlist.RegisterApp(playlistService, cfg, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	v2 := appregistry.ProvideAppInstallers(playlistAppInstaller)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, serverLockService, sqlStore, kvStore, middlewareHandler, scopedPluginDatasourceProvider, plugincontextProvider, pluginstoreService, dualwriteService, resourceClient, eventualRestConfigProvider, v, eventualRestConfigProvider, registerer, aggregatorRunner, v2)
 	if err != nil {
 		return nil, err
 	}
@@ -1205,12 +1214,11 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 		return nil, err
 	}
 	zanzanaReconciler := dualwrite2.ProvideZanzanaReconciler(cfg, featureToggles, client, sqlStore, serverLockService, folderimplService)
-	playlistAppProvider := playlist.RegisterApp(playlistService, cfg, featureToggles)
 	investigationsAppProvider := investigations.RegisterApp(cfg)
 	checkregistryService := checkregistry.ProvideService(service13, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
 	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1251,8 +1259,8 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	factory := github.ProvideFactory()
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, factory, renderingService, resourceClient, eventualRestConfigProvider)
-	v2 := apiregistry.MergeProvisioningExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, secretsService, v2)
+	v3 := apiregistry.MergeProvisioningExtras(webhookExtraBuilder)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, secretsService, v3)
 	if err != nil {
 		return nil, err
 	}

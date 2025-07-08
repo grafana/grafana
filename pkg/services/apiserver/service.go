@@ -17,9 +17,11 @@ import (
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -105,6 +107,7 @@ type service struct {
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
+	appInstallers                     []appsdkapiserver.AppInstaller
 }
 
 func ProvideService(
@@ -126,6 +129,7 @@ func ProvideService(
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
+	appInstallers []appsdkapiserver.AppInstaller,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -153,6 +157,7 @@ func ProvideService(
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
+		appInstallers:                     appInstallers,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -244,7 +249,7 @@ func (s *service) start(ctx context.Context) error {
 	builders := s.builders
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 
-	// Install schemas
+	// Install schemas for existing builders
 	for _, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
@@ -267,13 +272,30 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
+	// install schemas and admission plugins from app installers
+	for _, installer := range s.appInstallers {
+		if err := installer.AddToScheme(s.scheme); err != nil {
+			return fmt.Errorf("failed to add app installer scheme: %w", err)
+		}
+		groupVersions = append(groupVersions, installer.GroupVersions()...)
+		plugin := installer.AdmissionPlugin()
+		if plugin != nil {
+			md := installer.ManifestData()
+			if md == nil {
+				return fmt.Errorf("manifest is not initialized for installer for GroupVersions %v", installer.GroupVersions())
+			}
+			pluginName := md.AppName + " admission"
+			o.RecommendedOptions.Admission.Plugins.Register(pluginName, plugin)
+			s.log.Info("Registered admission plugin", "app", md.AppName)
+		}
+	}
+
 	err := applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
 	}
 
 	if errs := o.Validate(); len(errs) != 0 {
-		// TODO: handle multiple errors
 		return errs[0]
 	}
 
@@ -281,6 +303,7 @@ func (s *service) start(ctx context.Context) error {
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
+
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
@@ -303,12 +326,10 @@ func (s *service) start(ctx context.Context) error {
 	} else {
 		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
-
-		// Use unified storage client
 		serverConfig.RESTOptionsGetter = getter
 	}
 
-	// Add OpenAPI specs for each group+version
+	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,
 		serverConfig,
@@ -323,6 +344,50 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	existingGetter := serverConfig.OpenAPIConfig.GetDefinitions
+	serverConfig.OpenAPIConfig.GetDefinitions = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		defs := existingGetter(ref)
+
+		// add common OpenAPI definitions
+		commonDefs := appsdkapiserver.GetCommonOpenAPIDefinitions(ref)
+		for k, v := range commonDefs {
+			defs[k] = v
+		}
+
+		// add AppInstaller definitions
+		for _, installer := range s.appInstallers {
+			s.log.Info("attempting to add OpenAPI definitions", "app", installer.ManifestData().AppName)
+			installerDefs := installer.GetOpenAPIDefinitions(ref)
+			for k, v := range installerDefs {
+				defs[k] = v
+				s.log.Info("Added OpenAPI definition", "app", installer.ManifestData().AppName, "kind", k)
+			}
+		}
+		return defs
+	}
+
+	serverConfig.OpenAPIConfig.GetDefinitions = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		defs := existingGetter(ref)
+
+		s.log.Info("Adding OpenAPI definitions")
+		// add common OpenAPI definitions
+		commonDefs := appsdkapiserver.GetCommonOpenAPIDefinitions(ref)
+		for k, v := range commonDefs {
+			defs[k] = v
+		}
+
+		// add AppInstaller definitions
+		for _, installer := range s.appInstallers {
+			s.log.Info("attempting to add OpenAPI definitions", "app", installer.ManifestData().AppName)
+			installerDefs := installer.GetOpenAPIDefinitions(ref)
+			for k, v := range installerDefs {
+				defs[k] = v
+				s.log.Info("Added OpenAPI definition", "app", installer.ManifestData().AppName, "kind", k)
+			}
+		}
+		return defs
+	}
+
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
 	// Create the server
@@ -331,12 +396,11 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	// Install the API group+version
+	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
-		// Required for the dual writer initialization
 		s.metrics,
 		request.GetNamespaceMapper(s.cfg),
-		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), // NOTE: will be removed and replaced with the dual writer utility
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
 		s.storageStatus,
 		optsregister,
@@ -344,6 +408,49 @@ func (s *service) start(ctx context.Context) error {
 	)
 	if err != nil {
 		return err
+	}
+
+	// Install AppInstaller APIs
+	for _, installer := range s.appInstallers {
+		if err := installer.InstallAPIs(server, serverConfig.RESTOptionsGetter); err != nil {
+			return fmt.Errorf("failed to install app installer APIs: %w", err)
+		}
+	}
+
+	// Add post start hook for AppInstaller initialization
+	err = server.AddPostStartHook("app-installers", func(hookContext genericapiserver.PostStartHookContext) error {
+		s.log.Info("Starting app installers post start hook")
+
+		// Initialize each AppInstaller with the loopback client config
+		for _, installer := range s.appInstallers {
+			md := installer.ManifestData()
+			if md == nil {
+				s.log.Error("App installer has nil manifest data", "installer", fmt.Sprintf("%T", installer))
+				continue
+			}
+
+			s.log.Info("Initializing app installer", "app", md.AppName)
+
+			// Use the loopback client config for app initialization
+			loopbackConfig := *hookContext.LoopbackClientConfig
+			loopbackConfig.APIPath = "/apis"
+
+			if err := installer.InitializeApp(loopbackConfig); err != nil {
+				s.log.Error("Failed to initialize app installer",
+					"app", md.AppName,
+					"error", err)
+				// Continue with other apps rather than failing completely
+				continue
+			}
+
+			s.log.Info("Successfully initialized app installer", "app", md.AppName)
+		}
+
+		s.log.Info("App installers post start hook completed")
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add app installers post start hook: %w", err)
 	}
 
 	// stash the options for later use
