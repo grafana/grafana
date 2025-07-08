@@ -11,7 +11,7 @@ import { Select, ButtonSelect, AsyncMultiSelect, getSelectStyles, useTheme2, Che
 
 import { AzureMonitorQuery, AzureQueryType, AzureTracesFilter } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { VariableOptionGroup } from '../../types';
+import { VariableOptionGroup } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 
 export interface FilterProps {
