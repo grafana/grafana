@@ -110,6 +110,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, setupCfg.AllowList)
 
 	decryptStorage, err := metadata.ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
+	require.NoError(t, err)
 
 	return Sut{SecureValueService: secureValueService, SecureValueMetadataStorage: secureValueMetadataStorage, Database: database, DecryptStorage: decryptStorage}
 }

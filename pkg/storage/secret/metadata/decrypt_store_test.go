@@ -82,7 +82,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = svName
 		sv.Namespace = "default"
 
-		sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -118,7 +119,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
 		require.NoError(t, err)
@@ -156,7 +158,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = svName
 		sv.Namespace = "default"
 
-		sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -187,7 +190,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -219,7 +223,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = svName
 		sv.Namespace = "default"
 
-		sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -250,7 +255,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -282,7 +288,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = svName
 		sv.Namespace = "default"
 
-		sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		_, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
 
 		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", svName)
 		require.Error(t, err)

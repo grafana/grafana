@@ -179,7 +179,7 @@ func (s *secureValueMetadataStorage) getLatestVersion(ctx context.Context, names
 	if err != nil {
 		return nil, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error executing query: %w", err)
