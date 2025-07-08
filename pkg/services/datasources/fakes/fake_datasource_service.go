@@ -20,9 +20,9 @@ var _ datasources.DataSourceService = &FakeDataSourceService{}
 
 func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, dataSource := range s.DataSources {
-		idMatch := query.ID != 0 && query.ID == dataSource.ID
+		idMatch := query.ID != 0 && query.ID == dataSource.ID // nolint:staticcheck
 		uidMatch := query.UID != "" && query.UID == dataSource.UID
-		nameMatch := query.Name != "" && query.Name == dataSource.Name
+		nameMatch := query.Name != "" && query.Name == dataSource.Name // nolint:staticcheck
 		if idMatch || nameMatch || uidMatch {
 			return dataSource, nil
 		}

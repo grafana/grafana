@@ -964,6 +964,10 @@ export interface TableFieldOptions {
   inspect: boolean;
   minWidth?: number;
   width?: number;
+  /**
+   * Enables text wrapping for column headers
+   */
+  wrapHeaderText?: boolean;
 }
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
