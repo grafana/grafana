@@ -424,7 +424,8 @@
     "type-fest": "^4.18.2",
     "uplot": "1.6.32",
     "uuid": "11.1.0",
-    "visjs-network": "4.25.0",
+    "vis-data": "^7.1.10",
+    "vis-network": "9.1.13",
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {

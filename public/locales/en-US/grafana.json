@@ -8702,12 +8702,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "Indexed label",
-          "indexed-label-plural": "Indexed labels",
-          "parsed-label-plural": "Parsed fields",
-          "parsedl-label": "Parsed field",
-          "structured-metadata": "Structured metadata",
-          "structured-metadata-plural": "Structured metadata"
+          "indexed-label_one": "Indexed label",
+          "indexed-label_other": "Indexed labels",
+          "parsedl-label_one": "Parsed field",
+          "parsedl-label_other": "Parsed fields",
+          "structured-metadata_one": "Structured metadata",
+          "structured-metadata_other": "Structured metadata"
         }
       }
     },
@@ -8764,6 +8764,7 @@
       "close": "Close log details",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
+      "displayed-fields-section": "Organize displayed fields",
       "fields": {
         "adhoc-statistics": "Ad-hoc statistics",
         "copy-value-to-clipboard": "Copy value to clipboard",
@@ -8777,9 +8778,11 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "links-section": "Links",
+      "log-line-field": "Log line",
       "log-line-section": "Log line",
       "no-details": "No fields to display.",
       "pin-line": "Pin log",
+      "remove-displayed-field": "Remove field",
       "search": {
         "no-results": "No results to display."
       },
