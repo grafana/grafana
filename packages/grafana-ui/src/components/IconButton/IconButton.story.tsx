@@ -16,7 +16,7 @@ const defaultExcludes = ['ariaLabel', 'aria-label'];
 const additionalExcludes = ['size', 'name', 'variant', 'iconType'];
 
 const meta: Meta<typeof IconButton> = {
-  title: 'Buttons/IconButton',
+  title: 'Inputs/IconButton',
   component: IconButton,
   parameters: {
     docs: {
