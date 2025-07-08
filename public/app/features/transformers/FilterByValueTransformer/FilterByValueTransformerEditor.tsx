@@ -27,19 +27,31 @@ import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
-const filterTypes: Array<SelectableValue<FilterByValueType>> = [
-  { label: 'Include', value: FilterByValueType.include },
-  { label: 'Exclude', value: FilterByValueType.exclude },
-];
-
-const filterMatch: Array<SelectableValue<FilterByValueMatch>> = [
-  { label: 'Match all', value: FilterByValueMatch.all },
-  { label: 'Match any', value: FilterByValueMatch.any },
-];
-
 export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterByValueTransformerOptions>) => {
   const { input, options, onChange } = props;
   const fieldsInfo = useFieldsInfo(input);
+
+  const filterTypes: Array<SelectableValue<FilterByValueType>> = [
+    {
+      label: t('transformers.filter-by-value-transformer-editor.filter-types.label.include', 'Include'),
+      value: FilterByValueType.include,
+    },
+    {
+      label: t('transformers.filter-by-value-transformer-editor.filter-types.label.exclude', 'Exclude'),
+      value: FilterByValueType.exclude,
+    },
+  ];
+
+  const filterMatch: Array<SelectableValue<FilterByValueMatch>> = [
+    {
+      label: t('transformers.filter-by-value-transformer-editor.filter-match.label.match-all', 'Match all'),
+      value: FilterByValueMatch.all,
+    },
+    {
+      label: t('transformers.filter-by-value-transformer-editor.filter-match.label.match-any', 'Match any'),
+      value: FilterByValueMatch.any,
+    },
+  ];
 
   const onAddFilter = useCallback(() => {
     const frame = input[0];

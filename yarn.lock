@@ -2540,7 +2540,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     i18next-parser: "npm:9.3.0"
     immer: "npm:10.1.1"
     lodash: "npm:4.17.21"
@@ -2877,7 +2877,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     debounce-promise: "npm:3.1.2"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     immer: "npm:10.1.1"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.1"
@@ -2932,7 +2932,7 @@ __metadata:
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
     glob: "npm:11.0.1"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     lodash: "npm:4.17.21"
     lru-cache: "npm:11.1.0"
     monaco-editor: "npm:0.34.1"
@@ -3083,7 +3083,7 @@ __metadata:
     fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
-    marked: "npm:15.0.12"
+    marked: "npm:16.0.0"
     marked-mangle: "npm:1.1.11"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
@@ -3270,7 +3270,7 @@ __metadata:
     "@types/react": "npm:18.3.18"
     "@typescript-eslint/utils": "npm:^8.33.1"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-pseudo: "npm:^2.2.1"
     micro-memoize: "npm:^4.1.2"
@@ -3543,10 +3543,10 @@ __metadata:
   linkType: soft
 
 "@grafana/scenes-react@npm:^6.27.0":
-  version: 6.27.0
-  resolution: "@grafana/scenes-react@npm:6.27.0"
+  version: 6.27.1
+  resolution: "@grafana/scenes-react@npm:6.27.1"
   dependencies:
-    "@grafana/scenes": "npm:6.27.0"
+    "@grafana/scenes": "npm:6.27.1"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3558,13 +3558,13 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/4e52ad816a5ca05715ed0d317ece8ba8ccf857367f37c637edef11069b8f0db28ed41266f3bc8439ccf6af390d66e2351e17f026eb5cdc5ae516ab9afad6d18b
+  checksum: 10/1177db57199595f23722b9059ddf21f2679199f423ddde78c41d0a037d0e9c755a47c149541ce89df3694d7c55399e76eabed6a68a02b9b344acb8d3f1d95610
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.27.0, @grafana/scenes@npm:^6.27.0":
-  version: 6.27.0
-  resolution: "@grafana/scenes@npm:6.27.0"
+"@grafana/scenes@npm:6.27.1, @grafana/scenes@npm:^6.27.0":
+  version: 6.27.1
+  resolution: "@grafana/scenes@npm:6.27.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3584,7 +3584,7 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
-  checksum: 10/c8328cc323fe513d5bbb70eea44bcd08ff7b444e4266134151ccef1f038453f99d36dec0785f95bb0565c0c1623f463000721f9b22401d45ba79bdec14112332
+  checksum: 10/7569db543bdf53483d5960e533cee61e86c25647b30d1290a28038725895dbb7e530bc9fd4520fc8c4e59b9a819f1daeeb87aecdf45c9d8870212c7ef1d65c8d
   languageName: node
   linkType: hard
 
@@ -3751,7 +3751,7 @@ __metadata:
     expose-loader: "npm:5.0.0"
     fs-extra: "npm:^11.2.0"
     hoist-non-react-statics: "npm:3.3.2"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     immutable: "npm:5.1.3"
     is-hotkey: "npm:0.2.0"
@@ -18289,7 +18289,7 @@ __metadata:
     html-loader: "npm:5.1.0"
     html-webpack-plugin: "npm:5.6.3"
     http-server: "npm:14.1.1"
-    i18next: "npm:^24.0.0"
+    i18next: "npm:^25.0.0"
     i18next-browser-languagedetector: "npm:^8.0.0"
     i18next-parser: "npm:9.3.0"
     i18next-pseudo: "npm:^2.2.1"
@@ -18320,7 +18320,7 @@ __metadata:
     lru-cache: "npm:11.1.0"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
-    marked: "npm:15.0.12"
+    marked: "npm:16.0.0"
     memoize-one: "npm:6.0.0"
     micro-memoize: "npm:^4.1.2"
     mini-css-extract-plugin: "npm:2.9.2"
@@ -19209,7 +19209,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^23.5.1 || ^24.2.0, i18next@npm:^24.0.0":
+"i18next@npm:^23.5.1 || ^24.2.0":
   version: 24.2.2
   resolution: "i18next@npm:24.2.2"
   dependencies:
@@ -19220,6 +19220,20 @@ __metadata:
     typescript:
       optional: true
   checksum: 10/f66ed9e56d9412e59502f5df39163631daf9f1264774732fb21edbd66a528ca7a6b67dc2e2aec95683c6c7956e42c651587a54bd8ee082bd12008880ce6cd326
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^25.0.0":
+  version: 25.3.1
+  resolution: "i18next@npm:25.3.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.27.6"
+  peerDependencies:
+    typescript: ^5
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 10/f5f38af0f7b7c0055e607d4017dade5aedd1c75c44e091473b4d01537f0849e21a7ae7f66397719a2557fc53767cf9ea96a4da34127b906d3fe5ce21db895224
   languageName: node
   linkType: hard
 
@@ -22389,12 +22403,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:15.0.12":
-  version: 15.0.12
-  resolution: "marked@npm:15.0.12"
+"marked@npm:16.0.0":
+  version: 16.0.0
+  resolution: "marked@npm:16.0.0"
   bin:
     marked: bin/marked.js
-  checksum: 10/deeb619405c0c46af00c99b18b3365450abeb309104b24e3658f46142344f6b7c4117608c3b5834084d8738e92f81240c19f596e6ee369260f96e52b3457eaee
+  checksum: 10/aed6501ff5d49def83f0c79fab698666338a555cae32f83ba52369c9a04aa8be4fa4c908367d12f81f7d1c1a83d89ffe47aa1e7b023da308591e03ea82d5ca6d
   languageName: node
   linkType: hard
 

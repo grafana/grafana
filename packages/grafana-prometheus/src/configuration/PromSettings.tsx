@@ -40,11 +40,6 @@ const httpOptions = [
   { value: 'GET', label: 'GET' },
 ];
 
-const editorOptions = [
-  { value: QueryEditorMode.Builder, label: 'Builder' },
-  { value: QueryEditorMode.Code, label: 'Code' },
-];
-
 const cacheValueOptions = [
   { value: PrometheusCacheLevel.Low, label: 'Low' },
   { value: PrometheusCacheLevel.Medium, label: 'Medium' },
@@ -85,6 +80,17 @@ export const PromSettings = (props: Props) => {
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
   const { onOptionsChange } = props;
+
+  const editorOptions = [
+    {
+      value: QueryEditorMode.Builder,
+      label: t('grafana-prometheus.configuration.prom-settings.editor-options.label-builder', 'Builder'),
+    },
+    {
+      value: QueryEditorMode.Code,
+      label: t('grafana-prometheus.configuration.prom-settings.editor-options.label-code', 'Code'),
+    },
+  ];
 
   const optionsWithDefaults = getOptionsWithDefaults(props.options);
   const [validDuration, updateValidDuration] = useState<ValidDuration>({
