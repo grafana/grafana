@@ -565,6 +565,7 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
+              setDisplayedFields={setDisplayedFields}
               showControls={Boolean(showControls)}
               showTime={showTime}
               sortOrder={sortOrder}

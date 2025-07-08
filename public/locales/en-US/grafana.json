@@ -4399,7 +4399,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Public",
         "tooltip-view-as-scene": "View as Scene"
       }
     },
@@ -5173,7 +5172,6 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
-      "public-dashboard": "Public",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-dashboard": {
@@ -5474,15 +5472,9 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
-      "not-saved": "The value is not yet saved in the Grafana database",
       "not-yet-saved": "The value is not saved in the Grafana database",
-      "open-pull-request-in-git-hub": "Open pull request in GitHub",
-      "title-dashboard-loaded-branch-git-hub": "This dashboard is loaded from a branch in GitHub.",
       "title-dashboard-loaded-external-repository": "This dashboard is loaded from an external repository",
-      "title-dashboard-loaded-request-git-hub": "This dashboard is loaded from a pull request in GitHub.",
-      "title-error-loading-dashboard": "Error loading dashboard",
-      "value-not-saved": "The value is not yet saved in the Grafana database",
-      "view-pull-request-in-git-hub": "View pull request in GitHub"
+      "title-error-loading-dashboard": "Error loading dashboard"
     },
     "dashboard-scene": {
       "text": {
@@ -8503,7 +8495,7 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Search by name or description"
+      "placeholder-search-by-name-or-description": "Search by name, description or folder name"
     },
     "loading-indicator": {
       "loading-library-panel": "Loading library panel..."
@@ -8644,12 +8636,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "Indexed label",
-          "indexed-label-plural": "Indexed labels",
-          "parsed-label-plural": "Parsed fields",
-          "parsedl-label": "Parsed field",
-          "structured-metadata": "Structured metadata",
-          "structured-metadata-plural": "Structured metadata"
+          "indexed-label_one": "Indexed label",
+          "indexed-label_other": "Indexed labels",
+          "parsedl-label_one": "Parsed field",
+          "parsedl-label_other": "Parsed fields",
+          "structured-metadata_one": "Structured metadata",
+          "structured-metadata_other": "Structured metadata"
         }
       }
     },
@@ -8706,6 +8698,7 @@
       "close": "Close log details",
       "copy-shortlink": "Copy shortlink",
       "copy-to-clipboard": "Copy to clipboard",
+      "displayed-fields-section": "Organize displayed fields",
       "fields": {
         "adhoc-statistics": "Ad-hoc statistics",
         "copy-value-to-clipboard": "Copy value to clipboard",
@@ -8719,9 +8712,11 @@
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
       "links-section": "Links",
+      "log-line-field": "Log line",
       "log-line-section": "Log line",
       "no-details": "No fields to display.",
       "pin-line": "Pin log",
+      "remove-displayed-field": "Remove field",
       "search": {
         "no-results": "No results to display."
       },
@@ -10311,6 +10306,17 @@
       "label-workflow": "Workflow"
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "The value is not yet saved in the Grafana database",
+      "open-pull-request-in-git-hub": "Open pull request in GitHub",
+      "view-pull-request-in-git-hub": "View pull request in GitHub"
+    },
+    "title-dashboard-loaded-branch-git-hub": "This dashboard is loaded from a branch in GitHub.",
+    "title-dashboard-loaded-pull-request-git-hub": "This dashboard is loaded from a pull request in GitHub.",
+    "title-folder-created-branch-git-hub": "A new folder has been created in a branch in GitHub.",
+    "title-folder-created-pull-request-git-hub": "A new folder has been created in a pull request in GitHub."
+  },
   "provisioning": {
     "banner": {
       "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
@@ -11740,7 +11746,7 @@
     "description-count-rows": "Display a single count for all data rows",
     "description-fields": "Select the fields that should be calculated",
     "description-min-column-width": "The minimum width for column auto resizing",
-    "description-wrap-header-text": "Enables text wrapping for the field name in the table header",
+    "description-wrap-header-text": "Enables text wrapping for column headers",
     "image-cell-options-editor": {
       "description-alt-text": "Alternative text that will be displayed if an image can't be displayed or for users who use a screen reader",
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
@@ -11762,6 +11768,14 @@
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
+    "pill-cell-options-editor": {
+      "description-color-mode": "Choose how colors are assigned to pills",
+      "description-fixed-color": "All pills in this column will use this color",
+      "description-value-mappings-info": "For Value Mappings either use the global table Value Mappings or the Field overrides Value Mappings. The default will fall back to the Color Scheme. ",
+      "label-color-mode": "Color Mode",
+      "label-fixed-color": "Fixed Color",
+      "label-value-mappings-info": "Value Mappings"
+    },
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },
