@@ -84,6 +84,7 @@
     "admin-feature-toggles-table": {
       "confirm-modal-body-1": "Beberapa fitur stabil (GA) dan diaktifkan secara default, sedangkan beberapa fitur lainnya saat ini dalam fase Beta awal, tersedia untuk penggunaan awal.",
       "confirm-modal-body-2": "Sebaiknya pahami implikasi dari setiap perubahan fitur sebelum melakukan modifikasi.",
+      "confirmText-save-changes": "",
       "get-stage-cell": {
         "beta": "Beta",
         "content-general-availability": "Ketersediaan umum",
@@ -96,13 +97,20 @@
     },
     "admin-orgs-table": {
       "aria-label-delete-org": "Hapus org",
+      "confirmText-delete": "",
       "title-delete": "Hapus"
     },
     "anon-users": {
       "not-found": "Pengguna anonim tidak ditemukan."
     },
     "base-user-sessions": {
+      "body-force-logout-from-all-devices": "",
+      "confirmText-confirm-logout": "",
+      "confirmText-force-logout": "",
       "title-force-logout-from-all-devices": "Paksa keluar dari semua perangkat"
+    },
+    "change-org-button": {
+      "confirmText-save": ""
     },
     "edit-org": {
       "access-denied": "Anda tidak memiliki izin untuk melihat pengguna di organisasi ini. Untuk memperbarui organisasi ini, hubungi administrator server Anda.",
@@ -208,9 +216,11 @@
       "not-editable": "Peran pengguna ini tidak dapat diedit karena disinkronkan dari penyedia autentikasi Anda. Lihat <1> dokumen autentikasi Grafana </1> untuk detailnya."
     },
     "org-users-table": {
+      "body-delete": "",
       "columns": {
         "aria-label-role": "Peran"
       },
+      "confirmText-delete": "",
       "delete-aria-label": "Hapus pengguna: {{name}}",
       "title-delete": "Hapus"
     },
@@ -240,6 +250,9 @@
     },
     "settings": {
       "info-description": "Pengaturan sistem ini ditentukan dalam grafana.ini atau custom.ini (atau ditimpa dalam variabel ENV). Untuk mengubahnya, saat ini Anda perlu memulai ulang Grafana."
+    },
+    "un-themed-org-row": {
+      "confirmText-confirm-removal": ""
     },
     "upgrade-info": {
       "title": "Lisensi Enterprise"
@@ -293,12 +306,17 @@
     },
     "user-permissions": {
       "change-button": "Ubah",
+      "confirmText-change": "",
       "grafana-admin-key": "Admin Grafana",
       "grafana-admin-no": "Tidak",
       "grafana-admin-yes": "Ya",
       "title": "Izin"
     },
     "user-profile": {
+      "body-delete": "",
+      "body-disable": "",
+      "confirmText-delete-user": "",
+      "confirmText-disable-user": "",
       "delete-button": "Hapus pengguna",
       "disable-button": "Nonaktifkan pengguna",
       "edit-button": "Edit",
@@ -311,6 +329,9 @@
       "title": "Informasi pengguna",
       "title-delete-user": "Hapus pengguna",
       "title-disable-user": "Nonaktifkan pengguna"
+    },
+    "user-profile-row": {
+      "confirmText-save": ""
     },
     "user-sessions": {
       "browser-column": "Browser dan OS",
@@ -351,6 +372,10 @@
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Pengaturan waktu aktif"
+    },
+    "ad": {
+      "close": "",
+      "learn-more": ""
     },
     "add-button": {
       "add-more": "Tambah lagi"
@@ -453,6 +478,9 @@
       "label-muting-grouping-and-timings-optional": "Pembisuan, pengelompokan, dan pengaturan waktu (opsional)",
       "title-muting-grouping-and-timings": "Pembisuan, pengelompokan, dan pengaturan waktu"
     },
+    "alert-manager-picker": {
+      "noOptionsMessage-no-datasources-found": ""
+    },
     "alert-menu": {
       "copy-link": "Salin tautan",
       "duplicate": "Duplikasikan",
@@ -542,6 +570,7 @@
       "view-configuration": "Lihat konfigurasi"
     },
     "alertmanager-config": {
+      "confirmText-yes-reset-configuration": "",
       "gma-manual-configuration-description": "Konfigurasi internal Alertmanager Grafana tidak dapat diubah secara manual. Untuk mengubah konfigurasi ini, edit setiap sumber daya melalui UI.",
       "gma-manual-configuration-is-not-supported": "Perubahan konfigurasi manual tidak didukung",
       "message": {
@@ -556,11 +585,13 @@
       "title-resetting-alertmanager-configuration": "Mengatur ulang konfigurasi Alertmanager"
     },
     "alertmanager-configuration-version-manager": {
+      "body-restore-configuration-version-unsaved-changes": "",
       "columns": {
         "compare": "Bandingkan",
         "restore": "Pulihkan",
         "text-latest": "Terkini"
       },
+      "confirmText-yes-restore-configuration": "",
       "loading": "Memuat...",
       "no-previous-configurations": "Tidak ada konfigurasi sebelumnya",
       "this-might-take-a-while": "Harap tunggu...",
@@ -840,8 +871,10 @@
     },
     "contact-point-header": {
       "aria-label-more-actions": "Tindakan lainnya untuk titik kontak \"{{contactPointName}}\"",
+      "ariaLabel-delete": "",
       "button-edit": "Edit",
       "button-view": "Lihat",
+      "export-ariaLabel-export": "",
       "export-label-export": "Ekspor",
       "label-delete": "Hapus",
       "label-manage-permissions": "Kelola izin",
@@ -1374,6 +1407,7 @@
       "label-disable-resolved-message": "Nonaktifkan pesan terselesaikan"
     },
     "grafana-evaluation-behavior-step": {
+      "loadingMessage-loading-groups": "",
       "message": {
         "must-be-a-positive-integer": "Harus berupa bilangan bulat positif.",
         "must-enter-a-group-name": "Harus memasukkan nama grup"
@@ -1519,8 +1553,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "Mulai",
       "label-insights": "Wawasan",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "Alerting"
     },
     "import-to-gma": {
@@ -1819,7 +1865,11 @@
             "other-data-sources": "Sumber data lain"
           }
         }
-      }
+      },
+      "noOptionsMessage-no-datasources-found": ""
+    },
+    "mute-timing-actions-button": {
+      "body-delete-mute-timing": ""
     },
     "mute-timing-actions-buttons": {
       "text-disabled": "Dinonaktifkan",
@@ -2069,9 +2119,11 @@
       "update-errors": {
         "conflict": "Pohon kebijakan pemberitahuan telah diperbarui oleh pengguna lain.",
         "error-code": "Pesan kesalahan: \"{{error}}\"",
-        "fallback": "Terjadi kesalahan saat memperbarui kebijakan pemberitahuan Anda.",
+        "routes": {
+          "conflictingMatchers": ""
+        },
         "suffix": "Muat ulang halaman untuk mencoba lagi.",
-        "title": "Kesalahan saat menyimpan kebijakan pemberitahuan"
+        "title": ""
       },
       "n-more-policies_other": "{{count}} kebijakan tambahan"
     },
@@ -2126,6 +2178,7 @@
     "query-and-expressions-step": {
       "add-query": "Tambahkan kueri",
       "body-queries-expressions-configured": "Buat setidaknya satu kueri atau pola untuk diperingatkan",
+      "confirmText-deactivate": "",
       "expressions": "Pola",
       "loading-data-sources": "Memuat sumber data...",
       "manipulate-returned-queries-other-operations": "Manipulasi data yang dikembalikan dari kueri dengan matematika dan operasi lainnya.",
@@ -2193,6 +2246,7 @@
     "redirect-to-clone-rule": {
       "body-evaluation-group": "Anda perlu mengatur grup evaluasi baru untuk aturan yang disalin karena grup evaluasi awal telah disediakan dan tidak dapat digunakan untuk aturan yang dibuat di UI.",
       "body-not-provisioned": "Aturan baru tidak <1>akan</1> ditandai sebagai aturan yang disediakan.",
+      "confirmText-copy": "",
       "title-copy-provisioned-alert-rule": "Salin aturan peringatan yang disediakan"
     },
     "redirect-to-rule-viewer": {
@@ -2389,8 +2443,6 @@
       "title-inspect-alert-rule": "Periksa aturan Peringatan"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "Tidak dapat menemukan detail aturan untuk UID {{uid}}",
-      "cannot-load-rule-details-for": "Tidak dapat memuat detail aturan untuk UID {{uid}}",
       "configure-datasource": "Konfigurasikan",
       "draft-new-rule": "Buat draf aturan baru",
       "ds-error": {
@@ -2737,6 +2789,9 @@
       "existing-templates-selector-placeholder-choose-notification-template": "Pilih templat pemberitahuan",
       "loading": "Memuat...",
       "template-options": {
+        "ariaLabel": {
+          "select-notification-template": ""
+        },
         "label": {
           "select-notification-template": "Pilih templat pemberitahuan"
         }
@@ -2763,6 +2818,8 @@
     },
     "templates-table": {
       "actions": "Tindakan",
+      "body-delete-template-group": "",
+      "confirmText-yes-delete": "",
       "no-templates-defined": "Tidak ada templat yang ditentukan.",
       "template-group": "Grup templat",
       "title-delete-template-group": "Hapus grup templat"
@@ -2888,6 +2945,11 @@
         "delete-contact-point": "Anda yakin ingin menghapus titik kontak ini?",
         "deleting-contact-point-permanently-remove": "Menghapus titik kontak ini akan menghapusnya secara permanen.",
         "title-delete-contact-point": "Hapus titik kontak"
+      }
+    },
+    "use-delete-modal": {
+      "modal": {
+        "confirmText-yes-delete": ""
       }
     },
     "use-delete-policy-modal": {
@@ -3046,7 +3108,8 @@
     "annotation-field-mapper": {
       "annotation": "Anotasi",
       "first-value": "Nilai pertama",
-      "from": ""
+      "from": "",
+      "noOptionsMessage-unknown-field-names": ""
     },
     "empty-state": {
       "button-title": "Tambahkan kueri anotasi",
@@ -3180,7 +3243,7 @@
       "team-ids-github": "Daftar bilangan bulat ID Tim.",
       "team-ids-label": "ID Tim",
       "team-ids-numbers": "ID Tim harus berupa angka.",
-      "team-ids-other": "Daftar string ID Tim.",
+      "team-ids-other": "",
       "team-ids-placeholder": "Masukkan ID Tim dan tekan Enter untuk menambahkan",
       "teams-url-description": "URL yang digunakan untuk kueri ID Tim. Jika tidak diatur, nilai defaultnya adalah /teams.",
       "teams-url-description-oauth": "Jika Anda mengonfigurasi \"{{ teamsURLLabel }}\", Anda juga harus mengonfigurasi \"{{ teamIDsAttributePathLabel }}\".",
@@ -3224,6 +3287,7 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "Atur ulang ke nilai default"
       },
+      "confirmText-reset": "",
       "disable": "Nonaktifkan",
       "disabling": "Sedang menonaktifkan...",
       "discard": "Buang",
@@ -3877,6 +3941,7 @@
     "tooltip": "Tutup"
   },
   "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Terjadi kesalahan saat memuat opsi."
@@ -4145,8 +4210,8 @@
     }
   },
   "dashbaord-scene": {
-    "interval-variable-form": {
-      "description-auto-option": "Menghitung interval secara dinamis dengan membagi rentang waktu dengan jumlah yang ditentukan"
+    "variable-editor-form": {
+      "run-query": ""
     }
   },
   "dashboard": {
@@ -4308,6 +4373,9 @@
     },
     "dash-nav": {
       "on-open-snapshot-original": {
+        "confirmText": {
+          "proceed": ""
+        },
         "title": {
           "proceed-to-external-site": "Lanjutkan ke situs eksternal?"
         }
@@ -4521,6 +4589,13 @@
         "label": {
           "editable": "Dapat diedit",
           "readonly": "Hanya-baca"
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "",
+          "shared-crosshair": "",
+          "shared-tooltip": ""
         }
       }
     },
@@ -4825,6 +4900,7 @@
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Anda yakin ingin memulihkan dasbor ke versi {{version}}? Semua perubahan yang belum disimpan akan hilang.",
+      "confirmText-restore-version": "",
       "title-restore-version": "Pulihkan versi"
     },
     "row-options-button": {
@@ -4875,6 +4951,9 @@
         "title-not-unique": "Judul ini tidak unik"
       }
     },
+    "save-dashboard": {
+      "message-dashboard-saved": ""
+    },
     "save-dashboard-as-button": {
       "save-as": "Simpan sebagai"
     },
@@ -4909,6 +4988,7 @@
     "save-dashboard-error-proxy": {
       "body-name-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada.<1></1><2>Apa Anda masih ingin menyimpan dasbor ini?</2>",
       "body-version-mismatch": "Orang lain telah memperbarui dasbor ini<1></1><2>Apa Anda masih ingin menyimpan dasbor ini?</2>",
+      "confirmText-save-and-overwrite": "",
       "title-name-exists": "Konflik",
       "title-version-mismatch": "Konflik"
     },
@@ -5105,7 +5185,9 @@
       "label-apply-transformation-to": "Terapkan transformasi ke"
     },
     "transformation-operation-row": {
+      "body-delete": "",
       "render-actions": {
+        "confirmText-delete": "",
         "title-debug": "Debug",
         "title-disable-transformation": "Nonaktifkan transformasi",
         "title-filter": "Filter",
@@ -5127,10 +5209,14 @@
       "show-images": "Tampilkan gambar",
       "title-add-another-transformation": "Tambah transformasi lain"
     },
+    "un-theme-transformations-editor": {
+      "body-delete-all-transformations": ""
+    },
     "un-themed-transformations-editor": {
       "actions": {
         "add-another-transformation": "Tambah transformasi lain"
       },
+      "confirmText-delete-all": "",
       "delete-all-transformations": "Hapus semua transformasi",
       "title-delete-all-transformations": "Hapus semua transformasi?",
       "tooltip-clear-search": "Hapus pencarian",
@@ -5167,6 +5253,7 @@
     "version-history-table": {
       "aria-label-toggle-selection": "Alihkan tombol pemilihan versi {{version}}",
       "date": "Tanggal",
+      "name-latest": "",
       "notes": "Catatan",
       "restore": "Pulihkan",
       "updated-by": "Diperbarui oleh",
@@ -5243,7 +5330,8 @@
       "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
       "label-data-source": "Sumber data",
-      "label-use-static-key-dimensions": "Gunakan dimensi kunci statis"
+      "label-use-static-key-dimensions": "Gunakan dimensi kunci statis",
+      "name-allow-custom-values": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -5316,6 +5404,9 @@
       }
     },
     "config-public-dashboard": {
+      "confirmText": {
+        "revoke-public-url": ""
+      },
       "title": {
         "revoke-public-url": "Cabut URL publik"
       }
@@ -5327,6 +5418,7 @@
     },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
+      "name-values-separated-comma": "",
       "selection-options": "Opsi pemilihan"
     },
     "dashboard-edit-pane-renderer": {
@@ -5345,6 +5437,12 @@
       "label-type": "Jenis",
       "label-url": "URL",
       "label-with-tags": "Dengan tag",
+      "link-type-options": {
+        "label": {
+          "dashboards": "",
+          "link": ""
+        }
+      },
       "placeholder-open-dashboard": "Buka dasbor"
     },
     "dashboard-link-list": {
@@ -5391,6 +5489,8 @@
       "data-source-options": "Opsi sumber data",
       "description-instance-name-filter": "Filter regex untuk instans sumber data yang akan dipilih dalam daftar nilai variabel. Biarkan kosong untuk semua.",
       "example-instance-name-filter": "Contoh: <codeExample />",
+      "name-instance-name-filter": "",
+      "name-type": "",
       "selection-options": "Opsi pemilihan"
     },
     "default-grid-layout-manager": {
@@ -5436,6 +5536,21 @@
     "empty-transformations-message": {
       "add-transformation": "Tambahkan transformasi"
     },
+    "general-settings-edit-view": {
+      "editable_options": {
+        "label": {
+          "editable": "",
+          "readonly": ""
+        }
+      },
+      "graph_tooltip_options": {
+        "label": {
+          "default": "",
+          "shared-crosshair": "",
+          "shared-tooltip": ""
+        }
+      }
+    },
     "get-edit-options": {
       "title": {
         "column-options": "Opsi kolom",
@@ -5466,7 +5581,8 @@
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
       "group-by-options": "Kelompokkan berdasarkan opsi",
       "label-data-source": "Sumber data",
-      "label-use-static-group-by-dimensions": "Gunakan dimensi grup statis"
+      "label-use-static-group-by-dimensions": "Gunakan dimensi grup statis",
+      "name-allow-custom-values": ""
     },
     "help-wizard": {
       "copy-to-clipboard": "Salin ke papan klip",
@@ -5502,9 +5618,14 @@
       "apply": "Terapkan"
     },
     "interval-variable-form": {
+      "description-auto-option": "",
       "description-calculated-value-below-threshold": "Nilai yang dihitung tidak akan berada di bawah ambang batas ini",
       "description-step-count": "Berapa kali rentang waktu saat ini harus dibagi untuk menghitung nilai",
-      "interval-options": "Opsi interval"
+      "interval-options": "Opsi interval",
+      "name-auto-option": "",
+      "name-min-interval": "",
+      "name-step-count": "",
+      "name-values": ""
     },
     "json-model-edit-view": {
       "cancel-button": {
@@ -5528,6 +5649,9 @@
       "title-name-already-exists": "Nama sudah ada"
     },
     "on-open-snapshot-original-dashboard": {
+      "confirmText": {
+        "proceed": ""
+      },
       "title": {
         "proceed-to-external-site": "Lanjutkan ke situs eksternal?"
       }
@@ -5563,6 +5687,8 @@
     },
     "panel-data-transformations-tab-rendered": {
       "add-another-transformation": "Tambah transformasi lain",
+      "body-delete-all-transformations": "",
+      "confirmText-delete-all": "",
       "delete-all-transformations": "Hapus semua transformasi",
       "title-delete-all-transformations": "Hapus semua transformasi?"
     },
@@ -5616,6 +5742,7 @@
       "description-optional": "Opsional, jika Anda ingin mengekstrak bagian dari nama seri atau segmen node metrik.",
       "label-data-source": "Sumber data",
       "label-target-data-source": "Sumber data target",
+      "name-regex": "",
       "query-options": "Opsi kueri",
       "selection-options": "Opsi pemilihan"
     },
@@ -5630,6 +5757,7 @@
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Anda yakin ingin memulihkan dasbor ke versi {{version}}? Semua perubahan yang belum disimpan akan hilang.",
+      "confirmText-restore-version": "",
       "title-restore-version": "Pulihkan versi"
     },
     "save-button": {
@@ -5722,7 +5850,11 @@
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Memungkinkan beberapa nilai untuk dipilih secara bersamaan",
       "description-enables-option-include-variables": "Mengaktifkan opsi untuk menyertakan semua nilai",
-      "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar"
+      "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
+      "name-allow-custom-values": "",
+      "name-custom-all-value": "",
+      "name-include-all-option": "",
+      "name-multi-value": ""
     },
     "share-button": {
       "aria-label-sharedropdownmenu": "Alihkan menu bagikan"
@@ -5741,6 +5873,9 @@
       "title": {
         "copy-to-clipboard-failed": "Gagal menyalin ke papan klip"
       }
+    },
+    "text-box-variable": {
+      "name-default-value": ""
     },
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "(opsional)",
@@ -5765,6 +5900,8 @@
       }
     },
     "unlink-modal": {
+      "body-unlink-panel": "",
+      "confirmText-yes-unlink": "",
       "title-really-unlink-panel": "Anda yakin ingin memutus tautan panel ini?"
     },
     "unsaved-changes-modal": {
@@ -5781,6 +5918,9 @@
         }
       }
     },
+    "use-save-dashboard": {
+      "message-dashboard-saved": ""
+    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Variabel ini tidak direferensikan oleh variabel atau dasbor apa pun.",
       "aria-label-variable-referenced-other-variables-dashboard": "Variabel ini direferensikan oleh variabel atau dasbor lain.",
@@ -5790,10 +5930,16 @@
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formulir editor variabel",
       "back-to-list": "Kembali ke daftar",
+      "confirmText": {
+        "delete-variable": ""
+      },
       "delete": "Hapus",
       "description-optional-display-name": "Nama tampilan opsional",
       "description-template-variable-characters": "Nama variabel templat. (Maks. 50 karakter)",
       "general": "Umum",
+      "name-description": "",
+      "name-label": "",
+      "name-name": "",
       "placeholder-descriptive-text": "Teks deskriptif",
       "placeholder-label-name": "Nama label",
       "placeholder-variable-name": "Nama variabel",
@@ -5808,12 +5954,24 @@
       "variable": "Variabel"
     },
     "variable-editor-list-row": {
+      "body-delete-variable": "",
+      "confirmText-delete-variable": "",
       "title-delete-variable": "Hapus variabel",
       "tooltip-duplicate-variable": "Duplikatkan variabel",
       "tooltip-remove-variable": "Hapus variabel"
     },
     "variable-hide-select": {
+      "hide_options": {
+        "label": {
+          "label": "",
+          "nothing": "",
+          "variable": ""
+        }
+      },
       "label": "Sembunyikan"
+    },
+    "variable-type-select": {
+      "name-variable-type": ""
     },
     "variable-usages-button": {
       "title-show-usages": "Menampilkan penggunaan untuk: {{variableId}}",
@@ -5841,6 +5999,7 @@
     "version-history-table": {
       "aria-label-toggle-selection": "Alihkan tombol pemilihan versi {{version}}",
       "date": "Tanggal",
+      "name-latest": "",
       "notes": "Catatan",
       "restore": "Pulihkan",
       "updated-by": "Diperbarui oleh",
@@ -6228,7 +6387,8 @@
       }
     },
     "color-dimension-editor": {
-      "label-fixed-color": ""
+      "label-fixed-color": "",
+      "noOptionsMessage-no-fields-found": ""
     },
     "file-dropzone-custom-children": {
       "upload": "Unggah"
@@ -6266,6 +6426,7 @@
       },
       "label-limit": "Batas",
       "label-value": "Nilai",
+      "noOptionsMessage-no-fields-found": "",
       "scalar-options": {
         "description-clamped": "",
         "description-mod": "",
@@ -6274,9 +6435,15 @@
       }
     },
     "scale-dimension-editor": {
+      "fixed-value-option": {
+        "label": {
+          "fixed-value": ""
+        }
+      },
       "label-max": "Maksimum",
       "label-min": "Minimum",
-      "label-value": "Nilai"
+      "label-value": "Nilai",
+      "noOptionsMessage-no-fields-found": ""
     },
     "text-dimension-editor": {
       "description-field": "",
@@ -6848,6 +7015,8 @@
       "aria-label-select-service-name-operator": "Pilih operator nama layanan",
       "aria-label-select-span-name": "Pilih nama rentang",
       "aria-label-select-span-name-operator": "Pilih operator nama rentang",
+      "ariaLabel-select-max-span-duration": "",
+      "ariaLabel-select-min-span-duration": "",
       "label-collapse": "Filter Rentang",
       "label-duration": "Durasi",
       "label-service-name": "Nama layanan",
@@ -6918,6 +7087,8 @@
       "split-widen": "Lebarkan panel"
     },
     "trace-page-actions": {
+      "ariaLabel-copy-trace-id": "",
+      "ariaLabel-export-trace": "",
       "give-feedback": "Berikan umpan balik",
       "label-copied": "Disalin!",
       "label-export": "Ekspor",
@@ -7055,6 +7226,7 @@
   },
   "folder-filter": {
     "clear-folder-button": "Hapus folder",
+    "noOptionsMessage-no-folders-found": "",
     "select-aria-label": "Filter folder",
     "select-placeholder": "Filter berdasarkan folder"
   },
@@ -7123,7 +7295,53 @@
     "incomplete-request-error": "Maaf, saya tidak dapat menyelesaikan permintaan Anda. Silakan coba lagi.",
     "send-custom-feedback": "Kirim"
   },
+  "geo": {
+    "get-geometry-field": {
+      "warning-gazetteer-not-found": "",
+      "warning-no-geometry": "",
+      "warning-select-geohash": "",
+      "warning-select-lat-long": "",
+      "warning-select-lookup": "",
+      "warning-unable-to-find": ""
+    },
+    "location-editor": {
+      "geohash-field": {
+        "no-fields-message": ""
+      },
+      "latitude-field": {
+        "no-fields-message": ""
+      },
+      "longitude-field": {
+        "no-fields-message": ""
+      },
+      "lookup-field": {
+        "no-fields-message": ""
+      },
+      "name-gazetteer": "",
+      "name-geohash-field": "",
+      "name-latitude-field": "",
+      "name-location-mode": "",
+      "name-longitude-field": "",
+      "name-lookup-field": ""
+    },
+    "location-more-editor": {
+      "mode-options": {
+        "description-auto": "",
+        "description-coords": "",
+        "description-geohash": "",
+        "description-lookup": "",
+        "label-auto": "",
+        "label-coords": "",
+        "label-geohash": "",
+        "label-lookup": ""
+      }
+    }
+  },
   "geomap": {
+    "category-basemap-layer": "",
+    "category-map-controls": "",
+    "category-map-layers": "",
+    "category-map-view": "",
     "coordinates-map-view-editor": {
       "label-latitude": "Garis Lintang",
       "label-longitude": "Garis Bujur"
@@ -7132,6 +7350,14 @@
       "center": "Pusat:",
       "zoom": "Zoom:"
     },
+    "description-initial-view": "",
+    "description-mouse-wheel-zoom": "",
+    "description-share-view": "",
+    "description-show-attribution": "",
+    "description-show-debug": "",
+    "description-show-measure": "",
+    "description-show-scale": "",
+    "description-show-zoom": "",
     "fit-map-view-editor": {
       "all-layers-editor-fragment": {
         "label-layer": "Layer"
@@ -7154,6 +7380,14 @@
     "geomap-style-rules-editor": {
       "aria-label-add-geomap-style-rule": "Tambahkan aturan gaya geomap"
     },
+    "layer-editor": {
+      "category-base-layer": "",
+      "description-display-tooltip": "",
+      "name-data": "",
+      "name-display-tooltip": "",
+      "name-layer-type": "",
+      "name-opacity": ""
+    },
     "layers-editor": {
       "label-add-layer": "Tambahkan layer",
       "no-layers": "Tidak ada layer?"
@@ -7164,16 +7398,38 @@
       "label-zoom": "Perbesar",
       "use-current-map-settings": "Gunakan pengaturan peta saat ini"
     },
+    "markers-layer": {
+      "description-show-legend": "",
+      "name-show-legend": "",
+      "name-styles": ""
+    },
     "markers-legend": {
       "title-symbol": "Simbol"
     },
     "measure-overlay": {
       "tooltip-show-measure-tools": "Tampilkan alat ukur"
     },
+    "name-initial-view": "",
+    "name-mouse-wheel-zoom": "",
+    "name-share-view": "",
+    "name-show-attribution": "",
+    "name-show-debug": "",
+    "name-show-measure": "",
+    "name-show-scale": "",
+    "name-show-zoom": "",
+    "name-tooltip": "",
+    "photos-layer": {
+      "noFieldsMessage-no-string-fields": ""
+    },
     "plugin": {
       "basemap-layer-configured-server-admin": "Layer peta dasar dikonfigurasi oleh admin server."
     },
     "style-editor": {
+      "horizontal-align-options": {
+        "label-center": "",
+        "label-left": "",
+        "label-right": ""
+      },
       "label-align": "Ratakan",
       "label-baseline": "Baseline",
       "label-color": "Warna",
@@ -7187,7 +7443,14 @@
       "label-symbol-vertical-align": "Penyelarasan vertikal simbol",
       "label-text-label": "Label teks",
       "label-x-offset": "Offset X",
-      "label-y-offset": "Offset Y"
+      "label-y-offset": "Offset Y",
+      "placeholderText-select-symbol": "",
+      "placeholderText-select-symbol-or-add-text": "",
+      "vertical-align-options": {
+        "label-bottom": "",
+        "label-center": "",
+        "label-top": ""
+      }
     },
     "style-rule-editor": {
       "aria-label-comparison-operator": "Operator perbandingan",
@@ -7198,6 +7461,15 @@
       "placeholder-feature-property": "Properti fitur",
       "placeholder-numeric-value": "Nilai numerik",
       "placeholder-value": "nilai"
+    },
+    "tooltip-options": {
+      "description-details": "",
+      "description-none": "",
+      "label-details": "",
+      "label-none": ""
+    },
+    "utils": {
+      "get-next-layer-name": ""
     }
   },
   "get-enterprise": {
@@ -7447,7 +7719,8 @@
       "aria-label-selected-color": "warna {{colorLabel}}"
     },
     "confirm-button": {
-      "cancel": "Batalkan"
+      "cancel": "Batalkan",
+      "confirmText-delete": ""
     },
     "confirm-content": {
       "placeholder": "Ketik \"{{confirmPromptText}}\" untuk mengonfirmasi"
@@ -7629,6 +7902,8 @@
     },
     "panel-chrome": {
       "aria-label-toggle-collapse": "alihkan panel ciutkan",
+      "ariaLabel-panel-loading": "",
+      "ariaLabel-panel-status": "",
       "tooltip-cancel": "Batalkan kueri",
       "tooltip-cancel-loading": "Batalkan kueri",
       "tooltip-stop-streaming": "Hentikan streaming",
@@ -7796,6 +8071,12 @@
       "footer-click-to-action": "Klik untuk {{actionTitle}} ",
       "footer-click-to-navigate": "Klik untuk membuka {{linkTitle}}",
       "timestamp": "Stempel Waktu"
+    },
+    "week-start-picker": {
+      "weekStarts-label-default": "",
+      "weekStarts-label-monday": "",
+      "weekStarts-label-saturday": "",
+      "weekStarts-label-sunday": ""
     }
   },
   "graph": {
@@ -8171,6 +8452,10 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Buat panel pustaka"
+    },
+    "change-library-panel-modal": {
+      "confirmText-change": "",
+      "confirmText-replace": ""
     },
     "confirm": {
       "delete-panel": "Ingin menghapus panel ini?"
@@ -8613,6 +8898,8 @@
       "updated-on": "Diperbarui pada"
     },
     "snapshot-list-table": {
+      "body-delete": "",
+      "confirmText-delete": "",
       "title-delete": "Hapus"
     },
     "unthemed-dashboard-import": {
@@ -8623,6 +8910,9 @@
         "import-dashboard": "Impor dasbor"
       }
     }
+  },
+  "metric-select": {
+    "noOptionsMessage-no-options-found": ""
   },
   "migrate-to-cloud": {
     "build-snapshot": {
@@ -9459,6 +9749,7 @@
     }
   },
   "org-picker": {
+    "noOptionsMessage-no-organizations-found": "",
     "select-placeholder": "Pilih organisasi"
   },
   "page": {
@@ -9681,6 +9972,7 @@
         "permission": "Anda tidak memiliki izin untuk melihat halaman ini.",
         "title-access-denied": "Akses ditolak"
       },
+      "error-loading-plugin": "",
       "no-root-app-page-component-found": "Tidak ada komponen halaman aplikasi root yang ditemukan"
     },
     "browse": {
@@ -9724,8 +10016,7 @@
         "update-status-text": "plugin diperbarui"
       },
       "versions": {
-        "confirmation-text-1": "Apa Anda yakin ingin menurunkan ke versi",
-        "confirmation-text-2": "Anda biasanya tidak boleh melakukan ini",
+        "confirmation-text": "",
         "downgrade-confirm": "Turunkan",
         "downgrade-title": "Turunkan versi plugin"
       }
@@ -9779,6 +10070,10 @@
     "empty-state": {
       "message": "Tidak ada plugin yang ditemukan"
     },
+    "extensions": {
+      "extension-error-alert-description": "",
+      "extension-error-alert-title": ""
+    },
     "extensions-log-data-source": {
       "message": {
         "ok": "OK"
@@ -9812,7 +10107,11 @@
       "updating": "Memperbarui"
     },
     "install-controls-button": {
-      "title-uninstall-modal": "Hapus instalasi {{plugin}}"
+      "title-uninstall-modal": "Hapus instalasi {{plugin}}",
+      "uninstall-controls": {
+        "body-uninstall-plugin": "",
+        "confirmText-confirm": ""
+      }
     },
     "install-controls-warning": {
       "body-not-published": "Plugin ini tidak dipublikasikan ke <2>grafana.com/plugins</2> dan tidak dapat dikelola melalui katalog.",
@@ -10843,6 +11142,7 @@
     }
   },
   "service-account-picker": {
+    "noOptionsMessage-no-service-accounts-found": "",
     "select-aria-label": "Pemilih akun layanan",
     "select-placeholder": "Mulai mengetik untuk mencari akun layanan"
   },
@@ -10888,6 +11188,10 @@
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "Tambahkan token akun layanan",
+      "body-delete-service-account": "",
+      "body-disable-service-account": "",
+      "confirmText-delete-service-account": "",
+      "confirmText-disable-service-account": "",
       "delete-service-account": "Hapus akun layanan",
       "disable-service-account": "Nonaktifkan akun layanan",
       "enable-service-account": "Aktifkan akun layanan",
@@ -10914,6 +11218,7 @@
       "used-by": "Digunakan oleh"
     },
     "service-account-profile-row": {
+      "confirmText-save": "",
       "edit": "Edit"
     },
     "service-account-role-row": {
@@ -10927,10 +11232,15 @@
     },
     "service-accounts-list-page-unconnected": {
       "add-service-account": "Tambahkan akun layanan",
+      "body-delete-with-tokens": "",
+      "body-disable-service-account": "",
+      "confirmText-delete": "",
+      "confirmText-disable-service-account": "",
       "placeholder-search-service-account-by-name": "Cari akun layanan berdasarkan nama",
       "sub-title": "Akun layanan dan tokennya dapat digunakan untuk mengautentikasi API Grafana. Cari tahu selengkapnya di <2>dokumentasi kami.</2>",
       "title-delete-service-account": "Hapus akun layanan",
-      "title-disable-service-account": "Nonaktifkan akun layanan"
+      "title-disable-service-account": "Nonaktifkan akun layanan",
+      "body-delete_other": ""
     },
     "token-expiration": {
       "content-this-token-has-expired": "Token ini telah kedaluwarsa",
@@ -11466,6 +11776,7 @@
     "tag-option-label": "Opsi tag"
   },
   "team-picker": {
+    "noOptionsMessage-no-teams-found": "",
     "select-aria-label": "Pemilih tim",
     "select-placeholder": "Pilih tim"
   },
@@ -11791,6 +12102,7 @@
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Tambahkan transformer jenis bidang konversi",
       "aria-label-remove-convert-field-type-transformer": "Hapus transformer jenis bidang konversi",
+      "convert-field-type": "",
       "label": {
         "browser": "Browser",
         "utc": "UTC"
@@ -11833,6 +12145,11 @@
       "remove-enum-row-tooltip-delete": "Hapus"
     },
     "extract-fields-transformer-editor": {
+      "field-name-picker-settings": {
+        "placeholderText": {
+          "select-field": ""
+        }
+      },
       "label-delimiter": "Delimiter",
       "label-format": "Format",
       "label-keep-time": "Pertahankan waktu",
@@ -11846,6 +12163,14 @@
       "aria-label-threshold-color": "Warna ambang batas"
     },
     "field-lookup-transformer-editor": {
+      "field-name-picker-settings": {
+        "noFieldsMessage": {
+          "no-text-fields-found": ""
+        },
+        "placeholderText": {
+          "select-text-field": ""
+        }
+      },
       "label-field": "Bidang",
       "label-lookup": "Cari"
     },
@@ -11871,10 +12196,30 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Tambah ketentuan",
+      "filter-match": {
+        "label": {
+          "match-all": "",
+          "match-any": ""
+        }
+      },
+      "filter-types": {
+        "label": {
+          "exclude": "",
+          "include": ""
+        }
+      },
       "label-conditions": "Syarat",
       "label-filter-type": "Jenis filter"
     },
     "format-string-transfomer-editor": {
+      "field-name-picker-settings": {
+        "noFieldsMessage": {
+          "no-text-fields-found": ""
+        },
+        "placeholderText": {
+          "select-text-field": ""
+        }
+      },
       "label-field": "Bidang",
       "label-format": "Format",
       "label-substring-range": "Rentang substring"
@@ -12185,6 +12530,7 @@
     "title": "Organisasi"
   },
   "user-picker": {
+    "noOptionsMessage-no-users-found": "",
     "select-aria-label": "Pemilih pengguna",
     "select-placeholder": "Mulai mengetik untuk mencari pengguna"
   },
@@ -12270,6 +12616,8 @@
       }
     },
     "confirm-delete-modal": {
+      "body-delete-variable": "",
+      "confirmText-delete": "",
       "title-delete-variable": "Hapus variabel"
     },
     "create-ad-hoc-variable-adapter": {
@@ -12318,9 +12666,24 @@
       "label-refresh": "Muat ulang"
     },
     "query-variable-sort-select": {
-      "description-values-variable": "Cara mengurutkan nilai variabel ini"
+      "description-values-variable": "Cara mengurutkan nilai variabel ini",
+      "name-sort": "",
+      "sort_options": {
+        "label": {
+          "alphabetical-asc": "",
+          "alphabetical-caseinsensitive-asc": "",
+          "alphabetical-caseinsensitive-desc": "",
+          "alphabetical-desc": "",
+          "disabled": "",
+          "natural-asc": "",
+          "natural-desc": "",
+          "numerical-asc": "",
+          "numerical-desc": ""
+        }
+      }
     },
     "text-box-variable-editor": {
+      "name-default-value": "",
       "placeholder-default-value-if-any": "nilai default, jika ada",
       "text-options": "Opsi teks"
     },
@@ -12349,6 +12712,8 @@
       "description-optional-display-name": "Nama tampilan opsional",
       "description-template-variable-characters": "Nama variabel templat. (Maks. 50 karakter)",
       "general": "Umum",
+      "name-label": "",
+      "name-name": "",
       "placeholder-descriptive-text": "Teks deskriptif",
       "placeholder-label-name": "Nama label",
       "placeholder-variable-name": "Nama variabel",
@@ -12363,8 +12728,14 @@
       "tooltip-duplicate-variable": "Duplikatkan variabel",
       "tooltip-remove-variable": "Hapus variabel"
     },
+    "variable-editor-un-connected": {
+      "name-description": ""
+    },
     "variable-options": {
       "aria-label-toggle-all-values": "Alihkan tombol semua nilai"
+    },
+    "variable-type-select": {
+      "name-select-variable-type": ""
     },
     "variable-usages-button": {
       "tooltip-show-usages": "Tampilkan penggunaan"

@@ -11,13 +11,30 @@ import { partialQueryWithFunction as cloudwatchLogsSQLPartialQueryWithFunction }
 import { partialQueryWithSubquery as cloudwatchLogsSQLPartialQueryWithSubquery } from '../cloudwatch-logs-sql-test-data/partialQueryWithSubquery';
 import { singleLineFullQuery as cloudwatchLogsSQLSingleLineFullQuery } from '../cloudwatch-logs-sql-test-data/singleLineFullQuery';
 import { whitespaceQuery as cloudwatchLogsSQLWhitespaceQuery } from '../cloudwatch-logs-sql-test-data/whitespaceQuery';
-import * as CloudwatchLogsTestData from '../cloudwatch-logs-test-data';
+import { logsTestDataCommentOnlyQuery } from '../cloudwatch-logs-test-data/commentOnlyQuery';
+import { logsTestDataEmptyQuery } from '../cloudwatch-logs-test-data/empty';
+import { logsTestDataFilterQuery } from '../cloudwatch-logs-test-data/filterQuery';
+import { logsTestDataMultiLineFullQuery } from '../cloudwatch-logs-test-data/multiLineFullQuery';
+import { logsTestDataNewCommandQuery } from '../cloudwatch-logs-test-data/newCommandQuery';
+import { logsTestDataSingleLineFullQuery } from '../cloudwatch-logs-test-data/singleLineFullQuery';
+import { logsTestDataSortQuery } from '../cloudwatch-logs-test-data/sortQuery';
+import { logsTestDataWhitespaceOnlyQuery } from '../cloudwatch-logs-test-data/whitespaceQuery';
 import * as PPLMultilineQueries from '../cloudwatch-ppl-test-data/multilineQueries';
 import { newCommandQuery as PPLNewCommandQuery } from '../cloudwatch-ppl-test-data/newCommandQuery';
 import * as PPLSingleLineQueries from '../cloudwatch-ppl-test-data/singleLineQueries';
-import * as SQLTestData from '../cloudwatch-sql-test-data';
-import * as DynamicLabelTestData from '../dynamic-label-test-data';
-import * as MetricMathTestData from '../metric-math-test-data';
+import { sqlTestDataMultiLineFullQuery } from '../cloudwatch-sql-test-data/multiLineFullQuery';
+import { sqlTestDataMultiLineIncompleteQueryWithoutNamespace } from '../cloudwatch-sql-test-data/multiLineIncompleteQueryWithoutNamespace';
+import { sqlTestDataSingleLineEmptyQuery } from '../cloudwatch-sql-test-data/singleLineEmptyQuery';
+import { sqlTestDataSingleLineFullQuery } from '../cloudwatch-sql-test-data/singleLineFullQuery';
+import { sqlTestDataSingleLineTwoQueries } from '../cloudwatch-sql-test-data/singleLineTwoQueries';
+import { dynamicLabelTestDataAfterLabelValue } from '../dynamic-label-test-data/afterLabelValue';
+import { dynamicLabelTestDataInsideLabelValue } from '../dynamic-label-test-data/insideLabelValue';
+import { afterFunctionQuery } from '../metric-math-test-data/afterFunctionQuery';
+import { secondArgAfterSearchQuery } from '../metric-math-test-data/secondArgAfterSearchQuery';
+import { secondArgQuery } from '../metric-math-test-data/secondArgQuery';
+import { singleLineEmptyQuery } from '../metric-math-test-data/singleLineEmptyQuery';
+import { thirdArgAfterSearchQuery } from '../metric-math-test-data/thirdArgAfterSearchQuery';
+import { withinStringQuery } from '../metric-math-test-data/withinStringQuery';
 
 // Stub for the Monaco instance.
 const MonacoMock: Monaco = {
@@ -25,44 +42,44 @@ const MonacoMock: Monaco = {
     tokenize: (value: string, languageId: string) => {
       if (languageId === 'cloudwatch-sql') {
         const TestData = {
-          [SQLTestData.multiLineFullQuery.query]: SQLTestData.multiLineFullQuery.tokens,
-          [SQLTestData.singleLineFullQuery.query]: SQLTestData.singleLineFullQuery.tokens,
-          [SQLTestData.singleLineEmptyQuery.query]: SQLTestData.singleLineEmptyQuery.tokens,
-          [SQLTestData.singleLineTwoQueries.query]: SQLTestData.singleLineTwoQueries.tokens,
-          [SQLTestData.multiLineIncompleteQueryWithoutNamespace.query]:
-            SQLTestData.multiLineIncompleteQueryWithoutNamespace.tokens,
+          [sqlTestDataMultiLineFullQuery.query]: sqlTestDataMultiLineFullQuery.tokens,
+          [sqlTestDataSingleLineFullQuery.query]: sqlTestDataSingleLineFullQuery.tokens,
+          [sqlTestDataSingleLineEmptyQuery.query]: sqlTestDataSingleLineEmptyQuery.tokens,
+          [sqlTestDataSingleLineTwoQueries.query]: sqlTestDataSingleLineTwoQueries.tokens,
+          [sqlTestDataMultiLineIncompleteQueryWithoutNamespace.query]:
+            sqlTestDataMultiLineIncompleteQueryWithoutNamespace.tokens,
         };
         return TestData[value];
       }
       if (languageId === 'cloudwatch-MetricMath') {
         const TestData = {
-          [MetricMathTestData.singleLineEmptyQuery.query]: MetricMathTestData.singleLineEmptyQuery.tokens,
-          [MetricMathTestData.afterFunctionQuery.query]: MetricMathTestData.afterFunctionQuery.tokens,
-          [MetricMathTestData.secondArgQuery.query]: MetricMathTestData.secondArgQuery.tokens,
-          [MetricMathTestData.secondArgAfterSearchQuery.query]: MetricMathTestData.secondArgAfterSearchQuery.tokens,
-          [MetricMathTestData.withinStringQuery.query]: MetricMathTestData.withinStringQuery.tokens,
-          [MetricMathTestData.thirdArgAfterSearchQuery.query]: MetricMathTestData.thirdArgAfterSearchQuery.tokens,
+          [singleLineEmptyQuery.query]: singleLineEmptyQuery.tokens,
+          [afterFunctionQuery.query]: afterFunctionQuery.tokens,
+          [secondArgQuery.query]: secondArgQuery.tokens,
+          [secondArgAfterSearchQuery.query]: secondArgAfterSearchQuery.tokens,
+          [withinStringQuery.query]: withinStringQuery.tokens,
+          [thirdArgAfterSearchQuery.query]: thirdArgAfterSearchQuery.tokens,
         };
         return TestData[value];
       }
 
       if (languageId === 'cloudwatch-dynamicLabels') {
         const TestData = {
-          [DynamicLabelTestData.afterLabelValue.query]: DynamicLabelTestData.afterLabelValue.tokens,
-          [DynamicLabelTestData.insideLabelValue.query]: DynamicLabelTestData.insideLabelValue.tokens,
+          [dynamicLabelTestDataAfterLabelValue.query]: dynamicLabelTestDataAfterLabelValue.tokens,
+          [dynamicLabelTestDataInsideLabelValue.query]: dynamicLabelTestDataInsideLabelValue.tokens,
         };
         return TestData[value];
       }
       if (languageId === CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID) {
         const TestData = {
-          [CloudwatchLogsTestData.emptyQuery.query]: CloudwatchLogsTestData.emptyQuery.tokens,
-          [CloudwatchLogsTestData.whitespaceOnlyQuery.query]: CloudwatchLogsTestData.whitespaceOnlyQuery.tokens,
-          [CloudwatchLogsTestData.commentOnlyQuery.query]: CloudwatchLogsTestData.commentOnlyQuery.tokens,
-          [CloudwatchLogsTestData.singleLineFullQuery.query]: CloudwatchLogsTestData.singleLineFullQuery.tokens,
-          [CloudwatchLogsTestData.multiLineFullQuery.query]: CloudwatchLogsTestData.multiLineFullQuery.tokens,
-          [CloudwatchLogsTestData.filterQuery.query]: CloudwatchLogsTestData.filterQuery.tokens,
-          [CloudwatchLogsTestData.newCommandQuery.query]: CloudwatchLogsTestData.newCommandQuery.tokens,
-          [CloudwatchLogsTestData.sortQuery.query]: CloudwatchLogsTestData.sortQuery.tokens,
+          [logsTestDataEmptyQuery.query]: logsTestDataEmptyQuery.tokens,
+          [logsTestDataWhitespaceOnlyQuery.query]: logsTestDataWhitespaceOnlyQuery.tokens,
+          [logsTestDataCommentOnlyQuery.query]: logsTestDataCommentOnlyQuery.tokens,
+          [logsTestDataSingleLineFullQuery.query]: logsTestDataSingleLineFullQuery.tokens,
+          [logsTestDataMultiLineFullQuery.query]: logsTestDataMultiLineFullQuery.tokens,
+          [logsTestDataFilterQuery.query]: logsTestDataFilterQuery.tokens,
+          [logsTestDataNewCommandQuery.query]: logsTestDataNewCommandQuery.tokens,
+          [logsTestDataSortQuery.query]: logsTestDataSortQuery.tokens,
         };
         return TestData[value];
       }
