@@ -8,7 +8,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
-	"github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -23,7 +22,7 @@ type configStore interface {
 type remoteAlertmanager interface {
 	notifier.Alertmanager
 	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
-	FetchRemoteState(context.Context) (*clusterpb.FullState, error)
+	FetchRemoteState(context.Context) (RemoteState, error)
 	SendState(context.Context) error
 }
 

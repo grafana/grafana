@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -276,33 +275,16 @@ func (ng *AlertNG) init() error {
 					}
 
 					if remoteSecondaryWithRemoteState {
-						// Pull remote state from the remote Alertmanager.
-						s, err := remoteAM.FetchRemoteState(ctx)
+						// Pull and merge the remote Alertmanager state.
+						rs, err := remoteAM.FetchRemoteState(ctx)
 						if err != nil {
 							return nil, fmt.Errorf("failed to fetch remote state: %w", err)
 						}
-
-						// Mimir state has two parts:
-						// - "sil:<tenantID>": Silences
-						// - "nfl:<tenantID>": Notification log entries
-						var silencesPart, nflogPart clusterpb.Part
-						for _, p := range s.Parts {
-							switch p.Key {
-							case "sil:" + cfg.TenantID:
-								silencesPart = p
-							case "nfl:" + cfg.TenantID:
-								nflogPart = p
-							default:
-								return nil, fmt.Errorf("unknown part key %q", p.Key)
-							}
+						if err := internalAM.GetBase().MergeNflog(rs.Nflog); err != nil {
+							return nil, fmt.Errorf("failed to merge remote nflog entries: %w", err)
 						}
-
-						// Merge remote and internal silences / nflog.
-						if err := internalAM.GetBase().MergeNflog(nflogPart.Data); err != nil {
-							return nil, err
-						}
-						if err := internalAM.GetBase().MergeSilences(silencesPart.Data); err != nil {
-							return nil, err
+						if err := internalAM.GetBase().MergeSilences(rs.Silences); err != nil {
+							return nil, fmt.Errorf("failed to merge remote silences: %w", err)
 						}
 					}
 

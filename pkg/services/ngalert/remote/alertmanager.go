@@ -388,23 +388,46 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 	return nil
 }
 
+// RemoteState represents the state (silences, nflog) in use by a remote Alertmanager.
+type RemoteState struct {
+	Silences []byte
+	Nflog    []byte
+}
+
 // FetchRemoteState gets the remote Alertmanager's internal state.
-func (am *Alertmanager) FetchRemoteState(ctx context.Context) (*clusterpb.FullState, error) {
+func (am *Alertmanager) FetchRemoteState(ctx context.Context) (RemoteState, error) {
+	var rs RemoteState
+
 	s, err := am.mimirClient.GetFullState(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to pull remote state: %w", err)
+		return rs, fmt.Errorf("failed to pull remote state: %w", err)
 	}
 
+	// Decode and unmarshal the base64-encoded state we got from Mimir.
 	decoded, err := base64.StdEncoding.DecodeString(s.State)
 	if err != nil {
-		return nil, fmt.Errorf("failed to base64-decode remote state: %w", err)
+		return rs, fmt.Errorf("failed to base64-decode remote state: %w", err)
 	}
 	protoState := &clusterpb.FullState{}
 	if err := protoState.Unmarshal(decoded); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal remote state: %w", err)
+		return rs, fmt.Errorf("failed to unmarshal remote state: %w", err)
 	}
 
-	return protoState, nil
+	// Mimir state has two parts:
+	// - "sil:<tenantID>": silences
+	// - "nfl:<tenantID>": notification log entries
+	for _, p := range protoState.Parts {
+		switch p.Key {
+		case "sil:" + am.tenantID:
+			rs.Silences = p.Data
+		case "nfl:" + am.tenantID:
+			rs.Nflog = p.Data
+		default:
+			return rs, fmt.Errorf("unknown part key %q", p.Key)
+		}
+	}
+
+	return rs, nil
 }
 
 // SendState gets the Alertmanager's internal state and sends it to the remote Alertmanager.
