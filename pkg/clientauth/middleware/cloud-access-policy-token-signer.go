@@ -13,12 +13,10 @@ import (
 )
 
 type CloudAccessPolicyTokenSignerMiddlewareProvider struct {
-	isCloud             bool
 	tokenExchangeClient authlib.TokenExchanger
 }
 
 type cloudAccessPolicyTokenSignerMiddleware struct {
-	isCloud             bool
 	tokenExchangeClient authlib.TokenExchanger
 	audiences           []string
 	next                http.RoundTripper
