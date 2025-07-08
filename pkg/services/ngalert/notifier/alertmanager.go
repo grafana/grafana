@@ -140,7 +140,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Metrics:       alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l),
 	}
 
-	fmt.Println("Initializing Alertmanager with silences", silencesOptions.initialState, "and nflog", nflogOptions.initialState)
 	gam, err := alertingNotify.NewGrafanaAlertmanager(opts)
 	if err != nil {
 		return nil, err
