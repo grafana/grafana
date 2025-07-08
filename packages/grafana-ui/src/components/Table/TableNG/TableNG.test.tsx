@@ -1726,11 +1726,6 @@ describe('TableNG', () => {
     });
 
     it('does not show tooltip for a single link', async () => {
-      expect(
-        document.querySelectorAll(`[data-testid="${selectors.components.DataLinksActionsTooltip.tooltipWrapper}"]`)
-          .length
-      ).toBe(0);
-
       const dataFrame = createBasicDataFrame();
 
       const links: DataLink[] = [{ url: 'http://asdasd.com', title: 'Test Title' }];
