@@ -18,11 +18,6 @@ type StaticFlagEvaluator interface {
 
 // CreateStaticEvaluator is a dependency for ofrep APIBuilder
 func CreateStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
-	noop := openfeature.NoopProvider{}
-	if openfeature.ProviderMetadata() == noop.Metadata() {
-		return nil, fmt.Errorf("no provider initialized, current provider is %s", openfeature.ProviderMetadata().Name)
-	}
-
 	if cfg.OpenFeature.ProviderType != setting.StaticProviderType {
 		return nil, fmt.Errorf("provider is not a static provider, type %s", setting.StaticProviderType)
 	}

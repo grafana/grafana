@@ -53,11 +53,6 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 		return nil, err
 	}
 
-	// Initialize the OpenFeature feature flag system
-	if err := featuremgmt.InitOpenFeatureWithCfg(cfg); err != nil {
-		return nil, err
-	}
-
 	return s, nil
 }
 
