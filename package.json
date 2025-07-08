@@ -130,7 +130,7 @@
     "@types/jquery": "3.5.32",
     "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
-    "@types/lodash": "4.17.15",
+    "@types/lodash": "4.17.20",
     "@types/logfmt": "^1.2.3",
     "@types/lucene": "^2",
     "@types/node": "22.15.0",
@@ -156,7 +156,7 @@
     "@types/slate-plain-serializer": "0.7.5",
     "@types/slate-react": "0.22.9",
     "@types/swagger-ui-react": "5.18.0",
-    "@types/systemjs": "6.15.1",
+    "@types/systemjs": "6.15.3",
     "@types/tinycolor2": "1.4.6",
     "@types/uuid": "10.0.0",
     "@types/webpack-assets-manifest": "^5",
@@ -424,7 +424,8 @@
     "type-fest": "^4.18.2",
     "uplot": "1.6.32",
     "uuid": "11.1.0",
-    "visjs-network": "4.25.0",
+    "vis-data": "^7.1.10",
+    "vis-network": "9.1.13",
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
