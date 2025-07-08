@@ -1019,10 +1019,6 @@ func testDescription(description string, expectedErr error) string {
 
 // There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
 func TestFoldersGetAPIEndpointK8S(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	type testCase struct {
 		description         string
 		expectedCode        int
@@ -1058,6 +1054,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 			expectedOutput: []dtos.FolderSearchHit{
 				{UID: "foo", Title: "Folder 1"},
 				{UID: "qux", Title: "Folder 3"},
+				{UID: folder.SharedWithMeFolder.UID, Title: folder.SharedWithMeFolder.Title},
 			},
 			permissions: folderReadAndCreatePermission,
 		},
@@ -1103,7 +1100,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 	}
 
 	// test on all dualwriter modes
-	for mode := 1; mode <= 4; mode++ {
+	for mode := 0; mode <= 4; mode++ {
 		for _, tc := range tcs {
 			t.Run(fmt.Sprintf("Mode: %d, %s", mode, tc.description), func(t *testing.T) {
 				modeDw := grafanarest.DualWriterMode(mode)
@@ -1119,6 +1116,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 					},
 					EnableFeatureToggles: []string{
 						featuremgmt.FlagNestedFolders,
+						featuremgmt.FlagUnifiedStorageSearch,
 						featuremgmt.FlagKubernetesClientDashboardsFolders,
 					},
 				})
