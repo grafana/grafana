@@ -245,78 +245,136 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	defer s.reloadMutex.RUnlock()
 
 	s.log.Debug("Getting user info")
-	toCheck := make([]*UserInfoJson, 0, 2)
 
-	if tokenData := s.extractFromToken(token); tokenData != nil {
-		toCheck = append(toCheck, tokenData)
+	// 1. Collect user info data from various sources
+	dataSources := s.collectUserInfoData(ctx, client, token)
+
+	// 2. Build user info from collected data
+	userInfo, externalOrgs, err := s.buildUserInfo(dataSources)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Post-process user info
+	err = s.postProcessUserInfo(ctx, client, userInfo, externalOrgs)
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Validate user access
+	err = s.validateUserAccess(ctx, client, userInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Debug("User info result", "result", userInfo)
+	return userInfo, nil
+}
+
+// collectUserInfoData gathers user information from ID token, API, and access token
+func (s *SocialGenericOAuth) collectUserInfoData(ctx context.Context, client *http.Client, token *oauth2.Token) []*UserInfoJson {
+	dataSources := make([]*UserInfoJson, 0, 3)
+
+	if idTokenData := s.extractFromIDToken(token); idTokenData != nil {
+		dataSources = append(dataSources, idTokenData)
 	}
 	if apiData := s.extractFromAPI(ctx, client); apiData != nil {
-		toCheck = append(toCheck, apiData)
+		dataSources = append(dataSources, apiData)
+	}
+	if accessTokenData := s.extractFromAccessToken(token); accessTokenData != nil {
+		dataSources = append(dataSources, accessTokenData)
 	}
 
+	return dataSources
+}
+
+// buildUserInfo constructs BasicUserInfo from collected data sources
+func (s *SocialGenericOAuth) buildUserInfo(dataSources []*UserInfoJson) (*social.BasicUserInfo, []string, error) {
 	userInfo := &social.BasicUserInfo{}
 	var externalOrgs []string
-	for _, data := range toCheck {
+
+	for _, data := range dataSources {
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
-		if userInfo.Id == "" {
-			userInfo.Id = data.Sub
+		s.extractBasicUserFields(userInfo, data)
+
+		if err := s.extractRoleAndOrgs(userInfo, &externalOrgs, data); err != nil {
+			return nil, nil, err
 		}
 
-		if userInfo.Name == "" {
-			userInfo.Name = s.extractUserName(data)
-		}
+		s.extractUserGroups(userInfo, data)
+	}
 
-		if userInfo.Login == "" {
-			userInfo.Login = s.extractLogin(data)
-		}
+	return userInfo, externalOrgs, nil
+}
 
-		if userInfo.Email == "" {
-			userInfo.Email = s.extractEmail(data)
-			if userInfo.Email != "" {
-				s.log.Debug("Set user info email from extracted email", "email", userInfo.Email)
-			}
-		}
+// extractBasicUserFields extracts basic user fields (ID, Name, Login, Email) from data
+func (s *SocialGenericOAuth) extractBasicUserFields(userInfo *social.BasicUserInfo, data *UserInfoJson) {
+	if userInfo.Id == "" {
+		userInfo.Id = data.Sub
+	}
 
-		if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
-			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
-			if err != nil {
-				s.log.Warn("Failed to extract role", "err", err)
-			} else {
-				userInfo.Role = role
-				if s.info.AllowAssignGrafanaAdmin {
-					userInfo.IsGrafanaAdmin = &grafanaAdmin
-				}
-			}
-		}
+	if userInfo.Name == "" {
+		userInfo.Name = s.extractUserName(data)
+	}
 
-		if len(externalOrgs) == 0 && !s.info.SkipOrgRoleSync {
-			var err error
-			externalOrgs, err = s.extractOrgs(data.rawJSON)
-			if err != nil {
-				s.log.Warn("Failed to extract orgs", "err", err)
-				return nil, err
-			}
-		}
+	if userInfo.Login == "" {
+		userInfo.Login = s.extractLogin(data)
+	}
 
-		if len(userInfo.Groups) == 0 {
-			groups, err := s.extractGroups(data)
-			if err != nil {
-				s.log.Warn("Failed to extract groups", "err", err)
-			} else if len(groups) > 0 {
-				s.log.Debug("Setting user info groups from extracted groups")
-				userInfo.Groups = groups
+	if userInfo.Email == "" {
+		userInfo.Email = s.extractEmail(data)
+		if userInfo.Email != "" {
+			s.log.Debug("Set user info email from extracted email", "email", userInfo.Email)
+		}
+	}
+}
+
+// extractRoleAndOrgs extracts role and organization information from data
+func (s *SocialGenericOAuth) extractRoleAndOrgs(userInfo *social.BasicUserInfo, externalOrgs *[]string, data *UserInfoJson) error {
+	if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
+		role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
+		if err != nil {
+			s.log.Warn("Failed to extract role", "err", err)
+		} else {
+			userInfo.Role = role
+			if s.info.AllowAssignGrafanaAdmin {
+				userInfo.IsGrafanaAdmin = &grafanaAdmin
 			}
 		}
 	}
 
+	if len(*externalOrgs) == 0 && !s.info.SkipOrgRoleSync {
+		orgs, err := s.extractOrgs(data.rawJSON)
+		if err != nil {
+			s.log.Warn("Failed to extract orgs", "err", err)
+			return err
+		}
+		*externalOrgs = orgs
+	}
+
+	return nil
+}
+
+// extractUserGroups extracts group information from data
+func (s *SocialGenericOAuth) extractUserGroups(userInfo *social.BasicUserInfo, data *UserInfoJson) {
+	if len(userInfo.Groups) == 0 {
+		groups, err := s.extractGroups(data)
+		if err != nil {
+			s.log.Warn("Failed to extract groups", "err", err)
+		} else if len(groups) > 0 {
+			s.log.Debug("Setting user info groups from extracted groups")
+			userInfo.Groups = groups
+		}
+	}
+}
+
+// postProcessUserInfo handles post-processing of user info (org roles, private email, etc.)
+func (s *SocialGenericOAuth) postProcessUserInfo(ctx context.Context, client *http.Client, userInfo *social.BasicUserInfo, externalOrgs []string) error {
 	if !s.info.SkipOrgRoleSync {
 		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, userInfo.Role)
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
-			// If no roles are found and role_attribute_strict is set, return an error.
-			// The s.info.RoleAttributeStrict is necessary, because there is a case when len(userInfo.OrgRoles) == 0,
-			// but strict role mapping is not enabled (when getAllOrgs fails).
-			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
+			return errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
 	}
 
@@ -325,11 +383,11 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	if s.canFetchPrivateEmail(userInfo) {
-		var err error
-		userInfo.Email, err = s.fetchPrivateEmail(ctx, client)
+		email, err := s.fetchPrivateEmail(ctx, client)
 		if err != nil {
-			return nil, err
+			return err
 		}
+		userInfo.Email = email
 		s.log.Debug("Setting email from fetched private email", "email", userInfo.Email)
 	}
 
@@ -338,28 +396,32 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		userInfo.Login = userInfo.Email
 	}
 
+	return nil
+}
+
+// validateUserAccess validates user access based on team, organization, and group membership
+func (s *SocialGenericOAuth) validateUserAccess(ctx context.Context, client *http.Client, userInfo *social.BasicUserInfo) error {
 	if !s.isTeamMember(ctx, client) {
-		return nil, &SocialError{"User not a member of one of the required teams"}
+		return &SocialError{"User not a member of one of the required teams"}
 	}
 
 	if !s.isOrganizationMember(ctx, client) {
-		return nil, &SocialError{"User not a member of one of the required organizations"}
+		return &SocialError{"User not a member of one of the required organizations"}
 	}
 
 	if !s.isGroupMember(userInfo.Groups) {
-		return nil, errMissingGroupMembership
+		return errMissingGroupMembership
 	}
 
-	s.log.Debug("User info result", "result", userInfo)
-	return userInfo, nil
+	return nil
 }
 
 func (s *SocialGenericOAuth) canFetchPrivateEmail(userinfo *social.BasicUserInfo) bool {
 	return s.info.ApiUrl != "" && userinfo.Email == ""
 }
 
-func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
-	s.log.Debug("Extracting user info from OAuth token")
+func (s *SocialGenericOAuth) extractFromIDToken(token *oauth2.Token) *UserInfoJson {
+	s.log.Debug("Extracting user info from OAuth ID token")
 
 	idTokenAttribute := "id_token"
 	if s.idTokenAttributeName != "" {
@@ -373,21 +435,44 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 		return nil
 	}
 
-	rawJSON, err := s.retrieveRawIDToken(idToken)
+	rawJSON, err := s.retrieveRawJWTPayload(idToken)
 	if err != nil {
-		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", token))
+		s.log.Warn("Error retrieving id_token payload", "error", err, "token", fmt.Sprintf("%+v", token))
 		return nil
 	}
 
+	return s.parseUserInfoFromJSON(rawJSON, "id_token")
+}
+
+func (s *SocialGenericOAuth) extractFromAccessToken(token *oauth2.Token) *UserInfoJson {
+	s.log.Debug("Extracting user info from OAuth access token")
+
+	accessToken := token.AccessToken
+	if accessToken == "" {
+		s.log.Debug("No access token found")
+		return nil
+	}
+
+	rawJSON, err := s.retrieveRawJWTPayload(accessToken)
+	if err != nil {
+		s.log.Warn("Error retrieving access token payload", "error", err)
+		return nil
+	}
+
+	return s.parseUserInfoFromJSON(rawJSON, "access_token")
+}
+
+// parseUserInfoFromJSON is a helper method to parse UserInfoJson from raw JSON and source
+func (s *SocialGenericOAuth) parseUserInfoFromJSON(rawJSON []byte, source string) *UserInfoJson {
 	var data UserInfoJson
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding id_token JSON", "raw_json", string(rawJSON), "error", err)
+		s.log.Error("Error decoding user info JSON", "raw_json", string(rawJSON), "error", err, "source", source)
 		return nil
 	}
 
 	data.rawJSON = rawJSON
-	data.source = "token"
-	s.log.Debug("Received id_token", "raw_json", string(data.rawJSON), "data", data.String())
+	data.source = source
+	s.log.Debug("Parsed user info from JSON", "raw_json", string(rawJSON), "data", data.String(), "source", source)
 	return &data
 }
 
@@ -404,18 +489,7 @@ func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Cl
 		return nil
 	}
 
-	rawJSON := rawUserInfoResponse.Body
-
-	var data UserInfoJson
-	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding user info response", "raw_json", rawJSON, "error", err)
-		return nil
-	}
-
-	data.rawJSON = rawJSON
-	data.source = "API"
-	s.log.Debug("Received user info response from API", "raw_json", string(rawJSON), "data", data.String())
-	return &data
+	return s.parseUserInfoFromJSON(rawUserInfoResponse.Body, "API")
 }
 
 func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
