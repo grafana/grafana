@@ -36,7 +36,9 @@ func TestEncryptExtraConfigs(t *testing.T) {
 			m := fakes.NewFakeSecretsService()
 
 			c := &alertmanagerCrypto{
-				ExtraConfigsCrypto: &ExtraConfigsCrypto{secrets: m},
+				ExtraConfigsCrypto: &ExtraConfigsCrypto{
+					secrets: m,
+				},
 			}
 
 			cfg := &definitions.PostableUserConfig{
@@ -83,7 +85,9 @@ func TestDecryptExtraConfigs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			m := fakes.NewFakeSecretsService()
 			c := &alertmanagerCrypto{
-				ExtraConfigsCrypto: &ExtraConfigsCrypto{secrets: m},
+				ExtraConfigsCrypto: &ExtraConfigsCrypto{
+					secrets: m,
+				},
 			}
 
 			cfg := &definitions.PostableUserConfig{
