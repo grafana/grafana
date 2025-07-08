@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -18,10 +18,10 @@ import (
 func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts.KeeperMetadataStorage, name, namespace string) string {
 	t.Helper()
 
-	testKeeper := &secretv0alpha1.Keeper{
-		Spec: secretv0alpha1.KeeperSpec{
+	testKeeper := &secretv1beta1.Keeper{
+		Spec: secretv1beta1.KeeperSpec{
 			Description: "test keeper description",
-			AWS:         &secretv0alpha1.AWSKeeperConfig{},
+			AWS:         &secretv1beta1.AWSKeeperConfig{},
 		},
 	}
 	testKeeper.Name = name
@@ -55,8 +55,8 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		keeperName := createTestKeeper(t, ctx, keeperStorage, "test-keeper", "default")
 
 		// Create a test secure value
-		testSecureValue := &secretv0alpha1.SecureValue{
-			Spec: secretv0alpha1.SecureValueSpec{
+		testSecureValue := &secretv1beta1.SecureValue{
+			Spec: secretv1beta1.SecureValueSpec{
 				Description: "test description",
 				Value:       "test-value",
 				Keeper:      &keeperName,
@@ -73,7 +73,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "default", createdSecureValue.Namespace)
 		require.Equal(t, "test description", createdSecureValue.Spec.Description)
 		require.Equal(t, keeperName, *createdSecureValue.Spec.Keeper)
-		require.Equal(t, secretv0alpha1.SecureValuePhasePending, createdSecureValue.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhasePending, createdSecureValue.Status.Phase)
 
 		// Read the secure value back
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test", contracts.ReadOpts{})
@@ -83,7 +83,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "default", readSecureValue.Namespace)
 		require.Equal(t, "test description", readSecureValue.Spec.Description)
 		require.Equal(t, keeperName, *readSecureValue.Spec.Keeper)
-		require.Equal(t, secretv0alpha1.SecureValuePhasePending, readSecureValue.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhasePending, readSecureValue.Status.Phase)
 
 		// List secure values and verify our value is in the list
 		secureValues, err := secureValueStorage.List(ctx, xkube.Namespace("default"))
@@ -98,7 +98,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 				require.Equal(t, "default", sv.Namespace)
 				require.Equal(t, "test description", sv.Spec.Description)
 				require.Equal(t, keeperName, *sv.Spec.Keeper)
-				require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
+				require.Equal(t, secretv1beta1.SecureValuePhasePending, sv.Status.Phase)
 				break
 			}
 		}
@@ -110,8 +110,8 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		keeperName := createTestKeeper(t, ctx, keeperStorage, "test-keeper-2", "default")
 
 		// Create a test secure value
-		testSecureValue := &secretv0alpha1.SecureValue{
-			Spec: secretv0alpha1.SecureValueSpec{
+		testSecureValue := &secretv1beta1.SecureValue{
+			Spec: secretv1beta1.SecureValueSpec{
 				Description: "test description 2",
 				Value:       "test-value-2",
 				Keeper:      &keeperName,

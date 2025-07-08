@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
@@ -15,14 +15,14 @@ import (
 )
 
 type fakeKeeperService struct {
-	keeperForConfigFunc func(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error)
+	keeperForConfigFunc func(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error)
 }
 
-func newFakeKeeperService(keeperForConfigFunc func(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error)) *fakeKeeperService {
+func newFakeKeeperService(keeperForConfigFunc func(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error)) *fakeKeeperService {
 	return &fakeKeeperService{keeperForConfigFunc: keeperForConfigFunc}
 }
 
-func (s *fakeKeeperService) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+func (s *fakeKeeperService) KeeperForConfig(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
 	return s.keeperForConfigFunc(cfg)
 }
 
@@ -41,7 +41,7 @@ func TestProcessMessage(t *testing.T) {
 		}
 
 		// And an error that keeps happening
-		keeperService := newFakeKeeperService(func(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+		keeperService := newFakeKeeperService(func(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
 			return nil, fmt.Errorf("oops")
 		})
 
@@ -56,7 +56,7 @@ func TestProcessMessage(t *testing.T) {
 			// The secure value status should be Pending while the worker is trying to process the message
 			sv, err = sut.SecureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
 			require.NoError(t, err)
-			require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
+			require.Equal(t, secretv1beta1.SecureValuePhasePending, sv.Status.Phase)
 
 			// Worker tries to process messages
 			_ = sut.Worker.ReceiveAndProcessMessages(ctx)
@@ -66,7 +66,7 @@ func TestProcessMessage(t *testing.T) {
 		// the secure value status is changed to Failed
 		sv, err = sut.SecureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, secretv0alpha1.SecureValuePhaseFailed, sv.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhaseFailed, sv.Status.Phase)
 
 		messages, err := sut.OutboxQueue.ReceiveN(ctx, 100)
 		require.NoError(t, err)
@@ -89,7 +89,7 @@ func TestProcessMessage(t *testing.T) {
 		// and sets the secure value status to Succeeded
 		sv, err = sut.SecureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, sv.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhaseSucceeded, sv.Status.Phase)
 
 		messages, err := sut.OutboxQueue.ReceiveN(ctx, 100)
 		require.NoError(t, err)
@@ -112,21 +112,21 @@ func TestProcessMessage(t *testing.T) {
 		// and sets the secure value status to Succeeded
 		sv, err = sut.SecureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, sv.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhaseSucceeded, sv.Status.Phase)
 
 		sv.Spec.Description = "desc2"
-		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
+		sv.Spec.Value = secretv1beta1.NewExposedSecureValue("v2")
 
 		// Queue an update operation
 		sv, err = sut.UpdateSv(ctx, sv)
 		require.NoError(t, err)
-		require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhasePending, sv.Status.Phase)
 
 		// Worker receives and processes the message
 		require.NoError(t, sut.Worker.ReceiveAndProcessMessages(ctx))
 		updatedSv, err := sut.SecureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, updatedSv.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhaseSucceeded, updatedSv.Status.Phase)
 		require.Equal(t, sv.Spec.Description, updatedSv.Spec.Description)
 
 		messages, err := sut.OutboxQueue.ReceiveN(ctx, 100)
@@ -150,12 +150,12 @@ func TestProcessMessage(t *testing.T) {
 		// and sets the secure value status to Succeeded
 		sv, err = sut.SecureValueMetadataStorage.Read(ctx, xkube.Namespace(sv.Namespace), sv.Name, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.Equal(t, secretv0alpha1.SecureValuePhaseSucceeded, sv.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhaseSucceeded, sv.Status.Phase)
 
 		// Queue a delete operation
 		updatedSv, err := sut.DeleteSv(ctx, sv.Namespace, sv.Name)
 		require.NoError(t, err)
-		require.Equal(t, secretv0alpha1.SecureValuePhasePending, updatedSv.Status.Phase)
+		require.Equal(t, secretv1beta1.SecureValuePhasePending, updatedSv.Status.Phase)
 
 		// Worker receives and processes the message
 		require.NoError(t, sut.Worker.ReceiveAndProcessMessages(ctx))
@@ -201,12 +201,12 @@ func TestProcessMessage(t *testing.T) {
 		// Queue a create secure value operation
 		sv, err := sut.CreateSv(ctx)
 		require.NoError(t, err)
-		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
+		sv.Spec.Value = secretv1beta1.NewExposedSecureValue("v2")
 
 		require.NoError(t, sut.Worker.ReceiveAndProcessMessages(ctx))
 
 		newValue := "v2"
-		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue(newValue)
+		sv.Spec.Value = secretv1beta1.NewExposedSecureValue(newValue)
 
 		// Queue an update secure value operation
 		_, err = sut.UpdateSv(ctx, sv)
@@ -230,7 +230,7 @@ func TestProcessMessage(t *testing.T) {
 		// Queue a create secure value operation
 		sv, err := sut.CreateSv(ctx)
 		require.NoError(t, err)
-		sv.Spec.Value = secretv0alpha1.NewExposedSecureValue("v2")
+		sv.Spec.Value = secretv1beta1.NewExposedSecureValue("v2")
 
 		require.NoError(t, sut.Worker.ReceiveAndProcessMessages(ctx))
 

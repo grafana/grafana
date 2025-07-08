@@ -1,4 +1,4 @@
-package v0alpha1_test
+package v1beta1_test
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -15,7 +15,7 @@ func TestExposedSecureValue(t *testing.T) {
 	expected := "[REDACTED]"
 
 	rawValue := "a-password"
-	esv := v0alpha1.NewExposedSecureValue(rawValue)
+	esv := v1beta1.NewExposedSecureValue(rawValue)
 
 	// String must not return the exposed secure value.
 	require.Equal(t, expected, esv.String())

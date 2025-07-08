@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
@@ -88,8 +88,8 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 // Changes: 1) we don't support `*` for verbs; 2) we support specific names in the permission.
 func hasPermissionInToken(tokenPermissions []string, name string) bool {
 	var (
-		group    = secretv0alpha1.GROUP
-		resource = secretv0alpha1.SecureValuesResourceInfo.GetName()
+		group    = secretv1beta1.GROUP
+		resource = secretv1beta1.SecureValuesResourceInfo.GetName()
 		verb     = "decrypt"
 	)
 

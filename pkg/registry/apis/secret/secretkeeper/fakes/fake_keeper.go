@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
@@ -24,7 +24,7 @@ func NewFakeKeeper() *FakeKeeper {
 	}
 }
 
-func (s *FakeKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
+func (s *FakeKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
 	ns, ok := s.values[namespace]
 	if !ok {
 		ns = make(map[string]string)
@@ -36,7 +36,7 @@ func (s *FakeKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	return contracts.ExternalID(uid), nil
 }
 
-func (s *FakeKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
+func (s *FakeKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID) (secretv1beta1.ExposedSecureValue, error) {
 	ns, ok := s.values[namespace]
 	if !ok {
 		return "", ErrSecretNotFound
@@ -46,14 +46,14 @@ func (s *FakeKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig
 		return "", ErrSecretNotFound
 	}
 
-	return secretv0alpha1.NewExposedSecureValue(exposedVal), nil
+	return secretv1beta1.NewExposedSecureValue(exposedVal), nil
 }
 
-func (s *FakeKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) error {
+func (s *FakeKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID) error {
 	return nil
 }
 
-func (s *FakeKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID, exposedValueOrRef string) error {
+func (s *FakeKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID, exposedValueOrRef string) error {
 	ns, ok := s.values[namespace]
 	if !ok {
 		return ErrSecretNotFound

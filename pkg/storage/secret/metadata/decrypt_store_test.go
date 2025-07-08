@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -81,12 +81,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, allowList)
 
 		// Create a secure value that is not in the allowlist
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       secretv1beta1.NewExposedSecureValue("value"),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -115,12 +115,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, allowList)
 
 		// Create a secure value that is in the allowlist
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       secretv1beta1.NewExposedSecureValue("value"),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -151,12 +151,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, allowList)
 
 		// Create a secure value that is in the allowlist
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       secretv1beta1.NewExposedSecureValue("value"),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -182,12 +182,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{svcIdentity: {}})
 
 		// Create a secure value
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       secretv1beta1.NewExposedSecureValue("value"),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -214,12 +214,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{svcIdentity: {}})
 
 		// Create a secure value
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       secretv1beta1.NewExposedSecureValue("value"),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -245,12 +245,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{svcIdentity: {}})
 
 		// Create a secure value
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       secretv1beta1.NewExposedSecureValue("value"),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -277,12 +277,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{svcIdentity: {}})
 
 		// Create a secure value
-		spec := secretv0alpha1.SecureValueSpec{
+		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       secretv1beta1.NewExposedSecureValue("value"),
 		}
-		sv := &secretv0alpha1.SecureValue{Spec: spec}
+		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -373,7 +373,7 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 }
 
 // This helper will also delete the secureValue from the db when the test is done.
-func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureValueMetadataStorage, keeperService *secretkeeper.OSSKeeperService, keeperMetadataStorage contracts.KeeperMetadataStorage, sv *secretv0alpha1.SecureValue, actorUID string) {
+func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureValueMetadataStorage, keeperService *secretkeeper.OSSKeeperService, keeperMetadataStorage contracts.KeeperMetadataStorage, sv *secretv1beta1.SecureValue, actorUID string) {
 	t.Helper()
 
 	_, err := db.Create(ctx, sv, actorUID)

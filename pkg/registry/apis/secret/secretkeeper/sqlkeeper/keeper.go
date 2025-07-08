@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/metrics"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,7 +36,7 @@ func NewSQLKeeper(
 	}
 }
 
-func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
+func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store", trace.WithAttributes(attribute.String("namespace", namespace)))
 	defer span.End()
 
@@ -58,7 +58,7 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, 
 	return externalID, nil
 }
 
-func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
+func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID) (secretv1beta1.ExposedSecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Expose", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("externalID", externalID.String()),
@@ -76,13 +76,13 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 		return "", fmt.Errorf("unable to decrypt value: %w", err)
 	}
 
-	exposedValue := secretv0alpha1.NewExposedSecureValue(string(exposedBytes))
+	exposedValue := secretv1beta1.NewExposedSecureValue(string(exposedBytes))
 	s.metrics.ExposeDuration.WithLabelValues(string(cfg.Type())).Observe(time.Since(start).Seconds())
 
 	return exposedValue, nil
 }
 
-func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) error {
+func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Delete", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("externalID", externalID.String()),
@@ -100,7 +100,7 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	return nil
 }
 
-func (s *SQLKeeper) Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID, exposedValueOrRef string) error {
+func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID, exposedValueOrRef string) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Update", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("externalID", externalID.String()),
