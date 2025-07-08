@@ -251,6 +251,11 @@ export interface AutoCellProps {
   cellOptions: TableCellOptions;
 }
 
+export interface MarkdownCellProps {
+  field: Field;
+  rowIdx: number;
+}
+
 export interface ActionCellProps {
   field: Field;
   rowIdx: number;

@@ -7980,6 +7980,7 @@
         "image": "Image",
         "json": "JSON View",
         "markdown": "Markdown",
+        "pill": "Pill",
         "sparkline": "Sparkline"
       },
       "copy": "Copy to Clipboard",

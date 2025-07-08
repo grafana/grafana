@@ -36,7 +36,7 @@ export function getDefaultRowHeight(
   theme: GrafanaTheme2,
   cellHeight?: TableCellHeight,
   customCellHeight?: number
-): number {
+): number | string {
   const bodyFontSize = theme.typography.fontSize;
   const lineHeight = theme.typography.body.lineHeight;
 
@@ -47,8 +47,10 @@ export function getDefaultRowHeight(
       return 42;
     case TableCellHeight.Lg:
       return TABLE.MAX_CELL_HEIGHT;
+    case TableCellHeight.Auto:
+      return 'auto';
     case TableCellHeight.Custom:
-      return customCellHeight ?? 36;
+      return customCellHeight ?? TABLE.MAX_CELL_HEIGHT;
   }
 
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;

@@ -66,6 +66,10 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
         value: { type: TableCellDisplayMode.Actions },
         label: t('grafana-ui.table.cell-type.actions', 'Actions'),
       },
+      [TableCellDisplayMode.Pill]: {
+        value: { type: TableCellDisplayMode.Pill },
+        label: t('grafana-ui.table.cell-type.pill', 'Pill'),
+      },
       [TableCellDisplayMode.Markdown]: {
         value: { type: TableCellDisplayMode.Markdown },
         label: t('grafana-ui.table.cell-type.markdown', 'Markdown'),

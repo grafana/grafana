@@ -9,11 +9,8 @@ import { TableCellDisplayMode } from '../../types';
 import { useSingleLink } from '../hooks';
 import { ImageCellProps } from '../types';
 
-const DATALINKS_HEIGHT_OFFSET = 10;
-
-export const ImageCell = ({ cellOptions, field, height, justifyContent, value, rowIdx }: ImageCellProps) => {
-  const calculatedHeight = height - DATALINKS_HEIGHT_OFFSET;
-  const styles = useStyles2(getStyles, calculatedHeight, justifyContent);
+export const ImageCell = ({ cellOptions, field, justifyContent, value, rowIdx }: ImageCellProps) => {
+  const styles = useStyles2(getStyles, justifyContent);
 
   const { text } = field.display!(value);
   const { alt, title } =
@@ -25,9 +22,9 @@ export const ImageCell = ({ cellOptions, field, height, justifyContent, value, r
   return <div className={styles.imageContainer}>{link == null ? img : renderSingleLink(link, img)}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme2, height: number, justifyContent: Property.JustifyContent) => ({
+const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
   image: css({
-    height,
+    height: '100%',
     width: 'auto',
   }),
   imageContainer: css({

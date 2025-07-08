@@ -138,6 +138,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             { value: TableCellHeight.Sm, label: t('table-new.cell-height-options.label-small', 'Small') },
             { value: TableCellHeight.Md, label: t('table-new.cell-height-options.label-medium', 'Medium') },
             { value: TableCellHeight.Lg, label: t('table-new.cell-height-options.label-large', 'Large') },
+            { value: TableCellHeight.Auto, label: t('table.cell-height-options.label-auto', 'Auto') },
             { value: TableCellHeight.Custom, label: t('table.cell-height-options.label-custom', 'Custom') },
           ],
         },
@@ -147,7 +148,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         name: t('table-new.name-cell-height-custom', 'Custom cell height'),
         category,
         settings: {
-          placeholder: t('table-new.placeholder-cell-height', 'auto'),
+          placeholder: t('table-new.placeholder-cell-height', 'none'),
+          defaultValue: 40,
           min: 20,
         },
         showIf: (cfg) => cfg.cellHeight === TableCellHeight.Custom,
