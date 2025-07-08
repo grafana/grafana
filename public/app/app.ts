@@ -42,7 +42,6 @@ import {
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
-  getObservablePluginFunctions,
 } from '@grafana/runtime';
 import {
   setGetObservablePluginComponents,
@@ -91,6 +90,7 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import {
   getObservablePluginComponents,
   getObservablePluginLinks,
+  getObservablePluginFunctions,
 } from './features/plugins/extensions/getPluginExtensions';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
