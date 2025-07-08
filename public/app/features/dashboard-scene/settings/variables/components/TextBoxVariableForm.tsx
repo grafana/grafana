@@ -25,7 +25,7 @@ export function TextBoxVariableForm({ defaultValue, value, onChange, onBlur, inl
       <VariableTextField
         value={value}
         defaultValue={defaultValue}
-        name={inline ? undefined : 'Default value'}
+        name={inline ? undefined : t('dashboard-scene.text-box-variable.name-default-value', 'Default value')}
         placeholder={t('dashboard-scene.text-box-variable-form.placeholder-default-value-if-any', '(optional)')}
         onChange={onChange}
         onBlur={onBlur}

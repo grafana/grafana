@@ -196,21 +196,21 @@ func (s *SocialBase) isGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialBase) retrieveRawIDToken(idToken any) ([]byte, error) {
-	tokenString, ok := idToken.(string)
+func (s *SocialBase) retrieveRawJWTPayload(token any) ([]byte, error) {
+	tokenString, ok := token.(string)
 	if !ok {
-		return nil, fmt.Errorf("id_token is not a string: %v", idToken)
+		return nil, fmt.Errorf("token is not a string: %v", token)
 	}
 
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(tokenString)
 	if matched == nil {
-		return nil, fmt.Errorf("id_token is not in JWT format: %s", tokenString)
+		return nil, fmt.Errorf("token is not in JWT format: %s", tokenString)
 	}
 
 	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding id_token: %w", err)
+		return nil, fmt.Errorf("error base64 decoding token payload: %w", err)
 	}
 
 	headerBytes, err := base64.RawURLEncoding.DecodeString(matched[1])

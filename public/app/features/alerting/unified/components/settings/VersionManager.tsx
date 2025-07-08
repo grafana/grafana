@@ -242,8 +242,14 @@ const AlertmanagerConfigurationVersionManager = ({
       <ConfirmModal
         isOpen={confirmRestore}
         title={t('alerting.alertmanager-configuration-version-manager.title-restore-version', 'Restore version')}
-        body={'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'}
-        confirmText={'Yes, restore configuration'}
+        body={t(
+          'alerting.alertmanager-configuration-version-manager.body-restore-configuration-version-unsaved-changes',
+          'Are you sure you want to restore the configuration to this version? All unsaved changes will be lost.'
+        )}
+        confirmText={t(
+          'alerting.alertmanager-configuration-version-manager.confirmText-yes-restore-configuration',
+          'Yes, restore configuration'
+        )}
         onConfirm={() => {
           if (activeRestoreVersion) {
             restoreVersion(activeRestoreVersion);
