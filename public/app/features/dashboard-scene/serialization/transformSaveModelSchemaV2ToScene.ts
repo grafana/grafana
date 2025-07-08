@@ -15,6 +15,7 @@ import {
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
+  ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 import {
@@ -27,6 +28,7 @@ import {
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
   defaultCustomVariableKind,
+  defaultDataQueryKind,
   defaultDatasourceVariableKind,
   defaultGroupByVariableKind,
   defaultIntervalVariableKind,
@@ -59,9 +61,9 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
+import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
@@ -87,35 +89,26 @@ export type TypedVariableModelV2 =
   | AdhocVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
-  const { spec: dashboard, metadata } = dto;
+  const { spec: dashboard, metadata, apiVersion } = dto;
 
   // annotations might not come with the builtIn Grafana annotation, we need to add it
-
   const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
   if (grafanaBuiltAnnotation) {
     dashboard.annotations.unshift(grafanaBuiltAnnotation);
   }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
-    let annoQuerySpec = annotation.spec;
-    // some annotations will contain in the options properties that need to be
-    // added to the root level annotation spec
-    if (annoQuerySpec?.options) {
-      annoQuerySpec = {
-        ...annoQuerySpec,
-        ...annoQuerySpec.options,
-      };
-    }
-    return new DashboardAnnotationsDataLayer({
+    const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
+
+    const layerState = {
       key: uniqueId('annotations-'),
-      query: {
-        ...annoQuerySpec,
-        builtIn: annotation.spec.builtIn ? 1 : 0,
-      },
+      query: annotationQuerySpec,
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
-    });
+    };
+
+    return new DashboardAnnotationsDataLayer(layerState);
   });
 
   const isDashboardEditable = Boolean(dashboard.editable);
@@ -195,12 +188,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         registerDashboardMacro,
         registerPanelInteractionsReporter,
         new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
-        preserveDashboardSceneStateInLocalStorage,
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
-          version: 1,
         }),
       ],
       $data: new DashboardDataLayerSet({
@@ -209,6 +200,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
       controls: new DashboardControls({
         timePicker: new SceneTimePicker({
           quickRanges: dashboard.timeSettings.quickRanges,
+          defaultQuickRanges: config.quickRanges,
         }),
         refreshPicker: new SceneRefreshPicker({
           refresh: dashboard.timeSettings.autoRefresh,
@@ -221,7 +213,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     'v2'
   );
 
-  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
+  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
 
   return dashboardScene;
 }
@@ -229,17 +221,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
-  if (dashboard.variables.length) {
-    if (isSnapshot) {
-      variables = createVariablesForSnapshot(dashboard);
-    } else {
-      variables = createVariablesForDashboard(dashboard);
-    }
+  if (isSnapshot) {
+    variables = createVariablesForSnapshot(dashboard);
   } else {
-    // Create empty variable set
-    variables = new SceneVariableSet({
-      variables: [],
-    });
+    variables = createVariablesForDashboard(dashboard);
   }
 
   return variables;
@@ -258,6 +243,10 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec) {
     // TODO: Remove filter
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
+
+  if (config.featureToggles.scopeFilters) {
+    variableObjects.push(new ScopesVariable({ enable: true }));
+  }
 
   return new SceneVariableSet({
     variables: variableObjects,
@@ -518,7 +507,15 @@ function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
   const grafanaBuiltAnnotation: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
-      datasource: { uid: '-- Grafana --', type: 'grafana' },
+      query: {
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: 'grafana',
+        datasource: {
+          name: '-- Grafana --',
+        },
+        spec: {},
+      },
       name: 'Annotations & Alerts',
       iconColor: DEFAULT_ANNOTATION_COLOR,
       enable: true,

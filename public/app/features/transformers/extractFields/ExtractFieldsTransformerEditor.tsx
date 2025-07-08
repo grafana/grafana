@@ -9,9 +9,9 @@ import {
   StandardEditorsRegistryItem,
   TransformerCategory,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -20,21 +20,24 @@ import { extractFieldsTransformer } from './extractFields';
 import { fieldExtractors } from './fieldExtractors';
 import { ExtractFieldsOptions, FieldExtractorID, JSONPath } from './types';
 
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: {
-    width: 30,
-    placeholderText: 'Select field',
-  },
-  name: '',
-  id: '',
-  editor: () => null,
-};
-
 export const extractFieldsTransformerEditor = ({
   input,
   options = { delimiter: ',' },
   onChange,
 }: TransformerUIProps<ExtractFieldsOptions>) => {
+  const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+    settings: {
+      width: 30,
+      placeholderText: t(
+        'transformers.extract-fields-transformer-editor.field-name-picker-settings.placeholderText.select-field',
+        'Select field'
+      ),
+    },
+    name: '',
+    id: '',
+    editor: () => null,
+  };
+
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,
@@ -116,7 +119,7 @@ export const extractFieldsTransformerEditor = ({
       {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
           <InlineField
-            // eslint-disable-next-line @grafana/no-untranslated-strings
+            // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             label="RegExp"
             labelWidth={16}
             interactive={true}
@@ -125,7 +128,7 @@ export const extractFieldsTransformerEditor = ({
             })}
           >
             <Input
-              // eslint-disable-next-line @grafana/no-untranslated-strings
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               placeholder="/(?<NewField>.*)/"
               value={options.regExp}
               onChange={onRegexpChange}

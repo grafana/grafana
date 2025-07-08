@@ -240,9 +240,9 @@ use_refresh_token = true
 
 ## Configure team synchronization
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
-{{% /admonition %}}
+{{< admonition type="note" >}}
+Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+{{< /admonition >}}
 
 By using Team Sync, you can map GitLab groups to teams within Grafana. This will automatically assign users to the appropriate teams.
 Teams for each user are synchronized when the user logs in.

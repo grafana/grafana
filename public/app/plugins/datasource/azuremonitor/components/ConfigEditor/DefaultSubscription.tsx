@@ -2,10 +2,11 @@ import { useEffect, useReducer } from 'react';
 
 import { AzureCredentials, isCredentialsComplete } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Select, Button, Field } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorDataSourceJsonData } from '../../types';
+import { AzureMonitorDataSourceJsonData } from '../../types/types';
 
 export interface Props {
   options: AzureMonitorDataSourceJsonData;
@@ -69,14 +70,14 @@ export const DefaultSubscription = (props: Props) => {
   return (
     <>
       <Field
-        label="Default Subscription"
+        label={t('components.default-subscription.label-default-subscription', 'Default Subscription')}
         data-testid={selectors.components.configEditor.defaultSubscription.input}
         htmlFor="default-subscription"
       >
         <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
           <Select
             inputId="default-subscription"
-            aria-label="Default Subscription"
+            aria-label={t('components.default-subscription.aria-label-default-subscription', 'Default Subscription')}
             value={
               options.subscriptionId ? subscriptions.find((opt) => opt.value === options.subscriptionId) : undefined
             }
@@ -91,7 +92,7 @@ export const DefaultSubscription = (props: Props) => {
             disabled={!hasRequiredFields || disabled}
             data-testid={selectors.components.configEditor.loadSubscriptions.button}
           >
-            Load Subscriptions
+            <Trans i18nKey="components.default-subscription.load-subscriptions">Load Subscriptions</Trans>
           </Button>
         </div>
       </Field>

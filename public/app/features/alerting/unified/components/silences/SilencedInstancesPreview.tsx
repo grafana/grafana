@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -152,7 +152,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
   return [
     {
       id: 'state',
-      label: 'State',
+      label: t('alerting.use-columns.label.state', 'State'),
       renderCell: function renderStateTag({ data }) {
         return <AmAlertStateTag state={data.status.state} />;
       },
@@ -161,7 +161,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
     },
     {
       id: 'labels',
-      label: 'Labels',
+      label: t('alerting.use-columns.label.labels', 'Labels'),
       renderCell: function renderName({ data }) {
         return <AlertLabels labels={data.labels} size="sm" />;
       },
@@ -169,7 +169,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
     },
     {
       id: 'created',
-      label: 'Created',
+      label: t('alerting.use-columns.label.created', 'Created'),
       renderCell: function renderSummary({ data }) {
         return <>{isNullDate(data.startsAt) ? '-' : dateTime(data.startsAt).format('YYYY-MM-DD HH:mm:ss')}</>;
       },

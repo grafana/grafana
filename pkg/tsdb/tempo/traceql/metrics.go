@@ -67,13 +67,6 @@ func TransformInstantMetricsResponse(query *dataquery.TempoQuery, resp tempopb.Q
 	for i, series := range resp.Series {
 		name, labels := transformLabelsAndGetName(series.Labels)
 
-		labelKeys := make([]string, 0, len(labels))
-		labelFields := make([]*data.Field, 0, len(labels))
-		for key := range labels {
-			labelKeys = append(labelKeys, key)
-			labelFields = append(labelFields, data.NewField(key, nil, []string{}))
-		}
-
 		timeField := data.NewField("time", nil, []time.Time{})
 		valueField := data.NewField("value", labels, []float64{})
 		valueField.Config = &data.FieldConfig{
@@ -83,17 +76,13 @@ func TransformInstantMetricsResponse(query *dataquery.TempoQuery, resp tempopb.Q
 		frame := &data.Frame{
 			RefID:  name,
 			Name:   name,
-			Fields: append([]*data.Field{timeField}, append(labelFields, valueField)...),
+			Fields: append([]*data.Field{timeField}, valueField),
 			Meta: &data.FrameMeta{
 				PreferredVisualization: data.VisTypeTable,
 			},
 		}
 
-		labelValues := make([]interface{}, len(labels))
-		for idx, key := range labelKeys {
-			labelValues[idx] = strings.Trim(labels[key], "\"")
-		}
-		row := append([]interface{}{time.Now()}, append(labelValues, series.GetValue())...)
+		row := append([]interface{}{time.Now()}, series.GetValue())
 		frame.AppendRow(row...)
 
 		frames[i] = frame

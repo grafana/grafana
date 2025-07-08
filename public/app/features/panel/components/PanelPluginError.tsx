@@ -3,10 +3,10 @@ import { PureComponent, ReactNode } from 'react';
 
 // Types
 import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types';
-
-import { t, Trans } from '../../../core/internationalization';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 interface Props {
   title: string;
@@ -85,7 +85,7 @@ export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugi
       links: [],
       logos: {
         large: '',
-        small: 'public/img/grafana_icon.svg',
+        small: grafanaIconSvg,
       },
       screenshots: [],
       updated: '',

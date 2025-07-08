@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 )
 
@@ -23,6 +24,7 @@ type AlertmanagerConfig struct {
 	Password string
 	URL      *url.URL
 	Logger   log.Logger
+	Timeout  time.Duration
 }
 
 type Alertmanager struct {
@@ -33,12 +35,15 @@ type Alertmanager struct {
 }
 
 func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
-	// First, add the authentication middleware.
-	c := &http.Client{Transport: &MimirAuthRoundTripper{
-		TenantID: cfg.TenantID,
-		Password: cfg.Password,
-		Next:     http.DefaultTransport,
-	}}
+	// First, set up the http client.
+	c := &http.Client{
+		Transport: &MimirAuthRoundTripper{
+			TenantID: cfg.TenantID,
+			Password: cfg.Password,
+			Next:     httpclient.NewHTTPTransport(),
+		},
+		Timeout: cfg.Timeout,
+	}
 
 	tc := client.NewTimedClient(c, metrics.RequestLatency)
 	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
@@ -55,7 +60,7 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 		logger:          cfg.Logger,
 		url:             cfg.URL,
 		AlertmanagerAPI: amclient.New(r, nil),
-		httpClient:      tc,
+		httpClient:      trc,
 	}, nil
 }
 

@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans } from 'app/core/internationalization';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';

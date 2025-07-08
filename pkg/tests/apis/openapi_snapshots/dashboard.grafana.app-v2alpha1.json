@@ -1141,9 +1141,14 @@
           "filters",
           "defaultKeys",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
+          },
           "baseFilters": {
             "type": "array",
             "items": {
@@ -1245,6 +1250,7 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardAnnotationQuerySpec": {
         "type": "object",
         "required": [
+          "query",
           "enable",
           "hide",
           "iconColor",
@@ -1253,9 +1259,6 @@
         "properties": {
           "builtIn": {
             "type": "boolean"
-          },
-          "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
           },
           "enable": {
             "type": "boolean",
@@ -1272,19 +1275,24 @@
             "type": "string",
             "default": ""
           },
-          "name": {
-            "type": "string",
-            "default": ""
-          },
-          "options": {
-            "description": "Catch-all field for datasource-specific properties",
+          "legacyOptions": {
+            "description": "Catch-all field for datasource-specific properties. Should not be available in as code tooling.",
             "type": "object",
             "additionalProperties": {
               "type": "object"
             }
           },
+          "name": {
+            "type": "string",
+            "default": ""
+          },
           "query": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataQueryKind"
+              }
+            ]
           }
         }
       },
@@ -1705,11 +1713,16 @@
           "multi",
           "includeAll",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -1855,11 +1868,24 @@
         "type": "object",
         "required": [
           "kind",
+          "group",
+          "version",
           "spec"
         ],
         "properties": {
+          "datasource": {
+            "description": "New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1DataQueryKindDatasource"
+              }
+            ]
+          },
+          "group": {
+            "type": "string",
+            "default": ""
+          },
           "kind": {
-            "description": "The kind of a DataQueryKind is the datasource type",
             "type": "string",
             "default": ""
           },
@@ -1868,10 +1894,15 @@
             "additionalProperties": {
               "type": "object"
             }
+          },
+          "version": {
+            "type": "string",
+            "default": ""
           }
         }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef": {
+        "description": "Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec This type is widely used in the codebase and changing it will have a big impact",
         "type": "object",
         "properties": {
           "type": {
@@ -1954,11 +1985,16 @@
           "multi",
           "includeAll",
           "hide",
-          "skipUrlSync"
+          "skipUrlSync",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -2215,17 +2251,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind": {
-        "type": "object",
-        "properties": {
-          "GridLayoutItemKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
-          },
-          "GridLayoutRowKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowKind"
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemSpec": {
         "type": "object",
         "required": [
@@ -2325,66 +2350,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowKind": {
-        "type": "object",
-        "required": [
-          "kind",
-          "spec"
-        ],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "default": ""
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowSpec"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutRowSpec": {
-        "type": "object",
-        "required": [
-          "y",
-          "collapsed",
-          "title",
-          "elements"
-        ],
-        "properties": {
-          "collapsed": {
-            "type": "boolean",
-            "default": false
-          },
-          "elements": {
-            "description": "Grid items in the row will have their Y value be relative to the rows Y value. This means a panel positioned at Y: 0 in a row with Y: 10 will be positioned at Y: 11 (row header has a heigh of 1) in the dashboard.",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
-                }
-              ]
-            }
-          },
-          "repeat": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardRowRepeatOptions"
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          },
-          "y": {
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutSpec": {
         "type": "object",
         "required": [
@@ -2394,7 +2359,12 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKindOrGridLayoutRowKind"
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardGridLayoutItemKind"
+                }
+              ]
             }
           }
         }
@@ -2443,6 +2413,9 @@
           },
           "datasource": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
+          },
+          "defaultValue": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
           },
           "description": {
             "type": "string"
@@ -2791,9 +2764,6 @@
           "hidden"
         ],
         "properties": {
-          "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
-          },
           "hidden": {
             "type": "boolean",
             "default": false
@@ -3022,11 +2992,16 @@
           "sort",
           "options",
           "multi",
-          "includeAll"
+          "includeAll",
+          "allowCustomValue"
         ],
         "properties": {
           "allValue": {
             "type": "string"
+          },
+          "allowCustomValue": {
+            "type": "boolean",
+            "default": false
           },
           "current": {
             "default": {},
@@ -3035,9 +3010,6 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardVariableOption"
               }
             ]
-          },
-          "datasource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataSourceRef"
           },
           "definition": {
             "type": "string"
@@ -3765,6 +3737,14 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataTransformerConfig"
               }
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardV2alpha1DataQueryKindDatasource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
           }
         }
       },

@@ -6,8 +6,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { TransposeTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
   return (

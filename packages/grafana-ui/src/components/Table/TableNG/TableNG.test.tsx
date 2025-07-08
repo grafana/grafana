@@ -1,11 +1,13 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame, EventBus } from '@grafana/data';
-import { TableCellDisplayMode } from '@grafana/schema';
+import { applyFieldOverrides, createTheme, DataFrame, EventBus, FieldType, toDataFrame } from '@grafana/data';
+import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { PanelContext } from '../../PanelChrome';
+import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
+import { TableCellDisplayMode } from '../types';
 
-import { TableNG, onRowHover, onRowLeave } from './TableNG';
+import { TableNG } from './TableNG';
 
 // Create a basic data frame for testing
 const createBasicDataFrame = (): DataFrame => {
@@ -140,7 +142,7 @@ const createNestedDataFrame = (): DataFrame => {
         config: { custom: { hidden: true } },
       },
       {
-        name: 'Nested frames',
+        name: '__nestedFrames',
         type: FieldType.nestedFrames,
         values: [[processedNestedFrame], [processedNestedFrame]],
         config: { custom: {} },
@@ -250,7 +252,6 @@ const createSortingTestDataFrame = (): DataFrame => {
   })[0];
 };
 
-// Create a data frame with time field for testing crosshair sharing functionality
 const createTimeDataFrame = (): DataFrame => {
   const frame = toDataFrame({
     name: 'TimeTestData',
@@ -288,8 +289,42 @@ const createTimeDataFrame = (): DataFrame => {
 };
 
 describe('TableNG', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+  let origResizeObserver = global.ResizeObserver;
+  let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+
+  beforeEach(() => {
+    user = userEvent.setup();
+    origResizeObserver = global.ResizeObserver;
+    origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    // Mock ResizeObserver
+    global.ResizeObserver = class ResizeObserver {
+      constructor(callback: any) {
+        // Store the callback
+        this.callback = callback;
+      }
+      callback: any;
+      observe() {
+        // Do nothing
+      }
+      unobserve() {
+        // Do nothing
+      }
+      disconnect() {
+        // Do nothing
+      }
+    };
+
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+  });
+
+  afterEach(() => {
+    global.ResizeObserver = origResizeObserver;
+    window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
+  });
+
   describe('Basic TableNG rendering', () => {
-    it('renders a simple table with columns and rows', () => {
+    it('renders a simple table with columns and rows', async () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -332,7 +367,7 @@ describe('TableNG', () => {
       expect(expandIcons.length).toBeGreaterThan(0);
     });
 
-    it('expands nested data when clicking expand button', () => {
+    it('expands nested data when clicking expand button', async () => {
       // Mock scrollIntoView
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
@@ -356,7 +391,7 @@ describe('TableNG', () => {
 
       // Click the expand button
       if (expandButton) {
-        fireEvent.click(expandButton);
+        await user.click(expandButton);
 
         // After expansion, we should have more rows
         const expandedRows = container.querySelectorAll('[role="row"]');
@@ -581,7 +616,7 @@ describe('TableNG', () => {
 
       if (nextButton) {
         // Click to go to the next page
-        fireEvent.click(nextButton);
+        await user.click(nextButton);
 
         // Get all cell content on the second page
         const newCells = container.querySelectorAll('[role="gridcell"]');
@@ -597,7 +632,7 @@ describe('TableNG', () => {
 
         // Check that the pagination summary shows we're on a different page
         // The format appears to be "X - Y of Z rows" where X and Y are the row range
-        expect(container.textContent).toMatch(/\d+ - \d+ of 100 rows/);
+        expect(container).toHaveTextContent(/\d+ - \d+ of 100 rows/);
 
         // Verify that the pagination summary has changed
         const paginationSummary = container.querySelector('.paginationSummary, [class*="paginationSummary"]');
@@ -606,7 +641,7 @@ describe('TableNG', () => {
           expect(summaryText).toContain('of 100 rows');
         } else {
           // If we can't find the pagination summary by class, just check the container text
-          expect(container.textContent).toContain('of 100 rows');
+          expect(container).toHaveTextContent(/of 100 rows/);
         }
       }
     });
@@ -614,9 +649,6 @@ describe('TableNG', () => {
 
   describe('Sorting', () => {
     it('allows sorting when clicking on column headers', async () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -626,50 +658,49 @@ describe('TableNG', () => {
       expect(columnHeader).toBeInTheDocument();
 
       // Find the sort button within the first header
-      if (columnHeader) {
-        // Store the initial state of the header
-        const initialSortAttribute = columnHeader.getAttribute('aria-sort');
+      if (!columnHeader) {
+        throw new Error('No column header found');
+      }
 
-        // Look for a button inside the header
-        const sortButton = columnHeader.querySelector('button') || columnHeader;
+      // Store the initial state of the header
+      const initialSortAttribute = columnHeader.getAttribute('aria-sort');
 
-        // Click the sort button
-        fireEvent.click(sortButton);
+      // Look for a button inside the header
+      const sortButton = columnHeader.querySelector('button') || columnHeader;
 
-        // After clicking, the header should have an aria-sort attribute
-        const newSortAttribute = columnHeader.getAttribute('aria-sort');
+      // Click the sort button
+      await user.click(sortButton);
 
-        // The sort attribute should have changed
-        expect(newSortAttribute).not.toBe(initialSortAttribute);
+      // After clicking, the header should have an aria-sort attribute
+      const newSortAttribute = columnHeader.getAttribute('aria-sort');
 
-        // The sort attribute should be either 'ascending' or 'descending'
-        expect(['ascending', 'descending']).toContain(newSortAttribute);
+      // The sort attribute should have changed
+      expect(newSortAttribute).not.toBe(initialSortAttribute);
 
-        // Also verify the data is sorted by checking cell values
-        const cells = container.querySelectorAll('[role="gridcell"]');
-        const firstColumnCells = Array.from(cells).filter((_, index) => index % 2 === 0);
+      // The sort attribute should be either 'ascending' or 'descending'
+      expect(['ascending', 'descending']).toContain(newSortAttribute);
 
-        // Get the text content of the first column cells
-        const cellValues = firstColumnCells.map((cell) => cell.textContent);
+      // Also verify the data is sorted by checking cell values
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      const firstColumnCells = Array.from(cells).filter((_, index) => index % 2 === 0);
 
-        // Verify we have values to check
-        expect(cellValues.length).toBeGreaterThan(0);
+      // Get the text content of the first column cells
+      const cellValues = firstColumnCells.map((cell) => cell.textContent);
 
-        // Verify the values are in sorted order based on the aria-sort attribute
-        const sortedValues = [...cellValues].sort();
+      // Verify we have values to check
+      expect(cellValues.length).toBeGreaterThan(0);
 
-        if (newSortAttribute === 'ascending') {
-          expect(JSON.stringify(cellValues)).toBe(JSON.stringify(sortedValues));
-        } else if (newSortAttribute === 'descending') {
-          expect(JSON.stringify(cellValues)).toBe(JSON.stringify([...sortedValues].reverse()));
-        }
+      // Verify the values are in sorted order based on the aria-sort attribute
+      const sortedValues = [...cellValues].sort();
+
+      if (newSortAttribute === 'ascending') {
+        expect(JSON.stringify(cellValues)).toBe(JSON.stringify(sortedValues));
+      } else if (newSortAttribute === 'descending') {
+        expect(JSON.stringify(cellValues)).toBe(JSON.stringify([...sortedValues].reverse()));
       }
     });
 
-    it('cycles through ascending, descending, and no sort states', () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
+    it('cycles through ascending, descending, and no sort states', async () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
       );
@@ -682,26 +713,23 @@ describe('TableNG', () => {
         const sortButton = columnHeader.querySelector('button') || columnHeader;
 
         // Initial state - no sort
-        expect(columnHeader.getAttribute('aria-sort')).toBeNull();
+        expect(columnHeader).not.toHaveAttribute('aria-sort');
 
         // First click - should sort ascending
-        fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBe('ascending');
+        await user.click(sortButton);
+        expect(columnHeader).toHaveAttribute('aria-sort', 'ascending');
 
         // Second click - should sort descending
-        fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBe('descending');
+        await user.click(sortButton);
+        expect(columnHeader).toHaveAttribute('aria-sort', 'descending');
 
         // Third click - should remove sort
-        fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBeNull();
+        await user.click(sortButton);
+        expect(columnHeader).not.toHaveAttribute('aria-sort');
       }
     });
 
-    it('supports multi-column sorting with shift key', () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
+    it('supports multi-column sorting with cmd or ctrl key', async () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createSortingTestDataFrame()} width={800} height={600} />
       );
@@ -761,7 +789,7 @@ describe('TableNG', () => {
       const valueColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
 
       // 1. First sort by Category (ascending)
-      fireEvent.click(categoryColumnButton);
+      await user.click(categoryColumnButton);
 
       // Check data is sorted by Category
       const categoryOnlySortedRows = getCellTextContent();
@@ -796,7 +824,8 @@ describe('TableNG', () => {
       expect(categoryBValues).toContain('4');
 
       // 2. Now add second sort column (Value) with shift key
-      fireEvent.click(valueColumnButton, { shiftKey: true });
+      await user.keyboard('{Control>}');
+      await user.click(valueColumnButton);
 
       // Check data is sorted by Category and then by Value
       const multiSortedRows = getCellTextContent();
@@ -830,7 +859,7 @@ describe('TableNG', () => {
       expect(multiSortedRows[4][2]).toBe('Alice');
 
       // 3. Change Value sort direction to descending
-      fireEvent.click(valueColumnButton, { shiftKey: true });
+      await user.click(valueColumnButton);
 
       // Check data is sorted by Category (asc) and then by Value (desc)
       const multiSortedRowsDesc = getCellTextContent();
@@ -864,7 +893,7 @@ describe('TableNG', () => {
       expect(multiSortedRowsDesc[4][2]).toBe('Jane');
 
       // 4. Test removing the secondary sort by clicking a third time
-      fireEvent.click(valueColumnButton, { shiftKey: true });
+      await user.click(valueColumnButton);
 
       // The data should still be sorted by Category only
       const singleSortRows = getCellTextContent();
@@ -877,9 +906,59 @@ describe('TableNG', () => {
       // Last 2 rows should still be 'B' category
       expect(singleSortRows[3][0]).toBe('B');
       expect(singleSortRows[4][0]).toBe('B');
+
+      // finally release control and prove that we exit multi-sort mode
+      await user.keyboard('{/Control}');
+      await user.click(categoryColumnButton);
+
+      const nonMultiSortCategoryRows = getCellTextContent();
+
+      expect(nonMultiSortCategoryRows[0][0]).toBe('B');
+      expect(nonMultiSortCategoryRows[0][1]).toBe('3');
+      expect(nonMultiSortCategoryRows[0][2]).toBe('Jane');
+
+      expect(nonMultiSortCategoryRows[1][0]).toBe('B');
+      expect(nonMultiSortCategoryRows[1][1]).toBe('4');
+      expect(nonMultiSortCategoryRows[1][2]).toBe('Alice');
+
+      expect(nonMultiSortCategoryRows[2][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[2][1]).toBe('5');
+      expect(nonMultiSortCategoryRows[2][2]).toBe('John');
+
+      expect(nonMultiSortCategoryRows[3][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[3][1]).toBe('1');
+      expect(nonMultiSortCategoryRows[3][2]).toBe('Bob');
+
+      expect(nonMultiSortCategoryRows[4][0]).toBe('A');
+      expect(nonMultiSortCategoryRows[4][1]).toBe('2');
+      expect(nonMultiSortCategoryRows[4][2]).toBe('Charlie');
+
+      await user.click(valueColumnButton);
+
+      const nonMultiSortValueRows = getCellTextContent();
+
+      expect(nonMultiSortValueRows[0][0]).toBe('A');
+      expect(nonMultiSortValueRows[0][1]).toBe('1');
+      expect(nonMultiSortValueRows[0][2]).toBe('Bob');
+
+      expect(nonMultiSortValueRows[1][0]).toBe('A');
+      expect(nonMultiSortValueRows[1][1]).toBe('2');
+      expect(nonMultiSortValueRows[1][2]).toBe('Charlie');
+
+      expect(nonMultiSortValueRows[2][0]).toBe('B');
+      expect(nonMultiSortValueRows[2][1]).toBe('3');
+      expect(nonMultiSortValueRows[2][2]).toBe('Jane');
+
+      expect(nonMultiSortValueRows[3][0]).toBe('B');
+      expect(nonMultiSortValueRows[3][1]).toBe('4');
+      expect(nonMultiSortValueRows[3][2]).toBe('Alice');
+
+      expect(nonMultiSortValueRows[4][0]).toBe('A');
+      expect(nonMultiSortValueRows[4][1]).toBe('5');
+      expect(nonMultiSortValueRows[4][2]).toBe('John');
     });
 
-    it('correctly sorts different data types', () => {
+    it('correctly sorts different data types', async () => {
       // Create a data frame with different data types
       const mixedDataFrame = toDataFrame({
         name: 'MixedData',
@@ -918,7 +997,7 @@ describe('TableNG', () => {
 
       // Test string column sorting
       const stringColumnButton = columnHeaders[0].querySelector('button') || columnHeaders[0];
-      fireEvent.click(stringColumnButton);
+      await user.click(stringColumnButton);
 
       // Get cell values after sorting
       let cells = container.querySelectorAll('[role="gridcell"]');
@@ -930,7 +1009,7 @@ describe('TableNG', () => {
 
       // Test number column sorting
       const numberColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
-      fireEvent.click(numberColumnButton);
+      await user.click(numberColumnButton);
 
       // Get cell values after sorting
       cells = container.querySelectorAll('[role="gridcell"]');
@@ -939,6 +1018,38 @@ describe('TableNG', () => {
 
       // Verify number values are sorted numerically
       expect(numberValues).toEqual(['1', '2', '3']);
+    });
+
+    it('triggers the onSortByChange callback', async () => {
+      const onSortByChange = jest.fn();
+
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          onSortByChange={onSortByChange}
+        />
+      );
+
+      // Ensure there are column headers
+      const columnHeader = container.querySelector('[role="columnheader"]');
+      expect(columnHeader).toBeInTheDocument();
+
+      // Find the sort button within the first header
+      if (!columnHeader) {
+        throw new Error('No column header found');
+      }
+
+      // Look for a button inside the header
+      const sortButton = columnHeader.querySelector('button') || columnHeader;
+
+      // Click the sort button
+      await user.click(sortButton);
+
+      // After clicking, the header should have an aria-sort attribute
+      expect(onSortByChange).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -1121,8 +1232,28 @@ describe('TableNG', () => {
     });
   });
 
-  describe('Resizing', () => {
-    it('calls onColumnResize when column is resized', () => {
+  // TODO we need to test this with an e2e rather than a unit test, because the element dimensions calcs
+  // don't work in unit tests (no clientWidth/Height)
+  describe.skip('Resizing', () => {
+    beforeEach(() => {
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+      window.HTMLElement.prototype.setPointerCapture = jest.fn();
+      window.HTMLElement.prototype.hasPointerCapture = jest.fn();
+      window.HTMLElement.prototype.releasePointerCapture = jest.fn();
+      window.HTMLElement.prototype.getBoundingClientRect = jest.fn(() => ({
+        width: 100,
+        height: 20,
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+        x: 0,
+        y: 0,
+        toJSON: jest.fn(() => ''),
+      }));
+    });
+
+    it('calls onColumnResize when column is resized', async () => {
       const onColumnResize = jest.fn();
 
       const { container } = render(
@@ -1136,17 +1267,19 @@ describe('TableNG', () => {
       );
 
       // Find resize handle
-      const resizeHandles = container.querySelectorAll('.rdg-header-row > [role="columnheader"] .rdg-resizer');
+      const resizeHandles = container.querySelectorAll('.rdg-header-row > [role="columnheader"] > div:last-child');
+      const handle = resizeHandles[0];
 
-      if (resizeHandles.length > 0) {
-        // Simulate resize by triggering mousedown, mousemove, mouseup
-        fireEvent.mouseDown(resizeHandles[0]);
-        fireEvent.mouseMove(resizeHandles[0], { clientX: 250 });
-        fireEvent.mouseUp(resizeHandles[0]);
-
-        // Check that onColumnResize was called
-        expect(onColumnResize).toHaveBeenCalled();
+      if (!handle) {
+        throw new Error('Resize handle not found');
       }
+
+      // simulate a click, then drag, then release.
+      await userEvent.pointer({ keys: '[MouseLeft>]', coords: { x: 0, y: 0 }, target: handle });
+      await userEvent.pointer({ coords: { x: 250, y: 0 }, target: handle });
+      await userEvent.pointer({ keys: '[/MouseLeft]', coords: { x: 250, y: 0 }, target: handle });
+
+      await waitFor(() => expect(onColumnResize).toHaveBeenCalled());
     });
   });
 
@@ -1158,7 +1291,7 @@ describe('TableNG', () => {
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       const cellStyles = window.getComputedStyle(cells[0]);
-      expect(cellStyles.getPropertyValue('white-space')).toBe('nowrap');
+      expect(cellStyles.getPropertyValue('white-space')).not.toBe('pre-line');
     });
 
     it('applies text wrapping styles when wrapText is true', () => {
@@ -1202,28 +1335,6 @@ describe('TableNG', () => {
   });
 
   describe('Context menu', () => {
-    beforeEach(() => {
-      // Mock ResizeObserver
-      global.ResizeObserver = class ResizeObserver {
-        constructor(callback: any) {
-          // Store the callback
-          this.callback = callback;
-        }
-        callback: any;
-        observe() {
-          // Do nothing
-        }
-        unobserve() {
-          // Do nothing
-        }
-        disconnect() {
-          // Do nothing
-        }
-      };
-
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-    });
-
     it('should show context menu on right-click', async () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={400} height={400} />
@@ -1244,11 +1355,15 @@ describe('TableNG', () => {
       // Check for the Inspect value menu item
       const menuItem = await screen.findByText('Inspect value');
       expect(menuItem).toBeInTheDocument();
+
+      // close the menu
+      await userEvent.click(container);
+      expect(menuItem).not.toBeInTheDocument();
     });
   });
 
   describe('Cell inspection', () => {
-    it('shows inspect icon when hovering over a cell with inspection enabled', () => {
+    it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
         ...createBasicDataFrame(),
         fields: createBasicDataFrame().fields.map((field) => ({
@@ -1285,7 +1400,7 @@ describe('TableNG', () => {
 
         if (cellContent) {
           // Trigger mouse enter on the cell content
-          fireEvent.mouseEnter(cellContent);
+          await user.hover(cellContent);
 
           // Look for the inspect icon
           const inspectIcon = container.querySelector('[aria-label="Inspect value"]');
@@ -1350,8 +1465,8 @@ describe('TableNG', () => {
       expect(cells.length).toBeGreaterThan(0);
 
       // Check the first div inside the cell for style attributes
-      const div = cells[0].querySelectorAll('div')[0];
-      const styleAttr = window.getComputedStyle(div);
+      const cell = cells[0];
+      const styleAttr = window.getComputedStyle(cell);
 
       // Expected color is red
       expect(styleAttr.background).toBe('rgb(255, 0, 0)');
@@ -1387,11 +1502,50 @@ describe('TableNG', () => {
       expect(cells.length).toBeGreaterThan(0);
 
       // Check the first div inside the cell for style attributes
-      const div = cells[0].querySelectorAll('div')[0];
-      const computedStyle = window.getComputedStyle(div);
+      const cell = cells[0];
+      const computedStyle = window.getComputedStyle(cell);
 
       // Expected color is red
       expect(computedStyle.color).toBe('rgb(255, 0, 0)');
+
+      // doesn't accidentally applyToRow
+      const otherCell = cells[1];
+      expect(window.getComputedStyle(otherCell).color).not.toBe('rgb(255, 0, 0)');
+    });
+
+    it("renders the background color correclty when using 'ColorBackground' display mode and applyToRow is true", () => {
+      // Create a frame with color background cells and applyToRow set to true
+      const frame = createBasicDataFrame();
+      frame.fields[0].config.custom = {
+        ...frame.fields[0].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+
+      // Add color to the display values
+      const originalDisplay = frame.fields[0].display;
+      const expectedColor = '#ff0000'; // Red color
+      frame.fields[0].display = (value: unknown) => {
+        const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
+        return {
+          ...displayValue,
+          color: expectedColor,
+        };
+      };
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      // Find rows in the table
+      const rows = container.querySelectorAll('[role="row"]');
+      const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
+      for (const cell of cells) {
+        const cellStyle = window.getComputedStyle(cell);
+        // Ensure each cell has the same background color
+        expect(cellStyle.backgroundColor).toBe('rgb(255, 0, 0)');
+      }
     });
   });
 
@@ -1430,44 +1584,77 @@ describe('TableNG', () => {
       jest.clearAllMocks();
     });
 
-    it('should publish DataHoverEvent when hovering over a row with time field', () => {
-      const frame = createTimeDataFrame();
-      const idx = 1;
-
-      onRowHover(idx, mockPanelContext, frame, true);
-
-      expect(mockEventBus.publish).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payload: {
-            point: {
-              time: new Date('2024-03-20T10:01:00Z').getTime(),
-            },
-          },
-          type: 'data-hover',
-        })
+    it('should publish DataHoverEvent when hovering over a row with time field', async () => {
+      const data = createTimeDataFrame();
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG enableVirtualization={false} data={data} width={800} height={600} enableSharedCrosshair />
+        </PanelContextProvider>
       );
+
+      await userEvent.hover(screen.getAllByRole('row')[1]);
+
+      expect(mockEventBus.publish).toHaveBeenCalledWith({
+        payload: {
+          point: {
+            time: data.fields[0].values[0],
+          },
+        },
+        type: 'data-hover',
+      });
     });
 
-    it('should not publish DataHoverEvent when enableSharedCrosshair is false', () => {
-      const frame = createTimeDataFrame();
-      const idx = 1;
+    it('should not publish DataHoverEvent when enableSharedCrosshair is false', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair={false}
+          />
+        </PanelContextProvider>
+      );
 
-      onRowHover(idx, mockPanelContext, frame, false);
+      await userEvent.hover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).not.toHaveBeenCalled();
     });
 
-    it('should not publish DataHoverEvent when time field is not present', () => {
-      const frame = createBasicDataFrame();
-      const idx = 1;
+    it('should not publish DataHoverEvent when time field is not present', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createBasicDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair
+          />
+        </PanelContextProvider>
+      );
 
-      onRowHover(idx, mockPanelContext, frame, true);
+      await userEvent.hover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).not.toHaveBeenCalled();
     });
 
-    it('should publish DataHoverClearEvent when leaving a row', () => {
-      onRowLeave(mockPanelContext, true);
+    it('should publish DataHoverClearEvent when leaving a row', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair
+          />
+        </PanelContextProvider>
+      );
+
+      await userEvent.hover(screen.getAllByRole('row')[1]);
+      await userEvent.unhover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1476,51 +1663,23 @@ describe('TableNG', () => {
       );
     });
 
-    it('should not publish DataHoverClearEvent when enableSharedCrosshair is false', () => {
-      onRowLeave(mockPanelContext, false);
-
-      expect(mockEventBus.publish).not.toHaveBeenCalled();
-    });
-  });
-  describe('scroll position persistence', () => {
-    it('should persist scroll position after revId change', () => {
-      const data = createBasicDataFrame();
-      const { rerender } = render(<TableNG data={data} width={300} height={200} enableVirtualization={false} />);
-
-      // Find the DataGrid element
-      const dataGrid = screen.getByRole('grid');
-
-      // Simulate scrolling
-      act(() => {
-        fireEvent.scroll(dataGrid, {
-          target: {
-            scrollLeft: 100,
-            scrollTop: 50,
-          },
-        });
-      });
-
-      // Rerender with the same data but different fieldConfig to trigger revId change
-      rerender(
-        <TableNG
-          data={data}
-          width={300}
-          height={200}
-          enableVirtualization={false}
-          fieldConfig={{
-            defaults: {
-              custom: {
-                width: 200, // Different width to trigger revId change
-              },
-            },
-            overrides: [],
-          }}
-        />
+    it('should not publish DataHoverClearEvent when enableSharedCrosshair is false', async () => {
+      render(
+        <PanelContextProvider value={mockPanelContext}>
+          <TableNG
+            enableVirtualization={false}
+            data={createTimeDataFrame()}
+            width={800}
+            height={600}
+            enableSharedCrosshair={false}
+          />
+        </PanelContextProvider>
       );
 
-      // Verify scroll position was restored
-      expect(dataGrid.scrollLeft).toBe(100);
-      expect(dataGrid.scrollTop).toBe(50);
+      await userEvent.hover(screen.getAllByRole('row')[1]);
+      await userEvent.unhover(screen.getAllByRole('row')[1]);
+
+      expect(mockEventBus.publish).not.toHaveBeenCalled();
     });
   });
 });

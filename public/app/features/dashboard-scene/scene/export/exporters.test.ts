@@ -9,6 +9,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
 
 import { LibraryElementKind } from '../../../library-panels/types';
 import { DashboardJson } from '../../../manage-dashboards/types';
@@ -67,6 +68,7 @@ jest.mock('app/features/library-panels/state/api', () => ({
 variableAdapters.register(createQueryVariableAdapter());
 variableAdapters.register(createConstantVariableAdapter());
 variableAdapters.register(createDataSourceVariableAdapter());
+variableAdapters.register(createAdHocVariableAdapter());
 
 describe('dashboard exporter v1', () => {
   it('handles a default datasource in a template variable', async () => {
@@ -272,6 +274,11 @@ describe('dashboard exporter v1', () => {
               current: { value: 'other2', text: 'other2' },
               options: [],
             },
+            {
+              name: 'adhoc',
+              type: 'adhoc',
+              datasource: { uid: 'gfdb', type: 'testdb' },
+            },
           ],
         },
         annotations: {
@@ -420,6 +427,10 @@ describe('dashboard exporter v1', () => {
       expect(exported.templating.list[0].current.text).toBe(undefined);
     });
 
+    it('should replace datasource in adhoc query', () => {
+      expect(exported.templating.list[3].datasource.uid).toBe('${DS_GFDB}');
+    });
+
     it('should replace datasource in annotation query', () => {
       expect(exported.annotations.list[1].datasource.uid).toBe('${DS_GFDB}');
     });
@@ -538,13 +549,12 @@ describe('dashboard exporter v2', () => {
               {
                 kind: 'PanelQuery',
                 spec: {
-                  datasource: {
-                    type: 'prometheus',
-                    uid: '${datasourceVar}',
-                  },
                   hidden: false,
                   query: {
-                    kind: 'prometheus',
+                    datasource: {
+                      name: '${datasourceVar}',
+                    },
+                    group: 'prometheus',
                     spec: {
                       editorMode: 'builder',
                       expr: 'go_goroutines{job="prometheus"}',
@@ -572,7 +582,7 @@ describe('dashboard exporter v2', () => {
   it('should replace datasource in a query variable', async () => {
     const { dashboard } = await setup();
     const variable = dashboard.variables[0] as QueryVariableKind;
-    expect(variable.spec.datasource?.uid).toBeUndefined();
+    expect(variable.spec.query.datasource?.name).toBeUndefined();
   });
 
   it('do not expose datasource name and id in datasource variable', async () => {
@@ -586,7 +596,7 @@ describe('dashboard exporter v2', () => {
     const { dashboard } = await setup();
     const annotationQuery = dashboard.annotations[0];
 
-    expect(annotationQuery.spec.datasource?.uid).toBeUndefined();
+    expect(annotationQuery.spec.query?.datasource?.name).toBeUndefined();
   });
 
   it('should remove library panels from layout', async () => {
@@ -605,11 +615,8 @@ describe('dashboard exporter v2', () => {
     if (panel.kind !== 'Panel') {
       throw new Error('Panel should be a Panel');
     }
-
-    expect(panel.spec.data.spec.queries[0].spec.datasource).toEqual({
-      type: 'prometheus',
-      uid: '${datasourceVar}',
-    });
+    expect(panel.spec.data.spec.queries[0].spec.query.datasource?.name).toBe('${datasourceVar}');
+    expect(panel.spec.data.spec.queries[0].spec.query.group).toBe('prometheus');
   });
 });
 

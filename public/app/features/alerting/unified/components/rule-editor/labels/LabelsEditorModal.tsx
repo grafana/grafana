@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { Modal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { KBObjectArray } from '../../../types/rule-form';
 

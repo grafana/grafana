@@ -1,5 +1,5 @@
+import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { WithReturnButton } from './components/WithReturnButton';

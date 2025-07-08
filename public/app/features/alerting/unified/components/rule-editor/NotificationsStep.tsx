@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -47,13 +47,11 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const isGrafanaManaged = isGrafanaManagedRuleByType(type);
-  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const simplifiedModeInNotificationsStepEnabled = config.featureToggles.alertingNotificationsStepMode ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
 
-  const shouldAllowSimplifiedRouting =
-    type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
+  const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && hasInternalAlertmanagerEnabled;
 
   function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
@@ -146,7 +144,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
 /**
  * Preconditions:
- * - simplified routing is enabled
  * - the alert rule is a grafana rule
  *
  * This component will render the switch between the select contact point routing and the notification policy routing.
@@ -162,8 +159,20 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   const [manualRouting] = watch(['manualRouting']);
 
   const routingOptions = [
-    { label: 'Select contact point', value: RoutingOptions.ContactPoint },
-    { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
+    {
+      label: t(
+        'alerting.manual-and-automatic-routing.routing-options.label.select-contact-point',
+        'Select contact point'
+      ),
+      value: RoutingOptions.ContactPoint,
+    },
+    {
+      label: t(
+        'alerting.manual-and-automatic-routing.routing-options.label.use-notification-policy',
+        'Use notification policy'
+      ),
+      value: RoutingOptions.NotificationPolicy,
+    },
   ];
 
   const onRoutingOptionChange = (option: RoutingOptions) => {
@@ -191,7 +200,6 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
 
 /**
  * Preconditions:
- * - simplified routing is enabled
  * - simple mode for notifications step is enabled
  * - the alert rule is a grafana rule
  *

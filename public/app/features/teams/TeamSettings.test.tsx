@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Props, TeamSettings } from './TeamSettings';
-import { getMockTeam } from './__mocks__/teamMocks';
+import { getMockTeam } from './mocks/teamMocks';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {

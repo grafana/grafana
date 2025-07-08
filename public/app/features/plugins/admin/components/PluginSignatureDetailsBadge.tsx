@@ -3,8 +3,8 @@ import { capitalize } from 'lodash';
 import * as React from 'react';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { useStyles2, Icon, Badge, IconName } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 const SIGNATURE_ICONS: Record<string, IconName> = {
   [PluginSignatureType.grafana]: 'grafana',

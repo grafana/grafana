@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 
@@ -63,7 +63,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
               <td>{version.message}</td>
               <td className="text-right">
                 {idx === 0 ? (
-                  <Tag name="Latest" colorIndex={17} />
+                  <Tag name={t('dashboard.version-history-table.name-latest', 'Latest')} colorIndex={17} />
                 ) : (
                   <ModalsController>
                     {({ showModal, hideModal }) => (

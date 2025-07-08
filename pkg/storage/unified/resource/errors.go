@@ -10,6 +10,9 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	grpcstatus "google.golang.org/grpc/status"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 // Package-level errors.
@@ -29,18 +32,18 @@ var (
 	}
 )
 
-func NewBadRequestError(msg string) *ErrorResult {
-	return &ErrorResult{
+func NewBadRequestError(msg string) *resourcepb.ErrorResult {
+	return &resourcepb.ErrorResult{
 		Message: msg,
 		Code:    http.StatusBadRequest,
 		Reason:  string(metav1.StatusReasonBadRequest),
 	}
 }
 
-func NewNotFoundError(key *ResourceKey) *ErrorResult {
-	return &ErrorResult{
+func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
+	return &resourcepb.ErrorResult{
 		Code: http.StatusNotFound,
-		Details: &ErrorDetails{
+		Details: &resourcepb.ErrorDetails{
 			Group: key.Group,
 			Kind:  key.Resource, // yup, resource as kind same is true in apierrors.NewNotFound()
 			Name:  key.Name,
@@ -48,8 +51,16 @@ func NewNotFoundError(key *ResourceKey) *ErrorResult {
 	}
 }
 
+func NewTooManyRequestsError(msg string) *resourcepb.ErrorResult {
+	return &resourcepb.ErrorResult{
+		Message: msg,
+		Code:    http.StatusTooManyRequests,
+		Reason:  string(metav1.StatusReasonTooManyRequests),
+	}
+}
+
 // Convert golang errors to status result errors that can be returned to a client
-func AsErrorResult(err error) *ErrorResult {
+func AsErrorResult(err error) *resourcepb.ErrorResult {
 	if err == nil {
 		return nil
 	}
@@ -57,13 +68,13 @@ func AsErrorResult(err error) *ErrorResult {
 	var apistatus apierrors.APIStatus
 	if errors.As(err, &apistatus) {
 		s := apistatus.Status()
-		res := &ErrorResult{
+		res := &resourcepb.ErrorResult{
 			Message: s.Message,
 			Reason:  string(s.Reason),
 			Code:    s.Code,
 		}
 		if s.Details != nil {
-			res.Details = &ErrorDetails{
+			res.Details = &resourcepb.ErrorDetails{
 				Group:             s.Details.Group,
 				Kind:              s.Details.Kind,
 				Name:              s.Details.Name,
@@ -71,7 +82,7 @@ func AsErrorResult(err error) *ErrorResult {
 				RetryAfterSeconds: s.Details.RetryAfterSeconds,
 			}
 			for _, c := range s.Details.Causes {
-				res.Details.Causes = append(res.Details.Causes, &ErrorCause{
+				res.Details.Causes = append(res.Details.Causes, &resourcepb.ErrorCause{
 					Reason:  string(c.Type),
 					Message: c.Message,
 					Field:   c.Field,
@@ -88,13 +99,13 @@ func AsErrorResult(err error) *ErrorResult {
 		code = runtime.HTTPStatusFromCode(st.Code())
 	}
 
-	return &ErrorResult{
+	return &resourcepb.ErrorResult{
 		Message: err.Error(),
 		Code:    int32(code),
 	}
 }
 
-func GetError(res *ErrorResult) error {
+func GetError(res *resourcepb.ErrorResult) error {
 	if res == nil {
 		return nil
 	}
@@ -122,4 +133,11 @@ func GetError(res *ErrorResult) error {
 		}
 	}
 	return status
+}
+
+func HandleQueueError[T any](err error, makeResp func(*resourcepb.ErrorResult) *T) (*T, error) {
+	if errors.Is(err, scheduler.ErrTenantQueueFull) {
+		return makeResp(NewTooManyRequestsError("tenant queue is full, please try again later")), nil
+	}
+	return makeResp(AsErrorResult(err)), nil
 }

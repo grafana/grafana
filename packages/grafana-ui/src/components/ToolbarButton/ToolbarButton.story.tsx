@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { ButtonGroup } from '../Button';
+import { ButtonGroup } from '../Button/ButtonGroup';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { ToolbarButton, ToolbarButtonVariant } from './ToolbarButton';
@@ -9,7 +9,7 @@ import mdx from './ToolbarButton.mdx';
 import { ToolbarButtonRow } from './ToolbarButtonRow';
 
 const meta: Meta<typeof ToolbarButton> = {
-  title: 'Buttons/ToolbarButton',
+  title: 'Navigation/ToolbarButton',
   component: ToolbarButton,
   parameters: {
     docs: {

@@ -12,7 +12,7 @@ import {
 
 export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = 300;
 export const MIN_EXTENSION_SIDEBAR_WIDTH = 100;
-export const MAX_EXTENSION_SIDEBAR_WIDTH = 700;
+export const MAX_EXTENSION_SIDEBAR_WIDTH = Math.floor(window.innerWidth * (2 / 3));
 
 type ExtensionSidebarComponentProps = {
   props?: Record<string, unknown>;

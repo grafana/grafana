@@ -11,7 +11,9 @@ describe('toUrlParams', () => {
       isNull: null,
       isUndefined: undefined,
     });
-    expect(url).toBe('server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=');
+    expect(url).toBe(
+      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true=true&number=20&isNull=&isUndefined='
+    );
   });
   it('should encode the same way as angularjs', () => {
     const url = urlUtil.toUrlParams({
@@ -25,7 +27,7 @@ describe('toUrlParams', () => {
       bool1: true,
       bool2: false,
     });
-    expect(url).toBe('bool1&bool2=false');
+    expect(url).toBe('bool1=true&bool2=false');
   });
   it("should encode the following special characters [!'()*]", () => {
     const url = urlUtil.toUrlParams({
@@ -45,7 +47,7 @@ describe('toUrlParams', () => {
       oneMore: false,
     });
     expect(params).toBe(
-      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true&number=20&isNull=&isUndefined=&oneMore=false'
+      'server=backend-01&hasSpace=has%20space&many=1&many=2&many=3&true=true&number=20&isNull=&isUndefined=&oneMore=false'
     );
   });
 
@@ -61,7 +63,7 @@ describe('toUrlParams', () => {
       bool1: true,
       bool2: false,
     });
-    expect(url).toBe('bool1&bool2=false');
+    expect(url).toBe('bool1=true&bool2=false');
   });
 });
 
@@ -98,11 +100,12 @@ describe('parseKeyValue', () => {
 });
 
 describe('getUrlSearchParams', () => {
-  const { location } = window;
+  const win: typeof globalThis = window;
+  const { location } = win;
   // @ts-ignore
-  delete window.location;
+  delete win.location;
 
-  window.location = {
+  win.location = {
     ...location,
     hash: '#hash',
     host: 'www.domain.com:9877',

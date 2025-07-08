@@ -62,7 +62,7 @@ func TestIntegrationValidation(t *testing.T) {
 	}
 
 	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -246,6 +246,20 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			_, err := createDashboard(t, adminClient, "Dashboard in Non-existent Folder", &nonExistentFolderUID, nil)
 			ctx.Helper.EnsureStatusError(err, http.StatusNotFound, "folders.folder.grafana.app \"non-existent-folder-uid\" not found")
 		})
+
+		t.Run("allow moving folder to general folder", func(t *testing.T) {
+			folder1 := createFolderObject(t, "folder1", "default", "")
+			folder1UID := folder1.GetName()
+			dash, err := createDashboard(t, adminClient, "Dashboard in a Folder", &folder1UID, nil)
+			require.NoError(t, err)
+
+			generalFolderUID := ""
+			_, err = updateDashboard(t, adminClient, dash, "Move dashboard into the General Folder", &generalFolderUID)
+			require.NoError(t, err)
+
+			err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		})
 	})
 
 	t.Run("Dashboard schema validations", func(t *testing.T) {
@@ -382,17 +396,10 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 			require.NotNil(t, updatedDash1)
 
-			// Try to update with the second copy (should fail with version conflict for mode 0, 4 and 5, but not for mode 1, 2 and 3)
-			updatedDash2, err := updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
-			if ctx.DualWriterMode == rest.Mode1 || ctx.DualWriterMode == rest.Mode2 || ctx.DualWriterMode == rest.Mode3 {
-				require.NoError(t, err)
-				require.NotNil(t, updatedDash2)
-				meta, _ := utils.MetaAccessor(updatedDash2)
-				require.Equal(t, "Updated by second user", meta.FindTitle(""), "Dashboard title should be updated")
-			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
-			}
+			// Try to update with the second copy. Should fail with version conflict.
+			_, err = updateDashboard(t, editorClient, dash2, "Updated by second user", nil)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "the object has been modified", "Should fail with version conflict error")
 
 			// Clean up
 			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
@@ -422,6 +429,31 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 
 			// Clean up
 			err = adminClient.Resource.Delete(context.Background(), dashUID, v1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("dashboard version history available, even for UIDs ending in hyphen", func(t *testing.T) {
+			dashboardUID := "test-dashboard-"
+			dash, err := createDashboard(t, adminClient, "Dashboard with uid ending in hyphen", nil, &dashboardUID)
+			require.NoError(t, err)
+
+			updatedDash, err := updateDashboard(t, adminClient, dash, "Updated dashboard with uid ending in hyphen", nil)
+			require.NoError(t, err)
+			require.NotNil(t, updatedDash)
+
+			labelSelector := utils.LabelKeyGetHistory + "=true"
+			fieldSelector := "metadata.name=" + dashboardUID
+			versions, err := adminClient.Resource.List(context.Background(), v1.ListOptions{
+				LabelSelector: labelSelector,
+				FieldSelector: fieldSelector,
+				Limit:         10,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, versions)
+			// one from initial save, one from update
+			require.Equal(t, len(versions.Items), 2)
+
+			err = adminClient.Resource.Delete(context.Background(), dashboardUID, v1.DeleteOptions{})
 			require.NoError(t, err)
 		})
 	})
@@ -942,7 +974,7 @@ func createDashboard(t *testing.T, client *apis.K8sResourceClient, title string,
 	t.Helper()
 
 	var folderUIDStr string
-	if folderUID != nil && *folderUID != "" {
+	if folderUID != nil {
 		folderUIDStr = *folderUID
 	}
 
@@ -2385,4 +2417,29 @@ func runDashboardListTest(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 		}
 	})
+}
+
+func postHelper(t *testing.T, ctx *TestContext, path string, body interface{}, user apis.User) (map[string]interface{}, error) {
+	bodyJSON, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	resp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        user,
+		Method:      http.MethodPost,
+		Path:        path,
+		Body:        bodyJSON,
+		ContentType: "application/json",
+	}, &struct{}{})
+
+	if resp.Response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to post: %s", resp.Response.Status)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(resp.Body, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response JSON: %v", err)
+	}
+
+	return result, nil
 }

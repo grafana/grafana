@@ -37,8 +37,10 @@ import {
   GroupByVariableKind,
   LibraryPanelKind,
   PanelKind,
-  GridLayoutRowKind,
   GridLayoutItemKind,
+  defaultDataQueryKind,
+  RowsLayoutRowKind,
+  GridLayoutKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
@@ -54,7 +56,9 @@ import {
   DeprecatedInternalId,
   ObjectMeta,
 } from 'app/features/apiserver/types';
+import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
+import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
 import { TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
@@ -131,9 +135,15 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
       [AnnoKeyFolder]: dto.meta.folderUid,
       [AnnoKeySlug]: dto.meta.slug,
-      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
     };
+    if (dashboard.gnetId) {
+      annotationsMeta[AnnoKeyDashboardGnetId] = dashboard.gnetId;
+    }
+    if (dto.meta.isSnapshot) {
+      // FIXME -- lets not put non-annotation data in annotations!
+      annotationsMeta[AnnoKeyDashboardIsSnapshot] = 'true';
+    }
+
     creationTimestamp = dto.meta.created;
     labelsMeta = {
       [DeprecatedInternalId]: dashboard.id?.toString() ?? undefined,
@@ -253,22 +263,49 @@ function getElementsFromPanels(
     return [elements, layout];
   }
 
-  let currentRow: GridLayoutRowKind | null = null;
+  if (panels.some(isRowPanel)) {
+    return convertToRowsLayout(panels);
+  }
 
   // iterate over panels
   for (const p of panels) {
+    const [element, elementName] = buildElement(p);
+
+    elements[elementName] = element;
+
+    layout.spec.items.push(buildGridItemKind(p, elementName));
+  }
+
+  return [elements, layout];
+}
+
+function convertToRowsLayout(
+  panels: Array<Panel | RowPanel>
+): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {
+  let currentRow: RowsLayoutRowKind | null = null;
+  let legacyRowY = 0;
+  const elements: DashboardV2Spec['elements'] = {};
+  const layout: DashboardV2Spec['layout'] = {
+    kind: 'RowsLayout',
+    spec: {
+      rows: [],
+    },
+  };
+
+  for (const p of panels) {
     if (isRowPanel(p)) {
+      legacyRowY = p.gridPos!.y;
       if (currentRow) {
         // Flush current row to layout before we create a new one
-        layout.spec.items.push(currentRow);
+        layout.spec.rows.push(currentRow);
       }
 
+      // If the row is collapsed it will have panels
       const rowElements = [];
-
       for (const panel of p.panels || []) {
         const [element, name] = buildElement(panel);
         elements[name] = element;
-        rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, p.gridPos!.y)));
+        rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, legacyRowY)));
       }
 
       currentRow = buildRowKind(p, rowElements);
@@ -279,18 +316,41 @@ function getElementsFromPanels(
 
       if (currentRow) {
         // Collect panels to current layout row
-        currentRow.spec.elements.push(buildGridItemKind(p, elementName, yOffsetInRows(p, currentRow.spec.y)));
+        if (currentRow.spec.layout.kind === 'GridLayout') {
+          currentRow.spec.layout.spec.items.push(buildGridItemKind(p, elementName, yOffsetInRows(p, legacyRowY)));
+        } else {
+          throw new Error('RowsLayoutRow from legacy row must have a GridLayout');
+        }
       } else {
-        layout.spec.items.push(buildGridItemKind(p, elementName));
+        // This is the first row. In V1 these items could live outside of a row. In V2 they will be in a row with header hidden so that it will look similar to V1.
+        const grid: GridLayoutKind = {
+          kind: 'GridLayout',
+          spec: {
+            items: [buildGridItemKind(p, elementName)],
+          },
+        };
+
+        // Since this row does not exist in V1, we simulate it being outside of the grid above the first panel
+        // The Y position does not matter for the rows layout, but it's used to calculate the position of the panels in the grid layout in the row.
+        legacyRowY = -1;
+
+        currentRow = {
+          kind: 'RowsLayoutRow',
+          spec: {
+            collapse: false,
+            title: '',
+            hideHeader: true,
+            layout: grid,
+          },
+        };
       }
     }
   }
 
   if (currentRow) {
     // Flush last row to layout
-    layout.spec.items.push(currentRow);
+    layout.spec.rows.push(currentRow);
   }
-
   return [elements, layout];
 }
 
@@ -305,15 +365,19 @@ function getWeekStart(weekStart?: string, defaultWeekStart?: WeekStart): WeekSta
   return weekStart;
 }
 
-function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): GridLayoutRowKind {
+function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): RowsLayoutRowKind {
   return {
-    kind: 'GridLayoutRow',
+    kind: 'RowsLayoutRow',
     spec: {
-      collapsed: p.collapsed,
+      collapse: p.collapsed,
       title: p.title ?? '',
       repeat: p.repeat ? { value: p.repeat, mode: 'variable' } : undefined,
-      y: p.gridPos?.y ?? 0,
-      elements,
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: elements,
+        },
+      },
     },
   };
 }
@@ -440,9 +504,13 @@ export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourc
       spec: {
         refId: t.refId,
         hidden: t.hide ?? false,
-        datasource: t.datasource ? t.datasource : panelDatasource,
         query: {
-          kind: t.datasource?.type || panelDatasource.type!,
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: t.datasource?.type || panelDatasource.type!,
+          datasource: {
+            name: t.datasource?.uid || panelDatasource.uid!,
+          },
           spec: {
             ...query,
           },
@@ -506,9 +574,15 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             regex: v.regex || '',
             sort: transformSortVariableToEnum(v.sort),
             query: {
-              kind: v.datasource?.type || getDefaultDatasourceType(),
+              kind: 'DataQuery',
+              version: defaultDataQueryKind().version,
+              group: v.datasource?.type ?? getDefaultDatasourceType(),
+              datasource: {
+                name: v.datasource?.uid,
+              },
               spec: query,
             },
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(qv);
@@ -535,6 +609,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             refresh: transformVariableRefreshToEnum(v.refresh),
             pluginId,
             regex: v.regex || '',
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(dv);
@@ -553,6 +628,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             multi: v.multi,
             includeAll: v.includeAll,
             ...(v.allValue && { allValue: v.allValue }),
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(cv);
@@ -563,9 +639,10 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
           spec: {
             ...commonProperties,
             datasource: v.datasource || getDefaultDatasource(),
-            baseFilters: v.baseFilters || [],
-            filters: v.filters || [],
+            baseFilters: validateFiltersOrigin(v.baseFilters) || [],
+            filters: validateFiltersOrigin(v.filters) || [],
             defaultKeys: v.defaultKeys || [],
+            allowCustomValue: v.allowCustomValue ?? true,
           },
         };
         variables.push(av);
@@ -656,7 +733,12 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
         iconColor: a.iconColor,
         builtIn: Boolean(a.builtIn),
         query: {
-          kind: a.datasource?.type || getDefaultDatasourceType(),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: a.datasource?.type || getDefaultDatasourceType(),
+          datasource: {
+            name: a.datasource?.uid,
+          },
           spec: {
             ...a.target,
           },
@@ -691,7 +773,10 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
             LEGACY_STRING_VALUE_KEY in v.spec.query.spec
               ? v.spec.query.spec[LEGACY_STRING_VALUE_KEY]
               : v.spec.query.spec,
-          datasource: v.spec.datasource,
+          datasource: {
+            type: v.spec.query?.spec.group,
+            uid: v.spec.query?.spec.datasource?.name,
+          },
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
           regex: v.spec.regex,
@@ -808,22 +893,6 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
   return variables;
 }
 
-function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): AnnotationQuery[] {
-  // @ts-expect-error - target v2 query is not compatible with v1 target
-  return annotations.map((a) => {
-    return {
-      name: a.spec.name,
-      datasource: a.spec.datasource,
-      enable: a.spec.enable,
-      hide: a.spec.hide,
-      iconColor: a.spec.iconColor,
-      builtIn: a.spec.builtIn ? 1 : 0,
-      target: a.spec.query?.spec,
-      filter: a.spec.filter,
-    };
-  });
-}
-
 interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos' | 'type'> {}
 
 function getPanelsV1(
@@ -839,46 +908,11 @@ function getPanelsV1(
   }
 
   for (const item of layout.spec.items) {
-    if (item.kind === 'GridLayoutItem') {
-      const panel = panels[item.spec.element.name];
-      const v1Panel = transformV2PanelToV1Panel(panel, item);
-      panelsV1.push(v1Panel);
-      if (v1Panel.id ?? 0 > maxPanelId) {
-        maxPanelId = v1Panel.id ?? 0;
-      }
-    } else if (item.kind === 'GridLayoutRow') {
-      const row: RowPanel = {
-        id: -1, // Temporarily set to -1, updated later to be unique
-        type: 'row',
-        title: item.spec.title,
-        collapsed: item.spec.collapsed,
-        repeat: item.spec.repeat ? item.spec.repeat.value : undefined,
-        gridPos: {
-          x: 0,
-          y: item.spec.y,
-          w: 24,
-          h: GRID_ROW_HEIGHT,
-        },
-        panels: [],
-      };
-
-      const rowPanels = [];
-      for (const panel of item.spec.elements) {
-        const panelElement = panels[panel.spec.element.name];
-        const v1Panel = transformV2PanelToV1Panel(panelElement, panel, item.spec.y + GRID_ROW_HEIGHT + panel.spec.y);
-        rowPanels.push(v1Panel);
-        if (v1Panel.id ?? 0 > maxPanelId) {
-          maxPanelId = v1Panel.id ?? 0;
-        }
-      }
-      if (item.spec.collapsed) {
-        // When a row is collapsed, panels inside it are stored in the panels property.
-        row.panels = rowPanels;
-        panelsV1.push(row);
-      } else {
-        panelsV1.push(row);
-        panelsV1.push(...rowPanels);
-      }
+    const panel = panels[item.spec.element.name];
+    const v1Panel = transformV2PanelToV1Panel(panel, item);
+    panelsV1.push(v1Panel);
+    if (v1Panel.id ?? 0 > maxPanelId) {
+      maxPanelId = v1Panel.id ?? 0;
     }
   }
 
@@ -919,7 +953,10 @@ function transformV2PanelToV1Panel(
         return {
           refId: q.spec.refId,
           hide: q.spec.hidden,
-          datasource: q.spec.datasource,
+          datasource: {
+            uid: q.spec.query.spec.datasource?.uid,
+            type: q.spec.query.spec.group,
+          },
           ...q.spec.query.spec,
         };
       }),
@@ -1103,7 +1140,8 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
 }
 
 export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
-  const annotations = getAnnotationsV1(spec.annotations);
+  const annotations = spec.annotations.map(transformV2ToV1AnnotationQuery);
+
   const variables = getVariablesV1(spec.variables);
   const panels = getPanelsV1(spec.elements, spec.layout);
   return {

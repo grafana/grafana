@@ -1,8 +1,7 @@
 import { useLocalStorage } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton, Stack } from '@grafana/ui';
-
-import { t, Trans } from '../../core/internationalization';
 
 type Props = {
   datasourceType: string;

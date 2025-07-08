@@ -116,7 +116,8 @@
           "group_wait":"1s",
           "group_interval":"5s",
           "repeat_interval":"5m",
-          "mute_time_intervals":["test-mute"]
+          "mute_time_intervals":["test-mute"],
+          "active_time_intervals":["test-mute"]
         }
       }
     },
@@ -171,7 +172,8 @@
           "group_wait":"1s",
           "group_interval":"5s",
           "repeat_interval":"5m",
-          "mute_time_intervals":["test-mute"]
+          "mute_time_intervals":["test-mute"],
+          "active_time_intervals":["test-mute"]
         }
       }
     },

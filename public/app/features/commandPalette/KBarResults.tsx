@@ -71,7 +71,18 @@ export const KBarResults = (props: KBarResultsProps) => {
           }
           return nextIndex;
         });
-      } else if (event.key === 'Enter') {
+      } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        // Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux) - open in new tab
+        event.preventDefault();
+
+        if (activeRef.current instanceof HTMLAnchorElement) {
+          window.open(activeRef.current.href, '_blank', 'noopener,noreferrer');
+          query.toggle();
+        } else {
+          // For action-based items (rendered as <div> tags), execute normally
+          activeRef.current?.click();
+        }
+      } else if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
         event.preventDefault();
         // storing the active dom element in a ref prevents us from
         // having to calculate the current action to perform based
@@ -122,7 +133,10 @@ export const KBarResults = (props: KBarResultsProps) => {
 
       if (item.command) {
         item.command.perform(item);
-        query.toggle();
+        // TODO: ideally the perform method would return some marker or we would have something like preventDefault()
+        if (!item.id.startsWith('scopes/') || item.id === 'scopes/apply') {
+          query.toggle();
+        }
       } else if (url) {
         if (!(ev.ctrlKey || ev.metaKey || ev.shiftKey)) {
           query.toggle();

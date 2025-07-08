@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { EditorRow, EditorFieldGroup, EditorField, InputGroup } from '@grafana/plugin-ui';
 import { Button, Input, Select } from '@grafana/ui';
 
@@ -9,7 +10,8 @@ import {
   BuilderQueryEditorWhereExpression,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { BuildAndUpdateOptions, removeExtraQuotes } from './utils';
 
@@ -100,10 +102,12 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
     <EditorRow>
       <EditorFieldGroup>
         <EditorField
-          label="Fuzzy Search"
+          label={t('components.fuzzy-search.label-fuzzy-search', 'Fuzzy Search')}
           optional={true}
-          tooltip={`Find approximate text matches with tolerance for spelling variations. By default, fuzzy search scans all
-              columns (*) in the entire table, not just specific fields.`}
+          tooltip={t(
+            'components.fuzzy-search.tooltip-fuzzy-search',
+            'Find approximate text matches with tolerance for spelling variations. By default, fuzzy search scans all columns (*) in the entire table, not just specific fields.'
+          )}
         >
           <InputGroup>
             {isOpen ? (
@@ -111,12 +115,12 @@ export const FuzzySearch: React.FC<FuzzySearchProps> = ({
                 <Input
                   className="width-10"
                   type="text"
-                  placeholder="Enter search term"
+                  placeholder={t('components.fuzzy-search.placeholder-search-team', 'Enter search term')}
                   value={searchTerm}
                   onChange={(e) => updateFuzzySearch(selectedColumn, e.currentTarget.value)}
                 />
                 <Select
-                  aria-label="Select Column"
+                  aria-label={t('components.fuzzy-search.aria-label-select-column', 'Select Column')}
                   options={selectableOptions}
                   value={{ label: selectedColumn || '*', value: selectedColumn || '*' }}
                   onChange={(e: SelectableValue<string>) => updateFuzzySearch(e.value ?? '*', searchTerm)}

@@ -40,6 +40,71 @@ func filterTablesWithData(tables []types.MetadataTable) []types.MetadataTable {
 	return filtered
 }
 
+func writeErrorResponse(rw http.ResponseWriter, statusCode int, message string) error {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(statusCode)
+
+	// Log the raw error message
+	backend.Logger.Error(message)
+
+	// Set error response to initial error message
+	errorBody := map[string]string{"error": message}
+
+	// Attempt to locate JSON portion in error message
+	re := regexp.MustCompile(`\{.*\}`)
+	jsonPart := re.FindString(message)
+	if jsonPart != "" {
+		var jsonData map[string]interface{}
+		if unmarshalErr := json.Unmarshal([]byte(jsonPart), &jsonData); unmarshalErr != nil {
+			errorBody["error"] = fmt.Sprintf("Invalid JSON format in error message. Raw error: %s", message)
+			backend.Logger.Error("failed to unmarshal JSON error message", "error", unmarshalErr)
+		} else {
+			// Extract relevant fields for a formatted error message
+			errorType, ok := jsonData["error"].(string)
+			if ok {
+				errorDescription, ok := jsonData["error_description"].(string)
+				if !ok {
+					backend.Logger.Error("unable to convert error_description to string", "rawError", jsonData["error_description"])
+					// Attempt to just format the error as a string
+					errorDescription = fmt.Sprintf("%v", jsonData["error_description"])
+				}
+				if errorType == "" {
+					errorType = "UnknownError"
+				}
+
+				errorBody["error"] = fmt.Sprintf("%s: %s", errorType, errorDescription)
+			} else {
+				nestedError, ok := jsonData["error"].(map[string]interface{})
+
+				if !ok {
+					errorBody["error"] = fmt.Sprintf("Invalid JSON format in error message. Raw error: %s", message)
+					backend.Logger.Error("failed to unmarshal JSON error message", "error", unmarshalErr)
+				}
+
+				errorType := nestedError["code"].(string)
+				errorDescription, ok := nestedError["message"].(string)
+				if !ok {
+					backend.Logger.Error("unable to convert error_description to string", "rawError", jsonData["error_description"])
+					// Attempt to just format the error as a string
+					errorDescription = fmt.Sprintf("%v", nestedError["message"])
+				}
+
+				if errorType == "" {
+					errorType = "UnknownError"
+				}
+				errorBody["error"] = fmt.Sprintf("%s: %s", errorType, errorDescription)
+			}
+		}
+	}
+
+	jsonRes, _ := json.Marshal(errorBody)
+	_, err := rw.Write(jsonRes)
+	if err != nil {
+		return fmt.Errorf("unable to write HTTP response: %v", err)
+	}
+	return nil
+}
+
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	if req.URL.Path == "/usage/basiclogs" {
 		newUrl := &url.URL{
@@ -49,15 +114,21 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		}
 		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
 	} else if strings.Contains(req.URL.Path, "/metadata") {
+		isAppInsights := strings.Contains(strings.ToLower(req.URL.Path), "microsoft.insights/components")
 		// Add necessary headers
-		req.Header.Set("Prefer", "metadata-format-v4,exclude-resourcetypes,exclude-customfunctions")
+		if isAppInsights {
+			// metadata-format-v4 is not supported for AppInsights resources
+			req.Header.Set("Prefer", "metadata-format-v3,exclude-resourcetypes,exclude-customfunctions")
+		} else {
+			req.Header.Set("Prefer", "metadata-format-v4,exclude-resourcetypes,exclude-customfunctions")
+		}
 		queryParams := req.URL.Query()
 		// Add necessary query params
 		queryParams.Add("select", "categories,solutions,tables,workspaces")
 		req.URL.RawQuery = queryParams.Encode()
 		resp, err := cli.Do(req)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch metadata: %w", err)
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to fetch metadata: %s", err))
 		}
 
 		defer func() {
@@ -69,23 +140,28 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 		encoding := resp.Header.Get("Content-Encoding")
 		body, err := decode(encoding, resp.Body)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read metadata response: %w", err)
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("failed to read metadata response: %s", err))
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("metadata API error: %s", string(body))
+			return nil, writeErrorResponse(rw, resp.StatusCode, fmt.Sprintf("metadata API error: %s", string(body)))
 		}
 
 		var metadata types.AzureLogAnalyticsMetadata
 		err = json.Unmarshal(body, &metadata)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal metadata response: %w", err)
+			return nil, writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to unmarshal metadata response: %s", err))
 		}
-		metadata.Tables = filterTablesWithData(metadata.Tables)
+
+		// AppInsights metadata requests do not return the HasData field
+		// So we return all tables
+		if !isAppInsights {
+			metadata.Tables = filterTablesWithData(metadata.Tables)
+		}
 
 		responseBody, err := json.Marshal(metadata)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal metadata response: %w", err)
+			return nil, writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("failed to marshal metadata response: %s", err))
 		}
 
 		rw.Header().Set("Content-Type", "application/json")
@@ -523,7 +599,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 				DatasourceName: dsInfo.DatasourceName,
 				Query:          queryJSONModel,
 			},
-		})
+		}, MultiField)
 
 		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
 		AddCustomDataLink(*frame, data.DataLink{
@@ -534,7 +610,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 				DatasourceName: dsInfo.DatasourceName,
 				Query:          queryJSONModel,
 			},
-		})
+		}, MultiField)
 
 		linkTitle := "Explore Trace in Azure Portal"
 		AddConfigLinks(*frame, tracesUrl, &linkTitle)
@@ -548,7 +624,7 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 			DatasourceName: dsInfo.DatasourceName,
 			Query:          logsJSONModel,
 		},
-	})
+	}, SingleField)
 
 	return nil
 }

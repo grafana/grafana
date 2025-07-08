@@ -6,6 +6,7 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   Alert,
@@ -21,7 +22,6 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,
@@ -543,7 +543,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 }}
                 control={control}
                 rules={{
-                  required: { value: true, message: 'A valid expression is required' },
+                  required: {
+                    value: true,
+                    message: t(
+                      'alerting.query-and-expressions-step.message.a-valid-expression-is-required',
+                      'A valid expression is required'
+                    ),
+                  },
                 }}
               />
             </Field>
@@ -712,7 +718,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
             <br />
           </div>
         }
-        confirmText="Deactivate"
+        confirmText={t('alerting.query-and-expressions-step.confirmText-deactivate', 'Deactivate')}
         icon="exclamation-triangle"
         onConfirm={() => {
           setValue('editorSettings.simplifiedQueryEditor', true);

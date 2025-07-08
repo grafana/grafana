@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Switch, InteractiveTable, Tooltip, type CellProps, Button, ConfirmModal, type SortByFn } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { FeatureToggle, getTogglesAPI } from './AdminFeatureTogglesAPI';
 
@@ -37,6 +37,7 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
   const [localToggles, setLocalToggles] = useState<FeatureToggle[]>(featureToggles);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveModel, setShowSaveModal] = useState(false);
+
   const togglesApi = getTogglesAPI();
 
   const handleToggleChange = (toggle: FeatureToggle, newValue: boolean) => {
@@ -91,7 +92,12 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
     switch (stage) {
       case 'GA':
         return (
-          <Tooltip content={'General availability'}>
+          <Tooltip
+            content={t(
+              'admin.admin-feature-toggles-table.get-stage-cell.content-general-availability',
+              'General availability'
+            )}
+          >
             <div>
               <Trans i18nKey="admin.admin-feature-toggles-table.get-stage-cell.ga">GA</Trans>
             </div>
@@ -180,7 +186,7 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
                 </p>
               </div>
             }
-            confirmText="Save changes"
+            confirmText={t('admin.admin-feature-toggles-table.confirmText-save-changes', 'Save changes')}
             onConfirm={async () => {
               showSaveChangesModal(false)();
               handleSaveChanges();

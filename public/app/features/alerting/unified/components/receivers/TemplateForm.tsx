@@ -7,6 +7,7 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -25,7 +26,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
@@ -202,7 +202,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                 >
                   <Input
                     {...register('title', {
-                      required: { value: true, message: 'Required.' },
+                      required: { value: true, message: t('alerting.template-form.message.required', 'Required.') },
                       validate: { titleIsUnique },
                     })}
                     placeholder={t(

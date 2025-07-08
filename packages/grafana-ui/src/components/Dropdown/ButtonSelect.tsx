@@ -17,8 +17,8 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
-import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton';
-import { PopoverContent } from '../Tooltip';
+import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
+import { PopoverContent } from '../Tooltip/types';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -33,8 +33,7 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
 }
 
 /**
- * @internal
- * A temporary component until we have a proper dropdown component
+ * @deprecated Use Combobox or Dropdown instead
  */
 const ButtonSelectComponent = <T,>(props: Props<T>) => {
   const { className, options, value, onChange, narrow, variant, ...restProps } = props;

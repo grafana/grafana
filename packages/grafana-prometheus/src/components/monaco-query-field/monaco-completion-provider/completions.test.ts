@@ -1,8 +1,8 @@
 import { config } from '@grafana/runtime';
 
-import { SUGGESTIONS_LIMIT } from '../../../language_provider';
+import { SUGGESTIONS_LIMIT } from '../../../constants';
 import { FUNCTIONS } from '../../../promql';
-import { getMockTimeRange } from '../../../test/__mocks__/datasource';
+import { getMockTimeRange } from '../../../test/mocks/datasource';
 
 import { filterMetricNames, getCompletions } from './completions';
 import { DataProvider, type DataProviderParams } from './data_provider';
@@ -14,12 +14,10 @@ const dataProviderSettings = {
     datasource: {
       metricNamesAutocompleteSuggestionLimit: SUGGESTIONS_LIMIT,
     },
-    getLabelKeys: jest.fn(),
-    getLabelValues: jest.fn(),
-    getSeriesLabels: jest.fn(),
-    getSeriesValues: jest.fn(),
-    metrics: [],
-    metricsMetadata: {},
+    queryLabelKeys: jest.fn(),
+    queryLabelValues: jest.fn(),
+    retrieveLabelKeys: jest.fn(),
+    retrieveMetricsMetadata: jest.fn(),
   },
   historyProvider: history.map((expr, idx) => ({ query: { expr, refId: 'some-ref' }, ts: idx })),
 } as unknown as DataProviderParams;
@@ -286,10 +284,7 @@ describe('Label value completions', () => {
       getAllMetricNames: jest.fn(),
       metricNamesToMetrics: jest.fn(),
       getHistory: jest.fn(),
-      getLabelNames: jest.fn(),
       getLabelValues: jest.fn().mockResolvedValue(['value1', 'value"2', 'value\\3', "value'4"]),
-      getSeriesLabels: jest.fn(),
-      getSeriesValues: jest.fn(),
       monacoSettings: {
         setInputInRange: jest.fn(),
         inputInRange: '',

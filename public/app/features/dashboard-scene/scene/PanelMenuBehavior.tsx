@@ -10,12 +10,12 @@ import {
   PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -328,7 +328,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       // Add specific "Metrics drilldown" menu
       if (metricsDrilldownLinks.length > 0) {
         items.push({
-          text: 'Metrics drilldown',
+          text: t('dashboard-scene.panel-menu-behavior.async-func.text.metrics-drilldown', 'Metrics drilldown'),
           iconClassName: 'code-branch',
           type: 'submenu',
           subMenu: createExtensionSubMenu(metricsDrilldownLinks),
@@ -338,7 +338,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       // Add generic "Extensions" menu for other links
       if (otherLinks.length > 0) {
         items.push({
-          text: 'Extensions',
+          text: t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions'),
           iconClassName: 'plug',
           type: 'submenu',
           subMenu: createExtensionSubMenu(otherLinks),
@@ -544,8 +544,8 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
   appEvents.publish(
     new ShowConfirmModalEvent({
-      title: 'Remove panel',
-      text: 'Are you sure you want to remove this panel?',
+      title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
+      text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
       icon: 'trash-alt',
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
@@ -558,7 +558,7 @@ const onCreateAlert = async (panel: VizPanel) => {
     const formValues = await scenesPanelToRuleFormValues(panel);
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
     locationService.push(ruleFormUrl);
   } catch (err) {

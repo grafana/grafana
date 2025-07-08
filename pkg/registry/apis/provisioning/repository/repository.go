@@ -38,6 +38,20 @@ var ErrFileNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "file not found",
 }}
 
+var ErrRefNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusNotFound,
+	Reason:  metav1.StatusReasonNotFound,
+	Message: "ref not found",
+}}
+
+var ErrFileAlreadyExists error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusConflict,
+	Reason:  metav1.StatusReasonAlreadyExists,
+	Message: "file already exists",
+}}
+
 type FileInfo struct {
 	// Path to the file on disk.
 	// No leading or trailing slashes will be contained within.
@@ -162,10 +176,8 @@ type RepositoryWithURLs interface {
 type Hooks interface {
 	Repository
 
-	// For repositories that support webhooks
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
-	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
-	OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error)
+	OnCreate(ctx context.Context) ([]map[string]interface{}, error)
+	OnUpdate(ctx context.Context) ([]map[string]interface{}, error)
 	OnDelete(ctx context.Context) error
 }
 

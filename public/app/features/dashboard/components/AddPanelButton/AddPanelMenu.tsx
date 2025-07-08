@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getCopiedPanelPlugin,

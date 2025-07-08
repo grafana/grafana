@@ -6,10 +6,10 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 

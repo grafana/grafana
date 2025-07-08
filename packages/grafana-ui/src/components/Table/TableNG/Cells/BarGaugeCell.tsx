@@ -1,8 +1,11 @@
+import { useState } from 'react';
+
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
+import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
+import { tooltipOnClickHandler, DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { BarGaugeCellProps } from '../types';
 import { extractPixelValue, getCellOptions, getAlignmentFactor, getCellLinks } from '../utils';
 
@@ -20,7 +23,7 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
-export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: BarGaugeCellProps) => {
+export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx, actions }: BarGaugeCellProps) => {
   const displayValue = field.display!(value);
   const cellOptions = getCellOptions(field);
   const heightOffset = extractPixelValue(theme.spacing(1));
@@ -44,13 +47,14 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
       cellOptions.valueDisplayMode !== undefined ? cellOptions.valueDisplayMode : BarGaugeValueMode.Text;
   }
 
-  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
-
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
+  const links = getCellLinks(field, rowIdx) || [];
 
-  const renderComponent = (menuProps: DataLinksContextMenuApi) => {
-    const { openMenu } = menuProps;
+  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
+  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
+  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
 
+  const renderComponent = () => {
     return (
       <BarGauge
         width={width}
@@ -62,7 +66,6 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
         orientation={VizOrientation.Horizontal}
         theme={theme}
         alignmentFactors={alignmentFactors}
-        onClick={openMenu}
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
@@ -71,19 +74,25 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
     );
   };
 
-  // @TODO: Actions
   return (
-    <>
-      {hasLinks ? (
-        <DataLinksContextMenu
-          links={() => getCellLinks(field, rowIdx) || []}
-          style={{ display: 'flex', width: '100%' }}
-        >
-          {(api) => renderComponent(api)}
-        </DataLinksContextMenu>
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
+    <div
+      style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
+    >
+      {shouldShowLink ? (
+        renderSingleLink(links[0], renderComponent())
+      ) : shouldShowTooltip ? (
+        <DataLinksActionsTooltip
+          links={links}
+          actions={actions}
+          value={renderComponent()}
+          coords={tooltipCoords}
+          onTooltipClose={() => setTooltipCoords(undefined)}
+        />
       ) : (
-        renderComponent({})
+        renderComponent()
       )}
-    </>
+    </div>
   );
 };

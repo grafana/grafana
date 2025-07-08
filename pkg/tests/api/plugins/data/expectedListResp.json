@@ -209,7 +209,7 @@
           "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "azure",
@@ -880,7 +880,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -934,7 +934,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1195,12 +1195,16 @@
           "url": "https://www.jaegertracing.io"
         },
         {
-          "name": "GitHub Project",
+          "name": "Jaeger GitHub Project",
           "url": "https://github.com/jaegertracing/jaeger"
         },
         {
+          "name": "Repository",
+          "url": "https://github.com/grafana/grafana"
+        },
+        {
           "name": "Raise issue",
-          "url": "https://github.com/jaegertracing/jaeger/issues/new"
+          "url": "https://github.com/grafana/grafana/issues/new"
         },
         {
           "name": "Documentation",
@@ -1213,7 +1217,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1321,12 +1325,12 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.4.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1371,7 +1375,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1421,7 +1425,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -1625,7 +1629,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": [
         "grafana",
@@ -1730,7 +1734,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2038,7 +2042,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2088,7 +2092,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },
@@ -2441,7 +2445,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "11.6.0-pre",
+      "version": "12.1.0-pre",
       "updated": "",
       "keywords": null
     },

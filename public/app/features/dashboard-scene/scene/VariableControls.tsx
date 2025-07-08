@@ -29,6 +29,10 @@ export function VariableValueSelectWrapper({ variable }: VariableSelectProps) {
   const styles = useStyles2(getStyles);
 
   if (state.hide === VariableHide.hideVariable) {
+    if (variable.UNSAFE_renderAsHidden) {
+      return <variable.Component model={variable} />;
+    }
+
     return null;
   }
 
@@ -95,8 +99,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     // No border for second element (inputs) as label and input border is shared
     '> :nth-child(2)': css({
-      borderTopLeftRadius: 0,
-      borderBottomLeftRadius: 0,
+      borderTopLeftRadius: 'unset',
+      borderBottomLeftRadius: 'unset',
     }),
   }),
   labelWrapper: css({

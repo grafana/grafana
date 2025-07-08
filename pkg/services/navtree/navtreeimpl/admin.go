@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
@@ -60,15 +61,15 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
-		provisioningNode := &navtree.NavLink{
+	if c.HasRole(identity.RoleAdmin) &&
+		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
+			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
-		}
-
-		configNodes = append(configNodes, provisioningNode)
+		})
 	}
 
 	generalNode := &navtree.NavLink{
@@ -153,19 +154,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
-	disabled, err := s.apiKeyService.IsDisabled(ctx, c.GetOrgID())
-	if err != nil {
-		return nil, err
-	}
-	if hasAccess(ac.ApiKeyAccessEvaluator) && !disabled {
-		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
-			Text:     "API keys",
-			Id:       "apikeys",
-			SubTitle: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-			Icon:     "key-skeleton-alt",
-			Url:      s.cfg.AppSubURL + "/org/apikeys",
-		})
-	}
 
 	if s.license.FeatureEnabled("groupsync") &&
 		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
@@ -195,7 +183,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	configNodes = append(configNodes, usersNode)
 
 	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
-		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {
+		hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:      "Authentication",
 			Id:        "authentication",

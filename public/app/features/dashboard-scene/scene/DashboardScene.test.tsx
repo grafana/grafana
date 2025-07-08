@@ -1,5 +1,5 @@
 import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
-import { locationService, RefreshEvent } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -15,6 +15,7 @@ import {
 import { Dashboard, DashboardCursorSync, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
@@ -222,7 +223,7 @@ describe('DashboardScene', () => {
       it('A change to folderUid should set isDirty true', () => {
         const prevMeta = { ...scene.state.meta };
 
-        // The worker only detects changes in the model, so the folder change should be detected anyway
+        // The worker detects changes in the model, so the folder change should be detected anyway
         mockResultsOfDetectChangesWorker({ hasChanges: false });
 
         scene.setState({
@@ -451,25 +452,11 @@ describe('DashboardScene', () => {
         expect(panel.state.key).toBe('panel-7');
       });
 
-      it('Should select new panel', () => {
-        scene.state.editPane.activate();
-
-        const panel = scene.onCreateNewPanel();
-        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(panel);
-      });
-
       it('Should select new row', () => {
         scene.state.editPane.activate();
 
         const row = scene.onCreateNewRow();
         expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(row);
-      });
-
-      it('Should select new tab', () => {
-        scene.state.editPane.activate();
-
-        const tab = scene.onCreateNewTab();
-        expect(scene.state.editPane.state.selection?.getFirstObject()).toBe(tab);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
@@ -638,6 +625,7 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
+          dashboardTitle: 'hello',
           panelId: 1,
           panelName: 'Panel A',
           panelPluginId: 'table',
@@ -654,6 +642,7 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
+          dashboardTitle: 'hello',
           panelId: 1,
           panelName: 'Panel A',
           panelPluginId: 'table',
@@ -795,6 +784,82 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
+    });
+  });
+
+  describe('When checking dashboard managed by an external system', () => {
+    beforeEach(() => {
+      config.featureToggles.provisioning = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.provisioning = false;
+    });
+
+    it('should return true if the dashboard is managed', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
+      });
+      expect(scene.isManaged()).toBe(true);
+    });
+
+    it('dashboard should be editable if managed by repo', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(false);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: kubectl', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Kubectl,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: terraform', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: {
+            annotations: {
+              [AnnoKeyManagerKind]: ManagerKind.Terraform,
+            },
+          },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should not be editable if managed by systems that do not allow edits: plugin', () => {
+      const scene = buildTestScene({
+        meta: {
+          k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } },
+        },
+      });
+      expect(scene.managedResourceCannotBeEdited()).toBe(true);
+    });
+
+    it('dashboard should be editable if not managed', () => {
+      const scene = buildTestScene();
+      expect(scene.managedResourceCannotBeEdited()).toBe(false);
     });
   });
 });

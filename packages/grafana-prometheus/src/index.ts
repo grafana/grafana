@@ -18,13 +18,9 @@ export { PromVariableQueryEditor } from './components/VariableQueryEditor';
 
 // CONFIGURATION/
 // Main export
-export {
-  ConfigEditor,
-  docsTip,
-  overhaulStyles,
-  validateInput,
-  PROM_CONFIG_LABEL_WIDTH,
-} from './configuration/ConfigEditor';
+export { ConfigEditor } from './configuration/ConfigEditor';
+export { overhaulStyles, validateInput, docsTip } from './configuration/shared/utils';
+export { PROM_CONFIG_LABEL_WIDTH, InstantQueryRefIdIndex } from './constants';
 // The parts
 export { AlertingSettingsOverhaul } from './configuration/AlertingSettingsOverhaul';
 export { DataSourceHttpSettingsOverhaul } from './configuration/DataSourceHttpSettingsOverhaul';
@@ -58,10 +54,11 @@ export { MetricsModal } from './querybuilder/components/metrics-modal/MetricsMod
 
 // SRC/
 // Main export
-export { PrometheusDatasource, InstantQueryRefIdIndex } from './datasource';
+export { PrometheusDatasource } from './datasource';
 // The parts
 export { addLabelToQuery } from './add_label_to_query';
 export { type QueryEditorMode, type PromQueryFormat, type Prometheus } from './dataquery';
+export { loadResources } from './loadResources';
 export { PrometheusMetricFindQuery } from './metric_find_query';
 export { promqlGrammar } from './promql';
 export { getQueryHints, getInitHints } from './query_hints';
@@ -84,6 +81,8 @@ export {
   type StandardPromVariableQuery,
 } from './types';
 export { PrometheusVariableSupport } from './variables';
+
+export type { PrometheusLanguageProviderInterface } from './language_provider';
 
 // For Metrics Drilldown
 export { default as PromQlLanguageProvider } from './language_provider';

@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
 
+import { t } from '@grafana/i18n';
 import { Drawer, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { createRelativeUrl } from '../utils/url';
 

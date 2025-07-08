@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
+	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -19,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/anonymous/validator"
+	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	builder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -92,6 +96,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
+	secretkeeper.ProvideService,
+	wire.Bind(new(contracts.KeeperService), new(*secretkeeper.OSSKeeperService)),
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	guardian.ProvideGuardian,
@@ -121,6 +127,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Struct(new(unified.Options), "*"),
 	unified.ProvideUnifiedStorageClient,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
+	aggregatorrunner.ProvideNoopAggregatorConfigurator,
+	apisregistry.WireSetExts,
 )
 
 var wireExtsSet = wire.NewSet(

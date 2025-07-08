@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/plugin-ui';
 import { Button, Select, Label } from '@grafana/ui';
 
@@ -10,7 +11,8 @@ import {
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 
@@ -109,24 +111,29 @@ export const OrderBySection: React.FC<OrderBySectionProps> = ({ query, allColumn
     <EditorRow>
       <EditorFieldGroup>
         <EditorField
-          label="Order By"
+          label={t('components.order-by-section.label-order-by', 'Order By')}
           optional={true}
-          tooltip={`Sort results based on one or more columns in ascending or descending order.`}
+          tooltip={t(
+            'components.order-by-section.tooltip-order-by',
+            'Sort results based on one or more columns in ascending or descending order.'
+          )}
         >
           <>
             {orderBy.length > 0 ? (
               orderBy.map((entry, index) => (
                 <InputGroup key={index}>
                   <Select
-                    aria-label="Order by column"
+                    aria-label={t('components.order-by-section.aria-label-order-by-column', 'Order by column')}
                     width={inputFieldSize}
                     value={entry.property?.name ? { label: entry.property.name, value: entry.property.name } : null}
                     options={columnOptions}
                     onChange={(e) => e.value && handleOrderByChange(index, 'column', e.value)}
                   />
-                  <Label style={{ margin: '9px 9px 0 9px' }}>BY</Label>
+                  <Label style={{ margin: '9px 9px 0 9px' }}>
+                    <Trans i18nKey="components.order-by-section.label-by">BY</Trans>
+                  </Label>
                   <Select
-                    aria-label="Order Direction"
+                    aria-label={t('components.order-by-section.aria-label-order-direction', 'Order Direction')}
                     width={inputFieldSize}
                     value={orderOptions.find((o) => o.value === entry.order) || null}
                     options={orderOptions}

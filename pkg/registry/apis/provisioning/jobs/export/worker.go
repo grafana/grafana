@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
@@ -57,9 +57,14 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
+	writer := gogit.Progress(func(line string) {
+		progress.SetMessage(ctx, line)
+	}, "finished")
+
 	cloneOptions := repository.CloneOptions{
 		Timeout:      10 * time.Minute,
 		PushOnWrites: false,
+		Progress:     writer,
 		BeforeFn: func() error {
 			progress.SetMessage(ctx, "clone target")
 			// :( the branch is now baked into the repo
@@ -73,7 +78,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 
 	pushOptions := repository.PushOptions{
 		Timeout:  10 * time.Minute,
-		Progress: os.Stdout,
+		Progress: writer,
 		BeforeFn: func() error {
 			progress.SetMessage(ctx, "push changes")
 			return nil

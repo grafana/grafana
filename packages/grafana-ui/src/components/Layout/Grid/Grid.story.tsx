@@ -1,6 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { useTheme2 } from '../../../themes';
+import { useTheme2 } from '../../../themes/ThemeContext';
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 
 import { Grid } from './Grid';
@@ -11,7 +11,7 @@ const dimensions = Array.from({ length: 9 }).map(() => ({
 }));
 
 const meta: Meta<typeof Grid> = {
-  title: 'General/Layout/Grid',
+  title: 'Layout/Grid',
   component: Grid,
   parameters: {
     docs: {

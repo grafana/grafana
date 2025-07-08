@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import { PureComponent, RefObject } from 'react';
 
-import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
 import { SpanBarOptions, TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -23,9 +23,10 @@ import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
-import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
+import TNil from '../types/TNil';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceSpan, Trace, TraceLink, TraceSpanReference } from '../types/trace';
+import { SpanLinkFunc } from '../types/links';
+import { TraceSpan, Trace, TraceSpanReference, CriticalPathSection } from '../types/trace';
 
 import { TraceFlameGraphs } from './SpanDetail';
 import TimelineHeaderRow from './TimelineHeaderRow';
@@ -72,6 +73,7 @@ export type TProps = {
   trace: Trace;
   traceToProfilesOptions?: TraceToProfilesOptions;
   datasourceType: string;
+  datasourceUid: string;
   spanBarOptions: SpanBarOptions | undefined;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
@@ -96,7 +98,6 @@ export type TProps = {
   detailToggle: (spanID: string) => void;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
-  linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   theme: GrafanaTheme2;
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
@@ -222,6 +223,7 @@ export class UnthemedTraceTimelineViewer extends PureComponent<TProps, State> {
           topOfViewRef={topOfViewRef}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           datasourceType={this.props.datasourceType}
+          datasourceUid={this.props.datasourceUid}
         />
       </div>
     );

@@ -16,6 +16,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import { useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { Button, IconName, Tooltip, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => ({
@@ -50,7 +51,7 @@ export default function CopyIcon({ copyText, icon = 'copy', tooltipTitle }: Prop
   };
 
   return (
-    <Tooltip content={hasCopied ? 'Copied' : tooltipTitle}>
+    <Tooltip content={hasCopied ? t('explore.trace-view.tooltip-copy-icon', 'Copied') : tooltipTitle}>
       <Button className={cx(styles.CopyIcon)} type="button" icon={icon} onClick={handleClick} />
     </Tooltip>
   );

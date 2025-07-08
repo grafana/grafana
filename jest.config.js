@@ -5,22 +5,31 @@ process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylig
 
 const esModules = [
   '@glideapps/glide-data-grid',
+  '@wojtekmaj/date-utils',
   'ol',
   'd3',
   'd3-color',
   'd3-interpolate',
   'delaunator',
+  'get-user-locale',
   'internmap',
   'robust-predicates',
   'leven',
   'nanoid',
+  'marked',
+  'memoize',
+  'mimic-function',
   'monaco-promql',
+  'react-calendar',
   '@kusto/monaco-kusto',
   'monaco-editor',
   '@msagl',
   'lodash-es',
   'vscode-languageserver-types',
   '@bsull/augurs',
+  'react-data-grid',
+  '@grafana/llm',
+  'pkce-challenge',
 ].join('|');
 
 module.exports = {
@@ -35,7 +44,7 @@ module.exports = {
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'cjs'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
   testTimeout: 30000,
   resolver: `<rootDir>/public/test/jest-resolver.js`,
@@ -44,7 +53,7 @@ module.exports = {
     __webpack_public_path__: '', // empty string
   },
   moduleNameMapper: {
-    '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
+    '\\.(svg|png|jpg)': '<rootDir>/public/test/mocks/images.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
     // resolve directly as monaco and kusto don't have main property in package.json which jest needs

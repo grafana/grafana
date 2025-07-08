@@ -2,13 +2,12 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
-import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -18,17 +17,14 @@ import {
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
 } from '../../../Analytics';
-import { shouldUseAlertingListViewV2 } from '../../../featureToggles';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
-import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-import { RulesViewModeSelector } from './RulesViewModeSelector';
+import { RulesViewModeSelector, SupportedView } from './RulesViewModeSelector';
 
 const RuleTypeOptions: SelectableValue[] = [
   { label: 'Alert ', value: PromRuleType.Alerting },
@@ -42,22 +38,22 @@ const RuleHealthOptions: SelectableValue[] = [
 ];
 
 // Contact point selector is not supported in Alerting ListView V2 yet
-const canRenderContactPointSelector =
-  (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
-    config.featureToggles.alertingSimplifiedRouting &&
-    shouldUseAlertingListViewV2() === false) ??
-  false;
+const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
 interface RulesFilerProps {
   onClear?: () => void;
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
 }
 
-const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
-  label: alertStateToReadable(value),
-  value,
-}));
+const RuleStateOptions = Object.entries(PromAlertingRuleState)
+  .filter(([key, value]) => value !== PromAlertingRuleState.Unknown) // Exclude Unknown state from filter options
+  .map(([key, value]) => ({
+    label: alertStateToReadable(value),
+    value,
+  }));
 
-const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
+const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
@@ -233,29 +229,29 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
           />
         </div>
         {canRenderContactPointSelector && (
-          <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
-            <Stack direction="column" gap={0}>
-              <Field
-                label={
-                  <Label htmlFor="contactPointFilter">
-                    <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
-                  </Label>
-                }
-              >
-                <ContactPointSelector
-                  selectedContactPointName={filterState.contactPoint}
-                  selectProps={{
-                    inputId: 'contactPointFilter',
-                    width: 40,
-                    onChange: (selectValue) => {
-                      handleContactPointChange(selectValue?.value?.name!);
-                    },
-                    isClearable: true,
-                  }}
-                />
-              </Field>
-            </Stack>
-          </AlertmanagerProvider>
+          <Stack direction="column" gap={0}>
+            <Field
+              label={
+                <Label htmlFor="contactPointFilter">
+                  <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                </Label>
+              }
+            >
+              <ContactPointSelector
+                id="contactPointFilter"
+                value={filterState.contactPoint ?? null}
+                width={40}
+                placeholder={t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                )}
+                isClearable
+                onChange={(contactPoint) => {
+                  handleContactPointChange(contactPoint?.spec.title ?? '');
+                }}
+              />
+            </Field>
+          </Stack>
         )}
         {pluginsFilterEnabled && (
           <div>
@@ -264,8 +260,8 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             </Label>
             <RadioButtonGroup<'hide'>
               options={[
-                { label: 'Show', value: undefined },
-                { label: 'Hide', value: 'hide' },
+                { label: t('alerting.rules-filter.label.show', 'Show'), value: undefined },
+                { label: t('alerting.rules-filter.label.hide', 'Hide'), value: 'hide' },
               ]}
               value={filterState.plugins}
               onChange={(value) => updateFilters({ ...filterState, plugins: value })}
@@ -322,7 +318,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             <Label>
               <Trans i18nKey="alerting.rules-filter.view-as">View as</Trans>
             </Label>
-            <RulesViewModeSelector />
+            <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
           </div>
         </Stack>
         {hasActiveFilters && (

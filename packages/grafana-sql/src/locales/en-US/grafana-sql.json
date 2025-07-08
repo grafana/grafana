@@ -1,0 +1,154 @@
+{
+  "grafana-sql": {
+    "components": {
+      "confirm-modal": {
+        "builder-mode": "Builder mode does not display changes made in code. The query builder will display the last changes you made in builder mode.",
+        "cancel": "Cancel",
+        "clipboard": "Do you want to copy your code to the clipboard?",
+        "copy-code-and-switch": "Copy code and switch",
+        "discard-code-and-switch": "Discard code and switch",
+        "warning": "Warning"
+      },
+      "connection-limits": {
+        "auto-max-idle": "Auto max idle",
+        "content-auto-max-idle": "If enabled, automatically set the number of <1>Maximum idle connections</1> to the same value as<3> Max open connections</3>. If the number of maximum open connections is not set it will be set to the default ({{defaultMaxIdle}}).",
+        "content-max-idle": "The maximum number of connections in the idle connection pool.If <1>Max open connections</1> is greater than 0 but less than the <3>Max idle connections</3>, then the <5>Max idle connections</5> will be reduced to match the <8>Max open connections</8> limit. If set to 0, no idle connections are retained.",
+        "content-max-lifetime": "The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever.",
+        "content-max-open": "The maximum number of open connections to the database. If <1>Max idle connections</1> is greater than 0 and the <3>Max open connections</3> is less than <5>Max idle connections</5>, then<7>Max idle connections</7> will be reduced to match the <9>Max open connections</9> limit. If set to 0, there is no limit on the number of open connections.",
+        "max-idle": "Max idle",
+        "max-lifetime": "Max lifetime",
+        "max-open": "Max open",
+        "title-connection-limits": "Connection limits"
+      },
+      "dataset-selector": {
+        "aria-label-dataset-selector": "Dataset selector"
+      },
+      "error-boundary": {
+        "fall-back": {
+          "error": "Error"
+        }
+      },
+      "get-custom-operators": {
+        "custom-operators": {
+          "label": {
+            "macros": "Macros"
+          }
+        }
+      },
+      "make-render-column": {
+        "render-column": {
+          "aria-label-group-by": "Group by",
+          "title-remove-group-by-column": "Remove group by column"
+        }
+      },
+      "order-by-row": {
+        "aria-label-order-by": "Order by",
+        "label-limit": "Limit",
+        "label-offset": "Offset",
+        "label-order-by": "Order by"
+      },
+      "preview": {
+        "label-element": {
+          "preview": "Preview",
+          "tooltip-copy-to-clipboard": "Copy to clipboard"
+        }
+      },
+      "query-header": {
+        "content-invalid-query": "Your query is invalid. Check below for details. <1></1>However, you can still run this query.",
+        "editor-modes": {
+          "label-builder": "Builder",
+          "label-code": "Code"
+        },
+        "label-dataset": "Dataset",
+        "label-filter": "Filter",
+        "label-format": "Format",
+        "label-group": "Group",
+        "label-order": "Order",
+        "label-preview": "Preview",
+        "label-table": "Table",
+        "placeholder-select-format": "Select format",
+        "run-query": "Run query"
+      },
+      "query-toolbox": {
+        "content-hit-ctrlcmdreturn-to-run-query": "Hit CTRL/CMD+Return to run query",
+        "tooltip-collapse": "Collapse editor",
+        "tooltip-expand": "Expand editor",
+        "tooltip-format-query": "Format query"
+      },
+      "query-validator": {
+        "query-will-process": "<0></0> This query will process <2>{{bytes}}</2> when run.",
+        "validating-query": "Validating query..."
+      },
+      "raw-editor": {
+        "render-placeholder": {
+          "editing-in-expanded-code-editor": "Editing in expanded code editor"
+        },
+        "title-query-num": "Query {{queryNum}}"
+      },
+      "select-column": {
+        "label-column": "Column"
+      },
+      "select-custom-function-parameters": {
+        "aria-label-parameter": "Parameter {{index}} for column {{columnIndex}}",
+        "render-parameters": {
+          "params": {
+            "title-remove-parameter": "Remove parameter"
+          }
+        },
+        "title-add-parameter": "Add parameter"
+      },
+      "select-row": {
+        "aggregate-options": {
+          "options": {
+            "label": {
+              "aggregations": "Aggregations",
+              "macros": "Macros"
+            }
+          }
+        },
+        "label": {
+          "time": "time",
+          "value": "value"
+        },
+        "label-alias": "Alias",
+        "label-data-operations": "Data operations",
+        "title-add-column": "Add column",
+        "title-remove-column": "Remove column"
+      },
+      "settings": {
+        "aria-label-conjunction": "Conjunction",
+        "aria-label-field": "Field",
+        "aria-label-operator": "Operator",
+        "title-button-filter": "{{ buttonLabel }} filter"
+      },
+      "sql-query-editor-lazy": {
+        "text-loading-editor": "Loading editor"
+      },
+      "table-selector": {
+        "aria-label-table-selector": "Table selector",
+        "placeholder-loading": "Loading tables",
+        "placeholder-select-table": "Select table"
+      },
+      "tlssecrets-config": {
+        "content-tlsssl-client-certificate": "To authenticate with an TLS/SSL client certificate, provide the client certificate here.",
+        "content-tlsssl-client-key": "To authenticate with a client TLS/SSL certificate, provide the key here.",
+        "content-tlsssl-root-certificate": "If the selected TLS/SSL mode requires a server root certificate, provide it here",
+        "tlsssl-client-certificate": "TLS/SSL Client Certificate",
+        "tlsssl-client-key": "TLS/SSL Client Key",
+        "tlsssl-root-certificate": "TLS/SSL Root Certificate"
+      },
+      "visual-editor": {
+        "label-filter-by-column-value": "Filter by column value",
+        "label-group-by-column": "Group by column"
+      },
+      "widgets": {
+        "aria-label-macros-value-selector": "Macros value selector"
+      }
+    },
+    "utils": {
+      "get-columns-width-indices": {
+        "label-selected-columns": "Selected columns"
+      }
+    }
+  }
+}

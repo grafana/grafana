@@ -5,11 +5,11 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { Trans } from '@grafana/i18n';
+import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
@@ -25,12 +25,14 @@ import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
 import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
+import { ProvisionedFolderPreviewBanner } from './components/ProvisionedFolderPreviewBanner';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { setAllSelection, useHasSelection } from './state';
+import { useHasSelection } from './state/hooks';
+import { setAllSelection } from './state/slice';
 
 // New Browse/Manage/Search Dashboards views for nested folders
-const BrowseDashboardsPage = memo(() => {
+const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string, string> }) => {
   const { uid: folderUID } = useParams();
   const dispatch = useDispatch();
 
@@ -137,16 +139,15 @@ const BrowseDashboardsPage = memo(() => {
       renderTitle={renderTitle}
       actions={
         <>
-          {false &&
-            hasAdminRights && ( // TODO: change this to a feature flag when dashboard restore is reworked
-              <LinkButton
-                variant="secondary"
-                href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
-                onClick={handleButtonClickToRecentlyDeleted}
-              >
-                <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-              </LinkButton>
-            )}
+          {config.featureToggles.restoreDashboards && hasAdminRights && (
+            <LinkButton
+              variant="secondary"
+              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
+              onClick={handleButtonClickToRecentlyDeleted}
+            >
+              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
+            </LinkButton>
+          )}
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton
@@ -159,6 +160,7 @@ const BrowseDashboardsPage = memo(() => {
       }
     >
       <Page.Contents className={styles.pageContents}>
+        <ProvisionedFolderPreviewBanner queryParams={queryParams} />
         <div>
           <FilterInput
             placeholder={getSearchPlaceholder(searchState.includePanels)}
