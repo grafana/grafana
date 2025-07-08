@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 
+// TODO: Check if this is the correct way to check if the feature toggle is enabled
 test.use({
   featureToggles: {
     canvasPanelPanZoom: true,
@@ -12,14 +13,14 @@ test.describe('Canvas Panel - Scene Tests', () => {
   });
 
   test('should create and render canvas panel with scene elements', async ({ page }) => {
-    // Check that default element exists
-    await page.waitForSelector('[data-testid="canvas-element"]', { timeout: 10000 });
-    const defaultElement = page.locator('[data-testid="canvas-element"]');
-    await expect(defaultElement).toBeVisible();
+    // TODO: Check if this is the correct element selector
+    const canvasElement = await page.getByRole('button', { name: 'Double click to set field' });
+    await expect(canvasElement).toBeVisible();
   });
 
   test('should handle scene pan and zoom when enabled', async ({ page }) => {
     // Check if canvas panel pan/zoom feature toggle is enabled
+    // TODO: Check if this is the correct way to check if the feature toggle is enabled
     const config = await page.evaluate(() => (window as any).grafanaBootData?.settings?.featureToggles);
     if (config?.canvasPanelPanZoom) {
       // Feature toggle is enabled, pan/zoom functionality should be available
@@ -36,10 +37,6 @@ test.describe('Canvas Panel - Scene Tests', () => {
       const infiniteViewer = page.locator('[data-testid="canvas-scene-pan-zoom"]');
       await infiniteViewer.waitFor({ state: 'visible', timeout: 5000 });
       if (await infiniteViewer.isVisible()) {
-        // Test zoom functionality
-        // await infiniteViewer.hover();
-        // await page.mouse.wheel(0, -100);
-
         await infiniteViewer.hover();
         const viewerBounds = await infiniteViewer.boundingBox();
         if (viewerBounds) {
@@ -56,7 +53,7 @@ test.describe('Canvas Panel - Scene Tests', () => {
 
           // Check if canvas element is not visible after pan/zoom operations
           let canvasElement = await page.getByRole('button', { name: 'Double click to set field' });
-          // await expect(canvasElement).not.toBeVisible();
+          // TODO: This is checking if the element is outside the viewport; move this to a separate function to reuse it for zoom tests
           // Get element bounds to check if it's outside viewport
           let canvasSceneWrapper = page.locator('[data-testid="canvas-scene-wrapper"]');
           let elementBounds = await canvasElement.boundingBox();
@@ -85,7 +82,6 @@ test.describe('Canvas Panel - Scene Tests', () => {
           await page.keyboard.up('Control');
 
           // Check if canvas element is not visible after pan/zoom operations
-          // const canvasElement = page.locator('[data-testid="canvas-element"]');
           canvasElement = await page.getByRole('button', { name: 'Double click to set field' });
           // Check if element exists in DOM but is outside viewport
           await expect(canvasElement).toBeAttached(); // Element should still exist in DOM
@@ -112,24 +108,8 @@ test.describe('Canvas Panel - Scene Tests', () => {
           await expect(canvasElement).toBeVisible();
         }
       }
-
-      // // Verify canvas is still functional
-      // const canvasScene = page.locator('[data-testid="canvas-scene-pan-zoom"]');
-      // await expect(canvasScene).toBeVisible();
     }
   });
-
-  // test('should handle scene element connections', async ({ page }) => {
-  //   // Check if connections SVG is present
-  //   const connectionsSVG = page.locator('[data-testid="canvas-connections"]');
-  //   if (await connectionsSVG.isVisible()) {
-  //     await expect(connectionsSVG).toBeVisible();
-  //   }
-
-  //   // Check that scene can handle connection drawing
-  //   const canvasScene = page.locator('[data-testid="canvas-scene"]');
-  //   await expect(canvasScene).toBeVisible();
-  // });
 });
 
 async function createCanvasPanel(page: Page): Promise<void> {
