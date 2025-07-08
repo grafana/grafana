@@ -10,7 +10,7 @@ import {
   AnnotationEventFieldSource,
   getValueFormat,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Select, Tooltip, Icon } from '@grafana/ui';
 
 import { getAnnotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
@@ -171,7 +171,10 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
             onChange={(v: SelectableValue<string>) => {
               this.onFieldNameChange(row.key, v);
             }}
-            noOptionsMessage="Unknown field names"
+            noOptionsMessage={t(
+              'annotations.annotation-field-mapper.noOptionsMessage-unknown-field-names',
+              'Unknown field names'
+            )}
             allowCustomValue={true}
             isClearable
           />

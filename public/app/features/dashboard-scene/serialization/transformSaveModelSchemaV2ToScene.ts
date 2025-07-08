@@ -1,5 +1,6 @@
 import { uniqueId } from 'lodash';
 
+import { AnnotationQuery } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -28,6 +29,7 @@ import {
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
   defaultCustomVariableKind,
+  defaultDataQueryKind,
   defaultDatasourceVariableKind,
   defaultGroupByVariableKind,
   defaultIntervalVariableKind,
@@ -64,7 +66,7 @@ import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
-import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
+import { getRuntimePanelDataSource, getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -97,25 +99,46 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
-    let annoQuerySpec = annotation.spec;
+    let { query: dataQuery, ...annotationQuery } = annotation.spec;
+
+    // Mapping from AnnotationQueryKind to AnnotationQuery used by scenes.
+    let annoQuerySpec: AnnotationQuery = {
+      builtIn: annotation.spec.builtIn ? 1 : 0,
+      enable: annotation.spec.enable,
+      iconColor: annotation.spec.iconColor,
+      name: annotation.spec.name,
+      filter: annotation.spec.filter,
+      hide: annotation.spec.hide,
+      ...dataQuery?.spec,
+    };
+
     // some annotations will contain in the legacyOptions properties that need to be
     // added to the root level annotation spec
-    if (annoQuerySpec?.legacyOptions) {
+    if (annotationQuery.legacyOptions) {
       annoQuerySpec = {
         ...annoQuerySpec,
-        ...annoQuerySpec.legacyOptions,
+        ...annotationQuery.legacyOptions,
+        legacyOptions: {
+          ...annotationQuery.legacyOptions,
+        },
       };
     }
-    return new DashboardAnnotationsDataLayer({
+
+    // get data source from annotation query
+    const datasource = getRuntimePanelDataSource(dataQuery);
+
+    const layerState = {
       key: uniqueId('annotations-'),
       query: {
         ...annoQuerySpec,
-        builtIn: annotation.spec.builtIn ? 1 : 0,
+        datasource,
       },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
-    });
+    };
+
+    return new DashboardAnnotationsDataLayer(layerState);
   });
 
   const isDashboardEditable = Boolean(dashboard.editable);
@@ -514,7 +537,15 @@ function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
   const grafanaBuiltAnnotation: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
-      datasource: { uid: '-- Grafana --', type: 'grafana' },
+      query: {
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: 'grafana',
+        datasource: {
+          name: '-- Grafana --',
+        },
+        spec: {},
+      },
       name: 'Annotations & Alerts',
       iconColor: DEFAULT_ANNOTATION_COLOR,
       enable: true,

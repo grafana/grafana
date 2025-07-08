@@ -965,7 +965,7 @@ export interface TableFieldOptions {
   minWidth?: number;
   width?: number;
   /**
-   * Enables text wrapping for the display name in the table header.
+   * Enables text wrapping for column headers
    */
   wrapHeaderText?: boolean;
 }
