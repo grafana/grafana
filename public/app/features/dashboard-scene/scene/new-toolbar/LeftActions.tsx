@@ -16,7 +16,6 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditingDashboard = Boolean(isEditing);
   const isEditingPanel = Boolean(editPanel);
-  const isPublicDashboard = Boolean(meta.publicDashboardEnabled);
   const hasUid = Boolean(uid);
   const canEdit = Boolean(meta.canEdit);
   const canStar = Boolean(meta.canStar);
@@ -37,7 +36,7 @@ export const LeftActions = ({ dashboard }: { dashboard: DashboardScene }) => {
         key: 'public-dashboard-badge',
         component: PublicDashboardBadge,
         group: 'actions',
-        condition: isPublicDashboard && hasUid && canStar && isShowingDashboard && !isEditingDashboard,
+        condition: hasUid && canStar && isShowingDashboard && !isEditingDashboard,
       },
       {
         key: 'managed-dashboard-badge',
