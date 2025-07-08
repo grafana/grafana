@@ -159,7 +159,7 @@ export class GeneralSettingsEditView
 
   public onDeleteDashboard = () => {};
 
-  public onProvisionedFolderChange = async (newUID: string | undefined, newTitle: string | undefined) => {
+  public onProvisionedFolderChange = async (newUID?: string, newTitle?: string) => {
     if (newUID !== this._dashboard.state.meta.folderUid) {
       appEvents.publish(
         new ShowModalReactEvent({

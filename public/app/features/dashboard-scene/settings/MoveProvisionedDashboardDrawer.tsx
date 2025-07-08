@@ -11,16 +11,12 @@ export interface Props {
   onSuccess: (folderUID: string, folderTitle: string) => void;
 }
 
-/**
- * @description
- * Drawer component for moving a git provisioned dashboard to a different folder.
- */
-export function MoveProvisionedDashboardDrawer({ 
-  dashboard, 
-  targetFolderUID, 
-  targetFolderTitle, 
+export function MoveProvisionedDashboardDrawer({
+  dashboard,
+  targetFolderUID,
+  targetFolderTitle,
   onDismiss,
-  onSuccess 
+  onSuccess,
 }: Props) {
   const { defaultValues, loadedFromRef, readOnly, isGitHub, workflowOptions, isNew } =
     useProvisionedDashboardData(dashboard);

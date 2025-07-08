@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
@@ -8,11 +8,13 @@ import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
-  useGetRepositoryFilesWithPathQuery,
   useCreateRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
+  useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+
+const appEvents = getAppEvents();
 
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
@@ -33,10 +35,6 @@ export interface Props {
   onSuccess: (folderUID: string, folderTitle: string) => void;
 }
 
-/**
- * @description
- * Drawer component for moving a git provisioned dashboard to a different folder.
- */
 export function MoveProvisionedDashboardForm({
   dashboard,
   defaultValues,
@@ -68,12 +66,8 @@ export function MoveProvisionedDashboardForm({
   const [targetPath, setTargetPath] = useState<string>('');
 
   useEffect(() => {
-    if (!targetFolderUID || !currentFileData?.resource?.dryRun?.metadata?.annotations || !targetFolder) {
-      return;
-    }
-
-    const currentSourcePath = currentFileData.resource.dryRun.metadata.annotations[AnnoKeySourcePath];
-    if (!currentSourcePath) {
+    const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
+    if (!targetFolderUID || !targetFolder || !currentSourcePath) {
       return;
     }
 
@@ -87,38 +81,14 @@ export function MoveProvisionedDashboardForm({
   }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle]);
 
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
-    // Validation: Check required fields
-    if (!repo || !path) {
-      console.error('Missing required fields for move:', { repo, path });
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('dashboard-scene.move-provisioned-dashboard-form.missing-fields-error', 'Missing required fields for move'),
-        ],
-      });
-      return;
-    }
-
     if (!currentFileData?.resource?.file) {
-      console.error('Current dashboard file could not be found');
-      getAppEvents().publish({
+      appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [
           t(
             'dashboard-scene.move-provisioned-dashboard-form.current-file-not-found',
             'Current dashboard file could not be found'
           ),
-        ],
-      });
-      return;
-    }
-
-    if (!targetPath) {
-      console.error('Could not calculate target path');
-      getAppEvents().publish({
-        type: AppEvents.alertError.name,
-        payload: [
-          t('dashboard-scene.move-provisioned-dashboard-form.target-path-error', 'Could not calculate target path'),
         ],
       });
       return;
@@ -144,7 +114,7 @@ export function MoveProvisionedDashboardForm({
       }).unwrap();
     } catch (error) {
       if (createRequest.isSuccess && !deleteRequest.isSuccess) {
-        getAppEvents().publish({
+        appEvents.publish({
           type: AppEvents.alertWarning.name,
           payload: [
             t(
@@ -154,14 +124,17 @@ export function MoveProvisionedDashboardForm({
           ],
         });
       }
-      console.error('Move operation failed:', error);
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('dashboard-scene.move-provisioned-dashboard-form.move-failed', 'Failed to move dashboard'), error],
+      });
     }
   };
 
   const navigate = useNavigate();
 
   const onRequestError = (error: unknown) => {
-    getAppEvents().publish({
+    appEvents.publish({
       type: AppEvents.alertError.name,
       payload: [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error],
     });
@@ -176,7 +149,7 @@ export function MoveProvisionedDashboardForm({
     navigate('/dashboards');
   };
 
-  const onBranchSuccess = (path: string, urls?: Record<string, string>) => {
+  const onBranchSuccess = () => {
     panelEditor?.onDiscard();
     onDismiss();
     navigate('/dashboards');
@@ -187,7 +160,7 @@ export function MoveProvisionedDashboardForm({
     request: createRequest,
     workflow,
     handlers: {
-      onBranchSuccess: ({ path, urls }) => onBranchSuccess(path, urls),
+      onBranchSuccess,
       onWriteSuccess,
       onError: onRequestError,
     },
@@ -227,7 +200,7 @@ export function MoveProvisionedDashboardForm({
               </Stack>
             )}
 
-            {currentFileData?.errors && currentFileData.errors.length > 0 && (
+            {currentFileData?.errors?.length && currentFileData.errors.length > 0 && (
               <Alert
                 title={t('dashboard-scene.move-provisioned-dashboard-form.file-load-error', 'Error loading dashboard')}
                 severity="error"
