@@ -329,7 +329,7 @@ export function TableNG(props: TableNGProps) {
             colors = {};
           }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, colors);
+          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors);
 
           return (
             <Cell
@@ -808,6 +808,7 @@ const getCellStyles = (
   rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
+  hasTooltip: boolean,
   colors: CellColors
 ) => {
   return {
@@ -820,6 +821,7 @@ const getCellStyles = (
       height: '100%',
       minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
       ...(shouldWrap && { whiteSpace: 'pre-line' }),
+      ...(hasTooltip && { cursor: 'pointer' }),
       '&:last-child': {
         borderInlineEnd: 'none',
       },
