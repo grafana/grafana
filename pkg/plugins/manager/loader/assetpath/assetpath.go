@@ -51,6 +51,12 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 			return u, nil
 		}
 
+		// if plugin is located under public/app/plugins, retrieve relative path from public/
+		idx := strings.Index(n.fs.Base(), "public/app/plugins")
+		if idx != -1 {
+			return n.fs.Base()[idx:], nil
+		}
+
 		baseDir := getBaseDir(n.class, n.fs)
 		return path.Join("public/app/plugins", string(n.pluginJSON.Type), baseDir), nil
 	}
@@ -82,8 +88,7 @@ func (s *Service) Module(n PluginInfo) (string, error) {
 				return u, nil
 			}
 		} else {
-			baseDir := getBaseDir(n.class, n.fs)
-			return path.Join("core:plugin", baseDir), nil
+			return path.Join("core:plugin", filepath.Base(n.fs.Base())), nil
 		}
 	}
 	if n.class == plugins.ClassCDN {
