@@ -7,7 +7,7 @@ const meta: Meta = {
   component: BorderRadiusContainer,
   decorators: [],
   parameters: {
-    layout: 'centered',
+    // layout: 'centered',
   },
   args: {
     referenceBorderRadius: 20,
