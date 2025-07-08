@@ -305,7 +305,7 @@ export function TableNG(props: TableNGProps) {
         const shouldWrap = shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
 
-        colsWithTooltip[displayName] = withTooltip;
+        result.colsWithTooltip[displayName] = withTooltip;
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
