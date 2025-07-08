@@ -21,7 +21,7 @@ export type URLRange = {
 /**
  * @internal
  */
-export interface SearchProps {
+export interface TraceSearchProps {
   serviceName?: string;
   serviceNameOperator: string;
   spanName?: string;
@@ -30,13 +30,13 @@ export interface SearchProps {
   fromOperator: string;
   to?: string;
   toOperator: string;
-  tags: Tag[];
+  tags: TraceSearchTag[];
   query?: string;
   matchesOnly: boolean;
   criticalPathOnly: boolean;
 }
 
-export interface Tag {
+export interface TraceSearchTag {
   id: string;
   key?: string;
   operator: string;
@@ -49,7 +49,6 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   queries: T[];
   range: URLRange;
   panelsState?: ExplorePanelsState;
-  spanFilters?: SearchProps;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
@@ -71,6 +70,7 @@ export interface ExploreCorrelationHelperData {
 
 export interface ExploreTracePanelState {
   spanId?: string;
+  spanFilters?: TraceSearchProps;
 }
 
 export interface ExploreLogsPanelState {

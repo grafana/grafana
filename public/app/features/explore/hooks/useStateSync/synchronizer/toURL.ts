@@ -21,7 +21,6 @@ We want to update the URL when:
  - range is changed
  - panel state is updated
  - a datasource change has completed.
- - a span filter is changed in the TraceView 
 
 Note: Changing datasource causes a bunch of actions to be dispatched, we want to update the URL
 only when the change set has completed. This is done by checking if the changeDatasource.pending action

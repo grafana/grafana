@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, createRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { SearchProps, Field, LinkModel, PanelProps } from '@grafana/data';
+import { TraceSearchProps, Field, LinkModel, PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
@@ -22,7 +22,7 @@ export interface TracesPanelOptions {
   createSpanLink?: SpanLinkFunc;
   focusedSpanId?: string;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
-  spanFilters?: SearchProps;
+  spanFilters?: TraceSearchProps;
 }
 
 export const TracesPanel = ({ data, options, replaceVariables }: PanelProps<TracesPanelOptions>) => {

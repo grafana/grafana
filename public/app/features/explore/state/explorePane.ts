@@ -10,7 +10,6 @@ import {
   RawTimeRange,
   ExploreCorrelationHelperData,
   EventBusExtended,
-  SearchProps,
 } from '@grafana/data';
 import { CorrelationData } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
@@ -21,7 +20,6 @@ import { ExploreItemState } from 'app/types/explore';
 import { createAsyncThunk, ThunkResult } from 'app/types/store';
 
 import { datasourceReducer } from './datasource';
-import { setSpanFilters } from './main';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import {
@@ -128,7 +126,6 @@ export interface InitializeExploreOptions {
   queries: DataQuery[];
   range: RawTimeRange;
   panelsState?: ExplorePanelsState;
-  spanFilters?: SearchProps;
   correlationHelperData?: ExploreCorrelationHelperData;
   position?: number;
   eventBridge: EventBusExtended;
@@ -150,7 +147,6 @@ export const initializeExplore = createAsyncThunk(
       queries,
       range,
       panelsState,
-      spanFilters,
       correlationHelperData,
       eventBridge,
     }: InitializeExploreOptions,
@@ -178,10 +174,6 @@ export const initializeExplore = createAsyncThunk(
     );
     if (panelsState !== undefined) {
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
-    }
-
-    if (spanFilters !== undefined) {
-      dispatch(setSpanFilters({ exploreId, spanFilters }));
     }
 
     dispatch(updateTime({ exploreId }));

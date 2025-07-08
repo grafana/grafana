@@ -14,7 +14,7 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
-import { TraceKeyValuePair, SearchProps, Tag } from '@grafana/data';
+import { TraceKeyValuePair, TraceSearchProps, Tag } from '@grafana/data';
 
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
 import TNil from '../types/TNil';
@@ -22,7 +22,7 @@ import { TraceSpan } from '../types/trace';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
-export function filterSpans(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
+export function filterSpans(searchProps: TraceSearchProps, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return undefined;
   }
@@ -201,7 +201,7 @@ const getStringValue = (value: string | number | boolean | undefined) => {
   return value ? value.toString() : '';
 };
 
-const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
+const getServiceNameMatches = (spans: TraceSpan[], searchProps: TraceSearchProps) => {
   return spans.filter((span: TraceSpan) => {
     return searchProps.serviceNameOperator === '='
       ? span.process.serviceName === searchProps.serviceName
@@ -209,7 +209,7 @@ const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => 
   });
 };
 
-const getSpanNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
+const getSpanNameMatches = (spans: TraceSpan[], searchProps: TraceSearchProps) => {
   return spans.filter((span: TraceSpan) => {
     return searchProps.spanNameOperator === '='
       ? span.operationName === searchProps.spanName
@@ -217,7 +217,7 @@ const getSpanNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
   });
 };
 
-const getDurationMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
+const getDurationMatches = (spans: TraceSpan[], searchProps: TraceSearchProps) => {
   const from = convertTimeFilter(searchProps?.from || '');
   const to = convertTimeFilter(searchProps?.to || '');
   let filteredSpans: TraceSpan[] = [];

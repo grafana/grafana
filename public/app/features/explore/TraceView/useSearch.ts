@@ -1,10 +1,10 @@
 import { cloneDeep, merge } from 'lodash';
 import { useEffect, useMemo, useCallback, useState } from 'react';
 
-import { InterpolateFunction, SearchProps } from '@grafana/data';
+import { InterpolateFunction, TraceSearchProps } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types/store';
 
-import { DEFAULT_SPAN_FILTERS } from '../state/constants';
+import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';
 import { setSpanFilters } from '../state/main';
 import { getSpanFiltersSelector } from '../state/selectors';
 
@@ -18,26 +18,40 @@ import { filterSpans } from './components/utils/filter-spans';
  * @param spans - The trace spans to filter
  * @param initialFilters - Initial filters to set
  */
-export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilters?: SearchProps) {
+export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilters?: TraceSearchProps) {
   const dispatch = useDispatch();
 
   // Global state logic (for Explore)
   const globalFilters = useSelector(getSpanFiltersSelector(exploreId ?? ''));
 
   // Local state logic (for TracesPanel and other non-Explore usage)
-  const [localSearch, setLocalSearch] = useState<SearchProps>(
-    merge(cloneDeep(DEFAULT_SPAN_FILTERS), initialFilters ?? {})
-  );
+  const [localSearch, setLocalSearch] = useState<TraceSearchProps>(() => {
+    const merged = merge(cloneDeep(DEFAULT_SPAN_FILTERS), initialFilters ?? {});
+    // Ensure tags is always an array
+    if (!merged.tags || !Array.isArray(merged.tags)) {
+      merged.tags = [{ id: randomId(), operator: '=' }];
+    }
+    return merged;
+  });
 
   // Determine which state to use based on exploreId presence
   const search = exploreId
     ? globalFilters || merge(cloneDeep(DEFAULT_SPAN_FILTERS), initialFilters ?? {})
     : localSearch;
 
+  // Ensure tags is always an array for safety
+  if (search && (!search.tags || !Array.isArray(search.tags))) {
+    search.tags = [{ id: randomId(), operator: '=' }];
+  }
+
   // Global state initialization (only when exploreId exists)
   useEffect(() => {
     if (exploreId && !globalFilters) {
       const mergedFilters = merge(cloneDeep(DEFAULT_SPAN_FILTERS), initialFilters ?? {});
+      // Ensure tags is always an array
+      if (!mergedFilters.tags || !Array.isArray(mergedFilters.tags)) {
+        mergedFilters.tags = [{ id: randomId(), operator: '=' }];
+      }
       dispatch(setSpanFilters({ exploreId, spanFilters: mergedFilters }));
     }
   }, [exploreId, initialFilters, globalFilters, dispatch]);
@@ -46,14 +60,19 @@ export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilter
   useEffect(() => {
     if (!exploreId && initialFilters) {
       setLocalSearch((prev) => {
-        return merge(cloneDeep(prev), initialFilters);
+        const merged = merge(cloneDeep(prev), initialFilters);
+        // Ensure tags is always an array
+        if (!merged.tags || !Array.isArray(merged.tags)) {
+          merged.tags = [{ id: randomId(), operator: '=' }];
+        }
+        return merged;
       });
     }
   }, [exploreId, initialFilters]);
 
   // Function to update span filters (global or local based on exploreId)
   const setSearch = useCallback(
-    (newSearch: SearchProps) => {
+    (newSearch: TraceSearchProps) => {
       if (exploreId) {
         dispatch(setSpanFilters({ exploreId, spanFilters: newSearch }));
       } else {
@@ -70,12 +89,18 @@ export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilter
   return { search, setSearch, spanFilterMatches };
 }
 
-export function replaceSearchVariables(replaceVariables: InterpolateFunction, search?: SearchProps) {
+export function replaceSearchVariables(replaceVariables: InterpolateFunction, search?: TraceSearchProps) {
   if (!search) {
     return search;
   }
 
   const newSearch = { ...search };
+
+  // Ensure tags is always an array
+  if (!newSearch.tags || !Array.isArray(newSearch.tags)) {
+    newSearch.tags = [{ id: randomId(), operator: '=' }];
+  }
+
   if (newSearch.query) {
     newSearch.query = replaceVariables(newSearch.query);
   }

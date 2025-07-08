@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
-import { GrafanaTheme2, SearchProps } from '@grafana/data';
+import { GrafanaTheme2, TraceSearchProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
@@ -27,7 +27,7 @@ import NextPrevResult from './NextPrevResult';
 
 export type TracePageSearchBarProps = {
   trace: Trace;
-  search: SearchProps;
+  search: TraceSearchProps;
   spanFilterMatches: Set<string> | undefined;
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   setShowCriticalPathSpansOnly: (showCriticalPath: boolean) => void;
