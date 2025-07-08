@@ -5664,6 +5664,21 @@
       "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
+    "move-provisioned-dashboard-form": {
+      "api-error": "Failed to move dashboard",
+      "cancel-action": "Cancel",
+      "current-file-not-found": "Current dashboard file could not be found",
+      "drawer-title": "Move Provisioned Dashboard",
+      "file-load-error": "Error loading dashboard",
+      "loading-file-data": "Loading dashboard data",
+      "move-action": "Move dashboard",
+      "move-failed": "Failed to move dashboard",
+      "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
+      "moving": "Moving...",
+      "partial-failure-warning": "Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.",
+      "target-path-label": "Target path",
+      "title-this-repository-is-read-only": "This repository is read only"
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
