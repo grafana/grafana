@@ -140,24 +140,19 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
             invalid={!!formState.errors.title}
             error={formState.errors.title?.message}
           >
-            <>
-              <Input
-                {...register('title', {
-                  required: t(
-                    'browse-dashboards.new-provisioned-folder-form.error-required',
-                    'Folder name is required'
-                  ),
-                  validate: validateFolderName,
-                })}
-                placeholder={t(
-                  'browse-dashboards.new-provisioned-folder-form.folder-name-input-placeholder-enter-folder-name',
-                  'Enter folder name'
-                )}
-                id="folder-name-input"
-              />
-              <FolderNamePreviewMessage folderName={title} />
-            </>
+            <Input
+              {...register('title', {
+                required: t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required'),
+                validate: validateFolderName,
+              })}
+              placeholder={t(
+                'browse-dashboards.new-provisioned-folder-form.folder-name-input-placeholder-enter-folder-name',
+                'Enter folder name'
+              )}
+              id="folder-name-input"
+            />
           </Field>
+          <FolderNamePreviewMessage folderName={title} />
 
           <ResourceEditFormSharedFields
             resourceType="folder"
@@ -269,7 +264,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.success.text,
-      marginTop: theme.spacing(1),
     }),
   };
 };
