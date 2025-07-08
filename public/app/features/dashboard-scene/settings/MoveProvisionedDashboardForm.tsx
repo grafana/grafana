@@ -65,6 +65,8 @@ export function MoveProvisionedDashboardForm({
   const [deleteFile, deleteRequest] = useDeleteRepositoryFilesWithPathMutation();
   const [targetPath, setTargetPath] = useState<string>('');
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
     if (!targetFolderUID || !targetFolder || !currentSourcePath) {
@@ -126,23 +128,13 @@ export function MoveProvisionedDashboardForm({
       }
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [t('dashboard-scene.move-provisioned-dashboard-form.move-failed', 'Failed to move dashboard'), error],
+        payload: [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error],
       });
     }
   };
 
-  const navigate = useNavigate();
-
-  const onRequestError = (error: unknown) => {
-    appEvents.publish({
-      type: AppEvents.alertError.name,
-      payload: [t('dashboard-scene.move-provisioned-dashboard-form.api-error', 'Failed to move dashboard'), error],
-    });
-  };
-
   const onWriteSuccess = () => {
     panelEditor?.onDiscard();
-    onDismiss();
     if (targetFolderUID && targetFolderTitle) {
       onSuccess(targetFolderUID, targetFolderTitle);
     }
@@ -151,7 +143,6 @@ export function MoveProvisionedDashboardForm({
 
   const onBranchSuccess = () => {
     panelEditor?.onDiscard();
-    onDismiss();
     navigate(`/dashboards?new_pull_request_url=${createRequest.data?.urls?.newPullRequestURL}`);
   };
 
@@ -162,7 +153,6 @@ export function MoveProvisionedDashboardForm({
     handlers: {
       onBranchSuccess,
       onWriteSuccess,
-      onError: onRequestError,
     },
   });
 

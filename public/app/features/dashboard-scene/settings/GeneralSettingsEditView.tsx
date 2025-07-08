@@ -18,13 +18,11 @@ import {
   TextArea,
   WeekStart,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
-import { ShowModalReactEvent } from 'app/types/events';
 
 import { updateNavModel } from '../pages/utils';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -36,7 +34,13 @@ import { DeleteDashboardButton } from './DeleteDashboardButton';
 import { MoveProvisionedDashboardDrawer } from './MoveProvisionedDashboardDrawer';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
-export interface GeneralSettingsEditViewState extends DashboardEditViewState {}
+export interface GeneralSettingsEditViewState extends DashboardEditViewState {
+  showMoveModal?: boolean;
+  moveModalProps?: {
+    targetFolderUID?: string;
+    targetFolderTitle?: string;
+  };
+}
 
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
@@ -161,19 +165,21 @@ export class GeneralSettingsEditView
 
   public onProvisionedFolderChange = async (newUID?: string, newTitle?: string) => {
     if (newUID !== this._dashboard.state.meta.folderUid) {
-      appEvents.publish(
-        new ShowModalReactEvent({
-          component: MoveProvisionedDashboardDrawer,
-          props: {
-            dashboard: this._dashboard,
-            targetFolderUID: newUID,
-            targetFolderTitle: newTitle,
-            onDismiss: () => {}, // Modal auto-closes
-            onSuccess: this.onMoveSuccess,
-          },
-        })
-      );
+      this.setState({
+        showMoveModal: true,
+        moveModalProps: {
+          targetFolderUID: newUID,
+          targetFolderTitle: newTitle,
+        },
+      });
     }
+  };
+
+  public onMoveModalDismiss = () => {
+    this.setState({
+      showMoveModal: false,
+      moveModalProps: undefined,
+    });
   };
 
   private onMoveSuccess = (folderUID: string, folderTitle: string) => {
@@ -183,12 +189,14 @@ export class GeneralSettingsEditView
       folderTitle: folderTitle,
     };
     this._dashboard.setState({ meta: newMeta });
+    this.onMoveModalDismiss();
   };
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const dashboard = model.getDashboard();
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
     const { title, description, tags, meta, editable } = dashboard.useState();
+    const { showMoveModal, moveModalProps } = model.useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker().useState();
@@ -275,11 +283,10 @@ export class GeneralSettingsEditView
               <TagsInput id="tags-input" tags={tags} onChange={model.onTagsChange} width={40} />
             </Field>
             <Field noMargin label={t('dashboard-settings.general.folder-label', 'Folder')}>
-              {dashboard.isManagedRepository() ? (
-                <FolderPicker value={meta.folderUid} onChange={model.onProvisionedFolderChange} />
-              ) : (
-                <FolderPicker value={meta.folderUid} onChange={model.onFolderChange} />
-              )}
+              <FolderPicker
+                value={meta.folderUid}
+                onChange={dashboard.isManagedRepository() ? model.onProvisionedFolderChange : model.onFolderChange}
+              />
             </Field>
 
             <Field
@@ -349,6 +356,16 @@ export class GeneralSettingsEditView
 
           <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
         </div>
+
+        {showMoveModal && moveModalProps && (
+          <MoveProvisionedDashboardDrawer
+            dashboard={dashboard}
+            targetFolderUID={moveModalProps.targetFolderUID}
+            targetFolderTitle={moveModalProps.targetFolderTitle}
+            onDismiss={model.onMoveModalDismiss}
+            onSuccess={model.onMoveSuccess}
+          />
+        )}
       </Page>
     );
   };
