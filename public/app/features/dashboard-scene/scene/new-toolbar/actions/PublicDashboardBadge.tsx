@@ -18,18 +18,13 @@ export const PublicDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
 // Used in old architecture
 export const PublicDashboardBadgeLegacy = PublicDashboardBadgeInternal;
 
-function PublicDashboardBadgeInternal({ uid }: { uid?: string }) {
-  if (!uid) {
-    return null;
-  }
-
+function PublicDashboardBadgeInternal({ uid }: { uid: string }) {
   const { data: publicDashboard } = useGetPublicDashboardQuery(uid);
+  const styles = useStyles2(getStyles);
 
   if (!publicDashboard) {
     return null;
   }
-
-  const styles = useStyles2(getStyles);
 
   return (
     <Badge
