@@ -32,7 +32,7 @@ if (data.changes.length > 0) {
   markdown += printSection('Changes', data.changes);
 }
 
-//  The logic below would need access to secrets for accessing BigQuery, however that's not available on forks.
+// The logic below would need access to secrets for accessing BigQuery, however that's not available on forks.
 if ((data.removals.length > 0 || data.changes.length > 0) && !isFork) {
   markdown += printAffectedPluginsSection(data);
 }
