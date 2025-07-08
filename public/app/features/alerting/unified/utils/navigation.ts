@@ -45,6 +45,32 @@ export const groups = {
       { skipSubPath: options?.skipSubPath }
     );
   },
+  newAlertRuleLink: (folderName?: string, folderUid?: string, groupName?: string) => {
+    const returnTo = createReturnTo();
+
+    const defaults = JSON.stringify({
+      folder: {
+        title: folderName,
+        uid: folderUid,
+      },
+      group: groupName,
+    });
+
+    return createRelativeUrl('/alerting/new', { defaults, returnTo });
+  },
+  newRecordingRuleLink: (folderName?: string, folderUid?: string, groupName?: string) => {
+    const returnTo = createReturnTo();
+
+    const defaults = JSON.stringify({
+      folder: {
+        title: folderName,
+        uid: folderUid,
+      },
+      group: groupName,
+    });
+
+    return createRelativeUrl('/alerting/new/grafana-recording', { defaults, returnTo });
+  },
 };
 
 export const rulesNav = {

@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": "Alert rule"
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edit YAML",
@@ -1509,7 +1512,8 @@
       "folder": "Folder",
       "group-loading-error": "Error loading the group",
       "interval": "Interval",
-      "namespace": "Namespace"
+      "namespace": "Namespace",
+      "new": "New"
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -2232,6 +2236,9 @@
       "new-menu": {
         "label-export-all": "Export all"
       }
+    },
+    "recording-rule": {
+      "term": "Recording rule"
     },
     "recording-rule-editor": {
       "error-no-query-editor": "Could not load query editor due to: {{errorMessage}}"

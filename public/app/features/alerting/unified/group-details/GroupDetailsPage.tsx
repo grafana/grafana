@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, LinkButton, TextLink, withErrorBoundary } from '@grafana/ui';
+import { Alert, Button, Dropdown, Icon, LinkButton, Menu, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { FolderDTO } from 'app/types';
 import { GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
@@ -209,13 +209,39 @@ function GroupActions({ dsFeatures, namespaceId, groupName, folder, rulerGroup }
         </Button>
       )}
       {canEdit && (
-        <LinkButton
-          icon="pen"
-          href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName, { includeReturnTo: true })}
-          variant="secondary"
-        >
-          <Trans i18nKey="alerting.group-details.edit">Edit</Trans>
-        </LinkButton>
+        <>
+          <LinkButton
+            icon="pen"
+            href={groups.editPageLink(dsFeatures.uid, namespaceId, groupName, { includeReturnTo: true })}
+            variant="secondary"
+          >
+            <Trans i18nKey="alerting.group-details.edit">Edit</Trans>
+          </LinkButton>
+          {/* Data source managed requires different URLs, a hassle to implement for now */}
+          {isGrafanaSource && (
+            <Dropdown
+              overlay={
+                <Menu>
+                  <Menu.Item
+                    icon="bell"
+                    url={groups.newAlertRuleLink(folder?.title, folder?.uid, groupName)}
+                    label={t('alerting.alert-rule.term', 'Alert rule')}
+                  />
+                  <Menu.Item
+                    icon="record-audio"
+                    url={groups.newRecordingRuleLink(folder?.title, folder?.uid, groupName)}
+                    label={t('alerting.recording-rule.term', 'Recording rule')}
+                  />
+                </Menu>
+              }
+            >
+              <Button variant="primary">
+                {t('alerting.group-details.new', 'New')}
+                <Icon name="angle-down" />
+              </Button>
+            </Dropdown>
+          )}
+        </>
       )}
       {folder && isExporting && (
         <GrafanaRuleGroupExporter folderUid={folder.uid} groupName={groupName} onClose={() => setIsExporting(false)} />
