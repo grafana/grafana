@@ -528,6 +528,8 @@ export function TableNG(props: TableNGProps) {
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
+        enableVirtualization={false}
+        rowHeight="auto"
         onCellKeyDown={
           hasNestedFrames
             ? (_, event) => {
@@ -656,7 +658,7 @@ const getGridStyles = (
 
     // TODO: magic 32px number is unfortunate. it would be better to have the content
     // flow using flexbox rather than hard-coding this size via a calc
-    blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
+    // blockSize: enablePagination ? 'calc(100% - 32px)' : '100%',
     scrollbarWidth: 'thin',
     scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -759,7 +761,6 @@ const getCellStyles = (
     alignContent: 'center',
     justifyContent: getTextAlign(field),
     padding: TABLE.CELL_PADDING,
-    height: '100%',
     minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
     ...(shouldWrap && { whiteSpace: 'pre-line' }),
     '&:last-child': {
