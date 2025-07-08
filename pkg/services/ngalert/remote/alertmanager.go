@@ -18,7 +18,6 @@ import (
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/alerting/cluster/clusterpb"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -408,7 +407,7 @@ func (am *Alertmanager) GetRemoteState(ctx context.Context) (RemoteState, error)
 	if err != nil {
 		return rs, fmt.Errorf("failed to base64-decode remote state: %w", err)
 	}
-	protoState := &clusterpb.FullState{}
+	protoState := &alertingClusterPB.FullState{}
 	if err := protoState.Unmarshal(decoded); err != nil {
 		return rs, fmt.Errorf("failed to unmarshal remote state: %w", err)
 	}
