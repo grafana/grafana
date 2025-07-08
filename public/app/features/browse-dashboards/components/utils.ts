@@ -37,13 +37,23 @@ export function hasFolderNameCharactersToReplace(folderName: string): boolean {
   return hasWhitespace || hasInvalidCharacters;
 }
 
-export function formatFolderName(folderName: string): string {
+export function formatFolderName(folderName?: string): string {
   if (typeof folderName !== 'string') {
     console.error('Invalid folder name type:', typeof folderName);
     return '';
   }
-  return folderName
+
+  const result = folderName
+    .trim() // Remove leading/trailing whitespace first
     .toLowerCase()
     .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '');
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+
+  // If the result is empty, return empty string
+  if (result === '') {
+    return '';
+  }
+
+  return result;
 }
