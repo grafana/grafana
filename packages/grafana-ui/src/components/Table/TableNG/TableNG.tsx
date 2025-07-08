@@ -59,6 +59,7 @@ import {
   shouldTextWrap,
   isCellInspectEnabled,
   getCellLinks,
+  shouldShowDataLinksActionsTooltip,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -323,7 +324,15 @@ export function TableNG(props: TableNGProps) {
             colors = {};
           }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, colors);
+          const cellStyle = getCellStyles(
+            theme,
+            field,
+            _rowHeight,
+            shouldWrap,
+            shouldOverflow,
+            shouldShowDataLinksActionsTooltip(field, cellOptions),
+            colors
+          );
 
           return (
             <Cell
@@ -547,13 +556,12 @@ export function TableNG(props: TableNGProps) {
         columns={structureRevColumns}
         rows={paginatedRows}
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
-          let rowIdx = row.__index;
           // Note: could be column.field; JS says yes, but TS says no!
           let field = columns[column.idx].field;
+          let cellOptions = getCellOptions(field);
 
-          let stuffCount = (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0);
-
-          if (stuffCount > 1) {
+          if (shouldShowDataLinksActionsTooltip(field, cellOptions)) {
+            let rowIdx = row.__index;
             setTooltipState({
               coords: {
                 clientX,
@@ -804,11 +812,9 @@ const getCellStyles = (
   rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
+  contextCursor: boolean,
   colors: CellColors
 ) => {
-  const linksCount = field.config.links?.length ?? 0;
-  const actionsCount = field.config.actions?.length ?? 0;
-
   return {
     cell: css({
       textOverflow: 'initial',
@@ -817,7 +823,7 @@ const getCellStyles = (
       justifyContent: getTextAlign(field),
       paddingInline: TABLE.CELL_PADDING,
       height: '100%',
-      cursor: linksCount + actionsCount > 1 ? 'context-menu' : 'auto',
+      cursor: contextCursor ? 'context-menu' : 'auto',
       minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
       ...(shouldWrap && { whiteSpace: 'pre-line' }),
       '&:last-child': {
