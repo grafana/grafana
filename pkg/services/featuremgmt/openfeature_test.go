@@ -51,7 +51,6 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.StackID = "stacks-1234"
 			cfg.OpenFeature = tc.cfg
 
 			p, err := ProvideOpenFeatureService(cfg, httpClientProvider, noopSignerMiddlewareProvider)

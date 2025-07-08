@@ -29,7 +29,6 @@ var _ http.RoundTripper = &cloudAccessPolicyTokenSignerMiddleware{}
 func ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(tokenExchangeClient authlib.TokenExchanger, cfg *setting.Cfg) *CloudAccessPolicyTokenSignerMiddlewareProvider {
 	return &CloudAccessPolicyTokenSignerMiddlewareProvider{
 		tokenExchangeClient: tokenExchangeClient,
-		isCloud:             cfg.StackID != "",
 	}
 }
 
@@ -37,7 +36,6 @@ func (p *CloudAccessPolicyTokenSignerMiddlewareProvider) New(audiences []string)
 	return func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return &cloudAccessPolicyTokenSignerMiddleware{
 			tokenExchangeClient: p.tokenExchangeClient,
-			isCloud:             p.isCloud,
 			audiences:           audiences,
 			next:                next,
 		}
@@ -46,11 +44,6 @@ func (p *CloudAccessPolicyTokenSignerMiddlewareProvider) New(audiences []string)
 
 func (m cloudAccessPolicyTokenSignerMiddleware) RoundTrip(req *http.Request) (res *http.Response, e error) {
 	log := infralog.New("cloud-access-policy-token-signer-middleware")
-
-	if !m.isCloud {
-		// for non-cloud use-case, call next without signing
-		return m.next.RoundTrip(req)
-	}
 
 	namespace, ok := request.NamespaceFrom(req.Context())
 	if !ok {
