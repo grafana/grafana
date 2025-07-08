@@ -293,18 +293,20 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	if err := am.mergeExtraConfigs(ctx, decryptedCfg); err != nil {
 		return fmt.Errorf("unable to merge extra configurations: %w", err)
 	}
-	rawDecrypted, err := json.Marshal(decryptedCfg)
+	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
+	rawPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("unable to marshal decrypted configuration: %w", err)
 	}
-	configHash := md5.Sum(rawDecrypted)
+
+	configHash := md5.Sum(rawPayload)
 
 	// Send the configuration only if we need to.
 	if !am.shouldSendConfig(ctx, configHash) {
 		return nil
 	}
 
-	return am.sendConfiguration(ctx, decryptedCfg, fmt.Sprintf("%x", configHash), config.CreatedAt, am.isDefaultConfiguration(configHash))
+	return am.sendConfiguration(ctx, payload, fmt.Sprintf("%x", configHash), config.CreatedAt, am.isDefaultConfiguration(configHash))
 }
 
 func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
@@ -370,11 +372,11 @@ func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels
 	return nil
 }
 
-func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
+func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg *remoteClient.GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		PostableUserConfigToGrafanaAlertmanagerConfig(decrypted),
+		cfg,
 		hash,
 		createdAt,
 		isDefault,
@@ -420,14 +422,14 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	if err := am.mergeExtraConfigs(ctx, decryptedCfg); err != nil {
 		return fmt.Errorf("unable to merge extra configurations: %w", err)
 	}
-
-	rawCfg, err := json.Marshal(decryptedCfg)
+	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
+	rawCfg, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
 
-	return am.sendConfiguration(ctx, decryptedCfg, hash, time.Now().Unix(), false)
+	return am.sendConfiguration(ctx, payload, hash, time.Now().Unix(), false)
 }
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
@@ -446,10 +448,17 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		return err
 	}
 
+	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
+	rawCfg, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
+
 	return am.sendConfiguration(
 		ctx,
-		decryptedCfg,
-		am.defaultConfigHash,
+		payload,
+		hash,
 		time.Now().Unix(),
 		true,
 	)
