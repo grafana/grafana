@@ -314,7 +314,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/admin/*',
+      path: '/alerting/admin',
+      roles: () => ['Admin'],
+      component: () => <Navigate replace to="/alerting/admin/alertmanager" />,
+    },
+    {
+      path: '/alerting/admin/alertmanager',
       roles: () => ['Admin'],
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingSettings" */ 'app/features/alerting/unified/Settings')

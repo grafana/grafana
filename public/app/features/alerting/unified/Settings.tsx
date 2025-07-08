@@ -1,5 +1,3 @@
-import { Navigate, Route, Routes } from 'react-router-dom-v5-compat';
-
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, Stack, Text } from '@grafana/ui';
 
@@ -9,22 +7,8 @@ import { useEditConfigurationDrawer } from './components/settings/ConfigurationD
 import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanagers';
 import InternalAlertmanager from './components/settings/InternalAlertmanager';
 import { SettingsProvider, useSettings } from './components/settings/SettingsContext';
-import { settingsExtensions } from './settings/extensions';
 import { useSettingsPageNav } from './settings/navigation';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
-
-function SettingsPage() {
-  return (
-    <Routes>
-      <Route path="alertmanager" element={<AlertmanagerSettingsPage />} />
-      {Array.from(settingsExtensions.entries()).map(([key, { element }]) => (
-        <Route key={key} path={key} element={element} />
-      ))}
-      {/* Catch both index and any unmatched routes */}
-      <Route path="*" element={<Navigate replace to="/alerting/admin/alertmanager" />} />
-    </Routes>
-  );
-}
 
 function AlertmanagerSettingsPage() {
   return (
@@ -38,11 +22,11 @@ function AlertmanagerSettingsContent() {
   const [configurationDrawer, showConfiguration] = useEditConfigurationDrawer();
   const { isLoading } = useSettings();
 
-  const pageNav = useSettingsPageNav();
+  const { navId, pageNav } = useSettingsPageNav();
 
   return (
     <AlertingPageWrapper
-      navId="alerting-admin"
+      navId={navId}
       isLoading={isLoading}
       pageNav={pageNav}
       actions={[
@@ -74,4 +58,4 @@ function AlertmanagerSettingsContent() {
   );
 }
 
-export default withPageErrorBoundary(SettingsPage);
+export default withPageErrorBoundary(AlertmanagerSettingsPage);

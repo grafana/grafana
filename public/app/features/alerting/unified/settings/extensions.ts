@@ -1,19 +1,20 @@
 import { NavModelItem } from '@grafana/data';
 
-export const settingsExtensions: Map<string, { nav: NavModelItem; element: JSX.Element }> = new Map();
+type SettingsSectionUrl = `/alerting/admin/${string}`;
+type SettingsSectionNav = Pick<NavModelItem, 'id' | 'text' | 'icon'> & {
+  url: SettingsSectionUrl;
+};
 
-export function addSettingsSection(pageNav: NavModelItem, element: JSX.Element) {
-  if (!pageNav.id) {
-    console.warn('Unable to add settings page, PageNav must have an id');
+export const settingsExtensions: Map<SettingsSectionUrl, { nav: SettingsSectionNav }> = new Map();
+
+/**
+ * Registers a new settings section that will appear as a tab in the alerting settings page.
+ * @param pageNav - The navigation configuration for the settings section
+ */
+export function addSettingsSection(pageNav: SettingsSectionNav) {
+  if (settingsExtensions.has(pageNav.url)) {
+    console.warn('Unable to add settings page, PageNav must have an unique url');
     return;
   }
-  settingsExtensions.set(pageNav.id, { nav: pageNav, element });
-}
-
-export function addSettingsPage(pageNav: NavModelItem, element: JSX.Element) {
-  if (!pageNav.id) {
-    console.warn('Unable to add settings page, PageNav must have an id');
-    return;
-  }
-  settingsExtensions.set(pageNav.id, { nav: pageNav, element });
+  settingsExtensions.set(pageNav.url, { nav: pageNav });
 }
