@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // BenchmarkOptions configures the benchmark parameters
@@ -350,7 +348,7 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 		Search: resource.SearchOptions{
 			Backend:         searchBackend,
 			IndexEventsChan: events,
-			Resources:       &testDocumentBuilderSupplier{groupsResources: groupsResources},
+			Resources:       &resource.TestDocumentBuilderSupplier{GroupsResources: groupsResources},
 		},
 	})
 	require.NoError(tb, err)
@@ -423,74 +421,4 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	tb.Logf("P50 Index Latency: %.3fs", p50)
 	tb.Logf("P90 Index Latency: %.3fs", p90)
 	tb.Logf("P99 Index Latency: %.3fs", p99)
-}
-
-// testDocumentBuilder implements DocumentBuilder for testing
-type testDocumentBuilder struct{}
-
-func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	// convert value to unstructured.Unstructured
-	var u unstructured.Unstructured
-	if err := u.UnmarshalJSON(value); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
-	}
-
-	title := ""
-	tags := []string{}
-	val := ""
-
-	spec, ok, _ := unstructured.NestedMap(u.Object, "spec")
-	if ok {
-		if v, ok := spec["title"]; ok {
-			title = v.(string)
-		}
-		if v, ok := spec["tags"]; ok {
-			if tagSlice, ok := v.([]interface{}); ok {
-				tags = make([]string, len(tagSlice))
-				for i, tag := range tagSlice {
-					if strTag, ok := tag.(string); ok {
-						tags[i] = strTag
-					}
-				}
-			}
-		}
-		if v, ok := spec["value"]; ok {
-			val = v.(string)
-		}
-	}
-	return &resource.IndexableDocument{
-		Key: &resourcepb.ResourceKey{
-			Namespace: key.Namespace,
-			Group:     key.Group,
-			Resource:  key.Resource,
-			Name:      u.GetName(),
-		},
-		Title: title,
-		Tags:  tags,
-		Fields: map[string]interface{}{
-			"value": val,
-		},
-	}, nil
-}
-
-// testDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
-type testDocumentBuilderSupplier struct {
-	groupsResources map[string]string
-}
-
-func (s *testDocumentBuilderSupplier) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
-	builders := make([]resource.DocumentBuilderInfo, 0, len(s.groupsResources))
-
-	// Add builders for all possible group/resource combinations
-	for group, resourceType := range s.groupsResources {
-		builders = append(builders, resource.DocumentBuilderInfo{
-			GroupResource: schema.GroupResource{
-				Group:    group,
-				Resource: resourceType,
-			},
-			Builder: &testDocumentBuilder{},
-		})
-	}
-
-	return builders, nil
 }

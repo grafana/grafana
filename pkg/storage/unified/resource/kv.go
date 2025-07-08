@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"regexp"
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -131,7 +132,16 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 
 	key = section + "/" + key
 
-	err := txn.Delete([]byte(key))
+	// Check if key exists before deleting
+	_, err := txn.Get([]byte(key))
+	if err != nil {
+		if errors.Is(err, badger.ErrKeyNotFound) {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	err = txn.Delete([]byte(key))
 	if err != nil {
 		return err
 	}
@@ -206,4 +216,18 @@ func PrefixRangeEnd(prefix string) string {
 		}
 	}
 	return string(end)
+}
+
+var (
+	// validKeyRegex validates keys used in the unified storage
+	// Keys can contain lowercase alphanumeric characters, '-', '.', '/', and '~'
+	// Any combination of these characters is allowed as long as the key is not empty
+	validKeyRegex = regexp.MustCompile(`^[a-z0-9./~-]+$`)
+)
+
+func IsValidKey(key string) bool {
+	if key == "" {
+		return false
+	}
+	return validKeyRegex.MatchString(key)
 }

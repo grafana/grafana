@@ -222,6 +222,9 @@
       "text-no-resources": "Hiçbir kaynak bulunmadı",
       "title-error-occurred": "Azure Monitor'dan kaynaklar istenirken bir hata oluştu"
     },
+    "scope-selector": {
+      "label": ""
+    },
     "search": {
       "aria-label-resource-search": "Kaynak arama",
       "placeholder-resource-search": "Kaynak ara"

@@ -49,7 +49,13 @@ if (process.env.NODE_ENV === 'development') {
  * See https://github.com/mswjs/msw-storybook-addon#configuring-msw
  * to learn how to customize it
  */
-initialize();
+initialize({
+  onUnhandledRequest: 'bypass',
+  serviceWorker: {
+    // Important! The path must be relative to work when we deploy storybook to subpaths (e.g. /ui/canary)
+    url: 'mockServiceWorker.js',
+  },
+});
 
 const preview: Preview = {
   decorators: [withTheme(handleThemeChange), withTimeZone()],

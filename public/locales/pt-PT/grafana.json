@@ -110,6 +110,12 @@
       "update-button": "Atualizar",
       "users-heading": "Utilizadores da organização"
     },
+    "enterprise-auth-features-card": {
+      "dismiss": "",
+      "heading": "",
+      "learn-more-link": "",
+      "text": ""
+    },
     "feature-listing": {
       "title-auditing": "Auditoria",
       "title-custom-branding": "Marca personalizada",
@@ -345,6 +351,10 @@
   "alerting": {
     "active-timing-fields": {
       "am-active-timing-select-label-active-timings": "Tempos ativos"
+    },
+    "ad": {
+      "close": "",
+      "learn-more": ""
     },
     "add-button": {
       "add-more": "Adicionar mais"
@@ -1519,8 +1529,20 @@
       }
     },
     "home": {
+      "irm-card-description": "",
+      "irm-card-item-1": "",
+      "irm-card-item-2": "",
+      "irm-card-item-3": "",
+      "irm-card-item-4": "",
+      "irm-card-title": "",
       "label-get-started": "Começar",
       "label-insights": "Conhecimentos",
+      "synthetic-monitoring-card-description": "",
+      "synthetic-monitoring-card-item-1": "",
+      "synthetic-monitoring-card-item-2": "",
+      "synthetic-monitoring-card-item-3": "",
+      "synthetic-monitoring-card-item-4": "",
+      "synthetic-monitoring-card-title": "",
       "title-alerting": "Alerta"
     },
     "import-to-gma": {
@@ -3222,6 +3244,8 @@
       }
     },
     "provider-card": {
+      "saml-learn-more": "",
+      "scim-learn-more": "",
       "text-badge-enabled": "Ativado",
       "text-badge-not-enabled": "Não ativado"
     },
@@ -3254,6 +3278,12 @@
   },
   "auth-config-auth-config-page-unconnected": {
     "subtitle": "Faça a gestão das suas definições de autenticação e configure o início de sessão único. Saiba mais na nossa <2>documentação</2>."
+  },
+  "bar-chart": {
+    "warn": {
+      "missing-numeric": "",
+      "missing-series": ""
+    }
   },
   "barchart": {
     "config": {
@@ -3459,18 +3489,12 @@
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
-      "description-branch-name-in-git-hub": "Nome do ramo no GitHub",
       "error-invalid-folder-name": "Nome da pasta inválido",
       "error-required": "O nome da pasta é obrigatório",
-      "folder-comment-input-placeholder-describe-changes-optional": "Adicione uma nota para descrever as suas alterações (opcional)",
       "folder-name-input-placeholder-enter-folder-name": "Introduza o nome da pasta",
-      "label-branch": "Ramo",
-      "label-comment": "Comentário",
       "label-folder-name": "Nome da pasta",
-      "label-workflow": "Fluxo de trabalho",
       "text-pull-request-created": "Foi criado um pedido de extração com alterações a esta pasta:",
       "title-pull-request-created": "Pedido de extração criado",
-      "title-repository-not-found": "Repositório não encontrado",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
     },
     "no-results": {
@@ -3480,7 +3504,13 @@
     "restore": {
       "success": ""
     },
-    "text-this-repository-is-read-only": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá."
+    "text-this-repository-is-read-only": "Se tiver acesso direto ao destino, copie o JSON e cole-o lá.",
+    "trash-state-manager": {
+      "label": {
+        "alphabetically-az": "",
+        "alphabetically-za": ""
+      }
+    }
   },
   "candlestick": {
     "additional-fields-options": {
@@ -3880,6 +3910,8 @@
   "close-button": {
     "tooltip": "Fechar"
   },
+  "cloud-enterprise-feature-badge": "",
+  "cloud-feature-badge": "",
   "combobox": {
     "async": {
       "error": "Ocorreu um erro ao carregar as opções."
@@ -8341,6 +8373,18 @@
     "description-enable-infinite-scrolling": "",
     "description-enable-syntax-highlighting": "",
     "description-show-controls": "",
+    "fields": {
+      "type": {
+        "loki": {
+          "indexed-label": "",
+          "indexed-label-plural": "",
+          "parsed-label-plural": "",
+          "parsedl-label": "",
+          "structured-metadata": "",
+          "structured-metadata-plural": ""
+        }
+      }
+    },
     "font-size-options": {
       "label-default": "",
       "label-small": ""
@@ -8364,7 +8408,6 @@
       "label-wrap-lines": "Quebra de linhas"
     },
     "log-details": {
-      "close": "Fechar detalhes do registo",
       "fields": "Campos",
       "links": "Links",
       "log-line": "Linha de registo",
@@ -8389,6 +8432,35 @@
       "show-less": "mostrar menos",
       "show-more": "mostrar mais",
       "tooltip-error": "Erro: {{errorMessage}}"
+    },
+    "log-line-details": {
+      "clear-search": "",
+      "close": "",
+      "copy-shortlink": "",
+      "copy-to-clipboard": "",
+      "fields": {
+        "adhoc-statistics": "",
+        "copy-value-to-clipboard": "",
+        "filter-out": "",
+        "filter-out-query": "",
+        "toggle-field-button": {
+          "field-instead-message": "",
+          "hide-this-field": ""
+        }
+      },
+      "fields-section": "",
+      "hide-log-line": "",
+      "links-section": "",
+      "log-line-section": "",
+      "no-details": "",
+      "pin-line": "",
+      "search": {
+        "no-results": ""
+      },
+      "search-placeholder": "",
+      "show-context": "",
+      "show-log-line": "",
+      "unpin-line": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar link para a linha de registo",
@@ -8516,6 +8588,7 @@
     "un-themed-log-details": {
       "aria-label-data-links": "Ligações de dados",
       "aria-label-fields": "Campos",
+      "aria-label-line": "",
       "aria-label-log-level": "Nível de registo",
       "aria-label-no-details": "Sem detalhes"
     },
@@ -9494,6 +9567,15 @@
       "view": "Ver"
     },
     "panel-data-error-view": {
+      "missing-value": {
+        "number": "",
+        "string": "",
+        "time": "",
+        "unknown": ""
+      },
+      "no-value": {
+        "default": ""
+      },
       "open-visualization-suggestions": "Abrir sugestões de visualização",
       "switch-to-table": "Mudar para tabela"
     },
@@ -11364,6 +11446,7 @@
     "description-count-rows": "",
     "description-fields": "",
     "description-min-column-width": "",
+    "description-wrap-header-text": "",
     "image-cell-options-editor": {
       "description-alt-text": "Texto alternativo que será exibido se uma imagem não puder ser exibida ou para utilizadores que utilizem um leitor de ecrã",
       "description-title-text": "Texto que será exibido quando o cursor passar por cima da imagem",
@@ -11384,6 +11467,7 @@
     "name-min-column-width": "",
     "name-show-table-footer": "",
     "name-show-table-header": "",
+    "name-wrap-header-text": "",
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -11592,6 +11676,12 @@
     "zone": {
       "select-aria-label": "Seletor de fuso horário",
       "select-search-input": "Digite para pesquisar (país, cidade, abreviatura)"
+    }
+  },
+  "timeline": {
+    "missing-field": {
+      "all": "",
+      "time": ""
     }
   },
   "timeseries": {
@@ -12043,6 +12133,7 @@
           "polynomial": "Polinómio"
         }
       },
+      "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Número de pontos X, Y para prever"
     },
     "rename-by-regex-transformer-editor": {

@@ -61,7 +61,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestProvisioningApi(t *testing.T) {
+func TestIntegrationProvisioningApi(t *testing.T) {
 	t.Run("policies", func(t *testing.T) {
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
@@ -1619,7 +1619,7 @@ func TestProvisioningApi(t *testing.T) {
 	})
 }
 
-func TestProvisioningApiContactPointExport(t *testing.T) {
+func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 	createTestEnv := func(t *testing.T, testConfig string) testEnvironment {
 		env := createTestEnv(t, testConfig)
 		env.ac = &recordingAccessControlFake{
@@ -2034,7 +2034,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
 	tracer := tracing.InitializeTracerForTest()
-	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs)
+	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets))
 	receiverSvc := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
 		configStore,

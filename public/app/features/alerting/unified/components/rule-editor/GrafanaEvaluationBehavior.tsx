@@ -213,7 +213,10 @@ export function GrafanaEvaluationBehaviorStep({
                     isLoading={loadingGroups}
                     invalid={Boolean(folder?.uid) && !group && Boolean(fieldState.error)}
                     cacheOptions
-                    loadingMessage={'Loading groups...'}
+                    loadingMessage={t(
+                      'alerting.grafana-evaluation-behavior-step.loadingMessage-loading-groups',
+                      'Loading groups...'
+                    )}
                     defaultValue={defaultGroupValue}
                     options={groupOptions}
                     getOptionLabel={(option: SelectableValue<string>) => (

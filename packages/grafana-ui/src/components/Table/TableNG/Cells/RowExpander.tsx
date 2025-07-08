@@ -12,7 +12,7 @@ export function RowExpander({ height, onCellExpand, isExpanded }: RowExpanderNGP
   function handleKeyDown(e: React.KeyboardEvent<HTMLSpanElement>) {
     if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
-      onCellExpand();
+      onCellExpand(e);
     }
   }
   return (
