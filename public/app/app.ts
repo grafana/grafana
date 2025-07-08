@@ -42,9 +42,11 @@ import {
   setFolderPicker,
   setCorrelationsService,
   setPluginFunctionsHook,
+  getObservablePluginFunctions,
 } from '@grafana/runtime';
 import {
   setGetObservablePluginComponents,
+  setGetObservablePluginFunctions,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
   setPanelRenderer,
@@ -249,6 +251,7 @@ export class GrafanaApp {
       setPluginFunctionsHook(usePluginFunctions);
       setGetObservablePluginLinks(getObservablePluginLinks);
       setGetObservablePluginComponents(getObservablePluginComponents);
+      setGetObservablePluginFunctions(getObservablePluginFunctions);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
