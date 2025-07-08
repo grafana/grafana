@@ -301,24 +301,14 @@ func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
 // Should not be used outside of this package and the specific use case of decrypting the configuration before sending
 // it to the remote Alertmanager.
 func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) (*apimodels.PostableUserConfig, error) {
-	// Create a copy of the configuration to avoid modifying the original
-	cfgCopy := &apimodels.PostableUserConfig{}
-	rawCfg, err := json.Marshal(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal original configuration: %w", err)
-	}
-	if err := json.Unmarshal(rawCfg, cfgCopy); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal original configuration: %w", err)
-	}
-
 	// Decrypt the receivers in the configuration.
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfgCopy.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfg.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt receivers: %w", err)
 	}
-	cfgCopy.AlertmanagerConfig.Receivers = decryptedReceivers
+	cfg.AlertmanagerConfig.Receivers = decryptedReceivers
 
-	return cfgCopy, nil
+	return cfg, nil
 }
 
 func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
