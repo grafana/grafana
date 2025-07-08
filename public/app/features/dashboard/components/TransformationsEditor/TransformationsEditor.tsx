@@ -397,8 +397,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               'dashboard.un-themed-transformations-editor.title-delete-all-transformations',
               'Delete all transformations?'
             )}
-            body="By deleting all transformations, you will go back to the main selection screen."
-            confirmText="Delete all"
+            body={t(
+              'dashboard.un-theme-transformations-editor.body-delete-all-transformations',
+              'By deleting all transformations, you will go back to the main selection screen.'
+            )}
+            confirmText={t('dashboard.un-themed-transformations-editor.confirmText-delete-all', 'Delete all')}
             onConfirm={() => this.onTransformationRemoveAll()}
             onDismiss={() => this.setState({ showRemoveAllModal: false })}
           />

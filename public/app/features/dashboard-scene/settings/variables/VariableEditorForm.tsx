@@ -85,7 +85,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         <Trans i18nKey="dashboard-scene.variable-editor-form.general">General</Trans>
       </VariableLegend>
       <VariableTextField
-        name="Name"
+        name={t('dashboard-scene.variable-editor-form.name-name', 'Name')}
         description={t(
           'dashboard-scene.variable-editor-form.description-template-variable-characters',
           'The name of the template variable. (Max. 50 characters)'
@@ -101,7 +101,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         error={nameError}
       />
       <VariableTextField
-        name="Label"
+        name={t('dashboard-scene.variable-editor-form.name-label', 'Label')}
         description={t(
           'dashboard-scene.variable-editor-form.description-optional-display-name',
           'Optional display name'
@@ -112,7 +112,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
       />
       <VariableTextAreaField
-        name="Description"
+        name={t('dashboard-scene.variable-editor-form.name-description', 'Description')}
         defaultValue={description ?? ''}
         placeholder={t('dashboard-scene.variable-editor-form.placeholder-descriptive-text', 'Descriptive text')}
         onBlur={onDescriptionBlur}
@@ -136,7 +136,10 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
                   showModal(ConfirmModal, {
                     title: t('dashboard-scene.variable-editor-form.title.delete-variable', 'Delete variable'),
                     body: `Are you sure you want to delete: ${name}?`,
-                    confirmText: 'Delete variable',
+                    confirmText: t(
+                      'dashboard-scene.variable-editor-form.confirmText.delete-variable',
+                      'Delete variable'
+                    ),
                     onConfirm: onDeleteVariable(hideModal),
                     onDismiss: hideModal,
                     isOpen: true,
@@ -168,7 +171,7 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
                   text={t('dashboard-scene.variable-editor-form.text-running-query', 'Running query...')}
                 />
               ) : (
-                `Run query`
+                t('dashbaord-scene.variable-editor-form.run-query', 'Run query')
               )}
             </Button>
           )}
