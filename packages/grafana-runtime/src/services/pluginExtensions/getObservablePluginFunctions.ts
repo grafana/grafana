@@ -3,7 +3,6 @@ import { Observable } from 'rxjs';
 import { PluginExtensionFunction } from '@grafana/data';
 
 type GetObservablePluginFunctionsOptions = {
-  context?: object | Record<string | symbol, unknown>;
   extensionPointId: string;
   limitPerPlugin?: number;
 };
