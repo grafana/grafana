@@ -169,7 +169,7 @@
     "blob-polyfill": "9.0.20240710",
     "browserslist": "^4.21.4",
     "chance": "^1.1.13",
-    "chrome-remote-interface": "0.33.2",
+    "chrome-remote-interface": "0.33.3",
     "codeowners": "^5.1.1",
     "confusing-browser-globals": "^1.0.11",
     "copy-webpack-plugin": "12.0.2",
