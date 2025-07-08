@@ -423,6 +423,7 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	// copy the configuration by marshalling to avoid any mutations to the provided configuration
 	rawCopy, err := json.Marshal(cfg)
 	if err != nil {
 		return err
