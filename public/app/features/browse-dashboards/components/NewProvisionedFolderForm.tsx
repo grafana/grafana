@@ -245,6 +245,7 @@ function FolderNamePreviewMessage({ folderName }: { folderName: string }) {
   );
 }
 
+// TODO: this is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
 const validateFolderName = async (folderName: string) => {
   try {
     await validationSrv.validateNewFolderName(folderName);
