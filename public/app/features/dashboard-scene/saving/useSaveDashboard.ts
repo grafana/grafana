@@ -65,6 +65,9 @@ export function useSaveDashboard(isCopy = false) {
         //Update local storage dashboard to handle things like last used datasource
         updateDashboardUidLastUsedDatasource(resultData.uid);
 
+        // For analytics tracking, check if the dashboard has SQL expressions
+        const hasSQLExpression = scene.hasSQLExpressions(saveModel);
+
         if (isCopy) {
           reportInteraction('grafana_dashboard_copied', {
             name: saveModel.title,
@@ -74,6 +77,7 @@ export function useSaveDashboard(isCopy = false) {
           reportInteraction(`grafana_dashboard_${resultData.uid ? 'saved' : 'created'}`, {
             name: saveModel.title,
             url: resultData.url,
+            hasSQLExpression,
           });
         }
 
