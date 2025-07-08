@@ -107,7 +107,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
         </ControlledCollapse>
         {displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
-            label={t('logs.log-line-details.displayed-fields-section', 'Displayed fields')}
+            label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
             collapsible
             isOpen={displayedFieldsOpen}
             onToggle={(isOpen: boolean) => handleToggle('displayedFieldsOpen', isOpen)}

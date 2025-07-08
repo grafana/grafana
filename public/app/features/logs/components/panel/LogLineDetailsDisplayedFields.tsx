@@ -83,6 +83,7 @@ const DraggableDisplayedField = ({ field, index }: DraggableDisplayedFieldProps)
 
 const getStyles = (theme: GrafanaTheme2) => ({
   fieldCard: css({
+    cursor: 'move',
     padding: theme.spacing(1),
     marginBottom: theme.spacing(1),
     wordBreak: 'break-word',
