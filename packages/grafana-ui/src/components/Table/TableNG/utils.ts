@@ -172,6 +172,7 @@ const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
 /**
  * @internal
  * Returns the cell options for a field, migrating from legacy displayMode if necessary.
+ * TODO: remove live migration in favor of doing it in dashboard or panel migrator
  */
 export function getCellOptions(field: Field): TableCellOptions {
   if (field.config.custom?.displayMode) {
