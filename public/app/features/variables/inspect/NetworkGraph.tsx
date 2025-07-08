@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { DataSet } from 'vis-data';
 import type { Network, Options, Data, Edge, Node } from 'vis-network';
 
@@ -8,7 +8,6 @@ interface OwnProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
   direction?: 'UD' | 'DU' | 'LR' | 'RL';
-  onDoubleClick?: (node: string) => void;
   width?: string;
   height?: string;
 }
@@ -19,18 +18,9 @@ interface DispatchProps {}
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const NetworkGraph = ({ nodes, edges, direction, width, height, onDoubleClick }: Props) => {
+export const NetworkGraph = ({ nodes, edges, direction, width, height }: Props) => {
   const network = useRef<Network | null>(null);
   const ref = useRef<HTMLDivElement>(null);
-
-  const onNodeDoubleClick = useCallback(
-    (params: { nodes: string[] }) => {
-      if (onDoubleClick) {
-        onDoubleClick(params.nodes[0]);
-      }
-    },
-    [onDoubleClick]
-  );
 
   useEffect(() => {
     const createNetwork = async () => {
@@ -59,19 +49,11 @@ export const NetworkGraph = ({ nodes, edges, direction, width, height, onDoubleC
       };
       if (ref.current) {
         network.current = new visJs.Network(ref.current, data, options);
-        network.current.on('doubleClick', onNodeDoubleClick);
       }
     };
 
     createNetwork();
-
-    return () => {
-      // unsubscribe event handlers
-      if (network.current) {
-        network.current.off('doubleClick');
-      }
-    };
-  }, [direction, edges, nodes, onNodeDoubleClick]);
+  }, [direction, edges, nodes]);
 
   return (
     <div>
@@ -80,15 +62,15 @@ export const NetworkGraph = ({ nodes, edges, direction, width, height, onDoubleC
   );
 };
 
-function toVisNetworkNodes(visJs: any, nodes: GraphNode[]): DataSet<Node> {
+function toVisNetworkNodes(visData: any, nodes: GraphNode[]): DataSet<Node> {
   const nodesWithStyle = nodes.map((node) => ({
     ...node,
     shape: 'box',
   }));
-  return new visJs.DataSet(nodesWithStyle);
+  return new visData.DataSet(nodesWithStyle);
 }
 
-function toVisNetworkEdges(visJs: any, edges: GraphEdge[]): DataSet<Edge> {
+function toVisNetworkEdges(visData: any, edges: GraphEdge[]): DataSet<Edge> {
   const edgesWithStyle = edges.map((edge) => ({ ...edge, arrows: 'to', dashes: true }));
-  return new visJs.DataSet(edgesWithStyle);
+  return new visData.DataSet(edgesWithStyle);
 }
