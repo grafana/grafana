@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { ComponentProps, useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
@@ -44,7 +45,10 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
           }
         }}
         options={options}
-        noOptionsMessage="No datasources found"
+        noOptionsMessage={t(
+          'alerting.alert-manager-picker.noOptionsMessage-no-datasources-found',
+          'No datasources found'
+        )}
         value={selectedAlertmanager}
         getOptionLabel={(o) => o.label}
         components={{ Option: CustomOption }}
