@@ -533,3 +533,18 @@ export function isRecordingRuleByType(type?: RuleFormType) {
 export function isDataSourceManagedRuleByType(type?: RuleFormType) {
   return isCloudAlertingRuleByType(type) || isCloudRecordingRuleByType(type);
 }
+
+/*
+ * Grab the UID from either a rulerRule definition or a Prometheus rule definition, only Grafana-managed rules will have a UID.
+ */
+export function getRuleUID(rulerRule?: RulerRuleDTO, promRule?: Rule) {
+  let ruleUid: string | undefined;
+
+  if (rulerRuleType.grafana.rule(rulerRule)) {
+    ruleUid = rulerRule.grafana_alert.uid;
+  } else if (prometheusRuleType.grafana.rule(promRule)) {
+    ruleUid = promRule.uid;
+  }
+
+  return ruleUid;
+}
