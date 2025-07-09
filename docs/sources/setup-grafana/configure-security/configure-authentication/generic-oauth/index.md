@@ -49,10 +49,6 @@ If Users use the same email address in Azure AD that they use with other authent
 
 ## Configure generic OAuth authentication client using the Grafana UI
 
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default.
-{{< /admonition >}}
-
 As a Grafana Admin, you can configure Generic OAuth client from within Grafana using the Generic OAuth UI. To do this, navigate to **Administration > Authentication > Generic OAuth** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
@@ -66,10 +62,6 @@ If you run Grafana in high availability mode, configuration changes may not get 
 Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure generic OAuth authentication client using the Terraform provider
-
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default. Supported in the Terraform provider since v2.12.0.
-{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "generic_sso_settings" {
