@@ -7,6 +7,8 @@ import (
 	"net/mail"
 	"strconv"
 
+	"go.opentelemetry.io/otel/trace"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -14,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var _ authn.ProxyClient = new(Grafana)
@@ -35,8 +36,9 @@ func (c *Grafana) String() string {
 }
 
 func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error) {
-	ctx, span := c.tracer.Start(ctx, "authn.grafana.AuthenticateProxy")
+	ctx, span := c.tracer.Start(ctx, "authn.grafana.AuthenticateProxy") //nolint:ineffassign,staticcheck
 	defer span.End()
+
 	identity := &authn.Identity{
 		AuthenticatedBy: login.AuthProxyAuthModule,
 		AuthID:          username,

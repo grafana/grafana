@@ -239,7 +239,7 @@ func (c *OAuth) GetConfig() authn.SSOClientConfig {
 }
 
 func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
-	ctx, span := c.tracer.Start(ctx, "authn.oauth.RedirectURL")
+	ctx, span := c.tracer.Start(ctx, "authn.oauth.RedirectURL") //nolint:ineffassign,staticcheck
 	defer span.End()
 
 	var opts []oauth2.AuthCodeOption
