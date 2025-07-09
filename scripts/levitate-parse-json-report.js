@@ -29,7 +29,7 @@ const printTerminalSection = (title, items) => {
     dim: '\x1b[2m',
     reset: '\x1b[0m',
     cyan: '\x1b[36m',
-    yellow: '\x1b[33m'
+    yellow: '\x1b[33m',
   };
 
   let output = `${colors.bold}${colors.cyan}${title}${colors.reset}\n`;
