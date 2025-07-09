@@ -8,7 +8,7 @@ import { MssqlDatasource } from './datasource';
 import pluginJson from './plugin.json';
 import { MssqlOptions } from './types';
 
-initPluginTranslations(pluginJson.id, [loadSQLResources]);
+await initPluginTranslations(pluginJson.id, [loadSQLResources]);
 
 export const plugin = new DataSourcePlugin<MssqlDatasource, SQLQuery, MssqlOptions>(MssqlDatasource)
   .setQueryEditor(SqlQueryEditorLazy)

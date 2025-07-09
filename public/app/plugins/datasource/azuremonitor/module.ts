@@ -10,7 +10,13 @@ import { trackAzureMonitorDashboardLoaded } from './tracking';
 import { AzureMonitorQuery, AzureQueryType, ResultFormat } from './types/query';
 import { AzureMonitorDataSourceJsonData } from './types/types';
 
-initPluginTranslations(pluginJson.id);
+// top level await is fine in our bundlded code, but not in our test environment (yet)
+// TODO remove this when our test environment can handle top level await
+if (process.env.NODE_ENV === 'test') {
+  initPluginTranslations(pluginJson.id);
+} else {
+  await initPluginTranslations(pluginJson.id);
+}
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>(Datasource)
   .setConfigEditor(ConfigEditor)
