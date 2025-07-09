@@ -11566,14 +11566,13 @@
   },
   "sql-expressions": {
     "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
-    "ai-suggestions-drawer-title": "AI SQL Suggestions",
     "ai-suggestions-title": "AI-powered SQL expression suggestions",
     "apply": "Apply",
     "code-label": "{{ language }}",
     "copy": "Copy",
     "generate-sql-suggestions": "Generate SQL Suggestions",
     "show-suggestions": "AI Suggestions",
-    "suggestions-history-title": "SQL Suggestions History"
+    "sql-suggestion-history": "SQL Suggestion History"
   },
   "stat": {
     "add-orientation-option": {

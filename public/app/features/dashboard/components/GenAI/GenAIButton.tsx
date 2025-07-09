@@ -61,11 +61,11 @@ export const GenAIButton = ({
     (historyEntry: string) => {
       setHistory((h) => {
         const newHistory = [historyEntry, ...h];
-        onHistoryChange?.(newHistory);
         return newHistory;
       });
+      onHistoryChange?.([historyEntry, ...history]);
     },
-    [onHistoryChange]
+    [onHistoryChange, history]
   );
 
   const onResponse = useCallback(

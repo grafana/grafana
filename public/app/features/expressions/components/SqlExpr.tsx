@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
@@ -50,6 +50,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
   const [dimensions, setDimensions] = useState({ height: 0 });
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [hasUnseenSuggestions, setHasUnseenSuggestions] = useState(false);
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -61,15 +62,22 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
 
   const onHistoryUpdate = (history: string[]) => {
     setSuggestions(history);
+    setHasUnseenSuggestions(true);
     // Auto-open drawer when first suggestion is generated
     if (history.length === 1) {
       setIsDrawerOpen(true);
+      setHasUnseenSuggestions(false);
     }
   };
 
   const onApplySuggestion = (suggestion: string) => {
     onEditorChange(suggestion);
     setIsDrawerOpen(false);
+  };
+
+  const onOpenDrawer = () => {
+    setIsDrawerOpen(true);
+    setHasUnseenSuggestions(false);
   };
 
   // Set up resize observer to handle container resizing
@@ -109,16 +117,19 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
             />
           </Suspense>
           {suggestions.length > 0 && (
-            <Button variant="secondary" size="sm" onClick={() => setIsDrawerOpen(true)} icon="list-ul">
-              <Stack direction="row" gap={1} alignItems="center">
-                <Trans i18nKey="sql-expressions.show-suggestions">AI Suggestions</Trans>
-                {suggestions.length > 0 && (
-                  <Text variant="bodySmall" weight="bold">
-                    {suggestions.length}
-                  </Text>
-                )}
-              </Stack>
-            </Button>
+            <div className={styles.buttonWrapper}>
+              <Button variant="secondary" size="sm" onClick={onOpenDrawer} icon="list-ol">
+                <Stack direction="row" gap={1} alignItems="center">
+                  <Trans i18nKey="sql-expressions.show-suggestions">AI Suggestions</Trans>
+                  <span className={styles.countBadge}>
+                    <Text variant="bodySmall" weight="bold">
+                      {suggestions.length}
+                    </Text>
+                  </span>
+                </Stack>
+              </Button>
+              {hasUnseenSuggestions && <span className={styles.newDot} />}
+            </div>
           )}
         </Stack>
       )}
@@ -142,11 +153,29 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
   );
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   editorContainer: css({
     height: '240px',
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
+  }),
+  countBadge: css({
+    color: theme.colors.primary.text,
+    fontWeight: 'bold',
+  }),
+  buttonWrapper: css({
+    position: 'relative',
+    display: 'inline-block',
+  }),
+  newDot: css({
+    position: 'absolute',
+    top: '-2px',
+    right: '-2px',
+    width: theme.spacing(1),
+    height: theme.spacing(1),
+    backgroundColor: theme.colors.error.main,
+    borderRadius: theme.shape.radius.pill,
+    zIndex: 1,
   }),
 });

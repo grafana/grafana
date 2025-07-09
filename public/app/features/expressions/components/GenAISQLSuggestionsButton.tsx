@@ -99,7 +99,7 @@ export const GenAISQLSuggestionsButton = ({
       onGenerate={onGenerate}
       onHistoryChange={onHistoryUpdate}
       temperature={0.3}
-      text={t('sql-expressions.generate-sql-suggestions', 'Generate SQL Suggestions')}
+      text={t('sql-expressions.generate-sql-suggestion', 'Generate SQL Suggestion')}
       toggleTipTitle={t('sql-expressions.ai-suggestions-title', 'AI-powered SQL expression suggestions')}
       tooltip={
         refIds.length === 0

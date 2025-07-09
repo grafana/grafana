@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { CodeEditor, Drawer, useStyles2, Stack, Button, Card, Text } from '@grafana/ui';
+import { CodeEditor, Drawer, useStyles2, Stack, Button, Card, Text, ClipboardButton } from '@grafana/ui';
 
 interface AISuggestionsDrawerProps {
   isOpen: boolean;
@@ -13,14 +13,6 @@ interface AISuggestionsDrawerProps {
 
 export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, suggestions }: AISuggestionsDrawerProps) => {
   const styles = useStyles2(getStyles);
-
-  const copySuggestionToClipboard = async (suggestion: string) => {
-    try {
-      await navigator.clipboard.writeText(suggestion);
-    } catch (err) {
-      console.error('Failed to copy suggestion to clipboard:', err);
-    }
-  };
 
   /**
    * Parses AI-generated suggestions that contain mixed content (text and code blocks).
@@ -97,16 +89,10 @@ export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, sugges
     <Drawer
       onClose={onClose}
       size="lg"
-      title={<Trans i18nKey="sql-expressions.ai-suggestions-drawer-title">AI SQL Suggestions</Trans>}
+      title={<Trans i18nKey="sql-expressions.sql-suggestion-history">SQL Suggestion History</Trans>}
     >
       <div className={styles.content}>
         <Stack direction="column" gap={3}>
-          <div className={styles.header}>
-            <Text element="h4">
-              <Trans i18nKey="sql-expressions.suggestions-history-title">SQL Suggestions History</Trans>
-            </Text>
-          </div>
-
           <div className={styles.suggestionsList}>
             {suggestions.map((suggestion, index) => {
               const parsedSuggestion = parseSuggestion(suggestion);
@@ -130,18 +116,13 @@ export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, sugges
                                   </Trans>
                                 </Text>
                                 <Stack direction="row" gap={1}>
-                                  <Button
-                                    variant="secondary"
-                                    fill="text"
-                                    icon="copy"
-                                    onClick={() => copySuggestionToClipboard(content)}
-                                  >
+                                  <ClipboardButton size="sm" icon="copy" variant="secondary" getText={() => content}>
                                     <Trans i18nKey="sql-expressions.copy">Copy</Trans>
-                                  </Button>
+                                  </ClipboardButton>
                                   <Button
+                                    size="sm"
                                     variant="primary"
-                                    fill="text"
-                                    icon="arrow-right"
+                                    icon="ai-sparkle"
                                     onClick={() => onApplySuggestion(content)}
                                   >
                                     <Trans i18nKey="sql-expressions.apply">Apply</Trans>
@@ -209,10 +190,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'center',
     gap: theme.spacing(2),
   }),
-  header: css({
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    paddingBottom: theme.spacing(2),
-  }),
   suggestionsList: css({
     display: 'flex',
     flexDirection: 'column',
@@ -244,6 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(1.5),
     width: '100%',
+    overflowX: 'auto',
   }),
   suggestionPart: css({
     display: 'block',
@@ -255,6 +233,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     marginBottom: theme.spacing(1),
     width: '100%',
+    minWidth: '600px',
   }),
   codeHeader: css({
     backgroundColor: theme.colors.background.secondary,
