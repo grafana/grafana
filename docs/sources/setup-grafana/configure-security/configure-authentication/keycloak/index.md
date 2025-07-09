@@ -106,7 +106,7 @@ editor
 viewer
 ```
 
-## Team sync
+## Group synchronization
 
 {{< admonition type="note" >}}
 Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).

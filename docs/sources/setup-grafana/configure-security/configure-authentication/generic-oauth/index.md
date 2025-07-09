@@ -310,7 +310,7 @@ org_attribute_path = roles
 org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
 ```
 
-## Configure team synchronization
+## Configure group synchronization
 
 {{< admonition type="note" >}}
 Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).

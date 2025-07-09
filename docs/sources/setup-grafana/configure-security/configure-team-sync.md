@@ -30,13 +30,13 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 ## Supported providers
 
 - [Auth Proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/auth-proxy/#team-sync)
-- [Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#team-sync)
-- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/generic-oauth/#configure-team-synchronization)
-- [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/github/#configure-team-synchronization)
-- [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/gitlab/#configure-team-synchronization)
-- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/#configure-team-synchronization)
-- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/enhanced-ldap/)
-- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/okta/#configure-team-synchronization)
+- [Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/azuread/#group-sync)
+- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/generic-oauth/#configure-group-synchronization)
+- [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/github/#configure-group-synchronization)
+- [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/gitlab/#configure-group-synchronization)
+- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/google/#configure-group-synchronization)
+- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/enhanced-ldap#ldap-group-synchronization/)
+- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/okta/#configure-group-synchronization)
 - [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/#configure-group-synchronization)
 
 ## Synchronize a Grafana team with an external group
