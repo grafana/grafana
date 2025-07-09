@@ -2,8 +2,8 @@ import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
 import { isSharedWithMe } from 'app/features/browse-dashboards/components/utils';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
-import { DashboardDataDTO } from '../../../types';
 import { AnnoKeyFolder, ResourceList } from '../../apiserver/types';
 import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem, DashboardViewItemKind } from '../types';
 

@@ -3,7 +3,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Field, FieldSet, Icon, Input, Tooltip } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import config from 'app/core/config';
-import { UserDTO } from 'app/types';
+import { UserDTO } from 'app/types/user';
 
 import { ProfileUpdateFields } from './types';
 
