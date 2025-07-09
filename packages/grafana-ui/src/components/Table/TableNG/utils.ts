@@ -21,6 +21,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
+import { inferPills } from './Cells/PillCell';
 
 import { COLUMN, TABLE } from './constants';
 import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
@@ -100,13 +101,33 @@ export function getMaxWrapCell(
   for (let i = 0; i < colWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const field = fields[i];
+      const cellOptions = getCellOptions(field);
+
       // special case: for the header, provide `-1` as the row index.
       const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
 
       if (cellTextRaw != null) {
         const cellText = String(cellTextRaw);
 
-        if (spaceRegex.test(cellText)) {
+        // Handle pill cells with wrapping enabled
+        if (cellOptions.type === TableCellDisplayMode.Pill && 'wrapText' in cellOptions && cellOptions.wrapText) {
+          // For pill cells, we need to estimate how many pills will fit per line
+          // and how many lines we'll need. This is a rough estimation.
+          const pillValues = inferPills(cellTextRaw);
+          if (pillValues.length > 0) {
+            // Estimate pill width (including padding and gap)
+            const estimatedPillWidth = 80; // rough estimate for pill width
+            const pillsPerLine = Math.max(1, Math.floor(colWidths[i] / estimatedPillWidth));
+            const estimatedLines = Math.ceil(pillValues.length / pillsPerLine);
+
+            if (estimatedLines > maxLines) {
+              maxLines = estimatedLines;
+              maxLinesIdx = i;
+              maxLinesText = cellText;
+            }
+          }
+        } else if (spaceRegex.test(cellText)) {
+          // Handle regular text wrapping
           const charsPerLine = colWidths[i] / avgCharWidth;
           const approxLines = cellText.length / charsPerLine;
 

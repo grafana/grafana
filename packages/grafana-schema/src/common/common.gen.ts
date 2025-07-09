@@ -980,6 +980,7 @@ export interface TablePillCellOptions {
   color?: string;
   colorMode?: ('auto' | 'fixed' | 'mapped');
   type: TableCellDisplayMode.Pill;
+  wrapText?: boolean;
 }
 
 /**

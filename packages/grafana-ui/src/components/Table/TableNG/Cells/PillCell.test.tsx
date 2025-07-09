@@ -81,6 +81,63 @@ describe('PillCell', () => {
     });
   });
 
+  describe('pill wrapping', () => {
+    it('should not wrap pills by default', () => {
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" />);
+
+      const pillsContainer = screen.getByText('pill1').parentElement;
+      expect(pillsContainer).toHaveClass('pillsContainer');
+    });
+
+    it('should wrap pills when wrapText is true', () => {
+      const wrapOptions: TablePillCellOptions = {
+        type: TableCellDisplayMode.Pill,
+        wrapText: true,
+      };
+
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" cellOptions={wrapOptions} />);
+
+      const pillsContainer = screen.getByText('pill1').parentElement;
+      expect(pillsContainer).toHaveClass('pillsContainerWrapped');
+    });
+
+    it('should not wrap pills when wrapText is false', () => {
+      const noWrapOptions: TablePillCellOptions = {
+        type: TableCellDisplayMode.Pill,
+        wrapText: false,
+      };
+
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" cellOptions={noWrapOptions} />);
+
+      const pillsContainer = screen.getByText('pill1').parentElement;
+      expect(pillsContainer).toHaveClass('pillsContainer');
+    });
+
+    it('should use wrapped cell style when wrapText is true', () => {
+      const wrapOptions: TablePillCellOptions = {
+        type: TableCellDisplayMode.Pill,
+        wrapText: true,
+      };
+
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" cellOptions={wrapOptions} />);
+
+      const cell = screen.getByText('pill1').closest('div');
+      expect(cell).toHaveClass('cellWrapped');
+    });
+
+    it('should use regular cell style when wrapText is false', () => {
+      const noWrapOptions: TablePillCellOptions = {
+        type: TableCellDisplayMode.Pill,
+        wrapText: false,
+      };
+
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" cellOptions={noWrapOptions} />);
+
+      const cell = screen.getByText('pill1').closest('div');
+      expect(cell).toHaveClass('cell');
+    });
+  });
+
   describe('color mapping', () => {
     // These tests primarily ensure the color logic executes without throwing.
     // For true color verification, visual regression tests would be needed.
