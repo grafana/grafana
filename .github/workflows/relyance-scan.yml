@@ -30,4 +30,4 @@ jobs:
           API_KEY: "${{ fromJSON(steps.vault-secrets.outputs.secrets).API_KEY }}"
         run: |
           docker pull gcr.io/relyance-ext/compliance_inspector:release && \
-          docker run --rm -v `pwd`:/repo --env "API_KEY=${{ env.API_KEY }}" gcr.io/relyance-ext/compliance_inspector:release
+          docker run --rm -v ${{ github.workspace }}:/repo --env "API_KEY=${{ env.API_KEY }}" gcr.io/relyance-ext/compliance_inspector:release
