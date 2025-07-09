@@ -370,6 +370,9 @@ func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels
 	if err != nil {
 		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
 	}
+	if logctx := mergeResult.LogContext(); len(logctx) > 0 {
+		am.log.Debug("Configurations merged successfully but some resources were renamed", logctx...)
+	}
 	templates := definition.TemplatesMapToPostableAPITemplates(config.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)
 	return remoteClient.GrafanaAlertmanagerConfig{
 		// TODO keep sending Grafana templates as a map to not break old Mimir
