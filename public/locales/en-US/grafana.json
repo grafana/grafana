@@ -11570,7 +11570,7 @@
     "apply": "Apply",
     "code-label": "{{ language }}",
     "copy": "Copy",
-    "generate-sql-suggestions": "Generate SQL Suggestions",
+    "generate-sql-suggestion": "Generate SQL Suggestion",
     "show-suggestions": "AI Suggestions",
     "sql-suggestion-history": "SQL Suggestion History"
   },
