@@ -11810,9 +11810,11 @@
       "description-color-mode": "Choose how colors are assigned to pills",
       "description-fixed-color": "All pills in this column will use this color",
       "description-value-mappings-info": "For Value Mappings either use the global table Value Mappings or the Field overrides Value Mappings. The default will fall back to the Color Scheme. ",
+      "description-wrap-text": "Allow pills to wrap to new lines when they exceed the cell width. When disabled, pills will be truncated.",
       "label-color-mode": "Color Mode",
       "label-fixed-color": "Fixed Color",
-      "label-value-mappings-info": "Value Mappings"
+      "label-value-mappings-info": "Value Mappings",
+      "label-wrap-text": "Wrap text"
     },
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"

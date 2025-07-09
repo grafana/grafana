@@ -21,8 +21,8 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
-import { inferPills } from './Cells/PillCell';
 
+import { inferPills } from './Cells/PillCell';
 import { COLUMN, TABLE } from './constants';
 import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
 
