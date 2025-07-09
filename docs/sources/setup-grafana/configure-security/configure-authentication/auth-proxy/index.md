@@ -236,9 +236,11 @@ With our Grafana and Apache containers running, you can now connect to http://lo
 If the user is deleted from Grafana, the user will be not be able to login and resync until after the `sync_ttl` has expired.
 {{< /admonition >}}
 
-### Team Sync (Enterprise only)
+### Team Sync
 
-> Only available in Grafana Enterprise v6.3+
+{{< admonition type="note" >}}
+Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+{{< /admonition >}}
 
 With Team Sync, it's possible to set up synchronization between teams in your authentication provider and Grafana. You can send Grafana values as part of an HTTP header and have Grafana map them to your team structure. This allows you to put users into specific teams automatically.
 
