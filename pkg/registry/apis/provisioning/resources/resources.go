@@ -121,7 +121,7 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
 	if err != nil {
-		return "", fmt.Errorf("failed to write file: %w", err)
+		return "", fmt.Errorf("failed to write file: %s, %w", fileName, err)
 	}
 
 	return fileName, nil

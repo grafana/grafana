@@ -2,10 +2,12 @@ package repository
 
 import (
 	context "context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/nanogit"
 )
 
 type StageOptions struct {
@@ -59,5 +61,11 @@ func WrapWithStageAndPushIfPossible(
 		return err
 	}
 
-	return staged.Push(ctx)
+	if err = staged.Push(ctx); err != nil {
+		if errors.Is(err, nanogit.ErrNothingToPush) {
+			return nil // OK, already pushed
+		}
+		return fmt.Errorf("wrapped push error: %w", err)
+	}
+	return nil
 }

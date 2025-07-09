@@ -89,22 +89,29 @@ func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data
 	return nil
 }
 
+func (r *stagedGitRepository) blobExists(ctx context.Context, path string) (bool, error) {
+	if r.gitConfig.Path != "" {
+		path = safepath.Join(r.gitConfig.Path, path)
+	}
+	return r.writer.BlobExists(ctx, path)
+}
+
 func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data []byte, message string) error {
 	if ref != "" && ref != r.gitConfig.Branch {
 		return errors.New("ref is not supported for staged repository")
 	}
 
-	ok, err := r.writer.BlobExists(ctx, path)
+	exists, err := r.blobExists(ctx, path)
 	if err != nil {
 		return fmt.Errorf("check if file exists: %w", err)
 	}
 
-	if !ok {
-		if err := r.create(ctx, path, data, r.writer); err != nil {
+	if exists {
+		if err := r.update(ctx, path, data, r.writer); err != nil {
 			return err
 		}
 	} else {
-		if err := r.update(ctx, path, data, r.writer); err != nil {
+		if err := r.create(ctx, path, data, r.writer); err != nil {
 			return err
 		}
 	}
