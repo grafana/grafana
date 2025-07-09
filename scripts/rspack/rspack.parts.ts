@@ -142,7 +142,9 @@ export function getExperiments(env: Record<string, unknown> = {}) {
   const cache: ExperimentCacheOptions = {
     buildDependencies: [import.meta.filename, join(import.meta.dirname, '../../tsconfig.json')],
     storage: {
-      directory: env.production ? 'grafana-default-rspack-production' : 'grafana-default-rspack-development',
+      directory: env.production
+        ? './node_modules/.cache/rspack/grafana-default-rspack-production'
+        : './node_modules/.cache/rspack/grafana-default-rspack-development',
       type: 'filesystem',
     },
     type: 'persistent',
@@ -261,10 +263,6 @@ export function devServer(isDevelopment: boolean): DevServerConfiguration {
     },
     historyApiFallback: true,
     static: false,
-    // static: ['public/fonts', 'public/img'],
-    // devMiddleware: {
-    // publicPath: `/public/build`,
-    // },
   };
 }
 
@@ -272,9 +270,9 @@ export function getOptimizations(env: Record<string, unknown> = {}) {
   if (env.development) {
     return {
       moduleIds: 'named',
-      // runtimeChunk: true,
-      // removeEmptyChunks: false,
-      // splitChunks: false,
+      runtimeChunk: true,
+      removeEmptyChunks: false,
+      splitChunks: false,
     } as Optimization;
   }
 
@@ -307,5 +305,6 @@ export function getOptimizations(env: Record<string, unknown> = {}) {
     },
     nodeEnv: 'production',
     minimize: Boolean(env.noMinify),
+    minimizer: [new rspack.SwcJsMinimizerRspackPlugin(), new rspack.LightningCssMinimizerRspackPlugin()],
   } as Optimization;
 }
