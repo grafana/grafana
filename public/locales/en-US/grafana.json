@@ -11727,6 +11727,7 @@
     "category-table": "Table",
     "category-table-footer": "Table footer",
     "cell-height-options": {
+      "label-auto": "Auto",
       "label-custom": "Custom",
       "label-large": "Large",
       "label-medium": "Medium",
@@ -11829,7 +11830,7 @@
     "name-min-column-width": "Minimum column width",
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
-    "placeholder-cell-height": "auto",
+    "placeholder-cell-height": "none",
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },
