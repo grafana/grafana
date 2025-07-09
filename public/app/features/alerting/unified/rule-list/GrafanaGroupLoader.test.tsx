@@ -40,6 +40,7 @@ const ui = {
     copyLink: () => byRole('menuitem', { name: /copy link/i }),
     export: () => byRole('menuitem', { name: /export/i }),
     delete: () => byRole('menuitem', { name: /delete/i }),
+    pause: () => byRole('menuitem', { name: /pause/i }),
   },
 };
 
@@ -188,7 +189,7 @@ describe('GrafanaGroupLoader', () => {
     const menu = byRole('menu').get();
     expect(menu).toBeInTheDocument();
 
-    // With proper permissions, all 4 menu actions should be available:
+    // With proper permissions, all 6 menu actions should be available:
 
     // 1. Silence notifications - available for alerting rules (AlertingSilenceCreate permission)
     expect(ui.menuItems.silence().get()).toBeInTheDocument();
@@ -202,9 +203,15 @@ describe('GrafanaGroupLoader', () => {
     // 4. Export - should be available for Grafana alerting rules (AlertingRuleRead permission)
     expect(ui.menuItems.export().get()).toBeInTheDocument();
 
-    // Verify that the menu contains all 4 expected menu items
+    // 5. Delete - should be available for Grafana alerting rules (AlertingRuleDelete permission)
+    expect(ui.menuItems.delete().get()).toBeInTheDocument();
+
+    // 6. Pause - should be available for Grafana alerting rules (AlertingRuleUpdate permission)
+    expect(ui.menuItems.pause().get()).toBeInTheDocument();
+
+    // Verify that the menu contains all 6 expected menu items
     const menuItems = byRole('menuitem').getAll();
-    expect(menuItems.length).toBe(4);
+    expect(menuItems.length).toBe(6);
   });
 });
 
