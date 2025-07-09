@@ -481,8 +481,6 @@ export const LogListContextProvider = ({
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
 
-  console.log(detailsWidth);
-
   return (
     <LogListContext.Provider
       value={{
