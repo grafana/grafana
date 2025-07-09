@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -143,12 +142,12 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 	mockClients := resources.NewMockClientFactory(t)
 
 	mockClients.On("Clients", context.Background(), "test-namespace").Return(nil, errors.New("failed to create clients"))
-	mockCloneFn := NewMockWrapWithCloneFn(t)
-	mockCloneFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, nil, nil, mockCloneFn.Execute)
+	r := NewExportWorker(mockClients, nil, nil, mockStageFn.Execute)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
@@ -179,12 +178,12 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
-	mockCloneFn := NewMockWrapWithCloneFn(t)
-	mockCloneFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, nil, nil, mockCloneFn.Execute)
+	r := NewExportWorker(mockClients, nil, nil, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export job submitted targeting repository that is not a ReaderWriter")
 }
@@ -216,16 +215,16 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	mockRepoResources.On("Client", context.Background(), mockRepo).Return(nil, fmt.Errorf("failed to create repository resources client"))
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockCloneFn := NewMockWrapWithCloneFn(t)
-	mockCloneFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
-	r := NewExportWorker(mockClients, mockRepoResources, nil, mockCloneFn.Execute)
+	r := NewExportWorker(mockClients, mockRepoResources, nil, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create repository resource client: failed to create repository resources client")
 }
 
-func TestExportWorker_ProcessCloneAndPushOptions(t *testing.T) {
+func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
@@ -260,21 +259,15 @@ func TestExportWorker_ProcessCloneAndPushOptions(t *testing.T) {
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	mockCloneFn := NewMockWrapWithCloneFn(t)
+	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify clone and push options
-	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.CloneOptions) bool {
-		return opts.Timeout == 10*time.Minute && !opts.PushOnWrites && opts.BeforeFn != nil
-	}), mock.MatchedBy(func(opts repository.PushOptions) bool {
-		return opts.Timeout == 10*time.Minute && opts.Progress != nil && opts.BeforeFn != nil
-	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
-		// Execute both BeforeFn functions to verify progress messages
-		assert.NoError(t, cloneOpts.BeforeFn())
-		assert.NoError(t, pushOpts.BeforeFn())
-
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		return opts.Timeout == 10*time.Minute && !opts.PushOnWrites
+	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockCloneFn.Execute)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -310,12 +303,12 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
 
-	mockCloneFn := NewMockWrapWithCloneFn(t)
-	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockCloneFn.Execute)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export failed")
 }
@@ -340,10 +333,10 @@ func TestExportWorker_ProcessWrapWithCloneFnError(t *testing.T) {
 	})
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockCloneFn := NewMockWrapWithCloneFn(t)
-	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("clone failed"))
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(errors.New("stage failed"))
 
-	r := NewExportWorker(nil, nil, nil, mockCloneFn.Execute)
+	r := NewExportWorker(nil, nil, nil, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "clone failed")
 }
@@ -368,16 +361,12 @@ func TestExportWorker_ProcessBranchNotAllowedForClonableRepositories(t *testing.
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	mockProgress.On("SetMessage", mock.Anything, "clone target").Return()
-	mockCloneFn := NewMockWrapWithCloneFn(t)
-	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
-		if cloneOpts.BeforeFn != nil {
-			return cloneOpts.BeforeFn()
-		}
-
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(nil, nil, nil, mockCloneFn.Execute)
+	r := NewExportWorker(nil, nil, nil, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "branch is not supported for clonable repositories")
 }
@@ -422,21 +411,15 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	mockCloneFn := NewMockWrapWithCloneFn(t)
+	mockStageFn := NewMockWrapWithStageFn(t)
 	// Verify clone and push options
-	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.CloneOptions) bool {
-		return opts.Timeout == 10*time.Minute && !opts.PushOnWrites && opts.BeforeFn != nil
-	}), mock.MatchedBy(func(opts repository.PushOptions) bool {
-		return opts.Timeout == 10*time.Minute && opts.Progress != nil && opts.BeforeFn != nil
-	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
-		// Execute both BeforeFn functions to verify progress messages
-		assert.NoError(t, cloneOpts.BeforeFn())
-		assert.NoError(t, pushOpts.BeforeFn())
-
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		return opts.Timeout == 10*time.Minute && !opts.PushOnWrites
+	}), mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockCloneFn.Execute)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
 }
@@ -477,12 +460,12 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 	mockExportFn := NewMockExportFn(t)
 	mockExportFn.On("Execute", mock.Anything, "test-repo", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("export failed"))
 
-	mockCloneFn := NewMockWrapWithCloneFn(t)
-	mockCloneFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
+	mockStageFn := NewMockWrapWithStageFn(t)
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
-	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockCloneFn.Execute)
+	r := NewExportWorker(mockClients, mockRepoResources, mockExportFn.Execute, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export failed")
 }

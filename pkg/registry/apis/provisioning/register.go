@@ -598,11 +598,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			b.repositoryLister = repoInformer.Lister()
 
+			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
 				export.ExportAll,
-				repository.WrapWithCloneAndPushIfPossible,
+				stageIfPossible,
 			)
 
 			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
@@ -628,7 +629,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				legacyResources,
 				storageSwapper,
 				syncWorker,
-				repository.WrapWithCloneAndPushIfPossible,
+				stageIfPossible,
 			)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)

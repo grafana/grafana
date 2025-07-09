@@ -582,7 +582,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	return changes, nil
 }
 
-func (r *gitRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
+func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
 	return NewStagedGitRepository(ctx, r, opts)
 }
 

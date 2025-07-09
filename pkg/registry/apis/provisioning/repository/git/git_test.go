@@ -2168,7 +2168,7 @@ func TestGitRepository_logger(t *testing.T) {
 	})
 }
 
-func TestGitRepository_Clone(t *testing.T) {
+func TestGitRepository_Stage(t *testing.T) {
 	gitRepo := &gitRepository{
 		config: &provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
@@ -2184,9 +2184,8 @@ func TestGitRepository_Clone(t *testing.T) {
 
 	t.Run("calls NewStagedGitRepository", func(t *testing.T) {
 		ctx := context.Background()
-		opts := repository.CloneOptions{
-			CreateIfNotExists: true,
-			PushOnWrites:      true,
+		opts := repository.StageOptions{
+			PushOnWrites: true,
 		}
 
 		// Since NewStagedGitRepository is not mocked and may panic, we expect this to fail
@@ -2198,11 +2197,11 @@ func TestGitRepository_Clone(t *testing.T) {
 			}
 		}()
 
-		cloned, err := gitRepo.Clone(ctx, opts)
+		staged, err := gitRepo.Stage(ctx, opts)
 
 		// This will likely error/panic since we don't have a real implementation
 		// but we're testing that the method exists and forwards to NewStagedGitRepository
-		_ = cloned
+		_ = staged
 		_ = err
 	})
 }

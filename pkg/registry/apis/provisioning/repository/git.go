@@ -9,7 +9,7 @@ type GitRepository interface {
 	Versioned
 	Writer
 	Reader
-	ClonableRepository
+	StageableRepository
 	URL() string
 	Branch() string
 }

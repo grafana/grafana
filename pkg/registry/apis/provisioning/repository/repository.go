@@ -2,9 +2,7 @@ package repository
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,41 +65,10 @@ type FileInfo struct {
 	Modified *metav1.Time
 }
 
-type CloneOptions struct {
-	// If the branch does not exist, create it
-	CreateIfNotExists bool
-
-	// Push on every write
-	PushOnWrites bool
-
-	// Maximum allowed size for repository clone in bytes (0 means no limit)
-	MaxSize int64
-
-	// Maximum time allowed for clone operation in seconds (0 means no limit)
-	Timeout time.Duration
-
-	// Progress is the writer to report progress to
-	Progress io.Writer
-
-	// BeforeFn is called before the clone operation starts
-	BeforeFn func() error
-}
-
-//go:generate mockery --name ClonableRepository --structname MockClonableRepository --inpackage --filename clonable_repository_mock.go --with-expecter
-type ClonableRepository interface {
-	Clone(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
-}
-
-type PushOptions struct {
-	Timeout  time.Duration
-	Progress io.Writer
-	BeforeFn func() error
-}
-
-//go:generate mockery --name ClonedRepository --structname MockClonedRepository --inpackage --filename cloned_repository_mock.go --with-expecter
-type ClonedRepository interface {
+//go:generate mockery --name StagedRepository --structname MockStagedRepository --inpackage --filename staged_repository_mock.go --with-expecter
+type StagedRepository interface {
 	ReaderWriter
-	Push(ctx context.Context, opts PushOptions) error
+	Push(ctx context.Context) error
 	Remove(ctx context.Context) error
 }
 

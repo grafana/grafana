@@ -73,65 +73,6 @@ func (_c *MockGithubRepository_Client_Call) RunAndReturn(run func() Client) *Moc
 	return _c
 }
 
-// Clone provides a mock function with given fields: ctx, opts
-func (_m *MockGithubRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-	ret := _m.Called(ctx, opts)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Clone")
-	}
-
-	var r0 repository.ClonedRepository
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.CloneOptions) (repository.ClonedRepository, error)); ok {
-		return rf(ctx, opts)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.CloneOptions) repository.ClonedRepository); ok {
-		r0 = rf(ctx, opts)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(repository.ClonedRepository)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, repository.CloneOptions) error); ok {
-		r1 = rf(ctx, opts)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockGithubRepository_Clone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Clone'
-type MockGithubRepository_Clone_Call struct {
-	*mock.Call
-}
-
-// Clone is a helper method to define mock.On call
-//   - ctx context.Context
-//   - opts repository.CloneOptions
-func (_e *MockGithubRepository_Expecter) Clone(ctx interface{}, opts interface{}) *MockGithubRepository_Clone_Call {
-	return &MockGithubRepository_Clone_Call{Call: _e.mock.On("Clone", ctx, opts)}
-}
-
-func (_c *MockGithubRepository_Clone_Call) Run(run func(ctx context.Context, opts repository.CloneOptions)) *MockGithubRepository_Clone_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.CloneOptions))
-	})
-	return _c
-}
-
-func (_c *MockGithubRepository_Clone_Call) Return(_a0 repository.ClonedRepository, _a1 error) *MockGithubRepository_Clone_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockGithubRepository_Clone_Call) RunAndReturn(run func(context.Context, repository.CloneOptions) (repository.ClonedRepository, error)) *MockGithubRepository_Clone_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CompareFiles provides a mock function with given fields: ctx, base, ref
 func (_m *MockGithubRepository) CompareFiles(ctx context.Context, base string, ref string) ([]repository.VersionedFileChange, error) {
 	ret := _m.Called(ctx, base, ref)
@@ -718,6 +659,65 @@ func (_c *MockGithubRepository_ResourceURLs_Call) Return(_a0 *v0alpha1.ResourceU
 }
 
 func (_c *MockGithubRepository_ResourceURLs_Call) RunAndReturn(run func(context.Context, *repository.FileInfo) (*v0alpha1.ResourceURLs, error)) *MockGithubRepository_ResourceURLs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Stage provides a mock function with given fields: ctx, opts
+func (_m *MockGithubRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
+	ret := _m.Called(ctx, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Stage")
+	}
+
+	var r0 repository.StagedRepository
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, repository.StageOptions) (repository.StagedRepository, error)); ok {
+		return rf(ctx, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, repository.StageOptions) repository.StagedRepository); ok {
+		r0 = rf(ctx, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(repository.StagedRepository)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, repository.StageOptions) error); ok {
+		r1 = rf(ctx, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGithubRepository_Stage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Stage'
+type MockGithubRepository_Stage_Call struct {
+	*mock.Call
+}
+
+// Stage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts repository.StageOptions
+func (_e *MockGithubRepository_Expecter) Stage(ctx interface{}, opts interface{}) *MockGithubRepository_Stage_Call {
+	return &MockGithubRepository_Stage_Call{Call: _e.mock.On("Stage", ctx, opts)}
+}
+
+func (_c *MockGithubRepository_Stage_Call) Run(run func(ctx context.Context, opts repository.StageOptions)) *MockGithubRepository_Stage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(repository.StageOptions))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_Stage_Call) Return(_a0 repository.StagedRepository, _a1 error) *MockGithubRepository_Stage_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGithubRepository_Stage_Call) RunAndReturn(run func(context.Context, repository.StageOptions) (repository.StagedRepository, error)) *MockGithubRepository_Stage_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -41,7 +41,7 @@ type GithubRepository interface {
 	repository.Writer
 	repository.Reader
 	repository.RepositoryWithURLs
-	repository.ClonableRepository
+	repository.StageableRepository
 	Owner() string
 	Repo() string
 	Client() Client
@@ -328,9 +328,8 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 	return urls, nil
 }
 
-// TODO: we should not need to clone
-func (r *githubRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-	return r.gitRepo.Clone(ctx, opts)
+func (r *githubRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
+	return r.gitRepo.Stage(ctx, opts)
 }
 
 func (r *githubRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -3010,23 +3009,20 @@ func TestGitHubRepository_ResourceURLs(t *testing.T) {
 	}
 }
 
-func TestGitHubRepository_Clone(t *testing.T) {
+// TODO: simply redirect
+func TestGitHubRepository_Stage(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMock     func(m *repository.MockCloneFn)
+		setupMock     func(m *repository.MockStageableRepository)
 		config        *provisioning.Repository
 		expectedError error
 	}{
 		{
 			name: "successfully clone repository",
-			setupMock: func(m *repository.MockCloneFn) {
-				m.On("Execute", mock.Anything, repository.CloneOptions{
-					CreateIfNotExists: true,
-					PushOnWrites:      true,
-					MaxSize:           1024 * 1024 * 10, // 10MB
-					Timeout:           10 * time.Second,
-					Progress:          io.Discard,
-					BeforeFn:          nil,
+			setupMock: func(m *repository.MockStageableRepository) {
+				m.On("Execute", mock.Anything, repository.StageOptions{
+					PushOnWrites: true,
+					Timeout:      10 * time.Second,
 				}).Return(nil, nil)
 			},
 			config: &provisioning.Repository{
@@ -3040,14 +3036,10 @@ func TestGitHubRepository_Clone(t *testing.T) {
 		},
 		{
 			name: "error cloning repository",
-			setupMock: func(m *repository.MockCloneFn) {
-				m.On("Execute", mock.Anything, repository.CloneOptions{
-					CreateIfNotExists: true,
-					PushOnWrites:      true,
-					MaxSize:           1024 * 1024 * 10, // 10MB
-					Timeout:           10 * time.Second,
-					Progress:          io.Discard,
-					BeforeFn:          nil,
+			setupMock: func(m *repository.MockStageableRepository) {
+				m.On("Execute", mock.Anything, repository.StageOptions{
+					PushOnWrites: true,
+					Timeout:      10 * time.Second,
 				}).Return(nil, fmt.Errorf("failed to clone repository"))
 			},
 			config: &provisioning.Repository{
@@ -3063,7 +3055,7 @@ func TestGitHubRepository_Clone(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCloneFn := repository.NewMockCloneFn(t)
+			mockCloneFn := repository.NewMockStageableRepository(t)
 
 			tt.setupMock(mockCloneFn)
 
@@ -3075,13 +3067,9 @@ func TestGitHubRepository_Clone(t *testing.T) {
 			}
 
 			// Call the Clone method with a placeholder directory path
-			_, err := repo.Clone(context.Background(), repository.CloneOptions{
-				CreateIfNotExists: true,
-				PushOnWrites:      true,
-				MaxSize:           1024 * 1024 * 10, // 10MB
-				Timeout:           10 * time.Second,
-				Progress:          io.Discard,
-				BeforeFn:          nil,
+			_, err := repo.Stage(context.Background(), repository.StageOptions{
+				PushOnWrites: true,
+				Timeout:      10 * time.Second,
 			})
 
 			// Check results
