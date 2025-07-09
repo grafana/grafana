@@ -1,6 +1,6 @@
 import { isNumber } from 'lodash';
 import Feature, { FeatureLike } from 'ol/Feature';
-import Map from 'ol/Map';
+import OpenLayersMap from 'ol/Map';
 import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
 import { Fill, Stroke, Style, Text } from 'ol/style';
@@ -75,10 +75,9 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
    * Function that configures transformation and returns a transformer
    * @param map
    * @param options
-   * @param eventBus
    * @param theme
    */
-  create: async (map: any, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -89,9 +88,8 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const edgeStyle = await getStyleConfigState(config.edgeStyle);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-
     const vectorLayer = new VectorImage({
-      source: source as any,
+      source: source,
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 
@@ -345,7 +343,7 @@ function updateEdge(source: FrameVectorSource, graphFrames: GraphFrame) {
       geometry: geometryEdge,
     });
     edgeFeature.setId(i);
-    source['addFeatureInternal'](edgeFeature as any); // @TODO revisit?
+    source['addFeatureInternal'](edgeFeature); // @TODO revisit?
   }
 
   // Nodes
@@ -355,7 +353,7 @@ function updateEdge(source: FrameVectorSource, graphFrames: GraphFrame) {
         frameNodes,
         rowIndex: i,
         geometry: info.field.values[i],
-      }) as any
+      })
     );
   }
 

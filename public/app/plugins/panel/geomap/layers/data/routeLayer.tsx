@@ -1,5 +1,6 @@
 import { isNumber } from 'lodash';
 import Feature, { FeatureLike } from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -19,9 +20,10 @@ import {
   DataHoverClearEvent,
   DataFrame,
   FieldType,
-  colorManipulator
+  colorManipulator,
+  MapLayerOptions,
 } from '@grafana/data';
-import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
+import { FrameGeometrySourceMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
@@ -83,7 +85,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: any, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map: OpenLayersMap, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
     // Assert default values
     const config = {
       ...defaultOptions,
