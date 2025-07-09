@@ -26,6 +26,10 @@ func TestQueryRestConnectHandler(t *testing.T) {
 	b := &QueryAPIBuilder{
 		clientSupplier: mockClient{
 			lastCalledWithHeaders: &map[string]string{},
+			stubbedInstanceConfig: clientapi.InstanceConfigurationSettings{
+				FeatureToggles:         featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
+				SQLExpressionCellLimit: 10,
+			},
 		},
 		tracer: tracing.InitializeTracerForTest(),
 		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
@@ -33,7 +37,9 @@ func TestQueryRestConnectHandler(t *testing.T) {
 		log: log.New("test"),
 	}
 	qr := newQueryREST(b)
+
 	ctx := context.Background()
+
 	mr := mockResponder{}
 
 	handler, err := qr.Connect(ctx, "name", nil, mr)
@@ -150,11 +156,11 @@ func (m mockResponder) Error(err error) {
 
 type mockClient struct {
 	lastCalledWithHeaders *map[string]string
+	stubbedInstanceConfig clientapi.InstanceConfigurationSettings
 }
 
 func (m mockClient) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
 	*m.lastCalledWithHeaders = headers
-
 	return nil, fmt.Errorf("mock error")
 }
 

@@ -141,10 +141,15 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, cfg *setting.
 		if err != nil {
 			return nil, err
 		}
-		q, err := reader.ReadQuery(data.NewDataQuery(map[string]any{
-			"refId": rn.RefID,
-			"type":  rn.QueryType,
-		}), iter)
+		q, err := reader.ReadQuery(
+			data.NewDataQuery(map[string]any{
+				"refId": rn.RefID,
+				"type":  rn.QueryType,
+			}),
+			iter,
+			toggles.IsEnabledGlobally(featuremgmt.FlagSqlExpressions),
+			cfg.SQLExpressionCellLimit,
+		)
 		if err != nil {
 			return nil, err
 		}

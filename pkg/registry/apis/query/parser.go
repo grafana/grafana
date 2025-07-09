@@ -65,7 +65,7 @@ func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDat
 }
 
 // Split the main query into multiple
-func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRequest) (parsedRequestInfo, error) {
+func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRequest, sqlExpressions bool, sqlExpressionCellLimit int64) (parsedRequestInfo, error) {
 	ctx, span := p.tracer.Start(ctx, "QueryService.parseRequest")
 	defer span.End()
 
@@ -110,7 +110,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 				p.logger.Error("Failed to parse bytes for expression", "error", err)
 				return rsp, err
 			}
-			exp, err := p.reader.ReadQuery(q, iter)
+			exp, err := p.reader.ReadQuery(q, iter, sqlExpressions, sqlExpressionCellLimit)
 			if err != nil {
 				p.logger.Error("Failed to read query for expression", "error", err)
 				return rsp, NewErrorWithRefID(q.RefID, err)

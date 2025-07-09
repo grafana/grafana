@@ -42,7 +42,7 @@ func TestQuerySplitting(t *testing.T) {
 					},
 				}},
 			},
-		})
+		}, true, 0)
 		require.Error(t, err) // Missing datasource
 		require.Empty(t, split.Requests)
 	})
@@ -61,7 +61,7 @@ func TestQuerySplitting(t *testing.T) {
 					},
 				}},
 			},
-		})
+		}, true, 0)
 		require.NoError(t, err)
 		require.Len(t, split.Requests, 1)
 		require.Equal(t, "0", split.Requests[0].Request.From)
@@ -170,7 +170,7 @@ func TestQuerySplitting(t *testing.T) {
 					},
 				}},
 			},
-		})
+		}, true, 0)
 		require.NoError(t, err)
 		require.Len(t, split.Requests, 1)
 		require.Equal(t, "now-1d", split.Requests[0].Request.From)
@@ -198,7 +198,7 @@ func TestQuerySplitting(t *testing.T) {
 					},
 				}},
 			},
-		})
+		}, true, 0)
 		require.NoError(t, err)
 		require.Len(t, split.Requests, 1)
 		require.Equal(t, "now-1d", split.Requests[0].Request.From)
@@ -223,7 +223,7 @@ func TestQuerySplitting(t *testing.T) {
 				require.NoError(t, err)
 
 				changed := false
-				parsed, err := parser.parseRequest(ctx, &harness.Request)
+				parsed, err := parser.parseRequest(ctx, &harness.Request, true, 0)
 				if err != nil {
 					if !assert.Equal(t, harness.Error, err.Error(), "File %s", file) {
 						changed = true
@@ -281,7 +281,7 @@ func TestSqlInputs(t *testing.T) {
 				}),
 			},
 		},
-	})
+	}, true, 0)
 	require.NoError(t, err)
 	require.Equal(t, parsedRequestInfo.SqlInputs["B"], struct{}{})
 }
@@ -343,7 +343,7 @@ func TestGrafanaDS(t *testing.T) {
 					},
 				}},
 			},
-		})
+		}, true, 0)
 		require.NoError(t, err)
 		require.Len(t, parsed.Requests, 1)
 		require.Equal(t, "grafana", parsed.Requests[0].PluginId)
@@ -363,7 +363,7 @@ func TestGrafanaDS(t *testing.T) {
 					},
 				}},
 			},
-		})
+		}, true, 0)
 		require.NoError(t, err)
 		require.Len(t, parsed.Requests, 1)
 		require.Equal(t, "grafana", parsed.Requests[0].PluginId)

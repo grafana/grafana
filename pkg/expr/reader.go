@@ -48,6 +48,8 @@ func (h *ExpressionQueryReader) ReadQuery(
 	common data.DataQuery,
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
+	sqlExpressions bool,
+	sqlExpressionCellLimit int64,
 ) (eq ExpressionQuery, err error) {
 	referenceVar := ""
 	eq.RefID = common.RefID
@@ -126,16 +128,14 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 
 	case QueryTypeSQL:
-		if !h.features.IsEnabledGlobally(featuremgmt.FlagSqlExpressions) {
+		if !sqlExpressions {
 			return eq, fmt.Errorf("sql expressions are disabled")
 		}
 		q := &SQLExpression{}
 		err = iter.ReadVal(q)
 		if err == nil {
 			eq.Properties = q
-			// TODO: Cascade limit from Grafana config in this (new Expression Parser) branch of the code
-			cellLimit := 0 // zero means no limit
-			eq.Command, err = NewSQLCommand(common.RefID, q.Format, q.Expression, int64(cellLimit), 0, 0)
+			eq.Command, err = NewSQLCommand(common.RefID, q.Format, q.Expression, sqlExpressionCellLimit, 0, 0)
 		}
 
 	case QueryTypeThreshold:

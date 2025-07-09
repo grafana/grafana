@@ -141,7 +141,7 @@ func TestReaderReduceMode(t *testing.T) {
 
 			reader := NewExpressionQueryReader(featuremgmt.WithFeatures())
 
-			eq, err := reader.ReadQuery(q, iter)
+			eq, err := reader.ReadQuery(q, iter, true, 0)
 
 			if test.expectError {
 				require.Error(t, err)

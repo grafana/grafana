@@ -13,10 +13,11 @@ type QueryDataClient interface {
 }
 
 type InstanceConfigurationSettings struct {
-	StackID        uint32
-	FeatureToggles featuremgmt.FeatureToggles
-	FullConfig     map[string]map[string]string // configuration file settings
-	Options        map[string]string            // additional settings related to an instance as set by grafana
+	StackID                uint32
+	SQLExpressionCellLimit int64
+	FeatureToggles         featuremgmt.FeatureToggles
+	FullConfig             map[string]map[string]string // configuration file settings
+	Options                map[string]string            // additional settings related to an instance as set by grafana
 }
 
 type DataSourceClientSupplier interface {

@@ -52,7 +52,8 @@ type QueryAPIBuilder struct {
 	queryTypes     *query.QueryTypeDefinitionList
 }
 
-func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
+func NewQueryAPIBuilder(
+	features featuremgmt.FeatureToggles,
 	clientSupplier clientapi.DataSourceClientSupplier,
 	ar authorizer.Authorizer,
 	registry query.DataSourceApiServerRegistry,
