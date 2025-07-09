@@ -493,7 +493,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 
 	receiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true),
-		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService)),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
 		secretService,
@@ -504,7 +504,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	)
 
 	return NewContactPointService(
-		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService)),
 		secretService,
 		provisioningStore,
 		xact,

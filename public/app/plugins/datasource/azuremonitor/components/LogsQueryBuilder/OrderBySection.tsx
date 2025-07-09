@@ -11,7 +11,9 @@ import {
   BuilderQueryEditorOrderByOptions,
   BuilderQueryEditorPropertyType,
 } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorOption } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';

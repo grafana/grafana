@@ -6,13 +6,9 @@ import { EditorField, EditorFieldGroup, EditorRow, InputGroup } from '@grafana/p
 import { Button, Select } from '@grafana/ui';
 
 import { BuilderQueryEditorExpressionType, BuilderQueryEditorPropertyType } from '../../dataquery.gen';
-import {
-  AzureMonitorQuery,
-  AzureLogAnalyticsMetadataColumn,
-  AzureLogAnalyticsMetadataTable,
-  AzureMonitorOption,
-  TablePlan,
-} from '../../types';
+import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorOption, TablePlan } from '../../types/types';
 
 import { BuildAndUpdateOptions, inputFieldSize } from './utils';
 

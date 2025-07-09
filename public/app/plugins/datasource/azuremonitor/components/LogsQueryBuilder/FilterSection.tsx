@@ -15,7 +15,9 @@ import {
   BuilderQueryEditorWhereExpressionItems,
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorOption } from '../../types/types';
 
 import { FilterItem } from './FilterItem';
 import { BuildAndUpdateOptions } from './utils';

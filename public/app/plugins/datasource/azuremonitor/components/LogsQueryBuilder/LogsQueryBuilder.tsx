@@ -17,13 +17,9 @@ import {
 } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import {
-  AzureLogAnalyticsMetadataTable,
-  AzureLogAnalyticsMetadataColumn,
-  AzureMonitorQuery,
-  EngineSchema,
-  AzureMonitorOption,
-} from '../../types';
+import { AzureLogAnalyticsMetadataColumn, AzureLogAnalyticsMetadataTable } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorOption, EngineSchema } from '../../types/types';
 
 import { AggregateSection } from './AggregationSection';
 import { AzureMonitorKustoQueryBuilder } from './AzureMonitorKustoQueryBuilder';

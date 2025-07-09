@@ -8,15 +8,17 @@ SELECT
   "created_by",
   "updated",
   "updated_by",
-  "status_phase",
-  "status_message",
   "description",
   "keeper",
   "decrypters",
   "ref",
-  "external_id"
+  "external_id",
+  "version",
+  "active"
 FROM
   "secret_secure_value"
-WHERE "namespace" = 'ns'
+WHERE 
+  "namespace" = 'ns' AND
+  "active" = true
 ORDER BY "updated" DESC
 ;

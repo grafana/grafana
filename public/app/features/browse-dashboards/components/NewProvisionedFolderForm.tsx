@@ -14,7 +14,7 @@ import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/sha
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 interface FormProps extends Props {
@@ -30,7 +30,7 @@ interface Props {
 }
 
 function FormContent({ initialValues, repository, workflowOptions, folder, isGitHub, onDismiss }: FormProps) {
-  const prURL = usePullRequestParam();
+  const { prURL } = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
@@ -210,7 +210,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
   const { workflowOptions, isGitHub, repository, folder, initialValues } = useProvisionedFolderFormData({
     folderUid: parentFolder?.uid,
     action: 'create',
-    title: parentFolder?.title,
+    title: '', // Empty title for new folders
   });
 
   if (!initialValues) {

@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-export const multiLineFullQuery = {
+export const sqlTestDataMultiLineFullQuery = {
   query: `SELECT AVG(CPUUtilization) 
   FROM SCHEMA("AWS/ECS", InstanceId) 
   

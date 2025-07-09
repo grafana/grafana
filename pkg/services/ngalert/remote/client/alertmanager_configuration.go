@@ -3,10 +3,10 @@ package client
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/alerting/definition"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
@@ -53,7 +53,7 @@ func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafana
 }
 
 func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
-	payload, err := json.Marshal(&UserGrafanaConfig{
+	payload, err := definition.MarshalJSONWithSecrets(&UserGrafanaConfig{
 		GrafanaAlertmanagerConfig: cfg,
 		Hash:                      hash,
 		CreatedAt:                 createdAt,

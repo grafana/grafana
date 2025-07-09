@@ -5,7 +5,9 @@ import { t } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 
 import { BuilderQueryEditorReduceExpression } from '../../dataquery.gen';
-import { AzureLogAnalyticsMetadataColumn, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
+import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorOption } from '../../types/types';
 
 import AggregateItem from './AggregateItem';
 import { BuildAndUpdateOptions } from './utils';
