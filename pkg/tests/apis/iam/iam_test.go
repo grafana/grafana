@@ -218,7 +218,7 @@ func TestIntegrationUsers(t *testing.T) {
 }
 
 func doUserCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should create user through the new APIs", func(t *testing.T) {
+	t.Run("should create user and delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -258,9 +258,14 @@ func doUserCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		err = userClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
 		require.NoError(t, err)
+
+		// Verify deletion
+		_, err = userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not found")
 	})
 
-	t.Run("should create user using legacy APIs", func(t *testing.T) {
+	t.Run("should create user using legacy APIs and delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User: helper.Org1.Admin,
@@ -303,5 +308,10 @@ func doUserCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		err = userClient.Resource.Delete(ctx, rsp.Result.UID, metav1.DeleteOptions{})
 		require.NoError(t, err)
+
+		// Verify deletion
+		_, err = userClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not found")
 	})
 }
