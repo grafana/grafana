@@ -40,7 +40,7 @@ refs:
 
 # Configure mute timings and active intervals
 
-Mute timing and active time intervals let you determine how your alert notifications are handled during designated periods of time. Once you create a time interval, you can use use apply it as either a mute or active time interval for your notifications policies.
+Mute timing and active time intervals let you determine how your alert notifications are handled during designated periods of time. After you create a time interval, you can use use apply it as either a mute or active time interval for your notifications policies.
 
 A mute timing is a recurring interval that stops notifications for one or multiple notification policies during a specified period. It suppresses notifications but does not interrupt alert evaluation.
 
@@ -72,14 +72,14 @@ The following table highlights the key differences between mute and active timin
 1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
 1. Click **+ Add time interval**.
 1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute or active timing.
-1. Click **Save time interval**.
+1. Save your changes.
 
-## Add mute timing to a notification policy
+## Add notification timing to a notification policy
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification policies** and make sure you are on the **Notification Policies** tab.
-1. Find the notification policy you would like to add the mute timing to and click **...** -> **Edit**.
-1. From the **Mute timings** dropdown, choose the mute timings you would like to add to the policy.
+1. Find the notification policy you would like to add the notification timing to and click **...** -> **Edit**.
+1. From either the **Mute timings** or **Active timings** dropdowns, choose the notification timings you would like to add to the policy.
 1. Save your changes.
 
 ## Time intervals
