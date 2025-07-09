@@ -20,6 +20,13 @@ type StageableRepository interface {
 	Stage(ctx context.Context, opts StageOptions) (StagedRepository, error)
 }
 
+//go:generate mockery --name StagedRepository --structname MockStagedRepository --inpackage --filename staged_repository_mock.go --with-expecter
+type StagedRepository interface {
+	ReaderWriter
+	Push(ctx context.Context) error
+	Remove(ctx context.Context) error
+}
+
 // WrapWithStageAndPushIfPossible attempts to stage the given repository. If staging is supported,
 // it runs the provided function on the staged repository, then pushes any changes and cleans up the staged repository.
 // If staging is not supported, it runs the function on the original repository without pushing.

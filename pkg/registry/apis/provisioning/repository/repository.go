@@ -65,13 +65,6 @@ type FileInfo struct {
 	Modified *metav1.Time
 }
 
-//go:generate mockery --name StagedRepository --structname MockStagedRepository --inpackage --filename staged_repository_mock.go --with-expecter
-type StagedRepository interface {
-	ReaderWriter
-	Push(ctx context.Context) error
-	Remove(ctx context.Context) error
-}
-
 // An entry in the file tree, as returned by 'ReadFileTree'. Like FileInfo, but contains less information.
 type FileTreeEntry struct {
 	// The path to the file from the base path given (if any).
