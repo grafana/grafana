@@ -23,7 +23,7 @@ import (
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
-	gitRepo repository.GitRepository
+	gitRepo git.GitRepository
 	config  *provisioning.Repository
 	gh      Client // assumes github.com base URL
 
@@ -50,7 +50,7 @@ type GithubRepository interface {
 func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
-	gitRepo repository.GitRepository,
+	gitRepo git.GitRepository,
 	factory *Factory,
 	secrets secrets.Service,
 ) (GithubRepository, error) {

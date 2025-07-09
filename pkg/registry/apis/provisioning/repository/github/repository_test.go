@@ -17,6 +17,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
@@ -139,7 +140,7 @@ func TestNewGitHub(t *testing.T) {
 			factory := ProvideFactory()
 			factory.Client = http.DefaultClient
 
-			gitRepo := repository.NewMockGitRepository(t)
+			gitRepo := git.NewMockGitRepository(t)
 
 			// Call the function under test
 			repo, err := NewGitHub(

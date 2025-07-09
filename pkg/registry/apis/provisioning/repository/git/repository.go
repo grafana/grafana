@@ -46,7 +46,7 @@ func NewGitRepository(
 	secrets secrets.Service,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
-) (repository.GitRepository, error) {
+) (GitRepository, error) {
 	if gitConfig.Token == "" {
 		decrypted, err := secrets.Decrypt(ctx, gitConfig.EncryptedToken)
 		if err != nil {
