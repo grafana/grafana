@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	fullStatePath                = "/api/v1/grafana/full_state"
 	grafanaAlertmanagerStatePath = "/api/v1/grafana/state"
 )
 
@@ -16,7 +17,15 @@ type UserGrafanaState struct {
 	State string `json:"state"`
 }
 
+func (mc *Mimir) GetFullState(ctx context.Context) (*UserGrafanaState, error) {
+	return mc.getState(ctx, fullStatePath)
+}
+
 func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error) {
+	return mc.getState(ctx, grafanaAlertmanagerStatePath)
+}
+
+func (mc *Mimir) getState(ctx context.Context, path string) (*UserGrafanaState, error) {
 	gs := &UserGrafanaState{}
 	response := successResponse{
 		Data: gs,
