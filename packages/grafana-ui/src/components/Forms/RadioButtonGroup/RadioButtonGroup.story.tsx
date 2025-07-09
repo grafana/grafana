@@ -5,7 +5,7 @@ import { RadioButtonGroup } from './RadioButtonGroup';
 import mdx from './RadioButtonGroup.mdx';
 
 const meta: Meta = {
-  title: 'Forms/RadioButtonGroup',
+  title: 'Inputs/RadioButtonGroup',
   component: RadioButtonGroup,
   parameters: {
     docs: {

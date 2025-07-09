@@ -4,9 +4,9 @@ import { getBackendSrv } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { OrgUser } from 'app/types';
-
-import { AccessControlAction, ThunkResult } from '../../../types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ThunkResult } from 'app/types/store';
+import { OrgUser } from 'app/types/user';
 
 import {
   usersLoaded,

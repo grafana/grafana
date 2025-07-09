@@ -6,7 +6,7 @@ import { InlineList } from './InlineList';
 import { List } from './List';
 
 const meta: Meta = {
-  title: 'Layout/List',
+  title: 'Layout/Deprecated/List',
   component: List,
   parameters: {
     controls: {

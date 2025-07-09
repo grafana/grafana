@@ -4,7 +4,7 @@ import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { ProvisionedDashboardFormData } from '../shared';

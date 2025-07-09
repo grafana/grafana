@@ -7,7 +7,7 @@ import { useDeleteModal } from 'app/features/alerting/unified/components/rule-vi
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import SilenceGrafanaRuleDrawer from 'app/features/alerting/unified/components/silences/SilenceGrafanaRuleDrawer';
 import { useRulesFilter } from 'app/features/alerting/unified/hooks/useFilteredRules';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';

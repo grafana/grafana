@@ -861,7 +861,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 }
 
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
-func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
+func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -902,7 +902,7 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			description:     "folder creation fails without permissions to create a folder",
 			input:           folderWithoutParentInput,
 			expectedCode:    http.StatusForbidden,
-			expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
+			expectedMessage: fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", "folders:create"),
 			permissions:     []resourcepermissions.SetResourcePermissionCommand{},
 		},
 		{
@@ -1022,7 +1022,7 @@ func testDescription(description string, expectedErr error) string {
 }
 
 // There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
-func TestFoldersGetAPIEndpointK8S(t *testing.T) {
+func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -1062,6 +1062,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 			expectedOutput: []dtos.FolderSearchHit{
 				{UID: "foo", Title: "Folder 1"},
 				{UID: "qux", Title: "Folder 3"},
+				{UID: folder.SharedWithMeFolder.UID, Title: folder.SharedWithMeFolder.Title},
 			},
 			permissions: folderReadAndCreatePermission,
 		},
@@ -1107,7 +1108,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 	}
 
 	// test on all dualwriter modes
-	for mode := 1; mode <= 4; mode++ {
+	for mode := 0; mode <= 4; mode++ {
 		for _, tc := range tcs {
 			t.Run(fmt.Sprintf("Mode: %d, %s", mode, tc.description), func(t *testing.T) {
 				modeDw := grafanarest.DualWriterMode(mode)
@@ -1123,6 +1124,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 					},
 					EnableFeatureToggles: []string{
 						featuremgmt.FlagNestedFolders,
+						featuremgmt.FlagUnifiedStorageSearch,
 						featuremgmt.FlagKubernetesClientDashboardsFolders,
 					},
 				})

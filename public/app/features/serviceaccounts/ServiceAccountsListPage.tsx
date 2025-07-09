@@ -19,7 +19,9 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ServiceAccountStateFilter, ServiceAccountDTO } from 'app/types/serviceaccount';
+import { StoreState } from 'app/types/store';
 
 import { ServiceAccountTable } from './ServiceAccountTable';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';

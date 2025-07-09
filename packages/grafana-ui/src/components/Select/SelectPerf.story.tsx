@@ -9,7 +9,7 @@ import { Label } from '../Forms/Label';
 import { Select, VirtualizedSelect } from './Select';
 
 const meta: Meta = {
-  title: 'Forms/Select (Perf)',
+  title: 'Developers/Select Perf',
   argTypes: {
     numberOfOptions: {
       defaultValue: 10_000,

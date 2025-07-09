@@ -5,7 +5,7 @@ import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
 
 const meta: Meta<typeof CodeEditor> = {
-  title: 'CodeEditor',
+  title: 'Inputs/CodeEditor',
   component: CodeEditor,
   parameters: {
     docs: {

@@ -4399,7 +4399,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Pública",
         "tooltip-view-as-scene": "Ver como escena"
       }
     },
@@ -5173,7 +5172,6 @@
       "playlist-next": "Ir al siguiente panel de control",
       "playlist-previous": "Ir al panel de control anterior",
       "playlist-stop": "Detener la lista de reproducción",
-      "public-dashboard": "Pública",
       "refresh": "Actualizar panel de control",
       "save": "Guardar panel de control",
       "save-dashboard": {
@@ -5474,15 +5472,9 @@
       "type": "Tipo"
     },
     "dashboard-preview-banner": {
-      "not-saved": "El valor aún no se ha guardado en la base de datos de Grafana",
       "not-yet-saved": "El valor no se ha guardado en la base de datos de Grafana",
-      "open-pull-request-in-git-hub": "Abrir solicitud de extracción en GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Este panel de control se carga desde una rama en GitHub.",
       "title-dashboard-loaded-external-repository": "Este panel de control se carga desde un repositorio externo",
-      "title-dashboard-loaded-request-git-hub": "Este panel de control se carga desde una solicitud de extracción en GitHub.",
-      "title-error-loading-dashboard": "Error al cargar el panel de control",
-      "value-not-saved": "El valor aún no se ha guardado en la base de datos de Grafana",
-      "view-pull-request-in-git-hub": "Ver solicitud de extracción en GitHub"
+      "title-error-loading-dashboard": "Error al cargar el panel de control"
     },
     "dashboard-scene": {
       "text": {
@@ -7217,6 +7209,7 @@
       "when": "CUÁNDO"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Operación"
     },
     "math": {
@@ -8503,7 +8496,7 @@
       "usage-count_other": "Utilizado en {{count}} dashboards"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Buscar por nombre o descripción"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Cargando panel de la librería..."
@@ -8644,12 +8637,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8699,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8719,9 +8713,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10311,6 +10307,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "Esta función se encuentra actualmente en desarrollo activo. Para obtener la mejor experiencia y las últimas mejoras, recomendamos utilizar la <2>compilación nocturna</2> de Grafana."
@@ -11762,6 +11769,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
