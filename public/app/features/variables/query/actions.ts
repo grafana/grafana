@@ -2,8 +2,8 @@ import { Subscription } from 'rxjs';
 
 import { DataSourceRef } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { ThunkResult } from 'app/types/store';
 
-import { ThunkResult } from '../../../types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { getQueryVariableEditorState } from '../editor/selectors';

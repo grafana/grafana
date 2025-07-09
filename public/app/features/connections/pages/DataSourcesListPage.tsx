@@ -3,7 +3,7 @@ import { AdvisorRedirectNotice } from 'app/features/connections/components/Advis
 import { DataSourceAddButton } from 'app/features/datasources/components/DataSourceAddButton';
 import { DataSourcesList } from 'app/features/datasources/components/DataSourcesList';
 import { getDataSourcesCount } from 'app/features/datasources/state/selectors';
-import { StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types/store';
 
 export function DataSourcesListPage() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));

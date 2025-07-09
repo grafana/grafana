@@ -435,7 +435,7 @@ export { type GroupingToMatrixTransformerOptions } from './transformations/trans
 export {
   type PluginContextType,
   type DataSourcePluginContextType,
-  Context as PluginContext,
+  PluginContext,
 } from './context/plugins/PluginContext';
 export { type PluginContextProviderProps, PluginContextProvider } from './context/plugins/PluginContextProvider';
 export {

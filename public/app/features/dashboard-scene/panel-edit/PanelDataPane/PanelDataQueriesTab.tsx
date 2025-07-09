@@ -18,12 +18,15 @@ import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionTypeDropdown } from 'app/features/expressions/components/ExpressionTypeDropdown';
+import { ExpressionQueryType } from 'app/features/expressions/types';
+import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { MIXED_DATASOURCE_NAME } from '../../../../plugins/datasource/mixed/MixedDataSource';
 import { useQueryLibraryContext } from '../../../explore/QueryLibrary/QueryLibraryContext';
@@ -286,9 +289,15 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     return (dsSettings.meta.backend || dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
   }
 
-  public onAddExpressionClick = () => {
+  public onAddExpressionOfType = (type: ExpressionQueryType) => {
     const queries = this.getQueries();
-    this.onQueriesChange(addQuery(queries, expressionDatasource.newQuery()));
+    // Create base expression query with the specified type
+    const baseQuery = expressionDatasource.newQuery();
+    const queryWithType = { ...baseQuery, type };
+    // Apply defaults specific to the expression type
+    const queryWithDefaults = getDefaults(queryWithType);
+
+    this.onQueriesChange(addQuery(queries, queryWithDefaults));
   };
 
   public renderExtraActions() {
@@ -316,6 +325,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
   if (!datasource || !dsSettings || !data) {
     return null;
   }
+
   const showAddButton = !isSharedDashboardQuery(dsSettings.name);
   const onSelectQueryFromLibrary = async (query: DataQuery) => {
     // ensure all queries explicitly define a datasource
@@ -394,16 +404,11 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
           </>
         )}
         {config.expressionsEnabled && model.isExpressionsSupported(dsSettings) && (
-          <Button
-            icon="plus"
-            onClick={model.onAddExpressionClick}
-            variant="secondary"
-            data-testid={selectors.components.QueryTab.addExpression}
-          >
-            <span>
+          <ExpressionTypeDropdown handleOnSelect={model.onAddExpressionOfType}>
+            <Button icon="plus" variant="secondary" data-testid={selectors.components.QueryTab.addExpression}>
               <Trans i18nKey="dashboard-scene.panel-data-queries-tab-rendered.expression">Expression&nbsp;</Trans>
-            </span>
-          </Button>
+            </Button>
+          </ExpressionTypeDropdown>
         )}
         {model.renderExtraActions()}
       </Stack>

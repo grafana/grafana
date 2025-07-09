@@ -4,7 +4,7 @@ import { RenderUserContentAsHTML } from './RenderUserContentAsHTML';
 import mdx from './RenderUserContentAsHTML.mdx';
 
 const meta: Meta<typeof RenderUserContentAsHTML> = {
-  title: 'General/RenderUserContentAsHTML',
+  title: 'Utilities/RenderUserContentAsHTML',
   component: RenderUserContentAsHTML,
   parameters: {
     docs: {

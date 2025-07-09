@@ -8,7 +8,7 @@ import { byLabelText, byRole } from 'testing-library-selector';
 import { CodeEditor } from '@grafana/ui';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import Templates from './Templates';
 import { grantUserPermissions } from './mocks';

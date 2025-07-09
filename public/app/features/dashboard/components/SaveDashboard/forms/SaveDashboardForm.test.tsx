@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Dashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardOptions } from '../types';
 

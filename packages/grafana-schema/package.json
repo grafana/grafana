@@ -37,8 +37,8 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "@rollup/plugin-node-resolve": "16.0.0",
-    "esbuild": "0.25.0",
+    "@rollup/plugin-node-resolve": "16.0.1",
+    "esbuild": "0.25.6",
     "glob": "^11.0.0",
     "rimraf": "6.0.1",
     "rollup": "^4.22.4",

@@ -22,7 +22,7 @@ import {
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
