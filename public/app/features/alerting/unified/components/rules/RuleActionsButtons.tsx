@@ -17,7 +17,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datas
 import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import { getRuleUID, prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 
 import { RedirectToCloneRule } from './CloneRule';
@@ -106,14 +106,10 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
   }
 
   // determine if this rule can be silenced by checking for Grafana Alert rule type and extracting the UID
-  let ruleUid: string | undefined;
-  if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
-    ruleUid = rule.rulerRule?.grafana_alert.uid;
-  }
-
-  if (prometheusRuleType.grafana.alertingRule(rule.promRule)) {
-    ruleUid = rule.promRule?.uid;
-  }
+  const ruleUid = getRuleUID(rule.rulerRule ?? rule.promRule);
+  const silenceableRule =
+    isString(ruleUid) &&
+    (rulerRuleType.grafana.alertingRule(rule.rulerRule) || prometheusRuleType.grafana.alertingRule(rule.promRule));
 
   return (
     <Stack gap={1} alignItems="center" wrap="nowrap">
@@ -143,7 +139,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         buttonSize={buttonSize}
       />
       {deleteModal}
-      {isString(ruleUid) && showSilenceDrawer && (
+      {silenceableRule && showSilenceDrawer && (
         <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
