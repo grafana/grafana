@@ -6,7 +6,7 @@ import config from 'app/core/config';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { PanelModel } from '../state/PanelModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';

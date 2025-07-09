@@ -7,7 +7,10 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { ApiKey } from 'app/types/apiKeys';
+import { ServiceAccountDTO } from 'app/types/serviceaccount';
+import { StoreState } from 'app/types/store';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
