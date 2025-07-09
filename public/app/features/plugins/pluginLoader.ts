@@ -44,6 +44,7 @@ const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototyp
 // it will load the plugin using a script tag. The logic that sets loadingStrategy comes from the backend.
 // See: pkg/services/pluginsintegration/pluginassets/pluginassets.go
 systemJSPrototype.shouldFetch = function (url) {
+  console.log({ url });
   const pluginInfo = getPluginFromCache(url);
   const jsTypeRegEx = /^[^#?]+\.(js)([?#].*)?$/;
 
