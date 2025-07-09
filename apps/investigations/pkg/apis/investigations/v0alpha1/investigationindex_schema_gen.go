@@ -11,7 +11,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaInvestigationIndex = resource.NewSimpleSchema("investigations.grafana.app", "v0alpha1", &InvestigationIndex{}, &InvestigationIndexList{}, resource.WithKind("InvestigationIndex"),
-		resource.WithPlural("investigationindexs"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("investigationindexes"), resource.WithScope(resource.NamespacedScope))
 	kindInvestigationIndex = resource.Kind{
 		Schema: schemaInvestigationIndex,
 		Codecs: map[resource.KindEncoding]resource.Codec{

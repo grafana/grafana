@@ -28,35 +28,71 @@ ConversionStatus: {
 	error: string
 }
 
-// Dashboard v0alpha1 kind
-dashboardv0alpha1: {
-	kind:   "Dashboard"
-	plural: "dashboards"
-	scope:  "Namespaced"
-	schema: {
-		spec:   v0.DashboardSpec
-		status: DashboardStatus
-	}
-}
+dashboard: {
+	kind:       "Dashboard"
+	pluralName: "Dashboards"
+	current:    "v1beta1"
 
-// Dashboard v1beta1 kind
-dashboardv1beta1: {
-	kind:   "Dashboard"
-	plural: "dashboards"
-	scope:  "Namespaced"
-	schema: {
-		spec:   v1.DashboardSpec
-		status: DashboardStatus
-	}
-}
-
-// Dashboard v2alpha1 kind
-dashboardv2alpha1: {
-	kind:   "Dashboard"
-	plural: "dashboards"
-	scope:  "Namespaced"
-	schema: {
-		spec:   v2.DashboardSpec
-		status: DashboardStatus
+	versions: {
+		"v0alpha1": {
+			codegen: {
+				ts: {
+					enabled: true
+					config: {
+						enumsAsUnionTypes: true
+					}
+				}
+				go: {
+					enabled: true
+					config: {
+						allowMarshalEmptyDisjunctions: true
+					}
+				}
+			}
+			schema: {
+				spec:   v0.DashboardSpec
+				status: DashboardStatus
+			}
+		}
+		"v1beta1": {
+			codegen: {
+				ts: {
+					enabled: true
+					config: {
+						enumsAsUnionTypes: true
+					}
+				}
+				go: {
+					enabled: true
+					config: {
+						allowMarshalEmptyDisjunctions: true
+					}
+				}
+			}
+			schema: {
+				spec:   v1.DashboardSpec
+				status: DashboardStatus
+			}
+		}
+		"v2alpha1": {
+			codegen: {
+				ts: {
+					enabled: true
+					config: {
+						enumsAsUnionTypes: true
+					}
+				}
+				go: {
+					enabled: true
+					config: {
+						allowMarshalEmptyDisjunctions: true
+					}
+				}
+			}
+			schema: {
+				spec:   v2.DashboardSpec
+				status: DashboardStatus
+			}
+		}
 	}
 }

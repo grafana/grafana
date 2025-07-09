@@ -12,7 +12,7 @@ TeamBindingSpec: {
 	teamRef: TeamRef
 }
 
-TeamRef: {
+TeamRef:{
 	// Name is the unique identifier for a team.
 	name: string
 }

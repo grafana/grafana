@@ -59,6 +59,20 @@ func New(cfg app.Config) (app.App, error) {
 			{
 				Kind:       playlistv0alpha1.PlaylistKind(),
 				Reconciler: playlistReconciler,
+				Mutator: &simple.Mutator{
+					MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
+						// modify req.Object if needed
+						return &app.MutatingResponse{
+							UpdatedObject: req.Object,
+						}, nil
+					},
+				},
+				Validator: &simple.Validator{
+					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+						// do something here if needed
+						return nil
+					},
+				},
 			},
 		},
 	}

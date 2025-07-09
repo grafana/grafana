@@ -95,7 +95,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
-	r := client.lastValue.(advisorv0alpha1.CheckV0alpha1StatusReport)
+	r := client.lastValue.(advisorv0alpha1.CheckReport)
 	assert.Equal(t, r.Count, int64(100))
 	assert.Len(t, r.Failures, 50)
 }
@@ -231,7 +231,7 @@ func TestProcessCheckRetry_SkipMissingItem(t *testing.T) {
 		checks.RetryAnnotation:  "item",
 		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
 	})
-	obj.CheckStatus.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+	obj.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
 		{
 			ItemID: "item",
 			StepID: "step",
@@ -254,7 +254,7 @@ func TestProcessCheckRetry_SkipMissingItem(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
 	assert.Empty(t, obj.GetAnnotations()[checks.RetryAnnotation])
-	assert.Empty(t, obj.CheckStatus.Report.Failures)
+	assert.Empty(t, obj.Status.Report.Failures)
 }
 
 func TestProcessCheckRetry_Success(t *testing.T) {
@@ -263,7 +263,7 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 		checks.RetryAnnotation:  "item",
 		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
 	})
-	obj.CheckStatus.Report.Failures = []advisorv0alpha1.CheckReportFailure{
+	obj.Status.Report.Failures = []advisorv0alpha1.CheckReportFailure{
 		{
 			ItemID: "item",
 			StepID: "step",
@@ -286,7 +286,7 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
 	assert.Empty(t, obj.GetAnnotations()[checks.RetryAnnotation])
-	assert.Empty(t, obj.CheckStatus.Report.Failures)
+	assert.Empty(t, obj.Status.Report.Failures)
 }
 
 type mockClient struct {

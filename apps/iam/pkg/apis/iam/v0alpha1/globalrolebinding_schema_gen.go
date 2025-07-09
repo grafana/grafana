@@ -11,7 +11,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaGlobalRoleBinding = resource.NewSimpleSchema("iam.grafana.app", "v0alpha1", &GlobalRoleBinding{}, &GlobalRoleBindingList{}, resource.WithKind("GlobalRoleBinding"),
-		resource.WithPlural("globalrolebindings"), resource.WithScope(resource.ClusterScope))
+		resource.WithPlural("globalrolebindings"), resource.WithScope(resource.NamespacedScope))
 	kindGlobalRoleBinding = resource.Kind{
 		Schema: schemaGlobalRoleBinding,
 		Codecs: map[resource.KindEncoding]resource.Codec{

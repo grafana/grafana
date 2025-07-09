@@ -1,6 +1,6 @@
 package v0alpha1
 
 ServiceAccountSpec: {
-	title:    string
+    title: string
 	disabled: bool
 }

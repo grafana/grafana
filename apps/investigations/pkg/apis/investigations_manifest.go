@@ -43,7 +43,7 @@ var appManifestData = app.ManifestData{
 
 				{
 					Kind:       "InvestigationIndex",
-					Plural:     "InvestigationIndexs",
+					Plural:     "InvestigationIndexes",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Schema:     &versionSchemaInvestigationIndexv0alpha1,

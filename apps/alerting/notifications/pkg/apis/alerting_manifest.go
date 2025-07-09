@@ -11,59 +11,14 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
-
-	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 )
 
 var ()
 
 var appManifestData = app.ManifestData{
-	AppName: "alerting",
-	Group:   "alerting.ext.grafana.com",
-	Versions: []app.ManifestVersion{
-		{
-			Name:   "v0alpha1",
-			Served: true,
-			Kinds: []app.ManifestVersionKind{
-				{
-					Kind:       "Receiver",
-					Plural:     "Receivers",
-					Scope:      "Namespaced",
-					Conversion: false,
-					SelectableFields: []string{
-						"spec.title",
-					},
-				},
-
-				{
-					Kind:       "RoutingTree",
-					Plural:     "RoutingTrees",
-					Scope:      "Namespaced",
-					Conversion: false,
-				},
-
-				{
-					Kind:       "TemplateGroup",
-					Plural:     "TemplateGroups",
-					Scope:      "Namespaced",
-					Conversion: false,
-					SelectableFields: []string{
-						"spec.title",
-					},
-				},
-
-				{
-					Kind:       "TimeInterval",
-					Plural:     "TimeIntervals",
-					Scope:      "Namespaced",
-					Conversion: false,
-					SelectableFields: []string{
-						"spec.name",
-					},
-				},
-			},
-		},
-	},
+	AppName:  "alerting",
+	Group:    "alerting.ext.grafana.com",
+	Versions: []app.ManifestVersion{},
 }
 
 func LocalManifest() app.Manifest {
@@ -74,12 +29,7 @@ func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("alerting")
 }
 
-var kindVersionToGoType = map[string]resource.Kind{
-	"Receiver/v0alpha1":      v0alpha1.ReceiverKind(),
-	"RoutingTree/v0alpha1":   v0alpha1.RoutingTreeKind(),
-	"TemplateGroup/v0alpha1": v0alpha1.TemplateGroupKind(),
-	"TimeInterval/v0alpha1":  v0alpha1.TimeIntervalKind(),
-}
+var kindVersionToGoType = map[string]resource.Kind{}
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
 // If there is no association for the provided Kind and Version, exists will return false.

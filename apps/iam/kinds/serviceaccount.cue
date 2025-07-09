@@ -4,11 +4,20 @@ import (
 	"github.com/grafana/grafana/apps/iam/kinds/v0alpha1"
 )
 
-serviceaccountv0alpha1: {
-	kind:   "ServiceAccount"
-	plural: "serviceaccounts"
-	scope:  "Namespaced"
-	schema: {
-		spec: v0alpha1.ServiceAccountSpec
+serviceaccount: {
+	kind:       "ServiceAccount"
+	pluralName: "ServiceAccounts"
+	current:    "v0alpha1"
+
+	versions: {
+		"v0alpha1": {
+			codegen: {
+				ts: { enabled: false }
+				go: { enabled: true }
+			}
+			schema: {
+				spec: v0alpha1.ServiceAccountSpec
+			}
+		}
 	}
 }

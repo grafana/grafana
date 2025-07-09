@@ -24,6 +24,27 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
+					Kind:       "GlobalRole",
+					Plural:     "GlobalRoles",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
+
+				{
+					Kind:       "GlobalRoleBinding",
+					Plural:     "GlobalRoleBindings",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
+
+				{
+					Kind:       "CoreRole",
+					Plural:     "CoreRoles",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
+
+				{
 					Kind:       "Role",
 					Plural:     "Roles",
 					Scope:      "Namespaced",
@@ -34,13 +55,6 @@ var appManifestData = app.ManifestData{
 					Kind:       "RoleBinding",
 					Plural:     "RoleBindings",
 					Scope:      "Namespaced",
-					Conversion: false,
-				},
-
-				{
-					Kind:       "GlobalRoleBinding",
-					Plural:     "GlobalRoleBindings",
-					Scope:      "Cluster",
 					Conversion: false,
 				},
 
@@ -92,9 +106,11 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
+	"GlobalRole/v0alpha1":         v0alpha1.GlobalRoleKind(),
+	"GlobalRoleBinding/v0alpha1":  v0alpha1.GlobalRoleBindingKind(),
+	"CoreRole/v0alpha1":           v0alpha1.CoreRoleKind(),
 	"Role/v0alpha1":               v0alpha1.RoleKind(),
 	"RoleBinding/v0alpha1":        v0alpha1.RoleBindingKind(),
-	"GlobalRoleBinding/v0alpha1":  v0alpha1.GlobalRoleBindingKind(),
 	"ResourcePermission/v0alpha1": v0alpha1.ResourcePermissionKind(),
 	"User/v0alpha1":               v0alpha1.UserKind(),
 	"Team/v0alpha1":               v0alpha1.TeamKind(),
