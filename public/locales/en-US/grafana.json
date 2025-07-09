@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": "Alert rule"
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edit YAML",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Error loading data source details",
       "edit": "Edit",
-      "evaluations-to-fire": "Evaluation cycles to fire",
       "export": "Export",
       "folder": "Folder",
       "group-loading-error": "Error loading the group",
       "interval": "Interval",
       "namespace": "Namespace",
-      "pending-period": "Pending period",
-      "recording": "Recording",
-      "rule-name": "Rule name"
+      "new": "New"
     },
     "group-edit": {
       "ds-error": "Error loading data source details",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Export all"
       }
     },
+    "recording-rule": {
+      "term": "Recording rule"
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Could not load query editor due to: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon for more information."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": "Alert managers"
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Add new Alertmanager",
       "builtin-alertmanager": "Built-in Alertmanager",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} ago)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": "Manage alert rules, recording rules and evaluation interval"
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -8726,6 +8739,7 @@
       },
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
+      "inline-mode": "Display inline",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
@@ -8738,6 +8752,7 @@
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
       "show-log-line": "Show log line",
+      "sidebar-mode": "Anchor to the right",
       "unpin-line": "Unpin log"
     },
     "log-line-menu": {
@@ -8840,6 +8855,11 @@
     },
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
+    "name-details-mode": "Log Details panel mode",
+    "name-details-options": {
+      "label-inline": "Inline",
+      "label-sidebar": "Sidebar"
+    },
     "name-enable-infinite-scrolling": "Enable infinite scrolling",
     "name-enable-log-details": "Enable log details",
     "name-enable-syntax-highlighting": "Enable syntax highlighting",
