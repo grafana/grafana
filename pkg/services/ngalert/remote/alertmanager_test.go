@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"crypto/md5"
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
 	"slices"
 	"strings"
 	"testing"
@@ -46,6 +48,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+//go:embed test-data/*.*
+var testData embed.FS
 
 var (
 	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
@@ -357,12 +362,14 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	testGrafanaConfigWithBadEncryption, err := json.Marshal(inputCfg)
 	require.NoError(t, err)
 
-	cfgWithDecryptedSecret, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+	test, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
+	cfgWithDecryptedSecret := PostableUserConfigToGrafanaAlertmanagerConfig(test)
 
-	cfgWithAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+	testAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
-	require.NoError(t, testAutogenFn(nil, nil, 0, &cfgWithAutogenRoutes.AlertmanagerConfig, false))
+	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, false))
+	cfgWithAutogenRoutes := PostableUserConfigToGrafanaAlertmanagerConfig(testAutogenRoutes)
 
 	// Calculate hashes for expected configurations
 	cfgWithDecryptedSecretBytes, err := json.Marshal(cfgWithDecryptedSecret)
@@ -372,6 +379,20 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	cfgWithAutogenRoutesBytes, err := json.Marshal(cfgWithAutogenRoutes)
 	require.NoError(t, err)
 	cfgWithAutogenRoutesHash := fmt.Sprintf("%x", md5.Sum(cfgWithAutogenRoutesBytes))
+
+	cfgWithExtraUnmergedBytes, err := testData.ReadFile(path.Join("test-data", "config-with-extra.json"))
+	require.NoError(t, err)
+	cfgWithExtraUnmerged, err := notifier.Load(cfgWithExtraUnmergedBytes)
+	require.NoError(t, err)
+	r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
+	require.NoError(t, err)
+	cfgWithExtraMerged := &client.GrafanaAlertmanagerConfig{
+		TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
+		AlertmanagerConfig: r.Config,
+	}
+	cfgWithExtraMergedBytes, err := json.Marshal(cfgWithExtraMerged)
+	require.NoError(t, err)
+	cfgWithExtraMergedHash := fmt.Sprintf("%x", md5.Sum(cfgWithExtraMergedBytes))
 
 	tests := []struct {
 		name           string
@@ -427,6 +448,15 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				Hash:                      cfgWithAutogenRoutesHash,
 			},
 			nil,
+		},
+		{
+			name:      "no error, with extra configurations",
+			config:    string(cfgWithExtraUnmergedBytes),
+			autogenFn: NoopAutogenFn,
+			expCfg: &client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: cfgWithExtraMerged,
+				Hash:                      cfgWithExtraMergedHash,
+			},
 		},
 	}
 
@@ -677,7 +707,7 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 			// Return an empty config to ensure it gets replaced
 			w.Header().Add("content-type", "application/json")
 			require.NoError(t, json.NewEncoder(w).Encode(client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: &apimodels.PostableUserConfig{},
+				GrafanaAlertmanagerConfig: &client.GrafanaAlertmanagerConfig{},
 			}))
 			return
 		}
