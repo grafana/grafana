@@ -92,7 +92,7 @@ export function setItemSelectionState(
   const { item, isSelected } = action.payload;
 
   // UI shouldn't allow it, but also prevent sharedwithme from being selected
-  if (isSharedWithMe(item.uid) || item.managedBy === ManagerKind.Repo) {
+  if (isSharedWithMe(item.uid)) {
     return;
   }
 

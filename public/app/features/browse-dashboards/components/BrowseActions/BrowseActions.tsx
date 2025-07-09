@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Stack, Tooltip } from '@grafana/ui';
+import { Button, Drawer, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
+import { FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
@@ -15,15 +17,27 @@ import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
+import { useProvisioningStatus } from './useProvisioningStatus';
 
-export interface Props {}
+export interface Props {
+  folderDTO?: FolderDTO;
+}
 
-export function BrowseActions() {
+export function BrowseActions({ folderDTO }: Props) {
+  const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
+
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
+  const isProvisionedInstance = useIsProvisionedInstance();
+  const provisioningStatus = useProvisioningStatus(selectedItems);
+
+  const hasProvisionedItems =
+    provisioningStatus.provisioned.folders.length > 0 || provisioningStatus.provisioned.dashboards.length > 0;
+  const hasNonProvisionedItems =
+    provisioningStatus.nonProvisioned.folders.length > 0 || provisioningStatus.nonProvisioned.dashboards.length > 0;
 
   // Folders can only be moved if nested folders is enabled
   const moveIsInvalid = useMemo(
@@ -67,15 +81,24 @@ export function BrowseActions() {
   };
 
   const showDeleteModal = () => {
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: DeleteModal,
-        props: {
-          selectedItems,
-          onConfirm: onDelete,
-        },
-      })
-    );
+    console.log('showDeleteModal', { selectedItems, hasProvisionedItems, hasNonProvisionedItems });
+    if (hasProvisionedItems && hasNonProvisionedItems) {
+      // TODO: how to handle this case?
+    } else if (hasProvisionedItems) {
+      // if all selected items are provisioned
+      setShowBulkDeleteProvisionedResource(true);
+    } else {
+      // if all selected items are non-provisioned
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: DeleteModal,
+          props: {
+            selectedItems,
+            onConfirm: onDelete,
+          },
+        })
+      );
+    }
   };
 
   const moveButton = (
@@ -85,19 +108,30 @@ export function BrowseActions() {
   );
 
   return (
-    <Stack gap={1} data-testid="manage-actions">
-      {moveIsInvalid ? (
-        <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
-          {moveButton}
-        </Tooltip>
-      ) : (
-        moveButton
-      )}
+    <>
+      <Stack gap={1} data-testid="manage-actions">
+        {moveIsInvalid ? (
+          <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
+            {moveButton}
+          </Tooltip>
+        ) : (
+          moveButton
+        )}
 
-      <Button onClick={showDeleteModal} variant="destructive">
-        <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
-      </Button>
-    </Stack>
+        <Button onClick={showDeleteModal} variant="destructive">
+          <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
+        </Button>
+      </Stack>
+      {showBulkDeleteProvisionedResource && (
+        <Drawer
+          title={t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
+          onClose={() => setShowBulkDeleteProvisionedResource(false)}
+          size="md"
+        >
+          <div>placeholder</div>
+        </Drawer>
+      )}
+    </>
   );
 }
 
