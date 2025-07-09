@@ -4,9 +4,9 @@ import { cloneDeep, isFunction } from 'lodash';
 
 import { Monaco } from '@grafana/ui';
 
-import { loadScriptIntoSandbox } from './code_loader';
+import { loadScriptIntoSandbox } from './codeLoader';
 import { forbiddenElements } from './constants';
-import { recursivePatchObjectAsLiveTarget } from './document_sandbox';
+import { recursivePatchObjectAsLiveTarget } from './documentSandbox';
 import { SandboxEnvironment, SandboxPluginMeta } from './types';
 import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 

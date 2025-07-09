@@ -11,7 +11,7 @@ import {
   setSandboxEnabledCheck,
   isPluginFrontendSandboxEnabled,
   isPluginFrontendSandboxEligible,
-} from './sandbox_plugin_loader_registry';
+} from './sandboxPluginLoaderRegistry';
 
 jest.mock('@grafana/runtime', () => ({
   config: {
