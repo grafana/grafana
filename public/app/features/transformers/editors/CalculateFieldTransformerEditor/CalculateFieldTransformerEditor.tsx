@@ -240,12 +240,19 @@ export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformer
   );
 };
 
-export const calculateFieldTransformRegistryItem: TransformerRegistryItem<CalculateFieldTransformerOptions> = {
-  id: DataTransformerID.calculateField,
-  editor: CalculateFieldTransformerEditor,
-  transformation: standardTransformers.calculateFieldTransformer,
-  name: standardTransformers.calculateFieldTransformer.name,
-  description: 'Use the row values to calculate a new field.',
-  categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
-};
+export const getCalculateFieldTransformRegistryItem: () => TransformerRegistryItem<CalculateFieldTransformerOptions> =
+  () => ({
+    id: DataTransformerID.calculateField,
+    editor: CalculateFieldTransformerEditor,
+    transformation: standardTransformers.calculateFieldTransformer,
+    name: t(
+      'transformers.get-calculate-field-transform-registry-item.name.add-field-from-calculation',
+      'Add field from calculation'
+    ),
+    description: t(
+      'transformers.get-calculate-field-transform-registry-item.description.values-calculate-field',
+      'Use the row values to calculate a new field.'
+    ),
+    categories: new Set([TransformerCategory.CalculateNewFields]),
+    help: getTransformationContent(DataTransformerID.calculateField).helperDocs,
+  });

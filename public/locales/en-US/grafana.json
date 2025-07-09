@@ -12307,6 +12307,14 @@
       "tooltip-format": "The output format for the field specified as a <2>Moment.js format string</2>.",
       "tooltip-timezone-manually": "Set the timezone of the date manually"
     },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": "Use the row values to calculate a new field."
+      },
+      "name": {
+        "add-field-from-calculation": "Add field from calculation"
+      }
+    },
     "get-timezone-options": {
       "label": {
         "browser": "Browser",
