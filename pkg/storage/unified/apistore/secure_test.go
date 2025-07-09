@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
@@ -36,8 +37,11 @@ secure:
 `)
 	require.NoError(t, err)
 
-	store.On("CreateSecureValue", mock.Anything, mock.Anything, mock.Anything).
-		Return("NAME", nil).Once()
+	store.On("UpdateSecureValues", mock.Anything, mock.Anything, mock.Anything).
+		Return(common.InlineSecureValues{
+			"a": common.InlineSecureValue{Name: "NAME"},
+			"b": common.InlineSecureValue{Name: "xyz"},
+		}, nil).Once()
 
 	changed, err := handleSecureValues(context.Background(), store, obj, nil)
 	require.NoError(t, err)

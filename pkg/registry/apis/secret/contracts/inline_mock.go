@@ -94,27 +94,29 @@ func (_c *MockInlineSecureValueStore_CanReference_Call) RunAndReturn(run func(co
 	return _c
 }
 
-// CreateSecureValue provides a mock function with given fields: ctx, owner, value
-func (_m *MockInlineSecureValueStore) CreateSecureValue(ctx context.Context, owner v0alpha1.ResourceReference, value v0alpha1.RawSecretValue) (string, error) {
-	ret := _m.Called(ctx, owner, value)
+// UpdateSecureValues provides a mock function with given fields: ctx, owner, secure
+func (_m *MockInlineSecureValueStore) UpdateSecureValues(ctx context.Context, owner v0alpha1.ResourceReference, secure map[string]v0alpha1.InlineSecureValue) (map[string]v0alpha1.InlineSecureValue, error) {
+	ret := _m.Called(ctx, owner, secure)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateSecureValue")
+		panic("no return value specified for UpdateSecureValues")
 	}
 
-	var r0 string
+	var r0 map[string]v0alpha1.InlineSecureValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, v0alpha1.RawSecretValue) (string, error)); ok {
-		return rf(ctx, owner, value)
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) (map[string]v0alpha1.InlineSecureValue, error)); ok {
+		return rf(ctx, owner, secure)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, v0alpha1.RawSecretValue) string); ok {
-		r0 = rf(ctx, owner, value)
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) map[string]v0alpha1.InlineSecureValue); ok {
+		r0 = rf(ctx, owner, secure)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]v0alpha1.InlineSecureValue)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ResourceReference, v0alpha1.RawSecretValue) error); ok {
-		r1 = rf(ctx, owner, value)
+	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) error); ok {
+		r1 = rf(ctx, owner, secure)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -122,94 +124,32 @@ func (_m *MockInlineSecureValueStore) CreateSecureValue(ctx context.Context, own
 	return r0, r1
 }
 
-// MockInlineSecureValueStore_CreateSecureValue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateSecureValue'
-type MockInlineSecureValueStore_CreateSecureValue_Call struct {
+// MockInlineSecureValueStore_UpdateSecureValues_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateSecureValues'
+type MockInlineSecureValueStore_UpdateSecureValues_Call struct {
 	*mock.Call
 }
 
-// CreateSecureValue is a helper method to define mock.On call
+// UpdateSecureValues is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner v0alpha1.ResourceReference
-//   - value v0alpha1.RawSecretValue
-func (_e *MockInlineSecureValueStore_Expecter) CreateSecureValue(ctx interface{}, owner interface{}, value interface{}) *MockInlineSecureValueStore_CreateSecureValue_Call {
-	return &MockInlineSecureValueStore_CreateSecureValue_Call{Call: _e.mock.On("CreateSecureValue", ctx, owner, value)}
+//   - secure map[string]v0alpha1.InlineSecureValue
+func (_e *MockInlineSecureValueStore_Expecter) UpdateSecureValues(ctx interface{}, owner interface{}, secure interface{}) *MockInlineSecureValueStore_UpdateSecureValues_Call {
+	return &MockInlineSecureValueStore_UpdateSecureValues_Call{Call: _e.mock.On("UpdateSecureValues", ctx, owner, secure)}
 }
 
-func (_c *MockInlineSecureValueStore_CreateSecureValue_Call) Run(run func(ctx context.Context, owner v0alpha1.ResourceReference, value v0alpha1.RawSecretValue)) *MockInlineSecureValueStore_CreateSecureValue_Call {
+func (_c *MockInlineSecureValueStore_UpdateSecureValues_Call) Run(run func(ctx context.Context, owner v0alpha1.ResourceReference, secure map[string]v0alpha1.InlineSecureValue)) *MockInlineSecureValueStore_UpdateSecureValues_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(v0alpha1.ResourceReference), args[2].(v0alpha1.RawSecretValue))
+		run(args[0].(context.Context), args[1].(v0alpha1.ResourceReference), args[2].(map[string]v0alpha1.InlineSecureValue))
 	})
 	return _c
 }
 
-func (_c *MockInlineSecureValueStore_CreateSecureValue_Call) Return(_a0 string, _a1 error) *MockInlineSecureValueStore_CreateSecureValue_Call {
+func (_c *MockInlineSecureValueStore_UpdateSecureValues_Call) Return(_a0 map[string]v0alpha1.InlineSecureValue, _a1 error) *MockInlineSecureValueStore_UpdateSecureValues_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockInlineSecureValueStore_CreateSecureValue_Call) RunAndReturn(run func(context.Context, v0alpha1.ResourceReference, v0alpha1.RawSecretValue) (string, error)) *MockInlineSecureValueStore_CreateSecureValue_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DeleteValuesForOwner provides a mock function with given fields: ctx, owner, names
-func (_m *MockInlineSecureValueStore) DeleteValuesForOwner(ctx context.Context, owner v0alpha1.ResourceReference, names ...string) error {
-	_va := make([]interface{}, len(names))
-	for _i := range names {
-		_va[_i] = names[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, owner)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteValuesForOwner")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, ...string) error); ok {
-		r0 = rf(ctx, owner, names...)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockInlineSecureValueStore_DeleteValuesForOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteValuesForOwner'
-type MockInlineSecureValueStore_DeleteValuesForOwner_Call struct {
-	*mock.Call
-}
-
-// DeleteValuesForOwner is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner v0alpha1.ResourceReference
-//   - names ...string
-func (_e *MockInlineSecureValueStore_Expecter) DeleteValuesForOwner(ctx interface{}, owner interface{}, names ...interface{}) *MockInlineSecureValueStore_DeleteValuesForOwner_Call {
-	return &MockInlineSecureValueStore_DeleteValuesForOwner_Call{Call: _e.mock.On("DeleteValuesForOwner",
-		append([]interface{}{ctx, owner}, names...)...)}
-}
-
-func (_c *MockInlineSecureValueStore_DeleteValuesForOwner_Call) Run(run func(ctx context.Context, owner v0alpha1.ResourceReference, names ...string)) *MockInlineSecureValueStore_DeleteValuesForOwner_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]string, len(args)-2)
-		for i, a := range args[2:] {
-			if a != nil {
-				variadicArgs[i] = a.(string)
-			}
-		}
-		run(args[0].(context.Context), args[1].(v0alpha1.ResourceReference), variadicArgs...)
-	})
-	return _c
-}
-
-func (_c *MockInlineSecureValueStore_DeleteValuesForOwner_Call) Return(_a0 error) *MockInlineSecureValueStore_DeleteValuesForOwner_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockInlineSecureValueStore_DeleteValuesForOwner_Call) RunAndReturn(run func(context.Context, v0alpha1.ResourceReference, ...string) error) *MockInlineSecureValueStore_DeleteValuesForOwner_Call {
+func (_c *MockInlineSecureValueStore_UpdateSecureValues_Call) RunAndReturn(run func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) (map[string]v0alpha1.InlineSecureValue, error)) *MockInlineSecureValueStore_UpdateSecureValues_Call {
 	_c.Call.Return(run)
 	return _c
 }

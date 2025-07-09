@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Mutation hook that will update secure values
@@ -19,90 +16,55 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 	if err != nil {
 		return false, err
 	}
-	owner := utils.ToResourceReference(obj)
 
-	// Merge in any values from the previous object and handle remove
-	if previousObject != nil {
-		old, err := previousObject.GetSecureValues()
+	if previousObject == nil {
+		changed = true
+	} else {
+		// Merge in any values from the previous object and handle remove
+		previous, err := previousObject.GetSecureValues()
 		if err != nil {
 			return false, err
 		}
-		if old != nil && store == nil {
+		if previous != nil && store == nil {
 			return false, fmt.Errorf("secure value support is not configured")
 		}
+
+		// Keep exactly what we had before
 		if len(secure) == 0 {
-			secure = old
-		} else {
-			// Merge old values into the secure section
-			for k, oldValue := range old {
-				update, found := secure[k]
-				if !found {
-					secure[k] = oldValue
-					continue
-				}
+			return false, obj.SetSecureValues(previous)
+		}
 
-				// Explicitly remove the old value
-				if update.Remove {
-					// Remove the name from the previous saved value
-					err := store.DeleteValuesForOwner(ctx, owner, oldValue.Name)
-					if err != nil {
-						return false, err
-					}
-					delete(secure, k)
-					changed = true
-					if err = obj.SetSecureValues(secure); err != nil {
-						return changed, err
-					}
-					continue
+		for k, next := range secure {
+			last, found := previous[k]
+			if found {
+				if last.Name == "" {
+					return false, fmt.Errorf("invalid state, saved values must always have a name")
 				}
+				last.Create = next.Create
+				last.Remove = next.Remove
 
-				// The name changed (also true for create)
-				if oldValue.Name != update.Name {
-					// Remove the name from the previous saved value
-					err := store.DeleteValuesForOwner(ctx, owner, oldValue.Name)
-					if err != nil {
-						return false, err
+				if next.Name != "" && last.Name != next.Name {
+					// Add a remove command
+					previous["remove_"+util.GenerateShortUID()] = common.InlineSecureValue{
+						Name:   last.Name,
+						Remove: true,
 					}
-					continue
 				}
+			} else {
+				changed = true
 			}
+			previous[k] = last
 		}
+
+		secure = previous
 	}
 
-	// No secure values
-	if len(secure) == 0 {
-		return changed, nil
+	owner := utils.ToResourceReference(obj)
+	secure, err = store.UpdateSecureValues(ctx, owner, secure)
+	if err != nil {
+		return false, err
 	}
-
-	// Process all secure values
-	for k, v := range secure {
-		if v.Create != "" {
-			name, err := store.CreateSecureValue(ctx, owner, v.Create)
-			if err != nil {
-				return false, err
-			}
-			secure[k] = common.InlineSecureValue{Name: name}
-			changed = true
-			continue
-		}
-
-		// All secure values must have a reference name
-		if v.Name == "" {
-			return false, apierrors.NewInvalid(schema.GroupKind{
-				Group: owner.Group,
-				Kind:  owner.Kind,
-			}, owner.Name, field.ErrorList{
-				field.NotFound(field.NewPath("secure", k, "name"), v),
-			})
-		}
-
-		if v.Remove {
-			return false, fmt.Errorf("remove command should have already been processed")
-		}
-	}
-
-	err = obj.SetSecureValues(secure)
-	return changed, err
+	return changed, obj.SetSecureValues(secure)
 }
 
 // Mutation hook that will update secure values
@@ -116,16 +78,13 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 		return fmt.Errorf("secure value support is not configured")
 	}
 
-	i := 0
-	keys := make([]string, len(secure))
-	for k := range secure {
-		keys[i] = k
-		i++
+	for k, v := range secure {
+		v.Remove = true // Set the remove flag on everything
+		secure[k] = v
 	}
-	err = store.DeleteValuesForOwner(ctx, utils.ToResourceReference(obj), keys...)
+	_, err = store.UpdateSecureValues(ctx, utils.ToResourceReference(obj), secure)
 	if err != nil {
 		return err
 	}
-
 	return obj.SetSecureValues(nil) // remove them from the object
 }

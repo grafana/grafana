@@ -14,10 +14,8 @@ type InlineSecureValueStore interface {
 	// Check that the request user can reference a secret in the context of a given resource (owner)
 	CanReference(ctx context.Context, owner common.ResourceReference, names ...string) (bool, error)
 
-	// Create inline secure value
-	CreateSecureValue(ctx context.Context, owner common.ResourceReference, value common.RawSecretValue) (string, error)
-
-	// Called when deleting the referenced values IFF they are owned by the owner
-	// for shared values, they are not deleted and no error is returned
-	DeleteValuesForOwner(ctx context.Context, owner common.ResourceReference, names ...string) error
+	// Update secure values for the resource
+	// Values that are either REMOVED or no longer present in the set will be deleted
+	// Updates with equal raw values may continue using the previously saved name
+	UpdateSecureValues(ctx context.Context, owner common.ResourceReference, secure common.InlineSecureValues) (common.InlineSecureValues, error)
 }

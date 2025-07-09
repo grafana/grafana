@@ -6,9 +6,11 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -34,7 +36,7 @@ type inlineStorage struct {
 }
 
 // CanReference implements contracts.InlineSecureValueStore.
-func (i *inlineStorage) CanReference(ctx context.Context, owner v0alpha1.ResourceReference, names ...string) (bool, error) {
+func (i *inlineStorage) CanReference(ctx context.Context, owner common.ResourceReference, names ...string) (bool, error) {
 	actor, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return false, apierrors.NewBadRequest("missing auth info")
@@ -72,31 +74,61 @@ func (i *inlineStorage) CanReference(ctx context.Context, owner v0alpha1.Resourc
 	return true, nil
 }
 
-// CreateSecureValue implements contracts.InlineSecureValueStore.
-func (i *inlineStorage) CreateSecureValue(ctx context.Context, owner v0alpha1.ResourceReference, value v0alpha1.RawSecretValue) (string, error) {
+// UpdateSecureValues implements contracts.InlineSecureValueStore.
+func (i *inlineStorage) UpdateSecureValues(ctx context.Context, owner common.ResourceReference, values common.InlineSecureValues) (common.InlineSecureValues, error) {
 	actor, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
-		return "", apierrors.NewBadRequest("missing auth info")
+		return nil, apierrors.NewBadRequest("missing auth info")
 	}
 
-	v, err := i.db.Create(ctx, &secret.SecureValue{
-		ObjectMeta: v1.ObjectMeta{
-			OwnerReferences: []v1.OwnerReference{owner.ToOwnerReference()},
-		},
-	}, actor.GetUID())
-	if err != nil {
-		return "", err
-	}
-	return v.Name, nil
-}
-
-// DeleteValuesForOwner implements contracts.InlineSecureValueStore.
-func (i *inlineStorage) DeleteValuesForOwner(ctx context.Context, owner v0alpha1.ResourceReference, names ...string) error {
-	// TODO!!! ONLY DELETE if the owner matches
-	for _, name := range names {
-		if err := i.db.Delete(ctx, xkube.Namespace(owner.Namespace), name); err != nil {
-			return err
+	keep := make(common.InlineSecureValues, len(values))
+	for key, secure := range values {
+		var prev *secret.SecureValue
+		if secure.Name != "" {
+			// The user may not be able to read the value if it is owned
+			prev, _ = i.db.Read(ctx, xkube.Namespace(owner.Namespace), secure.Name, contracts.ReadOpts{})
+			if prev == nil {
+				if secure.Remove {
+					continue // OK if not found
+				}
+				if secure.Create.IsZero() {
+					return nil, apierrors.NewInvalid(schema.GroupKind{}, "", field.ErrorList{
+						field.Invalid(field.NewPath("secure", key, "name"),
+							secure.Name, "Unable to read secure value")})
+				}
+				secure.Name = "" // previous value not found
+			}
 		}
+
+		if secure.Remove {
+			if prev != nil {
+				// TODO... only if owned by the owner
+				if err := i.db.Delete(ctx, xkube.Namespace(owner.Namespace), prev.Name); err != nil {
+					return nil, err
+				}
+			}
+			continue
+		}
+
+		if !secure.Create.IsZero() {
+			if prev != nil {
+				// TODO: CHECK if the value has actually changed
+			}
+			v, err := i.db.Create(ctx, &secret.SecureValue{
+				ObjectMeta: v1.ObjectMeta{
+					OwnerReferences: []v1.OwnerReference{owner.ToOwnerReference()},
+				},
+			}, actor.GetUID())
+			if err != nil {
+				return nil, err
+			}
+			secure = common.InlineSecureValue{Name: v.Name}
+		}
+
+		keep[key] = secure
 	}
-	return nil
+
+	// TODO? clean up any orphan secure values?
+
+	return keep, nil
 }
