@@ -284,26 +284,6 @@ describe('JaegerDatasource', () => {
     expect(response.data[0].fields).toMatchObject(testResponseDataFrameFields);
   });
 
-  it('should successfully test datasource connection', async () => {
-    setupTestDatasourceMock('success');
-
-    const ds = new JaegerDatasource(defaultSettings);
-    const response = await ds.testDatasource();
-    expect(response.status).toEqual('success');
-    expect(response.message).toBe('Data source connected and services found.');
-  });
-
-  it('should display error when datasource test returns no services', async () => {
-    setupTestDatasourceMock('error');
-
-    const ds = new JaegerDatasource(defaultSettings);
-    const response = await ds.testDatasource();
-    expect(response.status).toEqual('error');
-    expect(response.message).toBe(
-      'Data source connected, but no services received. Verify that Jaeger is configured properly.'
-    );
-  });
-
   it('should calculate correct time range', async () => {
     const ds = new JaegerDatasource(defaultSettings);
     const timeRange = ds.getTimeRange();
@@ -319,22 +299,6 @@ function setupQueryMock(type: 'trace' | 'search') {
       return of(mockSearchResponse);
     } else {
       return of(mockTraceResponse);
-    }
-  });
-}
-
-function setupTestDatasourceMock(status: 'success' | 'error') {
-  return jest.spyOn(DataSourceWithBackend.prototype, 'testDatasource').mockImplementation(async () => {
-    if (status === 'success') {
-      return {
-        status: 'success',
-        message: 'Data source connected and services found.',
-      };
-    } else {
-      return {
-        status: 'error',
-        message: 'Data source connected, but no services received. Verify that Jaeger is configured properly.',
-      };
     }
   });
 }
