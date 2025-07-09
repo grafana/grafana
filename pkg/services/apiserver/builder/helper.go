@@ -278,13 +278,13 @@ func InstallAPIs(
 	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 	features featuremgmt.FeatureToggles,
+	dualWriterMetrics *grafanarest.DualWriterMetrics,
+	builderMetrics *BuilderMetrics,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
 	var dualWrite grafanarest.DualWriteBuilder
-	metrics := newBuilderMetrics(reg)
-	dualWriterMetrics := grafanarest.NewDualWriterMetrics(reg)
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
@@ -346,7 +346,7 @@ func InstallAPIs(
 				return nil, err
 			}
 
-			metrics.recordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
+			builderMetrics.recordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
 
 			switch currentMode {
 			case grafanarest.Mode0:

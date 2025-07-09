@@ -16,6 +16,15 @@ playlistv0alpha1: {
 			"UPDATE",
 		]
 	}
+	routes: {
+		"/example": {
+			"GET": {
+				response: {
+					status: string
+				}
+			}
+		}
+	}
 	schema: {
 		#Item: {
 			// type of the item.

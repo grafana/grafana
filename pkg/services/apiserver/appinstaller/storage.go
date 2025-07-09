@@ -10,6 +10,7 @@ import (
 	"k8s.io/klog/v2"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -37,6 +38,7 @@ func NewDualWriter(
 	namespaceMapper request.NamespaceMapper,
 	dualWriteService dualwrite.Service,
 	dualWriterMetrics *grafanarest.DualWriterMetrics,
+	builderMetrics *builder.BuilderMetrics,
 ) (grafanarest.Storage, error) {
 	// Check if the dual write service should manage this resource
 	if dualWriteService != nil && dualWriteService.ShouldManage(gr) {

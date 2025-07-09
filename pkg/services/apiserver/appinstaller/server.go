@@ -11,6 +11,7 @@ import (
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -29,6 +30,7 @@ type serverWrapper struct {
 	namespaceMapper   request.NamespaceMapper
 	dualWriteService  dualwrite.Service
 	dualWriterMetrics *grafanarest.DualWriterMetrics
+	builderMetrics    *builder.BuilderMetrics
 }
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
@@ -61,6 +63,7 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				s.namespaceMapper,
 				s.dualWriteService,
 				s.dualWriterMetrics,
+				s.builderMetrics,
 			)
 			if err != nil {
 				return err

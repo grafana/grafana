@@ -112,6 +112,8 @@ type service struct {
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
 	appInstallers                     []appsdkapiserver.AppInstaller
+	builderMetrics                    *builder.BuilderMetrics
+	dualWriterMetrics                 *grafanarest.DualWriterMetrics
 }
 
 func ProvideService(
@@ -134,6 +136,7 @@ func ProvideService(
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
 	appInstallers []appsdkapiserver.AppInstaller,
+	builderMetrics *builder.BuilderMetrics,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -162,6 +165,8 @@ func ProvideService(
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
 		appInstallers:                     appInstallers,
+		builderMetrics:                    builderMetrics,
+		dualWriterMetrics:                 grafanarest.NewDualWriterMetrics(reg),
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -377,6 +382,8 @@ func (s *service) start(ctx context.Context) error {
 		s.storageStatus,
 		optsregister,
 		s.features,
+		s.dualWriterMetrics,
+		s.builderMetrics,
 	)
 	if err != nil {
 		return err
@@ -392,7 +399,8 @@ func (s *service) start(ctx context.Context) error {
 		s.serverLockService,
 		request.GetNamespaceMapper(s.cfg),
 		s.storageStatus,
-		&grafanarest.DualWriterMetrics{}, // Create empty metrics for now
+		s.dualWriterMetrics,
+		s.builderMetrics,
 	); err != nil {
 		return err
 	}

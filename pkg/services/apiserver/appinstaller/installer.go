@@ -9,6 +9,7 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -113,12 +114,14 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	dualWriteService dualwrite.Service,
 	dualWriterMetrics *grafanarest.DualWriterMetrics,
+	builderMetrics *builder.BuilderMetrics,
 ) error {
 	logger := logging.FromContext(ctx)
 
 	for _, installer := range appInstallers {
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
 		wrapper := &serverWrapper{
+			ctx:               ctx,
 			GenericAPIServer:  server,
 			installer:         installer,
 			storageOpts:       storageOpts,
@@ -128,6 +131,7 @@ func InstallAPIs(
 			namespaceMapper:   namespaceMapper,
 			dualWriteService:  dualWriteService,
 			dualWriterMetrics: dualWriterMetrics,
+			builderMetrics:    builderMetrics,
 		}
 		if err := installer.InstallAPIs(wrapper, restOpsGetter); err != nil {
 			return fmt.Errorf("failed to install APIs for app %s: %w", installer.ManifestData().AppName, err)
