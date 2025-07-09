@@ -9,14 +9,34 @@ import { useStyles2, Stack, Button } from '@grafana/ui';
 
 import { SqlExpressionQuery } from '../types';
 
-import {
-  QueryUsageContext,
-  useSQLSuggestions,
-  useSQLExplanations,
-  GenAISuggestionsDrawer,
-  GenAIExplanationDrawer,
-  SuggestionsBadge,
-} from './GenAI';
+// Conditionally import GenAI features only when feature flag is enabled
+const getGenAIFeatures = () => {
+  if (config.featureToggles.sqlExpressions) {
+    return require('./GenAI');
+  }
+  // When feature flag is off, return no-op functions that don't render anything
+  return {
+    useSQLSuggestions: () => ({
+      handleApplySuggestion: () => {},
+      handleHistoryUpdate: () => {},
+      handleCloseDrawer: () => {},
+      handleOpenDrawer: () => {},
+      isDrawerOpen: false,
+      hasUnseenSuggestions: false,
+      suggestions: [],
+    }),
+    useSQLExplanations: () => ({
+      explanation: '',
+      handleCloseExplanation: () => {},
+      handleOpenExplanation: () => {},
+      handleExplain: () => {},
+      isExplanationOpen: false,
+      shouldShowViewExplanation: true, // Hide the explain button when feature is off
+      updatePrevExpression: () => {},
+    }),
+    QueryUsageContext: {},
+  };
+};
 
 // Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
@@ -28,6 +48,24 @@ const GenAISQLSuggestionsButton = lazy(() =>
 const GenAISQLExplainButton = lazy(() =>
   import('./GenAI').then((module) => ({
     default: module.GenAISQLExplainButton,
+  }))
+);
+
+const SuggestionsBadge = lazy(() =>
+  import('./GenAI').then((module) => ({
+    default: module.SuggestionsBadge,
+  }))
+);
+
+const GenAISuggestionsDrawer = lazy(() =>
+  import('./GenAI').then((module) => ({
+    default: module.GenAISuggestionsDrawer,
+  }))
+);
+
+const GenAIExplanationDrawer = lazy(() =>
+  import('./GenAI').then((module) => ({
+    default: module.GenAIExplanationDrawer,
   }))
 );
 
@@ -63,6 +101,9 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });
 
+  // Conditionally use GenAI features based on feature flag
+  const { useSQLSuggestions, useSQLExplanations } = getGenAIFeatures();
+
   const {
     handleApplySuggestion,
     handleHistoryUpdate,
@@ -83,7 +124,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
     updatePrevExpression,
   } = useSQLExplanations(query.expression || '');
 
-  const queryContext: QueryUsageContext = useMemo(() => ({ alerting, panelId }), [alerting, panelId]);
+  const queryContext = useMemo(() => ({ alerting, panelId }), [alerting, panelId]);
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -164,11 +205,13 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
               </Suspense>
             </Stack>
             {suggestions.length > 0 && (
-              <SuggestionsBadge
-                handleOpenDrawer={handleOpenDrawer}
-                hasUnseenSuggestions={hasUnseenSuggestions}
-                suggestions={suggestions}
-              />
+              <Suspense fallback={null}>
+                <SuggestionsBadge
+                  handleOpenDrawer={handleOpenDrawer}
+                  hasUnseenSuggestions={hasUnseenSuggestions}
+                  suggestions={suggestions}
+                />
+              </Suspense>
             )}
           </Stack>
         )}
@@ -182,13 +225,25 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
           />
         </div>
       </Stack>
-      <GenAISuggestionsDrawer
-        isOpen={isDrawerOpen}
-        onApplySuggestion={onApplySuggestion}
-        onClose={handleCloseDrawer}
-        suggestions={suggestions}
-      />
-      <GenAIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
+      {config.featureToggles.sqlExpressions && (
+        <>
+          <Suspense fallback={null}>
+            <GenAISuggestionsDrawer
+              isOpen={isDrawerOpen}
+              onApplySuggestion={onApplySuggestion}
+              onClose={handleCloseDrawer}
+              suggestions={suggestions}
+            />
+          </Suspense>
+          <Suspense fallback={null}>
+            <GenAIExplanationDrawer
+              isOpen={isExplanationOpen}
+              onClose={handleCloseExplanation}
+              explanation={explanation}
+            />
+          </Suspense>
+        </>
+      )}
     </>
   );
 };

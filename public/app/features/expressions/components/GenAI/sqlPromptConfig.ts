@@ -6,7 +6,7 @@
 // Common SQL context information shared across all prompts
 const COMMON_SQL_CONTEXT = {
   dialectInfo:
-    'The SQL syntax is MySQL dialectic, based on dolthub go-mysql-server, use this when building and interpreting queries',
+    'Always use MySQL dialectic, based on dolthub go-mysql-server, use this when building and interpreting queries',
   refIdExplanation:
     'RefIDs (A, B, C, etc.) represent data from other queries and are used as table names in FROM clauses',
 } as const;
@@ -31,6 +31,8 @@ export interface QueryUsageContext {
  */
 const SQL_SUGGESTION_SYSTEM_PROMPT = `You are a SQL expert for Grafana expressions specializing in time series data analysis.
 
+The most important note: ${COMMON_SQL_CONTEXT.dialectInfo}
+
 Help users with SQL queries by:
 - Fixing syntax errors using available field and data type information
 - Suggesting optimal queries based on actual data schema and patterns
@@ -38,7 +40,6 @@ Help users with SQL queries by:
 - Leveraging time series patterns and Grafana-specific use cases
 
 Guidelines:
-- ${COMMON_SQL_CONTEXT.dialectInfo}
 - ${COMMON_SQL_CONTEXT.refIdExplanation}
 - Use proper field names and types based on schema information
 - Include LIMIT clauses for performance unless aggregating
