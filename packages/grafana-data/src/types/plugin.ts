@@ -231,6 +231,8 @@ export interface PluginConfigPage<T extends PluginMeta> {
   body: ComponentType<PluginConfigPageProps<T>>;
 }
 
+export type PluginAsyncInitFunc = () => Promise<void>;
+
 export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // Meta is filled in by the plugin loading system
   meta: T;
@@ -262,7 +264,7 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
     return this;
   }
 
-  constructor() {
+  constructor(public readonly asyncInit?: PluginAsyncInitFunc) {
     this.meta = {} as T;
   }
 }

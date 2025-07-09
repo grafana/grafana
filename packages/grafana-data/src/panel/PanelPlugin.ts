@@ -13,7 +13,7 @@ import {
   PanelTypeChangedHandler,
   PanelPluginDataSupport,
 } from '../types/panel';
-import { GrafanaPlugin } from '../types/plugin';
+import { GrafanaPlugin, PluginAsyncInitFunc } from '../types/plugin';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
@@ -126,8 +126,11 @@ export class PanelPlugin<
    */
   angularPanelCtrl?: any;
 
-  constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
-    super();
+  constructor(
+    panel: ComponentType<PanelProps<TOptions>> | null,
+    readonly asyncInit?: PluginAsyncInitFunc
+  ) {
+    super(asyncInit);
     this.panel = panel;
   }
 

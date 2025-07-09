@@ -14,7 +14,7 @@ import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { PanelData } from './panel';
-import { GrafanaPlugin, PluginMeta } from './plugin';
+import { GrafanaPlugin, PluginAsyncInitFunc, PluginMeta } from './plugin';
 import { DataQuery } from './query';
 import { Scope } from './scopes';
 import { AdHocVariableFilter } from './templateVars';
@@ -44,8 +44,11 @@ export class DataSourcePlugin<
 > extends GrafanaPlugin<DataSourcePluginMeta<TOptions>> {
   components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
 
-  constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
-    super();
+  constructor(
+    public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>,
+    readonly asyncInit?: PluginAsyncInitFunc
+  ) {
+    super(asyncInit);
   }
 
   setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>) {

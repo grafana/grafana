@@ -140,19 +140,24 @@ export async function importPluginModule({
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  return SystemJS.import(modulePath).catch((e) => {
-    let error = new Error('Could not load plugin: ' + e);
-    console.error(error);
-    pluginsLogger.logError(error, {
-      path,
-      pluginId,
-      pluginVersion: version ?? '',
-      expectedHash: moduleHash ?? '',
-      loadingStrategy: loadingStrategy.toString(),
-      sriChecksEnabled: (config.featureToggles.pluginsSriChecks ?? false).toString(),
+  return SystemJS.import(modulePath)
+    .then(async (module) => {
+      await module.plugin?.asyncInit?.();
+      return module;
+    })
+    .catch((e) => {
+      let error = new Error('Could not load plugin: ' + e);
+      console.error(error);
+      pluginsLogger.logError(error, {
+        path,
+        pluginId,
+        pluginVersion: version ?? '',
+        expectedHash: moduleHash ?? '',
+        loadingStrategy: loadingStrategy.toString(),
+        sriChecksEnabled: (config.featureToggles.pluginsSriChecks ?? false).toString(),
+      });
+      throw error;
     });
-    throw error;
-  });
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
