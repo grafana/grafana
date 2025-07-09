@@ -119,18 +119,13 @@ export function ResourceExport({
         <Alert
           title={t(
             'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
-            'Dashboard Schema V2 does not support exporting library panels to be used in another instance. Converting Library Panels to Regular Panels'
+            'Library panels will be converted to regular panels'
           )}
           severity="warning"
         >
           <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
-            The dynamic dashboard functionality is experimental, and has not full feature parity with current dashboards
-            behaviour. It is based on a new schema format, that support library panels partially. This means that when
-            exporting the dashboard to use it in another instance, we will convert library panels to regular panels.{' '}
-            <TextLink external href="https://grafana.com/docs/release-life-cycle/">
-              life cycle
-            </TextLink>
-            .
+            Due to limitations in the new dashboard schema (V2), library panels will be converted to regular panels with
+            embedded content during external export.
           </Trans>
         </Alert>
       )}
