@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math"
@@ -55,7 +56,7 @@ type BleveOptions struct {
 	// ?? not totally sure the units
 	BatchSize int
 
-	// Index cache TTL for bleve indices
+	// Index cache TTL for bleve indices. 0 disables expiration.
 	IndexCacheTTL time.Duration
 }
 
@@ -66,7 +67,7 @@ type bleveBackend struct {
 	start  time.Time
 
 	cacheMx sync.RWMutex
-	cache   map[string]*bleveIndex
+	cache   map[resource.NamespacedResource]*bleveIndex
 
 	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
@@ -87,7 +88,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 	be := &bleveBackend{
 		log:          slog.Default().With("logger", "bleve-backend"),
 		tracer:       tracer,
-		cache:        map[string]*bleveIndex{},
+		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
 		start:        time.Now(),
 		features:     features,
@@ -101,7 +102,7 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 
 // GetIndex will return nil if the key does not exist
 func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
-	idx := b.getCachedIndex(key.String())
+	idx := b.getCachedIndex(key)
 	// Avoid returning typed nils.
 	if idx == nil {
 		return nil, nil
@@ -109,7 +110,7 @@ func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResour
 	return idx, nil
 }
 
-func (b *bleveBackend) getCachedIndex(key string) *bleveIndex {
+func (b *bleveBackend) getCachedIndex(key resource.NamespacedResource) *bleveIndex {
 	// Check index with read-lock first.
 	b.cacheMx.RLock()
 	val := b.cache[key]
@@ -198,7 +199,7 @@ func (b *bleveBackend) BuildIndex(
 		return nil, err
 	}
 
-	cachedIndex := b.getCachedIndex(key.String())
+	cachedIndex := b.getCachedIndex(key)
 
 	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion)
 
@@ -216,16 +217,27 @@ func (b *bleveBackend) BuildIndex(
 			build = false
 			logWithDetails.Info("Existing index found on filesystem", "directory", filepath.Join(resourceDir, fileIndexName))
 		} else {
-			// Building index from scratch, create new name.
-			fileIndexName = formatIndexName(time.Now(), resourceVersion)
-			indexDir := filepath.Join(resourceDir, fileIndexName)
-			if !isValidPath(indexDir, b.opts.Root) {
-				b.log.Error("Directory is not valid", "directory", indexDir)
-			}
+			// Building index from scratch. Index name has a time component in it to be unique, but if
+			// we happen to create non-unique name, we bump the time and try again.
 
-			index, err = bleve.New(indexDir, mapper)
-			if err != nil {
-				return nil, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
+			indexDir := ""
+			now := time.Now()
+			for index == nil {
+				fileIndexName = formatIndexName(time.Now(), resourceVersion)
+				indexDir = filepath.Join(resourceDir, fileIndexName)
+				if !isValidPath(indexDir, b.opts.Root) {
+					b.log.Error("Directory is not valid", "directory", indexDir)
+				}
+
+				index, err = bleve.New(indexDir, mapper)
+				if errors.Is(err, bleve.ErrorIndexPathExists) {
+					now.Add(time.Second) // Bump time for next try
+					index = nil          // Bleve actually returns non-nil value with ErrorIndexPathExists
+					continue
+				}
+				if err != nil {
+					return nil, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
+				}
 			}
 
 			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
@@ -254,10 +266,6 @@ func (b *bleveBackend) BuildIndex(
 		features: b.features,
 		tracing:  b.tracer,
 	}
-	// Only expire in-memory indexes.
-	if fileIndexName == "" {
-		idx.expiration = time.Now().Add(b.opts.IndexCacheTTL)
-	}
 
 	idx.allFields, err = getAllFields(idx.standard, fields)
 	if err != nil {
@@ -274,43 +282,49 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Info("Finished building index", "elapsed", elapsed)
 	}
 
+	// Set expiration after building the index. Only expire in-memory indexes.
+	if fileIndexName == "" && b.opts.IndexCacheTTL > 0 {
+		idx.expiration = time.Now().Add(b.opts.IndexCacheTTL)
+	}
+
 	// Store the index in the cache.
-	keyStr := key.String()
 	if idx.expiration.IsZero() {
-		logWithDetails.Info("Storing index in cache, with no expiration", "key", keyStr)
+		logWithDetails.Info("Storing index in cache, with no expiration", "key", key)
 	} else {
-		logWithDetails.Info("Storing index in cache", "key", keyStr, "expiration", idx.expiration)
+		logWithDetails.Info("Storing index in cache", "key", key, "expiration", idx.expiration)
 	}
 
 	b.cacheMx.Lock()
-	prev := b.cache[keyStr]
-	b.cache[keyStr] = idx
+	prev := b.cache[key]
+	b.cache[key] = idx
 	b.cacheMx.Unlock()
 
 	// If there was a previous index in the cache, close it.
 	if prev != nil {
 		err := prev.index.Close()
 		if err != nil {
-			logWithDetails.Error("failed to close previous index", "key", keyStr, "err", err)
+			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
 	}
 
-	// If we've built new file-based index, start a background task to cleanup the old index directories
-	if fileIndexName != "" {
-		go b.cleanOldIndexes(resourceDir, fileIndexName)
-	}
+	// Start a background task to cleanup the old index directories. If we have built a new file-based index,
+	// the new name is ignored. If we have created in-memory index, all old directories can be removed.
+	go b.cleanOldIndexes(resourceDir, fileIndexName)
 
 	return idx, nil
 }
 
-func (b *bleveBackend) cleanOldIndexes(dir string, skip string) {
+func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
 		b.log.Warn("error cleaning folders from", "directory", dir, "error", err)
 		return
 	}
 	for _, file := range files {
-		if file.IsDir() && file.Name() != skip {
+		if file.IsDir() && (skipName == "" || file.Name() != skipName) {
 			fpath := filepath.Join(dir, file.Name())
 			if !isValidPath(dir, b.opts.Root) {
 				b.log.Error("Path is not valid", "directory", fpath, "error", err)
@@ -341,11 +355,11 @@ func isValidPath(path, safeDir string) bool {
 }
 
 // cacheKeys returns list of keys for indexes in the cache (including possibly expired ones).
-func (b *bleveBackend) cacheKeys() []string {
+func (b *bleveBackend) cacheKeys() []resource.NamespacedResource {
 	b.cacheMx.RLock()
 	defer b.cacheMx.RUnlock()
 
-	keys := make([]string, 0, len(b.cache))
+	keys := make([]resource.NamespacedResource, 0, len(b.cache))
 	for k := range b.cache {
 		keys = append(keys, k)
 	}
@@ -428,6 +442,16 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVe
 	}
 
 	return idx, indexName
+}
+
+func (b *bleveBackend) closeAllIndexes() {
+	b.cacheMx.Lock()
+	defer b.cacheMx.Unlock()
+
+	for key, idx := range b.cache {
+		_ = idx.index.Close()
+		delete(b.cache, key)
+	}
 }
 
 type bleveIndex struct {

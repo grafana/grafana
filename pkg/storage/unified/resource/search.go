@@ -637,18 +637,12 @@ func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedReso
 
 		size := int64(0)
 		rv := int64(0)
-		found := false
 		for _, stat := range stats {
 			if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
 				size = stat.Count
 				rv = stat.ResourceVersion
-				found = true
 				break
 			}
-		}
-
-		if !found {
-			s.log.Warn("Failed to find resource stats for building index", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource)
 		}
 
 		idx, _, err = s.build(ctx, key, size, rv)
