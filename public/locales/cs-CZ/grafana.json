@@ -4435,7 +4435,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Veřejná",
         "tooltip-view-as-scene": "Zobrazit jako scénu"
       }
     },
@@ -5211,7 +5210,6 @@
       "playlist-next": "Přejít na další nástěnku",
       "playlist-previous": "Přejít na předchozí nástěnku",
       "playlist-stop": "Zastavit playlist",
-      "public-dashboard": "Veřejná",
       "refresh": "Obnovit nástěnku",
       "save": "Uložit nástěnku",
       "save-dashboard": {
@@ -5512,15 +5510,9 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Hodnota ještě není uložena v databázi Grafany",
       "not-yet-saved": "Hodnota není uložena v databázi Grafany",
-      "open-pull-request-in-git-hub": "Otevřít pull request v GitHubu",
-      "title-dashboard-loaded-branch-git-hub": "Tato nástěnka je načtena z větve na GitHubu.",
       "title-dashboard-loaded-external-repository": "Tato nástěnka je načtena z externího úložiště",
-      "title-dashboard-loaded-request-git-hub": "Tato nástěnka je načtena z pull request na GitHubu.",
-      "title-error-loading-dashboard": "Chyba při načítání nástěnky",
-      "value-not-saved": "Hodnota ještě není uložena v databázi Grafany",
-      "view-pull-request-in-git-hub": "Zobrazit pull request v GitHubu"
+      "title-error-loading-dashboard": "Chyba při načítání nástěnky"
     },
     "dashboard-scene": {
       "text": {
@@ -7259,6 +7251,7 @@
       "when": "KDY"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Činnost"
     },
     "math": {
@@ -8551,7 +8544,7 @@
       "usage-count_other": "Použito na {{count}} nástěnkách"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Hledat podle názvu nebo popisu"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Načítání panelu knihovny…"
@@ -8696,12 +8689,18 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_few": "",
+          "indexed-label_many": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_few": "",
+          "parsedl-label_many": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_few": "",
+          "structured-metadata_many": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8758,6 +8757,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8771,9 +8771,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10369,6 +10371,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "Tato funkce je v současné době v aktivním vývoji. Pro nejlepší zážitek a nejnovější vylepšení doporučujeme použít <2>noční sestavení</2> Grafany."
@@ -11834,6 +11847,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

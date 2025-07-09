@@ -36,55 +36,55 @@ describe('UrlAndAuthenticationSection', () => {
     expect(onOptionsChangeMock).toHaveBeenCalled();
   });
 
-  it('renders DRBP warning for InfluxDB OSS 1.x and InfluxQL', () => {
-    const props = {
-      ...defaultProps,
-      options: {
-        ...defaultProps.options,
-        jsonData: { product: 'InfluxDB OSS 1.x', version: InfluxVersion.InfluxQL },
-      },
-    };
+  const productsRequiringDBRP = [
+    'InfluxDB OSS 1.x',
+    'InfluxDB OSS 2.x',
+    'InfluxDB Enterprise 1.x',
+    'InfluxDB Cloud (TSM)',
+    'InfluxDB Cloud Serverless',
+  ];
 
-    render(<UrlAndAuthenticationSection {...props} />);
-    expect(screen.getByText(/requires DRBP mapping/i)).toBeInTheDocument();
+  describe('UrlAndAuthenticationSection', () => {
+    it.each(productsRequiringDBRP)('renders DBRP warning for %s and InfluxQL', (product) => {
+      const props = {
+        ...defaultProps,
+        options: {
+          ...defaultProps.options,
+          jsonData: {
+            product,
+            version: InfluxVersion.InfluxQL,
+          },
+        },
+      };
+
+      render(<UrlAndAuthenticationSection {...props} />);
+      expect(screen.getByText(/requires DBRP mapping/i)).toBeInTheDocument();
+    });
   });
 
-  it('renders DRBP warning for InfluxDB OSS 2.x and InfluxQL', () => {
+  it('does not render DBRP warning for SQL', () => {
     const props = {
       ...defaultProps,
       options: {
         ...defaultProps.options,
-        jsonData: { product: 'InfluxDB OSS 2.x', version: InfluxVersion.InfluxQL },
+        jsonData: { version: InfluxVersion.SQL },
       },
     };
 
     render(<UrlAndAuthenticationSection {...props} />);
-    expect(screen.getByText(/requires DRBP mapping/i)).toBeInTheDocument();
+    expect(screen.queryByText(/requires DBRP mapping/i)).not.toBeInTheDocument();
   });
 
-  it('does not render DRBP warning for InfluxDB OSS 1.x and Flux', () => {
+  it('does not render DBRP warning for Flux', () => {
     const props = {
       ...defaultProps,
       options: {
         ...defaultProps.options,
-        jsonData: { product: 'InfluxDB OSS 1.x', version: InfluxVersion.Flux },
+        jsonData: { version: InfluxVersion.Flux },
       },
     };
 
     render(<UrlAndAuthenticationSection {...props} />);
-    expect(screen.queryByText(/requires DRBP mapping/i)).not.toBeInTheDocument();
-  });
-
-  it('does not render DRBP warning for InfluxDB OSS 2.x and Flux', () => {
-    const props = {
-      ...defaultProps,
-      options: {
-        ...defaultProps.options,
-        jsonData: { product: 'InfluxDB OSS 2.x', version: InfluxVersion.Flux },
-      },
-    };
-
-    render(<UrlAndAuthenticationSection {...props} />);
-    expect(screen.queryByText(/requires DRBP mapping/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/requires DBRP mapping/i)).not.toBeInTheDocument();
   });
 });

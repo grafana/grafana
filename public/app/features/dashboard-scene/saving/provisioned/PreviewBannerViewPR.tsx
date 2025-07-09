@@ -8,33 +8,22 @@ import { commonAlertProps } from './DashboardPreviewBanner';
 
 interface Props {
   prParam: string;
-  isFolder?: boolean;
   isNewPr?: boolean;
 }
 
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created or loaded from a new branch in Github.
  */
-export function PreviewBannerViewPR({ prParam, isFolder = false, isNewPr }: Props) {
-  const titleText = isFolder
-    ? isNewPr
-      ? t(
-          'provisioned-resource-preview-banner.title-folder-created-branch-git-hub',
-          'A new folder has been created in a branch in GitHub.'
-        )
-      : t(
-          'provisioned-resource-preview-banner.title-folder-created-pull-request-git-hub',
-          'A new folder has been created in a pull request in GitHub.'
-        )
-    : isNewPr
-      ? t(
-          'provisioned-resource-preview-banner.title-dashboard-loaded-branch-git-hub',
-          'This dashboard is loaded from a branch in GitHub.'
-        )
-      : t(
-          'provisioned-resource-preview-banner.title-dashboard-loaded-pull-request-git-hub',
-          'This dashboard is loaded from a pull request in GitHub.'
-        );
+export function PreviewBannerViewPR({ prParam, isNewPr }: Props) {
+  const titleText = isNewPr
+    ? t(
+        'provisioned-resource-preview-banner.title-created-branch-git-hub',
+        'A new resource has been created in a branch in GitHub.'
+      )
+    : t(
+        'provisioned-resource-preview-banner.title-loaded-pull-request-git-hub',
+        'This resource is loaded from a pull request in GitHub.'
+      );
 
   return (
     <Alert

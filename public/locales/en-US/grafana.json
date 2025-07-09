@@ -5656,6 +5656,20 @@
       "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
+    "move-provisioned-dashboard-form": {
+      "api-error": "Failed to move dashboard",
+      "cancel-action": "Cancel",
+      "current-file-not-found": "Current dashboard file could not be found",
+      "drawer-title": "Move Provisioned Dashboard",
+      "file-load-error": "Error loading dashboard",
+      "loading-file-data": "Loading dashboard data",
+      "move-action": "Move dashboard",
+      "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
+      "moving": "Moving...",
+      "partial-failure-warning": "Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.",
+      "target-path-label": "Target path",
+      "title-this-repository-is-read-only": "This repository is read only"
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?",
       "title-name-already-exists": "Name already exists"
@@ -7209,6 +7223,7 @@
       "when": "WHEN"
     },
     "expression-query-editor": {
+      "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",
       "label-operation": "Operation"
     },
     "math": {
@@ -8495,7 +8510,7 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Search by name or description"
+      "placeholder-search-by-name-or-description": "Search by name, description or folder name"
     },
     "loading-indicator": {
       "loading-library-panel": "Loading library panel..."
@@ -10312,10 +10327,8 @@
       "open-pull-request-in-git-hub": "Open pull request in GitHub",
       "view-pull-request-in-git-hub": "View pull request in GitHub"
     },
-    "title-dashboard-loaded-branch-git-hub": "This dashboard is loaded from a branch in GitHub.",
-    "title-dashboard-loaded-pull-request-git-hub": "This dashboard is loaded from a pull request in GitHub.",
-    "title-folder-created-branch-git-hub": "A new folder has been created in a branch in GitHub.",
-    "title-folder-created-pull-request-git-hub": "A new folder has been created in a pull request in GitHub."
+    "title-created-branch-git-hub": "A new resource has been created in a branch in GitHub.",
+    "title-loaded-pull-request-git-hub": "This resource is loaded from a pull request in GitHub."
   },
   "provisioning": {
     "banner": {
@@ -11768,6 +11781,14 @@
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
+    "pill-cell-options-editor": {
+      "description-color-mode": "Choose how colors are assigned to pills",
+      "description-fixed-color": "All pills in this column will use this color",
+      "description-value-mappings-info": "For Value Mappings either use the global table Value Mappings or the Field overrides Value Mappings. The default will fall back to the Color Scheme. ",
+      "label-color-mode": "Color Mode",
+      "label-fixed-color": "Fixed Color",
+      "label-value-mappings-info": "Value Mappings"
+    },
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },

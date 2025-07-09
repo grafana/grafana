@@ -9,7 +9,7 @@ import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { ThunkDispatch } from 'app/types';
+import { ThunkDispatch } from 'app/types/store';
 
 import { getUrlStateFromPaneState } from '../index';
 import {

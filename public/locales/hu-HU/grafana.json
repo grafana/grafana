@@ -4399,7 +4399,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Nyilvános",
         "tooltip-view-as-scene": "Megtekintés jelenetként"
       }
     },
@@ -5173,7 +5172,6 @@
       "playlist-next": "Ugrás a következő irányítópulthoz",
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
-      "public-dashboard": "Nyilvános",
       "refresh": "Irányítópult frissítése",
       "save": "Irányítópult mentése",
       "save-dashboard": {
@@ -5474,15 +5472,9 @@
       "type": "Típus"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Az érték még nincs mentve a Grafana-adatbázisban",
       "not-yet-saved": "Az érték nincs mentve a Grafana-adatbázisban",
-      "open-pull-request-in-git-hub": "Összefésülési kérelem megnyitása a GitHubon",
-      "title-dashboard-loaded-branch-git-hub": "Ez az irányítópult a GitHub egyik ágából töltődik be.",
       "title-dashboard-loaded-external-repository": "Ez az irányítópult külső adattárból töltődik be",
-      "title-dashboard-loaded-request-git-hub": "Ez az irányítópult a GitHub egyik összefésülési kérelméből töltődik be.",
-      "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor",
-      "value-not-saved": "Az érték még nincs mentve a Grafana-adatbázisban",
-      "view-pull-request-in-git-hub": "Összefésülési kérelem megtekintése a GitHubon"
+      "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor"
     },
     "dashboard-scene": {
       "text": {
@@ -7217,6 +7209,7 @@
       "when": "WHEN"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Művelet"
     },
     "math": {
@@ -8503,7 +8496,7 @@
       "usage-count_other": "{{count}} irányítópulton használatos"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Keresés név vagy leírás alapján"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Könyvtárpanel betöltése…"
@@ -8644,12 +8637,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8699,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8719,9 +8713,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10311,6 +10307,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "Ez a funkció jelenleg aktív fejlesztés alatt áll. A legjobb élmény és a legújabb fejlesztések érdekében javasoljuk a Grafana <2>éjszakai buildjének</2> használatát."
@@ -11762,6 +11769,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
