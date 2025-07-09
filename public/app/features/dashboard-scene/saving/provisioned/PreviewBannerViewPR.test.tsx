@@ -60,14 +60,14 @@ describe('PreviewBannerViewPR', () => {
       setup({ prParam: 'test-url', isFolder: false, isNewPr: true });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText('This dashboard is loaded from a branch in GitHub.')).toBeInTheDocument();
+      expect(screen.getByText('A new resource has been created in a branch in GitHub.')).toBeInTheDocument();
     });
 
     it('should render correct text for existing PR dashboard', () => {
       setup({ prParam: 'test-url', isFolder: false, isNewPr: false });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText('This dashboard is loaded from a pull request in GitHub.')).toBeInTheDocument();
+      expect(screen.getByText('This resource is loaded from a pull request in GitHub.')).toBeInTheDocument();
     });
 
     it('should render correct button text for new PR dashboard', () => {
@@ -88,14 +88,14 @@ describe('PreviewBannerViewPR', () => {
       setup({ prParam: 'test-url', isFolder: true, isNewPr: true });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText('A new folder has been created in a branch in GitHub.')).toBeInTheDocument();
+      expect(screen.getByText('A new resource has been created in a branch in GitHub.')).toBeInTheDocument();
     });
 
     it('should render correct text for existing PR folder', () => {
       setup({ prParam: 'test-url', isFolder: true, isNewPr: false });
 
       expect(screen.getByRole('status')).toBeInTheDocument();
-      expect(screen.getByText('A new folder has been created in a pull request in GitHub.')).toBeInTheDocument();
+      expect(screen.getByText('This resource is loaded from a pull request in GitHub.')).toBeInTheDocument();
     });
 
     it('should render correct button text for new PR folder', () => {
