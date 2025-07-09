@@ -33,15 +33,15 @@ var _ auth.IDService = (*Service)(nil)
 
 func ProvideService(
 	cfg *setting.Cfg, signer auth.IDSigner,
-	cache remotecache.CacheStorage,
-	authnService authn.Service,
-	reg prometheus.Registerer,
+	cache remotecache.CacheStorage, authnService authn.Service,
+	reg prometheus.Registerer, tracer trace.Tracer,
 ) *Service {
 	s := &Service{
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
 		metrics:  newMetrics(reg),
 		nsMapper: request.GetNamespaceMapper(cfg),
+		tracer:   tracer,
 	}
 
 	authnService.RegisterPostAuthHook(s.SyncIDToken, 140)
