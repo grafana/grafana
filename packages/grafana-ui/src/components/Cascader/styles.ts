@@ -182,10 +182,10 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => ({
             position: 'relative',
 
             '&:after': {
-              background: theme.colors.background.secondary,
+              background: theme.colors.text.primary,
               content: "''",
               height: theme.spacing(3),
-              mask: 'url(../img/icons/unicons/angle-right.svg)',
+              mask: 'url(public/build/img/icons/unicons/angle-right.svg)',
               maskType: 'luminance',
               position: 'absolute',
               right: 0,
