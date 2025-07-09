@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -75,7 +76,7 @@ type APIBuilder struct {
 	features featuremgmt.FeatureToggles
 
 	getter              rest.Getter
-	localFileResolver   *repository.LocalFolderResolver
+	localFileResolver   *local.LocalFolderResolver
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -104,7 +105,7 @@ type APIBuilder struct {
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
-	local *repository.LocalFolderResolver,
+	local *local.LocalFolderResolver,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
@@ -167,7 +168,7 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	folderResolver := &repository.LocalFolderResolver{
+	folderResolver := &local.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}
@@ -1163,7 +1164,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver), nil
+		return local.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
 		return git.NewGitRepository(ctx, b.secrets, r, git.RepositoryConfig{
 			URL:            r.Spec.Git.URL,
