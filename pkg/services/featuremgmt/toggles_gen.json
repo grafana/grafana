@@ -2048,7 +2048,8 @@
       "metadata": {
         "name": "nanoGit",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-17T17:07:30Z"
+        "creationTimestamp": "2025-06-17T17:07:30Z",
+        "deletionTimestamp": "2025-07-09T11:53:17Z"
       },
       "spec": {
         "description": "Use experimental git library for provisioning",
