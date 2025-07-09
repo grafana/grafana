@@ -1,7 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
 import { useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 interface ReturnBag {
   folder?: FolderDTO;

@@ -5,7 +5,7 @@ import { rangeUtil, PanelData, DataSourceApi, GrafanaTheme2 } from '@grafana/dat
 import { Trans, t } from '@grafana/i18n';
 import { Input, InlineSwitch, useStyles2, InlineLabel } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { QueryGroupOptions } from 'app/types';
+import { QueryGroupOptions } from 'app/types/query';
 
 interface Props {
   options: QueryGroupOptions;

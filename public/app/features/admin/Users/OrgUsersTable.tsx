@@ -25,7 +25,8 @@ import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicke
 import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, OrgUser, Role } from 'app/types';
+import { AccessControlAction, Role } from 'app/types/accessControl';
+import { OrgUser } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 

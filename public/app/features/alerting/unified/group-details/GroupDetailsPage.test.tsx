@@ -4,7 +4,7 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';

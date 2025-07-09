@@ -4,7 +4,7 @@ import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 

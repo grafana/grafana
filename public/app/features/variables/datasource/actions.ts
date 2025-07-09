@@ -2,8 +2,8 @@ import { chain } from 'lodash';
 
 import { stringToJsRegex } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { ThunkResult } from 'app/types/store';
 
-import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { validateVariableSelectionState } from '../state/actions';
