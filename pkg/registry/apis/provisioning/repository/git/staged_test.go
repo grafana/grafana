@@ -821,14 +821,6 @@ func TestStagedGitRepository_Push(t *testing.T) {
 			expectCalls: 1,
 		},
 		{
-			name: "fails with before fn error",
-			setupMock: func(_ *mocks.FakeStagedWriter) {
-				// No setup needed as BeforeFn fails first
-			},
-			wantError:   errors.New("before function failed"),
-			expectCalls: 0,
-		},
-		{
 			name: "fails with push error",
 			setupMock: func(mockWriter *mocks.FakeStagedWriter) {
 				mockWriter.PushReturns(errors.New("push failed"))

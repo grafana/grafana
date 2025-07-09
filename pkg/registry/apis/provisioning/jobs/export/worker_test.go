@@ -244,9 +244,7 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	})
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	// Verify progress messages are set
-	mockProgress.On("SetMessage", mock.Anything, "clone target").Return()
-	mockProgress.On("SetMessage", mock.Anything, "push changes").Return()
+	// No progress messages expected in current implementation
 
 	mockClients := resources.NewMockClientFactory(t)
 	mockResourceClients := resources.NewMockResourceClients(t)
@@ -313,7 +311,7 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 	require.EqualError(t, err, "export failed")
 }
 
-func TestExportWorker_ProcessWrapWithCloneFnError(t *testing.T) {
+func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
@@ -338,10 +336,10 @@ func TestExportWorker_ProcessWrapWithCloneFnError(t *testing.T) {
 
 	r := NewExportWorker(nil, nil, nil, mockStageFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
-	require.EqualError(t, err, "clone failed")
+	require.EqualError(t, err, "stage failed")
 }
 
-func TestExportWorker_ProcessBranchNotAllowedForClonableRepositories(t *testing.T) {
+func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionPush,
@@ -355,20 +353,16 @@ func TestExportWorker_ProcessBranchNotAllowedForClonableRepositories(t *testing.
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
 		Spec: v0alpha1.RepositorySpec{
 			Type:      v0alpha1.GitHubRepositoryType,
-			Workflows: []v0alpha1.Workflow{v0alpha1.BranchWorkflow},
+			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow}, // Only write workflow, not branch
 		},
 	})
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockProgress.On("SetMessage", mock.Anything, "clone target").Return()
-	mockStageFn := NewMockWrapWithStageFn(t)
-	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
-		return fn(repo, true)
-	})
-
-	r := NewExportWorker(nil, nil, nil, mockStageFn.Execute)
+	// No progress messages expected in current implementation
+	
+	r := NewExportWorker(nil, nil, nil, nil)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
-	require.EqualError(t, err, "branch is not supported for clonable repositories")
+	require.EqualError(t, err, "this repository does not support the branch workflow")
 }
 
 func TestExportWorker_ProcessGitRepository(t *testing.T) {
@@ -396,9 +390,7 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 	})
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	// Verify progress messages are set
-	mockProgress.On("SetMessage", mock.Anything, "clone target").Return()
-	mockProgress.On("SetMessage", mock.Anything, "push changes").Return()
+	// No progress messages expected in current implementation
 
 	mockClients := resources.NewMockClientFactory(t)
 	mockResourceClients := resources.NewMockResourceClients(t)

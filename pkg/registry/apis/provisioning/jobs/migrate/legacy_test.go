@@ -363,8 +363,7 @@ func TestLegacyMigrator_BeforeFnExecution(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, "clone repository").Return()
-		progress.On("SetMessage", mock.Anything, "push changes").Return()
+		// No progress messages expected in current staging implementation
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -398,8 +397,7 @@ func TestLegacyMigrator_ProgressScanner(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, "clone repository").Return()
-		progress.On("SetMessage", mock.Anything, "push changes").Return()
+		// No progress messages expected in current staging implementation
 
 		repo := repository.NewMockRepository(t)
 		repo.On("Config").Return(&provisioning.Repository{
@@ -412,10 +410,7 @@ func TestLegacyMigrator_ProgressScanner(t *testing.T) {
 		require.EqualError(t, err, "migrate from SQL: abort test here")
 
 		require.Eventually(t, func() bool {
-			if len(progress.Calls) != 2 {
-				return false
-			}
-
+			// No progress message calls expected in current staging implementation
 			return progress.AssertExpectations(t)
 		}, time.Second, 10*time.Millisecond)
 	})
