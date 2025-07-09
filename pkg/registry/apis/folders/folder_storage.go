@@ -77,6 +77,10 @@ func (s *folderStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
+	if 1 == 1 {
+		// no op
+	}
+
 	obj, err := s.store.Create(ctx, obj, createValidation, options)
 	if err != nil {
 		return nil, err
