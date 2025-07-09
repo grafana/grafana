@@ -31,7 +31,7 @@ function skipFiles(f: string): boolean {
   return true;
 }
 
-type Env = {
+export type Env = {
   [key: string]: true | string | Env;
 };
 
