@@ -647,6 +647,7 @@ export interface FiltersApplicability {
   key: string;
   applicable: boolean;
   reason?: string;
+  origin?: string;
 }
 
 export interface DataSourceJsonData {
