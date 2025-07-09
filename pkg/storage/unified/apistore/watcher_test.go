@@ -135,9 +135,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 		require.NoError(t, err)
 	case StorageTypeUnified:
-		if tests.Short(t) {
-			t.Skip("skipping integration test")
-		}
+		tests.SkipIntegrationTestInShortMode(t)
 		dbstore := infraDB.InitTestDB(t)
 		cfg := setting.NewCfg()
 

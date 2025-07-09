@@ -96,9 +96,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
-	if tests.Short(t) {
-		t.Skip("skipping integration test in short mode")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
 

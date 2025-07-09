@@ -14,9 +14,7 @@ import (
 )
 
 func TestBleveSearchBackend(t *testing.T) {
-	if tests.Short(t) {
-		t.Skip("skipping integration test")
-	}
+	tests.SkipIntegrationTestInShortMode(t)
 
 	// Run the search backend test suite
 	unitest.RunSearchBackendTest(t, func(ctx context.Context) resource.SearchBackend {

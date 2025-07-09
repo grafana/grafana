@@ -24,13 +24,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func Short(t testing.TB) bool {
+func SkipIntegrationTestInShortMode(t testing.TB) {
 	t.Helper()
 	if strings.HasPrefix(t.Name(), "TestIntegration") {
-		return testing.Short()
+		if testing.Short() {
+			t.Skip("skipping integration test in short mode")
+		}
 	}
-	t.Fatal("Short called from non-integration test")
-	return false
+	t.Fatal("test is not an integration test")
 }
 
 func CreateUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
