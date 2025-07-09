@@ -12,9 +12,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
+	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
+	"k8s.io/apiserver/pkg/util/openapi"
+	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -340,16 +343,18 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	existingGetter := serverConfig.OpenAPIConfig.GetDefinitions
-	serverConfig.OpenAPIConfig.GetDefinitions = appinstaller.SetupOpenAPIDefinitions(
+	combinedDefsGetter := appinstaller.SetupOpenAPIDefinitions(
+		ctx,
 		s.appInstallers,
-		existingGetter,
+		serverConfig.OpenAPIConfig.GetDefinitions,
 	)
+	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(combinedDefsGetter),
+		openapinamer.NewDefinitionNamer(s.scheme, k8sscheme.Scheme))
 
-	serverConfig.OpenAPIV3Config.GetDefinitions = appinstaller.SetupOpenAPIDefinitions(
-		s.appInstallers,
-		existingGetter,
-	)
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(combinedDefsGetter),
+		openapinamer.NewDefinitionNamer(s.scheme, k8sscheme.Scheme))
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 

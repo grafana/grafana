@@ -32,28 +32,30 @@ type serverWrapper struct {
 }
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {
-	dwGetter, ok := s.installer.(LegacyStorageProvider)
+	legacyProvider, ok := s.installer.(LegacyStorageProvider)
 	if !ok {
 		return s.GenericAPIServer.InstallAPIGroup(apiGroupInfo)
 	}
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
 		for storagePath, restStorage := range storageMap {
-			storage, ok := restStorage.(grafanarest.Storage)
+			grafanaStorage, ok := restStorage.(grafanarest.Storage)
 			if !ok {
 				continue
 			}
-
 			resource, err := getResourceFromStoragePath(storagePath)
+			if err != nil {
+				return err
+			}
 			gr := schema.GroupResource{
-				Group:    apiGroupInfo.MetaGroupVersion.Group,
+				Group:    s.installer.ManifestData().Group,
 				Resource: resource,
 			}
 			dw, err := NewDualWriter(
 				s.ctx,
 				gr,
 				s.storageOpts,
-				dwGetter.GetLegacyStorage(gr.WithVersion(v)),
-				storage,
+				legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
+				grafanaStorage,
 				s.kvStore,
 				s.lock,
 				s.namespaceMapper,
@@ -63,12 +65,11 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 			if err != nil {
 				return err
 			}
-			storageMap[storagePath] = dw
+			apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = dw
 		}
-
 	}
 
-	return nil
+	return s.GenericAPIServer.InstallAPIGroup(apiGroupInfo)
 }
 
 func getResourceFromStoragePath(storagePath string) (string, error) {

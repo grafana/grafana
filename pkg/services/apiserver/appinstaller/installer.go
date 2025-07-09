@@ -3,6 +3,7 @@ package appinstaller
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -52,14 +53,12 @@ func AddToScheme(
 	scheme *runtime.Scheme,
 ) ([]schema.GroupVersion, error) {
 	var additionalGroupVersions []schema.GroupVersion
-
 	for _, installer := range appInstallers {
 		if err := installer.AddToScheme(scheme); err != nil {
 			return nil, fmt.Errorf("failed to add app installer scheme: %w", err)
 		}
 		additionalGroupVersions = append(additionalGroupVersions, installer.GroupVersions()...)
 	}
-
 	return additionalGroupVersions, nil
 }
 
@@ -88,28 +87,16 @@ func RegisterAdmissionPlugins(
 
 // SetupOpenAPIDefinitions sets up OpenAPI definitions for app installers
 func SetupOpenAPIDefinitions(
+	ctx context.Context,
 	appInstallers []appsdkapiserver.AppInstaller,
 	existingGetter func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition,
 ) func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		defs := existingGetter(ref)
-
-		// add common OpenAPI definitions
-		commonDefs := appsdkapiserver.GetCommonOpenAPIDefinitions(ref)
-		for k, v := range commonDefs {
-			defs[k] = v
-		}
-
-		// add AppInstaller definitions
+		defs := make(map[string]common.OpenAPIDefinition)
+		maps.Copy(defs, existingGetter(ref))
+		maps.Copy(defs, appsdkapiserver.GetCommonOpenAPIDefinitions(ref))
 		for _, installer := range appInstallers {
-			md := installer.ManifestData()
-			if md != nil {
-				// Note: logging context not available in this function
-				installerDefs := installer.GetOpenAPIDefinitions(ref)
-				for k, v := range installerDefs {
-					defs[k] = v
-				}
-			}
+			maps.Copy(defs, installer.GetOpenAPIDefinitions(ref))
 		}
 		return defs
 	}
@@ -119,7 +106,7 @@ func InstallAPIs(
 	ctx context.Context,
 	appInstallers []appsdkapiserver.AppInstaller,
 	server *genericapiserver.GenericAPIServer,
-	storage generic.RESTOptionsGetter,
+	restOpsGetter generic.RESTOptionsGetter,
 	storageOpts *grafanaapiserveroptions.StorageOptions,
 	kvStore grafanarest.NamespacedKVStore,
 	lock serverLock,
@@ -131,6 +118,20 @@ func InstallAPIs(
 
 	for _, installer := range appInstallers {
 		logger.Debug("Installing APIs for app installer", "app", installer.ManifestData().AppName)
+		wrapper := &serverWrapper{
+			GenericAPIServer:  server,
+			installer:         installer,
+			storageOpts:       storageOpts,
+			restOptionsGetter: restOpsGetter,
+			kvStore:           kvStore,
+			lock:              lock,
+			namespaceMapper:   namespaceMapper,
+			dualWriteService:  dualWriteService,
+			dualWriterMetrics: dualWriterMetrics,
+		}
+		if err := installer.InstallAPIs(wrapper, restOpsGetter); err != nil {
+			return fmt.Errorf("failed to install APIs for app %s: %w", installer.ManifestData().AppName, err)
+		}
 		logger.Info("Installed APIs for app", "app", installer.ManifestData().AppName)
 	}
 	return nil
