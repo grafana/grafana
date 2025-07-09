@@ -3719,6 +3719,20 @@
           }
         ]
       },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SecureValues": {
+        "description": "NOT YET USED FOR REAL -- testing secure value workflow",
+        "type": "object",
+        "properties": {
+          "token": {
+            "description": "Token used to connect the configured repository",
+            "default": {}
+          },
+          "webhookSecret": {
+            "description": "Some webhooks (github) require a secret key value",
+            "default": {}
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.SyncJobOptions": {
         "type": "object",
         "required": [

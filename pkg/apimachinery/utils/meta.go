@@ -847,7 +847,7 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 		// Unstructured
 		u, ok := m.raw.(*unstructured.Unstructured)
 		if ok {
-			property, _ = u.Object["secure"]
+			property = u.Object["secure"]
 		}
 	}
 

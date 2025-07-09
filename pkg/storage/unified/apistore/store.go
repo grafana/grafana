@@ -301,6 +301,10 @@ func (s *Storage) Delete(
 		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 	}
 
+	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+		return err
+	}
+
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))

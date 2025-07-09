@@ -108,11 +108,11 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 // Mutation hook that will update secure values
 func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValueStore, obj utils.GrafanaMetaAccessor) error {
 	secure, err := obj.GetSecureValues()
-	if err != nil {
+	if err != nil || len(secure) == 0 {
 		return err
 	}
 
-	if secure != nil && store == nil {
+	if store == nil {
 		return fmt.Errorf("secure value support is not configured")
 	}
 
