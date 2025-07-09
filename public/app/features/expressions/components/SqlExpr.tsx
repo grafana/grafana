@@ -7,11 +7,16 @@ import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { useStyles2, Stack, Button } from '@grafana/ui';
 
-import { QueryUsageContext } from '../ai/sqlPromptConfig';
 import { SqlExpressionQuery } from '../types';
 
-import { useSQLSuggestions, useSQLExplanations, GenAISuggestionsDrawer, GenAIExplanationDrawer } from './GenAI';
-import { SuggestionsBadge } from './GenAI/SuggestionsBadge';
+import {
+  QueryUsageContext,
+  useSQLSuggestions,
+  useSQLExplanations,
+  GenAISuggestionsDrawer,
+  GenAIExplanationDrawer,
+  SuggestionsBadge,
+} from './GenAI';
 
 // Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
