@@ -48,6 +48,15 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 			expectedProvider: setting.GOFFProviderType,
 		},
 		{
+			name: "goff provider with failing token exchange",
+			cfg: setting.OpenFeatureSettings{
+				ProviderType: setting.GOFFProviderType,
+				URL:          u,
+				TargetingKey: "grafana",
+			},
+			failSigning: true,
+		},
+		{
 			name: "invalid provider",
 			cfg: setting.OpenFeatureSettings{
 				ProviderType: "some_provider",
@@ -91,7 +100,7 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 				goffProvider, ok := p.provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
 
-				testGoFFProvider(t, goffProvider)
+				testGoFFProvider(t, goffProvider, tc.failSigning)
 			} else {
 				_, ok := p.provider.(*inMemoryBulkProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
@@ -100,9 +109,10 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 	}
 }
 
-func testGoFFProvider(t *testing.T, provider *gofeatureflag.Provider) {
+func testGoFFProvider(t *testing.T, provider *gofeatureflag.Provider, failSigning bool) {
 	client, err := createClient(provider)
 	assert.NoError(t, err)
+
 	// this tests with a fake identity with * namespace access, but in any case, it proves what the requester
 	// is scoped to is what is used to sign the token with
 	ctx, _ := identity.WithServiceIdentity(context.Background(), 1)
