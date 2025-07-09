@@ -334,7 +334,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     const { exploreId, spanFilters } = action.payload;
 
     if (exploreId === undefined || !state.panes[exploreId]) {
-      console.warn('setSpanFilters action dispatched without a valid exploreId');
       return state;
     }
 
