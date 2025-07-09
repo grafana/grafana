@@ -15,7 +15,7 @@ import {
   RuleGroupIdentifierV2,
   RuleIdentifier,
 } from 'app/types/unified-alerting';
-import { PromRuleType, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { logWarning } from '../../Analytics';
 import { AlertRuleAction, skipToken, useGrafanaPromRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
