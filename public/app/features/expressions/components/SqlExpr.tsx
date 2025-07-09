@@ -1,28 +1,27 @@
 import { css } from '@emotion/css';
 import { useMemo, useRef, useEffect, useState, lazy, Suspense } from 'react';
 
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { useStyles2, Stack, Button, Text } from '@grafana/ui';
+import { useStyles2, Stack, Button } from '@grafana/ui';
 
 import { QueryUsageContext } from '../ai/sqlPromptConfig';
-import { useSQLSuggestions, useSQLExplanations } from '../hooks';
 import { SqlExpressionQuery } from '../types';
 
-import { AIExplanationDrawer } from './AIExplanationDrawer';
-import { AISuggestionsDrawer } from './AISuggestionsDrawer';
+import { useSQLSuggestions, useSQLExplanations, GenAISuggestionsDrawer, GenAIExplanationDrawer } from './GenAI';
+import { SuggestionsBadge } from './GenAI/SuggestionsBadge';
 
 // Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
-  import('./GenAISQLSuggestionsButton').then((module) => ({
+  import('./GenAI').then((module) => ({
     default: module.GenAISQLSuggestionsButton,
   }))
 );
 
 const GenAISQLExplainButton = lazy(() =>
-  import('./GenAISQLExplainButton').then((module) => ({
+  import('./GenAI').then((module) => ({
     default: module.GenAISQLExplainButton,
   }))
 );
@@ -79,14 +78,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
     updatePrevExpression,
   } = useSQLExplanations(query.expression || '');
 
-  const queryContext: QueryUsageContext = useMemo(
-    () => ({
-      alerting,
-      panelId,
-      // TODO: Add dashboard context when available
-    }),
-    [alerting, panelId]
-  );
+  const queryContext: QueryUsageContext = useMemo(() => ({ alerting, panelId }), [alerting, panelId]);
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -136,10 +128,10 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
                 {shouldShowViewExplanation ? (
                   <Button
                     fill="outline"
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleOpenExplanation}
                     icon="gf-movepane-right"
+                    onClick={handleOpenExplanation}
+                    size="sm"
+                    variant="secondary"
                   >
                     <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
                   </Button>
@@ -147,39 +139,31 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
                   <GenAISQLExplainButton
                     currentQuery={query.expression || ''}
                     onExplain={handleExplain}
-                    refIds={vars}
                     queryContext={queryContext}
+                    refIds={vars}
                     // schemas={schemas} // Will be added when schema extraction is implemented
                   />
                 )}
               </Suspense>
               <Suspense fallback={null}>
                 <GenAISQLSuggestionsButton
-                  initialQuery={initialQuery}
                   currentQuery={query.expression || ''}
+                  initialQuery={initialQuery}
                   onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
                   onHistoryUpdate={handleHistoryUpdate}
-                  refIds={vars}
                   queryContext={queryContext}
-                  // schemas={schemas} // Will be added when schema extraction is implemented
+                  refIds={vars}
                   // errorContext={errorContext} // Will be added when error tracking is implemented
+                  // schemas={schemas} // Will be added when schema extraction is implemented
                 />
               </Suspense>
             </Stack>
             {suggestions.length > 0 && (
-              <div className={styles.buttonWrapper}>
-                <Button variant="secondary" size="sm" onClick={handleOpenDrawer} icon="list-ol">
-                  <Stack direction="row" gap={1} alignItems="center">
-                    <Trans i18nKey="sql-expressions.suggestions">Suggestions</Trans>
-                    <span className={styles.countBadge}>
-                      <Text variant="bodySmall" weight="bold">
-                        {suggestions.length}
-                      </Text>
-                    </span>
-                  </Stack>
-                </Button>
-                {hasUnseenSuggestions && <span className={styles.newDot} />}
-              </div>
+              <SuggestionsBadge
+                handleOpenDrawer={handleOpenDrawer}
+                hasUnseenSuggestions={hasUnseenSuggestions}
+                suggestions={suggestions}
+              />
             )}
           </Stack>
         )}
@@ -193,40 +177,22 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: 
           />
         </div>
       </Stack>
-      <AISuggestionsDrawer
+      <GenAISuggestionsDrawer
         isOpen={isDrawerOpen}
         onApplySuggestion={onApplySuggestion}
         onClose={handleCloseDrawer}
         suggestions={suggestions}
       />
-      <AIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
+      <GenAIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
     </>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   editorContainer: css({
     height: '240px',
     resize: 'vertical',
     overflow: 'auto',
     minHeight: '100px',
-  }),
-  countBadge: css({
-    color: theme.colors.primary.text,
-    fontWeight: 'bold',
-  }),
-  buttonWrapper: css({
-    position: 'relative',
-    display: 'inline-block',
-  }),
-  newDot: css({
-    position: 'absolute',
-    top: '-2px',
-    right: '-2px',
-    width: theme.spacing(1),
-    height: theme.spacing(1),
-    backgroundColor: theme.colors.error.main,
-    borderRadius: theme.shape.radius.pill,
-    zIndex: 1,
   }),
 });

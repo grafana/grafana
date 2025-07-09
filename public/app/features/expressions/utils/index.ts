@@ -1,1 +1,1 @@
-export { parseSuggestion } from './utils';
+export { parseSuggestion } from '../components/GenAI/utils';

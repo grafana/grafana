@@ -10,7 +10,7 @@ interface AIExplanationDrawerProps {
   explanation: string;
 }
 
-export const AIExplanationDrawer = ({ isOpen, onClose, explanation }: AIExplanationDrawerProps) => {
+export const GenAIExplanationDrawer = ({ isOpen, onClose, explanation }: AIExplanationDrawerProps) => {
   const styles = useStyles2(getStyles);
 
   if (!isOpen) {

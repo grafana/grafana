@@ -4,7 +4,7 @@ import { GrafanaTheme2, renderMarkdown } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { CodeEditor, Drawer, useStyles2, Stack, Button, Card, Text, ClipboardButton } from '@grafana/ui';
 
-import { parseSuggestion } from '../utils';
+import { parseSuggestion } from './utils';
 
 interface AISuggestionsDrawerProps {
   isOpen: boolean;
@@ -13,7 +13,12 @@ interface AISuggestionsDrawerProps {
   suggestions: string[];
 }
 
-export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, suggestions }: AISuggestionsDrawerProps) => {
+export const GenAISuggestionsDrawer = ({
+  isOpen,
+  onApplySuggestion,
+  onClose,
+  suggestions,
+}: AISuggestionsDrawerProps) => {
   const styles = useStyles2(getStyles);
 
   if (!isOpen) {
