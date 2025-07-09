@@ -34,6 +34,7 @@ func ProvideOpenFeatureService(cfg *setting.Cfg, httpClientProvider *sdkhttpclie
 	}
 
 	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, cfg.OpenFeature.ContextAttrs))
+
 	return newOpenFeatureService(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags, httpClientProvider, signerMiddlewareProvider)
 }
 

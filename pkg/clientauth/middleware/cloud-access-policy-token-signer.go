@@ -29,6 +29,13 @@ type signerSettings struct {
 
 var _ http.RoundTripper = &cloudAccessPolicyTokenSignerMiddleware{}
 
+func NewTestCloudAccessPolicyTokenSignerMiddlewareProvider() (*CloudAccessPolicyTokenSignerMiddlewareProvider, error) {
+	tokenExchangeClient := authlib.NewStaticTokenExchanger("mock-token")
+	return &CloudAccessPolicyTokenSignerMiddlewareProvider{
+		tokenExchangeClient: tokenExchangeClient,
+	}, nil
+}
+
 func ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(cfg *setting.Cfg) (*CloudAccessPolicyTokenSignerMiddlewareProvider, error) {
 	clientCfg, err := readSignerSettings(cfg)
 	if err != nil {

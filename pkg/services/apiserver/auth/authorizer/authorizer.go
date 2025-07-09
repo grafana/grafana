@@ -32,7 +32,7 @@ func NewGrafanaAuthorizer(cfg *setting.Cfg) *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{
 		newImpersonationAuthorizer(),
 		authorizerfactory.NewPrivilegedGroups(k8suser.SystemPrivilegedGroup),
-		newNamespaceAuthorizer(),
+		// newNamespaceAuthorizer(),
 	}
 
 	// Individual services may have explicit implementations
