@@ -43,20 +43,19 @@ jobs:
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
-            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
-            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+            GITHUB_APP_ID=grafana_pr_automation_app:app_id
+            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
 
-      - name: "Generate token"
+      - name: Generate token
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
         with:
-          app_id: ${{ env.GH_APP_ID }}
-          private_key: ${{ env.GH_APP_PEM }}
+          app-id: ${{ env.GITHUB_APP_ID }}
+          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
       - name: Run Commands
         uses: ./actions/commands
         with:
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
           token: ${{ steps.generate_token.outputs.token }}
           configPath: "issue-opened"
 
@@ -77,18 +76,20 @@ jobs:
           repo_secrets: |
             AUTOTRIAGER_OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
             AUTOTRIAGER_SLACK_WEBHOOK_URL=plugins_platform_issue_triager:AUTOTRIAGER_SLACK_WEBHOOK_URL
-            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
-            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+            GITHUB_APP_ID=plugins_platform_issue_triager_github_bot:app_id
+            GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem
 
-      - name: "Generate token"
+      - name: Generate token
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
         with:
-          app_id: ${{ env.GH_APP_ID }}
-          private_key: ${{ env.GH_APP_PEM }}
+          app-id: ${{ env.GITHUB_APP_ID }}
+          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
       - name: Checkout
         uses: actions/checkout@v4 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Send issue to the auto triager action
         id: auto_triage
