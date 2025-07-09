@@ -5664,7 +5664,6 @@
       "file-load-error": "Error loading dashboard",
       "loading-file-data": "Loading dashboard data",
       "move-action": "Move dashboard",
-      "move-failed": "Failed to move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
       "partial-failure-warning": "Dashboard was created at new location but could not be deleted from original location. Please manually remove the old file.",
