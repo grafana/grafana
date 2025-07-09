@@ -26,15 +26,6 @@ services:
 # Purpose: Configuration is used to exclude directories from analysis such as test directories etc.
 # Note: Directory paths are relative to the repository's root directory
 exclude:
-  # Development tooling, IDE configs, and CI/CD
-  - .github
-  - .vscode
-  - .idea
-  - .cursor
-  - .devcontainer
-  - .bingo
-  - .git
-
   # Test and development environments
   - e2e
   - devenv
