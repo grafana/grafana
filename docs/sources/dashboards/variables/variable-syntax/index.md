@@ -219,6 +219,6 @@ Use the `customqueryparam` formatter to customize how the query parameters are f
 
 ```bash
 servers = ["test1", "test2"]
-String to interpolate: '${servers:customqueryparam:v-:x-}'
+String to interpolate: '${servers:customqueryparam:v-servers:x-}'
 Interpolation result: "v-servers=x-test1&v-servers=x-test2"
 ```
