@@ -167,13 +167,6 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	logger := logging.DefaultLogger.With("logger", "provisioning startup")
-	if features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
-		logger.Info("Using nanogit for repositories")
-	} else {
-		logger.Debug("Using go-git and Github API for repositories")
-	}
-
 	folderResolver := &repository.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
