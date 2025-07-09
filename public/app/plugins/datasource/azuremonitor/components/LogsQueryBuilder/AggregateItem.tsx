@@ -10,7 +10,7 @@ import {
   BuilderQueryEditorPropertyType,
   BuilderQueryEditorReduceExpression,
 } from '../../dataquery.gen';
-import { AzureMonitorOption } from '../../types';
+import { AzureMonitorOption } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 
 import { aggregateOptions, inputFieldSize } from './utils';
