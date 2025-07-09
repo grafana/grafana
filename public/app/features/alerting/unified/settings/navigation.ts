@@ -4,7 +4,7 @@ import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useSelector } from 'app/types';
 
-import { settingsExtensions } from './extensions';
+import { useSettingsExtensionsNav } from './extensions';
 
 export function useSettingsPageNav() {
   const location = useLocation();
@@ -12,13 +12,7 @@ export function useSettingsPageNav() {
   const navIndex = useSelector((state) => state.navIndex);
   const settingsNav = navIndex['alerting-admin'];
 
-  // Build extension tabs from settingsExtensions
-  const extensionTabs: NavModelItem[] = Array.from(settingsExtensions.entries()).map(([url, { nav }]) => ({
-    ...nav,
-    active: location.pathname === url,
-    url: url,
-    parentItem: settingsNav,
-  }));
+  const extensionTabs = useSettingsExtensionsNav();
 
   // All available tabs including the main alertmanager tab
   const allTabs: NavModelItem[] = [
