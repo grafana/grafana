@@ -46,9 +46,12 @@ export const valueHelper = (f: TraceqlFilter) => {
   if (Array.isArray(value) && value.length > 1) {
     return `"${value.join('|')}"`;
   }
-  if (f.valueType === 'string') {
+  
+  // Always quote specific tag values and strings
+  if (f.tag === 'service.name' || f.tag === 'name' || f.valueType === 'string') {
     return `"${value}"`;
   }
+  
   return value;
 };
 
@@ -57,6 +60,16 @@ export const scopeHelper = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
   if (lp.getIntrinsics().find((t) => t === f.tag)) {
     return '';
   }
+  
+  // Special cases for common fields to ensure correct scoping
+  if (f.tag === 'service.name') {
+    return 'resource.';
+  }
+  
+  if (f.tag === 'name') {
+    return 'span.';
+  }
+  
   return (
     (f.scope === TraceqlSearchScope.Event ||
     f.scope === TraceqlSearchScope.Instrumentation ||
