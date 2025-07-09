@@ -78,7 +78,7 @@ func TestService(t *testing.T) {
 
 				base, err = svc.Base(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS, nil))
 				require.NoError(t, err)
-				require.Equal(t, "public/app/plugins/table-old", base)
+				require.Equal(t, "public/app/plugins/panel/table-old", base)
 
 				parentFS := pluginFS(oneCDNURL)
 				parentFS.RelFunc = func(_ string) (string, error) {
@@ -252,7 +252,7 @@ func TestService_ChildPlugins(t *testing.T) {
 			name: "Local FS core plugin",
 			cfg:  &config.PluginManagementCfg{},
 			pluginInfo: func() PluginInfo {
-				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCore, plugins.NewLocalFS("/plugins/parent"), nil)
+				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCore, plugins.NewLocalFS("/public/app/plugins/parent"), nil)
 			},
 			expected: expected{
 				module:  "core:plugin/parent",
@@ -264,12 +264,12 @@ func TestService_ChildPlugins(t *testing.T) {
 			name: "Externally-built Local FS core plugin",
 			cfg:  &config.PluginManagementCfg{},
 			pluginInfo: func() PluginInfo {
-				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCore, plugins.NewLocalFS("/plugins/parent/dist"), nil)
+				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCore, plugins.NewLocalFS("/public/app/plugins/parent/dist"), nil)
 			},
 			expected: expected{
 				module:  "public/plugins/parent/module.js",
-				baseURL: "public/app/plugins/parent",
-				relURL:  "public/app/plugins/parent/path/to/file.txt",
+				baseURL: "public/app/plugins/parent/dist",
+				relURL:  "public/app/plugins/parent/dist/path/to/file.txt",
 			},
 		},
 		{
