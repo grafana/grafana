@@ -8739,6 +8739,7 @@
       },
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
+      "inline-mode": "Display inline",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
@@ -8751,6 +8752,7 @@
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
       "show-log-line": "Show log line",
+      "sidebar-mode": "Anchor to the right",
       "unpin-line": "Unpin log"
     },
     "log-line-menu": {
@@ -8853,6 +8855,11 @@
     },
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
+    "name-details-mode": "Log Details panel mode",
+    "name-details-options": {
+      "label-inline": "Inline",
+      "label-sidebar": "Sidebar"
+    },
     "name-enable-infinite-scrolling": "Enable infinite scrolling",
     "name-enable-log-details": "Enable log details",
     "name-enable-syntax-highlighting": "Enable syntax highlighting",
