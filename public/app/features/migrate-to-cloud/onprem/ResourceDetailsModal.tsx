@@ -116,11 +116,11 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
             <>
               <Text element="p">{msgTitle}</Text>
               <Text element="p">
-                {getTMessage(resource?.errorCode) ||
-                  resource?.message ||
+                {getTMessage(resource?.errorCode) || resource?.message || (
                   <Trans i18nKey="migrate-to-cloud.resource-details.error-messages.generic-error">
                     There has been an error while migrating. Please check the cloud migration logs for more information.
-                  </Trans>}
+                  </Trans>
+                )}
               </Text>
             </>
           ) : (
