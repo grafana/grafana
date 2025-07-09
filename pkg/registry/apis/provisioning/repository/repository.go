@@ -67,9 +67,6 @@ type FileInfo struct {
 	Modified *metav1.Time
 }
 
-//go:generate mockery --name CloneFn --structname MockCloneFn --inpackage --filename clone_fn_mock.go --with-expecter
-type CloneFn func(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
-
 type CloneOptions struct {
 	// If the branch does not exist, create it
 	CreateIfNotExists bool
