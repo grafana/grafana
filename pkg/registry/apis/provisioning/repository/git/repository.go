@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -401,11 +402,15 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 	}
 
 	ctx, _ = r.logger(ctx, ref)
-	_, err := r.Read(ctx, path, ref)
+	info, err := r.Read(ctx, path, ref)
 	if err != nil && !(errors.Is(err, repository.ErrFileNotFound)) {
 		return fmt.Errorf("check if file exists before writing: %w", err)
 	}
 	if err == nil {
+		// If the value already exists and is the same, we don't need to do anything
+		if bytes.Equal(info.Data, data) {
+			return nil
+		}
 		return r.Update(ctx, path, ref, data, message)
 	}
 
