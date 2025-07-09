@@ -195,6 +195,16 @@ String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
 
+### Join
+
+Formats multi-valued variables with a custom delimiter. If no delimiter argument is supplied, they will be combined with `,`.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:join:&}'
+Interpolation result: "test1&test2"
+```
+
 ### Query parameters
 
 Formats single- and multi-valued variables into their query parameter representation. Example: `var-foo=value1&var-foo=value2`
@@ -203,4 +213,12 @@ Formats single- and multi-valued variables into their query parameter representa
 servers = ["test1", "test2"]
 String to interpolate: '${servers:queryparam}'
 Interpolation result: "var-servers=test1&var-servers=test2"
+```
+
+Use the `customqueryparam` formatter to customize how the query parameters are formatted. It accepts two optional arguments to specify the parameter name, and a value prefix.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:customqueryparam:v-:x-}'
+Interpolation result: "v-servers=x-test1&v-servers=x-test2"
 ```
