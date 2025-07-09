@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"slices"
 	"time"
 
@@ -15,9 +16,9 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
@@ -49,7 +50,7 @@ type DataQueryJson struct {
 
 type DataSource struct {
 	Settings          models.CloudWatchSettings
-	ProxyOpts         *proxy.Options
+	HTTPClient        *http.Client
 	AWSConfigProvider awsauth.ConfigProvider
 
 	logger          log.Logger
@@ -73,9 +74,7 @@ func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Conf
 		Region:             region,
 		AccessKey:          ds.Settings.AccessKey,
 		SecretKey:          ds.Settings.SecretKey,
-	}
-	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
-		authSettings.ProxyOptions = ds.ProxyOpts
+		HTTPClient:         ds.HTTPClient,
 	}
 	cfg, err := ds.AWSConfigProvider.GetConfig(ctx, authSettings)
 	if err != nil {
@@ -94,11 +93,14 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 	if err != nil {
 		return nil, err
 	}
+	httpClient, err := httpclient.New(opts)
+	if err != nil {
+		return nil, err
+	}
 
 	ds := &DataSource{
-		Settings: instanceSettings,
-		// this is used to build a custom dialer when secure socks proxy is enabled
-		ProxyOpts:         opts.ProxyOptions,
+		Settings:          instanceSettings,
+		HTTPClient:        httpClient,
 		AWSConfigProvider: awsauth.NewConfigProvider(),
 		logger:            backend.NewLoggerWith("logger", "grafana-cloudwatch-datasource"),
 		tagValueCache:     cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
