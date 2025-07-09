@@ -4381,7 +4381,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Publik",
         "tooltip-view-as-scene": "Tampilkan sebagai Scene"
       }
     },
@@ -5154,7 +5153,6 @@
       "playlist-next": "Buka dasbor berikutnya",
       "playlist-previous": "Buka dasbor sebelumnya",
       "playlist-stop": "Hentikan daftar putar",
-      "public-dashboard": "Publik",
       "refresh": "Muat ulang dasbor",
       "save": "Simpan dasbor",
       "save-dashboard": {
@@ -5455,15 +5453,9 @@
       "type": "Jenis"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Nilai belum disimpan dalam database Grafana",
       "not-yet-saved": "Nilai tidak disimpan dalam database Grafana",
-      "open-pull-request-in-git-hub": "Buka permintaan penggabungan di GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Dasbor ini dimuat dari cabang di GitHub.",
       "title-dashboard-loaded-external-repository": "Dasbor ini dimuat dari repositori eksternal",
-      "title-dashboard-loaded-request-git-hub": "Dasbor ini dimuat dari permintaan penggabungan di GitHub.",
-      "title-error-loading-dashboard": "Kesalahan saat memuat dasbor",
-      "value-not-saved": "Nilai belum disimpan dalam database Grafana",
-      "view-pull-request-in-git-hub": "Lihat permintaan penggabungan di GitHub"
+      "title-error-loading-dashboard": "Kesalahan saat memuat dasbor"
     },
     "dashboard-scene": {
       "text": {
@@ -7196,6 +7188,7 @@
       "when": "KAPAN"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Pengoperasian"
     },
     "math": {
@@ -8479,7 +8472,7 @@
       "usage-count_other": "Digunakan pada {{count}} dasbor"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Cari berdasarkan nama atau deskripsi"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Memuat panel pustaka..."
@@ -8618,12 +8611,9 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_other": "",
+          "parsedl-label_other": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8680,6 +8670,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8693,9 +8684,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10282,6 +10275,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "Fitur ini saat ini sedang dalam pengembangan aktif. Untuk pengalaman terbaik dan peningkatan terbaru, kami merekomendasikan Anda untuk menggunakan <2>versi nightly </2> Grafana."
@@ -11726,6 +11730,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
