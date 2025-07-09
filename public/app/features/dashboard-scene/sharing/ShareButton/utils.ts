@@ -18,7 +18,7 @@ const DEFAULT_SHARE_LINK_CONFIGURATION: ShareLinkConfiguration = {
   theme: 'current',
 };
 
-export const buildShareUrl = async (dashboard: DashboardScene, panel?: VizPanel) => {
+export const buildShareUrl = (dashboard: DashboardScene, panel?: VizPanel) => {
   const { useAbsoluteTimeRange, useShortUrl, theme } = getShareLinkConfiguration();
   DashboardInteractions.shareLinkCopied({
     currentTimeRange: useAbsoluteTimeRange,
@@ -26,7 +26,7 @@ export const buildShareUrl = async (dashboard: DashboardScene, panel?: VizPanel)
     shortenURL: useShortUrl,
     shareResource: getTrackingSource(panel?.getRef()),
   });
-  return await createAndCopyShareDashboardLink(dashboard, {
+  return createAndCopyShareDashboardLink(dashboard, {
     useAbsoluteTimeRange,
     theme,
     useShortUrl,

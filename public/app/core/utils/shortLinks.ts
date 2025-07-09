@@ -35,24 +35,52 @@ export const createShortLink = memoizeOne(async function (path: string) {
   }
 });
 
-export const createAndCopyShortLink = async (path: string) => {
-  const shortLink = await createShortLink(path);
-  if (shortLink) {
-    copyStringToClipboard(shortLink);
+/**
+ * Creates a ClipboardItem for the shortened link. This is used due to clipboard issues in Safari after making async calls.
+ * See https://github.com/grafana/grafana/issues/106889
+ * @param path - The path to the dashboard.
+ * @returns A ClipboardItem for the shortened link.
+ */
+export const createShortLinkClipboardItem = (path: string) => {
+  return new ClipboardItem({
+    'text/plain': getBackendSrv()
+      .post(`/api/short-urls`, {
+        path: getRelativeURLPath(path),
+      })
+      .then((response) => response.url)
+      .catch((err) => {
+        console.error('Error when creating shortened link: ', err);
+        dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+      }),
+  });
+};
+
+export const createAndCopyShortLink = (path: string) => {
+  if (typeof ClipboardItem !== 'undefined' && navigator.clipboard.write) {
+    navigator.clipboard.write([createShortLinkClipboardItem(path)]);
     dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
   } else {
-    dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    const shortLink = createShortLink(path);
+    if (shortLink) {
+      shortLink.then((link) => {
+        copyStringToClipboard(link);
+      });
+      dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
+    } else {
+      console.log('shortLink is undefined');
+      dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    }
   }
 };
 
-export const createAndCopyShareDashboardLink = async (
+export const createAndCopyShareDashboardLink = (
   dashboard: DashboardScene,
   opts: ShareLinkConfiguration,
   panel?: VizPanel
 ) => {
   const shareUrl = createDashboardShareUrl(dashboard, opts, panel);
   if (opts.useShortUrl) {
-    return await createAndCopyShortLink(shareUrl);
+    return createAndCopyShortLink(shareUrl);
   } else {
     copyStringToClipboard(shareUrl);
     dispatch(notifyApp(createSuccessNotification(t('link.share.copy-to-clipboard', 'Link copied to clipboard'))));
