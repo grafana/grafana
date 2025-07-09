@@ -451,14 +451,9 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("execute user template %q: %w", sqlCreateUserTemplate.Name(), err)
 		}
 
-		result, err := st.Exec(ctx, userQuery, req.GetArgs()...)
+		userID, err := st.ExecWithReturningId(ctx, userQuery, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to create user: %w", err)
-		}
-
-		userID, err := result.LastInsertId()
-		if err != nil {
-			return fmt.Errorf("failed to get user ID: %w", err)
 		}
 
 		orgUserCmd := &CreateOrgUserCommand{
