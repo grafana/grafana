@@ -11,44 +11,50 @@ interface GenAISQLSuggestionsButtonProps {
   onGenerate: (suggestion: string) => void;
   onHistoryUpdate?: (history: string[]) => void;
   refIds: string[];
+  initialQuery: string;
 }
 
 // AI prompts for different SQL use cases
-const SQL_EXPRESSION_SYSTEM_PROMPT = `You are an expert in SQL and Grafana SQL expressions.
+const SQL_EXPRESSION_SYSTEM_PROMPT = `You are a SQL expert for Grafana expressions.
 
-Your role is to generate intelligent SQL queries for Grafana SQL expressions based on:
-1. Available data queries (RefIDs like A, B, C) that act as table references
-2. Current query context and user intent
-3. Common time series data patterns in monitoring/observability
+Help users with SQL queries by:
+- Fixing syntax errors in existing queries
+- Suggesting new queries using available RefIDs (A, B, C, etc.)
+- Optimizing for performance
 
-Key guidelines:
-- Use RefIDs (A, B, C, etc.) as table names in FROM clauses
-- Focus on practical data transformation and analysis patterns
-- Consider time series data conventions (time, __value__, metric_name, display_name columns)
-- Include proper LIMIT clauses for performance
-- Generate clean, readable SQL with proper formatting
-- Support JOINs, aggregations, filtering, and transformations
-- Include helpful comments when query is complex
+Guidelines:
+- Use RefIDs as table names in FROM clauses
+- Include LIMIT clauses for performance
+- Generate clean, readable SQL
+- Focus on time series data patterns
 
 Available RefIDs: {refIds}
 Current query: {currentQuery}
 
-Generate a useful SQL expression that transforms or analyzes the available data.`;
+{queryInstruction}`;
 
 const getContextualPrompts = (refIds: string[], currentQuery: string): string[] => {
-  const basePrompts = [
-    `Generate a SQL query that joins data from multiple queries (${refIds.join(', ')}) to correlate metrics`,
-    `Create a SQL query that aggregates and groups data by time intervals for trending analysis`,
-    `Write a SQL query that filters and transforms data to identify anomalies or outliers`,
-    `Generate a SQL query that calculates percentiles, ratios, or derived metrics from the source data`,
-    `Create a SQL query with Common Table Expressions (CTEs) for complex data transformations`,
-  ];
+  const trimmedQuery = currentQuery.trim();
 
-  if (currentQuery.trim()) {
-    basePrompts.unshift(`Improve or enhance this existing SQL query: ${currentQuery}`);
+  // If there's a current query, focus more on fixing/improving it
+  if (trimmedQuery) {
+    return [
+      `Fix syntax errors in this SQL query: ${trimmedQuery}`,
+      `Optimize this SQL query: ${trimmedQuery}`,
+      `Improve this SQL query: ${trimmedQuery}`,
+      `Join data from ${refIds.join(', ')} to correlate metrics`,
+      `Aggregate data by time intervals`,
+    ];
   }
 
-  return basePrompts;
+  // If no current query, focus on suggestions
+  return [
+    `Join data from ${refIds.join(', ')} to correlate metrics`,
+    `Aggregate data by time intervals`,
+    `Filter data to identify outliers`,
+    `Calculate percentiles from the data`,
+    `Create time-based window functions`,
+  ];
 };
 
 /**
@@ -61,10 +67,14 @@ const getContextualPrompts = (refIds: string[], currentQuery: string): string[] 
  * The selected prompt is then sent to the LLM for generating SQL suggestions.
  */
 const getSQLSuggestionMessages = (refIds: string[], currentQuery: string): Message[] => {
-  const systemPrompt = SQL_EXPRESSION_SYSTEM_PROMPT.replace(
-    '{refIds}',
-    refIds.length > 0 ? refIds.join(', ') : 'A'
-  ).replace('{currentQuery}', currentQuery || 'No current query');
+  const trimmedQuery = currentQuery.trim();
+  const queryInstruction = trimmedQuery
+    ? 'Focus on fixing, improving, or enhancing the current query provided above.'
+    : 'Generate a new SQL query based on the available RefIDs and common use cases.';
+
+  const systemPrompt = SQL_EXPRESSION_SYSTEM_PROMPT.replace('{refIds}', refIds.length > 0 ? refIds.join(', ') : 'A')
+    .replace('{currentQuery}', trimmedQuery || 'No current query provided')
+    .replace('{queryInstruction}', queryInstruction);
 
   const contextualPrompts = getContextualPrompts(refIds, currentQuery);
   const selectedPrompt = contextualPrompts[Math.floor(Math.random() * contextualPrompts.length)];
@@ -86,10 +96,13 @@ export const GenAISQLSuggestionsButton = ({
   onGenerate,
   onHistoryUpdate,
   refIds,
+  initialQuery,
 }: GenAISQLSuggestionsButtonProps) => {
   const messages = useCallback(() => {
     return getSQLSuggestionMessages(refIds, currentQuery);
   }, [refIds, currentQuery]);
+
+  const text = !currentQuery || currentQuery === initialQuery ? 'Generate suggestion' : 'Improve query';
 
   return (
     <GenAIButton
@@ -99,7 +112,7 @@ export const GenAISQLSuggestionsButton = ({
       onGenerate={onGenerate}
       onHistoryChange={onHistoryUpdate}
       temperature={0.3}
-      text={t('sql-expressions.generate-sql-suggestion', 'Generate SQL Suggestion')}
+      text={t('sql-expressions.sql-ai-interaction', `{{text}}`, { text })}
       toggleTipTitle={t('sql-expressions.ai-suggestions-title', 'AI-powered SQL expression suggestions')}
       tooltip={
         refIds.length === 0

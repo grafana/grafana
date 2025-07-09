@@ -9,12 +9,19 @@ import { useStyles2, Stack, Button, Text } from '@grafana/ui';
 
 import { SqlExpressionQuery } from '../types';
 
+import { AIExplanationDrawer } from './AIExplanationDrawer';
 import { AISuggestionsDrawer } from './AISuggestionsDrawer';
 
-// Lazy load the GenAI component to avoid circular dependencies
+// Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
   import('./GenAISQLSuggestionsButton').then((module) => ({
     default: module.GenAISQLSuggestionsButton,
+  }))
+);
+
+const GenAISQLExplainButton = lazy(() =>
+  import('./GenAISQLExplainButton').then((module) => ({
+    default: module.GenAISQLExplainButton,
   }))
 );
 
@@ -51,6 +58,9 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [hasUnseenSuggestions, setHasUnseenSuggestions] = useState(false);
+  const [prevExpression, setPrevExpression] = useState<string>(query.expression || '');
+  const [explanation, setExplanation] = useState<string>('');
+  const [isExplanationOpen, setIsExplanationOpen] = useState(false);
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -58,6 +68,8 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
       expression,
       format: alerting ? 'alerting' : undefined,
     });
+    setPrevExpression(expression);
+    setExplanation('');
   };
 
   const onHistoryUpdate = (history: string[]) => {
@@ -78,6 +90,11 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
   const onOpenDrawer = () => {
     setIsDrawerOpen(true);
     setHasUnseenSuggestions(false);
+  };
+
+  const onExplain = (explanation: string) => {
+    setExplanation(explanation);
+    setIsExplanationOpen(true);
   };
 
   // Set up resize observer to handle container resizing
@@ -105,51 +122,75 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
   }, []);
 
   return (
-    <Stack direction="column" gap={1}>
-      {config.featureToggles.dashgpt && (
-        <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
-          <Suspense fallback={null}>
-            <GenAISQLSuggestionsButton
-              currentQuery={query.expression || ''}
-              onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
-              onHistoryUpdate={onHistoryUpdate}
-              refIds={vars}
-            />
-          </Suspense>
-          {suggestions.length > 0 && (
-            <div className={styles.buttonWrapper}>
-              <Button variant="secondary" size="sm" onClick={onOpenDrawer} icon="list-ol">
-                <Stack direction="row" gap={1} alignItems="center">
-                  <Trans i18nKey="sql-expressions.show-suggestions">AI Suggestions</Trans>
-                  <span className={styles.countBadge}>
-                    <Text variant="bodySmall" weight="bold">
-                      {suggestions.length}
-                    </Text>
-                  </span>
-                </Stack>
-              </Button>
-              {hasUnseenSuggestions && <span className={styles.newDot} />}
-            </div>
-          )}
-        </Stack>
-      )}
+    <>
+      <Stack direction="column" gap={1}>
+        {config.featureToggles.sqlExpressions && (
+          <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+            <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
+              <Suspense fallback={null}>
+                {explanation || prevExpression !== query.expression ? (
+                  <Button
+                    fill="outline"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsExplanationOpen(true)}
+                    icon="gf-movepane-right"
+                  >
+                    <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
+                  </Button>
+                ) : (
+                  <GenAISQLExplainButton currentQuery={query.expression || ''} onExplain={onExplain} refIds={vars} />
+                )}
+              </Suspense>
+              <Suspense fallback={null}>
+                <GenAISQLSuggestionsButton
+                  initialQuery={initialQuery}
+                  currentQuery={query.expression || ''}
+                  onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
+                  onHistoryUpdate={onHistoryUpdate}
+                  refIds={vars}
+                />
+              </Suspense>
+            </Stack>
+            {suggestions.length > 0 && (
+              <div className={styles.buttonWrapper}>
+                <Button variant="secondary" size="sm" onClick={onOpenDrawer} icon="list-ol">
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <Trans i18nKey="sql-expressions.suggestions">Suggestions</Trans>
+                    <span className={styles.countBadge}>
+                      <Text variant="bodySmall" weight="bold">
+                        {suggestions.length}
+                      </Text>
+                    </span>
+                  </Stack>
+                </Button>
+                {hasUnseenSuggestions && <span className={styles.newDot} />}
+              </div>
+            )}
+          </Stack>
+        )}
 
-      <div ref={containerRef} className={styles.editorContainer}>
-        <SQLEditor
-          query={query.expression || initialQuery}
-          onChange={onEditorChange}
-          height={dimensions.height - EDITOR_BORDER_ADJUSTMENT}
-          language={EDITOR_LANGUAGE_DEFINITION}
-        />
-      </div>
-
+        <div ref={containerRef} className={styles.editorContainer}>
+          <SQLEditor
+            query={query.expression || initialQuery}
+            onChange={onEditorChange}
+            height={dimensions.height - EDITOR_BORDER_ADJUSTMENT}
+            language={EDITOR_LANGUAGE_DEFINITION}
+          />
+        </div>
+      </Stack>
       <AISuggestionsDrawer
         isOpen={isDrawerOpen}
         onApplySuggestion={onApplySuggestion}
         onClose={() => setIsDrawerOpen(false)}
         suggestions={suggestions}
       />
-    </Stack>
+      <AIExplanationDrawer
+        isOpen={isExplanationOpen}
+        onClose={() => setIsExplanationOpen(false)}
+        explanation={explanation}
+      />
+    </>
   );
 };
 

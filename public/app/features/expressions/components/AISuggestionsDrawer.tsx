@@ -88,7 +88,7 @@ export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, sugges
   return (
     <Drawer
       onClose={onClose}
-      size="lg"
+      size="md"
       title={<Trans i18nKey="sql-expressions.sql-suggestion-history">SQL Suggestion History</Trans>}
     >
       <div className={styles.content}>
@@ -155,12 +155,10 @@ export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, sugges
                             />
                           </div>
                         ) : (
-                          <div className={styles.textBlock}>
-                            <div
-                              className="markdown-html"
-                              dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
-                            />
-                          </div>
+                          <div
+                            className="markdown-html"
+                            dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+                          />
                         )}
                       </div>
                     ))}
@@ -239,22 +237,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing(1, 1.5),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
-  textBlock: css({
-    padding: theme.spacing(1, 0),
-    lineHeight: theme.typography.body.lineHeight,
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.text.primary,
-
-    // Ensure markdown content flows properly
-    '& .markdown-html': {
-      // Remove default margins for first and last elements to prevent extra spacing
-      '& > :first-child': {
-        marginTop: 0,
-      },
-      '& > :last-child': {
-        marginBottom: 0,
-      },
-    },
   }),
 });
