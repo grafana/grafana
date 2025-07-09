@@ -18,9 +18,9 @@ const (
 
 type GrafanaAlertmanagerConfig struct {
 	// TODO this needs to be deleted once Mimir is updated
-	TemplateFiles       map[string]string                    `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig  definition.PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	TemplateDefinitions []definition.PostableApiTemplate     `yaml:"template_definitions" json:"template_definitions"`
+	TemplateFiles      map[string]string                    `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig definition.PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	Templates          []definition.PostableApiTemplate     `yaml:"templates,omitempty" json:"templates,omitempty"`
 }
 
 func (u *GrafanaAlertmanagerConfig) MarshalJSON() ([]byte, error) {

@@ -810,7 +810,7 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 	return MergeResult(m), nil
 }
 
-// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
+// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.
 func (c *PostableUserConfig) GetMergedTemplateDefinitions() []definition.PostableApiTemplate {
 	out := definition.TemplatesMapToPostableAPITemplates(c.TemplateFiles, definition.GrafanaTemplateKind)
 	if len(c.ExtraConfigs) == 0 || len(c.ExtraConfigs[0].TemplateFiles) == 0 {
