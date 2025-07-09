@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { GenAIButton } from '../../dashboard/components/GenAI/GenAIButton';
 import { EventTrackingSrc } from '../../dashboard/components/GenAI/tracking';
 import { Message, Role } from '../../dashboard/components/GenAI/utils';
+import { getSQLExplanationSystemPrompt } from '../ai/sqlPromptConfig';
 
 interface GenAISQLExplainButtonProps {
   currentQuery: string;
@@ -13,13 +14,6 @@ interface GenAISQLExplainButtonProps {
 }
 
 // AI prompt for explaining SQL expressions
-const SQL_EXPRESSION_EXPLAIN_SYSTEM_PROMPT = `You are an expert in SQL and Grafana SQL expressions.
-
-Explain SQL queries clearly and concisely. RefIDs (A, B, C, etc.) represent data from other queries.
-
-Available RefIDs: {refIds}
-
-Provide a clear explanation of what this SQL query does:`;
 
 const getExplanationPrompt = (currentQuery: string): string => {
   if (!currentQuery || currentQuery.trim() === '') {
@@ -37,10 +31,9 @@ Explain what this query does in simple terms.`;
  * @returns A list of messages to be sent to the LLM for explaining the SQL query
  */
 const getSQLExplanationMessages = (refIds: string[], currentQuery: string): Message[] => {
-  const systemPrompt = SQL_EXPRESSION_EXPLAIN_SYSTEM_PROMPT.replace(
-    '{refIds}',
-    refIds.length > 0 ? refIds.join(', ') : 'A'
-  );
+  const systemPrompt = getSQLExplanationSystemPrompt({
+    refIds: refIds.length > 0 ? refIds.join(', ') : 'A',
+  });
 
   const userPrompt = getExplanationPrompt(currentQuery);
 

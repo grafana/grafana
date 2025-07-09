@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { GenAIButton } from '../../dashboard/components/GenAI/GenAIButton';
 import { EventTrackingSrc } from '../../dashboard/components/GenAI/tracking';
 import { Message, Role } from '../../dashboard/components/GenAI/utils';
+import { getSQLSuggestionSystemPrompt } from '../ai/sqlPromptConfig';
 
 interface GenAISQLSuggestionsButtonProps {
   currentQuery: string;
@@ -15,23 +16,6 @@ interface GenAISQLSuggestionsButtonProps {
 }
 
 // AI prompts for different SQL use cases
-const SQL_EXPRESSION_SYSTEM_PROMPT = `You are a SQL expert for Grafana expressions.
-
-Help users with SQL queries by:
-- Fixing syntax errors in existing queries
-- Suggesting new queries using available RefIDs (A, B, C, etc.)
-- Optimizing for performance
-
-Guidelines:
-- Use RefIDs as table names in FROM clauses
-- Include LIMIT clauses for performance
-- Generate clean, readable SQL
-- Focus on time series data patterns
-
-Available RefIDs: {refIds}
-Current query: {currentQuery}
-
-{queryInstruction}`;
 
 const getContextualPrompts = (refIds: string[], currentQuery: string): string[] => {
   const trimmedQuery = currentQuery.trim();
@@ -72,9 +56,11 @@ const getSQLSuggestionMessages = (refIds: string[], currentQuery: string): Messa
     ? 'Focus on fixing, improving, or enhancing the current query provided above.'
     : 'Generate a new SQL query based on the available RefIDs and common use cases.';
 
-  const systemPrompt = SQL_EXPRESSION_SYSTEM_PROMPT.replace('{refIds}', refIds.length > 0 ? refIds.join(', ') : 'A')
-    .replace('{currentQuery}', trimmedQuery || 'No current query provided')
-    .replace('{queryInstruction}', queryInstruction);
+  const systemPrompt = getSQLSuggestionSystemPrompt({
+    refIds: refIds.length > 0 ? refIds.join(', ') : 'A',
+    currentQuery: trimmedQuery || 'No current query provided',
+    queryInstruction: queryInstruction,
+  });
 
   const contextualPrompts = getContextualPrompts(refIds, currentQuery);
   const selectedPrompt = contextualPrompts[Math.floor(Math.random() * contextualPrompts.length)];
