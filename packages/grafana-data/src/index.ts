@@ -559,7 +559,7 @@ export {
   type ComponentTypeWithExtensionMeta,
   type PluginExtensionFunction,
   type PluginExtensionEventHelpers,
-  type DataSourceConfigHealthCheckContext,
+  type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,

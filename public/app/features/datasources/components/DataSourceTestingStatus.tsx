@@ -148,9 +148,13 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   };
   const styles = useStyles2(getTestingStatusStyles);
   const { links } = usePluginLinks({
-    extensionPointId: PluginExtensionPoints.DataSourceConfigHealthCheck,
+    extensionPointId: PluginExtensionPoints.DataSourceConfigErrorStatus,
     context: {
-      dataSource,
+      dataSource: {
+        type: dataSource.type,
+        uid: dataSource.uid,
+        name: dataSource.name,
+      },
       testingStatus,
     },
     limitPerPlugin: 3,

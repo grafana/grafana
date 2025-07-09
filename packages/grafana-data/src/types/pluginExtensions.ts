@@ -188,7 +188,7 @@ export enum PluginExtensionPoints {
   CommandPalette = 'grafana/commandpalette/action',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
-  DataSourceConfigHealthCheck = 'grafana/datasources/config/healthcheck',
+  DataSourceConfigErrorStatus = 'grafana/datasources/config/error-status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
   TraceViewDetails = 'grafana/traceview/details',
@@ -249,11 +249,16 @@ export type PluginExtensionResourceAttributesContext = {
   };
 };
 
-export type DataSourceConfigHealthCheckContext = {
-  dataSource: DataSourceSettings;
+export type DataSourceConfigErrorStatusContext = {
+  dataSource: {
+    type: string;
+    uid: string;
+    name: string;
+  };
   testingStatus: {
     message?: string | null;
     status?: string | null;
+    details?: Record<string, unknown>;
   };
 };
 
