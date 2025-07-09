@@ -78,7 +78,7 @@ func TestService(t *testing.T) {
 
 				base, err = svc.Base(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS, nil))
 				require.NoError(t, err)
-				require.Equal(t, "public/app/plugins/table-old", base)
+				require.Equal(t, "public/plugins/table-old", base)
 
 				parentFS := pluginFS(oneCDNURL)
 				parentFS.RelFunc = func(_ string) (string, error) {
@@ -243,9 +243,9 @@ func TestService_ChildPlugins(t *testing.T) {
 				return childInfo
 			},
 			expected: expected{
-				module:  "public/plugins/parent/child/module.js",
-				baseURL: "public/plugins/parent/child",
-				relURL:  "public/plugins/parent/child/path/to/file.txt",
+				module:  "public/plugins/child/module.js",
+				baseURL: "public/plugins/child",
+				relURL:  "public/plugins/child/path/to/file.txt",
 			},
 		},
 		{
@@ -256,8 +256,8 @@ func TestService_ChildPlugins(t *testing.T) {
 			},
 			expected: expected{
 				module:  "core:plugin/parent",
-				baseURL: "public/app/plugins/parent",
-				relURL:  "public/app/plugins/parent/path/to/file.txt",
+				baseURL: "public/plugins/parent",
+				relURL:  "public/plugins/parent/path/to/file.txt",
 			},
 		},
 		{
@@ -268,8 +268,8 @@ func TestService_ChildPlugins(t *testing.T) {
 			},
 			expected: expected{
 				module:  "public/plugins/parent/module.js",
-				baseURL: "public/app/plugins/parent",
-				relURL:  "public/app/plugins/parent/path/to/file.txt",
+				baseURL: "public/plugins/parent",
+				relURL:  "public/plugins/parent/path/to/file.txt",
 			},
 		},
 		{
