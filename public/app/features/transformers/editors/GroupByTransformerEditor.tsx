@@ -24,11 +24,7 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
-export const GroupByTransformerEditor = ({
-  input,
-  options,
-  onChange,
-}: TransformerUIProps<GroupByTransformerOptions>) => {
+const GroupByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<GroupByTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input, true);
 
   const onConfigChange = useCallback(
@@ -91,7 +87,7 @@ const options = [
   { label: 'Calculate', value: GroupByOperationID.aggregate },
 ];
 
-export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
+const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
 
   const styles = getStyles(theme);
@@ -119,7 +115,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
           />
         </div>
 
-        {config?.operation === GroupByOperationID.aggregate && (
+        {config?.operation && (
           <StatsPicker
             className={styles.aggregations}
             placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
