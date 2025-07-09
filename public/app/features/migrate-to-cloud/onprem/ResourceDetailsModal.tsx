@@ -13,6 +13,16 @@ interface ResourceDetailsModalProps {
 
 function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string {
   switch (errorCode) {
+    case 'ALERT_RULES_QUOTA_REACHED':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.alert-rules-quota-reached',
+        'Maximum number of alert rules reached: Delete some alert rules or upgrade your plan and try again.'
+      );
+    case 'ALERT_RULES_GROUP_QUOTA_REACHED':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.alert-rules-group-quota-reached',
+        'Maximum number of alert rule groups reached: Delete some alert rule groups or upgrade your plan and try again.'
+      );
     case 'DATASOURCE_NAME_CONFLICT':
       return t(
         'migrate-to-cloud.resource-details.error-messages.datasource-name-conflict',
@@ -106,9 +116,11 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
             <>
               <Text element="p">{msgTitle}</Text>
               <Text element="p">
-                {getTMessage(resource?.errorCode) ||
-                  resource?.message ||
-                  'There has been an error while migrating. Please check the cloud migration logs for more information.'}
+                {getTMessage(resource?.errorCode) || resource?.message || (
+                  <Trans i18nKey="migrate-to-cloud.resource-details.error-messages.generic-error">
+                    There has been an error while migrating. Please check the cloud migration logs for more information.
+                  </Trans>
+                )}
               </Text>
             </>
           ) : (

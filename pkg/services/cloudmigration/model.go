@@ -110,17 +110,19 @@ const (
 type ResourceErrorCode string
 
 const (
-	ErrDatasourceNameConflict     ResourceErrorCode = "DATASOURCE_NAME_CONFLICT"
-	ErrDatasourceInvalidURL       ResourceErrorCode = "DATASOURCE_INVALID_URL"
-	ErrDatasourceAlreadyManaged   ResourceErrorCode = "DATASOURCE_ALREADY_MANAGED"
-	ErrFolderNameConflict         ResourceErrorCode = "FOLDER_NAME_CONFLICT"
-	ErrDashboardAlreadyManaged    ResourceErrorCode = "DASHBOARD_ALREADY_MANAGED"
-	ErrLibraryElementNameConflict ResourceErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
-	ErrUnsupportedDataType        ResourceErrorCode = "UNSUPPORTED_DATA_TYPE"
-	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
-	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
-	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
+	ErrAlertRulesQuotaReached      ResourceErrorCode = "ALERT_RULES_QUOTA_REACHED"
+	ErrAlertRulesGroupQuotaReached ResourceErrorCode = "ALERT_RULES_GROUP_QUOTA_REACHED"
+	ErrDatasourceNameConflict      ResourceErrorCode = "DATASOURCE_NAME_CONFLICT"
+	ErrDatasourceInvalidURL        ResourceErrorCode = "DATASOURCE_INVALID_URL"
+	ErrDatasourceAlreadyManaged    ResourceErrorCode = "DATASOURCE_ALREADY_MANAGED"
+	ErrFolderNameConflict          ResourceErrorCode = "FOLDER_NAME_CONFLICT"
+	ErrDashboardAlreadyManaged     ResourceErrorCode = "DASHBOARD_ALREADY_MANAGED"
+	ErrLibraryElementNameConflict  ResourceErrorCode = "LIBRARY_ELEMENT_NAME_CONFLICT"
+	ErrUnsupportedDataType         ResourceErrorCode = "UNSUPPORTED_DATA_TYPE"
+	ErrResourceConflict            ResourceErrorCode = "RESOURCE_CONFLICT"
+	ErrUnexpectedStatus            ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
+	ErrInternalServiceError        ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
+	ErrGeneric                     ResourceErrorCode = "GENERIC_ERROR"
 )
 
 type SnapshotResourceStats struct {
