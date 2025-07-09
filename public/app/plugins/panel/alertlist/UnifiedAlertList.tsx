@@ -47,7 +47,6 @@ import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-a
 import { GroupMode, SortOrder, StateFilter, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
-import { filterAlerts } from './util';
 
 function getStateList(state: StateFilter) {
   const reducer = (list: string[], [stateKey, value]: [string, boolean]) => {
@@ -325,27 +324,27 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   }
 
-  // Remove rules having 0 instances
-  // AlertInstances filters instances and we need to prevent situation
-  // when we display a rule with 0 instances
-  filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
-    const alertingRule = getAlertingRule(rule);
-    const filteredAlerts = alertingRule
-      ? filterAlerts(
-          {
-            stateFilter: options.stateFilter,
-            alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
-          },
-          alertingRule.alerts ?? []
-        )
-      : [];
-    if (filteredAlerts.length) {
-      // We intentionally don't set alerts to filteredAlerts
-      // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
-      rules.push(rule);
-    }
-    return rules;
-  }, []);
+  // // Remove rules having 0 instances
+  // // AlertInstances filters instances and we need to prevent situation
+  // // when we display a rule with 0 instances
+  // filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
+  //   const alertingRule = getAlertingRule(rule);
+  //   const filteredAlerts = alertingRule
+  //     ? filterAlerts(
+  //         {
+  //           stateFilter: options.stateFilter,
+  //           alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+  //         },
+  //         alertingRule.alerts ?? []
+  //       )
+  //     : [];
+  //   if (filteredAlerts.length) {
+  //     // We intentionally don't set alerts to filteredAlerts
+  //     // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
+  //     rules.push(rule);
+  //   }
+  //   return rules;
+  // }, []);
 
   return filteredRules;
 }
@@ -446,6 +445,18 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   hidden: css`
     display: none;
+  `,
+  severityTag: css`
+    background: ${theme.colors.background.secondary};
+    color: ${theme.colors.text.secondary};
+    padding: ${theme.spacing(0.25)} ${theme.spacing(0.5)};
+    border-radius: ${theme.shape.radius.default};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
   `,
 });
 

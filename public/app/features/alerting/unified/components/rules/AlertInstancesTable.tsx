@@ -89,7 +89,7 @@ const columns: AlertTableColumnProps[] = [
       data: {
         alert: { activeAt },
       },
-    }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
+    }) => <>{activeAt?.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
     size: '150px',
   },
   {
