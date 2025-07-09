@@ -918,4 +918,8 @@ const (
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
+
+	// FlagAlertmanagerRemoteSecondaryWithRemoteState
+	// Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.
+	FlagAlertmanagerRemoteSecondaryWithRemoteState = "alertmanagerRemoteSecondaryWithRemoteState"
 )

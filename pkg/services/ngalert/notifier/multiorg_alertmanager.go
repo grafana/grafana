@@ -75,6 +75,8 @@ type Alertmanager interface {
 	// Lifecycle
 	StopAndWait()
 	Ready() bool
+
+	GetBase() *alertingNotify.GrafanaAlertmanager
 }
 
 // StateMerger describes a type that is able to merge external state (nflog, silences) with its own.

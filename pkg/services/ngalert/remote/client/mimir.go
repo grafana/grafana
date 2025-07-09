@@ -32,6 +32,8 @@ type MimirClient interface {
 	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
 
+	GetFullState(ctx context.Context) (*UserGrafanaState, error)
+
 	TestTemplate(ctx context.Context, c alertingNotify.TestTemplatesConfigBodyParams) (*alertingNotify.TestTemplatesResults, error)
 	TestReceivers(ctx context.Context, c alertingNotify.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 

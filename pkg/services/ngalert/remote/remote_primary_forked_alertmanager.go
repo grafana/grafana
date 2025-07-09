@@ -145,6 +145,10 @@ func (fam *RemotePrimaryForkedAlertmanager) SilenceState(ctx context.Context) (a
 	return fam.remote.SilenceState(ctx)
 }
 
+func (fam *RemotePrimaryForkedAlertmanager) GetBase() *alertingNotify.GrafanaAlertmanager {
+	return fam.remote.GetBase()
+}
+
 func (fam *RemotePrimaryForkedAlertmanager) StopAndWait() {
 	fam.internal.StopAndWait()
 	fam.remote.StopAndWait()

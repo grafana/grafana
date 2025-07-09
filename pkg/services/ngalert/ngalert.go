@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -191,7 +192,8 @@ func (ng *AlertNG) init() error {
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-	if remotePrimary || remoteSecondary {
+	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
+	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		smtpCfg := remoteClient.SmtpConfig{
 			FromAddress:    ng.Cfg.Smtp.FromAddress,
@@ -256,24 +258,61 @@ func (ng *AlertNG) init() error {
 			// This function will be used by the MOA to create new Alertmanagers.
 			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-					// Create internal Alertmanager.
-					internalAM, err := factoryFn(ctx, orgID)
-					if err != nil {
-						return nil, err
-					}
 
 					// Create remote Alertmanager.
 					cfg.OrgID = orgID
 					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+					}
+
+					// Create internal Alertmanager.
+					internalAM, err := factoryFn(ctx, orgID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Fall back to the internal AM in case of error creating the remote one.
+					if remoteAM == nil {
 						return internalAM, nil
+					}
+
+					if remoteSecondaryWithRemoteState {
+						// Pull remote state from the remote Alertmanager.
+						s, err := remoteAM.FetchRemoteState(ctx)
+						if err != nil {
+							return nil, err
+						}
+
+						// Mimir state has two parts:
+						// - "sil:<tenantID>": Silences
+						// - "nfl:<tenantID>": Notification log entries
+						var silencesPart, nflogPart clusterpb.Part
+						for _, p := range s.Parts {
+							switch p.Key {
+							case "sil:" + cfg.TenantID:
+								silencesPart = p
+							case "nfl:" + cfg.TenantID:
+								nflogPart = p
+							default:
+								return nil, fmt.Errorf("unknown part key %q", p.Key)
+							}
+						}
+
+						// Merge remote and internal silences / nflog.
+						if err := internalAM.GetBase().MergeNflog(nflogPart.Data); err != nil {
+							return nil, err
+						}
+						if err := internalAM.GetBase().MergeSilences(silencesPart.Data); err != nil {
+							return nil, err
+						}
 					}
 
 					// Use both Alertmanager implementations in the forked Alertmanager.
 					rsCfg := remote.RemoteSecondaryConfig{
 						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
 						OrgID:        orgID,
+						PullState:    remoteSecondaryWithRemoteState,
 						Store:        ng.store,
 						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 					}

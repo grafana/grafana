@@ -389,6 +389,21 @@
     },
     {
       "metadata": {
+        "name": "alertmanagerRemoteSecondaryWithRemoteState",
+        "resourceVersion": "1751882564974",
+        "creationTimestamp": "2025-07-07T10:02:44Z"
+      },
+      "spec": {
+        "description": "Starts Grafana in remote secondary mode pulling the latest state from the remote Alertmanager to avoid duplicate notifications.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "angularDeprecationUI",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2023-08-29T14:05:47Z",

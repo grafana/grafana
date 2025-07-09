@@ -8,6 +8,7 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
+	"github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -22,13 +23,15 @@ type configStore interface {
 type remoteAlertmanager interface {
 	notifier.Alertmanager
 	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
+	FetchRemoteState(context.Context) (*clusterpb.FullState, error)
 	SendState(context.Context) error
 }
 
 type RemoteSecondaryForkedAlertmanager struct {
-	log   log.Logger
-	orgID int64
-	store configStore
+	log       log.Logger
+	orgID     int64
+	store     configStore
+	pullState bool
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
@@ -41,6 +44,10 @@ type RemoteSecondaryConfig struct {
 	Logger log.Logger
 	OrgID  int64
 	Store  configStore
+
+	// PullState indicates whether to get the latest state from the remote Alertmanager and merging it with Grafana's
+	// internal state before starting.
+	PullState bool
 
 	// SyncInterval determines how often we should attempt to synchronize
 	// the configuration on the remote Alertmanager.
@@ -63,6 +70,7 @@ func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 		orgID:        cfg.OrgID,
 		store:        cfg.Store,
 		internal:     internal,
+		pullState:    cfg.PullState,
 		remote:       remote,
 		syncInterval: cfg.SyncInterval,
 	}, nil
@@ -99,7 +107,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		}
 	}()
 
-	// Call ApplyConfig on the internal Alertmanager - we only care about errors for this one.
 	err := fam.internal.ApplyConfig(ctx, config)
 	wg.Wait()
 	return err
@@ -161,6 +168,10 @@ func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, 
 
 func (fam *RemoteSecondaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
 	return fam.internal.SilenceState(ctx)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) GetBase() *alertingNotify.GrafanaAlertmanager {
+	return fam.internal.GetBase()
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {

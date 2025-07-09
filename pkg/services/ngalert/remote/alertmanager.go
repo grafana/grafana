@@ -18,6 +18,7 @@ import (
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/alerting/cluster/clusterpb"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -387,6 +388,25 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 	return nil
 }
 
+// FetchRemoteState gets the remote Alertmanager's internal state.
+func (am *Alertmanager) FetchRemoteState(ctx context.Context) (*clusterpb.FullState, error) {
+	s, err := am.mimirClient.GetFullState(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pull remote state: %w", err)
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(s.State)
+	if err != nil {
+		return nil, fmt.Errorf("failed to base64-decode remote state: %w", err)
+	}
+	protoState := &clusterpb.FullState{}
+	if err := protoState.Unmarshal(decoded); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal remote state: %w", err)
+	}
+
+	return protoState, nil
+}
+
 // SendState gets the Alertmanager's internal state and sends it to the remote Alertmanager.
 func (am *Alertmanager) SendState(ctx context.Context) error {
 	am.metrics.StateSyncsTotal.Inc()
@@ -645,6 +665,10 @@ func (am *Alertmanager) StopAndWait() {
 
 func (am *Alertmanager) Ready() bool {
 	return am.ready
+}
+
+func (am *Alertmanager) GetBase() *alertingNotify.GrafanaAlertmanager {
+	return nil
 }
 
 // SilenceState returns the Alertmanager's silence state as a SilenceState. Currently, does not retrieve the state

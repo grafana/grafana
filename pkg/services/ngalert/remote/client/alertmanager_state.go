@@ -9,11 +9,32 @@ import (
 )
 
 const (
+	fullStatePath                = "/api/v1/grafana/full_state"
 	grafanaAlertmanagerStatePath = "/api/v1/grafana/state"
 )
 
 type UserGrafanaState struct {
 	State string `json:"state"`
+}
+
+func (mc *Mimir) GetFullState(ctx context.Context) (*UserGrafanaState, error) {
+	// NOTE: Not really a Grafana state, but a Mimir one
+	gs := &UserGrafanaState{}
+	response := successResponse{
+		Data: gs,
+	}
+	// nolint:bodyclose
+	// closed within `do`
+	_, err := mc.do(ctx, fullStatePath, http.MethodGet, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Status != "success" {
+		return nil, fmt.Errorf("returned non-success `status` from the MimirAPI: %s", response.Status)
+	}
+
+	return gs, nil
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerState(ctx context.Context) (*UserGrafanaState, error) {
