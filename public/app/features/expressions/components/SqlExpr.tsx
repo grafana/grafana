@@ -12,7 +12,12 @@ import { SqlExpressionQuery } from '../types';
 // Conditionally import GenAI features only when feature flag is enabled
 const getGenAIFeatures = () => {
   if (config.featureToggles.sqlExpressions) {
-    return require('./GenAI');
+    const { useSQLSuggestions } = require('./GenAI/hooks/useSQLSuggestions');
+    const { useSQLExplanations } = require('./GenAI/hooks/useSQLExplanations');
+    return {
+      useSQLSuggestions,
+      useSQLExplanations,
+    };
   }
   // When feature flag is off, return no-op functions that don't render anything
   return {
@@ -34,37 +39,36 @@ const getGenAIFeatures = () => {
       shouldShowViewExplanation: true, // Hide the explain button when feature is off
       updatePrevExpression: () => {},
     }),
-    QueryUsageContext: {},
   };
 };
 
 // Lazy load the GenAI components to avoid circular dependencies
 const GenAISQLSuggestionsButton = lazy(() =>
-  import('./GenAI').then((module) => ({
+  import('./GenAI/GenAISQLSuggestionsButton').then((module) => ({
     default: module.GenAISQLSuggestionsButton,
   }))
 );
 
 const GenAISQLExplainButton = lazy(() =>
-  import('./GenAI').then((module) => ({
+  import('./GenAI/GenAISQLExplainButton').then((module) => ({
     default: module.GenAISQLExplainButton,
   }))
 );
 
 const SuggestionsBadge = lazy(() =>
-  import('./GenAI').then((module) => ({
+  import('./GenAI/SuggestionsBadge').then((module) => ({
     default: module.SuggestionsBadge,
   }))
 );
 
 const GenAISuggestionsDrawer = lazy(() =>
-  import('./GenAI').then((module) => ({
+  import('./GenAI/GenAISuggestionsDrawer').then((module) => ({
     default: module.GenAISuggestionsDrawer,
   }))
 );
 
 const GenAIExplanationDrawer = lazy(() =>
-  import('./GenAI').then((module) => ({
+  import('./GenAI/GenAIExplanationDrawer').then((module) => ({
     default: module.GenAIExplanationDrawer,
   }))
 );
