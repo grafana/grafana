@@ -236,7 +236,7 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		f.Spec.Title = strings.Trim(f.Spec.Title, "")
+		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
 	}
 	return nil
