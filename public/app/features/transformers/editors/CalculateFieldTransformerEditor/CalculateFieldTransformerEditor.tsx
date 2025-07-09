@@ -42,26 +42,50 @@ interface CalculateFieldTransformerEditorState {
   selected: string[];
 }
 
-const calculationModes = [
-  { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
-  { value: CalculateFieldMode.UnaryOperation, label: 'Unary operation' },
-  { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
-  { value: CalculateFieldMode.Index, label: 'Row index' },
-];
-
-if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
-  calculationModes.push(
-    { value: CalculateFieldMode.CumulativeFunctions, label: 'Cumulative functions' },
-    { value: CalculateFieldMode.WindowFunctions, label: 'Window functions' }
-  );
-}
-
 const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string, FieldType.boolean]);
 
 export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformerEditorProps) => {
   const { options, onChange, input } = props;
   const configuredOptions = options?.reduce?.include;
   const [state, setState] = useState<CalculateFieldTransformerEditorState>({ names: [], selected: [] });
+
+  const calculationModes = [
+    {
+      value: CalculateFieldMode.BinaryOperation,
+      label: t(
+        'transformers.calculate-field-transformer-editor.calculation-modes.label.binary-operation',
+        'Binary operation'
+      ),
+    },
+    {
+      value: CalculateFieldMode.UnaryOperation,
+      label: t(
+        'transformers.calculate-field-transformer-editor.calculation-modes.label.unary-operation',
+        'Unary operation'
+      ),
+    },
+    {
+      value: CalculateFieldMode.ReduceRow,
+      label: t('transformers.calculate-field-transformer-editor.calculation-modes.label.reduce-row', 'Reduce row'),
+    },
+    {
+      value: CalculateFieldMode.Index,
+      label: t('transformers.calculate-field-transformer-editor.calculation-modes.label.row-index', 'Row index'),
+    },
+  ];
+
+  if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
+    calculationModes.push(
+      {
+        value: CalculateFieldMode.CumulativeFunctions,
+        label: t('transformers.calculate-field-transformer-editor.label.cumulative-functions', 'Cumulative functions'),
+      },
+      {
+        value: CalculateFieldMode.WindowFunctions,
+        label: t('transformers.calculate-field-transformer-editor.label.window-functions', 'Window functions'),
+      }
+    );
+  }
 
   useEffect(() => {
     const ctx = { interpolate: (v: string) => v };

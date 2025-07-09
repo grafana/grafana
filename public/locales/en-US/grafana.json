@@ -12154,6 +12154,18 @@
       "placeholder-fields-or-number": "Field(s) or number"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "Binary operation",
+          "reduce-row": "Reduce row",
+          "row-index": "Row index",
+          "unary-operation": "Unary operation"
+        }
+      },
+      "label": {
+        "cumulative-functions": "Cumulative functions",
+        "window-functions": "Window functions"
+      },
       "label-alias": "Alias",
       "label-mode": "Mode",
       "label-replace-all-fields": "Replace all fields"
