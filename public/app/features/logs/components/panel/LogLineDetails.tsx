@@ -86,7 +86,7 @@ export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
   );
 };
 
-export const LOG_LINE_DETAILS_HEIGHT = 30;
+export const LOG_LINE_DETAILS_HEIGHT = 35;
 
 const getStyles = (theme: GrafanaTheme2, mode: LogLineDetailsMode) => ({
   inlineWrapper: css({
