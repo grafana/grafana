@@ -129,7 +129,7 @@ func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req 
 		// For list request we need to filter out in storage layer.
 		eval = EvalPermission(action)
 	} else if req.Verb == utils.VerbCreate || req.Verb == utils.VerbUpdate || req.Verb == utils.VerbPatch || req.Verb == utils.VerbDelete {
-		eval = EvalPermission(action, fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, req.Name))
+		eval = EvalPermission(action)
 	} else {
 		// Assuming that all non list request should have a valid name
 		return claims.CheckResponse{}, fmt.Errorf("unhandled authorization: %s %s", req.Group, req.Verb)

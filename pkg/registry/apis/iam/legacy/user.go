@@ -592,11 +592,6 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		if err != nil {
 			return fmt.Errorf("failed to check if user exists: %w", err)
 		}
-		defer func() {
-			if rows != nil {
-				_ = rows.Close()
-			}
-		}()
 
 		var userID int64
 		if !rows.Next() {
@@ -604,6 +599,11 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 		}
 		if err := rows.Scan(&userID); err != nil {
 			return fmt.Errorf("failed to scan user ID: %w", err)
+		}
+
+		// Close rows to avoid the bad connection error
+		if rows != nil {
+			_ = rows.Close()
 		}
 
 		orgUserReq := deleteOrgUserQuery{
