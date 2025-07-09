@@ -2,10 +2,8 @@ import uFuzzy from '@leeoniya/ufuzzy';
 
 import { PluginSignatureStatus, dateTimeParse, PluginError, PluginType, PluginErrorCode } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
-import { Settings } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import {
   CatalogPlugin,
@@ -340,14 +338,6 @@ function getPluginSignature(options: {
 
   return PluginSignatureStatus.missing;
 }
-
-// Updates the core Grafana config to have the correct list available panels
-export const updatePanels = () =>
-  getBackendSrv()
-    .get('/api/frontend/settings')
-    .then((settings: Settings) => {
-      config.panels = settings.panels;
-    });
 
 export function getLatestCompatibleVersion(versions: Version[] | undefined): Version | undefined {
   if (!versions) {

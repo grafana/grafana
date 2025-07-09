@@ -8,7 +8,7 @@ import { contextSrv } from 'app/core/core';
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { ConfigPublicDashboardBase } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -47,7 +47,10 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
             isOpen: true,
             title: t('dashboard-scene.config-public-dashboard.title.revoke-public-url', 'Revoke public URL'),
             icon: 'trash-alt',
-            confirmText: 'Revoke public URL',
+            confirmText: t(
+              'dashboard-scene.config-public-dashboard.confirmText.revoke-public-url',
+              'Revoke public URL'
+            ),
             body: (
               <p className={styles.description}>
                 <Trans i18nKey="public-dashboard.config.revoke-body">

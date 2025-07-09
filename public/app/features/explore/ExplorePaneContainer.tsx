@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { EventBusSrv, getTimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { stopQueryState } from 'app/core/utils/explore';
-import { StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types/store';
 
 import Explore from './Explore';
 import ExploreQueryInspector from './ExploreQueryInspector';

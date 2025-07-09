@@ -22,7 +22,7 @@ const prefixSuffixOpts = {
 };
 
 const meta: Meta = {
-  title: 'Forms/Input',
+  title: 'Inputs/Input',
   component: Input,
   parameters: {
     docs: {

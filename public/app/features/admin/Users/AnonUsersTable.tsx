@@ -13,7 +13,7 @@ import {
   FetchDataFunc,
 } from '@grafana/ui';
 import { EmptyArea } from 'app/features/alerting/unified/components/EmptyArea';
-import { UserAnonymousDeviceDTO } from 'app/types';
+import { UserAnonymousDeviceDTO } from 'app/types/user';
 
 type Cell<T extends keyof UserAnonymousDeviceDTO = keyof UserAnonymousDeviceDTO> = CellProps<
   UserAnonymousDeviceDTO,

@@ -10,7 +10,7 @@ import { Alert, useStyles2 } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { useGrafana } from '../../../core/context/GrafanaContext';
 import { DashboardPanel } from '../dashgrid/DashboardPanel';
