@@ -7,6 +7,7 @@ import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { useStyles2, Stack, Button, Text } from '@grafana/ui';
 
+import { QueryUsageContext } from '../ai/sqlPromptConfig';
 import { useSQLSuggestions, useSQLExplanations } from '../hooks';
 import { SqlExpressionQuery } from '../types';
 
@@ -45,9 +46,10 @@ interface Props {
   onChange: (query: SqlExpressionQuery) => void;
   /** Should the `format` property be set to `alerting`? */
   alerting?: boolean;
+  panelId?: string;
 }
 
-export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) => {
+export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: Props) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const initialQuery = `SELECT *
   FROM ${vars[0]}
@@ -76,6 +78,15 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
     shouldShowViewExplanation,
     updatePrevExpression,
   } = useSQLExplanations(query.expression || '');
+
+  const queryContext: QueryUsageContext = useMemo(
+    () => ({
+      alerting,
+      panelId,
+      // TODO: Add dashboard context when available
+    }),
+    [alerting, panelId]
+  );
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -137,6 +148,8 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
                     currentQuery={query.expression || ''}
                     onExplain={handleExplain}
                     refIds={vars}
+                    queryContext={queryContext}
+                    // schemas={schemas} // Will be added when schema extraction is implemented
                   />
                 )}
               </Suspense>
@@ -147,6 +160,9 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
                   onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
                   onHistoryUpdate={handleHistoryUpdate}
                   refIds={vars}
+                  queryContext={queryContext}
+                  // schemas={schemas} // Will be added when schema extraction is implemented
+                  // errorContext={errorContext} // Will be added when error tracking is implemented
                 />
               </Suspense>
             </Stack>

@@ -23,7 +23,7 @@ export const AISuggestionsDrawer = ({ isOpen, onApplySuggestion, onClose, sugges
   return (
     <Drawer
       onClose={onClose}
-      size="md"
+      size="lg"
       title={<Trans i18nKey="sql-expressions.sql-suggestion-history">SQL Suggestion History</Trans>}
     >
       <div className={styles.content}>

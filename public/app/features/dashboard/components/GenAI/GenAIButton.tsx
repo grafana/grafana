@@ -195,6 +195,7 @@ export const GenAIButton = ({
               onApplySuggestion={onApplySuggestion}
               updateHistory={unshiftHistoryEntry}
               eventTrackingSrc={eventTrackingSrc}
+              timeout={timeout}
             />
           }
           placement="left-start"

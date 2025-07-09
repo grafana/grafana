@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { GenAIButton } from '../../dashboard/components/GenAI/GenAIButton';
 import { EventTrackingSrc } from '../../dashboard/components/GenAI/tracking';
 import { Message, Role } from '../../dashboard/components/GenAI/utils';
-import { getSQLSuggestionSystemPrompt } from '../ai/sqlPromptConfig';
+import { getSQLSuggestionSystemPrompt, QueryUsageContext } from '../ai/sqlPromptConfig';
 
 interface GenAISQLSuggestionsButtonProps {
   currentQuery: string;
@@ -13,6 +13,9 @@ interface GenAISQLSuggestionsButtonProps {
   onHistoryUpdate?: (history: string[]) => void;
   refIds: string[];
   initialQuery: string;
+  schemas?: unknown; // Reserved for future schema implementation
+  errorContext?: unknown; // Reserved for future error context implementation
+  queryContext?: QueryUsageContext;
 }
 
 // AI prompts for different SQL use cases
@@ -42,15 +45,22 @@ const getContextualPrompts = (refIds: string[], currentQuery: string): string[] 
 };
 
 /**
+ * Creates messages for the LLM to generate SQL suggestions
+ *
  * @param refIds - The list of RefIDs available in the current context
  * @param currentQuery - The current SQL query being edited
+ * @param schemas - Optional schema information (planned for future implementation)
+ * @param errorContext - Optional error context for targeted fixes (planned for future implementation)
+ * @param queryContext - Optional query usage context
  * @returns A list of messages to be sent to the LLM for generating SQL suggestions
- *
- * The system prompt is a template that is replaced with the actual RefIDs and current query.
- * The contextual prompts are a list of prompts that are selected at random to be sent to the LLM.
- * The selected prompt is then sent to the LLM for generating SQL suggestions.
  */
-const getSQLSuggestionMessages = (refIds: string[], currentQuery: string): Message[] => {
+const getSQLSuggestionMessages = (
+  refIds: string[],
+  currentQuery: string,
+  schemas?: unknown,
+  errorContext?: unknown,
+  queryContext?: QueryUsageContext
+): Message[] => {
   const trimmedQuery = currentQuery.trim();
   const queryInstruction = trimmedQuery
     ? 'Focus on fixing, improving, or enhancing the current query provided above.'
@@ -60,6 +70,9 @@ const getSQLSuggestionMessages = (refIds: string[], currentQuery: string): Messa
     refIds: refIds.length > 0 ? refIds.join(', ') : 'A',
     currentQuery: trimmedQuery || 'No current query provided',
     queryInstruction: queryInstruction,
+    schemas, // Will be utilized once schema extraction is implemented
+    errorContext, // Will be utilized once error tracking is implemented
+    queryContext,
   });
 
   const contextualPrompts = getContextualPrompts(refIds, currentQuery);
@@ -83,10 +96,13 @@ export const GenAISQLSuggestionsButton = ({
   onHistoryUpdate,
   refIds,
   initialQuery,
+  schemas, // Future implementation will use this for enhanced context
+  errorContext, // Will be utilized once error tracking is implemented
+  queryContext,
 }: GenAISQLSuggestionsButtonProps) => {
   const messages = useCallback(() => {
-    return getSQLSuggestionMessages(refIds, currentQuery);
-  }, [refIds, currentQuery]);
+    return getSQLSuggestionMessages(refIds, currentQuery, schemas, errorContext, queryContext);
+  }, [refIds, currentQuery, schemas, errorContext, queryContext]);
 
   const text = !currentQuery || currentQuery === initialQuery ? 'Generate suggestion' : 'Improve query';
 

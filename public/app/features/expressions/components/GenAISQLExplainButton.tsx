@@ -5,12 +5,14 @@ import { t } from '@grafana/i18n';
 import { GenAIButton } from '../../dashboard/components/GenAI/GenAIButton';
 import { EventTrackingSrc } from '../../dashboard/components/GenAI/tracking';
 import { Message, Role } from '../../dashboard/components/GenAI/utils';
-import { getSQLExplanationSystemPrompt } from '../ai/sqlPromptConfig';
+import { getSQLExplanationSystemPrompt, QueryUsageContext } from '../ai/sqlPromptConfig';
 
 interface GenAISQLExplainButtonProps {
   currentQuery: string;
   onExplain: (explanation: string) => void;
   refIds: string[];
+  schemas?: unknown; // Reserved for future schema implementation
+  queryContext?: QueryUsageContext;
 }
 
 // AI prompt for explaining SQL expressions
@@ -26,13 +28,25 @@ Explain what this query does in simple terms.`;
 };
 
 /**
+ * Creates messages for the LLM to explain SQL queries
+ *
  * @param refIds - The list of RefIDs available in the current context
  * @param currentQuery - The current SQL query to explain
+ * @param schemas - Optional schema information (planned for future implementation)
+ * @param queryContext - Optional query usage context
  * @returns A list of messages to be sent to the LLM for explaining the SQL query
  */
-const getSQLExplanationMessages = (refIds: string[], currentQuery: string): Message[] => {
+const getSQLExplanationMessages = (
+  refIds: string[],
+  currentQuery: string,
+  schemas?: unknown,
+  queryContext?: QueryUsageContext
+): Message[] => {
   const systemPrompt = getSQLExplanationSystemPrompt({
     refIds: refIds.length > 0 ? refIds.join(', ') : 'A',
+    currentQuery: currentQuery.trim() || 'No current query provided',
+    schemas, // Will be utilized once schema extraction is implemented
+    queryContext,
   });
 
   const userPrompt = getExplanationPrompt(currentQuery);
@@ -49,10 +63,16 @@ const getSQLExplanationMessages = (refIds: string[], currentQuery: string): Mess
   ];
 };
 
-export const GenAISQLExplainButton = ({ currentQuery, onExplain, refIds }: GenAISQLExplainButtonProps) => {
+export const GenAISQLExplainButton = ({
+  currentQuery,
+  onExplain,
+  queryContext,
+  refIds,
+  schemas, // Future implementation will use this for enhanced context
+}: GenAISQLExplainButtonProps) => {
   const messages = useCallback(() => {
-    return getSQLExplanationMessages(refIds, currentQuery);
-  }, [refIds, currentQuery]);
+    return getSQLExplanationMessages(refIds, currentQuery, schemas, queryContext);
+  }, [refIds, currentQuery, schemas, queryContext]);
 
   const hasQuery = currentQuery && currentQuery.trim() !== '';
 

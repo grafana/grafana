@@ -49,12 +49,8 @@ interface UseLLMStreamResponse {
 }
 
 // TODO: Add tests
-export function useLLMStream({
-  model,
-  temperature,
-  onResponse,
-  timeout,
-}: Options = defaultOptions): UseLLMStreamResponse {
+export function useLLMStream(options: Options = defaultOptions): UseLLMStreamResponse {
+  const { model, temperature, onResponse, timeout } = { ...defaultOptions, ...options };
   // The messages array to send to the LLM, updated when the button is clicked.
   const [messages, setMessages] = useState<Message[]>([]);
 
