@@ -260,14 +260,18 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return <AddLibraryPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
+    const isViewing = window.parent.location.pathname.split('/').pop() === 'view';
+
+    console.log({ isViewing });
+
     return (
       <DashboardPanel
         key={panel.key}
         stateKey={panel.key}
         panel={panel}
         dashboard={this.props.dashboard}
-        isEditing={panel.isEditing}
-        isViewing={panel.isViewing}
+        isEditing={!isViewing || panel.isEditing}
+        isViewing={isViewing || panel.isViewing}
         isDraggable={isDraggable}
         width={width}
         height={height}
