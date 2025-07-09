@@ -4435,7 +4435,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Общедоступный",
         "tooltip-view-as-scene": "Просмотр в виде сцены"
       }
     },
@@ -5211,7 +5210,6 @@
       "playlist-next": "Перейти к следующему дашборду",
       "playlist-previous": "Перейти к предыдущему дашборду",
       "playlist-stop": "Остановить плейлист",
-      "public-dashboard": "Общедоступный",
       "refresh": "Обновить дашборд",
       "save": "Сохранить дашборд",
       "save-dashboard": {
@@ -5512,15 +5510,9 @@
       "type": "Тип"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Значение еще не сохранено в базе данных Grafana",
       "not-yet-saved": "Значение не сохранено в базе данных Grafana",
-      "open-pull-request-in-git-hub": "Открыть запрос на включение изменений в GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Дашборд загружается из ветви в GitHub.",
       "title-dashboard-loaded-external-repository": "Дашборд загружается из внешнего репозитория",
-      "title-dashboard-loaded-request-git-hub": "Дашборд загружается из запроса на включение изменений в GitHub.",
-      "title-error-loading-dashboard": "Ошибка при загрузке дашборда",
-      "value-not-saved": "Значение еще не сохранено в базе данных Grafana",
-      "view-pull-request-in-git-hub": "Просмотр запроса на включение изменений в GitHub"
+      "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
     },
     "dashboard-scene": {
       "text": {
@@ -7259,6 +7251,7 @@
       "when": "КОГДА"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Операция"
     },
     "math": {
@@ -8551,7 +8544,7 @@
       "usage-count_other": "Используется на {{count}} дашборда"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Поиск по названию или описанию"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Загрузка панели библиотеки..."
@@ -8696,12 +8689,18 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_few": "",
+          "indexed-label_many": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_few": "",
+          "parsedl-label_many": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_few": "",
+          "structured-metadata_many": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8758,6 +8757,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8771,9 +8771,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10369,6 +10371,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "В настоящее время эта функция находится в стадии активной разработки. Чтобы обеспечить максимальное удобство пользования и получить доступ к последним улучшениям, рекомендуем использовать <2>ночную сборку</2> Grafana."
@@ -11834,6 +11847,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

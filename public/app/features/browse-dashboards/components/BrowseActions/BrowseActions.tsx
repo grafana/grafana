@@ -6,8 +6,9 @@ import { Button, Drawer, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { FolderDTO, useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
+import { FolderDTO } from 'app/types/folders';
+import { useDispatch } from 'app/types/store';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
 import { useActionSelectionState } from '../../state/hooks';
@@ -90,7 +91,7 @@ export function BrowseActions({ folderDTO }: Props) {
       );
     }
 
-    // if partially provisioned, we show a warning modal
+    // TODO: mixed selection of provisioned and non-provisioned items
   };
 
   const moveButton = (

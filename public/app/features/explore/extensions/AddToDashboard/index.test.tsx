@@ -8,7 +8,7 @@ import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreState } from 'app/types';
+import { ExploreState } from 'app/types/explore';
 
 import { createEmptyQueryResponse } from '../../state/utils';
 

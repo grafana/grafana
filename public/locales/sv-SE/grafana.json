@@ -4399,7 +4399,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Offentlig",
         "tooltip-view-as-scene": "Visa som scen"
       }
     },
@@ -5173,7 +5172,6 @@
       "playlist-next": "Gå till nästa instrumentpanel",
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
-      "public-dashboard": "Offentlig",
       "refresh": "Uppdatera instrumentpanel",
       "save": "Spara instrumentpanel",
       "save-dashboard": {
@@ -5474,15 +5472,9 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Värdet har ännu inte sparats i Grafana-databasen",
       "not-yet-saved": "Värdet sparades inte i Grafana-databasen",
-      "open-pull-request-in-git-hub": "Öppna pull-begäran i GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Den här instrumentpanelen laddas från en gren i GitHub.",
       "title-dashboard-loaded-external-repository": "Den här instrumentpanelen laddas från ett externt arkiv",
-      "title-dashboard-loaded-request-git-hub": "Den här instrumentpanelen laddas från en pull-begäran i GitHub.",
-      "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel",
-      "value-not-saved": "Värdet har ännu inte sparats i Grafana-databasen",
-      "view-pull-request-in-git-hub": "Visa pull-begäran i GitHub"
+      "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel"
     },
     "dashboard-scene": {
       "text": {
@@ -7217,6 +7209,7 @@
       "when": "NÄR"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Drift"
     },
     "math": {
@@ -8503,7 +8496,7 @@
       "usage-count_other": "Används på {{count}} instrumentpaneler"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Sök efter namn eller beskrivning"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Laddar bibliotekspanel …"
@@ -8644,12 +8637,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8699,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8719,9 +8713,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10311,6 +10307,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "Den här funktionen är för närvarande under aktiv utveckling. För den bästa upplevelsen och de senaste förbättringarna rekommenderar vi att du använder <2> nightly-versionen</2> av Grafana."
@@ -11762,6 +11769,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
