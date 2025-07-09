@@ -172,6 +172,7 @@ const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
 /**
  * @internal
  * Returns the cell options for a field, migrating from legacy displayMode if necessary.
+ * TODO: remove live migration in favor of doing it in dashboard or panel migrator
  */
 export function getCellOptions(field: Field): TableCellOptions {
   if (field.config.custom?.displayMode) {
@@ -612,4 +613,13 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
       return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
     }
   }
+}
+
+/** @internal */
+export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDisplayMode) {
+  return (
+    cellType !== TableCellDisplayMode.DataLinks &&
+    cellType !== TableCellDisplayMode.Actions &&
+    (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
+  );
 }

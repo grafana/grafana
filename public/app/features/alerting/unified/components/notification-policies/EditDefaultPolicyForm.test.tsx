@@ -6,7 +6,7 @@ import { Button } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../../types/amroutes';

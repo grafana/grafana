@@ -10,6 +10,7 @@ import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
+import { PillCellOptionsEditor } from './cells/PillCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
@@ -77,6 +78,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.Image && (
         <ImageCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
+      {cellType === TableCellDisplayMode.Pill && (
+        <PillCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
     </div>
   );
 };
@@ -91,6 +95,7 @@ let cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
   { value: { type: TableCellDisplayMode.Actions }, label: 'Actions' },
+  { value: { type: TableCellDisplayMode.Pill }, label: 'Pill' },
 ];
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -9,8 +9,8 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';

@@ -5,7 +5,8 @@ import { locationService } from '@grafana/runtime';
 import { Space, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
-import { useDispatch, useSelector, UserOrg } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
+import { UserOrg } from 'app/types/user';
 
 import { Branding } from '../../Branding/Branding';
 

@@ -1,7 +1,7 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { DataSourcePluginCategory } from 'app/types';
+import { DataSourcePluginCategory } from 'app/types/datasources';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 import adobeAnalyticsSvg from 'img/plugins/adobe-analytics.svg';
 import appdynamicsSvg from 'img/plugins/appdynamics.svg';
