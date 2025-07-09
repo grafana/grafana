@@ -3,12 +3,19 @@ import { glob } from 'glob';
 import path from 'path';
 import process from 'process';
 
+// Support for node 22 and 24. Due to the many changes in importing json files
+// across recent node versions we load the json files using fs for simplicity.
+function loadJson(path: string) {
+  const rawJson = fs.readFileSync(path, 'utf8');
+  return JSON.parse(rawJson);
+}
+
 export function getPackageJson() {
-  return require(path.resolve(process.cwd(), 'package.json'));
+  return loadJson(path.resolve(process.cwd(), 'package.json'));
 }
 
 export function getPluginJson() {
-  return require(path.resolve(process.cwd(), 'plugin.json'));
+  return loadJson(path.resolve(process.cwd(), 'plugin.json'));
 }
 
 export async function getEntries(): Promise<Record<string, string>> {
