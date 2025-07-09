@@ -314,7 +314,15 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      // This route is for backward compatibility
+      // Previously we had a single admin page containing only the alertmanager settings
+      // We now have a separate route for the alertmanager settings and other settings can be added as extensions
       path: '/alerting/admin',
+      roles: () => ['Admin'],
+      component: () => <Navigate replace to="/alerting/admin/alertmanager" />,
+    },
+    {
+      path: '/alerting/admin/alertmanager',
       roles: () => ['Admin'],
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingSettings" */ 'app/features/alerting/unified/Settings')

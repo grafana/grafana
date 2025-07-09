@@ -7,24 +7,28 @@ import { useEditConfigurationDrawer } from './components/settings/ConfigurationD
 import { ExternalAlertmanagers } from './components/settings/ExternalAlertmanagers';
 import InternalAlertmanager from './components/settings/InternalAlertmanager';
 import { SettingsProvider, useSettings } from './components/settings/SettingsContext';
+import { useSettingsPageNav } from './settings/navigation';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
-function SettingsPage() {
+function AlertmanagerSettingsPage() {
   return (
     <SettingsProvider>
-      <SettingsContent />
+      <AlertmanagerSettingsContent />
     </SettingsProvider>
   );
 }
 
-function SettingsContent() {
+function AlertmanagerSettingsContent() {
   const [configurationDrawer, showConfiguration] = useEditConfigurationDrawer();
   const { isLoading } = useSettings();
 
+  const { navId, pageNav } = useSettingsPageNav();
+
   return (
     <AlertingPageWrapper
-      navId="alerting-admin"
+      navId={navId}
       isLoading={isLoading}
+      pageNav={pageNav}
       actions={[
         <WithReturnButton
           key="add-alertmanager"
@@ -54,4 +58,4 @@ function SettingsContent() {
   );
 }
 
-export default withPageErrorBoundary(SettingsPage);
+export default withPageErrorBoundary(AlertmanagerSettingsPage);
