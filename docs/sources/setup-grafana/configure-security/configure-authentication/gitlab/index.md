@@ -57,10 +57,6 @@ Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure GitLab authentication client using the Terraform provider
 
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default. Supported in the Terraform provider since v2.12.0.
-{{< /admonition >}}
-
 ```terraform
 resource "grafana_sso_settings" "gitlab_sso_settings" {
   provider_name = "gitlab"
