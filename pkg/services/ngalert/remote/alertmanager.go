@@ -376,7 +376,7 @@ func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels
 	}, nil
 }
 
-func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg *remoteClient.GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
+func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg remoteClient.GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
