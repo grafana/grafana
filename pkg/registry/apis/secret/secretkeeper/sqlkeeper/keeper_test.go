@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
@@ -44,7 +44,7 @@ func Test_SQLKeeperSetup(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, sqlKeeper)
 
-	keeperCfg := &secretv0alpha1.SystemKeeperConfig{}
+	keeperCfg := &secretv1beta1.SystemKeeperConfig{}
 
 	t.Run("storing an encrypted value returns no error", func(t *testing.T) {
 		externalId1, err := sqlKeeper.Store(ctx, keeperCfg, namespace1, plaintext1)

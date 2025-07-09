@@ -13,7 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -60,7 +60,7 @@ type decryptStorage struct {
 }
 
 // Decrypt decrypts a secure value from the keeper.
-func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (_ secretv0alpha1.ExposedSecureValue, decryptErr error) {
+func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (_ secretv1beta1.ExposedSecureValue, decryptErr error) {
 	ctx, span := s.tracer.Start(ctx, "DecryptStorage.Decrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),

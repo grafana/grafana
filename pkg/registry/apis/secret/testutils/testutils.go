@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -143,28 +143,28 @@ type Sut struct {
 }
 
 type CreateSvConfig struct {
-	Sv *secretv0alpha1.SecureValue
+	Sv *secretv1beta1.SecureValue
 }
 
-func CreateSvWithSv(sv *secretv0alpha1.SecureValue) func(*CreateSvConfig) {
+func CreateSvWithSv(sv *secretv1beta1.SecureValue) func(*CreateSvConfig) {
 	return func(cfg *CreateSvConfig) {
 		cfg.Sv = sv
 	}
 }
 
-func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*secretv0alpha1.SecureValue, error) {
+func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*secretv1beta1.SecureValue, error) {
 	cfg := CreateSvConfig{
-		Sv: &secretv0alpha1.SecureValue{
+		Sv: &secretv1beta1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sv1",
 				Namespace: "ns1",
 			},
-			Spec: secretv0alpha1.SecureValueSpec{
+			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
-				Value:       secretv0alpha1.NewExposedSecureValue("v1"),
+				Value:       secretv1beta1.NewExposedSecureValue("v1"),
 			},
-			Status: secretv0alpha1.SecureValueStatus{
-				Phase: secretv0alpha1.SecureValuePhasePending,
+			Status: secretv1beta1.SecureValueStatus{
+				Phase: secretv1beta1.SecureValuePhasePending,
 			},
 		},
 	}
@@ -179,12 +179,12 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 	return createdSv, nil
 }
 
-func (s *Sut) UpdateSv(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *Sut) UpdateSv(ctx context.Context, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
 	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor")
 	return newSv, err
 }
 
-func (s *Sut) DeleteSv(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (s *Sut) DeleteSv(ctx context.Context, namespace, name string) (*secretv1beta1.SecureValue, error) {
 	sv, err := s.SecureValueService.Delete(ctx, xkube.Namespace(namespace), name)
 	return sv, err
 }
@@ -197,6 +197,6 @@ func newKeeperServiceWrapper(keeper contracts.Keeper) *keeperServiceWrapper {
 	return &keeperServiceWrapper{keeper: keeper}
 }
 
-func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
 	return wrapper.keeper, nil
 }

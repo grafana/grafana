@@ -1,4 +1,4 @@
-package v0alpha1
+package v1beta1
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 
 const (
 	GROUP   = "secret.grafana.app"
-	VERSION = "v0alpha1"
+	VERSION = "v1beta1"
 )
 
 // SecureValuesResourceInfo is used when registering the API service.

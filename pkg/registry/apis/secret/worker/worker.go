@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/tracectx"
@@ -191,7 +191,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 	defer span.End()
 
 	if message.ReceiveCount >= int(w.config.MaxMessageProcessingAttempts) {
-		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseFailed, Message: fmt.Sprintf("Reached max number of attempts to complete operation: %s", message.Type)}); err != nil {
+		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv1beta1.SecureValueStatus{Phase: secretv1beta1.SecureValuePhaseFailed, Message: fmt.Sprintf("Reached max number of attempts to complete operation: %s", message.Type)}); err != nil {
 			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
 		}
 		if err := w.outboxQueue.Delete(ctx, message.MessageID); err != nil {
@@ -230,7 +230,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 
 		// Setting the status to Succeeded must be the last action
 		// since it acts as a fence to clients.
-		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseSucceeded}); err != nil {
+		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv1beta1.SecureValueStatus{Phase: secretv1beta1.SecureValuePhaseSucceeded}); err != nil {
 			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v %w", message, err)
 		}
 
@@ -246,7 +246,7 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 
 		// Setting the status to Succeeded must be the last action
 		// since it acts as a fence to clients.
-		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseSucceeded}); err != nil {
+		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv1beta1.SecureValueStatus{Phase: secretv1beta1.SecureValuePhaseSucceeded}); err != nil {
 			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
 		}
 

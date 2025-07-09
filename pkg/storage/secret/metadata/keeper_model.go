@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +37,7 @@ func (*keeperDB) TableName() string {
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
-func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
+func (kp *keeperDB) toKubernetes() (*secretv1beta1.Keeper, error) {
 	annotations := make(map[string]string, 0)
 	if kp.Annotations != "" {
 		if err := json.Unmarshal([]byte(kp.Annotations), &annotations); err != nil {
@@ -52,22 +52,22 @@ func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
 		}
 	}
 
-	resource := &secretv0alpha1.Keeper{
-		Spec: secretv0alpha1.KeeperSpec{
+	resource := &secretv1beta1.Keeper{
+		Spec: secretv1beta1.KeeperSpec{
 			Description: kp.Description,
 		},
 	}
 
 	// Obtain provider configs
-	provider := toProvider(secretv0alpha1.KeeperType(kp.Type), kp.Payload)
+	provider := toProvider(secretv1beta1.KeeperType(kp.Type), kp.Payload)
 	switch v := provider.(type) {
-	case *secretv0alpha1.AWSKeeperConfig:
+	case *secretv1beta1.AWSKeeperConfig:
 		resource.Spec.AWS = v
-	case *secretv0alpha1.AzureKeeperConfig:
+	case *secretv1beta1.AzureKeeperConfig:
 		resource.Spec.Azure = v
-	case *secretv0alpha1.GCPKeeperConfig:
+	case *secretv1beta1.GCPKeeperConfig:
 		resource.Spec.GCP = v
-	case *secretv0alpha1.HashiCorpKeeperConfig:
+	case *secretv1beta1.HashiCorpKeeperConfig:
 		resource.Spec.HashiCorp = v
 	}
 
@@ -94,7 +94,7 @@ func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
 }
 
 // toKeeperCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*keeperDB, error) {
+func toKeeperCreateRow(kp *secretv1beta1.Keeper, actorUID string) (*keeperDB, error) {
 	row, err := toKeeperRow(kp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map to row: %w", err)
@@ -112,7 +112,7 @@ func toKeeperCreateRow(kp *secretv0alpha1.Keeper, actorUID string) (*keeperDB, e
 }
 
 // toKeeperUpdateRow maps a Kubernetes resource into a DB row for existing resources being updated.
-func toKeeperUpdateRow(currentRow *keeperDB, newKeeper *secretv0alpha1.Keeper, actorUID string) (*keeperDB, error) {
+func toKeeperUpdateRow(currentRow *keeperDB, newKeeper *secretv1beta1.Keeper, actorUID string) (*keeperDB, error) {
 	row, err := toKeeperRow(newKeeper)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map to row: %w", err)
@@ -130,7 +130,7 @@ func toKeeperUpdateRow(currentRow *keeperDB, newKeeper *secretv0alpha1.Keeper, a
 }
 
 // toKeeperRow maps a Kubernetes Keeper resource into a Keeper DB row.
-func toKeeperRow(kp *secretv0alpha1.Keeper) (*keeperDB, error) {
+func toKeeperRow(kp *secretv1beta1.Keeper) (*keeperDB, error) {
 	var annotations string
 	if len(kp.Annotations) > 0 {
 		cleanedAnnotations := xkube.CleanAnnotations(kp.Annotations)
@@ -196,19 +196,19 @@ func toKeeperRow(kp *secretv0alpha1.Keeper) (*keeperDB, error) {
 
 // toTypeAndPayload obtain keeper type and payload from a Kubernetes Keeper resource.
 // TODO: Move as method of KeeperSpec
-func toTypeAndPayload(kp *secretv0alpha1.Keeper) (secretv0alpha1.KeeperType, string, error) {
+func toTypeAndPayload(kp *secretv1beta1.Keeper) (secretv1beta1.KeeperType, string, error) {
 	if kp.Spec.AWS != nil {
 		payload, err := json.Marshal(kp.Spec.AWS.AWSCredentials)
-		return secretv0alpha1.AWSKeeperType, string(payload), err
+		return secretv1beta1.AWSKeeperType, string(payload), err
 	} else if kp.Spec.Azure != nil {
 		payload, err := json.Marshal(kp.Spec.Azure)
-		return secretv0alpha1.AzureKeeperType, string(payload), err
+		return secretv1beta1.AzureKeeperType, string(payload), err
 	} else if kp.Spec.GCP != nil {
 		payload, err := json.Marshal(kp.Spec.GCP)
-		return secretv0alpha1.GCPKeeperType, string(payload), err
+		return secretv1beta1.GCPKeeperType, string(payload), err
 	} else if kp.Spec.HashiCorp != nil {
 		payload, err := json.Marshal(kp.Spec.HashiCorp)
-		return secretv0alpha1.HashiCorpKeeperType, string(payload), err
+		return secretv1beta1.HashiCorpKeeperType, string(payload), err
 	}
 
 	return "", "", fmt.Errorf("no keeper type found")
@@ -216,28 +216,28 @@ func toTypeAndPayload(kp *secretv0alpha1.Keeper) (secretv0alpha1.KeeperType, str
 
 // toProvider maps a KeeperType and payload into a provider config struct.
 // TODO: Move as method of KeeperType
-func toProvider(keeperType secretv0alpha1.KeeperType, payload string) secretv0alpha1.KeeperConfig {
+func toProvider(keeperType secretv1beta1.KeeperType, payload string) secretv1beta1.KeeperConfig {
 	switch keeperType {
-	case secretv0alpha1.AWSKeeperType:
-		aws := &secretv0alpha1.AWSKeeperConfig{}
+	case secretv1beta1.AWSKeeperType:
+		aws := &secretv1beta1.AWSKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), aws); err != nil {
 			return nil
 		}
 		return aws
-	case secretv0alpha1.AzureKeeperType:
-		azure := &secretv0alpha1.AzureKeeperConfig{}
+	case secretv1beta1.AzureKeeperType:
+		azure := &secretv1beta1.AzureKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), azure); err != nil {
 			return nil
 		}
 		return azure
-	case secretv0alpha1.GCPKeeperType:
-		gcp := &secretv0alpha1.GCPKeeperConfig{}
+	case secretv1beta1.GCPKeeperType:
+		gcp := &secretv1beta1.GCPKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), gcp); err != nil {
 			return nil
 		}
 		return gcp
-	case secretv0alpha1.HashiCorpKeeperType:
-		hashicorp := &secretv0alpha1.HashiCorpKeeperConfig{}
+	case secretv1beta1.HashiCorpKeeperType:
+		hashicorp := &secretv1beta1.HashiCorpKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), hashicorp); err != nil {
 			return nil
 		}
@@ -248,7 +248,7 @@ func toProvider(keeperType secretv0alpha1.KeeperType, payload string) secretv0al
 }
 
 // extractSecureValues extracts unique securevalues referenced by the keeper, if any.
-func extractSecureValues(kp *secretv0alpha1.Keeper) map[string]struct{} {
+func extractSecureValues(kp *secretv1beta1.Keeper) map[string]struct{} {
 	switch {
 	case kp.Spec.AWS != nil:
 		secureValues := make(map[string]struct{}, 0)
