@@ -12,10 +12,10 @@ import (
 
 type InlineSecureValueStore interface {
 	// Check that the request user can reference a secret in the context of a given resource (owner)
-	CanReference(ctx context.Context, owner common.ResourceReference, names ...string) (bool, error)
+	CanReference(ctx context.Context, owner common.ResourceReference, values common.InlineSecureValues) (bool, error)
 
 	// Update secure values for the resource
 	// Values that are either REMOVED or no longer present in the set will be deleted
 	// Updates with equal raw values may continue using the previously saved name
-	UpdateSecureValues(ctx context.Context, owner common.ResourceReference, secure common.InlineSecureValues) (common.InlineSecureValues, error)
+	UpdateSecureValues(ctx context.Context, owner common.ResourceReference, values common.InlineSecureValues) (common.InlineSecureValues, error)
 }

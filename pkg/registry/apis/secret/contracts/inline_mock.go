@@ -22,16 +22,9 @@ func (_m *MockInlineSecureValueStore) EXPECT() *MockInlineSecureValueStore_Expec
 	return &MockInlineSecureValueStore_Expecter{mock: &_m.Mock}
 }
 
-// CanReference provides a mock function with given fields: ctx, owner, names
-func (_m *MockInlineSecureValueStore) CanReference(ctx context.Context, owner v0alpha1.ResourceReference, names ...string) (bool, error) {
-	_va := make([]interface{}, len(names))
-	for _i := range names {
-		_va[_i] = names[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, owner)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
+// CanReference provides a mock function with given fields: ctx, owner, values
+func (_m *MockInlineSecureValueStore) CanReference(ctx context.Context, owner v0alpha1.ResourceReference, values map[string]v0alpha1.InlineSecureValue) (bool, error) {
+	ret := _m.Called(ctx, owner, values)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CanReference")
@@ -39,17 +32,17 @@ func (_m *MockInlineSecureValueStore) CanReference(ctx context.Context, owner v0
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, ...string) (bool, error)); ok {
-		return rf(ctx, owner, names...)
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) (bool, error)); ok {
+		return rf(ctx, owner, values)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, ...string) bool); ok {
-		r0 = rf(ctx, owner, names...)
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) bool); ok {
+		r0 = rf(ctx, owner, values)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ResourceReference, ...string) error); ok {
-		r1 = rf(ctx, owner, names...)
+	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) error); ok {
+		r1 = rf(ctx, owner, values)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -65,21 +58,14 @@ type MockInlineSecureValueStore_CanReference_Call struct {
 // CanReference is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner v0alpha1.ResourceReference
-//   - names ...string
-func (_e *MockInlineSecureValueStore_Expecter) CanReference(ctx interface{}, owner interface{}, names ...interface{}) *MockInlineSecureValueStore_CanReference_Call {
-	return &MockInlineSecureValueStore_CanReference_Call{Call: _e.mock.On("CanReference",
-		append([]interface{}{ctx, owner}, names...)...)}
+//   - values map[string]v0alpha1.InlineSecureValue
+func (_e *MockInlineSecureValueStore_Expecter) CanReference(ctx interface{}, owner interface{}, values interface{}) *MockInlineSecureValueStore_CanReference_Call {
+	return &MockInlineSecureValueStore_CanReference_Call{Call: _e.mock.On("CanReference", ctx, owner, values)}
 }
 
-func (_c *MockInlineSecureValueStore_CanReference_Call) Run(run func(ctx context.Context, owner v0alpha1.ResourceReference, names ...string)) *MockInlineSecureValueStore_CanReference_Call {
+func (_c *MockInlineSecureValueStore_CanReference_Call) Run(run func(ctx context.Context, owner v0alpha1.ResourceReference, values map[string]v0alpha1.InlineSecureValue)) *MockInlineSecureValueStore_CanReference_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]string, len(args)-2)
-		for i, a := range args[2:] {
-			if a != nil {
-				variadicArgs[i] = a.(string)
-			}
-		}
-		run(args[0].(context.Context), args[1].(v0alpha1.ResourceReference), variadicArgs...)
+		run(args[0].(context.Context), args[1].(v0alpha1.ResourceReference), args[2].(map[string]v0alpha1.InlineSecureValue))
 	})
 	return _c
 }
@@ -89,14 +75,14 @@ func (_c *MockInlineSecureValueStore_CanReference_Call) Return(_a0 bool, _a1 err
 	return _c
 }
 
-func (_c *MockInlineSecureValueStore_CanReference_Call) RunAndReturn(run func(context.Context, v0alpha1.ResourceReference, ...string) (bool, error)) *MockInlineSecureValueStore_CanReference_Call {
+func (_c *MockInlineSecureValueStore_CanReference_Call) RunAndReturn(run func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) (bool, error)) *MockInlineSecureValueStore_CanReference_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateSecureValues provides a mock function with given fields: ctx, owner, secure
-func (_m *MockInlineSecureValueStore) UpdateSecureValues(ctx context.Context, owner v0alpha1.ResourceReference, secure map[string]v0alpha1.InlineSecureValue) (map[string]v0alpha1.InlineSecureValue, error) {
-	ret := _m.Called(ctx, owner, secure)
+// UpdateSecureValues provides a mock function with given fields: ctx, owner, values
+func (_m *MockInlineSecureValueStore) UpdateSecureValues(ctx context.Context, owner v0alpha1.ResourceReference, values map[string]v0alpha1.InlineSecureValue) (map[string]v0alpha1.InlineSecureValue, error) {
+	ret := _m.Called(ctx, owner, values)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSecureValues")
@@ -105,10 +91,10 @@ func (_m *MockInlineSecureValueStore) UpdateSecureValues(ctx context.Context, ow
 	var r0 map[string]v0alpha1.InlineSecureValue
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) (map[string]v0alpha1.InlineSecureValue, error)); ok {
-		return rf(ctx, owner, secure)
+		return rf(ctx, owner, values)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) map[string]v0alpha1.InlineSecureValue); ok {
-		r0 = rf(ctx, owner, secure)
+		r0 = rf(ctx, owner, values)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]v0alpha1.InlineSecureValue)
@@ -116,7 +102,7 @@ func (_m *MockInlineSecureValueStore) UpdateSecureValues(ctx context.Context, ow
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.ResourceReference, map[string]v0alpha1.InlineSecureValue) error); ok {
-		r1 = rf(ctx, owner, secure)
+		r1 = rf(ctx, owner, values)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,12 +118,12 @@ type MockInlineSecureValueStore_UpdateSecureValues_Call struct {
 // UpdateSecureValues is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner v0alpha1.ResourceReference
-//   - secure map[string]v0alpha1.InlineSecureValue
-func (_e *MockInlineSecureValueStore_Expecter) UpdateSecureValues(ctx interface{}, owner interface{}, secure interface{}) *MockInlineSecureValueStore_UpdateSecureValues_Call {
-	return &MockInlineSecureValueStore_UpdateSecureValues_Call{Call: _e.mock.On("UpdateSecureValues", ctx, owner, secure)}
+//   - values map[string]v0alpha1.InlineSecureValue
+func (_e *MockInlineSecureValueStore_Expecter) UpdateSecureValues(ctx interface{}, owner interface{}, values interface{}) *MockInlineSecureValueStore_UpdateSecureValues_Call {
+	return &MockInlineSecureValueStore_UpdateSecureValues_Call{Call: _e.mock.On("UpdateSecureValues", ctx, owner, values)}
 }
 
-func (_c *MockInlineSecureValueStore_UpdateSecureValues_Call) Run(run func(ctx context.Context, owner v0alpha1.ResourceReference, secure map[string]v0alpha1.InlineSecureValue)) *MockInlineSecureValueStore_UpdateSecureValues_Call {
+func (_c *MockInlineSecureValueStore_UpdateSecureValues_Call) Run(run func(ctx context.Context, owner v0alpha1.ResourceReference, values map[string]v0alpha1.InlineSecureValue)) *MockInlineSecureValueStore_UpdateSecureValues_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(v0alpha1.ResourceReference), args[2].(map[string]v0alpha1.InlineSecureValue))
 	})

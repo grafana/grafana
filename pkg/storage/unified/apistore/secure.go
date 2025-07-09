@@ -17,9 +17,7 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 		return false, err
 	}
 
-	if previousObject == nil {
-		changed = true
-	} else {
+	if previousObject != nil {
 		// Merge in any values from the previous object and handle remove
 		previous, err := previousObject.GetSecureValues()
 		if err != nil {
@@ -55,8 +53,10 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 			}
 			previous[k] = last
 		}
+	}
 
-		secure = previous
+	if store == nil {
+		return false, fmt.Errorf("secure value support is not configured")
 	}
 
 	owner := utils.ToResourceReference(obj)
@@ -64,6 +64,7 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 	if err != nil {
 		return false, err
 	}
+	// TODO: calculate change from the response
 	return changed, obj.SetSecureValues(secure)
 }
 
