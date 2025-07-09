@@ -531,6 +531,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	_, err = dbSection.NewKey("max_idle_conn", "2")
 	require.NoError(t, err)
 
+	_, err = dbSection.NewKey("high_availability", "false")
+	require.NoError(t, err)
+
 	cfgPath := filepath.Join(cfgDir, "test.ini")
 	err = cfg.SaveTo(cfgPath)
 	require.NoError(t, err)
