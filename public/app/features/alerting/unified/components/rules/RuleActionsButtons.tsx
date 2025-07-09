@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
@@ -16,7 +17,7 @@ import { GRAFANA_RULES_SOURCE_NAME, getRulesSourceName } from '../../utils/datas
 import { groupIdentifier } from '../../utils/groupIdentifier';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { rulerRuleType } from '../../utils/rules';
+import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 
 import { RedirectToCloneRule } from './CloneRule';
@@ -104,6 +105,16 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
     return null;
   }
 
+  // determine if this rule can be silenced by checking for Grafana Alert rule type and extracting the UID
+  let ruleUid: string | undefined;
+  if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
+    ruleUid = rule.rulerRule?.grafana_alert.uid;
+  }
+
+  if (prometheusRuleType.grafana.alertingRule(rule.promRule)) {
+    ruleUid = rule.promRule?.uid;
+  }
+
   return (
     <Stack gap={1} alignItems="center" wrap="nowrap">
       {buttons}
@@ -132,8 +143,8 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
         buttonSize={buttonSize}
       />
       {deleteModal}
-      {rulerRuleType.grafana.alertingRule(rule.rulerRule) && showSilenceDrawer && (
-        <SilenceGrafanaRuleDrawer rulerRule={rule.rulerRule} onClose={() => setShowSilenceDrawer(false)} />
+      {isString(ruleUid) && showSilenceDrawer && (
+        <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule

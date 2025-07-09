@@ -1,7 +1,7 @@
 import { addMilliseconds, formatDistanceToNowStrict, isBefore } from 'date-fns';
 
 import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data';
-import { GrafanaPromRuleDTO, RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleDTO, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { isNullDate, parsePrometheusDuration } from '../../utils/time';
