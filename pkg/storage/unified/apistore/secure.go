@@ -17,19 +17,29 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 		return false, err
 	}
 
-	if previousObject != nil {
+	if previousObject == nil {
+		if len(secure) == 0 {
+			return false, nil // create
+		}
+		if store == nil {
+			return false, fmt.Errorf("secure value support is not configured (create)")
+		}
+	} else {
 		// Merge in any values from the previous object and handle remove
 		previous, err := previousObject.GetSecureValues()
 		if err != nil {
 			return false, err
 		}
-		if previous != nil && store == nil {
-			return false, fmt.Errorf("secure value support is not configured")
+		if len(previous) > 0 && store == nil {
+			return false, fmt.Errorf("secure value support is not configured (update)")
 		}
 
 		// Keep exactly what we had before
 		if len(secure) == 0 {
-			return false, obj.SetSecureValues(previous)
+			if len(previous) > 0 {
+				return false, obj.SetSecureValues(previous)
+			}
+			return false, nil
 		}
 
 		for k, next := range secure {
@@ -55,10 +65,6 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 		}
 	}
 
-	if store == nil {
-		return false, fmt.Errorf("secure value support is not configured")
-	}
-
 	owner := utils.ToResourceReference(obj)
 	secure, err = store.UpdateSecureValues(ctx, owner, secure)
 	if err != nil {
@@ -76,7 +82,7 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 	}
 
 	if store == nil {
-		return fmt.Errorf("secure value support is not configured")
+		return fmt.Errorf("secure value support is not configured (delete)")
 	}
 
 	for k, v := range secure {

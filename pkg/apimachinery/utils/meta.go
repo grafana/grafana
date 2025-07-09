@@ -909,7 +909,7 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 		return
 	}
 
-	return fmt.Errorf("not yet supported on this object")
+	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
 }
 
 func ToResourceReference(obj GrafanaMetaAccessor) common.ResourceReference {

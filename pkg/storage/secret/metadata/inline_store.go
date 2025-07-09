@@ -113,9 +113,10 @@ func (i *inlineStorage) UpdateSecureValues(ctx context.Context, owner common.Res
 		if secure.Remove {
 			if prev != nil {
 				// TODO... only if owned by the owner
-				if err := i.db.Delete(ctx, xkube.Namespace(owner.Namespace), prev.Name); err != nil {
-					return nil, err
-				}
+				fmt.Printf("TODO... delete previous value")
+				// if err := i.db.Delete(ctx, xkube.Namespace(owner.Namespace), prev.Name); err != nil {
+				// 	return nil, err
+				// }
 			}
 			continue
 		}
