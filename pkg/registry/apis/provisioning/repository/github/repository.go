@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"net/url"
 	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -136,52 +133,14 @@ func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) 
 
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	if err := r.gh.IsAuthenticated(ctx); err != nil {
-		return &provisioning.TestResults{
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", "github", "token").String(),
-				Detail: err.Error(),
-			}}}, nil
-	}
-
 	url := r.config.Spec.GitHub.URL
-	owner, repo, err := ParseOwnerRepoGithub(url)
+	_, _, err := ParseOwnerRepoGithub(url)
 	if err != nil {
 		return repository.FromFieldError(field.Invalid(
 			field.NewPath("spec", "github", "url"), url, err.Error())), nil
 	}
 
-	// FIXME: check token permissions
-	ok, err := r.gh.RepoExists(ctx, owner, repo)
-	if err != nil {
-		return repository.FromFieldError(field.Invalid(
-			field.NewPath("spec", "github", "url"), url, err.Error())), nil
-	}
-
-	if !ok {
-		return repository.FromFieldError(field.NotFound(
-			field.NewPath("spec", "github", "url"), url)), nil
-	}
-
-	branch := r.config.Spec.GitHub.Branch
-	ok, err = r.gh.BranchExists(ctx, r.owner, r.repo, branch)
-	if err != nil {
-		return repository.FromFieldError(field.Invalid(
-			field.NewPath("spec", "github", "branch"), branch, err.Error())), nil
-	}
-
-	if !ok {
-		return repository.FromFieldError(field.NotFound(
-			field.NewPath("spec", "github", "branch"), branch)), nil
-	}
-
-	return &provisioning.TestResults{
-		Code:    http.StatusOK,
-		Success: true,
-	}, nil
+	return r.gitRepo.Test(ctx)
 }
 
 // ReadResource implements provisioning.Repository.
@@ -253,44 +212,6 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	}
 
 	return ret, nil
-}
-
-func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName string) error {
-	if !git.IsValidGitBranchName(branchName) {
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Code:    http.StatusBadRequest,
-				Message: "invalid branch name",
-			},
-		}
-	}
-
-	ok, err := r.gh.BranchExists(ctx, r.owner, r.repo, branchName)
-	if err != nil {
-		return fmt.Errorf("check branch exists: %w", err)
-	}
-
-	if ok {
-		logging.FromContext(ctx).Info("branch already exists", "branch", branchName)
-
-		return nil
-	}
-
-	srcBranch := r.config.Spec.GitHub.Branch
-	if err := r.gh.CreateBranch(ctx, r.owner, r.repo, srcBranch, branchName); err != nil {
-		if errors.Is(err, ErrResourceAlreadyExists) {
-			return &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Code:    http.StatusConflict,
-					Message: "branch already exists",
-				},
-			}
-		}
-
-		return fmt.Errorf("create branch: %w", err)
-	}
-
-	return nil
 }
 
 func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {

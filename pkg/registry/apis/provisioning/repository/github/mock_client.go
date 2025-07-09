@@ -21,65 +21,6 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
-// BranchExists provides a mock function with given fields: ctx, owner, repository, branchName
-func (_m *MockClient) BranchExists(ctx context.Context, owner string, repository string, branchName string) (bool, error) {
-	ret := _m.Called(ctx, owner, repository, branchName)
-
-	if len(ret) == 0 {
-		panic("no return value specified for BranchExists")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (bool, error)); ok {
-		return rf(ctx, owner, repository, branchName)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) bool); ok {
-		r0 = rf(ctx, owner, repository, branchName)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, owner, repository, branchName)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockClient_BranchExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BranchExists'
-type MockClient_BranchExists_Call struct {
-	*mock.Call
-}
-
-// BranchExists is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner string
-//   - repository string
-//   - branchName string
-func (_e *MockClient_Expecter) BranchExists(ctx interface{}, owner interface{}, repository interface{}, branchName interface{}) *MockClient_BranchExists_Call {
-	return &MockClient_BranchExists_Call{Call: _e.mock.On("BranchExists", ctx, owner, repository, branchName)}
-}
-
-func (_c *MockClient_BranchExists_Call) Run(run func(ctx context.Context, owner string, repository string, branchName string)) *MockClient_BranchExists_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
-	})
-	return _c
-}
-
-func (_c *MockClient_BranchExists_Call) Return(_a0 bool, _a1 error) *MockClient_BranchExists_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockClient_BranchExists_Call) RunAndReturn(run func(context.Context, string, string, string) (bool, error)) *MockClient_BranchExists_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Commits provides a mock function with given fields: ctx, owner, repository, path, branch
 func (_m *MockClient) Commits(ctx context.Context, owner string, repository string, path string, branch string) ([]Commit, error) {
 	ret := _m.Called(ctx, owner, repository, path, branch)
@@ -138,56 +79,6 @@ func (_c *MockClient_Commits_Call) Return(_a0 []Commit, _a1 error) *MockClient_C
 }
 
 func (_c *MockClient_Commits_Call) RunAndReturn(run func(context.Context, string, string, string, string) ([]Commit, error)) *MockClient_Commits_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateBranch provides a mock function with given fields: ctx, owner, repository, sourceBranch, branchName
-func (_m *MockClient) CreateBranch(ctx context.Context, owner string, repository string, sourceBranch string, branchName string) error {
-	ret := _m.Called(ctx, owner, repository, sourceBranch, branchName)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateBranch")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) error); ok {
-		r0 = rf(ctx, owner, repository, sourceBranch, branchName)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockClient_CreateBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateBranch'
-type MockClient_CreateBranch_Call struct {
-	*mock.Call
-}
-
-// CreateBranch is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner string
-//   - repository string
-//   - sourceBranch string
-//   - branchName string
-func (_e *MockClient_Expecter) CreateBranch(ctx interface{}, owner interface{}, repository interface{}, sourceBranch interface{}, branchName interface{}) *MockClient_CreateBranch_Call {
-	return &MockClient_CreateBranch_Call{Call: _e.mock.On("CreateBranch", ctx, owner, repository, sourceBranch, branchName)}
-}
-
-func (_c *MockClient_CreateBranch_Call) Run(run func(ctx context.Context, owner string, repository string, sourceBranch string, branchName string)) *MockClient_CreateBranch_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
-	})
-	return _c
-}
-
-func (_c *MockClient_CreateBranch_Call) Return(_a0 error) *MockClient_CreateBranch_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockClient_CreateBranch_Call) RunAndReturn(run func(context.Context, string, string, string, string) error) *MockClient_CreateBranch_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -458,52 +349,6 @@ func (_c *MockClient_GetWebhook_Call) RunAndReturn(run func(context.Context, str
 	return _c
 }
 
-// IsAuthenticated provides a mock function with given fields: ctx
-func (_m *MockClient) IsAuthenticated(ctx context.Context) error {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IsAuthenticated")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockClient_IsAuthenticated_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsAuthenticated'
-type MockClient_IsAuthenticated_Call struct {
-	*mock.Call
-}
-
-// IsAuthenticated is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockClient_Expecter) IsAuthenticated(ctx interface{}) *MockClient_IsAuthenticated_Call {
-	return &MockClient_IsAuthenticated_Call{Call: _e.mock.On("IsAuthenticated", ctx)}
-}
-
-func (_c *MockClient_IsAuthenticated_Call) Run(run func(ctx context.Context)) *MockClient_IsAuthenticated_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *MockClient_IsAuthenticated_Call) Return(_a0 error) *MockClient_IsAuthenticated_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockClient_IsAuthenticated_Call) RunAndReturn(run func(context.Context) error) *MockClient_IsAuthenticated_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // ListPullRequestFiles provides a mock function with given fields: ctx, owner, repository, number
 func (_m *MockClient) ListPullRequestFiles(ctx context.Context, owner string, repository string, number int) ([]CommitFile, error) {
 	ret := _m.Called(ctx, owner, repository, number)
@@ -621,64 +466,6 @@ func (_c *MockClient_ListWebhooks_Call) Return(_a0 []WebhookConfig, _a1 error) *
 }
 
 func (_c *MockClient_ListWebhooks_Call) RunAndReturn(run func(context.Context, string, string) ([]WebhookConfig, error)) *MockClient_ListWebhooks_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RepoExists provides a mock function with given fields: ctx, owner, repository
-func (_m *MockClient) RepoExists(ctx context.Context, owner string, repository string) (bool, error) {
-	ret := _m.Called(ctx, owner, repository)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RepoExists")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
-		return rf(ctx, owner, repository)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
-		r0 = rf(ctx, owner, repository)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, owner, repository)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockClient_RepoExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RepoExists'
-type MockClient_RepoExists_Call struct {
-	*mock.Call
-}
-
-// RepoExists is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner string
-//   - repository string
-func (_e *MockClient_Expecter) RepoExists(ctx interface{}, owner interface{}, repository interface{}) *MockClient_RepoExists_Call {
-	return &MockClient_RepoExists_Call{Call: _e.mock.On("RepoExists", ctx, owner, repository)}
-}
-
-func (_c *MockClient_RepoExists_Call) Run(run func(ctx context.Context, owner string, repository string)) *MockClient_RepoExists_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *MockClient_RepoExists_Call) Return(_a0 bool, _a1 error) *MockClient_RepoExists_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockClient_RepoExists_Call) RunAndReturn(run func(context.Context, string, string) (bool, error)) *MockClient_RepoExists_Call {
 	_c.Call.Return(run)
 	return _c
 }
