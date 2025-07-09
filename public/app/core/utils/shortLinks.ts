@@ -67,7 +67,6 @@ export const createAndCopyShortLink = (path: string) => {
       });
       dispatch(notifyApp(createSuccessNotification('Shortened link copied to clipboard')));
     } else {
-      console.log('shortLink is undefined');
       dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
     }
   }
