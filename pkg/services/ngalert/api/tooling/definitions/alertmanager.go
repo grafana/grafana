@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	alertingTemplates "github.com/grafana/alerting/templates"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -812,27 +811,12 @@ func (c *PostableUserConfig) GetMergedAlertmanagerConfig() (MergeResult, error) 
 }
 
 // GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of TemplateDefinitions.
-func (c *PostableUserConfig) GetMergedTemplateDefinitions() []alertingTemplates.TemplateDefinition {
-	out := make([]alertingTemplates.TemplateDefinition, 0, len(c.TemplateFiles))
-	for name, tmpl := range c.TemplateFiles {
-		out = append(out, alertingTemplates.TemplateDefinition{
-			Name:     name,
-			Template: tmpl,
-			Kind:     alertingTemplates.GrafanaKind,
-		})
-	}
-	if len(c.ExtraConfigs) == 0 {
+func (c *PostableUserConfig) GetMergedTemplateDefinitions() []definition.PostableApiTemplate {
+	out := definition.TemplatesMapToPostableAPITemplates(c.TemplateFiles, definition.GrafanaTemplateKind)
+	if len(c.ExtraConfigs) == 0 || len(c.ExtraConfigs[0].TemplateFiles) == 0 {
 		return out
 	}
-	// support only one config for now
-	for name, tmpl := range c.ExtraConfigs[0].TemplateFiles {
-		out = append(out, alertingTemplates.TemplateDefinition{
-			Name:     name,
-			Template: tmpl,
-			Kind:     alertingTemplates.MimirKind,
-		})
-	}
-	return out
+	return append(out, definition.TemplatesMapToPostableAPITemplates(c.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)...)
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
