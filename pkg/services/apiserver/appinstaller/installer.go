@@ -162,12 +162,14 @@ func createPostStartHook(
 		logger.Debug("Initializing app", "app", installer.ManifestData().AppName)
 
 		if err := installer.InitializeApp(*hookContext.LoopbackClientConfig); err != nil {
+			logger.Error("Failed to initialize app", "app", installer.ManifestData().AppName, "error", err)
 			return fmt.Errorf("failed to initialize app %s: %w", installer.ManifestData().AppName, err)
 		}
 
 		logger.Info("App initialized", "app", installer.ManifestData().AppName)
 		app, err := installer.App()
 		if err != nil {
+			logger.Error("Failed to initialize app", "app", installer.ManifestData().AppName, "error", err)
 			return fmt.Errorf("failed to get app from installer %s: %w", installer.ManifestData().AppName, err)
 		}
 		return app.Runner().Run(hookContext.Context)
