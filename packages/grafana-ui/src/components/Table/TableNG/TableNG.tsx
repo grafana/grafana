@@ -67,6 +67,7 @@ type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, Tabl
 export function TableNG(props: TableNGProps) {
   const {
     cellHeight,
+    cellHeightCustom,
     data,
     enablePagination = false,
     enableSharedCrosshair = false,
@@ -143,7 +144,7 @@ export function TableNG(props: TableNGProps) {
     setSortColumns,
   } = useSortedRows(filteredRows, data.fields, { hasNestedFrames, initialSortBy });
 
-  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight);
+  const defaultRowHeight = getDefaultRowHeight(theme, cellHeight, cellHeightCustom);
   const defaultHeaderHeight = getDefaultRowHeight(theme, TableCellHeight.Sm);
   const [isInspecting, setIsInspecting] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -188,7 +189,7 @@ export function TableNG(props: TableNGProps) {
     width: availableWidth,
     height,
     headerHeight,
-    footerHeight: hasFooter ? defaultRowHeight : 0,
+    footerHeight: hasFooter ? (typeof defaultRowHeight === 'number' ? defaultRowHeight : TABLE.MAX_CELL_HEIGHT) : 0,
     rowHeight,
   });
 
@@ -204,7 +205,8 @@ export function TableNG(props: TableNGProps) {
   const commonDataGridProps = useMemo(
     () =>
       ({
-        enableVirtualization,
+        enableVirtualization:
+          typeof enableVirtualization === 'boolean' ? enableVirtualization : cellHeight !== TableCellHeight.Auto,
         defaultColumnOptions: {
           minWidth: 50,
           resizable: true,
@@ -249,6 +251,7 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
     [
+      cellHeight,
       enableVirtualization,
       resizeHandler,
       sortColumns,
@@ -314,7 +317,15 @@ export function TableNG(props: TableNGProps) {
 
           // meh, this should be cached by the renderRow() call?
           if (rowIdx !== lastRowIdx) {
-            _rowHeight = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
+            // certain cell types require a height to be provided. if we're using auto height,
+            // we will just send the Max cell height as the value. we should spend time figuring out
+            // how to make all of the cell types work with dynamic heights and kill this _rowHeight.
+            _rowHeight =
+              typeof rowHeight === 'function'
+                ? rowHeight(props.row)
+                : typeof rowHeight === 'string'
+                  ? TABLE.MAX_CELL_HEIGHT
+                  : rowHeight;
             lastRowIdx = rowIdx;
           }
 
@@ -329,7 +340,7 @@ export function TableNG(props: TableNGProps) {
             colors = {};
           }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors);
+          const cellStyle = getCellStyles(theme, field, shouldWrap, shouldOverflow, withTooltip, colors);
 
           return (
             <Cell
@@ -470,7 +481,7 @@ export function TableNG(props: TableNGProps) {
         if (row.__depth === 0) {
           return (
             <RowExpander
-              height={defaultRowHeight}
+              height={typeof defaultRowHeight === 'string' ? TABLE.MAX_CELL_HEIGHT : defaultRowHeight}
               isExpanded={expandedRows[row.__index] ?? false}
               onCellExpand={() => {
                 setExpandedRows({ ...expandedRows, [row.__index]: !expandedRows[row.__index] });
@@ -805,7 +816,6 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 const getCellStyles = (
   theme: GrafanaTheme2,
   field: Field,
-  rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
   hasTooltip: boolean,
@@ -815,11 +825,9 @@ const getCellStyles = (
     cell: css({
       textOverflow: 'initial',
       background: colors.bgColor ?? 'inherit',
-      alignContent: 'center',
+      alignContent: 'flex-start',
       justifyContent: getTextAlign(field),
-      paddingInline: TABLE.CELL_PADDING,
-      height: '100%',
-      minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
+      padding: TABLE.CELL_PADDING,
       ...(shouldWrap && { whiteSpace: 'pre-line' }),
       ...(hasTooltip && { cursor: 'pointer' }),
       '&:last-child': {

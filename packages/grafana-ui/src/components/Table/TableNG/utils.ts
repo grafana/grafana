@@ -32,7 +32,11 @@ export type CellHeightCalculator = (text: string, cellWidth: number) => number;
  * @internal
  * Returns the default row height based on the theme and cell height setting.
  */
-export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCellHeight): number {
+export function getDefaultRowHeight(
+  theme: GrafanaTheme2,
+  cellHeight?: TableCellHeight,
+  customCellHeight?: number
+): number | string {
   const bodyFontSize = theme.typography.fontSize;
   const lineHeight = theme.typography.body.lineHeight;
 
@@ -43,6 +47,10 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
       return 42;
     case TableCellHeight.Lg:
       return TABLE.MAX_CELL_HEIGHT;
+    case TableCellHeight.Auto:
+      return 'auto';
+    case TableCellHeight.Custom:
+      return customCellHeight ?? TABLE.MAX_CELL_HEIGHT;
   }
 
   return TABLE.CELL_PADDING * 2 + bodyFontSize * lineHeight;
@@ -128,11 +136,13 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
+  const cellOptions = getCellOptions(field);
   return (
     field.type === FieldType.string &&
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensure we don't apply overflow hover states for type image
-    getCellOptions(field).type !== TableCellDisplayMode.Image &&
+    cellOptions.type !== TableCellDisplayMode.Image &&
+    cellOptions.type !== TableCellDisplayMode.Markdown &&
     !shouldTextWrap(field) &&
     !isCellInspectEnabled(field)
   );

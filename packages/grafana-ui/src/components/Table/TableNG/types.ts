@@ -130,6 +130,7 @@ export interface BaseTableProps {
   footerValues?: FooterItem[];
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
+  cellHeightCustom?: number;
   structureRev?: number;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
@@ -248,6 +249,11 @@ export interface AutoCellProps {
   justifyContent: Property.JustifyContent;
   rowIdx: number;
   cellOptions: TableCellOptions;
+}
+
+export interface MarkdownCellProps {
+  field: Field;
+  rowIdx: number;
 }
 
 export interface ActionCellProps {
