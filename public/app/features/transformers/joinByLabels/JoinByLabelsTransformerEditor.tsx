@@ -108,7 +108,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
 
       <InlineFieldRow>
         <InlineField
-          error="required"
+          error={t('transformers.join-by-labels-transformer-editor.error-required', 'Required')}
           invalid={!Boolean(options.value?.length)}
           label={t('transformers.join-by-labels-transformer-editor.label-value', 'Value')}
           labelWidth={labelWidth}

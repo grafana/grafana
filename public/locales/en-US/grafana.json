@@ -12474,6 +12474,12 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "Calculate",
+          "group-by": "Group by"
+        }
+      },
       "placeholder-ignored": "Ignored",
       "placeholder-select-stats": "Select stats"
     },
@@ -12549,6 +12555,7 @@
       }
     },
     "join-by-labels-transformer-editor": {
+      "error-required": "Required",
       "info": {
         "input-contain-labels": "The input does not contain any labels",
         "no-input-or-labels-found": "No input (or labels) found",
@@ -12664,7 +12671,31 @@
     },
     "prepare-time-series-editor": {
       "label-format": "Format",
-      "label-info": "Info"
+      "label-info": "Info",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": "Convert each frame to long format"
+        },
+        "label": {
+          "long-time-series": "Long time series"
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": "Creates a new frame for each time/number pair"
+        },
+        "label": {
+          "multiframe-time-series": "Multi-frame time series"
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": "Creates a single frame joined by time"
+        },
+        "label": {
+          "wide-time-series": "Wide time series"
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "and",

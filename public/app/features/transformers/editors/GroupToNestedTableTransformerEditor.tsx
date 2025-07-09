@@ -123,11 +123,6 @@ export const GroupToNestedTableTransformerEditor = ({
   );
 };
 
-const options = [
-  { label: 'Group by', value: GroupByOperationID.groupBy },
-  { label: 'Calculate', value: GroupByOperationID.aggregate },
-];
-
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -140,6 +135,17 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     },
     [config, onConfigChange]
   );
+
+  const options = [
+    {
+      label: t('transformers.group-by-field-configuration.options.label.group-by', 'Group by'),
+      value: GroupByOperationID.groupBy,
+    },
+    {
+      label: t('transformers.group-by-field-configuration.options.label.calculate', 'Calculate'),
+      value: GroupByOperationID.aggregate,
+    },
+  ];
 
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
