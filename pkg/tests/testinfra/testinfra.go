@@ -526,9 +526,9 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = dbSection.NewKey("query_retries", fmt.Sprintf("%d", queryRetries))
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_open_conn", "2")
+	_, err = dbSection.NewKey("max_open_conn", "5")
 	require.NoError(t, err)
-	_, err = dbSection.NewKey("max_idle_conn", "2")
+	_, err = dbSection.NewKey("max_idle_conn", "5")
 	require.NoError(t, err)
 
 	_, err = dbSection.NewKey("high_availability", "false")
