@@ -10,10 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
+	"github.com/grafana/grafana/pkg/tests"
 )
 
 func TestBleveSearchBackend(t *testing.T) {
-	if testing.Short() {
+	if tests.Short(t) {
 		t.Skip("skipping integration test")
 	}
 

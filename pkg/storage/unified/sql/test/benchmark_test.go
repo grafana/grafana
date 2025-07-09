@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
+	"github.com/grafana/grafana/pkg/tests"
 )
 
 func newTestBackend(b testing.TB) resource.StorageBackend {
@@ -38,7 +39,7 @@ func newTestBackend(b testing.TB) resource.StorageBackend {
 }
 
 func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
-	if testing.Short() {
+	if tests.Short(t) {
 		t.Skip("skipping integration test in short mode")
 	}
 	opts := test.DefaultBenchmarkOptions()
@@ -49,7 +50,7 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 }
 
 func TestIntegrationBenchmarkResourceServer(t *testing.T) {
-	if testing.Short() {
+	if tests.Short(t) {
 		t.Skip("skipping integration test in short mode")
 	}
 

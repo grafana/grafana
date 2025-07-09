@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -43,7 +44,7 @@ func GenerateRandomKVPrefix() string {
 
 // RunKVTest runs the KV test suite
 func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
-	if testing.Short() {
+	if tests.Short(t) {
 		t.Skip("skipping integration test")
 	}
 

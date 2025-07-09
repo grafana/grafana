@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -24,7 +25,7 @@ type NewSearchBackendFunc func(ctx context.Context) resource.SearchBackend
 
 // RunSearchBackendTest runs the search backend test suite
 func RunSearchBackendTest(t *testing.T, newBackend NewSearchBackendFunc, opts *TestOptions) {
-	if testing.Short() {
+	if tests.Short(t) {
 		t.Skip("skipping integration test")
 	}
 
