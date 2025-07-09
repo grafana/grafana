@@ -595,7 +595,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 
 	// Try to parse ref as a hash first
 	refHash, err := hash.FromHex(ref)
-	if err == nil && refHash != nil {
+	if err == nil && refHash != hash.Zero {
 		// Valid hash, return it
 		return refHash, nil
 	}
@@ -604,9 +604,9 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 	branchRef, err := r.client.GetRef(ctx, ref)
 	if err != nil {
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
-			return nil, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
+			return hash.Zero, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
 		}
-		return nil, fmt.Errorf("get ref %s: %w", ref, err)
+		return hash.Zero, fmt.Errorf("get ref %s: %w", ref, err)
 	}
 
 	return branchRef.Hash, nil
