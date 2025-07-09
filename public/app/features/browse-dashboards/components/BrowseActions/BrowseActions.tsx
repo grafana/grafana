@@ -17,7 +17,7 @@ import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
-import { useProvisioningStatus } from './useProvisioningStatus';
+import { useSelectionProvisioningStatus } from './useSelectionProvisioningStatus';
 
 export interface Props {
   folderDTO?: FolderDTO;
@@ -32,12 +32,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
   const isProvisionedInstance = useIsProvisionedInstance();
-  const provisioningStatus = useProvisioningStatus(selectedItems);
-
-  const hasProvisionedItems =
-    provisioningStatus.provisioned.folders.length > 0 || provisioningStatus.provisioned.dashboards.length > 0;
-  const hasNonProvisionedItems =
-    provisioningStatus.nonProvisioned.folders.length > 0 || provisioningStatus.nonProvisioned.dashboards.length > 0;
+  const provisioningStatus = useSelectionProvisioningStatus(selectedItems);
 
   // Folders can only be moved if nested folders is enabled
   const moveIsInvalid = useMemo(
@@ -81,14 +76,16 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showDeleteModal = () => {
-    console.log('showDeleteModal', { selectedItems, hasProvisionedItems, hasNonProvisionedItems });
-    if (hasProvisionedItems && hasNonProvisionedItems) {
-      // TODO: how to handle this case?
-    } else if (hasProvisionedItems) {
-      // if all selected items are provisioned
+    const { hasProvisioned, hasNonProvisioned } = provisioningStatus;
+    console.log('showDeleteModal', { provisioningStatus, hasProvisioned, hasNonProvisioned });
+    if (hasProvisioned && hasNonProvisioned) {
+      // Mixed selection
+      // This is a placeholder for future implementation
+    } else if (hasProvisioned) {
+      // Only provisioned items
       setShowBulkDeleteProvisionedResource(true);
     } else {
-      // if all selected items are non-provisioned
+      // Only non-provisioned items
       appEvents.publish(
         new ShowModalReactEvent({
           component: DeleteModal,
