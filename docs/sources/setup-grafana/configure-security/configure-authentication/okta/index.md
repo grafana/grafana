@@ -243,7 +243,7 @@ org_attribute_path = groups
 org_mapping = ["Group 1:org_foo:Viewer", "Group 2:org_bar:Editor", "*:3:Editor"]
 ```
 
-### Configure team synchronization
+### Configure group synchronization
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).

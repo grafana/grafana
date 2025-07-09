@@ -216,7 +216,7 @@ allowed_domains = mycompany.com mycompany.org
 role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
 ```
 
-## Configure team synchronization
+## Configure group synchronization
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).

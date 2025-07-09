@@ -165,7 +165,7 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-### Configure team synchronization
+### Configure group synchronization
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
