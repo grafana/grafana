@@ -66,8 +66,6 @@ type NotificationHistoryLokiEntryAlert struct {
 type remoteLokiClient interface {
 	Ping(context.Context) error
 	Push(context.Context, []lokiclient.Stream) error
-	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (lokiclient.QueryRes, error)
-	MaxQuerySize() int
 }
 
 type NotificationHistorian struct {
