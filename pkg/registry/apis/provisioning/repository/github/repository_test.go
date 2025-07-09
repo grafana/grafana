@@ -838,7 +838,7 @@ func TestGitHubRepositoryResourceURLs(t *testing.T) {
 // Test simple delegation functions
 func TestGitHubRepositoryDelegation(t *testing.T) {
 	ctx := context.Background()
-	
+
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			GitHub: &provisioning.GitHubRepositoryConfig{
@@ -1066,59 +1066,5 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 
 		result := repo.Client()
 		assert.Equal(t, mockClient, result)
-	})
-}
-
-func TestGitHubRepositoryLogger(t *testing.T) {
-	config := &provisioning.Repository{
-		Spec: provisioning.RepositorySpec{
-			GitHub: &provisioning.GitHubRepositoryConfig{
-				URL:    "https://github.com/grafana/grafana",
-				Branch: "main",
-				Token:  "test-token",
-			},
-		},
-	}
-
-	repo := &githubRepository{
-		config: config,
-		owner:  "grafana",
-		repo:   "grafana",
-	}
-
-	ctx := context.Background()
-	
-	t.Run("logger adds github_repository context", func(t *testing.T) {
-		newCtx, logger := repo.logger(ctx, "feature-branch")
-		
-		require.NotNil(t, newCtx)
-		require.NotNil(t, logger)
-		
-		// Verify that context is different from original
-		assert.NotEqual(t, ctx, newCtx)
-	})
-	
-	t.Run("logger uses default branch when ref is empty", func(t *testing.T) {
-		newCtx, logger := repo.logger(ctx, "")
-		
-		require.NotNil(t, newCtx)
-		require.NotNil(t, logger)
-		
-		// Verify that context is different from original
-		assert.NotEqual(t, ctx, newCtx)
-	})
-	
-	t.Run("logger doesn't add duplicate context", func(t *testing.T) {
-		// First call
-		newCtx, _ := repo.logger(ctx, "main")
-		
-		// Second call should not add duplicate context
-		newCtx2, logger2 := repo.logger(newCtx, "main")
-		
-		require.NotNil(t, newCtx2)
-		require.NotNil(t, logger2)
-		
-		// Should return the same context if it already has the key
-		assert.Equal(t, newCtx, newCtx2)
 	})
 }

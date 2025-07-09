@@ -4,13 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/url"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
@@ -172,7 +170,6 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
-	ctx, _ = r.logger(ctx, ref)
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
@@ -251,23 +248,4 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 
 func (r *githubRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
 	return r.gitRepo.Stage(ctx, opts)
-}
-
-func (r *githubRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {
-	logger := logging.FromContext(ctx)
-
-	type containsGh int
-	var containsGhKey containsGh
-	if ctx.Value(containsGhKey) != nil {
-		return ctx, logging.FromContext(ctx)
-	}
-
-	if ref == "" {
-		ref = r.config.Spec.GitHub.Branch
-	}
-	logger = logger.With(slog.Group("github_repository", "owner", r.owner, "name", r.repo, "ref", ref))
-	ctx = logging.Context(ctx, logger)
-	// We want to ensure we don't add multiple github_repository keys. With doesn't deduplicate the keys...
-	ctx = context.WithValue(ctx, containsGhKey, true)
-	return ctx, logger
 }
