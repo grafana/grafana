@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export const useSQLExplanations = (currentExpression: string) => {
   const [explanation, setExplanation] = useState<string>('');
@@ -37,7 +37,9 @@ export const useSQLExplanations = (currentExpression: string) => {
    * Determine if we should show "View explanation" button vs "Explain query" button
    * Returns true if there's an existing explanation OR if the expression has changed
    */
-  const shouldShowViewExplanation = Boolean(explanation) || prevExpression !== currentExpression;
+  const shouldShowViewExplanation = useMemo(() => {
+    return Boolean(explanation) || prevExpression !== currentExpression;
+  }, [explanation, prevExpression, currentExpression]);
 
   return {
     // State

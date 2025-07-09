@@ -7,7 +7,7 @@ import { llm } from '@grafana/llm';
 import { Button, Spinner, useStyles2, Tooltip, Toggletip, Text, Stack } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
-import { StreamStatus, useLLMStream } from './hooks';
+import { StreamStatus, TIMEOUT, useLLMStream } from './hooks';
 import { AutoGenerateItem, EventTrackingSrc, reportAutoGenerateInteraction } from './tracking';
 import { DEFAULT_LLM_MODEL, Message, sanitizeReply } from './utils';
 
@@ -38,6 +38,8 @@ export interface GenAIButtonProps {
   tooltip?: string;
   // Optional callback to receive history updates
   onHistoryChange?: (history: string[]) => void;
+  // Optional timeout for the LLM stream. Default is 10 seconds
+  timeout?: number;
 }
 export const STOP_GENERATION_TEXT = 'Stop generating';
 
@@ -53,6 +55,7 @@ export const GenAIButton = ({
   disabled,
   tooltip,
   onHistoryChange,
+  timeout = TIMEOUT,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
 
@@ -81,6 +84,7 @@ export const GenAIButton = ({
     model,
     temperature,
     onResponse,
+    timeout,
   });
 
   const [showHistory, setShowHistory] = useState(false);
