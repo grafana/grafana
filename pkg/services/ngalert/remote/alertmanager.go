@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/alerting/definition"
 	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
@@ -369,10 +370,12 @@ func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels
 	if err != nil {
 		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
 	}
+	templates := definition.TemplatesMapToPostableAPITemplates(config.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)
 	return remoteClient.GrafanaAlertmanagerConfig{
 		// TODO keep sending Grafana templates as a map to not break old Mimir
-		TemplateFiles:      config.TemplateFiles,
-		AlertmanagerConfig: mergeResult.Config,
+		TemplateFiles:       config.TemplateFiles,
+		AlertmanagerConfig:  mergeResult.Config,
+		TemplateDefinitions: templates,
 	}, nil
 }
 
