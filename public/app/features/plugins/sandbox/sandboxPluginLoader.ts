@@ -5,8 +5,8 @@ import { BootData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
-import { getPluginCode, getPluginLoadData, patchSandboxEnvironmentPrototype } from './code_loader';
-import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
+import { getPluginCode, getPluginLoadData, patchSandboxEnvironmentPrototype } from './codeLoader';
+import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortions';
 import {
   getSafeSandboxDomElement,
   isDomElement,
@@ -14,9 +14,9 @@ import {
   markDomElementStyleAsALiveTarget,
   patchObjectAsLiveTarget,
   patchWebAPIs,
-} from './document_sandbox';
-import { sandboxPluginDependencies } from './plugin_dependencies';
-import { sandboxPluginComponents } from './sandbox_components';
+} from './documentSandbox';
+import { sandboxPluginDependencies } from './pluginDependencies';
+import { sandboxPluginComponents } from './sandboxComponents';
 import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment, SandboxPluginMeta } from './types';
 import { logError, logInfo } from './utils';
 
