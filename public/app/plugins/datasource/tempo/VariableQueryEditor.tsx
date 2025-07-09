@@ -42,12 +42,15 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource, range }:
     if (type === TempoVariableQueryType.LabelValues) {
       const includeTimeRangeForTags = datasource.includeTimeRangeForTags;
       setIsLoading(true);
-      datasource.labelNamesQuery(includeTimeRangeForTags, range).then((labelNames: Array<{ text: string }>) => {
-        setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
-        setIsLoading(false);
-      }).catch(() => {
-        setIsLoading(false);
-      });
+      datasource
+        .labelNamesQuery(includeTimeRangeForTags, range)
+        .then((labelNames: Array<{ text: string }>) => {
+          setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
+          setIsLoading(false);
+        })
+        .catch(() => {
+          setIsLoading(false);
+        });
     }
   }, [datasource, query, type, range]);
 

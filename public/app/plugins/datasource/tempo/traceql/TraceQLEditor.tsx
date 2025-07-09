@@ -27,7 +27,12 @@ export function TraceQLEditor(props: Props) {
   const [alertText, setAlertText] = useState<string>();
 
   const { query, onChange, onRunQuery, placeholder } = props;
-  const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText, props.datasource.includeTimeRangeForTags ?? false, props.range);
+  const setupAutocompleteFn = useAutocomplete(
+    props.datasource,
+    setAlertText,
+    props.datasource.includeTimeRangeForTags ?? false,
+    props.range
+  );
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
 
@@ -207,7 +212,12 @@ function useAutocomplete(
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
   // need to.
   const providerRef = useRef<CompletionProvider>(
-    new CompletionProvider({ languageProvider: datasource.languageProvider, setAlertText, includeTimeRangeForTags, range })
+    new CompletionProvider({
+      languageProvider: datasource.languageProvider,
+      setAlertText,
+      includeTimeRangeForTags,
+      range,
+    })
   );
 
   useEffect(() => {

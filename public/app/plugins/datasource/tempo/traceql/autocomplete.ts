@@ -397,7 +397,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.registerInteractionCommandId = id;
   }
 
-  private async getTagValues(tagName: string, query: string, includeTimeRangeForTags?: boolean, range?: TimeRange): Promise<Array<SelectableValue<string>>> {
+  private async getTagValues(
+    tagName: string,
+    query: string,
+    includeTimeRangeForTags?: boolean,
+    range?: TimeRange
+  ): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
     const cacheKey = `${tagName}:${query}`;
 
@@ -467,7 +472,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
-          tagValues = await this.getTagValues(situation.tagName, situation.query, this.includeTimeRangeForTags, this.range);
+          tagValues = await this.getTagValues(
+            situation.tagName,
+            situation.query,
+            this.includeTimeRangeForTags,
+            this.range
+          );
           setAlertText(undefined);
         } catch (error) {
           if (isFetchError(error)) {

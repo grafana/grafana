@@ -53,7 +53,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
   async fetchTags(includeTimeRangeForTags?: boolean, range?: TimeRange) {
     let v1Resp, v2Resp;
-    
+
     try {
       const params: { limit: number; start?: number; end?: number } = {
         limit: this.getTagsLimit(),
@@ -154,7 +154,12 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return options;
   }
 
-  async getOptionsV2(tag: string, query?: string, includeTimeRangeForTags?: boolean, range?: TimeRange): Promise<Array<SelectableValue<string>>> {
+  async getOptionsV2(
+    tag: string,
+    query?: string,
+    includeTimeRangeForTags?: boolean,
+    range?: TimeRange
+  ): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
     const params: { q?: string; limit: number; start?: number; end?: number } = {
       limit: this.getTagsLimit(),

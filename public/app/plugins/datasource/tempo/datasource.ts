@@ -198,7 +198,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
-  async labelValuesQuery(labelName?: string, includeTimeRangeForTags?: boolean, range?: TimeRange): Promise<Array<{ text: string }>> {
+  async labelValuesQuery(
+    labelName?: string,
+    includeTimeRangeForTags?: boolean,
+    range?: TimeRange
+  ): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
@@ -251,7 +255,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return this.tagValuesQuery(options.key, query, this.includeTimeRangeForTags, options.timeRange);
   }
 
-  async tagValuesQuery(tag: string, query: string, includeTimeRangeForTags?: boolean, range?: TimeRange): Promise<Array<{ text: string }>> {
+  async tagValuesQuery(
+    tag: string,
+    query: string,
+    includeTimeRangeForTags?: boolean,
+    range?: TimeRange
+  ): Promise<Array<{ text: string }>> {
     let options;
     try {
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
