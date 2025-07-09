@@ -31,7 +31,8 @@ function createPills(pillValues: string[], cellOptions: TableCellRendererProps['
 }
 
 export function PillCell({ value, field, justifyContent, cellOptions }: TableCellRendererProps) {
-  const styles = useStyles2(getStyles, justifyContent);
+  const shouldWrap = isPillCellOptions(cellOptions) ? (cellOptions.wrapText ?? false) : false;
+  const styles = useStyles2(getStyles, justifyContent, shouldWrap);
 
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(value);
@@ -42,11 +43,9 @@ export function PillCell({ value, field, justifyContent, cellOptions }: TableCel
     return <div className={styles.cell}>-</div>;
   }
 
-  const shouldWrap = isPillCellOptions(cellOptions) ? (cellOptions.wrapText ?? false) : false;
-
   return (
-    <div className={shouldWrap ? styles.cellWrapped : styles.cell}>
-      <div className={shouldWrap ? styles.pillsContainerWrapped : styles.pillsContainer}>
+    <div className={styles.cell}>
+      <div className={styles.pillsContainer}>
         {pills.map((pill) => (
           <span
             key={pill.key}
@@ -159,33 +158,19 @@ function getDeterministicColor(text: string): string {
   return colorValues[index];
 }
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined, shouldWrap: boolean) => ({
   cell: css({
     display: 'flex',
     justifyContent: justifyContent || 'flex-start',
-    alignItems: 'center',
+    alignItems: shouldWrap ? 'flex-start' : 'center',
     height: '100%',
-    padding: theme.spacing(0.5),
-  }),
-  cellWrapped: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'flex-start',
-    alignItems: 'flex-start',
-    minHeight: '100%',
-    padding: theme.spacing(0.5),
   }),
   pillsContainer: css({
     display: 'flex',
-    flexWrap: 'nowrap',
     gap: theme.spacing(0.5),
     maxWidth: '100%',
     overflow: 'hidden',
-  }),
-  pillsContainerWrapped: css({
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: theme.spacing(0.5),
-    maxWidth: '100%',
+    flexWrap: shouldWrap ? 'wrap' : 'nowrap',
   }),
   pill: css({
     display: 'inline-block',

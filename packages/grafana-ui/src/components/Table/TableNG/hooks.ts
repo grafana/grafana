@@ -309,11 +309,19 @@ export function useFooterCalcs(
   }, [fields, enabled, footerOptions, isCountRowsSet, rows]);
 }
 
+type CalcRowHeight = (
+  text: string,
+  cellWidth: number,
+  defaultHeight: number,
+  lineHeight?: number,
+  verticalPadding?: number
+) => number;
+
 interface TypographyCtx {
   ctx: CanvasRenderingContext2D;
   font: string;
   avgCharWidth: number;
-  calcRowHeight: (text: string, cellWidth: number, defaultHeight: number) => number;
+  calcRowHeight: CalcRowHeight;
 }
 
 export function useTypographyCtx(): TypographyCtx {
@@ -333,12 +341,18 @@ export function useTypographyCtx(): TypographyCtx {
     const avgCharWidth = txtWidth / txt.length + letterSpacing;
     const { count } = varPreLine(ctx);
 
-    const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
+    const calcRowHeight: CalcRowHeight = (
+      text: string,
+      cellWidth: number,
+      defaultHeight: number,
+      lineHeight = TABLE.LINE_HEIGHT,
+      blockPadding = 2 * TABLE.CELL_PADDING
+    ) => {
       if (text === '') {
         return defaultHeight;
       }
       const numLines = count(text, cellWidth);
-      const totalHeight = numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING;
+      const totalHeight = numLines * lineHeight + blockPadding;
       return Math.max(totalHeight, defaultHeight);
     };
 
@@ -429,7 +443,13 @@ export function useHeaderHeight({
     }
 
     const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
+    return calcRowHeight(
+      maxLinesText,
+      columnAvailableWidths[maxLinesIdx],
+      defaultHeight,
+      TABLE.LINE_HEIGHT,
+      TABLE.CELL_PADDING
+    );
   }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
 
   return headerHeight;
@@ -513,8 +533,20 @@ export function useRowHeight({
       }
 
       // regular rows
-      const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
-      return calcRowHeight(maxLinesText, colWidths[maxLinesIdx], defaultHeight);
+      const {
+        text: maxLinesText,
+        idx: maxLinesIdx,
+        numLines,
+      } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
+
+      const maxLinesField = fields[maxLinesIdx];
+      let verticalPadding = 2 * TABLE.CELL_PADDING;
+      // in PillCell, there's a 4px gap between each line (if more than one line is present)
+      if (maxLinesField && getCellOptions(maxLinesField).type === TableCellDisplayMode.Pill) {
+        verticalPadding += 4 * (numLines - 1);
+      }
+
+      return calcRowHeight(maxLinesText, colWidths[maxLinesIdx], defaultHeight, TABLE.LINE_HEIGHT, verticalPadding);
     };
   }, [
     calcRowHeight,
