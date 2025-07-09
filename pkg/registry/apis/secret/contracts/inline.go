@@ -8,7 +8,7 @@ import (
 
 // SecureValue storage support
 //
-//go:generate mockery --name InlineSecureValueStore --structname MockInlineSecureValueStore --inpackage --filename store_mock.go --with-expecter
+//go:generate mockery --name InlineSecureValueStore --structname MockInlineSecureValueStore --inpackage --filename inline_mock.go --with-expecter
 
 type InlineSecureValueStore interface {
 	// Check that the request user can reference a secret in the context of a given resource (owner)

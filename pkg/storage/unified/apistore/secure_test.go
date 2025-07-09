@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,7 +20,7 @@ import (
 )
 
 func TestSecureUpdates(t *testing.T) {
-	store := &secret.MockInlineSecureValueStore{}
+	store := secret.NewMockInlineSecureValueStore(t)
 	obj, err := resourceFromYAML(t, `
 apiVersion: something.grafana.app/v1beta1
 kind: CustomKind
@@ -34,13 +35,17 @@ secure:
     name: xyz
 `)
 	require.NoError(t, err)
+
+	store.On("CreateSecureValue", mock.Anything, mock.Anything, mock.Anything).
+		Return("NAME", nil).Once()
+
 	changed, err := handleSecureValues(context.Background(), store, obj, nil)
 	require.NoError(t, err)
 	require.True(t, changed)
 	secure, err := obj.GetSecureValues()
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"a": {"name": "TODO"},
+		"a": {"name": "NAME"},
 		"b": {"name": "xyz"}
 	}`, asJSON(secure, true))
 }
