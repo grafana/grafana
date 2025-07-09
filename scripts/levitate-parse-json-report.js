@@ -33,7 +33,7 @@ const printTerminalSection = (title, items) => {
   };
 
   let output = `${colors.bold}${colors.cyan}${title}${colors.reset}\n`;
-  output += '='.repeat(title.length) + '\n\n';
+  output += '-'.repeat(title.length) + '\n';
 
   items.forEach((item) => {
     const code = item.declaration ? item.declaration : stripAnsi(item.diff);
