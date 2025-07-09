@@ -2865,7 +2865,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.1.0-pre"
     "@grafana/e2e-selectors": "npm:12.1.0-pre"
-    "@grafana/google-sdk": "npm:0.3.2"
+    "@grafana/google-sdk": "npm:0.3.4"
     "@grafana/plugin-configs": "npm:12.1.0-pre"
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/runtime": "npm:12.1.0-pre"
@@ -3256,15 +3256,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/google-sdk@npm:0.3.2":
-  version: 0.3.2
-  resolution: "@grafana/google-sdk@npm:0.3.2"
+"@grafana/google-sdk@npm:0.3.4":
+  version: 0.3.4
+  resolution: "@grafana/google-sdk@npm:0.3.4"
   peerDependencies:
     "@grafana/data": ">=10.4.0"
     "@grafana/ui": ">=10.4.0"
     react: ^18.2.0
     react-dom: ^18.2.0
-  checksum: 10/da0b1c7eda95a03da5ea919aaf97e3ae942c219ee0854483f84824837192fad06c302c3f7e87a7819882ba272726039a0633891bd3ded10449227aafac16dfc7
+  checksum: 10/6156a07ab9a8e31ac20a689448f7d6bc86bd9d3fd0b22de8182cf5e6f96c05054f8c53a38148de58dca807adb5b0563914b03a22308ec7f770bf1cc71e8f21bd
   languageName: node
   linkType: hard
 
@@ -18130,7 +18130,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^1.13.2"
     "@grafana/faro-web-tracing": "npm:^1.13.2"
     "@grafana/flamegraph": "workspace:*"
-    "@grafana/google-sdk": "npm:0.3.2"
+    "@grafana/google-sdk": "npm:0.3.4"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.8"
     "@grafana/llm": "npm:0.22.1"
