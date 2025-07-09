@@ -51,6 +51,12 @@ function folderUrl(uid: string, title: string): string {
   return `${config.appSubUrl}/dashboards/f/${uid}/${slug}`;
 }
 
+/**
+ * A proxy function that uses either legacy folder client or the new app platform APIs to get the data in the same
+ * format of a FolderDTO object. As the schema isn't the same, using the app platform needs multiple different calls
+ * which are then stitched together.
+ * @param uid
+ */
 export function useGetFolderQueryFacade(uid?: string) {
   if (config.featureToggles.foldersAppPlatformAPI) {
     const result = useGetFolderQuery(uid ? { name: uid } : skipToken);
