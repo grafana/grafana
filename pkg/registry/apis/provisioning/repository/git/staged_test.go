@@ -68,16 +68,6 @@ func TestNewStagedGitRepository(t *testing.T) {
 			wantError: nil,
 		},
 		{
-			name: "fails with BeforeFn error",
-			setupMock: func(mockClient *mocks.FakeClient) {
-				// No setup needed as BeforeFn fails first
-			},
-			opts: repository.StageOptions{
-				PushOnWrites: false,
-			},
-			wantError: errors.New("before function failed"),
-		},
-		{
 			name: "fails with GetRef error",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{}, errors.New("ref not found"))
