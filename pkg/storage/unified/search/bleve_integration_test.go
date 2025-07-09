@@ -10,12 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
-	"github.com/grafana/grafana/pkg/tests"
 )
 
 func TestBleveSearchBackend(t *testing.T) {
-	tests.SkipIntegrationTestInShortMode(t)
-
 	// Run the search backend test suite
 	unitest.RunSearchBackendTest(t, func(ctx context.Context) resource.SearchBackend {
 		tempDir := t.TempDir()
