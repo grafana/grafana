@@ -10,7 +10,7 @@ function stripAnsi(str) {
   return str.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
-const printSection = (title, items) => {
+const printMarkdownSection = (title, items) => {
   let output = `<h4>${title}</h4>`;
   items.forEach((item) => {
     const language = item.declaration ? 'typescript' : 'diff';
@@ -22,6 +22,31 @@ const printSection = (title, items) => {
   });
   return output;
 };
+
+const printTerminalSection = (title, items) => {
+  const colors = {
+    bold: '\x1b[1m',
+    dim: '\x1b[2m',
+    reset: '\x1b[0m',
+    cyan: '\x1b[36m',
+    yellow: '\x1b[33m'
+  };
+
+  let output = `${colors.bold}${colors.cyan}${title}${colors.reset}\n`;
+  output += '='.repeat(title.length) + '\n\n';
+
+  items.forEach((item) => {
+    const code = item.declaration ? item.declaration : stripAnsi(item.diff);
+
+    output += `${colors.bold}${item.name}${colors.reset}\n`;
+    output += `${colors.dim}${item.location}${colors.reset}\n`;
+    output += `${code}\n\n`;
+  });
+
+  return output;
+};
+
+const printSection = isFork ? printTerminalSection : printMarkdownSection;
 
 let markdown = '';
 
