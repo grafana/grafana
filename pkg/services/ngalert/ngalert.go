@@ -280,10 +280,13 @@ func (ng *AlertNG) init() error {
 						if err != nil {
 							return nil, fmt.Errorf("failed to fetch remote state: %w", err)
 						}
-						if err := internalAM.MergeNflog(rs.Nflog); err != nil {
+
+						// The internal Alertmanager should implement the StateMerger interface.
+						sm := internalAM.(notifier.StateMerger)
+						if err := sm.MergeNflog(rs.Nflog); err != nil {
 							return nil, fmt.Errorf("failed to merge remote nflog entries: %w", err)
 						}
-						if err := internalAM.MergeSilences(rs.Silences); err != nil {
+						if err := sm.MergeSilences(rs.Silences); err != nil {
 							return nil, fmt.Errorf("failed to merge remote silences: %w", err)
 						}
 					}
