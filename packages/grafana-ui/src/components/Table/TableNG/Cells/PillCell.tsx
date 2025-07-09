@@ -1,15 +1,7 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
 import { useMemo } from 'react';
 
-import {
-  GrafanaTheme2,
-  isDataFrame,
-  classicColors,
-  colorManipulator,
-  Field,
-  getColorByStringHash,
-} from '@grafana/data';
+import { GrafanaTheme2, classicColors, colorManipulator, Field, getColorByStringHash } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
@@ -63,30 +55,22 @@ export function PillCell({ value, field }: TableCellRendererProps) {
   );
 }
 
-// todo: pills can only string, boolean, enum, (maybe int)
+const SPLIT_RE = /\s*,\s*/;
+
 export function inferPills(value: string): string[] {
   if (value === '') {
     return [];
   }
 
-  // json array
   if (value[0] === '[') {
     try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        // JSON array of strings
-        return parsed
-          .filter((item) => item != null && item !== '')
-          .map(String)
-          .map((text) => text.trim())
-          .filter((item) => item !== '');
-      }
+      return JSON.parse(value);
     } catch {
-      // Not valid JSON, continue with other parsing
+      return value.trim().split(SPLIT_RE);
     }
-  } else {
-    return value.split(',');
   }
+
+  return value.trim().split(SPLIT_RE);
 }
 
 function getPillColor(value: string, field: Field): string {
@@ -100,8 +84,7 @@ function getPillColor(value: string, field: Field): string {
     return cfg.color?.fixedColor ?? DEFAULT_PILL_BG_COLOR;
   }
 
-  // TODO: instead of classicColors is wrong, we need to pull colors from theme, same way as FieldColorModeId.PaletteClassicByName
-  // see fieldColor.ts
+  // TODO: instead of classicColors we need to pull colors from theme, same way as FieldColorModeId.PaletteClassicByName (see fieldColor.ts)
   return getColorByStringHash(classicColors, value);
 }
 
