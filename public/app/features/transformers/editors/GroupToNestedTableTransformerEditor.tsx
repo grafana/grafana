@@ -187,16 +187,23 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const groupToNestedTableTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
-  id: DataTransformerID.groupToNestedTable,
-  editor: GroupToNestedTableTransformerEditor,
-  transformation: standardTransformers.groupToNestedTable,
-  name: standardTransformers.groupToNestedTable.name,
-  description: standardTransformers.groupToNestedTable.description,
-  categories: new Set([
-    TransformerCategory.Combine,
-    TransformerCategory.CalculateNewFields,
-    TransformerCategory.Reformat,
-  ]),
-  state: PluginState.beta,
-};
+export const getGroupToNestedTableTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> =
+  () => ({
+    id: DataTransformerID.groupToNestedTable,
+    editor: GroupToNestedTableTransformerEditor,
+    transformation: standardTransformers.groupToNestedTable,
+    name: t(
+      'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
+      'Group to nested tables'
+    ),
+    description: t(
+      'transformers.group-to-nested-table-transformer-editor.description.group-by-field-value',
+      'Group data by a field value and create nested tables with the grouped data.'
+    ),
+    categories: new Set([
+      TransformerCategory.Combine,
+      TransformerCategory.CalculateNewFields,
+      TransformerCategory.Reformat,
+    ]),
+    state: PluginState.beta,
+  });

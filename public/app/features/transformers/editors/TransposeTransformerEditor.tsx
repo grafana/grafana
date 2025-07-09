@@ -43,11 +43,14 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
   );
 };
 
-export const transposeTransformerRegistryItem: TransformerRegistryItem<TransposeTransformerOptions> = {
+export const getTransposeTransformerRegistryItem: () => TransformerRegistryItem<TransposeTransformerOptions> = () => ({
   id: DataTransformerID.transpose,
   editor: TransposeTransfomerEditor,
   transformation: standardTransformers.transposeTransformer,
-  name: standardTransformers.transposeTransformer.name,
-  description: standardTransformers.transposeTransformer.description,
+  name: t('transformers.transpose-transformer-editor.name.transpose', 'Transpose'),
+  description: t(
+    'transformers.transpose-transformer-editor.description.transpose-data-frame',
+    'Transpose the data frame.'
+  ),
   categories: new Set([TransformerCategory.Reformat]),
-};
+});

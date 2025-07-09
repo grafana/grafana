@@ -153,16 +153,19 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
+export const getGroupByTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> = () => ({
   id: DataTransformerID.groupBy,
   editor: GroupByTransformerEditor,
   transformation: standardTransformers.groupByTransformer,
-  name: standardTransformers.groupByTransformer.name,
-  description: standardTransformers.groupByTransformer.description,
+  name: t('transformers.group-by-transformer-editor.name.group-by', 'Group by'),
+  description: t(
+    'transformers.group-by-transformer-editor.description.group-series-by-field-calculate-stats',
+    'Group data by a field value and create aggregate data.'
+  ),
   categories: new Set([
     TransformerCategory.Combine,
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
   help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
-};
+});

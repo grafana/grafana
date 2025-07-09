@@ -14,7 +14,7 @@ import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
-import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
+import { PrepareTimeSeriesOptions, timeSeriesFormat, getPrepareTimeSeriesTransformer } from './prepareTimeSeries';
 
 const wideInfo = {
   label: 'Wide time series',
@@ -154,12 +154,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<PrepareTimeSeriesOptions> = {
-  id: prepareTimeSeriesTransformer.id,
-  editor: PrepareTimeSeriesEditor,
-  transformation: prepareTimeSeriesTransformer,
-  name: prepareTimeSeriesTransformer.name,
-  description: prepareTimeSeriesTransformer.description,
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(prepareTimeSeriesTransformer.id).helperDocs,
-};
+export const getPrepareTimeseriesTransformerRegistryItem: () => TransformerRegistryItem<PrepareTimeSeriesOptions> =
+  () => {
+    const prepareTimeSeriesTransformer = getPrepareTimeSeriesTransformer();
+    return {
+      id: prepareTimeSeriesTransformer.id,
+      editor: PrepareTimeSeriesEditor,
+      transformation: prepareTimeSeriesTransformer,
+      name: prepareTimeSeriesTransformer.name,
+      description: prepareTimeSeriesTransformer.description,
+      categories: new Set([TransformerCategory.Reformat]),
+      help: getTransformationContent(prepareTimeSeriesTransformer.id).helperDocs,
+    };
+  };

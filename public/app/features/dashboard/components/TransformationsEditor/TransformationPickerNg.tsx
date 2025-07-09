@@ -3,7 +3,6 @@ import { FormEventHandler, KeyboardEventHandler, ReactNode, useCallback } from '
 
 import {
   DataFrame,
-  DataTransformerID,
   TransformerRegistryItem,
   TransformationApplicabilityLevels,
   GrafanaTheme2,
@@ -15,17 +14,11 @@ import { Trans, t } from '@grafana/i18n';
 import { Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
-import { categoriesLabels } from 'app/features/transformers/utils';
+import { getCategoriesLabels } from 'app/features/transformers/utils';
 
 import { FilterCategory } from './TransformationsEditor';
 
-const viewAllLabel = 'View all';
 const VIEW_ALL_VALUE = 'viewAll';
-const filterCategoriesLabels: Array<[FilterCategory, string]> = [
-  [VIEW_ALL_VALUE, viewAllLabel],
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
-];
 
 interface TransformationPickerNgProps {
   onTransformationAdd: (selectedItem: SelectableValue<string>) => void;
@@ -59,6 +52,12 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
     onShowIllustrationsChange,
     onSelectedFilterChange,
   } = props;
+
+  const filterCategoriesLabels: Array<[FilterCategory, string]> = [
+    [VIEW_ALL_VALUE, t('dashboard.transformation-picker-ng.view-all', 'View all')],
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    ...(Object.entries(getCategoriesLabels()) as Array<[FilterCategory, string]>),
+  ];
 
   // Use a callback ref to call "click" on the search input
   // This will focus it when it's opened
@@ -290,23 +289,4 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
 const getImagePath = (id: string, disabled: boolean) => {
   const folder = config.theme2.isDark ? 'dark' : 'light';
   return `public/build/img/transformations/${folder}/${id}.svg`;
-};
-
-const TransformationDescriptionOverrides: { [key: string]: string } = {
-  [DataTransformerID.fieldLookup]: 'Use a field value to lookup countries, states, or airports.',
-  [DataTransformerID.filterFieldsByName]: 'Remove parts of the query results using a regex pattern.',
-  [DataTransformerID.filterByRefId]: 'Remove rows from the data based on origin query',
-  [DataTransformerID.filterByValue]: 'Remove rows from the query results using user-defined filters.',
-  [DataTransformerID.groupBy]: 'Group data by a field value and create aggregate data.',
-  [DataTransformerID.groupingToMatrix]: 'Summarize and reorganize data based on three fields.',
-  [DataTransformerID.joinByField]: 'Combine rows from 2+ tables, based on a related field.',
-  [DataTransformerID.labelsToFields]: 'Group series by time and return labels or tags as fields.',
-  [DataTransformerID.merge]: 'Merge multiple series. Values will be combined into one row.',
-  [DataTransformerID.organize]: 'Re-order, hide, or rename fields.',
-  [DataTransformerID.partitionByValues]: 'Split a one-frame dataset into multiple series.',
-  [DataTransformerID.prepareTimeSeries]: 'Stretch data frames from the wide format into the long format.',
-  [DataTransformerID.reduce]: 'Reduce all rows or data points to a single value (ex. max, mean).',
-  [DataTransformerID.renameByRegex]:
-    'Rename parts of the query results using a regular expression and replacement pattern.',
-  [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
 };
