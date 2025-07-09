@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
@@ -30,13 +32,14 @@ var (
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
 )
 
-func ProvideJWT(jwtService auth.JWTVerifierService, orgRoleMapper *connectors.OrgRoleMapper, cfg *setting.Cfg) *JWT {
+func ProvideJWT(jwtService auth.JWTVerifierService, orgRoleMapper *connectors.OrgRoleMapper, cfg *setting.Cfg, tracer trace.Tracer) *JWT {
 	return &JWT{
 		cfg:           cfg,
 		log:           log.New(authn.ClientJWT),
 		jwtService:    jwtService,
 		orgRoleMapper: orgRoleMapper,
 		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), cfg.JWTAuth.OrgMapping, cfg.JWTAuth.RoleAttributeStrict),
+		tracer:        tracer,
 	}
 }
 
@@ -46,6 +49,7 @@ type JWT struct {
 	orgMappingCfg connectors.MappingConfiguration
 	log           log.Logger
 	jwtService    auth.JWTVerifierService
+	tracer        trace.Tracer
 }
 
 func (s *JWT) Name() string {
