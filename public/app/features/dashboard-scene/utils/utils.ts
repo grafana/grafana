@@ -13,6 +13,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
@@ -468,6 +469,36 @@ export function useInterpolatedTitle<T extends SceneObjectState & { title?: stri
 
 export function getLayoutOrchestratorFor(scene: SceneObject): DashboardLayoutOrchestrator | undefined {
   return getDashboardSceneFor(scene).state.layoutOrchestrator;
+}
+
+/**
+ * Checks if a V1 dashboard contains library panels
+ * @returns true if the dashboard contains library panels
+ */
+export function hasLibraryPanelsInV1Dashboard(dashboard: Dashboard | undefined): boolean {
+  if (!dashboard || !dashboard.panels) {
+    return false;
+  }
+
+  return dashboard.panels.some((panel: Panel | RowPanel) => {
+    if ('libraryPanel' in panel && panel.libraryPanel && 'uid' in panel.libraryPanel) {
+      return Boolean(panel.libraryPanel.uid);
+    }
+
+    // Check collapsed row panels
+    if ('collapsed' in panel && panel.collapsed && 'panels' in panel && panel.panels) {
+      return panel.panels.some((rowPanel: Panel) => {
+        return (
+          'libraryPanel' in rowPanel &&
+          rowPanel.libraryPanel &&
+          'uid' in rowPanel.libraryPanel &&
+          Boolean(rowPanel.libraryPanel.uid)
+        );
+      });
+    }
+
+    return false;
+  });
 }
 
 export const dashboardLog = createLogger('Dashboard');
