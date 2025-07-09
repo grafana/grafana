@@ -179,6 +179,24 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		err = obj.Value.Close()
 		require.NoError(t, err)
 	})
+
+	t.Run("save key with no data", func(t *testing.T) {
+		// Save a key with empty data
+		err := kv.Save(ctx, section, "empty-key", strings.NewReader(""))
+		require.NoError(t, err)
+
+		// Verify it was saved with empty data
+		obj, err := kv.Get(ctx, section, "empty-key")
+		require.NoError(t, err)
+		assert.Equal(t, "empty-key", obj.Key)
+
+		value, err := io.ReadAll(obj.Value)
+		require.NoError(t, err)
+		assert.Equal(t, "", string(value))
+		assert.Len(t, value, 0)
+		err = obj.Value.Close()
+		require.NoError(t, err)
+	})
 }
 
 func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
@@ -250,6 +268,19 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		assert.Len(t, errors, 1)
 		assert.Contains(t, errors[0].Error(), "section is required")
 		assert.Empty(t, keys)
+	})
+
+	t.Run("list keys returns 0 keys", func(t *testing.T) {
+		// Use a different section with no keys
+		emptySection := nsPrefix + "-empty-keys"
+
+		var keys []string
+		for k, err := range kv.Keys(ctx, emptySection, resource.ListOptions{}) {
+			require.NoError(t, err)
+			keys = append(keys, k)
+		}
+		assert.Empty(t, keys)
+		assert.Len(t, keys, 0)
 	})
 }
 

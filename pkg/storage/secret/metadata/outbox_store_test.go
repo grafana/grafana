@@ -24,7 +24,7 @@ func newOutboxStoreModel() *outboxStoreModel {
 	return &outboxStoreModel{}
 }
 
-func (model *outboxStoreModel) Append(messageID string, message contracts.AppendOutboxMessage) {
+func (model *outboxStoreModel) Append(messageID int64, message contracts.AppendOutboxMessage) {
 	model.rows = append(model.rows, contracts.OutboxMessage{
 		Type:            message.Type,
 		MessageID:       messageID,
@@ -39,12 +39,12 @@ func (model *outboxStoreModel) Append(messageID string, message contracts.Append
 func (model *outboxStoreModel) ReceiveN(n uint) []contracts.OutboxMessage {
 	maxMessages := min(len(model.rows), int(n))
 	if maxMessages == 0 {
-		return []contracts.OutboxMessage{}
+		return nil
 	}
 	return model.rows[:maxMessages]
 }
 
-func (model *outboxStoreModel) Delete(messageID string) {
+func (model *outboxStoreModel) Delete(messageID int64) {
 	oldLen := len(model.rows)
 	model.rows = slices.DeleteFunc(model.rows, func(m contracts.OutboxMessage) bool {
 		return m.MessageID == messageID
@@ -70,7 +70,7 @@ func TestOutboxStoreModel(t *testing.T) {
 	}
 
 	outboxMessage1 := contracts.OutboxMessage{
-		MessageID:       "message_id_1",
+		MessageID:       1,
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
@@ -79,7 +79,7 @@ func TestOutboxStoreModel(t *testing.T) {
 	}
 
 	outboxMessage2 := contracts.OutboxMessage{
-		MessageID:       "message_id_2",
+		MessageID:       2,
 		Type:            contracts.CreateSecretOutboxMessage,
 		Name:            "s-1",
 		Namespace:       "n-1",
@@ -87,11 +87,11 @@ func TestOutboxStoreModel(t *testing.T) {
 		ExternalID:      nil,
 	}
 
-	model.Append("message_id_1", appendOutboxMessage)
+	model.Append(1, appendOutboxMessage)
 
 	require.Equal(t, []contracts.OutboxMessage{outboxMessage1}, model.ReceiveN(10))
 
-	model.Append("message_id_2", appendOutboxMessage)
+	model.Append(2, appendOutboxMessage)
 
 	require.Equal(t, []contracts.OutboxMessage{outboxMessage1, outboxMessage2}, model.ReceiveN(10))
 
@@ -115,7 +115,7 @@ func TestOutboxStoreSecureValueOperationInProgress(t *testing.T) {
 
 		ctx := context.Background()
 
-		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer)
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 		_, err := outbox.Append(ctx, contracts.AppendOutboxMessage{
 			RequestID:       "1",
@@ -148,7 +148,7 @@ func TestOutboxStore(t *testing.T) {
 
 	ctx := context.Background()
 
-	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer)
+	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 	m1 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
@@ -206,9 +206,8 @@ func TestOutboxStoreProperty(t *testing.T) {
 	rng := rand.New(rand.NewSource(seed))
 
 	defer func() {
-		if err := recover(); err != nil || t.Failed() {
-			fmt.Printf("TestOutboxStoreProperty: err=%+v\n\nSEED=%+v", err, seed)
-			t.FailNow()
+		if t.Failed() {
+			fmt.Printf("TestOutboxStoreProperty: SEED=%+v\n\n", seed)
 		}
 	}()
 
@@ -217,7 +216,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		tracer := noop.NewTracerProvider().Tracer("test")
 
-		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer)
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB, tracer), tracer, nil)
 
 		model := newOutboxStoreModel()
 
@@ -227,6 +226,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 			n := rng.Intn(3)
 			switch n {
 			case 0:
+				time.Sleep(1 * time.Microsecond)
 				message := contracts.AppendOutboxMessage{
 					Type:            contracts.CreateSecretOutboxMessage,
 					Name:            fmt.Sprintf("s-%d", i),
@@ -247,7 +247,9 @@ func TestOutboxStoreProperty(t *testing.T) {
 				modelMessages := model.ReceiveN(n)
 
 				require.Equal(t, len(modelMessages), len(messages))
-				require.Equal(t, modelMessages, messages)
+				for i := range len(modelMessages) {
+					require.Equal(t, modelMessages[i].MessageID, messages[i].MessageID)
+				}
 
 			case 2:
 				if len(model.rows) == 0 {

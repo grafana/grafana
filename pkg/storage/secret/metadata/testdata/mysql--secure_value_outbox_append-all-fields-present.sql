@@ -1,6 +1,5 @@
 INSERT INTO `secret_secure_value_outbox` (
   `request_id`,
-  `uid`,
   `message_type`,
   `name`,
   `namespace`,
@@ -11,7 +10,6 @@ INSERT INTO `secret_secure_value_outbox` (
   `created`
 ) VALUES (
   '',
-  'my-uuid',
   'some-type',
   'name',
   'namespace',

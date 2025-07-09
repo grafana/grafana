@@ -3,5 +3,5 @@ UPDATE
 SET
   {{ .Ident "receive_count" }} = {{ .Ident "receive_count" }} + 1
 WHERE 
-  {{ .Ident "uid" }} IN ({{ .ArgList .MessageIDs }})
+  {{ .Ident "id" }} IN ({{ .ArgList .MessageIDs }})
 ;

@@ -34,9 +34,11 @@ var (
 	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
 
 	sqlSecureValueOutboxAppend             = mustTemplate("secure_value_outbox_append.sql")
+	sqlSecureValueOutboxFetchMessageIDs    = mustTemplate("secure_value_outbox_fetch_message_ids.sql")
 	sqlSecureValueOutboxReceiveN           = mustTemplate("secure_value_outbox_receiveN.sql")
 	sqlSecureValueOutboxDelete             = mustTemplate("secure_value_outbox_delete.sql")
 	sqlSecureValueOutboxUpdateReceiveCount = mustTemplate("secure_value_outbox_update_receive_count.sql")
+	sqlSecureValueOutboxQueryTimestamp     = mustTemplate("secure_value_outbox_query_timestamp.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -109,18 +111,6 @@ func (r deleteKeeper) Validate() error {
 }
 
 // This is used at keeper store to validate create & update operations
-type listByNameKeeper struct {
-	sqltemplate.SQLTemplate
-	Namespace   string
-	KeeperNames []string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r listByNameKeeper) Validate() error {
-	return nil // TODO
-}
-
-// This is used at keeper store to validate create & update operations
 type listByNameSecureValue struct {
 	sqltemplate.SQLTemplate
 	Namespace        string
@@ -129,6 +119,18 @@ type listByNameSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listByNameSecureValue) Validate() error {
+	return nil // TODO
+}
+
+// This is used at keeper store to validate create & update operations
+type listByNameKeeper struct {
+	sqltemplate.SQLTemplate
+	Namespace   string
+	KeeperNames []string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r listByNameKeeper) Validate() error {
 	return nil // TODO
 }
 
@@ -240,21 +242,35 @@ func (appendSecureValueOutbox) Validate() error { return nil }
 
 type receiveNSecureValueOutbox struct {
 	sqltemplate.SQLTemplate
-	ReceiveLimit uint
+	MessageIDs []int64
 }
 
 func (receiveNSecureValueOutbox) Validate() error { return nil }
 
+type fetchMessageIDsOutbox struct {
+	sqltemplate.SQLTemplate
+	ReceiveLimit uint
+}
+
+func (fetchMessageIDsOutbox) Validate() error { return nil }
+
 type deleteSecureValueOutbox struct {
 	sqltemplate.SQLTemplate
-	MessageID string
+	MessageID int64
 }
 
 func (deleteSecureValueOutbox) Validate() error { return nil }
 
+type getOutboxMessageTimestamp struct {
+	sqltemplate.SQLTemplate
+	MessageID int64
+}
+
+func (getOutboxMessageTimestamp) Validate() error { return nil }
+
 type incrementReceiveCountOutbox struct {
 	sqltemplate.SQLTemplate
-	MessageIDs []string
+	MessageIDs []int64
 }
 
 func (incrementReceiveCountOutbox) Validate() error { return nil }

@@ -60,3 +60,9 @@ export function getIconRoot(): string {
 
   return iconRoot;
 }
+
+export function getIconPath(name: IconName, type: IconType = 'default'): string {
+  const iconRoot = getIconRoot();
+  const subDir = getIconSubDir(name, type);
+  return `${iconRoot}${subDir}/${name}.svg`;
+}

@@ -8,7 +8,7 @@ import { selectors } from '../../e2e/selectors';
 import createMockDatasource from '../../mocks/datasource';
 import { invalidNamespaceError } from '../../mocks/errors';
 import createMockQuery from '../../mocks/query';
-import { AzureQueryType, ResultFormat } from '../../types';
+import { AzureQueryType, ResultFormat } from '../../types/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 import { createMockResourcePickerData } from '../LogsQueryEditor/mocks';
 

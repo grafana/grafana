@@ -108,6 +108,15 @@ func TestDecryptAuthorizer(t *testing.T) {
 		require.False(t, allowed)
 	})
 
+	t.Run("when the allow list is empty, it allows all identities", func(t *testing.T) {
+		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
+		authorizer := ProvideDecryptAuthorizer(tracer, nil)
+
+		identity, allowed := authorizer.Authorize(ctx, "", []string{"identity"})
+		require.NotEmpty(t, identity)
+		require.True(t, allowed)
+	})
+
 	t.Run("when the identity is not in the allow list, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
 		authorizer := ProvideDecryptAuthorizer(tracer, map[string]struct{}{"allowed1": {}})

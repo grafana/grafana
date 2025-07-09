@@ -168,6 +168,10 @@ export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
   return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
 }
 
+export function isProvisionedPromRule(promRule: PromRuleDTO): boolean {
+  return prometheusRuleType.grafana.rule(promRule) && Boolean(promRule.provenance);
+}
+
 export function isProvisionedRuleGroup(group: RulerRuleGroupDTO): boolean {
   return group.rules.some((rule) => isProvisionedRule(rule));
 }
