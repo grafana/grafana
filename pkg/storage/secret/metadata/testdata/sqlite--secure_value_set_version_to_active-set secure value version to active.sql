@@ -1,9 +1,8 @@
 UPDATE
   "secret_secure_value"
 SET
-  "external_id" = 'extId'
+  "active" = ("version" = 1)
 WHERE 
   "namespace" = 'ns' AND
-  "name" = 'name' AND
-  "version" = 0
+  "name" = 'name'
 ;
