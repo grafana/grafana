@@ -356,9 +356,9 @@ func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
 func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) (remoteClient.GrafanaAlertmanagerConfig, error) {
 	if len(config.ExtraConfigs) == 0 {
 		return remoteClient.GrafanaAlertmanagerConfig{
-			TemplateFiles:       config.TemplateFiles,
-			AlertmanagerConfig:  config.AlertmanagerConfig,
-			TemplateDefinitions: nil,
+			TemplateFiles:      config.TemplateFiles,
+			AlertmanagerConfig: config.AlertmanagerConfig,
+			Templates:          nil,
 		}, nil
 	}
 
@@ -373,9 +373,9 @@ func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels
 	templates := definition.TemplatesMapToPostableAPITemplates(config.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)
 	return remoteClient.GrafanaAlertmanagerConfig{
 		// TODO keep sending Grafana templates as a map to not break old Mimir
-		TemplateFiles:       config.TemplateFiles,
-		AlertmanagerConfig:  mergeResult.Config,
-		TemplateDefinitions: templates,
+		TemplateFiles:      config.TemplateFiles,
+		AlertmanagerConfig: mergeResult.Config,
+		Templates:          templates,
 	}, nil
 }
 

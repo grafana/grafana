@@ -513,9 +513,9 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
 	require.NoError(t, err)
 	cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
-		TemplateFiles:       cfgWithExtraUnmerged.TemplateFiles,
-		AlertmanagerConfig:  r.Config,
-		TemplateDefinitions: definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
+		TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
+		AlertmanagerConfig: r.Config,
+		Templates:          definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
 	}
 	cfgWithExtraMergedBytes, err := json.Marshal(cfgWithExtraMerged)
 	require.NoError(t, err)
