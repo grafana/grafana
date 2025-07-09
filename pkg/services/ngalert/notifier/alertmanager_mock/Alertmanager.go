@@ -538,6 +538,98 @@ func (_c *AlertmanagerMock_ListSilences_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// MergeNflog provides a mock function with given fields: _a0
+func (_m *AlertmanagerMock) MergeNflog(_a0 []byte) error {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MergeNflog")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AlertmanagerMock_MergeNflog_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MergeNflog'
+type AlertmanagerMock_MergeNflog_Call struct {
+	*mock.Call
+}
+
+// MergeNflog is a helper method to define mock.On call
+//   - _a0 []byte
+func (_e *AlertmanagerMock_Expecter) MergeNflog(_a0 interface{}) *AlertmanagerMock_MergeNflog_Call {
+	return &AlertmanagerMock_MergeNflog_Call{Call: _e.mock.On("MergeNflog", _a0)}
+}
+
+func (_c *AlertmanagerMock_MergeNflog_Call) Run(run func(_a0 []byte)) *AlertmanagerMock_MergeNflog_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]byte))
+	})
+	return _c
+}
+
+func (_c *AlertmanagerMock_MergeNflog_Call) Return(_a0 error) *AlertmanagerMock_MergeNflog_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *AlertmanagerMock_MergeNflog_Call) RunAndReturn(run func([]byte) error) *AlertmanagerMock_MergeNflog_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MergeSilences provides a mock function with given fields: _a0
+func (_m *AlertmanagerMock) MergeSilences(_a0 []byte) error {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MergeSilences")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte) error); ok {
+		r0 = rf(_a0)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AlertmanagerMock_MergeSilences_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MergeSilences'
+type AlertmanagerMock_MergeSilences_Call struct {
+	*mock.Call
+}
+
+// MergeSilences is a helper method to define mock.On call
+//   - _a0 []byte
+func (_e *AlertmanagerMock_Expecter) MergeSilences(_a0 interface{}) *AlertmanagerMock_MergeSilences_Call {
+	return &AlertmanagerMock_MergeSilences_Call{Call: _e.mock.On("MergeSilences", _a0)}
+}
+
+func (_c *AlertmanagerMock_MergeSilences_Call) Run(run func(_a0 []byte)) *AlertmanagerMock_MergeSilences_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]byte))
+	})
+	return _c
+}
+
+func (_c *AlertmanagerMock_MergeSilences_Call) Return(_a0 error) *AlertmanagerMock_MergeSilences_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *AlertmanagerMock_MergeSilences_Call) RunAndReturn(run func([]byte) error) *AlertmanagerMock_MergeSilences_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PutAlerts provides a mock function with given fields: _a0, _a1
 func (_m *AlertmanagerMock) PutAlerts(_a0 context.Context, _a1 definitions.PostableAlerts) error {
 	ret := _m.Called(_a0, _a1)
