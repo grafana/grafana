@@ -702,10 +702,23 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-debug-9-1-0.png" max-width="1200px" alt="Geomap panel debug" >}}
 
-#### Tooltip
+### Tooltip options
+
+Tooltips are supported for the **Markers**, **Heatmap**, **Photos** (beta) layers.
+For these layer types, choose from the following tooltip options:
 
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
+
+When a data point on the geomap represents one row&mdash;that is, only a single row of response data is relevant to that point&mdash;the tooltip displays a grid with the row's names and values.
+
+When a data point represents more than one row&mdash;that is, different rows but with the same geographical information&mdash;then each row appears as a single entry, containing the name and value of the first column of the respective row.
+Clicking one of these rows expands it and shows the grid with the row details.
+
+The name of each top-level row of the tooltip is determined by [exact language from engineering would be great here...].
+
+The data appearing in each detail row can only be controlled through the underlying query and transformations applied to the query's results.
+You can't directly control what's displayed in the tooltip using the tooltip options.
 
 ### Standard options
 
