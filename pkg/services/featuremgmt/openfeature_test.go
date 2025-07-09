@@ -103,7 +103,8 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 func testGoFFProvider(t *testing.T, provider *gofeatureflag.Provider) {
 	client, err := createClient(provider)
 	assert.NoError(t, err)
-	// this tests for the MT usecase
+	// this tests with a fake identity with * namespace access, but in any case, it proves what the requester
+	// is scoped to is what is used to sign the token with
 	ctx, _ := identity.WithServiceIdentity(context.Background(), 1)
 	_ = client.Boolean(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
 }
