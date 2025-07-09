@@ -251,7 +251,6 @@ If you run Grafana in high availability mode, configuration changes may not get 
 
 ## Configure Azure AD authentication client using the Terraform provider
 
-
 ```terraform
 resource "grafana_sso_settings" "azuread_sso_settings" {
   provider_name = "azuread"
