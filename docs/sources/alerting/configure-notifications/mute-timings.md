@@ -48,7 +48,6 @@ Use mute timings to temporarily pause notifications for a specific recurring per
 
 The active time interval provide the opposite functionality, where alerts handled by a notification policy are suppressed unless the notification happens at a time that matches the time interval. Use active time intervals for periods where you want to reduce alert noise.
 
-
 {{< admonition type="note" >}}
 Mute timings and active time intervals are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
 {{< /admonition >}}
@@ -59,7 +58,7 @@ Mute timings and active time intervals are assigned to a [specific Alertmanager]
 
 The following table highlights the key differences between mute and active timings, and silences.
 
-|            | Mute and active timing                                                 | Silence                                                          |
+|            | Mute and active timing                                      | Silence                                                          |
 | ---------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
 | **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
 | **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |

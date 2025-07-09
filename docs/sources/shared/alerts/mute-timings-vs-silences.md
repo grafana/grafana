@@ -11,7 +11,7 @@ title: 'Mute timings vs silences'
 
 The following table highlights the key differences between mute and active timings, and silences.
 
-|            | Mute and active timing                                                 | Silence                                                          |
+|            | Mute and active timing                                      | Silence                                                          |
 | ---------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
 | **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
 | **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
