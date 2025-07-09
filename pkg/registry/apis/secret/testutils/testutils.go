@@ -3,7 +3,6 @@ package testutils
 import (
 	"context"
 	"testing"
-	"time"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
@@ -12,11 +11,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -29,35 +28,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type setupConfig struct {
-	workerCfg     worker.Config
-	keeperService contracts.KeeperService
+type SetupConfig struct {
+	KeeperService contracts.KeeperService
+	AllowList     map[string]struct{}
 }
 
-func defaultSetupCfg() setupConfig {
-	return setupConfig{
-		workerCfg: worker.Config{
-			BatchSize:                    10,
-			ReceiveTimeout:               1 * time.Second,
-			PollingInterval:              time.Millisecond,
-			MaxMessageProcessingAttempts: 5,
-		},
+func defaultSetupCfg() SetupConfig {
+	return SetupConfig{}
+}
+
+func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig) {
+	return func(setupCfg *SetupConfig) {
+		setupCfg.KeeperService = keeperService
 	}
 }
 
-func WithWorkerConfig(cfg worker.Config) func(*setupConfig) {
-	return func(setupCfg *setupConfig) {
-		setupCfg.workerCfg = cfg
+func WithMutateCfg(f func(*SetupConfig)) func(*SetupConfig) {
+	return func(cfg *SetupConfig) {
+		f(cfg)
 	}
 }
 
-func WithKeeperService(keeperService contracts.KeeperService) func(*setupConfig) {
-	return func(setupCfg *setupConfig) {
-		setupCfg.keeperService = keeperService
-	}
-}
-
-func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
+func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	setupCfg := defaultSetupCfg()
 	for _, opt := range opts {
 		opt(&setupCfg)
@@ -67,8 +59,6 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
 	database := database.ProvideDatabase(testDB, tracer)
-
-	outboxQueue := metadata.ProvideOutboxQueue(database, tracer, nil)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
@@ -111,34 +101,24 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 
-	if setupCfg.keeperService != nil {
-		keeperService = setupCfg.keeperService
+	if setupCfg.KeeperService != nil {
+		keeperService = setupCfg.KeeperService
 	}
 
-	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
+	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
 
-	worker, err := worker.NewWorker(
-		setupCfg.workerCfg,
-		tracer,
-		database,
-		outboxQueue,
-		secureValueMetadataStorage,
-		keeperMetadataStorage,
-		keeperService,
-		encryptionManager,
-		features,
-		nil, // metrics
-	)
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, setupCfg.AllowList)
+
+	decryptStorage, err := metadata.ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
-	return Sut{Worker: worker, SecureValueService: secureValueService, SecureValueMetadataStorage: secureValueMetadataStorage, OutboxQueue: outboxQueue, Database: database}
+	return Sut{SecureValueService: secureValueService, SecureValueMetadataStorage: secureValueMetadataStorage, Database: database, DecryptStorage: decryptStorage}
 }
 
 type Sut struct {
-	Worker                     *worker.Worker
 	SecureValueService         *service.SecureValueService
 	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
-	OutboxQueue                contracts.OutboxQueue
+	DecryptStorage             contracts.DecryptStorage
 	Database                   *database.Database
 }
 
@@ -163,9 +143,7 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 				Description: "desc1",
 				Value:       secretv0alpha1.NewExposedSecureValue("v1"),
 			},
-			Status: secretv0alpha1.SecureValueStatus{
-				Phase: secretv0alpha1.SecureValuePhasePending,
-			},
+			Status: secretv0alpha1.SecureValueStatus{},
 		},
 	}
 	for _, opt := range opts {
