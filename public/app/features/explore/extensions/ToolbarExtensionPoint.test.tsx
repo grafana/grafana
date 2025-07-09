@@ -8,7 +8,7 @@ import { usePluginLinks } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
-import { ExplorePanelData, ExploreState } from 'app/types';
+import { ExplorePanelData, ExploreState } from 'app/types/explore';
 
 import { createEmptyQueryResponse } from '../state/utils';
 

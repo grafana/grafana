@@ -25,7 +25,7 @@ import {
   transformVariableHideToEnum,
   transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import {
   getDefaultDatasource,
@@ -1016,15 +1016,14 @@ describe('ResponseTransformers', () => {
 
   function validateAnnotation(v1: AnnotationQuery, v2: DashboardV2Spec['annotations'][0]) {
     const { spec: v2Spec } = v2;
-
     expect(v1.name).toBe(v2Spec.name);
-    expect(v1.datasource?.type).toBe(v2Spec.query?.spec.group);
-    expect(v1.datasource?.uid).toBe(v2Spec.query?.spec.datasource?.name);
+    expect(v1.datasource?.type).toBe(v2Spec.query.group);
+    expect(v1.datasource?.uid).toBe(v2Spec.query.datasource?.name);
     expect(v1.enable).toBe(v2Spec.enable);
     expect(v1.hide).toBe(v2Spec.hide);
     expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : 0);
-    expect(v1.target).toBe(v2Spec.query?.spec);
+    expect(v1.builtIn).toBe(v2Spec.builtIn ? 1 : undefined);
+    expect(v1.target).toEqual(v2Spec.query.spec);
     expect(v1.filter).toEqual(v2Spec.filter);
   }
 

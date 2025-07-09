@@ -12,7 +12,7 @@ import {
   getNewFolderPhrase,
   getNewPhrase,
 } from 'app/features/search/tempI18nPhrases';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 import { ManagerKind } from '../../apiserver/types';
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';

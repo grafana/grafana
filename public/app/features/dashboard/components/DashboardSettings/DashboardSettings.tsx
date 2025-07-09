@@ -10,7 +10,7 @@ import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardMetaChangedEvent } from 'app/types/events';
 
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';

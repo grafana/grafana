@@ -7,7 +7,7 @@ import config from 'app/core/config';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';

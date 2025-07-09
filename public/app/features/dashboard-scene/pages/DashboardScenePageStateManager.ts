@@ -27,7 +27,7 @@ import {
   DashboardRoutes,
   HomeDashboardRedirectDTO,
   isRedirectResponse,
-} from 'app/types';
+} from 'app/types/dashboard';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';

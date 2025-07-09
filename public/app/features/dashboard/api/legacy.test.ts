@@ -1,5 +1,5 @@
 import { UrlQueryMap } from '@grafana/data';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
 
 import { LegacyDashboardAPI } from './legacy';
 

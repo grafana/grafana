@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { ROUTES } from 'app/features/connections/constants';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { trackAddNewDsClicked } from '../tracking';
 

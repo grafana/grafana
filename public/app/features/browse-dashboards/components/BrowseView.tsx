@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/services';
 import { fetchNextChildrenPage } from '../state/actions';
