@@ -14,8 +14,6 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
-const appEvents = getAppEvents();
-
 import { ResourceEditFormSharedFields } from '../components/Provisioned/ResourceEditFormSharedFields';
 import { ProvisionedDashboardFormData } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -51,6 +49,7 @@ export function MoveProvisionedDashboardForm({
   const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
   const { editPanel: panelEditor } = dashboard.useState();
   const { handleSubmit, watch } = methods;
+  const appEvents = getAppEvents();
 
   const [ref, workflow] = watch(['ref', 'workflow']);
 
