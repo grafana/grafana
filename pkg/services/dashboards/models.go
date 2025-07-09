@@ -299,6 +299,8 @@ type DashboardRef struct {
 	UID       string `xorm:"uid"`
 	Slug      string
 	FolderUID string `xorm:"folder_uid"`
+	// Deprecated: use UID instead
+	ID int64 `xorm:"id"`
 }
 
 type GetDashboardRefByIDQuery struct {

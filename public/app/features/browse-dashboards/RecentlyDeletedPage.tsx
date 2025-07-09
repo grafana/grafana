@@ -8,15 +8,15 @@ import { FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-
-import { useDispatch } from '../../types';
+import { useDispatch } from 'app/types/store';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
 import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
 import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { setAllSelection, useHasSelection } from './state';
+import { useHasSelection } from './state/hooks';
+import { setAllSelection } from './state/slice';
 
 const RecentlyDeletedPage = memo(() => {
   const dispatch = useDispatch();
@@ -59,7 +59,7 @@ const RecentlyDeletedPage = memo(() => {
             <ActionRow
               state={searchState}
               getTagOptions={stateManager.getTagOptions}
-              getSortOptions={getGrafanaSearcher().getSortOptions}
+              getSortOptions={stateManager.getSortOptions}
               sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
               onLayoutChange={stateManager.onLayoutChange}
               onSortChange={stateManager.onSortChange}

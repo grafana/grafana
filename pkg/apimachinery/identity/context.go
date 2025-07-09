@@ -115,9 +115,10 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"datasources:delete",
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
-	"users:read",     // accesscontrol.ActionUsersRead,
-	"org.users:read", // accesscontrol.ActionOrgUsersRead,
-	"teams:read",     // accesscontrol.ActionTeamsRead,
+	"users:read",           // accesscontrol.ActionUsersRead,
+	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
+	"teams:read",           // accesscontrol.ActionTeamsRead,
+	"serviceaccounts:read", // serviceaccounts.ActionRead,
 )
 
 var serviceIdentityTokenPermissions = getTokenPermissions(
@@ -125,6 +126,7 @@ var serviceIdentityTokenPermissions = getTokenPermissions(
 	"dashboard.grafana.app",
 	"secret.grafana.app",
 	"query.grafana.app",
+	"iam.grafana.app",
 )
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{

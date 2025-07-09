@@ -104,6 +104,7 @@ module.exports = [
       '**/__mocks__/**',
       '**/public/test/**',
       '**/mocks.{ts,tsx}',
+      '**/mocks/**/*.{ts,tsx}',
       '**/spec/**/*.{ts,tsx}',
     ],
     rules: {

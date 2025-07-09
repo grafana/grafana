@@ -4,30 +4,24 @@ import (
 	"context"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/aws/smithy-go"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
+	resourcegroupstaggingapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/mock"
 )
 
 type fakeCWLogsClient struct {
-	cloudwatchlogsiface.CloudWatchLogsAPI
-
 	calls logsQueryCalls
 
 	logGroups      []cloudwatchlogs.DescribeLogGroupsOutput
@@ -38,69 +32,90 @@ type fakeCWLogsClient struct {
 }
 
 type logsQueryCalls struct {
-	startQueryWithContext []*cloudwatchlogs.StartQueryInput
-	getEventsWithContext  []*cloudwatchlogs.GetLogEventsInput
-	describeLogGroups     []*cloudwatchlogs.DescribeLogGroupsInput
+	startQuery        []*cloudwatchlogs.StartQueryInput
+	getEvents         []*cloudwatchlogs.GetLogEventsInput
+	describeLogGroups []*cloudwatchlogs.DescribeLogGroupsInput
 }
 
-func (m *fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (m *fakeCWLogsClient) GetQueryResults(_ context.Context, _ *cloudwatchlogs.GetQueryResultsInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	return &m.queryResults, nil
 }
 
-func (m *fakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
-	m.calls.startQueryWithContext = append(m.calls.startQueryWithContext, input)
+func (m *fakeCWLogsClient) StartQuery(_ context.Context, input *cloudwatchlogs.StartQueryInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.StartQueryOutput, error) {
+	m.calls.startQuery = append(m.calls.startQuery, input)
 
 	return &cloudwatchlogs.StartQueryOutput{
 		QueryId: aws.String("abcd-efgh-ijkl-mnop"),
 	}, nil
 }
 
-func (m *fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
+func (m *fakeCWLogsClient) StopQuery(_ context.Context, _ *cloudwatchlogs.StopQueryInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.StopQueryOutput, error) {
 	return &cloudwatchlogs.StopQueryOutput{
-		Success: aws.Bool(true),
+		Success: true,
 	}, nil
 }
 
 type mockLogsSyncClient struct {
-	cloudwatchlogsiface.CloudWatchLogsAPI
-
 	mock.Mock
 }
 
-func (m *mockLogsSyncClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
-	args := m.Called(ctx, input, option)
+func (m *mockLogsSyncClient) StopQuery(context.Context, *cloudwatchlogs.StopQueryInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.StopQueryOutput, error) {
+	return nil, nil
+}
+
+func (m *mockLogsSyncClient) GetLogEvents(context.Context, *cloudwatchlogs.GetLogEventsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetLogEventsOutput, error) {
+	return nil, nil
+}
+
+func (m *mockLogsSyncClient) DescribeLogGroups(context.Context, *cloudwatchlogs.DescribeLogGroupsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+	return nil, nil
+}
+
+func (m *mockLogsSyncClient) GetQueryResults(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	args := m.Called(ctx, input, optFns)
 	return args.Get(0).(*cloudwatchlogs.GetQueryResultsOutput), args.Error(1)
 }
-func (m *mockLogsSyncClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
-	args := m.Called(ctx, input, option)
+func (m *mockLogsSyncClient) StartQuery(ctx context.Context, input *cloudwatchlogs.StartQueryInput, optFns ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.StartQueryOutput, error) {
+	args := m.Called(ctx, input, optFns)
 	return args.Get(0).(*cloudwatchlogs.StartQueryOutput), args.Error(1)
 }
 
-func (m *fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+func (m *fakeCWLogsClient) DescribeLogGroups(_ context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	m.calls.describeLogGroups = append(m.calls.describeLogGroups, input)
 	output := &m.logGroups[m.logGroupsIndex]
 	m.logGroupsIndex++
 	return output, nil
 }
 
-func (m *fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (m *fakeCWLogsClient) GetLogGroupFields(_ context.Context, _ *cloudwatchlogs.GetLogGroupFieldsInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return &m.logGroupFields, nil
 }
 
-func (m *fakeCWLogsClient) GetLogEventsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogEventsInput, option ...request.Option) (*cloudwatchlogs.GetLogEventsOutput, error) {
-	m.calls.getEventsWithContext = append(m.calls.getEventsWithContext, input)
+func (m *fakeCWLogsClient) GetLogEvents(_ context.Context, input *cloudwatchlogs.GetLogEventsInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetLogEventsOutput, error) {
+	m.calls.getEvents = append(m.calls.getEvents, input)
 
 	return &cloudwatchlogs.GetLogEventsOutput{
-		Events: []*cloudwatchlogs.OutputLogEvent{},
+		Events: []cloudwatchlogstypes.OutputLogEvent{},
 	}, nil
 }
 
 type fakeCWAnnotationsClient struct {
-	cloudwatchiface.CloudWatchAPI
 	calls annontationsQueryCalls
 
 	describeAlarmsForMetricOutput *cloudwatch.DescribeAlarmsForMetricOutput
 	describeAlarmsOutput          *cloudwatch.DescribeAlarmsOutput
+}
+
+func (c *fakeCWAnnotationsClient) DescribeAlarmHistory(ctx context.Context, input *cloudwatch.DescribeAlarmHistoryInput, f ...func(*cloudwatch.Options)) (*cloudwatch.DescribeAlarmHistoryOutput, error) {
+	return nil, nil
+}
+
+func (c *fakeCWAnnotationsClient) GetMetricData(ctx context.Context, input *cloudwatch.GetMetricDataInput, f ...func(*cloudwatch.Options)) (*cloudwatch.GetMetricDataOutput, error) {
+	return nil, nil
+}
+
+func (c *fakeCWAnnotationsClient) ListMetrics(ctx context.Context, input *cloudwatch.ListMetricsInput, f ...func(*cloudwatch.Options)) (*cloudwatch.ListMetricsOutput, error) {
+	return nil, nil
 }
 
 type annontationsQueryCalls struct {
@@ -108,13 +123,13 @@ type annontationsQueryCalls struct {
 	describeAlarms          []*cloudwatch.DescribeAlarmsInput
 }
 
-func (c *fakeCWAnnotationsClient) DescribeAlarmsForMetric(params *cloudwatch.DescribeAlarmsForMetricInput) (*cloudwatch.DescribeAlarmsForMetricOutput, error) {
+func (c *fakeCWAnnotationsClient) DescribeAlarmsForMetric(_ context.Context, params *cloudwatch.DescribeAlarmsForMetricInput, _ ...func(*cloudwatch.Options)) (*cloudwatch.DescribeAlarmsForMetricOutput, error) {
 	c.calls.describeAlarmsForMetric = append(c.calls.describeAlarmsForMetric, params)
 
 	return c.describeAlarmsForMetricOutput, nil
 }
 
-func (c *fakeCWAnnotationsClient) DescribeAlarms(params *cloudwatch.DescribeAlarmsInput) (*cloudwatch.DescribeAlarmsOutput, error) {
+func (c *fakeCWAnnotationsClient) DescribeAlarms(_ context.Context, params *cloudwatch.DescribeAlarmsInput, _ ...func(*cloudwatch.Options)) (*cloudwatch.DescribeAlarmsOutput, error) {
 	c.calls.describeAlarms = append(c.calls.describeAlarms, params)
 
 	return c.describeAlarmsOutput, nil
@@ -122,16 +137,14 @@ func (c *fakeCWAnnotationsClient) DescribeAlarms(params *cloudwatch.DescribeAlar
 
 // Please use mockEC2Client above, we are slowly migrating towards using testify's mocks only
 type oldEC2Client struct {
-	ec2iface.EC2API
-
 	regions      []string
-	reservations []*ec2.Reservation
+	reservations []ec2types.Reservation
 }
 
-func (c oldEC2Client) DescribeRegionsWithContext(ctx aws.Context, in *ec2.DescribeRegionsInput, option ...request.Option) (*ec2.DescribeRegionsOutput, error) {
-	regions := []*ec2.Region{}
+func (c oldEC2Client) DescribeRegions(_ context.Context, _ *ec2.DescribeRegionsInput, _ ...func(*ec2.Options)) (*ec2.DescribeRegionsOutput, error) {
+	regions := []ec2types.Region{}
 	for _, region := range c.regions {
-		regions = append(regions, &ec2.Region{
+		regions = append(regions, ec2types.Region{
 			RegionName: aws.String(region),
 		})
 	}
@@ -140,11 +153,10 @@ func (c oldEC2Client) DescribeRegionsWithContext(ctx aws.Context, in *ec2.Descri
 	}, nil
 }
 
-func (c oldEC2Client) DescribeInstancesPagesWithContext(ctx aws.Context, in *ec2.DescribeInstancesInput,
-	fn func(*ec2.DescribeInstancesOutput, bool) bool, opts ...request.Option) error {
-	reservations := []*ec2.Reservation{}
+func (c oldEC2Client) DescribeInstances(_ context.Context, in *ec2.DescribeInstancesInput, _ ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error) {
+	reservations := []ec2types.Reservation{}
 	for _, r := range c.reservations {
-		instances := []*ec2.Instance{}
+		instances := []ec2types.Instance{}
 		for _, inst := range r.Instances {
 			if len(in.InstanceIds) == 0 {
 				instances = append(instances, inst)
@@ -152,97 +164,59 @@ func (c oldEC2Client) DescribeInstancesPagesWithContext(ctx aws.Context, in *ec2
 			}
 
 			for _, id := range in.InstanceIds {
-				if *inst.InstanceId == *id {
+				if *inst.InstanceId == id {
 					instances = append(instances, inst)
 				}
 			}
 		}
-		reservation := &ec2.Reservation{Instances: instances}
+		reservation := ec2types.Reservation{Instances: instances}
 		reservations = append(reservations, reservation)
 	}
-	fn(&ec2.DescribeInstancesOutput{
+	return &ec2.DescribeInstancesOutput{
 		Reservations: reservations,
-	}, true)
-	return nil
+	}, nil
 }
 
 type fakeRGTAClient struct {
-	resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-
-	tagMapping []*resourcegroupstaggingapi.ResourceTagMapping
+	tagMapping []resourcegroupstaggingapitypes.ResourceTagMapping
 }
 
-func (c fakeRGTAClient) GetResourcesPagesWithContext(ctx context.Context, in *resourcegroupstaggingapi.GetResourcesInput,
-	fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool, opts ...request.Option) error {
-	fn(&resourcegroupstaggingapi.GetResourcesOutput{
+func (c fakeRGTAClient) GetResources(_ context.Context, _ *resourcegroupstaggingapi.GetResourcesInput, _ ...func(*resourcegroupstaggingapi.Options)) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+	return &resourcegroupstaggingapi.GetResourcesOutput{
 		ResourceTagMappingList: c.tagMapping,
-	}, true)
-	return nil
+	}, nil
 }
 
 type fakeCheckHealthClient struct {
-	listMetricsPages  func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error
-	describeLogGroups func(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
+	listMetricsFunction       func(context.Context, *cloudwatch.ListMetricsInput, ...func(*cloudwatch.Options)) (*cloudwatch.ListMetricsOutput, error)
+	describeLogGroupsFunction func(context.Context, *cloudwatchlogs.DescribeLogGroupsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogGroupsOutput, error)
+
+	models.CWClient
 }
 
-func (c fakeCheckHealthClient) ListMetricsPagesWithContext(ctx aws.Context, input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool, opts ...request.Option) error {
-	if c.listMetricsPages != nil {
-		return c.listMetricsPages(input, fn)
+func (c fakeCheckHealthClient) ListMetrics(ctx context.Context, input *cloudwatch.ListMetricsInput, _ ...func(*cloudwatch.Options)) (*cloudwatch.ListMetricsOutput, error) {
+	if c.listMetricsFunction != nil {
+		return c.listMetricsFunction(ctx, input)
 	}
-	return nil
+	return &cloudwatch.ListMetricsOutput{}, nil
 }
 
-func (c fakeCheckHealthClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
-	if c.describeLogGroups != nil {
-		return c.describeLogGroups(input)
+func (c fakeCheckHealthClient) DescribeLogGroups(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+	if c.describeLogGroupsFunction != nil {
+		return c.describeLogGroupsFunction(ctx, input)
 	}
 	return nil, nil
 }
 
-func (c fakeCheckHealthClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (c fakeCheckHealthClient) GetLogGroupFields(_ context.Context, _ *cloudwatchlogs.GetLogGroupFieldsInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return nil, nil
 }
 
-func testInstanceManager(pageLimit int) instancemgmt.InstanceManager {
-	return datasource.NewInstanceManager((func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{
-			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-				Region: "us-east-1",
-			},
-			GrafanaSettings: awsds.AuthSettings{ListMetricsPageLimit: pageLimit},
-		},
-			sessions:      &fakeSessionCache{},
-			tagValueCache: cache.New(0, 0)}, nil
-	}))
+type FakeCredentialsProvider struct {
 }
 
-func defaultTestInstanceManager() instancemgmt.InstanceManager {
-	return testInstanceManager(1000)
-}
-
-type mockSessionCache struct {
-	mock.Mock
-}
-
-func (c *mockSessionCache) GetSessionWithAuthSettings(config awsds.GetSessionConfig, auth awsds.AuthSettings) (*session.Session, error) {
-	args := c.Called(config)
-	return args.Get(0).(*session.Session), args.Error(1)
-}
-
-type fakeSessionCache struct {
-	getSessionWithAuthSettings func(c awsds.GetSessionConfig, a awsds.AuthSettings) (*session.Session, error)
-	calledRegions              []string
-}
-
-func (s *fakeSessionCache) GetSessionWithAuthSettings(c awsds.GetSessionConfig, a awsds.AuthSettings) (*session.Session, error) {
-	s.calledRegions = append(s.calledRegions, c.Settings.Region)
-
-	if s.getSessionWithAuthSettings != nil {
-		return s.getSessionWithAuthSettings(c, a)
-	}
-	return &session.Session{
-		Config: &aws.Config{},
-	}, nil
+func (fcp *FakeCredentialsProvider) Retrieve(_ context.Context) (aws.Credentials, error) {
+	return aws.Credentials{}, nil
 }
 
 type mockedCallResourceResponseSenderForOauth struct {
@@ -254,25 +228,25 @@ func (s *mockedCallResourceResponseSenderForOauth) Send(resp *backend.CallResour
 	return nil
 }
 
-type fakeAWSError struct {
+type fakeSmithyError struct {
 	code    string
 	message string
 }
 
-func (e fakeAWSError) OrigErr() error {
-	return nil
+func (f fakeSmithyError) Error() string {
+	return f.message
 }
 
-func (e fakeAWSError) Error() string {
-	return e.message
+func (f fakeSmithyError) ErrorCode() string {
+	return f.code
 }
 
-func (e fakeAWSError) Code() string {
-	return e.code
+func (f fakeSmithyError) ErrorMessage() string {
+	return f.message
 }
 
-func (e fakeAWSError) Message() string {
-	return e.message
+func (f fakeSmithyError) ErrorFault() smithy.ErrorFault {
+	return 0
 }
 
 func contextWithFeaturesEnabled(enabled ...string) context.Context {

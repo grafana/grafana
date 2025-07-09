@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
 import { LogsConfig } from './LogsConfig';
-import { createDefaultConfigOptions } from './__mocks__/configOptions';
+import { createDefaultConfigOptions } from './mocks/configOptions';
 
 describe('ElasticDetails', () => {
   it('should pass correct data to onChange', () => {

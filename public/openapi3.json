@@ -7028,6 +7028,7 @@
             "type": "integer"
           },
           "id": {
+            "description": "Deprecated: this field will be removed in the future",
             "format": "int64",
             "type": "integer"
           },
@@ -12239,6 +12240,7 @@
             "type": "string"
           },
           "version": {
+            "description": "The previous version -- used for optimistic locking",
             "format": "int64",
             "type": "integer"
           },

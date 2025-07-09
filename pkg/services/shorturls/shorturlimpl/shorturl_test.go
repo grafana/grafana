@@ -17,7 +17,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestShortURLService(t *testing.T) {
+func TestIntegrationShortURLService(t *testing.T) {
 	user := &user.SignedInUser{UserID: 1}
 	store := db.InitTestDB(t)
 

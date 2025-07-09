@@ -16,7 +16,7 @@ import {
   PublicDashboardPageRouteParams,
   PublicDashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
-import { AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';

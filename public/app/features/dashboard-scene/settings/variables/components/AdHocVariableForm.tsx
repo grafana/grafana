@@ -119,7 +119,7 @@ export function AdHocVariableForm({
       {datasourceSupported && onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue ?? true}
-          name="Allow custom values"
+          name={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.ad-hoc-variable-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'
