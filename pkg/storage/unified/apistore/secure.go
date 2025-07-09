@@ -24,6 +24,7 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 		if store == nil {
 			return false, fmt.Errorf("secure value support is not configured (create)")
 		}
+		changed = true
 	} else {
 		// Merge in any values from the previous object and handle remove
 		previous, err := previousObject.GetSecureValues()
