@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
 import { Description, ResourcePermission } from 'app/core/components/AccessControl/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 // TODO: Expand this out to more realistic use cases as we work on RBAC for contact points
 const resourceDescriptionsMap: Record<string, Description> = {

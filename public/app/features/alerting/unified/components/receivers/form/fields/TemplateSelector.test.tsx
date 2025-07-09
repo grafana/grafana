@@ -9,7 +9,8 @@ import { AlertmanagerProvider } from 'app/features/alerting/unified/state/Alertm
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
-import { AccessControlAction, NotificationChannelOption } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { NotificationChannelOption } from 'app/types/alerting';
 
 import { TemplatesPicker, getTemplateOptions } from './TemplateSelector';
 import { parseTemplates } from './utils';

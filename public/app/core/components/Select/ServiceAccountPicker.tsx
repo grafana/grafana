@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
-import { ServiceAccountDTO, ServiceAccountsState } from 'app/types';
+import { ServiceAccountDTO, ServiceAccountsState } from 'app/types/serviceaccount';
 
 export interface Props {
   onSelected: (user: SelectableValue<ServiceAccountDTO>) => void;

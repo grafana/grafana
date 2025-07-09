@@ -10,7 +10,7 @@ import { RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/ap
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 

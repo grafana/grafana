@@ -10,7 +10,7 @@ import {
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import ContactPoints from './components/contact-points/ContactPoints';
 import EditContactPoint from './components/contact-points/EditContactPoint';

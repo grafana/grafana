@@ -71,6 +71,7 @@ func TestIntegrationValidation(t *testing.T) {
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
 					featuremgmt.FlagUnifiedStorageSearch,
+					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
@@ -79,6 +80,36 @@ func TestIntegrationValidation(t *testing.T) {
 				}})
 
 			testIntegrationValidationForServer(t, helper, dualWriterMode)
+		})
+	}
+
+	for _, dualWriterMode := range dualWriterModes {
+		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
+			// Create a K8sTestHelper which will set up a real API server
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
+					featuremgmt.FlagUnifiedStorageSearch,
+				},
+				DisableFeatureToggles: []string{
+					featuremgmt.FlagKubernetesDashboards,
+				},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+				}})
+
+			t.Cleanup(func() {
+				helper.Shutdown()
+			})
+
+			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+
+			t.Run("Dashboard permission tests", func(t *testing.T) {
+				runDashboardPermissionTests(t, org1Ctx, false)
+			})
 		})
 	}
 }
@@ -106,7 +137,7 @@ func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper
 		})
 
 		t.Run("Dashboard permission tests", func(t *testing.T) {
-			runDashboardPermissionTests(t, org1Ctx)
+			runDashboardPermissionTests(t, org1Ctx, true)
 		})
 
 		t.Run("Dashboard LIST API test", func(t *testing.T) {
@@ -1225,7 +1256,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 }
 
 // Run tests for dashboard permissions
-func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
+func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashboardsEnabled bool) {
 	t.Helper()
 
 	// Get clients for each user
@@ -1348,8 +1379,22 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 		// Clean up dashboard
 		err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 		require.NoError(t, err)
-		err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
-		require.NoError(t, err)
+
+		if kubernetesDashboardsEnabled {
+			// In case kubernetesDashboards feature flag is set to true,
+			// we don't grant admin permission to dashboard creator on nested folders.
+			// This means that the viewer will not be able to delete the dashboard.
+			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.Error(t, err)
+			err = adminClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		} else {
+			// In case kubernetesDashboards feature flag is set to false,
+			// we grant admin permission to dashboard creator on nested folders.
+			// This means that the viewer will be able to delete the dashboard.
+			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		}
 
 		// Clean up the folder
 		err = adminFolderClient.Resource.Delete(context.Background(), folderUID, v1.DeleteOptions{})

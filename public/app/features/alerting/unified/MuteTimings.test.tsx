@@ -14,7 +14,7 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import EditMuteTimingPage from './components/mute-timings/EditMuteTiming';
 import NewMuteTimingPage from './components/mute-timings/NewMuteTiming';

@@ -11,7 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
-import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types';
+import { DashboardDataDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import {
   NameAlreadyExistsError,
