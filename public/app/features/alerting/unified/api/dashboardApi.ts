@@ -1,4 +1,5 @@
-import { DashboardDTO } from '../../../../types';
+import { DashboardDTO } from 'app/types/dashboard';
+
 import { DashboardSearchItem } from '../../../search/types';
 
 import { alertingApi } from './alertingApi';

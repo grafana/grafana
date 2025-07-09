@@ -14,7 +14,7 @@ import {
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
-import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types';
+import { DASHBOARD_FROM_LS_KEY, DashboardDataDTO, DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';

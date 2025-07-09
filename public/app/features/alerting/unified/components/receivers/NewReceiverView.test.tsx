@@ -3,7 +3,7 @@ import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';

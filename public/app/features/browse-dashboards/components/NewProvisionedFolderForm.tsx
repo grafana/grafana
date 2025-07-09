@@ -14,7 +14,7 @@ import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/sha
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 interface FormProps extends Props {

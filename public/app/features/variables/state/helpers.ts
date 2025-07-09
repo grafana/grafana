@@ -9,8 +9,9 @@ import {
 } from '@grafana/data';
 import { VariableRefresh } from '@grafana/schema';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
+import { DashboardState } from 'app/types/dashboard';
+import { StoreState } from 'app/types/store';
 
-import { DashboardState, StoreState } from '../../../types';
 import { VariableAdapter } from '../adapters';
 import { NEW_VARIABLE_ID } from '../constants';
 import { initialVariableModelState } from '../types';

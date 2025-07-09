@@ -12,9 +12,9 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { StoreState } from 'app/types/store';
 
 import { getState } from '../../store/store';
-import { StoreState } from '../../types';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';

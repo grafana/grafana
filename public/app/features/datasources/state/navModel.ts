@@ -5,7 +5,7 @@ import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { highlightTrial } from 'app/features/admin/utils';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { GenericDataSourcePlugin } from '../types';

@@ -24,7 +24,9 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role, StoreState, TeamWithRoles } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { StoreState } from 'app/types/store';
+import { TeamWithRoles } from 'app/types/teams';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { EnterpriseAuthFeaturesCard } from '../admin/EnterpriseAuthFeaturesCard';

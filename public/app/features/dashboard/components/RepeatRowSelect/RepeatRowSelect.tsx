@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneObject, sceneGraph } from '@grafana/scenes';
 import { Combobox, ComboboxOption, Select } from '@grafana/ui';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
 

@@ -14,7 +14,7 @@ import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';

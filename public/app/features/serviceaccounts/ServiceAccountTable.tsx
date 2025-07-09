@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
@@ -16,7 +17,8 @@ import {
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, OrgRole, Role, ServiceAccountDTO } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 

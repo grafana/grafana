@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { LogMessages, trackRuleListNavigation } from '../Analytics';

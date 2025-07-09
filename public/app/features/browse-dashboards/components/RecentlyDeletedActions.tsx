@@ -6,8 +6,8 @@ import { Button, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/store';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { useListDeletedDashboardsQuery, useRestoreDashboardMutation } from '../api/browseDashboardsAPI';

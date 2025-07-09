@@ -10,7 +10,8 @@ import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Role, TeamDTO } from 'app/types';
+import { Role, AccessControlAction } from 'app/types/accessControl';
+import { TeamDTO } from 'app/types/teams';
 
 const pageNav: NavModelItem = {
   icon: 'users-alt',

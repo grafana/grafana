@@ -14,7 +14,7 @@ import { SearchField } from 'app/features/plugins/admin/components/SearchField';
 import { Sorters } from 'app/features/plugins/admin/helpers';
 import { useHistory } from 'app/features/plugins/admin/hooks/useHistory';
 import { useGetAll, useIsRemotePluginsAvailable } from 'app/features/plugins/admin/state/hooks';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ROUTES } from '../../constants';
 

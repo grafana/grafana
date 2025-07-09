@@ -1,6 +1,6 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/';
+import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/appNotifications';
 
 const MAX_STORED_NOTIFICATIONS = 25;
 export const STORAGE_KEY = 'notifications';

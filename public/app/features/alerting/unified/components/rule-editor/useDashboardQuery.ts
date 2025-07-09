@@ -1,6 +1,7 @@
 import memoizeOne from 'memoize-one';
 
-import { DashboardDTO } from '../../../../../types';
+import { DashboardDTO } from 'app/types/dashboard';
+
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
 import { dashboardApi } from '../../api/dashboardApi';
 

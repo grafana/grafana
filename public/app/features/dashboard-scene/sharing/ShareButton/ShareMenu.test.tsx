@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { config } from '../../../../core/config';
-import { AccessControlAction } from '../../../../types';
 import { grantUserPermissions } from '../../../alerting/unified/mocks';
 import { DashboardScene, DashboardSceneState } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';

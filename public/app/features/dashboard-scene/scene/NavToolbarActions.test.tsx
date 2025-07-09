@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 

@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { isGrafanaRulesSource } from '../../utils/datasource';

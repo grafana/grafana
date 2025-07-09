@@ -1,6 +1,5 @@
 import { RichHistorySearchBackendFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
-
-import { RichHistoryQuery } from '../../types';
+import { RichHistoryQuery } from 'app/types/explore';
 
 /**
  * Errors are used when the operation on Rich History was not successful.

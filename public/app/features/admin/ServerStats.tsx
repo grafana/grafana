@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, GrafanaBootConfig } from '@grafana/runtime';
 import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { contextSrv } from '../../core/services/context_srv';
 

@@ -17,7 +17,8 @@ import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
-import { AccessControlAction, DashboardRoutes } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';

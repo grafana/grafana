@@ -9,7 +9,7 @@ import {
   strongPasswordValidationRegister,
 } from 'app/core/components/ValidationLabels/ValidationLabels';
 import config from 'app/core/config';
-import { UserDTO } from 'app/types';
+import { UserDTO } from 'app/types/user';
 
 import { PasswordField } from '../../core/components/PasswordField/PasswordField';
 

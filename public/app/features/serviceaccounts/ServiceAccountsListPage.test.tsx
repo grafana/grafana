@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
+import { OrgRole } from '@grafana/data';
+import { ServiceAccountStateFilter, ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';
 

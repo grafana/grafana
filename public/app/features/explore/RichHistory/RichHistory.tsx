@@ -11,8 +11,8 @@ import {
   RichHistorySettings,
   createDatasourcesList,
 } from 'app/core/utils/richHistory';
-import { useSelector } from 'app/types';
 import { RichHistoryQuery } from 'app/types/explore';
+import { useSelector } from 'app/types/store';
 
 import { supportedFeatures } from '../../../core/history/richHistoryStorageProvider';
 import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';

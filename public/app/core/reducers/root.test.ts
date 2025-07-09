@@ -1,6 +1,7 @@
+import { Team } from 'app/types/teams';
+
 import { reducerTester } from '../../../test/core/redux/reducerTester';
 import { initialTeamsState, teamsLoaded } from '../../features/teams/state/reducers';
-import { Team } from '../../types';
 import { StoreState } from '../../types/store';
 import { cleanUpAction } from '../actions/cleanUp';
 

@@ -1,4 +1,5 @@
-import { AlertRule, AlertRulesState, NotificationChannelState, StoreState } from 'app/types';
+import { AlertRule, AlertRulesState, NotificationChannelState } from 'app/types/alerting';
+import { StoreState } from 'app/types/store';
 
 export const getSearchQuery = (state: AlertRulesState) => state.searchQuery;
 

@@ -6,7 +6,7 @@ import { Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Legend, TextLink } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
 import { DashboardSource, ImportDashboardDTO } from '../state/reducers';

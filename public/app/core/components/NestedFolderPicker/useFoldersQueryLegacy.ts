@@ -7,7 +7,8 @@ import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-da
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { FolderListItemDTO, PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
+import { FolderListItemDTO } from 'app/types/folders';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { ROOT_FOLDER_ITEM } from './utils';

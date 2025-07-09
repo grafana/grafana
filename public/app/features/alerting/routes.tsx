@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
 import {

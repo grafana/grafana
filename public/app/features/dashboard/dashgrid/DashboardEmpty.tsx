@@ -14,7 +14,7 @@ import {
 import { buildPanelEditScene } from 'app/features/dashboard-scene/panel-edit/PanelEditor';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../state/reducers';
 

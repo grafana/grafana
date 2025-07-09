@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';

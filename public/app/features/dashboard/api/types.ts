@@ -2,7 +2,7 @@ import { UrlQueryMap } from '@grafana/data';
 import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
 import { ListOptions, Resource, ResourceList } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types';
+import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 

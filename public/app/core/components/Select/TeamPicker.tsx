@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
-import { Team } from 'app/types';
+import { Team } from 'app/types/teams';
 
 export interface Props {
   onSelected: (team: SelectableValue<Team>) => void;

@@ -1,4 +1,4 @@
-import { ReceiversStateDTO } from 'app/types';
+import { ReceiversStateDTO } from 'app/types/alerting';
 
 import { contactPointsStateDtoToModel, getIntegrationType, parseIntegrationName } from './grafana';
 

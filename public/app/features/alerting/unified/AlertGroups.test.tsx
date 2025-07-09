@@ -3,7 +3,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';

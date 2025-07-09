@@ -1,5 +1,5 @@
 import { getTemplateSrv } from '@grafana/runtime';
-import { ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types/store';
 
 import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';

@@ -5,7 +5,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { locationService } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';

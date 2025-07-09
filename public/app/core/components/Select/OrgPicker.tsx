@@ -5,7 +5,8 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
-import { Organization, UserOrg } from 'app/types';
+import { Organization } from 'app/types/organization';
+import { UserOrg } from 'app/types/user';
 
 export type OrgSelectItem = SelectableValue<Organization>;
 

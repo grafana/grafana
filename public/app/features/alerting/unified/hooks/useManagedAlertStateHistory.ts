@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { StateHistoryItem } from 'app/types/unified-alerting';
 
 import { fetchGrafanaAnnotationsAction } from '../state/actions';

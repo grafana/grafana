@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { RuleHealth } from 'app/types/unified-alerting';
 import {
   GrafanaPromRuleGroupDTO,

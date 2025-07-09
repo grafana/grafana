@@ -1,5 +1,6 @@
+import { TeamsState, TeamState } from 'app/types/teams';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { TeamsState, TeamState } from '../../../types';
 import { getMockTeam, getMockTeamGroups, getMockTeamMember } from '../mocks/teamMocks';
 
 import {

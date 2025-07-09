@@ -8,7 +8,7 @@ import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types'
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 import { DashboardSearchItem } from 'app/features/search/types';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
 
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];

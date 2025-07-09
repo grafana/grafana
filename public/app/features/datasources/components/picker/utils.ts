@@ -5,7 +5,7 @@ import {
   setLastUsedDatasourceKeyForDashboard,
 } from 'app/features/dashboard/utils/dashboard';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { QueryGroupDataSource } from 'app/types';
+import { QueryGroupDataSource } from 'app/types/query';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,

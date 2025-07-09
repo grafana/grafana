@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';
 import { MIXED_DATASOURCE_NAME } from '../../plugins/datasource/mixed/MixedDataSource';

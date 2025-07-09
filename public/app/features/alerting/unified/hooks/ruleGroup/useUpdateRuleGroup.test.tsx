@@ -1,7 +1,7 @@
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../../mockApi';
