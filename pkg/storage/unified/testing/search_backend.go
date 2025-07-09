@@ -24,10 +24,6 @@ type NewSearchBackendFunc func(ctx context.Context) resource.SearchBackend
 
 // RunSearchBackendTest runs the search backend test suite
 func RunSearchBackendTest(t *testing.T, newBackend NewSearchBackendFunc, opts *TestOptions) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	if opts == nil {
 		opts = &TestOptions{}
 	}
