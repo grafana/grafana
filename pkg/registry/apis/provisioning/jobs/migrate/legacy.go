@@ -10,7 +10,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	nanogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
 )
 
 type LegacyMigrator struct {
@@ -37,7 +37,7 @@ func NewLegacyMigrator(
 func (m *LegacyMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := rw.Config().Namespace
 
-	writer := gogit.Progress(func(line string) {
+	writer := nanogit.Progress(func(line string) {
 		progress.SetMessage(ctx, line)
 	}, "finished")
 	cloneOptions := repository.CloneOptions{

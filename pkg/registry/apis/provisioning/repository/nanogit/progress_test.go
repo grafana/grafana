@@ -1,4 +1,4 @@
-package gogit
+package nanogit
 
 import (
 	"testing"
