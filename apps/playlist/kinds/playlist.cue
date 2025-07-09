@@ -4,23 +4,17 @@ playlistv0alpha1: {
 	kind:   "Playlist"
 	plural: "playlists"
 	scope:  "Namespaced"
-	codegen: {
-		frontend: false
-		backend:  true
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
 	}
-	admission: {
-		validation: {
-			operations: [
-				"CREATE",
-				"UPDATE",
-			]
-		}
-		mutation: {
-			operations: [
-				"CREATE",
-				"UPDATE",
-			]
-		}
+	mutation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
 	}
 	schema: {
 		#Item: {

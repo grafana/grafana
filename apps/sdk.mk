@@ -1,4 +1,4 @@
-APP_SDK_VERSION = apiserver-custom-routes
+APP_SDK_VERSION = aef07c9d3145f6884710130d28bed723ae28de9f
 APP_SDK_DIR     = $(shell go env GOPATH)/bin/app-sdk-$(APP_SDK_VERSION)
 APP_SDK_BIN     = $(APP_SDK_DIR)/grafana-app-sdk
 

@@ -4,8 +4,6 @@ folder: {
 	kind:       "Folder"
 	pluralName: "Folders"
 	current:    "v1beta1"
-
-
 	versions: {
 		"v1beta1": {
 			codegen: {

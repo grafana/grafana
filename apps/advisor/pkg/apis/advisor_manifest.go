@@ -38,7 +38,15 @@ var appManifestData = app.ManifestData{
 					Plural:     "Checks",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaCheckv0alpha1,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaCheckv0alpha1,
 				},
 
 				{
