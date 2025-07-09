@@ -16,7 +16,6 @@ import (
 type OpenFeatureService struct {
 	log                      log.Logger
 	provider                 openfeature.FeatureProvider
-	stackID                  string
 	Client                   openfeature.IClient
 	httpClientProvider       *sdkhttpclient.Provider
 	signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider
