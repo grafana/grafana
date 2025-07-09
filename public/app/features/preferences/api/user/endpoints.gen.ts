@@ -48,6 +48,8 @@ export type PreferencesSpec = {
   locale?: string;
   navbar?: PreferencesNavbarPreference;
   queryHistory?: PreferencesQueryHistoryPreference;
+  /** Selected locale (beta) */
+  regionalFormat?: string;
   /** light, dark, empty is default */
   theme?: string;
   /** The timezone selection
@@ -78,22 +80,26 @@ export type QueryHistoryPreference = {
 };
 export type PatchPrefsCmd = {
   cookies?: CookieType[];
+  /** The numerical :id of a favorited dashboard */
+  homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark';
   timezone?: 'utc' | 'browser';
   weekStart?: string;
 };
 export type UpdatePrefsCmd = {
   cookies?: CookieType[];
+  /** The numerical :id of a favorited dashboard */
+  homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;
-  locale?: string;
   navbar?: NavbarPreference;
   queryHistory?: QueryHistoryPreference;
+  regionalFormat?: string;
   theme?: 'light' | 'dark' | 'system';
   timezone?: 'utc' | 'browser';
   weekStart?: string;
