@@ -140,13 +140,13 @@ func TestNewGitHub(t *testing.T) {
 			factory := ProvideFactory()
 			factory.Client = http.DefaultClient
 
-			nanogitRepo := repository.NewMockGitRepository(t)
+			gitRepo := repository.NewMockGitRepository(t)
 
 			// Call the function under test
 			repo, err := NewGitHub(
 				context.Background(),
 				tt.config,
-				nanogitRepo,
+				gitRepo,
 				factory,
 				mockSecrets,
 			)
@@ -164,7 +164,7 @@ func TestNewGitHub(t *testing.T) {
 				assert.Equal(t, tt.config, repo.Config())
 				concreteRepo, ok := repo.(*githubRepository)
 				require.True(t, ok)
-				assert.Equal(t, nanogitRepo, concreteRepo.nanogitRepo)
+				assert.Equal(t, gitRepo, concreteRepo.gitRepo)
 			}
 
 			// Verify all mock expectations were met

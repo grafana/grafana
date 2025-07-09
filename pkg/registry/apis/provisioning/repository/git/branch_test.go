@@ -1,4 +1,4 @@
-package nanogit
+package git
 
 import (
 	"testing"

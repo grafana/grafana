@@ -11,8 +11,8 @@ import (
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
@@ -187,7 +187,7 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			return nil, fmt.Errorf("github configuration is required for nano git")
 		}
 
-		gitCfg := nanogit.RepositoryConfig{
+		gitCfg := git.RepositoryConfig{
 			URL:            ghCfg.URL,
 			Branch:         ghCfg.Branch,
 			Path:           ghCfg.Path,
@@ -196,12 +196,12 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 		}
 
 		// TODO: secrets only once
-		nanogitRepo, err := nanogit.NewGitRepository(ctx, e.secrets, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, e.secrets, r, gitCfg)
 		if err != nil {
-			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
+			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		basicRepo, err := github.NewGitHub(ctx, r, nanogitRepo, e.ghFactory, e.secrets)
+		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, e.secrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}

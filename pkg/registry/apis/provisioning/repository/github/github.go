@@ -16,16 +16,16 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
-	nanogitRepo repository.GitRepository
-	config      *provisioning.Repository
-	gh          Client // assumes github.com base URL
+	gitRepo repository.GitRepository
+	config  *provisioning.Repository
+	gh      Client // assumes github.com base URL
 
 	owner string
 	repo  string
@@ -50,7 +50,7 @@ type GithubRepository interface {
 func NewGitHub(
 	ctx context.Context,
 	config *provisioning.Repository,
-	nanogitRepo repository.GitRepository,
+	gitRepo repository.GitRepository,
 	factory *Factory,
 	secrets secrets.Service,
 ) (GithubRepository, error) {
@@ -59,7 +59,7 @@ func NewGitHub(
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
 	}
 
-	// TODO: we are decrypting twice. Once for nanogit and once for GH.
+	// TODO: we are decrypting twice. Once for git and once for GH.
 	token := config.Spec.GitHub.Token
 	if token == "" {
 		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
@@ -70,16 +70,16 @@ func NewGitHub(
 	}
 
 	return &githubRepository{
-		config:      config,
-		nanogitRepo: nanogitRepo,
-		gh:          factory.New(ctx, token), // TODO, baseURL from config
-		owner:       owner,
-		repo:        repo,
+		config:  config,
+		gitRepo: gitRepo,
+		gh:      factory.New(ctx, token), // TODO, baseURL from config
+		owner:   owner,
+		repo:    repo,
 	}, nil
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
-	return r.nanogitRepo.Config()
+	return r.gitRepo.Config()
 }
 
 func (r *githubRepository) Owner() string {
@@ -96,7 +96,7 @@ func (r *githubRepository) Client() Client {
 
 // Validate implements provisioning.Repository.
 func (r *githubRepository) Validate() (list field.ErrorList) {
-	cfg := r.nanogitRepo.Config()
+	cfg := r.gitRepo.Config()
 	gh := cfg.Spec.GitHub
 	if gh == nil {
 		list = append(list, field.Required(field.NewPath("spec", "github"), "a github config is required"))
@@ -117,7 +117,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 		return list
 	}
 
-	return r.nanogitRepo.Validate()
+	return r.gitRepo.Validate()
 }
 
 func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) {
@@ -186,27 +186,27 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 
 // ReadResource implements provisioning.Repository.
 func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*repository.FileInfo, error) {
-	return r.nanogitRepo.Read(ctx, filePath, ref)
+	return r.gitRepo.Read(ctx, filePath, ref)
 }
 
 func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
-	return r.nanogitRepo.ReadTree(ctx, ref)
+	return r.gitRepo.ReadTree(ctx, ref)
 }
 
 func (r *githubRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
-	return r.nanogitRepo.Create(ctx, path, ref, data, comment)
+	return r.gitRepo.Create(ctx, path, ref, data, comment)
 }
 
 func (r *githubRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
-	return r.nanogitRepo.Update(ctx, path, ref, data, comment)
+	return r.gitRepo.Update(ctx, path, ref, data, comment)
 }
 
 func (r *githubRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
-	return r.nanogitRepo.Write(ctx, path, ref, data, message)
+	return r.gitRepo.Write(ctx, path, ref, data, message)
 }
 
 func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
-	return r.nanogitRepo.Delete(ctx, path, ref, comment)
+	return r.gitRepo.Delete(ctx, path, ref, comment)
 }
 
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
@@ -256,7 +256,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 }
 
 func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName string) error {
-	if !nanogit.IsValidGitBranchName(branchName) {
+	if !git.IsValidGitBranchName(branchName) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Code:    http.StatusBadRequest,
@@ -294,11 +294,11 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 }
 
 func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
-	return r.nanogitRepo.LatestRef(ctx)
+	return r.gitRepo.LatestRef(ctx)
 }
 
 func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error) {
-	return r.nanogitRepo.CompareFiles(ctx, base, ref)
+	return r.gitRepo.CompareFiles(ctx, base, ref)
 }
 
 // ResourceURLs implements RepositoryWithURLs.
@@ -330,7 +330,7 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 
 // TODO: we should not need to clone
 func (r *githubRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-	return r.nanogitRepo.Clone(ctx, opts)
+	return r.gitRepo.Clone(ctx, opts)
 }
 
 func (r *githubRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {
