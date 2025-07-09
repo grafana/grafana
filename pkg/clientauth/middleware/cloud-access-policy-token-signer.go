@@ -6,7 +6,6 @@ import (
 
 	authlib "github.com/grafana/authlib/authn"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infralog "github.com/grafana/grafana/pkg/infra/log"
@@ -67,8 +66,6 @@ func (m cloudAccessPolicyTokenSignerMiddleware) RoundTrip(req *http.Request) (re
 	}
 
 	namespace := user.GetNamespace()
-	// TODO: still failing authorizer after this (ns, err := types.ParseNamespace(a.GetNamespace()) returns nothing)
-	req = req.WithContext(request.WithNamespace(req.Context(), namespace))
 
 	if namespace == "" {
 		return nil, fmt.Errorf("cluster scoped resources are currently not supported")
