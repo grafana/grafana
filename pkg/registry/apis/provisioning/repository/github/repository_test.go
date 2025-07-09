@@ -985,263 +985,75 @@ func TestGitHubRepository_Create(t *testing.T) {
 		ref           string
 		data          []byte
 		comment       string
-		mockSetup     func(t *testing.T, mockClient *MockClient)
+		mockSetup     func(t *testing.T, gitRepo *git.MockGitRepository)
 		expectedError error
 	}{
 		{
-			name: "successful file creation",
+			name: "delegates create to nanoGit",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
 						Branch: "main",
+						Path:   "base/path",
 					},
 				},
 			},
-			path:    "dashboard.json",
+			path:    "test/file.txt",
 			ref:     "feature-branch",
-			data:    []byte("dashboard content"),
-			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
-				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "feature-branch", "Add new dashboard", []byte("dashboard content")).Return(nil)
+			data:    []byte("file content"),
+			comment: "Add test file",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("Create", mock.Anything, "test/file.txt", "feature-branch", []byte("file content"), "Add test file").
+					Return(nil)
 			},
 			expectedError: nil,
 		},
 		{
-			name: "create with default branch",
+			name: "returns error from nanoGit",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
 						Branch: "main",
+						Path:   "",
 					},
 				},
 			},
-			path:    "dashboard.json",
-			ref:     "",
-			data:    []byte("dashboard content"),
-			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main", "Add new dashboard", []byte("dashboard content")).Return(nil)
-			},
-			expectedError: nil,
-		},
-		{
-			name: "branch already exists error",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "feature-branch",
-			data:    []byte("dashboard content"),
-			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
-				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(ErrResourceAlreadyExists)
-			},
-			expectedError: &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Code:    http.StatusConflict,
-					Message: "branch already exists",
-				},
-			},
-		},
-		{
-			name: "branch does not exist error",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "feature-branch",
-			data:    []byte("dashboard content"),
-			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
-				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(fmt.Errorf("failed to create branch"))
-			},
-			expectedError: fmt.Errorf("create branch: %w", fmt.Errorf("failed to create branch")),
-		},
-		{
-			name: "branch does not exist but it's created",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "feature-branch",
-			data:    []byte("dashboard content"),
-			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
-				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(nil)
-				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "feature-branch", "Add new dashboard", []byte("dashboard content")).Return(nil)
-			},
-			expectedError: nil,
-		},
-		{
-			name: "invalid branch name",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "feature//branch",
-			data:    []byte("dashboard content"),
-			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				// No mock expectations needed as validation should fail before any GitHub API calls
-			},
-			expectedError: &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Code:    http.StatusBadRequest,
-					Message: "invalid branch name",
-				},
-			},
-		},
-		{
-			name: "branch exists check fails",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "feature-branch",
-			data:    []byte("dashboard content"),
-			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, fmt.Errorf("failed to check branch"))
-			},
-			expectedError: fmt.Errorf("check branch exists: %w", fmt.Errorf("failed to check branch")),
-		},
-		{
-			name: "file already exists",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
+			path:    "fail/file.txt",
 			ref:     "main",
-			data:    []byte("dashboard content"),
-			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main", "Add new dashboard", []byte("dashboard content")).Return(ErrResourceAlreadyExists)
+			data:    []byte("bad content"),
+			comment: "Try to add file",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("Create", mock.Anything, "fail/file.txt", "main", []byte("bad content"), "Try to add file").
+					Return(errors.New("nanoGit error"))
 			},
-			expectedError: &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: "file already exists",
-					Code:    http.StatusConflict,
-				},
-			},
-		},
-		{
-			name: "create directory with .keep file",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboards/",
-			ref:     "main",
-			data:    nil,
-			comment: "Add dashboards directory",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/.keep", "main", "Add dashboards directory", []byte{}).Return(nil)
-			},
-			expectedError: nil,
-		},
-		{
-			name: "error when providing data for directory",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboards/",
-			ref:     "main",
-			data:    []byte("some data"),
-			comment: "Add dashboards directory",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-			},
-			expectedError: apierrors.NewBadRequest("data cannot be provided for a directory"),
+			expectedError: errors.New("nanoGit error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock GitHub client
-			mockClient := NewMockClient(t)
-
-			// Set up the mock expectations
+			gitRepo := git.NewMockGitRepository(t)
 			if tt.mockSetup != nil {
-				tt.mockSetup(t, mockClient)
+				tt.mockSetup(t, gitRepo)
 			}
 
-			// Create a GitHub repository with the test config and mock client
 			repo := &githubRepository{
-				config: tt.config,
-				gh:     mockClient,
-				owner:  "grafana",
-				repo:   "grafana",
+				config:  tt.config,
+				gitRepo: gitRepo,
+				owner:   "grafana",
+				repo:    "grafana",
 			}
 
-			// Call the Create method
 			err := repo.Create(context.Background(), tt.path, tt.ref, tt.data, tt.comment)
 
-			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				var statusErr *apierrors.StatusError
-				if errors.As(tt.expectedError, &statusErr) {
-					var actualStatusErr *apierrors.StatusError
-					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type")
-					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
-					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
-				} else {
-					require.Equal(t, tt.expectedError.Error(), err.Error())
-				}
+				require.EqualError(t, err, tt.expectedError.Error())
 			} else {
 				require.NoError(t, err)
 			}
 
-			// Verify all mock expectations were met
-			mockClient.AssertExpectations(t)
+			gitRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -1254,316 +1066,75 @@ func TestGitHubRepository_Update(t *testing.T) {
 		ref           string
 		data          []byte
 		comment       string
-		mockSetup     func(t *testing.T, client *MockClient)
+		mockSetup     func(t *testing.T, gitRepo *git.MockGitRepository)
 		expectedError error
 	}{
 		{
-			name: "Successfully update file",
+			name: "successful update",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "base/path",
+						Path:   "",
 					},
 				},
 			},
-			path:    "test/file.txt",
-			ref:     "feature-branch",
+			path:    "file.txt",
+			ref:     "main",
 			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-				fileContent.EXPECT().IsDirectory().Return(false)
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
-				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
-					Return(fileContent, nil, nil)
-				client.On("UpdateFile", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch",
-					"Update test file", "abc123", []byte("updated content")).Return(nil)
+			comment: "Update file",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("Update", mock.Anything, "file.txt", "main", []byte("updated content"), "Update file").
+					Return(nil)
 			},
 			expectedError: nil,
 		},
 		{
-			name: "Use default branch when ref is empty",
+			name: "returns error from nanoGit",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
-						Path:   "base/path",
+						Path:   "",
 					},
 				},
 			},
-			path:    "test/file.txt",
-			ref:     "",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-				fileContent.EXPECT().IsDirectory().Return(false)
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "main").
-					Return(fileContent, nil, nil)
-				client.On("UpdateFile", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "main",
-					"Update test file", "abc123", []byte("updated content")).Return(nil)
+			path:    "fail/file.txt",
+			ref:     "main",
+			data:    []byte("bad content"),
+			comment: "Try to update file",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("Update", mock.Anything, "fail/file.txt", "main", []byte("bad content"), "Try to update file").
+					Return(errors.New("nanoGit update error"))
 			},
-			expectedError: nil,
-		},
-		{
-			name: "Branch does not exist",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/file.txt",
-			ref:     "feature-branch",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
-				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(errors.New("failed to create branch"))
-			},
-			expectedError: errors.New("create branch: failed to create branch"),
-		},
-		{
-			name: "Invalid branch name",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/file.txt",
-			ref:     "invalid//branch",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				// No mock calls expected
-			},
-			expectedError: &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Code:    http.StatusBadRequest,
-					Message: "invalid branch name",
-				},
-			},
-		},
-		{
-			name: "Branch exists check fails",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/file.txt",
-			ref:     "feature-branch",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, errors.New("failed to check branch"))
-			},
-			expectedError: errors.New("check branch exists: failed to check branch"),
-		},
-		{
-			name: "Branch does not exist but it's created successfully",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/file.txt",
-			ref:     "feature-branch",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
-				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(nil)
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-				fileContent.EXPECT().IsDirectory().Return(false)
-				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
-					Return(fileContent, nil, nil)
-				client.On("UpdateFile", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch",
-					"Update test file", "abc123", []byte("updated content")).Return(nil)
-			},
-			expectedError: nil,
-		},
-		{
-			name: "Branch already exists error",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/file.txt",
-			ref:     "feature-branch",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
-				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(ErrResourceAlreadyExists)
-			},
-			expectedError: &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Code:    http.StatusConflict,
-					Message: "branch already exists",
-				},
-			},
-		},
-		{
-			name: "File not found",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/file.txt",
-			ref:     "feature-branch",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
-				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
-					Return(nil, nil, ErrResourceNotFound)
-			},
-			expectedError: &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: "file not found",
-					Code:    http.StatusNotFound,
-				},
-			},
-		},
-		{
-			name: "Error getting file contents",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/file.txt",
-			ref:     "feature-branch",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
-				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
-					Return(nil, nil, errors.New("API error"))
-			},
-			expectedError: errors.New("get content before file update: API error"),
-		},
-		{
-			name: "Cannot update directory",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/directory",
-			ref:     "feature-branch",
-			data:    []byte("updated content"),
-			comment: "Update test directory",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
-
-				// Create a directory file
-				dirFile := NewMockRepositoryContent(t)
-				dirFile.EXPECT().IsDirectory().Return(true)
-
-				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/directory", "feature-branch").
-					Return(dirFile, nil, nil)
-			},
-			expectedError: apierrors.NewBadRequest("cannot update a directory"),
-		},
-		{
-			name: "Error updating file",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch: "main",
-						Path:   "base/path",
-					},
-				},
-			},
-			path:    "test/file.txt",
-			ref:     "feature-branch",
-			data:    []byte("updated content"),
-			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-				fileContent.EXPECT().IsDirectory().Return(false)
-				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
-				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
-					Return(fileContent, nil, nil)
-				client.On("UpdateFile", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch",
-					"Update test file", "abc123", []byte("updated content")).Return(errors.New("update failed"))
-			},
-			expectedError: errors.New("update file: update failed"),
+			expectedError: errors.New("nanoGit update error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock GitHub client
-			mockClient := NewMockClient(t)
-
-			// Set up the mock expectations
+			gitRepo := git.NewMockGitRepository(t)
 			if tt.mockSetup != nil {
-				tt.mockSetup(t, mockClient)
+				tt.mockSetup(t, gitRepo)
 			}
 
-			// Create a GitHub repository with the test config and mock client
 			repo := &githubRepository{
-				config: tt.config,
-				gh:     mockClient,
-				owner:  "grafana",
-				repo:   "grafana",
+				config:  tt.config,
+				gitRepo: gitRepo,
+				owner:   "grafana",
+				repo:    "grafana",
 			}
 
-			// Call the Update method
 			err := repo.Update(context.Background(), tt.path, tt.ref, tt.data, tt.comment)
 
-			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				var statusErr *apierrors.StatusError
-				if errors.As(tt.expectedError, &statusErr) {
-					var actualStatusErr *apierrors.StatusError
-					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type")
-					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
-					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
-				} else {
-					require.Equal(t, tt.expectedError.Error(), err.Error())
-				}
+				require.EqualError(t, err, tt.expectedError.Error())
 			} else {
 				require.NoError(t, err)
 			}
 
-			// Verify all mock expectations were met
-			mockClient.AssertExpectations(t)
+			gitRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -1575,12 +1146,12 @@ func TestGitHubRepository_Write(t *testing.T) {
 		path          string
 		ref           string
 		data          []byte
-		message       string
-		mockSetup     func(t *testing.T, mockClient *MockClient)
+		comment       string
+		mockSetup     func(t *testing.T, gitRepo *git.MockGitRepository)
 		expectedError error
 	}{
 		{
-			name: "write to existing file (update)",
+			name: "delegates write to nanogit",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
@@ -1591,24 +1162,16 @@ func TestGitHubRepository_Write(t *testing.T) {
 			},
 			path:    "dashboard.json",
 			ref:     "main",
-			data:    []byte("updated content"),
-			message: "Update dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().GetFileContent().Return("existing content", nil)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-				fileContent.EXPECT().IsDirectory().Return(false)
-
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
-					Return(fileContent, nil, nil)
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().UpdateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
-					"Update dashboard", "abc123", []byte("updated content")).Return(nil)
+			data:    []byte("dashboard content"),
+			comment: "Add dashboard",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("Write", mock.Anything, "dashboard.json", "main", []byte("dashboard content"), "Add dashboard").
+					Return(nil)
 			},
 			expectedError: nil,
 		},
 		{
-			name: "write to non-existing file (create)",
+			name: "returns error from nanogit",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
@@ -1617,151 +1180,42 @@ func TestGitHubRepository_Write(t *testing.T) {
 					},
 				},
 			},
-			path:    "new-dashboard.json",
+			path:    "fail/dashboard.json",
 			ref:     "main",
-			data:    []byte("new content"),
-			message: "Create new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/new-dashboard.json", "main").
-					Return(nil, nil, ErrResourceNotFound)
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/new-dashboard.json", "main",
-					"Create new dashboard", []byte("new content")).Return(nil)
+			data:    []byte("bad content"),
+			comment: "Try to write file",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("Write", mock.Anything, "fail/dashboard.json", "main", []byte("bad content"), "Try to write file").
+					Return(errors.New("nanogit write error"))
 			},
-			expectedError: nil,
-		},
-		{
-			name: "write with default branch",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "",
-			data:    []byte("content"),
-			message: "Update dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().GetFileContent().Return("existing content", nil)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-				fileContent.EXPECT().IsDirectory().Return(false)
-
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
-					Return(fileContent, nil, nil)
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().UpdateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
-					"Update dashboard", "abc123", []byte("content")).Return(nil)
-			},
-			expectedError: nil,
-		},
-		{
-			name: "error checking if file exists",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "main",
-			data:    []byte("content"),
-			message: "Update dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
-					Return(nil, nil, errors.New("connection error"))
-			},
-			expectedError: errors.New("check if file exists before writing: get contents: connection error"),
-		},
-		{
-			name: "error during update",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "main",
-			data:    []byte("updated content"),
-			message: "Update dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().GetFileContent().Return("existing content", nil)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-				fileContent.EXPECT().IsDirectory().Return(false)
-
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
-					Return(fileContent, nil, nil)
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().UpdateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
-					"Update dashboard", "abc123", []byte("updated content")).Return(errors.New("update failed"))
-			},
-			expectedError: errors.New("update file: update failed"),
-		},
-		{
-			name: "error during create",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "new-dashboard.json",
-			ref:     "main",
-			data:    []byte("new content"),
-			message: "Create new dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/new-dashboard.json", "main").
-					Return(nil, nil, ErrResourceNotFound)
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/new-dashboard.json", "main",
-					"Create new dashboard", []byte("new content")).Return(errors.New("create failed"))
-			},
-			expectedError: errors.New("create failed"),
+			expectedError: errors.New("nanogit write error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock GitHub client
-			mockClient := NewMockClient(t)
-
-			// Set up the mock expectations
+			gitRepo := git.NewMockGitRepository(t)
 			if tt.mockSetup != nil {
-				tt.mockSetup(t, mockClient)
+				tt.mockSetup(t, gitRepo)
 			}
 
-			// Create a GitHub repository with the test config and mock client
 			repo := &githubRepository{
-				config: tt.config,
-				gh:     mockClient,
-				owner:  "grafana",
-				repo:   "grafana",
+				config:  tt.config,
+				gitRepo: gitRepo,
+				owner:   "grafana",
+				repo:    "grafana",
 			}
 
-			// Call the Write method
-			err := repo.Write(context.Background(), tt.path, tt.ref, tt.data, tt.message)
+			err := repo.Write(context.Background(), tt.path, tt.ref, tt.data, tt.comment)
 
-			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				require.Equal(t, tt.expectedError.Error(), err.Error())
+				require.EqualError(t, err, tt.expectedError.Error())
 			} else {
 				require.NoError(t, err)
 			}
 
-			// Verify all mock expectations were met
-			mockClient.AssertExpectations(t)
+			gitRepo.AssertExpectations(t)
 		})
 	}
 }
@@ -1772,330 +1226,71 @@ func TestGitHubRepository_Delete(t *testing.T) {
 		config        *provisioning.Repository
 		path          string
 		ref           string
-		comment       string
-		mockSetup     func(t *testing.T, mockClient *MockClient)
+		mockSetup     func(t *testing.T, gitRepo *git.MockGitRepository)
 		expectedError error
 	}{
 		{
-			name: "delete existing file",
+			name: "delegates delete to nanogit repo",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
 						Branch: "main",
+						Path:   "base/path",
 					},
 				},
 			},
-			path:    "dashboard.json",
-			ref:     "main",
-			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().IsDirectory().Return(false)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
-					Return(fileContent, nil, nil)
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
-					"Delete dashboard", "abc123").Return(nil)
+			path: "test/file.txt",
+			ref:  "feature-branch",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("Delete", mock.Anything, "test/file.txt", "feature-branch").
+					Return(nil)
 			},
 			expectedError: nil,
 		},
 		{
-			name: "delete with default branch",
+			name: "returns error from nanogit",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
 						Branch: "main",
+						Path:   "",
 					},
 				},
 			},
-			path:    "dashboard.json",
-			ref:     "",
-			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().IsDirectory().Return(false)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
-					Return(fileContent, nil, nil)
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
-					"Delete dashboard", "abc123").Return(nil)
+			path: "fail/file.txt",
+			ref:  "main",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("Delete", mock.Anything, "fail/file.txt", "main").
+					Return(errors.New("nanogit delete error"))
 			},
-			expectedError: nil,
-		},
-		{
-			name: "delete directory recursively",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboards",
-			ref:     "main",
-			comment: "Delete dashboards directory",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				dirContent := NewMockRepositoryContent(t)
-				dirContent.EXPECT().IsDirectory().Return(true)
-
-				// Directory contents
-				file1Content := NewMockRepositoryContent(t)
-				file1Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard1.json")
-				file1Content.EXPECT().IsDirectory().Return(false)
-				file1Content.EXPECT().GetSHA().Return("file1-sha")
-
-				file2Content := NewMockRepositoryContent(t)
-				file2Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard2.json")
-				file2Content.EXPECT().IsDirectory().Return(false)
-				file2Content.EXPECT().GetSHA().Return("file2-sha")
-
-				subDirContent := NewMockRepositoryContent(t)
-				subDirContent.EXPECT().GetPath().Return("grafana/dashboards/subfolder")
-				subDirContent.EXPECT().IsDirectory().Return(true)
-
-				// Subfolder contents
-				subFile1Content := NewMockRepositoryContent(t)
-				subFile1Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard.json")
-				subFile1Content.EXPECT().IsDirectory().Return(false)
-				subFile1Content.EXPECT().GetSHA().Return("subfile-sha")
-
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-
-				// Get main directory
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards", "main").
-					Return(dirContent, []RepositoryContent{file1Content, file2Content, subDirContent}, nil)
-
-				// Get subfolder contents
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder", "main").
-					Return(subDirContent, []RepositoryContent{subFile1Content}, nil)
-
-				// Delete files in reverse order (depth-first)
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder/subdashboard.json", "main",
-					"Delete dashboards directory", "subfile-sha").Return(nil)
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard2.json", "main",
-					"Delete dashboards directory", "file2-sha").Return(nil)
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard1.json", "main",
-					"Delete dashboards directory", "file1-sha").Return(nil)
-			},
-			expectedError: nil,
-		},
-		{
-			name: "delete directory recursively fails in the middle",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboards",
-			ref:     "main",
-			comment: "Delete dashboards directory",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				dirContent := NewMockRepositoryContent(t)
-				dirContent.EXPECT().IsDirectory().Return(true)
-
-				// Directory contents
-				file1Content := NewMockRepositoryContent(t)
-				file1Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard1.json")
-				file1Content.EXPECT().IsDirectory().Return(false)
-				file1Content.EXPECT().GetSHA().Return("file1-sha")
-
-				file2Content := NewMockRepositoryContent(t)
-				file2Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard2.json")
-				file2Content.EXPECT().IsDirectory().Return(false)
-				file2Content.EXPECT().GetSHA().Return("file2-sha")
-
-				subDirContent := NewMockRepositoryContent(t)
-				subDirContent.EXPECT().IsDirectory().Return(true)
-				subDirContent.EXPECT().GetPath().Return("grafana/dashboards/subfolder")
-
-				// Subfolder contents
-				subFile1Content := NewMockRepositoryContent(t)
-				subFile1Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard.json")
-				subFile1Content.EXPECT().IsDirectory().Return(false)
-				subFile1Content.EXPECT().GetSHA().Return("subfile-sha")
-
-				subFile2Content := NewMockRepositoryContent(t)
-				subFile2Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard2.json")
-				subFile2Content.EXPECT().IsDirectory().Return(false)
-				subFile2Content.EXPECT().GetSHA().Return("subfile2-sha")
-
-				subFile3Content := NewMockRepositoryContent(t)
-
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-
-				// Get main directory
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards", "main").
-					Return(dirContent, []RepositoryContent{file1Content, file2Content, subDirContent}, nil)
-
-				// Get subfolder contents
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder", "main").
-					Return(subDirContent, []RepositoryContent{subFile1Content, subFile2Content, subFile3Content}, nil)
-
-				// Delete first file successfully
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard1.json", "main",
-					"Delete dashboards directory", "file1-sha").Return(nil)
-
-				// Second file deletion fails
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard2.json", "main",
-					"Delete dashboards directory", "file2-sha").Return(nil)
-
-				// Delete subfolder files
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder/subdashboard.json", "main",
-					"Delete dashboards directory", "subfile-sha").Return(nil)
-
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder/subdashboard2.json", "main",
-					"Delete dashboards directory", "subfile2-sha").Return(errors.New("permission denied"))
-			},
-			expectedError: errors.New("delete directory recursively: delete file: permission denied"),
-		},
-		{
-			name: "file not found",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "nonexistent.json",
-			ref:     "main",
-			comment: "Delete nonexistent file",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/nonexistent.json", "main").
-					Return(nil, nil, ErrResourceNotFound)
-			},
-			expectedError: repository.ErrFileNotFound,
-		},
-		{
-			name: "branch does not exist and creation fails",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "feature",
-			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature").Return(false, nil)
-				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature").
-					Return(errors.New("failed to create branch"))
-			},
-			expectedError: errors.New("create branch: failed to create branch"),
-		},
-		{
-			name: "error checking if branch exists",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "main",
-			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").
-					Return(false, errors.New("API error"))
-			},
-			expectedError: errors.New("check branch exists: API error"),
-		},
-		{
-			name: "error getting file content",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "main",
-			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
-					Return(nil, nil, errors.New("API rate limit exceeded"))
-			},
-			expectedError: fmt.Errorf("find file to delete: %w", errors.New("API rate limit exceeded")),
-		},
-		{
-			name: "error deleting file",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						Path:   "grafana",
-						Branch: "main",
-					},
-				},
-			},
-			path:    "dashboard.json",
-			ref:     "main",
-			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *MockClient) {
-				fileContent := NewMockRepositoryContent(t)
-				fileContent.EXPECT().IsDirectory().Return(false)
-				fileContent.EXPECT().GetSHA().Return("abc123")
-
-				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
-					Return(fileContent, nil, nil)
-				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
-					"Delete dashboard", "abc123").Return(errors.New("delete failed"))
-			},
-			expectedError: errors.New("delete failed"),
+			expectedError: errors.New("nanogit delete error"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock GitHub client
-			mockClient := NewMockClient(t)
-
-			// Set up the mock expectations
+			gitRepo := git.NewMockGitRepository(t)
 			if tt.mockSetup != nil {
-				tt.mockSetup(t, mockClient)
+				tt.mockSetup(t, gitRepo)
 			}
 
-			// Create a GitHub repository with the test config and mock client
 			repo := &githubRepository{
-				config: tt.config,
-				gh:     mockClient,
-				owner:  "grafana",
-				repo:   "grafana",
+				config:  tt.config,
+				gitRepo: gitRepo,
+				owner:   "grafana",
+				repo:    "grafana",
 			}
 
-			// Call the Delete method
-			err := repo.Delete(context.Background(), tt.path, tt.ref, tt.comment)
+			err := repo.Delete(context.Background(), tt.path, tt.ref, "test")
 
-			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				require.Equal(t, tt.expectedError.Error(), err.Error())
+				require.EqualError(t, err, tt.expectedError.Error())
 			} else {
 				require.NoError(t, err)
 			}
 
-			// Verify all mock expectations were met
-			mockClient.AssertExpectations(t)
+			gitRepo.AssertExpectations(t)
 		})
 	}
 }

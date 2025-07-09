@@ -31,66 +31,23 @@ type ErrRateLimited = github.RateLimitError
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
 type Client interface {
+	// TODO: remove this
 	// IsAuthenticated checks if the client is authenticated.
 	IsAuthenticated(ctx context.Context) error
-
-	// GetContents returns the metadata and content of a file or directory.
-	// When a file is checked, the first returned value will have a value. For a directory, the second will. The other value is always nil.
-	// If an error occurs, the returned values may or may not be nil.
-	//
-	// If ".." appears in the "path", this method will return an error.
-	GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error)
-
-	// GetTree returns the Git tree in the repository.
-	// When recursive is given, subtrees are mapped into the returned array.
-	// When basePath is given, only trees under it are given. The results do not include this path in their names.
-	//
-	// The truncated bool will be set to true if the tree is larger than 7 MB or 100 000 entries.
-	// When truncated is true, you may wish to read each subtree manually instead.
-	GetTree(ctx context.Context, owner, repository, basePath, ref string, recursive bool) (entries []RepositoryContent, truncated bool, err error)
-
-	// CreateFile creates a new file in the repository under the given path.
-	// The file is created on the branch given.
-	// The message given is the commit message. If none is given, an appropriate default is used.
-	// The content is what the file should contain. An empty slice is valid, though often not very useful.
-	//
-	// If ".." appears in the "path", this method will return an error.
-	CreateFile(ctx context.Context, owner, repository, path, branch, message string, content []byte) error
-
-	// UpdateFile updates a file in the repository under the given path.
-	// The file is updated on the branch given.
-	// The message given is the commit message. If none is given, an appropriate default is used.
-	// The content is what the file should contain. An empty slice is valid, though often not very useful.
-	// If the path does not exist, an error is returned.
-	// The hash given must be the SHA hash of the file contents. Calling GetContents in advance is an easy way of handling this.
-	//
-	// If ".." appears in the "path", this method will return an error.
-	UpdateFile(ctx context.Context, owner, repository, path, branch, message, hash string, content []byte) error
-
-	// DeleteFile deletes a file in the repository under the given path.
-	// The file is deleted from the branch given.
-	// The message given is the commit message. If none is given, an appropriate default is used.
-	// If the path does not exist, an error is returned.
-	// The hash given must be the SHA hash of the file contents. Calling GetContents in advance is an easy way of handling this.
-	//
-	// If ".." appears in the "path", this method will return an error.
-	DeleteFile(ctx context.Context, owner, repository, path, branch, message, hash string) error
 
 	// Commits returns the commits for the given path
 	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
 
-	// CompareCommits returns the changes between two commits.
-	CompareCommits(ctx context.Context, owner, repository, base, head string) ([]CommitFile, error)
-
+	// TODO: remove this
 	// RepoExists checks if a repository exists.
 	RepoExists(ctx context.Context, owner, repository string) (bool, error)
 
+	// TODO: remove this
 	// CreateBranch creates a new branch in the repository.
 	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error
 	// BranchExists checks if a branch exists in the repository.
+	// TODO: remove this
 	BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error)
-	// GetBranch returns the branch of the repository.
-	GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error)
 
 	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error)
