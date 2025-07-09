@@ -61,7 +61,7 @@ type Service struct {
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, *authnlib.Claims[authnlib.IDTokenClaims], error) {
-	ctx, span := s.tracer.Start(ctx, "authn.idimpl.SignIdentity")
+	ctx, span := s.tracer.Start(ctx, "user.sync.SignIdentity")
 	defer span.End()
 
 	defer func(t time.Time) {
@@ -145,7 +145,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 }
 
 func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
-	ctx, span := s.tracer.Start(ctx, "authn.idimpl.RemoveIDToken")
+	ctx, span := s.tracer.Start(ctx, "user.sync.RemoveIDToken")
 	defer span.End()
 
 	return s.cache.Delete(ctx, getCacheKey(id))
