@@ -7,7 +7,7 @@ import { SystemJS } from './loader/systemjs';
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { addTranslationsToI18n } from './pluginLoader';
 
-describe('plugin_loader', () => {
+describe('pluginLoader', () => {
   describe('addTranslationsToI18n', () => {
     const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
     const originalFetch = systemJSPrototype.fetch;

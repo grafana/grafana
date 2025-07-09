@@ -26,7 +26,7 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
 
-jest.mock('./plugin_loader', () => ({
+jest.mock('./pluginLoader', () => ({
   importAppPlugin: jest.fn(),
 }));
 

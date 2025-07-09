@@ -23,7 +23,7 @@ import AppRootPage from './AppRootPage';
 jest.mock('../pluginSettings', () => ({
   getPluginSettings: jest.fn(),
 }));
-jest.mock('../plugin_loader', () => ({
+jest.mock('../pluginLoader', () => ({
   importAppPlugin: jest.fn(),
 }));
 
