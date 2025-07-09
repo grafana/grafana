@@ -41,7 +41,7 @@ func TestNewGitHub(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(m *secrets.MockService) {
+			setupMock: func(_ *secrets.MockService) {
 				// No mock calls expected since we're using the token directly
 			},
 			expectedError: "",
@@ -95,7 +95,7 @@ func TestNewGitHub(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(m *secrets.MockService) {
+			setupMock: func(_ *secrets.MockService) {
 				// No mock calls expected
 			},
 			expectedError: "parse owner and repo",
@@ -111,7 +111,7 @@ func TestNewGitHub(t *testing.T) {
 					},
 				},
 			},
-			setupMock: func(m *secrets.MockService) {
+			setupMock: func(_ *secrets.MockService) {
 				// No mock calls expected
 			},
 			expectedError: "",
@@ -417,7 +417,7 @@ func TestGitHubRepositoryTest(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(m *git.MockGitRepository) {
+			mockSetup: func(_ *git.MockGitRepository) {
 				// No mock calls expected as validation fails first
 			},
 			expectedResult: &provisioning.TestResults{
