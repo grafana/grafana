@@ -4435,7 +4435,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Publiczny",
         "tooltip-view-as-scene": "Wyświetl jako scenę"
       }
     },
@@ -5211,7 +5210,6 @@
       "playlist-next": "Przejdź do następnego pulpitu",
       "playlist-previous": "Przejdź do poprzedniego pulpitu",
       "playlist-stop": "Zatrzymaj autoodtwarzanie",
-      "public-dashboard": "Publiczny",
       "refresh": "Odśwież pulpit",
       "save": "Zapisz pulpit",
       "save-dashboard": {
@@ -5512,15 +5510,9 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Wartość nie została jeszcze zapisana w bazie danych Grafana",
       "not-yet-saved": "Wartość nie została zapisana w bazie danych Grafana",
-      "open-pull-request-in-git-hub": "Otwórz pull request w GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Ten pulpit nawigacyjny jest ładowany z gałęzi w GitHub.",
       "title-dashboard-loaded-external-repository": "Ten pulpit nawigacyjny jest ładowany z zewnętrznego repozytorium",
-      "title-dashboard-loaded-request-git-hub": "Ten pulpit nawigacyjny jest ładowany z pull request w GitHub.",
-      "title-error-loading-dashboard": "Błąd wczytywania pulpitu",
-      "value-not-saved": "Wartość nie została jeszcze zapisana w bazie danych Grafana",
-      "view-pull-request-in-git-hub": "Wyświetl pull request w GitHub"
+      "title-error-loading-dashboard": "Błąd wczytywania pulpitu"
     },
     "dashboard-scene": {
       "text": {
@@ -7259,6 +7251,7 @@
       "when": "KIEDY"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Operacja"
     },
     "math": {
@@ -8551,7 +8544,7 @@
       "usage-count_other": "Używane na {{count}} pulpitu"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Szukaj według nazwy lub opisu"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Wczytywanie panelu biblioteki…"
@@ -8696,12 +8689,18 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_few": "",
+          "indexed-label_many": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_few": "",
+          "parsedl-label_many": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_few": "",
+          "structured-metadata_many": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8758,6 +8757,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8771,9 +8771,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10369,6 +10371,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "Ta funkcja jest obecnie aktywnie rozwijana. Aby uzyskać najlepsze wrażenia i najnowsze ulepszenia, zalecamy korzystanie z <2>nocnej kompilacji</2> aplikacji Grafana."
@@ -11834,6 +11847,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

@@ -4399,7 +4399,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Öffentlich",
         "tooltip-view-as-scene": "Als Szene anzeigen"
       }
     },
@@ -5173,7 +5172,6 @@
       "playlist-next": "Zum nächsten Dashboard",
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
-      "public-dashboard": "Öffentlich",
       "refresh": "Dashboard aktualisieren",
       "save": "Dashboard speichern",
       "save-dashboard": {
@@ -5474,15 +5472,9 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Der Wert ist noch nicht in der Grafana-Datenbank gespeichert",
       "not-yet-saved": "Der Wert wird nicht in der Grafana-Datenbank gespeichert",
-      "open-pull-request-in-git-hub": "Pull-Anfrage in GitHub öffnen",
-      "title-dashboard-loaded-branch-git-hub": "Dieses Dashboard wird von einem Branch in GitHub geladen.",
       "title-dashboard-loaded-external-repository": "Dieses Dashboard wird von einem externen Repository geladen",
-      "title-dashboard-loaded-request-git-hub": "Dieses Dashboard wird von einer Pull-Anfrage in GitHub geladen.",
-      "title-error-loading-dashboard": "Fehler beim Laden des Dashboards",
-      "value-not-saved": "Der Wert ist noch nicht in der Grafana-Datenbank gespeichert",
-      "view-pull-request-in-git-hub": "Pull-Anfrage in GitHub anzeigen"
+      "title-error-loading-dashboard": "Fehler beim Laden des Dashboards"
     },
     "dashboard-scene": {
       "text": {
@@ -7217,6 +7209,7 @@
       "when": "WANN"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Operation"
     },
     "math": {
@@ -8503,7 +8496,7 @@
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Suche nach Name oder Beschreibung"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Bibliotheks-Panel wird geladen ..."
@@ -8644,12 +8637,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8699,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8719,9 +8713,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10311,6 +10307,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "Diese Funktion befindet sich momentan in der aktiven Entwicklung. Für die bestmögliche Nutzererfahrung und die neuesten Verbesserungen empfehlen wir die Nutzung von <2>Nightly Build</2> von Grafana."
@@ -11762,6 +11769,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
