@@ -702,7 +702,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-debug-9-1-0.png" max-width="400px" alt="Geomap panel debug" >}}
 
-### Tooltip options
+#### Tooltip
 
 Tooltips are supported for the **Markers**, **Heatmap**, **Photos** (beta) layers.
 For these layer types, choose from the following tooltip options:
