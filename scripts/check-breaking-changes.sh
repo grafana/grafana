@@ -72,13 +72,14 @@ done <<<"$PACKAGES"
 echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
-echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
 
-# for forked repos, the report will be printed in stdout
-# and we will exit the workflow right away according to the exit code
 if [[ "$IS_FORK" == "true" ]]; then
-  cat ./levitate/levitate.md
+  # for forked repos, the report will be printed in stdout
+  # and we will exit the workflow right away according to the exit code
+  echo -e "$GITHUB_LEVITATE_MARKDOWN"
   exit $EXIT_CODE
+else
+  echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
 fi
 
 # We will exit the workflow accordingly at another step
