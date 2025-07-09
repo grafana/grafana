@@ -4,13 +4,16 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
 
 import { LogListModel, PreProcessOptions } from './processing';
-import { LogLineVirtualization, getLogLineSize, DisplayOptions } from './virtualization';
+import { LogLineVirtualization, getLogLineSize, DisplayOptions, FIELD_GAP_MULTIPLIER } from './virtualization';
+import { LOG_LINE_DETAILS_HEIGHT } from './LogLineDetails';
 
 describe('Virtualization', () => {
   let log: LogListModel, container: HTMLDivElement;
 
   let virtualization = new LogLineVirtualization(createTheme(), 'default');
 
+  const GAP = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
+  const DETAILS_HEIGHT = window.innerHeight * (LOG_LINE_DETAILS_HEIGHT / 100) + GAP / 2;
   const PADDING_BOTTOM = 6;
   const LINE_HEIGHT = virtualization.getLineHeight();
   const SINGLE_LINE_HEIGHT = LINE_HEIGHT + PADDING_BOTTOM;
@@ -52,6 +55,18 @@ describe('Virtualization', () => {
       expect(size).toBe(SINGLE_LINE_HEIGHT);
     });
 
+    test('Returns the a single line plus inline details if the display mode is unwrapped', () => {
+      const size = getLogLineSize(
+        virtualization,
+        [log],
+        container,
+        [],
+        { ...defaultOptions, showTime: true, showDetails: [log], detailsMode: 'inline' },
+        0
+      );
+      expect(size).toBe(SINGLE_LINE_HEIGHT + DETAILS_HEIGHT);
+    });
+
     test('Returns the a single line if the line is not loaded yet', () => {
       const logs = [log];
       const size = getLogLineSize(
@@ -78,6 +93,21 @@ describe('Virtualization', () => {
         0
       );
       expect(size).toBe((virtualization.getTruncationLineCount() + 1) * LINE_HEIGHT);
+    });
+
+    test('Returns the size of a truncated long line with inline details', () => {
+      // Very small container
+      log.collapsed = true;
+      jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(10);
+      const size = getLogLineSize(
+        virtualization,
+        [log],
+        container,
+        [],
+        { ...defaultOptions, wrap: true, showTime: true, showDetails: [log], detailsMode: 'inline' },
+        0
+      );
+      expect(size).toBe((virtualization.getTruncationLineCount() + 1) * LINE_HEIGHT + DETAILS_HEIGHT);
     });
 
     test.each([true, false])('Measures a log line with controls %s and displayed time %s', (showTime: boolean) => {
@@ -115,6 +145,24 @@ describe('Virtualization', () => {
       );
       // Two lines for the log and one extra for level and time
       expect(size).toBe(THREE_LINES_HEIGHT);
+    });
+
+    test('Measures a multi-line log line with level, controls, displayed time, and inline details', () => {
+      log = createLogLine(
+        { labels: { place: 'luna' }, entry: new Array(TWO_LINES_OF_CHARACTERS).fill('e').join('') },
+        preProcessOptions
+      );
+
+      const size = getLogLineSize(
+        virtualization,
+        [log],
+        container,
+        [],
+        { ...defaultOptions, wrap: true, showTime: true, showDetails: [log], detailsMode: 'inline' },
+        0
+      );
+      // Two lines for the log and one extra for level and time
+      expect(size).toBe(THREE_LINES_HEIGHT + DETAILS_HEIGHT);
     });
 
     test('Measures a multi-line log line with displayed fields', () => {
