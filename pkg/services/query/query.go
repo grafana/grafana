@@ -201,12 +201,13 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
-// in the query service
+// used in the query service
 func Handle(ctx context.Context, log log.Logger, dscache datasources.CacheService, req *parsedRequest, exprService *expr.Service) (*backend.QueryDataResponse, error) {
 	s := &ServiceImpl{
 		log:               log,
 		dataSourceCache:   dscache,
 		expressionService: exprService,
+		// dataSourceClient:  getDatasourceClient,
 		// pCtxProvider:      pCtxProvider, // todo??
 		//ExecutePipeline:   ExecutePipelineWithClient, <=== how does expecute pipeline work when we haven't defined it?
 	} // or however you initialize it

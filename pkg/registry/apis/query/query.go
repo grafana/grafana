@@ -13,9 +13,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -206,12 +208,62 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			Queries: jsonQueries,
 		})
 		spew.Dump("1", zz)
+		// client, err := b.clientSupplier.GetDataSourceClient(
+		// 	ctx,
+		// 	v0alpha1.DataSourceRef{
+		// 		Type: req.PluginId,
+		// 		UID:  req.UID,
+		// 	},
+		// 	req.Headers,
+		// 	instanceConfig,
+		// )
+		// if err != nil {
+		// 	b.log.Debug("error getting single datasource client", "error", err, "reqUid", req.UID)
+		// 	qdr := buildErrorResponse(err, req)
+		// 	return qdr, err
+		// }
+
 		if hasExpression {
-			qdr, err := sse_query.Handle(ctx, b.log, cache, zz, b.exprService)
+			headers := ExtractKnownHeaders(httpreq.Header)
+			instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
+			if err != nil {
+				b.log.Error("failed to get instance configuration settings", "err", err)
+				responder.Error(err)
+				return
+			}
+
+			// TODO shouldn't we pass in config for expressions enabled
+			exprService := expr.ProvideService(
+				&setting.Cfg{ExpressionsEnabled: true},
+				nil,
+				nil,
+				instanceConfig.FeatureToggles,
+				nil,
+				b.tracer,
+				&mtClientProvider{
+					getClient: func(pluginId string, uid string) (clientapi.QueryDataClient, error) {
+						return b.clientSupplier.GetDataSourceClient(
+							ctx,
+							v0alpha1.DataSourceRef{
+								Type: pluginId,
+								UID:  uid,
+							},
+							headers,
+							instanceConfig,
+						)
+					},
+				},
+			)
+			// headers := ExtractKnownHeaders(httpreq.Header)
+			qdr, err := sse_query.Handle(ctx, b.log, cache, zz, exprService)
 			if err != nil {
 				spew.Dump(err)
 			}
-			spew.Dump(qdr)
+			spew.Dump("IT WORKED?!?!?!", qdr)
+			responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+				QueryDataResponse: *qdr, // wrap the backend response as a QueryDataResponse
+			})
+			return
 		}
 		if err != nil {
 			var refError ErrorWithRefID
@@ -351,6 +403,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
+	// MAYBE FIGURE OUT HOW TO REUISE THE OTHER ONE
 	client, err := b.clientSupplier.GetDataSourceClient(
 		ctx,
 		v0alpha1.DataSourceRef{
@@ -605,4 +658,12 @@ func isSingleAlertQuery(req parsedRequestInfo) bool {
 		return true
 	}
 	return false
+}
+
+type mtClientProvider struct {
+	getClient func(pluginId string, uid string) (clientapi.QueryDataClient, error)
+}
+
+func (m *mtClientProvider) GetMTDatasourceClient(pluginId string, uid string) (clientapi.QueryDataClient, error) {
+	return m.getClient(pluginId, uid)
 }

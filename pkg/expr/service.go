@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -65,8 +66,24 @@ type Service struct {
 
 	pluginsClient backend.CallResourceHandler
 
-	tracer  tracing.Tracer
-	metrics *metrics.ExprMetrics
+	tracer           tracing.Tracer
+	metrics          *metrics.ExprMetrics
+	mtClientProvider MTDatasourceClientProvider
+}
+
+type MTDatasourceClientProvider interface {
+	GetMTDatasourceClient(pluginId string, uid string) (clientapi.QueryDataClient, error)
+}
+
+type nullMtClientProvider struct{}
+
+func (n nullMtClientProvider) GetMTDatasourceClient(pluginId string, uid string) (clientapi.QueryDataClient, error) {
+	return nil, errors.New("not implemented")
+}
+
+// TODO CAN WE REDUCE LAYERS HERE?
+func ProvideMTDatasourceClientProvider() MTDatasourceClientProvider {
+	return &nullMtClientProvider{}
 }
 
 type pluginContextProvider interface {
@@ -75,7 +92,7 @@ type pluginContextProvider interface {
 }
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
-	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, mtClientProvider MTDatasourceClientProvider) *Service {
 	return &Service{
 		cfg:           cfg,
 		dataService:   pluginClient,
@@ -88,6 +105,7 @@ func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider 
 			Features: features,
 			Tracer:   tracer,
 		},
+		mtClientProvider: mtClientProvider,
 	}
 }
 

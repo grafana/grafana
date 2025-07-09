@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -401,9 +402,42 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}()
 
 	// dataservice is nil!
-	resp, err := s.dataService.QueryData(ctx, req)
-	if err != nil {
-		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+	// if s.client is not nil
+	// then call s.client.queryData
+	resp := &backend.QueryDataResponse{}
+	var err error
+	mtDSClient, err := s.mtClientProvider.GetMTDatasourceClient(dn.datasource.Type, dn.datasource.UID)
+	if err == nil {
+		k8sReq := &data.QueryDataRequest{}
+		for _, q := range req.Queries {
+			spew.Dump(q)
+			// START HERE WE ARE REALLY CLOSE
+			// Convert backend.DataQuery to data.DataQuery
+			jsonBytes, err := json.Marshal(q)
+			if err != nil {
+				return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+			}
+			spew.Dump(jsonBytes)
+
+			var dataQuery data.DataQuery
+			err = json.Unmarshal(q.JSON, &dataQuery)
+			if err != nil {
+				return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+			}
+
+			spew.Dump(dataQuery)
+
+			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
+		}
+		resp, err = mtDSClient.QueryData(ctx, *k8sReq)
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+		}
+	} else {
+		resp, err = s.dataService.QueryData(ctx, req)
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+		}
 	}
 
 	dataFrames, err := getResponseFrame(logger, resp, dn.refID)
