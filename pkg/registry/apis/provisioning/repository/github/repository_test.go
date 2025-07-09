@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -18,71 +17,31 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 func TestNewGitHub(t *testing.T) {
 	tests := []struct {
 		name          string
 		config        *provisioning.Repository
-		setupMock     func(m *secrets.MockService)
+		token         string
 		expectedError string
 		expectedOwner string
 		expectedRepo  string
 	}{
 		{
-			name: "successful creation with token",
+			name: "successful creation",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://github.com/grafana/grafana",
-						Token:  "token123",
 						Branch: "main",
 					},
 				},
 			},
-			setupMock: func(_ *secrets.MockService) {
-				// No mock calls expected since we're using the token directly
-			},
+			token:         "token123",
 			expectedError: "",
 			expectedOwner: "grafana",
 			expectedRepo:  "grafana",
-		},
-		{
-			name: "successful creation with encrypted token",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:            "https://github.com/grafana/grafana",
-						EncryptedToken: []byte("encrypted-token"),
-						Branch:         "main",
-					},
-				},
-			},
-			setupMock: func(m *secrets.MockService) {
-				m.On("Decrypt", mock.Anything, []byte("encrypted-token")).
-					Return([]byte("decrypted-token"), nil)
-			},
-			expectedError: "",
-			expectedOwner: "grafana",
-			expectedRepo:  "grafana",
-		},
-		{
-			name: "error decrypting token",
-			config: &provisioning.Repository{
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:            "https://github.com/grafana/grafana",
-						EncryptedToken: []byte("encrypted-token"),
-						Branch:         "main",
-					},
-				},
-			},
-			setupMock: func(m *secrets.MockService) {
-				m.On("Decrypt", mock.Anything, []byte("encrypted-token")).
-					Return(nil, fmt.Errorf("decryption error"))
-			},
-			expectedError: "decrypt token: decryption error",
 		},
 		{
 			name: "invalid URL format",
@@ -90,14 +49,11 @@ func TestNewGitHub(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "invalid-url",
-						Token:  "token123",
 						Branch: "main",
 					},
 				},
 			},
-			setupMock: func(_ *secrets.MockService) {
-				// No mock calls expected
-			},
+			token:         "token123",
 			expectedError: "parse owner and repo",
 		},
 		{
@@ -106,14 +62,11 @@ func TestNewGitHub(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://github.com/grafana/grafana.git",
-						Token:  "token123",
 						Branch: "main",
 					},
 				},
 			},
-			setupMock: func(_ *secrets.MockService) {
-				// No mock calls expected
-			},
+			token:         "token123",
 			expectedError: "",
 			expectedOwner: "grafana",
 			expectedRepo:  "grafana",
@@ -122,12 +75,6 @@ func TestNewGitHub(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup mocks
-			mockSecrets := secrets.NewMockService(t)
-			if tt.setupMock != nil {
-				tt.setupMock(mockSecrets)
-			}
-
 			factory := ProvideFactory()
 			factory.Client = http.DefaultClient
 
@@ -139,7 +86,7 @@ func TestNewGitHub(t *testing.T) {
 				tt.config,
 				gitRepo,
 				factory,
-				mockSecrets,
+				tt.token,
 			)
 
 			// Check results
@@ -156,9 +103,6 @@ func TestNewGitHub(t *testing.T) {
 				require.True(t, ok)
 				assert.Equal(t, gitRepo, concreteRepo.gitRepo)
 			}
-
-			// Verify all mock expectations were met
-			mockSecrets.AssertExpectations(t)
 		})
 	}
 }
