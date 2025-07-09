@@ -579,9 +579,11 @@ func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions)
 func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.Hash, error) {
 	// Use default branch if ref is empty
 	if ref == "" {
-		ref = fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch)
+		ref = r.gitConfig.Branch
 	}
 
+	// Prefix ref with refs/heads/
+	ref = fmt.Sprintf("refs/heads/%s", ref)
 	// Try to parse ref as a hash first
 	refHash, err := hash.FromHex(ref)
 	if err == nil && refHash != hash.Zero {
