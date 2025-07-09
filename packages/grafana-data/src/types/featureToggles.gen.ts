@@ -979,7 +979,7 @@ export interface FeatureToggles {
   restoreDashboards?: boolean;
   /**
   * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default false
+  * @default true
   */
   skipTokenRotationIfRecent?: boolean;
   /**
@@ -999,7 +999,7 @@ export interface FeatureToggles {
   preferLibraryPanelTitle?: boolean;
   /**
   * Use fixed-width numbers globally in the UI
-  * @default true
+  * @default false
   */
   tabularNumbers?: boolean;
   /**

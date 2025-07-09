@@ -1678,11 +1678,11 @@ var (
 		{
 			Name:              "skipTokenRotationIfRecent",
 			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
-			Stage:             FeatureStagePrivatePreview,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-			Expression:        "false",
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:              "alertEnrichment",
@@ -1714,7 +1714,7 @@ var (
 			Description: "Use fixed-width numbers globally in the UI",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
+			Expression:  "false",
 		},
 		{
 			Name:         "newInfluxDSConfigPageDesign",

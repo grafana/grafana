@@ -344,7 +344,10 @@ export function PanelChrome({
     >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
-          <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
+          <LoadingBar
+            width={loadingBarWidth}
+            ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-loading', 'Panel loading bar')}
+          />
         ) : null}
       </div>
 
@@ -362,7 +365,11 @@ export function PanelChrome({
 
           {statusMessage && (
             <div className={styles.errorContainerFloating}>
-              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+              <PanelStatus
+                message={statusMessage}
+                onClick={statusMessageOnClick}
+                ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+              />
             </div>
           )}
         </>
@@ -380,7 +387,11 @@ export function PanelChrome({
         >
           {statusMessage && (
             <div className={dragClassCancel}>
-              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+              <PanelStatus
+                message={statusMessage}
+                onClick={statusMessageOnClick}
+                ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+              />
             </div>
           )}
 

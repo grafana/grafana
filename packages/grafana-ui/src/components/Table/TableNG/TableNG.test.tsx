@@ -1,7 +1,17 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { applyFieldOverrides, createTheme, DataFrame, EventBus, FieldType, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  createTheme,
+  DataFrame,
+  DataLink,
+  EventBus,
+  FieldType,
+  LinkModel,
+  toDataFrame,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { PanelContext, PanelContextProvider } from '../../../components/PanelChrome';
@@ -1680,6 +1690,57 @@ describe('TableNG', () => {
       await userEvent.unhover(screen.getAllByRole('row')[1]);
 
       expect(mockEventBus.publish).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Displays data Links', () => {
+    function toLinkModel(link: DataLink): LinkModel {
+      return {
+        href: link.url,
+        title: link.title,
+        target: link.targetBlank ? '_blank' : '_self',
+        origin: link.origin || 'panel',
+      };
+    }
+
+    it('shows multiple datalinks in the tooltip', async () => {
+      const dataFrame = createBasicDataFrame();
+      const links: DataLink[] = [
+        { url: 'http://asdasd.com', title: 'Test Title' },
+        { url: 'http://asdasd2.com', title: 'Test Title2' },
+      ];
+
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+
+      render(<TableNG enableVirtualization={false} data={dataFrame} width={800} height={600} />);
+
+      const cell = screen.getByText('A1');
+      await userEvent.click(cell);
+
+      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+      expect(tooltip).toBeInTheDocument();
+
+      expect(screen.getByText('Test Title')).toBeInTheDocument();
+      expect(screen.getByText('Test Title2')).toBeInTheDocument();
+    });
+
+    it('does not show tooltip for a single link', async () => {
+      const dataFrame = createBasicDataFrame();
+
+      const links: DataLink[] = [{ url: 'http://asdasd.com', title: 'Test Title' }];
+
+      dataFrame.fields[0].config.links = links;
+      dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
+
+      render(<TableNG enableVirtualization={false} data={dataFrame} width={800} height={600} />);
+
+      const cell = screen.getByText('A1');
+
+      // we need to click the parent since the cell itself is a link.
+      await userEvent.click(cell.parentElement!);
+
+      expect(screen.queryByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeInTheDocument();
     });
   });
 });

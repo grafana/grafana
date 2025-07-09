@@ -10,6 +10,7 @@ import { Button, Icon, Tooltip } from '@grafana/ui';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { LogMessageAnsi } from '../LogMessageAnsi';
 
+import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
@@ -50,7 +51,7 @@ export const LogLine = ({
   wrapLogMessage,
 }: Props) => {
   return (
-    <div style={style}>
+    <div style={wrapLogMessage ? style : { ...style, width: 'max-content', minWidth: '100%' }}>
       <LogLineComponent
         displayedFields={displayedFields}
         height={style.height}
@@ -88,6 +89,7 @@ const LogLineComponent = memo(
   }: LogLineComponentProps) => {
     const {
       detailsDisplayed,
+      detailsMode,
       dedupStrategy,
       enableLogDetails,
       fontSize,
@@ -235,6 +237,7 @@ const LogLineComponent = memo(
             </Button>
           </div>
         )}
+        {detailsMode === 'inline' && detailsShown && <InlineLogLineDetails logs={[]} />}
       </>
     );
   }
@@ -528,9 +531,6 @@ export const getStyles = (theme: GrafanaTheme2, virtualization?: LogLineVirtuali
       gridColumnGap: theme.spacing(FIELD_GAP_MULTIPLIER),
       whiteSpace: 'pre',
       paddingBottom: theme.spacing(0.75),
-      '& .field': {
-        overflow: 'hidden',
-      },
     }),
     wrappedLogLine: css({
       alignSelf: 'flex-start',

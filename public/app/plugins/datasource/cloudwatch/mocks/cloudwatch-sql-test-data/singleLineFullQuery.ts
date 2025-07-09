@@ -1,6 +1,6 @@
 import { monacoTypes } from '@grafana/ui';
 
-export const singleLineFullQuery = {
+export const sqlTestDataSingleLineFullQuery = {
   query: `SELECT AVG(CPUUtilization) FROM SCHEMA("AWS/EC2", InstanceId) WHERE InstanceId = 'i-03c6908092db17ac9' GROUP BY InstanceId ORDER BY AVG() DESC LIMIT 10`,
   tokens: [
     [
