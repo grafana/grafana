@@ -2650,6 +2650,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon for more information."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": "Alert managers"
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Add new Alertmanager",
       "builtin-alertmanager": "Built-in Alertmanager",
