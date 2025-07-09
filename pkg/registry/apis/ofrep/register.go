@@ -126,7 +126,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
-				Path: "ofrep/v1/evaluate/flags/",
+				Path: "ofrep/v1/evaluate/flags",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
@@ -338,8 +338,9 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
+	evalCtxStackId := b.stackIdFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
-	if b.stackIdFromEvalCtx(body) == info.StackID {
+	if (namespace == "default" && evalCtxStackId == 0) || (evalCtxStackId == info.StackID) {
 		return true
 	}
 
