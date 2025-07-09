@@ -1,7 +1,7 @@
 UPDATE
   {{ .Ident "secret_secure_value" }}
 SET
-  {{ .Ident "external_id" }} = {{ .Arg .ExternalID }}
+  {{ .Ident "active" }} = false
 WHERE 
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Name }} AND
