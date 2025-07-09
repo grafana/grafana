@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
@@ -31,7 +32,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -39,8 +39,6 @@ import (
 const (
 	// tracingPrexfixBleve is the prefix used for tracing spans in the Bleve backend
 	tracingPrexfixBleve = "unified_search.bleve."
-	// Default index cache cleanup TTL is 1 minute
-	indexCacheCleanupInterval = time.Minute
 )
 
 var _ resource.SearchBackend = &bleveBackend{}
@@ -67,7 +65,8 @@ type bleveBackend struct {
 	opts   BleveOptions
 	start  time.Time
 
-	cache *localcache.CacheService
+	cacheMx sync.RWMutex
+	cache   map[string]*bleveIndex
 
 	features     featuremgmt.FeatureToggles
 	indexMetrics *resource.BleveIndexMetrics
@@ -85,33 +84,63 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		return nil, fmt.Errorf("bleve root is configured against a file (not folder)")
 	}
 
-	bleveBackend := &bleveBackend{
+	be := &bleveBackend{
 		log:          slog.Default().With("logger", "bleve-backend"),
 		tracer:       tracer,
-		cache:        localcache.New(opts.IndexCacheTTL, indexCacheCleanupInterval),
+		cache:        map[string]*bleveIndex{},
 		opts:         opts,
 		start:        time.Now(),
 		features:     features,
 		indexMetrics: indexMetrics,
 	}
 
-	go bleveBackend.updateIndexSizeMetric(opts.Root)
+	go be.updateIndexSizeMetric(opts.Root)
 
-	return bleveBackend, nil
+	return be, nil
 }
 
-// This will return nil if the key does not exist
-func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
-	val, ok := b.cache.Get(key.String())
-	if !ok {
+// GetIndex will return nil if the key does not exist
+func (b *bleveBackend) GetIndex(_ context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
+	idx := b.getCachedIndex(key.String())
+	// Avoid returning typed nils.
+	if idx == nil {
 		return nil, nil
 	}
-
-	idx, ok := val.(*bleveIndex)
-	if !ok {
-		return nil, fmt.Errorf("cache item is not a bleve index: %s", key.String())
-	}
 	return idx, nil
+}
+
+func (b *bleveBackend) getCachedIndex(key string) *bleveIndex {
+	// Check index with read-lock first.
+	b.cacheMx.RLock()
+	val := b.cache[key]
+	b.cacheMx.RUnlock()
+
+	if val == nil {
+		return nil
+	}
+
+	if val.expiration.IsZero() || val.expiration.After(time.Now()) {
+		// Not expired yet.
+		return val
+	}
+
+	// We're dealing with expired index. We need to remove it from the cache and close it.
+	b.cacheMx.Lock()
+	val = b.cache[key]
+	delete(b.cache, key)
+	b.cacheMx.Unlock()
+
+	if val == nil {
+		return nil
+	}
+
+	// Index is no longer in the cache, but we need to close it.
+	err := val.index.Close()
+	if err != nil {
+		b.log.Error("failed to close index", "key", key, "err", err)
+	}
+	b.log.Info("index evicted from cache", "key", key)
+	return nil
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
@@ -147,28 +176,21 @@ func (b *bleveBackend) updateIndexSizeMetric(indexPath string) {
 	}
 }
 
-// Build an index from scratch
-func (b *bleveBackend) BuildIndex(ctx context.Context,
+// BuildIndex builds an index from scratch.
+// If built successfully, the new index replaces the old index in the cache (if there was any).
+func (b *bleveBackend) BuildIndex(
+	ctx context.Context,
 	key resource.NamespacedResource,
-
-	// When the size is known, it will be passed along here
-	// Depending on the size, the backend may choose different options (eg: memory vs disk)
 	size int64,
-
-	// The last known resource version can be used to know that we can skip calling the builder
 	resourceVersion int64,
-
-	// the non-standard searchable fields
 	fields resource.SearchableDocumentFields,
-
-	// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
 	_, span := b.tracer.Start(ctx, tracingPrexfixBleve+"BuildIndex")
 	defer span.End()
 
-	var err error
 	var index bleve.Index
+	fileIndexName := "" // Name of the file-based index, or empty for in-memory indexes.
 
 	build := true
 	mapper, err := GetBleveMappings(fields)
@@ -176,61 +198,51 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		return nil, err
 	}
 
+	cachedIndex := b.getCachedIndex(key.String())
+
+	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion)
+
+	resourceDir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
+
 	if size > b.opts.FileThreshold {
-		resourceDir := filepath.Join(b.opts.Root, key.Namespace,
-			fmt.Sprintf("%s.%s", key.Resource, key.Group),
-		)
-		fname := fmt.Sprintf("rv%d", resourceVersion)
-		if resourceVersion == 0 {
-			fname = b.start.Format("tmp-20060102-150405")
+		// We only check for the existing file-based index if we don't already have an open index for this key.
+		// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
+		// If we do have an unexpired cached index already, we always build a new index from scratch.
+		if cachedIndex == nil && resourceVersion > 0 {
+			index, fileIndexName = b.findPreviousFileBasedIndex(resourceDir, resourceVersion, size)
 		}
-		dir := filepath.Join(resourceDir, fname)
-		if !isValidPath(dir, b.opts.Root) {
-			b.log.Error("Directory is not valid", "directory", dir)
-		}
-		if resourceVersion > 0 {
-			info, _ := os.Stat(dir)
-			if info != nil && info.IsDir() {
-				index, err = bleve.Open(dir) // NOTE, will use the same mappings!!!
-				if err == nil {
-					found, err := index.DocCount()
-					if err != nil || int64(found) != size {
-						b.log.Info("this size changed since the last time the index opened")
-						_ = index.Close()
 
-						// Pick a new file name
-						fname = b.start.Format("tmp-20060102-150405-changed")
-						dir = filepath.Join(resourceDir, fname)
-						index = nil
-					} else {
-						build = false // no need to build the index
-					}
-				}
+		if index != nil {
+			build = false
+			logWithDetails.Info("Existing index found on filesystem", "directory", filepath.Join(resourceDir, fileIndexName))
+		} else {
+			// Building index from scratch, create new name.
+			fileIndexName = formatIndexName(time.Now(), resourceVersion)
+			indexDir := filepath.Join(resourceDir, fileIndexName)
+			if !isValidPath(indexDir, b.opts.Root) {
+				b.log.Error("Directory is not valid", "directory", indexDir)
 			}
-		}
 
-		if index == nil {
-			index, err = bleve.New(dir, mapper)
+			index, err = bleve.New(indexDir, mapper)
 			if err != nil {
-				err = fmt.Errorf("error creating new bleve index: %s %w", dir, err)
+				return nil, fmt.Errorf("error creating new bleve index: %s %w", indexDir, err)
 			}
+
+			logWithDetails.Info("Building index using filesystem", "directory", indexDir)
 		}
 
-		// Start a background task to cleanup the old index directories
-		if index != nil && err == nil {
-			go b.cleanOldIndexes(resourceDir, fname)
-		}
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexTenants.WithLabelValues("file").Inc()
 		}
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
+		if err != nil {
+			return nil, fmt.Errorf("error creating new in-memory bleve index: %w", err)
+		}
 		if b.indexMetrics != nil {
 			b.indexMetrics.IndexTenants.WithLabelValues("memory").Inc()
 		}
-	}
-	if err != nil {
-		return nil, err
+		logWithDetails.Info("Building index using memory")
 	}
 
 	// Batch all the changes
@@ -242,6 +254,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		features: b.features,
 		tracing:  b.tracer,
 	}
+	// Only expire in-memory indexes.
+	if fileIndexName == "" {
+		idx.expiration = time.Now().Add(b.opts.IndexCacheTTL)
+	}
 
 	idx.allFields, err = getAllFields(idx.standard, fields)
 	if err != nil {
@@ -249,13 +265,41 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	}
 
 	if build {
+		start := time.Now()
 		_, err = builder(idx)
 		if err != nil {
 			return nil, err
 		}
+		elapsed := time.Since(start)
+		logWithDetails.Info("Finished building index", "elapsed", elapsed)
 	}
 
-	b.cache.SetDefault(key.String(), idx)
+	// Store the index in the cache.
+	keyStr := key.String()
+	if idx.expiration.IsZero() {
+		logWithDetails.Info("Storing index in cache, with no expiration", "key", keyStr)
+	} else {
+		logWithDetails.Info("Storing index in cache", "key", keyStr, "expiration", idx.expiration)
+	}
+
+	b.cacheMx.Lock()
+	prev := b.cache[keyStr]
+	b.cache[keyStr] = idx
+	b.cacheMx.Unlock()
+
+	// If there was a previous index in the cache, close it.
+	if prev != nil {
+		err := prev.index.Close()
+		if err != nil {
+			logWithDetails.Error("failed to close previous index", "key", keyStr, "err", err)
+		}
+	}
+
+	// If we've built new file-based index, start a background task to cleanup the old index directories
+	if fileIndexName != "" {
+		go b.cleanOldIndexes(resourceDir, fileIndexName)
+	}
+
 	return idx, nil
 }
 
@@ -296,16 +340,29 @@ func isValidPath(path, safeDir string) bool {
 	return !strings.HasPrefix(rel, "..") && !strings.Contains(rel, "\\")
 }
 
+// cacheKeys returns list of keys for indexes in the cache (including possibly expired ones).
+func (b *bleveBackend) cacheKeys() []string {
+	b.cacheMx.RLock()
+	defer b.cacheMx.RUnlock()
+
+	keys := make([]string, 0, len(b.cache))
+	for k := range b.cache {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 // TotalDocs returns the total number of documents across all indices
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
-	for _, v := range b.cache.Items() {
-		idx, ok := v.Object.(*bleveIndex)
-		if !ok {
-			b.log.Warn("cache item is not a bleve index", "key", v.Object)
+	// We iterate over keys and call getCachedIndex for each index individually.
+	// We do this to avoid keeping a lock for the entire TotalDocs function, since DocCount may be slow (due to disk access).
+	// Calling getCachedIndex also handles index expiration.
+	for _, key := range b.cacheKeys() {
+		idx := b.getCachedIndex(key)
+		if idx == nil {
 			continue
 		}
-
 		c, err := idx.index.DocCount()
 		if err != nil {
 			continue
@@ -315,12 +372,74 @@ func (b *bleveBackend) TotalDocs() int64 {
 	return totalDocs
 }
 
+func formatIndexName(now time.Time, resourceVersion int64) string {
+	timestamp := now.Format("20060102-150405")
+	return fmt.Sprintf("%s-%d", timestamp, resourceVersion)
+}
+
+func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string, resourceVersion int64, size int64) (bleve.Index, string) {
+	entries, err := os.ReadDir(resourceDir)
+	if err != nil {
+		return nil, ""
+	}
+
+	indexName := ""
+	for _, ent := range entries {
+		if !ent.IsDir() {
+			continue
+		}
+
+		parts := strings.Split(ent.Name(), "-")
+		if len(parts) != 3 {
+			continue
+		}
+
+		// Last part is resourceVersion
+		indexRv, err := strconv.ParseInt(parts[2], 10, 64)
+		if err != nil {
+			continue
+		}
+		if indexRv != resourceVersion {
+			continue
+		}
+		indexName = ent.Name()
+		break
+	}
+
+	if indexName == "" {
+		return nil, ""
+	}
+
+	indexDir := filepath.Join(resourceDir, indexName)
+	idx, err := bleve.Open(indexDir)
+	if err != nil {
+		return nil, ""
+	}
+
+	cnt, err := idx.DocCount()
+	if err != nil {
+		_ = idx.Close()
+		return nil, ""
+	}
+
+	if uint64(size) != cnt {
+		_ = idx.Close()
+		return nil, ""
+	}
+
+	return idx, indexName
+}
+
 type bleveIndex struct {
 	key   resource.NamespacedResource
 	index bleve.Index
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
+
+	// When to expire and close the index. Zero value = no expiration.
+	// We only expire in-memory indexes.
+	expiration time.Time
 
 	// The values returned with all
 	allFields []*resourcepb.ResourceTableColumnDefinition
