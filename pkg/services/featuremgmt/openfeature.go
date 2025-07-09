@@ -14,31 +14,31 @@ import (
 )
 
 type OpenFeatureService struct {
-	log                      log.Logger
-	provider                 openfeature.FeatureProvider
-	Client                   openfeature.IClient
-	httpClientProvider       *sdkhttpclient.Provider
-	signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider
+	log                log.Logger
+	provider           openfeature.FeatureProvider
+	Client             openfeature.IClient
+	httpClientProvider *sdkhttpclient.Provider
+	exchangeMiddleware *middleware.TokenExchangeMiddleware
 }
 
 const (
-	cloudFeaturesProviderAudience = "features.grafana.app"
+	featuresProviderAudience = "features.grafana.app"
 )
 
 // ProvideOpenFeatureService is used for wiring dependencies in single tenant grafana
-func ProvideOpenFeatureService(cfg *setting.Cfg, httpClientProvider *sdkhttpclient.Provider, signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider) (*OpenFeatureService, error) {
+func ProvideOpenFeatureService(cfg *setting.Cfg, httpClientProvider *sdkhttpclient.Provider, exchangeMiddleware *middleware.TokenExchangeMiddleware) (*OpenFeatureService, error) {
 	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
 	}
 
 	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, cfg.OpenFeature.ContextAttrs))
-	return newOpenFeatureService(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags, httpClientProvider, signerMiddlewareProvider)
+	return newOpenFeatureService(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags, httpClientProvider, exchangeMiddleware)
 }
 
 // TODO: might need to be public, so other MT services could set up open feature client
-func newOpenFeatureService(pType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider) (*OpenFeatureService, error) {
-	p, err := createProvider(pType, u, staticFlags, httpClientProvider, signerMiddlewareProvider)
+func newOpenFeatureService(pType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, exchangeMiddleware *middleware.TokenExchangeMiddleware) (*OpenFeatureService, error) {
+	p, err := createProvider(pType, u, staticFlags, httpClientProvider, exchangeMiddleware)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create feature provider: type %s, %w", pType, err)
 	}
@@ -49,15 +49,15 @@ func newOpenFeatureService(pType string, u *url.URL, staticFlags map[string]bool
 
 	client := openfeature.NewClient("grafana-openfeature-client")
 	return &OpenFeatureService{
-		log:                      log.New("openfeatureservice"),
-		provider:                 p,
-		Client:                   client,
-		httpClientProvider:       httpClientProvider,
-		signerMiddlewareProvider: signerMiddlewareProvider,
+		log:                log.New("openfeatureservice"),
+		provider:           p,
+		Client:             client,
+		httpClientProvider: httpClientProvider,
+		exchangeMiddleware: exchangeMiddleware,
 	}, nil
 }
 
-func createProvider(providerType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider) (openfeature.FeatureProvider, error) {
+func createProvider(providerType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, exchangeMiddleware *middleware.TokenExchangeMiddleware) (openfeature.FeatureProvider, error) {
 	if providerType != setting.GOFFProviderType {
 		return newStaticProvider(staticFlags)
 	}
@@ -73,7 +73,7 @@ func createProvider(providerType string, u *url.URL, staticFlags map[string]bool
 			Timeout: 10 * time.Second,
 		},
 		Middlewares: []sdkhttpclient.Middleware{
-			signerMiddlewareProvider.New([]string{cloudFeaturesProviderAudience}),
+			exchangeMiddleware.New([]string{featuresProviderAudience}),
 		},
 	})
 

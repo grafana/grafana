@@ -1,16 +1,21 @@
 package featuremgmt
 
 import (
+	"context"
+	"errors"
 	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 
 	authlib "github.com/grafana/authlib/authn"
 	gofeatureflag "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,9 +24,11 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 	require.NoError(t, err)
 
 	testCases := []struct {
-		name             string
-		cfg              setting.OpenFeatureSettings
-		expectedProvider string
+		name                  string
+		cfg                   setting.OpenFeatureSettings
+		expectedProvider      string
+		expectExchangeRequest *authlib.TokenExchangeRequest
+		failSigning           bool
 	}{
 		{
 			name:             "static provider",
@@ -33,6 +40,10 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 				ProviderType: setting.GOFFProviderType,
 				URL:          u,
 				TargetingKey: "grafana",
+			},
+			expectExchangeRequest: &authlib.TokenExchangeRequest{
+				Namespace: "*",
+				Audiences: []string{"features.grafana.app"},
 			},
 			expectedProvider: setting.GOFFProviderType,
 		},
@@ -46,23 +57,53 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 	}
 
 	httpClientProvider := httpclient.NewProvider()
-	noopSignerMiddlewareProvider := middleware.ProvideCloudAccessPolicyTokenSignerMiddlewareProvider(authlib.NewStaticTokenExchanger("noop-signer"), setting.NewCfg())
+	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.OpenFeature = tc.cfg
 
-			p, err := ProvideOpenFeatureService(cfg, httpClientProvider, noopSignerMiddlewareProvider)
+			var tokenExchangeClient *fakeTokenExchangeClient
+
+			if tc.expectExchangeRequest != nil {
+				tokenExchangeClient = &fakeTokenExchangeClient{
+					Mock: &mock.Mock{
+						ExpectedCalls: []*mock.Call{
+							{
+								Method:    "Exchange",
+								Arguments: mock.Arguments{mock.Anything, *tc.expectExchangeRequest},
+							},
+						},
+					},
+				}
+
+				if tc.failSigning {
+					tokenExchangeClient.expectedErr = errors.New("failed signing access token")
+				}
+			}
+
+			tokenExchangeMiddleware := middleware.TestingTokenExchangeMiddleware(tokenExchangeClient)
+			p, err := ProvideOpenFeatureService(cfg, httpClientProvider, tokenExchangeMiddleware)
 			require.NoError(t, err)
 
 			if tc.expectedProvider == setting.GOFFProviderType {
-				_, ok := p.provider.(*gofeatureflag.Provider)
+				goffProvider, ok := p.provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
+
+				testGoFFProvider(t, goffProvider)
 			} else {
 				_, ok := p.provider.(*inMemoryBulkProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
 			}
 		})
 	}
+}
+
+func testGoFFProvider(t *testing.T, provider *gofeatureflag.Provider) {
+	client, err := createClient(provider)
+	assert.NoError(t, err)
+	// this tests for the MT usecase
+	ctx, _ := identity.WithServiceIdentity(context.Background(), 1)
+	_ = client.Boolean(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
 }
