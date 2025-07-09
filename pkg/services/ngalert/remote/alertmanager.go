@@ -290,10 +290,10 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	}
 
 	// Decrypt and merge extra configs
-	if err := am.mergeExtraConfigs(ctx, decryptedCfg); err != nil {
+	payload, err := am.mergeExtraConfigs(ctx, decryptedCfg)
+	if err != nil {
 		return fmt.Errorf("unable to merge extra configurations: %w", err)
 	}
-	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
 	rawPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("unable to marshal decrypted configuration: %w", err)
@@ -352,24 +352,28 @@ func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
 }
 
 // mergeExtraConfigs decrypts and applies merged configuration if extra configs exist.
-func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error {
+func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) (remoteClient.GrafanaAlertmanagerConfig, error) {
 	if len(config.ExtraConfigs) == 0 {
-		return nil
+		return remoteClient.GrafanaAlertmanagerConfig{
+			TemplateFiles:       config.TemplateFiles,
+			AlertmanagerConfig:  config.AlertmanagerConfig,
+			TemplateDefinitions: nil,
+		}, nil
 	}
 
 	if err := am.crypto.DecryptExtraConfigs(ctx, config); err != nil {
-		return fmt.Errorf("unable to decrypt extra configs: %w", err)
+		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to decrypt extra configs: %w", err)
 	}
 
 	mergeResult, err := config.GetMergedAlertmanagerConfig()
 	if err != nil {
-		return fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
+		return remoteClient.GrafanaAlertmanagerConfig{}, fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
 	}
-	config.AlertmanagerConfig = mergeResult.Config
-	// Clear ExtraConfigs to avoid re-processing them later
-	config.ExtraConfigs = nil
-
-	return nil
+	return remoteClient.GrafanaAlertmanagerConfig{
+		// TODO keep sending Grafana templates as a map to not break old Mimir
+		TemplateFiles:      config.TemplateFiles,
+		AlertmanagerConfig: mergeResult.Config,
+	}, nil
 }
 
 func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg *remoteClient.GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
@@ -455,10 +459,10 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		return err
 	}
 
-	if err := am.mergeExtraConfigs(ctx, decryptedCfg); err != nil {
+	payload, err := am.mergeExtraConfigs(ctx, decryptedCfg)
+	if err != nil {
 		return fmt.Errorf("unable to merge extra configurations: %w", err)
 	}
-	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
 	rawCfg, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -484,7 +488,10 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		return err
 	}
 
-	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
+	payload := remoteClient.GrafanaAlertmanagerConfig{
+		TemplateFiles:      c.TemplateFiles,
+		AlertmanagerConfig: decryptedCfg.AlertmanagerConfig,
+	}
 	rawCfg, err := json.Marshal(payload)
 	if err != nil {
 		return err
