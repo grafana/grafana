@@ -275,11 +275,11 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ ttipOpen: false, ttip: undefined });
   };
 
-  pointerClickListener = (evt: MapBrowserEvent<MouseEvent>) => {
+  pointerClickListener = (evt: MapBrowserEvent<PointerEvent>) => {
     pointerClickListener(evt, this);
   };
 
-  pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>) => {
+  pointerMoveListener = (evt: MapBrowserEvent<PointerEvent>) => {
     pointerMoveListener(evt, this);
   };
 
