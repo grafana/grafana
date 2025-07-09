@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-// Mapping maps a verb to a RBAC action and a resource name to a RBAC scope.
-type Mapping interface {
+// Mapper maps a verb to a RBAC action and a resource name to a RBAC scope.
+type Mapper interface {
 	// action returns the action for the given verb.
 	// If no action is found, it returns false.
 	Action(verb string) (string, bool)
@@ -62,14 +62,14 @@ func (t translation) HasFolderSupport() bool {
 type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
-	Get(group, resource string) (Mapping, bool)
+	Get(group, resource string) (Mapper, bool)
 	// GetAll returns all the translations for the given group
-	GetAll(group string) []Mapping
+	GetAll(group string) []Mapper
 }
 
-type mapper map[string]map[string]translation
+type mapperRegistry map[string]map[string]Mapper
 
-func newResourceTranslation(resource string, attribute string, folderSupport bool) translation {
+func newResourceTranslation(resource string, attribute string, folderSupport bool) *translation {
 	defaultMapping := func(r string) map[string]string {
 		return map[string]string{
 			utils.VerbGet:              fmt.Sprintf("%s:read", r),
@@ -85,7 +85,7 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 		}
 	}
 
-	return translation{
+	return &translation{
 		resource:      resource,
 		attribute:     attribute,
 		verbMapping:   defaultMapping(resource),
@@ -94,7 +94,7 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 }
 
 func NewMapperRegistry() MapperRegistry {
-	mapper := mapper(map[string]map[string]translation{
+	mapper := mapperRegistry(map[string]map[string]Mapper{
 		"dashboard.grafana.app": {
 			"dashboards": newResourceTranslation("dashboards", "uid", true),
 		},
@@ -124,7 +124,7 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
-func (m mapper) Get(group, resource string) (Mapping, bool) {
+func (m mapperRegistry) Get(group, resource string) (Mapper, bool) {
 	resources, ok := m[group]
 	if !ok {
 		return nil, false
@@ -135,18 +135,18 @@ func (m mapper) Get(group, resource string) (Mapping, bool) {
 		return nil, false
 	}
 
-	return &t, true
+	return t, true
 }
 
-func (m mapper) GetAll(group string) []Mapping {
+func (m mapperRegistry) GetAll(group string) []Mapper {
 	resources, ok := m[group]
 	if !ok {
 		return nil
 	}
 
-	translations := make([]Mapping, 0, len(resources))
+	translations := make([]Mapper, 0, len(resources))
 	for _, t := range resources {
-		translations = append(translations, &t)
+		translations = append(translations, t)
 	}
 
 	return translations
