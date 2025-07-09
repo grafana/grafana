@@ -3,7 +3,7 @@ import { StoryFn, Meta } from '@storybook/react';
 import { ButtonCascader } from './ButtonCascader';
 
 const meta: Meta<typeof ButtonCascader> = {
-  title: 'Forms/Cascader/ButtonCascader',
+  title: 'Inputs/ButtonCascader',
   component: ButtonCascader,
   parameters: {
     controls: {
