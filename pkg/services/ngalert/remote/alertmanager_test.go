@@ -484,12 +484,18 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	test, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
-	cfgWithDecryptedSecret := PostableUserConfigToGrafanaAlertmanagerConfig(test)
+	cfgWithDecryptedSecret := client.GrafanaAlertmanagerConfig{
+		TemplateFiles:      test.TemplateFiles,
+		AlertmanagerConfig: test.AlertmanagerConfig,
+	}
 
 	testAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
 	require.NoError(t, testAutogenFn(nil, nil, 0, &testAutogenRoutes.AlertmanagerConfig, false))
-	cfgWithAutogenRoutes := PostableUserConfigToGrafanaAlertmanagerConfig(testAutogenRoutes)
+	cfgWithAutogenRoutes := client.GrafanaAlertmanagerConfig{
+		TemplateFiles:      testAutogenRoutes.TemplateFiles,
+		AlertmanagerConfig: testAutogenRoutes.AlertmanagerConfig,
+	}
 
 	// Calculate hashes for expected configurations
 	cfgWithDecryptedSecretBytes, err := json.Marshal(cfgWithDecryptedSecret)
@@ -506,9 +512,10 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 	require.NoError(t, err)
 	r, err := cfgWithExtraUnmerged.GetMergedAlertmanagerConfig()
 	require.NoError(t, err)
-	cfgWithExtraMerged := &client.GrafanaAlertmanagerConfig{
-		TemplateFiles:      cfgWithExtraUnmerged.TemplateFiles,
-		AlertmanagerConfig: r.Config,
+	cfgWithExtraMerged := client.GrafanaAlertmanagerConfig{
+		TemplateFiles:       cfgWithExtraUnmerged.TemplateFiles,
+		AlertmanagerConfig:  r.Config,
+		TemplateDefinitions: definition.TemplatesMapToPostableAPITemplates(cfgWithExtraUnmerged.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind),
 	}
 	cfgWithExtraMergedBytes, err := json.Marshal(cfgWithExtraMerged)
 	require.NoError(t, err)
@@ -827,7 +834,7 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 			// Return an empty config to ensure it gets replaced
 			w.Header().Add("content-type", "application/json")
 			require.NoError(t, json.NewEncoder(w).Encode(client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: &client.GrafanaAlertmanagerConfig{},
+				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{},
 			}))
 			return
 		}
