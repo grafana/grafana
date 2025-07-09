@@ -60,10 +60,12 @@ func (p *CloudAccessPolicyTokenSignerMiddlewareProvider) New(audiences []string)
 func (m cloudAccessPolicyTokenSignerMiddleware) RoundTrip(req *http.Request) (res *http.Response, e error) {
 	log := infralog.New("cloud-access-policy-token-signer-middleware")
 
-	namespace, ok := request.NamespaceFrom(req.Context())
-	if !ok {
-		return nil, fmt.Errorf("namespace not found in request context")
+	user, err := identity.GetRequester(req.Context())
+	if err != nil {
+		return nil, err
 	}
+
+	namespace := user.GetNamespace()
 
 	if namespace == "" {
 		return nil, fmt.Errorf("cluster scoped resources are currently not supported")
