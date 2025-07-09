@@ -7,6 +7,7 @@ import { SQLEditor, LanguageDefinition } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { useStyles2, Stack, Button, Text } from '@grafana/ui';
 
+import { useSQLSuggestions, useSQLExplanations } from '../hooks';
 import { SqlExpressionQuery } from '../types';
 
 import { AIExplanationDrawer } from './AIExplanationDrawer';
@@ -55,12 +56,26 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ height: 0 });
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [hasUnseenSuggestions, setHasUnseenSuggestions] = useState(false);
-  const [prevExpression, setPrevExpression] = useState<string>(query.expression || '');
-  const [explanation, setExplanation] = useState<string>('');
-  const [isExplanationOpen, setIsExplanationOpen] = useState(false);
+
+  const {
+    handleApplySuggestion,
+    handleHistoryUpdate,
+    handleCloseDrawer,
+    handleOpenDrawer,
+    isDrawerOpen,
+    hasUnseenSuggestions,
+    suggestions,
+  } = useSQLSuggestions();
+
+  const {
+    explanation,
+    handleCloseExplanation,
+    handleOpenExplanation,
+    handleExplain,
+    isExplanationOpen,
+    shouldShowViewExplanation,
+    updatePrevExpression,
+  } = useSQLExplanations(query.expression || '');
 
   const onEditorChange = (expression: string) => {
     onChange({
@@ -68,33 +83,12 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
       expression,
       format: alerting ? 'alerting' : undefined,
     });
-    setPrevExpression(expression);
-    setExplanation('');
-  };
-
-  const onHistoryUpdate = (history: string[]) => {
-    setSuggestions(history);
-    setHasUnseenSuggestions(true);
-    // Auto-open drawer when first suggestion is generated
-    if (history.length === 1) {
-      setIsDrawerOpen(true);
-      setHasUnseenSuggestions(false);
-    }
+    updatePrevExpression(expression);
   };
 
   const onApplySuggestion = (suggestion: string) => {
     onEditorChange(suggestion);
-    setIsDrawerOpen(false);
-  };
-
-  const onOpenDrawer = () => {
-    setIsDrawerOpen(true);
-    setHasUnseenSuggestions(false);
-  };
-
-  const onExplain = (explanation: string) => {
-    setExplanation(explanation);
-    setIsExplanationOpen(true);
+    handleApplySuggestion(suggestion);
   };
 
   // Set up resize observer to handle container resizing
@@ -128,18 +122,22 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
           <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
             <Stack direction="row" gap={1} alignItems="center" justifyContent="end">
               <Suspense fallback={null}>
-                {explanation || prevExpression !== query.expression ? (
+                {shouldShowViewExplanation ? (
                   <Button
                     fill="outline"
                     variant="secondary"
                     size="sm"
-                    onClick={() => setIsExplanationOpen(true)}
+                    onClick={handleOpenExplanation}
                     icon="gf-movepane-right"
                   >
                     <Trans i18nKey="sql-expressions.view-explanation">View explanation</Trans>
                   </Button>
                 ) : (
-                  <GenAISQLExplainButton currentQuery={query.expression || ''} onExplain={onExplain} refIds={vars} />
+                  <GenAISQLExplainButton
+                    currentQuery={query.expression || ''}
+                    onExplain={handleExplain}
+                    refIds={vars}
+                  />
                 )}
               </Suspense>
               <Suspense fallback={null}>
@@ -147,14 +145,14 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
                   initialQuery={initialQuery}
                   currentQuery={query.expression || ''}
                   onGenerate={() => {}} // Noop - history is managed via onHistoryUpdate
-                  onHistoryUpdate={onHistoryUpdate}
+                  onHistoryUpdate={handleHistoryUpdate}
                   refIds={vars}
                 />
               </Suspense>
             </Stack>
             {suggestions.length > 0 && (
               <div className={styles.buttonWrapper}>
-                <Button variant="secondary" size="sm" onClick={onOpenDrawer} icon="list-ol">
+                <Button variant="secondary" size="sm" onClick={handleOpenDrawer} icon="list-ol">
                   <Stack direction="row" gap={1} alignItems="center">
                     <Trans i18nKey="sql-expressions.suggestions">Suggestions</Trans>
                     <span className={styles.countBadge}>
@@ -182,14 +180,10 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false }: Props) =>
       <AISuggestionsDrawer
         isOpen={isDrawerOpen}
         onApplySuggestion={onApplySuggestion}
-        onClose={() => setIsDrawerOpen(false)}
+        onClose={handleCloseDrawer}
         suggestions={suggestions}
       />
-      <AIExplanationDrawer
-        isOpen={isExplanationOpen}
-        onClose={() => setIsExplanationOpen(false)}
-        explanation={explanation}
-      />
+      <AIExplanationDrawer isOpen={isExplanationOpen} onClose={handleCloseExplanation} explanation={explanation} />
     </>
   );
 };
