@@ -582,14 +582,15 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		ref = r.gitConfig.Branch
 	}
 
-	// Prefix ref with refs/heads/
-	ref = fmt.Sprintf("refs/heads/%s", ref)
 	// Try to parse ref as a hash first
 	refHash, err := hash.FromHex(ref)
 	if err == nil && refHash != hash.Zero {
 		// Valid hash, return it
 		return refHash, nil
 	}
+
+	// Prefix ref with refs/heads/
+	ref = fmt.Sprintf("refs/heads/%s", ref)
 
 	// Not a valid hash, try to resolve as a branch reference
 	branchRef, err := r.client.GetRef(ctx, ref)
