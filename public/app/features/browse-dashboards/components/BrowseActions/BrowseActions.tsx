@@ -4,7 +4,6 @@ import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
@@ -31,7 +30,6 @@ export function BrowseActions({ folderDTO }: Props) {
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
-  const isProvisionedInstance = useIsProvisionedInstance();
   const provisioningStatus = useSelectionProvisioningStatus(selectedItems);
 
   // Folders can only be moved if nested folders is enabled
@@ -125,7 +123,7 @@ export function BrowseActions({ folderDTO }: Props) {
           onClose={() => setShowBulkDeleteProvisionedResource(false)}
           size="md"
         >
-          <div>placeholder</div>
+          <div></div>
         </Drawer>
       )}
     </>

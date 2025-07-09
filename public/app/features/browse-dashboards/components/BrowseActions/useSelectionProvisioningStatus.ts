@@ -33,7 +33,7 @@ export function useSelectionProvisioningStatus(
         return rootItem;
       }
 
-      // Check children in all folders
+      // Check children in all loaded folders
       for (const parentUID in browseState.childrenByParentUID) {
         const collection = browseState.childrenByParentUID[parentUID];
         if (collection) {

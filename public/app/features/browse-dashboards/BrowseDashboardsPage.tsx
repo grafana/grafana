@@ -97,7 +97,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
   const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
-  const canSelect = (canEditFolders || canEditDashboards) && !isProvisionedFolder;
+  const canSelect = canEditFolders || canEditDashboards;
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
