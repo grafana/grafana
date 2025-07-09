@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, LinkButton, Text, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types/folders';
 import { GrafanaRulesSourceSymbol, RuleGroup } from 'app/types/unified-alerting';
 import { PromRuleType, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 

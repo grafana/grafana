@@ -5,7 +5,8 @@ import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { formatDate } from 'app/core/internationalization/dates';
-import { AccessControlAction, UserSession } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { UserSession } from 'app/types/user';
 
 interface Props {
   sessions: UserSession[];
