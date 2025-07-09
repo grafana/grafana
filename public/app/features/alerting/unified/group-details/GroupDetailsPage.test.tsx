@@ -161,6 +161,7 @@ describe('GroupDetailsPage', () => {
         '/alerting/grafana/namespaces/test-folder-uid/groups/test-group-cpu/edit?returnTo=%2Falerting%2Fgrafana%2Fnamespaces%2Ftest-folder-uid%2Fgroups%2Ftest-group-cpu%2Fview'
       );
 
+      await waitFor(() => expect(ui.ruleLoader.queryAll()).toHaveLength(3));
       await waitForElementToBeRemoved(() => ui.ruleLoader.queryAll());
 
       const alertRuleItems = await ui.ruleItem.findAll();
