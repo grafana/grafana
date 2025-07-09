@@ -77,7 +77,7 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
   }
 
   // determine if this rule can be silenced by checking for Grafana Alert rule type and extracting the UID
-  const ruleUid = getRuleUID(rule, promRule);
+  const ruleUid = getRuleUID(rule ?? promRule);
   const silenceableRule =
     isString(ruleUid) &&
     (rulerRuleType.grafana.alertingRule(rule) || prometheusRuleType.grafana.alertingRule(promRule));

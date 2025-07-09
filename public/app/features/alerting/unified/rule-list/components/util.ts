@@ -1,9 +1,7 @@
 import { addMilliseconds, formatDistanceToNowStrict, isBefore } from 'date-fns';
 
 import { dateTime, dateTimeFormat, isValidDate } from '@grafana/data';
-import { GrafanaPromRuleDTO, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { isNullDate, parsePrometheusDuration } from '../../utils/time';
 
 type NextEvaluation = {
@@ -70,17 +68,4 @@ export function getRelativeEvaluationInterval(lastEvaluation?: string) {
   }
 
   return formatDistanceToNowStrict(new Date(lastEvaluation));
-}
-
-export function getRuleUid(rule?: RulerGrafanaRuleDTO, promRule?: GrafanaPromRuleDTO) {
-  let ruleUid: string | undefined;
-  if (rulerRuleType.grafana.rule(rule)) {
-    ruleUid = rule.grafana_alert.uid;
-  }
-
-  if (prometheusRuleType.grafana.rule(promRule)) {
-    ruleUid = promRule.uid;
-  }
-
-  return ruleUid;
 }

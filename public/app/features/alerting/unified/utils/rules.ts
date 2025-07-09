@@ -537,13 +537,17 @@ export function isDataSourceManagedRuleByType(type?: RuleFormType) {
 /*
  * Grab the UID from either a rulerRule definition or a Prometheus rule definition, only Grafana-managed rules will have a UID.
  */
-export function getRuleUID(rulerRule?: RulerRuleDTO, promRule?: Rule) {
+export function getRuleUID(rule?: RulerRuleDTO | Rule) {
+  if (!rule) {
+    return;
+  }
+
   let ruleUid: string | undefined;
 
-  if (rulerRuleType.grafana.rule(rulerRule)) {
-    ruleUid = rulerRule.grafana_alert.uid;
-  } else if (prometheusRuleType.grafana.rule(promRule)) {
-    ruleUid = promRule.uid;
+  if ('grafana_alert' in rule && rulerRuleType.grafana.rule(rule)) {
+    ruleUid = rule.grafana_alert.uid;
+  } else if ('uid' in rule && prometheusRuleType.grafana.rule(rule)) {
+    ruleUid = rule.uid;
   }
 
   return ruleUid;

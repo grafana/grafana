@@ -125,7 +125,7 @@ const AlertRuleMenu = ({
     [canPause, canSilence, shouldShowDeclareIncidentButton, canDuplicate].some(Boolean) && [canExport].some(Boolean);
 
   // grab the UID from either rulerRule or promRule
-  const ruleUid = getRuleUID(rulerRule, promRule);
+  const ruleUid = getRuleUID(rulerRule ?? promRule);
 
   const isPaused =
     (rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule)) ||
