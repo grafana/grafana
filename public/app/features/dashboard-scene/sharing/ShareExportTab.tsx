@@ -216,6 +216,10 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
           status: {},
         },
         initialSaveModelVersion,
+        hasLibraryPanels:
+          initialSaveModelVersion === 'v1' && !isDashboardV2Spec(origDashboard)
+            ? hasLibraryPanelsInV1Dashboard(origDashboard)
+            : false,
       };
     }
 
