@@ -37,7 +37,6 @@ func ProvideOpenFeatureService(cfg *setting.Cfg, httpClientProvider *sdkhttpclie
 }
 
 // TODO: might need to be public, so other MT services could set up open feature client
-// stackID may be empty for non-cloud use-case
 func newOpenFeatureService(pType string, u *url.URL, staticFlags map[string]bool, httpClientProvider *sdkhttpclient.Provider, signerMiddlewareProvider *middleware.CloudAccessPolicyTokenSignerMiddlewareProvider) (*OpenFeatureService, error) {
 	p, err := createProvider(pType, u, staticFlags, httpClientProvider, signerMiddlewareProvider)
 	if err != nil {
