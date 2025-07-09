@@ -8,12 +8,356 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v70/github"
 	mockhub "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestGithubClient_GetCommits(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		branch      string
+		path        string
+		since       time.Time
+		until       time.Time
+		wantCommits []Commit
+		wantErr     error
+	}{
+		{
+			name: "get commits successfully",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						commits := []*github.RepositoryCommit{
+							{
+								SHA: github.Ptr("abc123"),
+								Commit: &github.Commit{
+									Message: github.Ptr("First commit"),
+									Author: &github.CommitAuthor{
+										Name:  github.Ptr("Test User"),
+										Email: github.Ptr("test@example.com"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+									},
+									Committer: &github.CommitAuthor{
+										Name:  github.Ptr("Test User"),
+										Email: github.Ptr("test@example.com"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+									},
+								},
+								Author: &github.User{
+									Login:     github.Ptr("test-user"),
+									AvatarURL: github.Ptr("https://avatar.url"),
+								},
+								Committer: &github.User{
+									Login:     github.Ptr("test-user"),
+									AvatarURL: github.Ptr("https://avatar.url"),
+								},
+							},
+							{
+								SHA: github.Ptr("def456"),
+								Commit: &github.Commit{
+									Message: github.Ptr("Second commit"),
+									Author: &github.CommitAuthor{
+										Name:  github.Ptr("Another User"),
+										Email: github.Ptr("another@example.com"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
+									},
+									Committer: &github.CommitAuthor{
+										Name:  github.Ptr("Another User"),
+										Email: github.Ptr("another@example.com"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
+									},
+								},
+								Author: &github.User{
+									Login:     github.Ptr("another-user"),
+									AvatarURL: github.Ptr("https://another.avatar.url"),
+								},
+								Committer: &github.User{
+									Login:     github.Ptr("another-user"),
+									AvatarURL: github.Ptr("https://another.avatar.url"),
+								},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(commits))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			path:       "test.txt",
+			since:      time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:      time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: []Commit{
+				{
+					Ref:     "abc123",
+					Message: "First commit",
+					Author: &CommitAuthor{
+						Name:      "Test User",
+						Username:  "test-user",
+						AvatarURL: "https://avatar.url",
+					},
+					Committer: &CommitAuthor{
+						Name:      "Test User",
+						Username:  "test-user",
+						AvatarURL: "https://avatar.url",
+					},
+					CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+				{
+					Ref:     "def456",
+					Message: "Second commit",
+					Author: &CommitAuthor{
+						Name:      "Another User",
+						Username:  "another-user",
+						AvatarURL: "https://another.avatar.url",
+					},
+					Committer: &CommitAuthor{
+						Name:      "Another User",
+						Username:  "another-user",
+						AvatarURL: "https://another.avatar.url",
+					},
+					CreatedAt: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "repository not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:       "test-owner",
+			repository:  "nonexistent-repo",
+			branch:      "main",
+			path:        "test.txt",
+			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: nil,
+			wantErr:     ErrResourceNotFound,
+		},
+		{
+			name: "commits missing author",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						commits := []*github.RepositoryCommit{
+							{
+								SHA: github.Ptr("abc123"),
+								Commit: &github.Commit{
+									Message: github.Ptr("First commit"),
+									Author: &github.CommitAuthor{
+										Name:  github.Ptr("Test User"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+										Email: github.Ptr("test@example.com"),
+									},
+									Committer: &github.CommitAuthor{
+										Name:  github.Ptr("Test User"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+										Email: github.Ptr("test@example.com"),
+									},
+								},
+								// Author is nil
+								Committer: &github.User{
+									Login:     github.Ptr("test-user"),
+									AvatarURL: github.Ptr("https://avatar.url"),
+								},
+							},
+							{
+								SHA: github.Ptr("def456"),
+								Commit: &github.Commit{
+									Message: github.Ptr("Second commit"),
+									// Missing Author in Commit
+									Committer: &github.CommitAuthor{
+										Name:  github.Ptr("Another User"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC)},
+										Email: github.Ptr("another@example.com"),
+									},
+								},
+								Author: &github.User{
+									Login:     github.Ptr("another-user"),
+									AvatarURL: github.Ptr("https://another.avatar.url"),
+								},
+								Committer: &github.User{
+									Login:     github.Ptr("another-user"),
+									AvatarURL: github.Ptr("https://another.avatar.url"),
+								},
+							},
+						}
+						require.NoError(t, json.NewEncoder(w).Encode(commits))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branch:     "main",
+			path:       "test.txt",
+			since:      time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:      time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: []Commit{
+				{
+					Ref:     "abc123",
+					Message: "First commit",
+					Author: &CommitAuthor{
+						Name: "Test User",
+						// Username and AvatarURL are empty because Author is nil in the response
+					},
+					Committer: &CommitAuthor{
+						Name:      "Test User",
+						Username:  "test-user",
+						AvatarURL: "https://avatar.url",
+					},
+					CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+				},
+				{
+					Ref:     "def456",
+					Message: "Second commit",
+					Author:  nil, // Author is nil because Commit.Author is nil in the response
+					Committer: &CommitAuthor{
+						Name:      "Another User",
+						Username:  "another-user",
+						AvatarURL: "https://another.avatar.url",
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "too many commits",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// Return a large number of commits that would exceed the maxCommits limit
+						commits := make([]*github.RepositoryCommit, maxCommits+1)
+						for i := 0; i < maxCommits+1; i++ {
+							commits[i] = &github.RepositoryCommit{
+								SHA: github.Ptr(fmt.Sprintf("commit%d", i)),
+								Commit: &github.Commit{
+									Message: github.Ptr(fmt.Sprintf("Commit %d", i)),
+									Author: &github.CommitAuthor{
+										Name:  github.Ptr("Test User"),
+										Date:  &github.Timestamp{Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)},
+										Email: github.Ptr("test@example.com"),
+									},
+								},
+								Author: &github.User{
+									Login:     github.Ptr("test-user"),
+									AvatarURL: github.Ptr("https://avatar.url"),
+								},
+							}
+						}
+						require.NoError(t, json.NewEncoder(w).Encode(commits))
+					}),
+				),
+			),
+			owner:       "test-owner",
+			repository:  "test-repo",
+			branch:      "main",
+			path:        "test.txt",
+			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: nil,
+			wantErr:     fmt.Errorf("too many commits to fetch (more than %d)", maxCommits),
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:       "test-owner",
+			repository:  "test-repo",
+			branch:      "main",
+			path:        "test.txt",
+			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: nil,
+			wantErr:     ErrServiceUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposCommitsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:       "test-owner",
+			repository:  "test-repo",
+			branch:      "main",
+			path:        "test.txt",
+			since:       time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+			until:       time.Date(2023, 1, 3, 0, 0, 0, 0, time.UTC),
+			wantCommits: nil,
+			wantErr:     errors.New("Internal server error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			commits, err := client.Commits(context.Background(), tt.owner, tt.repository, tt.branch, tt.path)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+				assert.Nil(t, commits)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantCommits, commits)
+			}
+		})
+	}
+}
 
 func TestGithubClient_ListWebhooks(t *testing.T) {
 	tests := []struct {
