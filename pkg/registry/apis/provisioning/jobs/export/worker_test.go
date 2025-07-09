@@ -359,7 +359,7 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	// No progress messages expected in current implementation
-	
+
 	r := NewExportWorker(nil, nil, nil, nil)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "this repository does not support the branch workflow")

@@ -45,7 +45,6 @@ func NewGitRepository(
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
-
 	// Create nanogit client with authentication
 	client, err := nanogit.NewHTTPClient(
 		gitConfig.URL,

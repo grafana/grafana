@@ -7,16 +7,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/hash"
-	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestGitRepository_Validate(t *testing.T) {
@@ -255,17 +256,6 @@ func TestIsValidGitURL(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
-}
-
-// Mock secrets service for testing
-type mockSecretsService struct{}
-
-func (m *mockSecretsService) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
-	return []byte("decrypted-token"), nil
-}
-
-func (m *mockSecretsService) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
-	return []byte("encrypted-token"), nil
 }
 
 func TestNewGit(t *testing.T) {
@@ -2224,26 +2214,6 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 		require.Contains(t, err.Error(), "check if file exists before writing")
 	})
 }
-
-// Enhanced secrets service mock with error handling
-type mockSecretsServiceWithError struct {
-	shouldError bool
-}
-
-func (m *mockSecretsServiceWithError) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
-	if m.shouldError {
-		return nil, errors.New("decryption failed")
-	}
-	return []byte("decrypted-token"), nil
-}
-
-func (m *mockSecretsServiceWithError) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
-	if m.shouldError {
-		return nil, errors.New("encryption failed")
-	}
-	return []byte("encrypted-token"), nil
-}
-
 
 func TestGitRepository_ValidateBranchNames(t *testing.T) {
 	tests := []struct {
