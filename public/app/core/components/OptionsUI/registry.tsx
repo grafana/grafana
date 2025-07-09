@@ -274,7 +274,7 @@ export const getAllStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('boolean').editor,
     process: booleanOverrideProcessor,
 
-    shouldApply: (field) => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number || field.type === FieldType.frame,
     showIf: (options) => {
       return options.min === undefined || options.max === undefined;
     },
@@ -297,7 +297,7 @@ export const getAllStandardFieldConfigs = () => {
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-min', 'auto'),
     },
-    shouldApply: (field) => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number || field.type === FieldType.frame,
     category,
   };
 
@@ -318,7 +318,7 @@ export const getAllStandardFieldConfigs = () => {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-max', 'auto'),
     },
 
-    shouldApply: (field) => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number || field.type === FieldType.frame,
     category,
   };
 
@@ -338,7 +338,7 @@ export const getAllStandardFieldConfigs = () => {
       integer: true,
     },
 
-    shouldApply: (field) => field.type === FieldType.number,
+    shouldApply: (field) => field.type === FieldType.number || field.type === FieldType.frame,
     category,
   };
 

@@ -5,13 +5,14 @@ import * as React from 'react';
 import {
   FieldType,
   FieldConfig,
-  getMinMaxAndDelta,
   FieldSparkline,
   isDataFrame,
   Field,
   isDataFrameWithValue,
   GrafanaTheme2,
+  getFieldConfigWithMinMax,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   BarAlignment,
   GraphDrawStyle,
@@ -49,8 +50,10 @@ export const SparklineCell = (props: SparklineCellProps) => {
   const sparkline = getSparkline(value);
 
   if (!sparkline) {
-    return <>{field.config.noValue || 'no data'}</>;
+    return <>{field.config.noValue || t('grafana-ui.table.sparkline-cell.no-data', 'no data')}</>;
   }
+
+  const fieldConfig = getFieldConfigWithMinMax(field, true);
 
   // Get the step from the first two values to null-fill the x-axis based on timerange
   if (sparkline.x && !sparkline.x.config.interval && sparkline.x.values.length > 1) {
@@ -66,16 +69,16 @@ export const SparklineCell = (props: SparklineCellProps) => {
     }
   });
 
-  const range = getMinMaxAndDelta(sparkline.y);
-  sparkline.y.config.min = range.min;
-  sparkline.y.config.max = range.max;
-  sparkline.y.state = { range };
+  sparkline.y.config.min = fieldConfig.min;
+  sparkline.y.config.max = fieldConfig.max;
+  sparkline.y.state = { range: field.state?.range };
   sparkline.timeRange = timeRange;
 
   const cellOptions = getTableSparklineCellOptions(field);
 
   const config: FieldConfig<GraphFieldConfig> = {
-    color: field.config.color,
+    ...fieldConfig,
+    color: fieldConfig.color,
     custom: {
       ...defaultSparklineCellConfig,
       ...cellOptions,

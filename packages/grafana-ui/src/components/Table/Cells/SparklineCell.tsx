@@ -3,12 +3,12 @@ import * as React from 'react';
 import {
   FieldType,
   FieldConfig,
-  getMinMaxAndDelta,
   FieldSparkline,
   isDataFrame,
   Field,
   isDataFrameWithValue,
   formattedValueToString,
+  getFieldConfigWithMinMax,
 } from '@grafana/data';
 import {
   BarAlignment,
@@ -54,6 +54,8 @@ export const SparklineCell = (props: TableCellProps) => {
     );
   }
 
+  const fieldConfig: FieldConfig<GraphFieldConfig> = getFieldConfigWithMinMax(field, true);
+
   // Get the step from the first two values to null-fill the x-axis based on timerange
   if (sparkline.x && !sparkline.x.config.interval && sparkline.x.values.length > 1) {
     sparkline.x.config.interval = sparkline.x.values[1] - sparkline.x.values[0];
@@ -68,16 +70,16 @@ export const SparklineCell = (props: TableCellProps) => {
     }
   });
 
-  const range = getMinMaxAndDelta(sparkline.y);
-  sparkline.y.config.min = range.min;
-  sparkline.y.config.max = range.max;
-  sparkline.y.state = { range };
+  sparkline.y.config.min = fieldConfig.min;
+  sparkline.y.config.max = fieldConfig.max;
+  sparkline.y.state = { range: field.state?.range };
   sparkline.timeRange = timeRange;
 
   const cellOptions = getTableSparklineCellOptions(field);
 
   const config: FieldConfig<GraphFieldConfig> = {
-    color: field.config.color,
+    ...fieldConfig,
+    color: fieldConfig.color,
     custom: {
       ...defaultSparklineCellConfig,
       ...cellOptions,

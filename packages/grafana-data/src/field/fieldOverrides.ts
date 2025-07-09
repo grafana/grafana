@@ -1,4 +1,4 @@
-import { isNumber, set, unset, get, cloneDeep } from 'lodash';
+import { set, unset, get, cloneDeep } from 'lodash';
 import { useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
@@ -9,7 +9,6 @@ import { guessFieldTypeForField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { GrafanaTheme2 } from '../themes/types';
-import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { fieldMatchers } from '../transformations/matchers';
 import { ScopedVars, DataContextScopedVar } from '../types/ScopedVars';
 import { DataFrame, NumericRange, FieldType, Field, ValueLinkConfig, FieldConfig } from '../types/dataFrame';
@@ -32,39 +31,12 @@ import { locationUtil } from '../utils/location';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import { getMinMaxAndDelta } from './scale';
+import { findNumericFieldMinMax, getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 interface OverrideProps {
   match: FieldMatcher;
   properties: DynamicConfigValue[];
-}
-
-export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
-  let min: number | null = null;
-  let max: number | null = null;
-
-  const reducers = [ReducerID.min, ReducerID.max];
-
-  for (const frame of data) {
-    for (const field of frame.fields) {
-      if (field.type === FieldType.number) {
-        const stats = reduceField({ field, reducers });
-        const statsMin = stats[ReducerID.min];
-        const statsMax = stats[ReducerID.max];
-
-        if (min === null || statsMin < min) {
-          min = statsMin;
-        }
-
-        if (max === null || statsMax > max) {
-          max = statsMax;
-        }
-      }
-    }
-  }
-
-  return { min, max, delta: (max ?? 0) - (min ?? 0) };
 }
 
 /**
@@ -244,8 +216,8 @@ function calculateRange(
   globalRange: NumericRange | undefined,
   data: DataFrame[]
 ): { range?: { min?: number | null; max?: number | null; delta: number }; newGlobalRange: NumericRange | undefined } {
-  // Only calculate ranges when the field is a number and one of min/max is set to auto.
-  if (field.type !== FieldType.number || (isNumber(config.min) && isNumber(config.max))) {
+  // Only for numeric fields (or frames containing numeric fields)
+  if (field.type !== FieldType.number && field.type !== FieldType.frame) {
     return { newGlobalRange: globalRange };
   }
 

@@ -2,7 +2,7 @@ import { isNumber } from 'lodash';
 
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { Field, FieldConfig, FieldType, NumericRange } from '../types/dataFrame';
+import { DataFrame, Field, FieldConfig, FieldType, NumericRange } from '../types/dataFrame';
 import { Threshold } from '../types/thresholds';
 
 import { getFieldColorModeForField } from './fieldColor';
@@ -71,23 +71,59 @@ function getBooleanScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCal
   };
 }
 
+export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
+  let min: number | null = null;
+  let max: number | null = null;
+
+  const reducers = [ReducerID.min, ReducerID.max];
+
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        const stats = reduceField({ field, reducers });
+        const statsMin = stats[ReducerID.min];
+        const statsMax = stats[ReducerID.max];
+
+        if (min === null || statsMin < min) {
+          min = statsMin;
+        }
+        if (max === null || statsMax > max) {
+          max = statsMax;
+        }
+      } else if (field.type === FieldType.frame) {
+        const { min: newMin, max: newMax } = findNumericFieldMinMax(field.values);
+        if (min === null || (newMin != null && newMin < min)) {
+          min = newMin ?? null;
+        }
+        if (max === null || (newMax != null && newMax > max)) {
+          max = newMax ?? null;
+        }
+      }
+    }
+  }
+
+  return { min, max, delta: (max ?? 0) - (min ?? 0) };
+}
+
 export function getMinMaxAndDelta(field: Field): NumericRange {
-  if (field.type !== FieldType.number) {
+  if (field.type !== FieldType.number && field.type !== FieldType.frame) {
     return { min: 0, max: 100, delta: 100 };
   }
 
-  // Calculate min/max if required
   let min = field.config.min;
   let max = field.config.max;
 
+  // Calculate min/max if required
   if (!isNumber(min) || !isNumber(max)) {
     if (field.values && field.values.length) {
-      const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-      if (!isNumber(min)) {
-        min = stats[ReducerID.min];
-      }
-      if (!isNumber(max)) {
-        max = stats[ReducerID.max];
+      if (field.type === FieldType.frame) {
+        const result = findNumericFieldMinMax(field.values);
+        min = isNumber(min) ? min : result.min;
+        max = isNumber(max) ? max : result.max;
+      } else if (field.type === FieldType.number) {
+        const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
+        min = isNumber(min) ? min : stats[ReducerID.min];
+        max = isNumber(max) ? max : stats[ReducerID.max];
       }
     } else {
       min = 0;
