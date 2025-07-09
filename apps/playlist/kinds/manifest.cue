@@ -5,10 +5,6 @@ manifest: {
 	groupOverride: "playlist.grafana.app"
 	versions: {
 		"v0alpha1": {
-			codegen: {
-				frontend: false
-				backend:  true
-			}
 			kinds: [
 				playlistv0alpha1,
 			]

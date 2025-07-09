@@ -21,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// ProvideAppInstallers returns a list of app installers that can be used to install apps.
+// This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	playlistAppInstaller *playlist.PlaylistAppInstaller,
 ) []appsdkapiserver.AppInstaller {
@@ -36,8 +38,9 @@ type Service struct {
 	log    log.Logger
 }
 
-// ProvideRegistryServiceSink is an entry point for each service that will force initialization
-func ProvideRegistryServiceSink(
+// ProvideBuilderRunners adapts apps to the APIGroupBuilder interface.
+// deprecated: Use ProvideAppInstallers instead.
+func ProvideBuilderRunners(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
 	features featuremgmt.FeatureToggles,

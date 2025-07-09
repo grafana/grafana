@@ -17,7 +17,6 @@ import (
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -271,26 +272,21 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
+	// Add schemas from app installers to the scheme before creating options
+	additionalGroupVersions, err := appinstaller.AddToScheme(s.appInstallers, s.scheme)
+	if err != nil {
+		return err
+	}
+	groupVersions = append(groupVersions, additionalGroupVersions...)
+
 	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
-	// install schemas and admission plugins from app installers
-	for _, installer := range s.appInstallers {
-		if err := installer.AddToScheme(s.scheme); err != nil {
-			return fmt.Errorf("failed to add app installer scheme: %w", err)
-		}
-		groupVersions = append(groupVersions, installer.GroupVersions()...)
-		plugin := installer.AdmissionPlugin()
-		if plugin != nil {
-			md := installer.ManifestData()
-			if md == nil {
-				return fmt.Errorf("manifest is not initialized for installer for GroupVersions %v", installer.GroupVersions())
-			}
-			pluginName := md.AppName + " admission"
-			o.RecommendedOptions.Admission.Plugins.Register(pluginName, plugin)
-			s.log.Info("Registered admission plugin", "app", md.AppName)
-		}
+
+	// Register admission plugins from app installers after options are created
+	if err := appinstaller.RegisterAdmissionPlugins(ctx, s.appInstallers, o); err != nil {
+		return err
 	}
 
-	err := applyGrafanaConfig(s.cfg, s.features, o)
+	err = applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
 	}
@@ -345,50 +341,21 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	existingGetter := serverConfig.OpenAPIConfig.GetDefinitions
-	serverConfig.OpenAPIConfig.GetDefinitions = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		defs := existingGetter(ref)
+	serverConfig.OpenAPIConfig.GetDefinitions = appinstaller.SetupOpenAPIDefinitions(
+		s.appInstallers,
+		existingGetter,
+	)
 
-		// add common OpenAPI definitions
-		commonDefs := appsdkapiserver.GetCommonOpenAPIDefinitions(ref)
-		for k, v := range commonDefs {
-			defs[k] = v
-		}
-
-		// add AppInstaller definitions
-		for _, installer := range s.appInstallers {
-			s.log.Info("attempting to add OpenAPI definitions", "app", installer.ManifestData().AppName)
-			installerDefs := installer.GetOpenAPIDefinitions(ref)
-			for k, v := range installerDefs {
-				defs[k] = v
-				s.log.Info("Added OpenAPI definition", "app", installer.ManifestData().AppName, "kind", k)
-			}
-		}
-		return defs
-	}
-
-	serverConfig.OpenAPIConfig.GetDefinitions = func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		defs := existingGetter(ref)
-
-		s.log.Info("Adding OpenAPI definitions")
-		// add common OpenAPI definitions
-		commonDefs := appsdkapiserver.GetCommonOpenAPIDefinitions(ref)
-		for k, v := range commonDefs {
-			defs[k] = v
-		}
-
-		// add AppInstaller definitions
-		for _, installer := range s.appInstallers {
-			s.log.Info("attempting to add OpenAPI definitions", "app", installer.ManifestData().AppName)
-			installerDefs := installer.GetOpenAPIDefinitions(ref)
-			for k, v := range installerDefs {
-				defs[k] = v
-				s.log.Info("Added OpenAPI definition", "app", installer.ManifestData().AppName, "kind", k)
-			}
-		}
-		return defs
-	}
+	serverConfig.OpenAPIV3Config.GetDefinitions = appinstaller.SetupOpenAPIDefinitions(
+		s.appInstallers,
+		existingGetter,
+	)
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
+
+	if err := appinstaller.RegisterPostStartHooks(s.appInstallers, serverConfig); err != nil {
+		return fmt.Errorf("failed to register post start hooks for app installers: %w", err)
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
@@ -410,47 +377,19 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	// Install AppInstaller APIs
-	for _, installer := range s.appInstallers {
-		if err := installer.InstallAPIs(server, serverConfig.RESTOptionsGetter); err != nil {
-			return fmt.Errorf("failed to install app installer APIs: %w", err)
-		}
-	}
-
-	// Add post start hook for AppInstaller initialization
-	err = server.AddPostStartHook("app-installers", func(hookContext genericapiserver.PostStartHookContext) error {
-		s.log.Info("Starting app installers post start hook")
-
-		// Initialize each AppInstaller with the loopback client config
-		for _, installer := range s.appInstallers {
-			md := installer.ManifestData()
-			if md == nil {
-				s.log.Error("App installer has nil manifest data", "installer", fmt.Sprintf("%T", installer))
-				continue
-			}
-
-			s.log.Info("Initializing app installer", "app", md.AppName)
-
-			// Use the loopback client config for app initialization
-			loopbackConfig := *hookContext.LoopbackClientConfig
-			loopbackConfig.APIPath = "/apis"
-
-			if err := installer.InitializeApp(loopbackConfig); err != nil {
-				s.log.Error("Failed to initialize app installer",
-					"app", md.AppName,
-					"error", err)
-				// Continue with other apps rather than failing completely
-				continue
-			}
-
-			s.log.Info("Successfully initialized app installer", "app", md.AppName)
-		}
-
-		s.log.Info("App installers post start hook completed")
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to add app installers post start hook: %w", err)
+	if err := appinstaller.InstallAPIs(
+		ctx,
+		s.appInstallers,
+		server,
+		serverConfig.RESTOptionsGetter,
+		o.StorageOptions,
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.serverLockService,
+		request.GetNamespaceMapper(s.cfg),
+		s.storageStatus,
+		&grafanarest.DualWriterMetrics{}, // Create empty metrics for now
+	); err != nil {
+		return err
 	}
 
 	// stash the options for later use

@@ -4,6 +4,10 @@ playlistv0alpha1: {
 	kind:   "Playlist"
 	plural: "playlists"
 	scope:  "Namespaced"
+	codegen: {
+		frontend: false
+		backend:  true
+	}
 	admission: {
 		validation: {
 			operations: [

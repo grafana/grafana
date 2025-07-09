@@ -1,4 +1,4 @@
-APP_SDK_VERSION := apiserver-custom-routes
+APP_SDK_VERSION := df8ec27cecb55a27a391681921ffffc7f977bc8d
 APP_SDK_DIR     := $(shell go env GOPATH)/bin/app-sdk-$(APP_SDK_VERSION)
 APP_SDK_BIN     := $(APP_SDK_DIR)/grafana-app-sdk
 
@@ -24,6 +24,4 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 		--source=./kinds/ \
 		--gogenpath=./pkg/apis \
 		--grouping=group \
-		--defencoding=none \
-		--noschemasinmanifest \
-		--postprocess
+		--defencoding=none
