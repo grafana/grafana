@@ -27,10 +27,9 @@ type remoteAlertmanager interface {
 }
 
 type RemoteSecondaryForkedAlertmanager struct {
-	log       log.Logger
-	orgID     int64
-	store     configStore
-	pullState bool
+	log   log.Logger
+	orgID int64
+	store configStore
 
 	internal notifier.Alertmanager
 	remote   remoteAlertmanager
@@ -43,10 +42,6 @@ type RemoteSecondaryConfig struct {
 	Logger log.Logger
 	OrgID  int64
 	Store  configStore
-
-	// PullState indicates whether to get the latest state from the remote Alertmanager and merging it with Grafana's
-	// internal state before starting.
-	PullState bool
 
 	// SyncInterval determines how often we should attempt to synchronize
 	// the configuration on the remote Alertmanager.
@@ -69,7 +64,6 @@ func NewRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 		orgID:        cfg.OrgID,
 		store:        cfg.Store,
 		internal:     internal,
-		pullState:    cfg.PullState,
 		remote:       remote,
 		syncInterval: cfg.SyncInterval,
 	}, nil
@@ -106,6 +100,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 		}
 	}()
 
+	// Call ApplyConfig on the internal Alertmanager - we only care about errors for this one.
 	err := fam.internal.ApplyConfig(ctx, config)
 	wg.Wait()
 	return err
