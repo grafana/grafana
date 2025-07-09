@@ -54,7 +54,12 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
 
     return {
       isLoading: false,
-      component: wrapWithPluginContext(registryItem.pluginId, registryItem.component, componentLog),
+      component: wrapWithPluginContext({
+        pluginId: registryItem.pluginId,
+        extensionTitle: registryItem.title,
+        Component: registryItem.component,
+        log: componentLog,
+      }),
     };
   }, [id, pluginContext, registryState, isLoadingAppPlugins]);
 }

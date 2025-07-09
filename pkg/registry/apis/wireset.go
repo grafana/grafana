@@ -56,7 +56,6 @@ var WireSet = wire.NewSet(
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
-	WireSetExts, // this will be moved to wireexts_oss.go in a following PR
 	iam.RegisterAPIService,
 	ProvisioningExtras,
 	provisioning.RegisterAPIService,

@@ -8,6 +8,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
@@ -49,6 +50,10 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
 
     const libPanelModel = new PanelModel(libPanel.model);
+
+    // Use dashboard panel ID for data layer filtering
+    const dashboardPanelId = getPanelIdForVizPanel(vizPanel);
+    libPanelModel.id = dashboardPanelId;
 
     const titleItems: SceneObject[] = [];
 

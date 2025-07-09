@@ -5,9 +5,9 @@ import { from } from 'rxjs';
 import { getDefaultTimeRange } from '@grafana/data';
 
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
+import { ElasticsearchDataQuery, BucketAggregationType, MetricAggregationType } from '../dataquery.gen';
 import { ElasticDatasource } from '../datasource';
 import { defaultBucketAgg, defaultMetricAgg } from '../queryDef';
-import { ElasticsearchQuery, MetricAggregationType, BucketAggregationType } from '../types';
 
 import { useFields } from './useFields';
 
@@ -16,7 +16,7 @@ describe('useFields hook', () => {
   // we can stop testing for getField to be called with the correct parameters.
   it("returns a function that calls datasource's getFields with the correct parameters", async () => {
     const timeRange = getDefaultTimeRange();
-    const query: ElasticsearchQuery = {
+    const query: ElasticsearchDataQuery = {
       refId: 'A',
       query: '',
       metrics: [defaultMetricAgg()],

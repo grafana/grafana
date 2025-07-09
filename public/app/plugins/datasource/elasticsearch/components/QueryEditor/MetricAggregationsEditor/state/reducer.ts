@@ -1,7 +1,8 @@
 import { Action } from '@reduxjs/toolkit';
 
+import { ElasticsearchDataQuery, MetricAggregation } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
+
 import { defaultMetricAgg } from '../../../../queryDef';
-import { ElasticsearchQuery, MetricAggregation } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
 import { initQuery } from '../../state';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, isPipelineAggregation } from '../aggregations';
@@ -18,7 +19,10 @@ import {
   toggleMetricVisibility,
 } from './actions';
 
-export const reducer = (state: ElasticsearchQuery['metrics'], action: Action): ElasticsearchQuery['metrics'] => {
+export const reducer = (
+  state: ElasticsearchDataQuery['metrics'],
+  action: Action
+): ElasticsearchDataQuery['metrics'] => {
   if (addMetric.match(action)) {
     return [...state!, defaultMetricAgg(action.payload)];
   }
