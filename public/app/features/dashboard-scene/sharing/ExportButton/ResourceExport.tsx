@@ -1,9 +1,9 @@
 import { AsyncState } from 'react-use/lib/useAsync';
 
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Label, RadioButtonGroup, Stack, Switch } from '@grafana/ui';
+import { Alert, Label, RadioButtonGroup, Stack, Switch, TextLink } from '@grafana/ui';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { ExportableResource } from '../ShareExportTab';
@@ -37,9 +37,11 @@ export function ResourceExport({
   onShareExternallyChange,
   onViewYAML,
 }: Props) {
+  const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
   const initialSaveModelVersion = dashboardJson.value?.initialSaveModelVersion;
   const isV2Dashboard =
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
+  const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
   const switchExportLabel =
     exportMode === ExportMode.V2Resource
@@ -112,6 +114,26 @@ export function ResourceExport({
           </Stack>
         )}
       </Stack>
+
+      {showV2LibPanelAlert && (
+        <Alert
+          title={t(
+            'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
+            'Dashboard Schema V2 does not support exporting library panels to be used in another instance. Converting Library Panels to Regular Panels'
+          )}
+          severity="warning"
+        >
+          <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
+            The dynamic dashboard functionality is experimental, and has not full feature parity with current dashboards
+            behaviour. It is based on a new schema format, that support library panels partially. This means that when
+            exporting the dashboard to use it in another instance, we will convert library panels to regular panels.{' '}
+            <TextLink external href="https://grafana.com/docs/release-life-cycle/">
+              life cycle
+            </TextLink>
+            .
+          </Trans>
+        </Alert>
+      )}
     </Stack>
   );
 }
