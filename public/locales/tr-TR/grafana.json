@@ -4399,7 +4399,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Herkese açık",
         "tooltip-view-as-scene": "Sahne olarak görüntüle"
       }
     },
@@ -5173,7 +5172,6 @@
       "playlist-next": "Sonraki panoya git",
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
-      "public-dashboard": "Herkese açık",
       "refresh": "Panoyu yenile",
       "save": "Panoyu kaydet",
       "save-dashboard": {
@@ -5474,15 +5472,9 @@
       "type": "Tür"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Değer henüz Grafana veri tabanına kaydedilmedi",
       "not-yet-saved": "Değer Grafana veri tabanına kaydedilmedi",
-      "open-pull-request-in-git-hub": "GitHub'da çekme isteği aç",
-      "title-dashboard-loaded-branch-git-hub": "Bu pano, GitHub'daki bir daldan yüklendi.",
       "title-dashboard-loaded-external-repository": "Bu pano, haricî bir depodan yüklendi.",
-      "title-dashboard-loaded-request-git-hub": "Bu pano, GitHub'daki bir çekme isteğinden yüklendi.",
-      "title-error-loading-dashboard": "Pano yüklenirken hata oluştu",
-      "value-not-saved": "Değer henüz Grafana veri tabanına kaydedilmedi",
-      "view-pull-request-in-git-hub": "GitHub'da çekme isteğini görüntüle"
+      "title-error-loading-dashboard": "Pano yüklenirken hata oluştu"
     },
     "dashboard-scene": {
       "text": {
@@ -7217,6 +7209,7 @@
       "when": "NE ZAMAN"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Çalıştırma"
     },
     "math": {
@@ -8503,7 +8496,7 @@
       "usage-count_other": "{{count}} panoda kullanılıyor"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Ada veya açıklamaya göre ara"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Kütüphane paneli yükleniyor..."
@@ -8644,12 +8637,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8699,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8719,9 +8713,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10311,6 +10307,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "Bu özellik şu anda aktif geliştirme aşamasındadır. En iyi deneyim ve en yeni geliştirmeler için Grafana'nın <2>gecelik derleme</2> sürümünü kullanmanızı öneririz."
@@ -11762,6 +11769,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

@@ -4381,7 +4381,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "公开",
         "tooltip-view-as-scene": "作为场景查看"
       }
     },
@@ -5154,7 +5153,6 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
-      "public-dashboard": "公开",
       "refresh": "刷新仪表板",
       "save": "保存仪表板",
       "save-dashboard": {
@@ -5455,15 +5453,9 @@
       "type": "类型"
     },
     "dashboard-preview-banner": {
-      "not-saved": "该值尚未保存在 Grafana 数据库中",
       "not-yet-saved": "该值未保存在 Grafana 数据库中",
-      "open-pull-request-in-git-hub": "在 GitHub 中打开拉取请求",
-      "title-dashboard-loaded-branch-git-hub": "此数据面板从 GitHub 的分支加载。",
       "title-dashboard-loaded-external-repository": "此数据面板从外部存储库加载",
-      "title-dashboard-loaded-request-git-hub": "此数据面板从 GitHub 的拉取请求加载。",
-      "title-error-loading-dashboard": "加载数据面板时出错",
-      "value-not-saved": "该值尚未保存在 Grafana 数据库中",
-      "view-pull-request-in-git-hub": "在 GitHub 中查看拉取请求"
+      "title-error-loading-dashboard": "加载数据面板时出错"
     },
     "dashboard-scene": {
       "text": {
@@ -7196,6 +7188,7 @@
       "when": "满足以下条件时"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "运算"
     },
     "math": {
@@ -8479,7 +8472,7 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "按名称或描述搜索"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "正在加载库面板..."
@@ -8618,12 +8611,9 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_other": "",
+          "parsedl-label_other": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8680,6 +8670,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8693,9 +8684,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10282,6 +10275,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
@@ -11726,6 +11730,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

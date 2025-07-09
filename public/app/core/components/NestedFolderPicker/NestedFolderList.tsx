@@ -12,7 +12,7 @@ import { Indent } from 'app/core/components/Indent/Indent';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state/hooks';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector } from 'app/types';
+import { useSelector } from 'app/types/store';
 
 import { FolderRepo } from './FolderRepo';
 
