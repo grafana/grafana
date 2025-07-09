@@ -18,6 +18,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -1026,7 +1027,6 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	t.Skip("not working yet")
 
 	type testCase struct {
 		description         string
@@ -1129,6 +1129,10 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 						featuremgmt.FlagKubernetesClientDashboardsFolders,
 					},
 				})
+
+				if !db.IsTestDbSQLite() {
+					t.Skip("for now, this test should run only against sqlite")
+				}
 
 				userTest := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
 
