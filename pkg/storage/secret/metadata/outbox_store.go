@@ -21,8 +21,8 @@ import (
 type outboxStore struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
-	tracer  trace.Tracer
 	metrics *metrics.StorageMetrics
+	tracer  trace.Tracer
 }
 
 func ProvideOutboxQueue(
