@@ -293,8 +293,6 @@ const getImagePath = (id: string, disabled: boolean) => {
 };
 
 const TransformationDescriptionOverrides: { [key: string]: string } = {
-  [DataTransformerID.concatenate]: 'Combine all fields into a single frame.',
-  [DataTransformerID.configFromData]: 'Set unit, min, max and more.',
   [DataTransformerID.fieldLookup]: 'Use a field value to lookup countries, states, or airports.',
   [DataTransformerID.filterFieldsByName]: 'Remove parts of the query results using a regex pattern.',
   [DataTransformerID.filterByRefId]: 'Remove rows from the data based on origin query',

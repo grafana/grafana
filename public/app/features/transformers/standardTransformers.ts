@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 
 import { filterByValueTransformRegistryItem } from './FilterByValueTransformer/FilterByValueTransformerEditor';
 import { heatmapTransformRegistryItem } from './calculateHeatmap/HeatmapTransformerEditor';
-import { configFromQueryTransformRegistryItem } from './configFromQuery/ConfigFromQueryTransformerEditor';
+import { getConfigFromQueryTransformRegistryItem } from './configFromQuery/ConfigFromQueryTransformerEditor';
 import { getCalculateFieldTransformRegistryItem } from './editors/CalculateFieldTransformerEditor/CalculateFieldTransformerEditor';
 import { getConcatenateTransformRegistryItem } from './editors/ConcatenateTransformerEditor';
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
@@ -53,7 +53,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     mergeTransformerRegistryItem,
     histogramTransformRegistryItem,
     rowsToFieldsTransformRegistryItem,
-    configFromQueryTransformRegistryItem,
+    getConfigFromQueryTransformRegistryItem(),
     prepareTimeseriesTransformerRegistryItem,
     convertFieldTypeTransformRegistryItem,
     spatialTransformRegistryItem,
