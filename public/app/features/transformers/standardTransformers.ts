@@ -5,7 +5,7 @@ import { filterByValueTransformRegistryItem } from './FilterByValueTransformer/F
 import { heatmapTransformRegistryItem } from './calculateHeatmap/HeatmapTransformerEditor';
 import { configFromQueryTransformRegistryItem } from './configFromQuery/ConfigFromQueryTransformerEditor';
 import { getCalculateFieldTransformRegistryItem } from './editors/CalculateFieldTransformerEditor/CalculateFieldTransformerEditor';
-import { concatenateTransformRegistryItem } from './editors/ConcatenateTransformerEditor';
+import { getConcatenateTransformRegistryItem } from './editors/ConcatenateTransformerEditor';
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefIdTransformerEditor';
@@ -45,7 +45,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     organizeFieldsTransformRegistryItem,
     joinByFieldTransformerRegistryItem,
     seriesToRowsTransformerRegistryItem,
-    concatenateTransformRegistryItem,
+    getConcatenateTransformRegistryItem(),
     getCalculateFieldTransformRegistryItem(),
     labelsToFieldsTransformerRegistryItem,
     groupByTransformRegistryItem,

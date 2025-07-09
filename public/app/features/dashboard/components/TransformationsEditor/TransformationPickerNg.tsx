@@ -214,7 +214,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
               </span>
             </Card.Heading>
             <Card.Description className={styles.description}>
-              <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
+              <span>{standardTransformersRegistry.getIfExists(transform.id)?.description}</span>
               {showIllustrations && (
                 <span>
                   <img className={styles.image} src={getImagePath(transform.id, !isApplicable)} alt={transform.name} />
@@ -311,8 +311,4 @@ const TransformationDescriptionOverrides: { [key: string]: string } = {
   [DataTransformerID.renameByRegex]:
     'Rename parts of the query results using a regular expression and replacement pattern.',
   [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
-};
-
-const getTransformationsRedesignDescriptions = (id: string): string => {
-  return TransformationDescriptionOverrides[id] || standardTransformersRegistry.getIfExists(id)?.description || '';
 };

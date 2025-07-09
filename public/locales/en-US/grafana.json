@@ -12180,6 +12180,13 @@
     "concatenate-transformer-editor": {
       "label-label": "Label",
       "label-name": "Name",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "Copy frame name to field name",
+          "ignore-the-frame-name": "Ignore the frame name",
+          "label-frame": "Add a label with the frame name"
+        }
+      },
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
@@ -12222,6 +12229,16 @@
       "asc": "ASC",
       "desc": "DESC",
       "off": "Off"
+    },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": "Combine all fields into a single frame."
+        },
+        "name": {
+          "concatenate-fields": "Concatenate fields"
+        }
+      }
     },
     "enum-mapping-editor": {
       "add-enum-value": "Add enum value",
