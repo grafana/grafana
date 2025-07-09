@@ -30,8 +30,8 @@ import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { buildImportMap, resolveModulePath } from './loader/utils';
-import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
-import { shouldLoadPluginInFrontendSandbox } from './sandbox/sandbox_plugin_loader_registry';
+import { importPluginModuleInSandbox } from './sandbox/sandboxPluginLoader';
+import { shouldLoadPluginInFrontendSandbox } from './sandbox/sandboxPluginLoaderRegistry';
 import { pluginsLogger } from './utils';
 
 const imports = buildImportMap(sharedDependenciesMap);
