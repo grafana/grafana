@@ -481,6 +481,8 @@ export const LogListContextProvider = ({
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
 
+  console.log(detailsWidth);
+
   return (
     <LogListContext.Provider
       value={{
@@ -573,7 +575,9 @@ function getDetailsWidth(
   const defaultWidth = containerElement.clientWidth * 0.4;
   const detailsWidth =
     currentWidth ||
-    (logOptionsStorageKey ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10) : defaultWidth);
+    (logOptionsStorageKey
+      ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`) ?? defaultWidth, 10)
+      : defaultWidth);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
