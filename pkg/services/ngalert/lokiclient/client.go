@@ -46,12 +46,11 @@ type LokiConfig struct {
 }
 
 type HttpLokiClient struct {
-	client        client.Requester
-	encoder       encoder
-	cfg           LokiConfig
-	bytesWritten  prometheus.Counter
-	writeDuration *instrument.HistogramCollector
-	log           log.Logger
+	client       client.Requester
+	encoder      encoder
+	cfg          LokiConfig
+	bytesWritten prometheus.Counter
+	log          log.Logger
 }
 
 // Kind of Operation (=, !=, =~, !~)
