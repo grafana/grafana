@@ -16,12 +16,12 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
     case 'ALERT_RULES_QUOTA_REACHED':
       return t(
         'migrate-to-cloud.resource-details.error-messages.alert-rules-quota-reached',
-        'Maximum number of alert rules reached. Please delete some alert rules or upgrade your plan and try again.'
+        'Maximum number of alert rules reached: Delete some alert rules or upgrade your plan and try again.'
       );
     case 'ALERT_RULES_GROUP_QUOTA_REACHED':
       return t(
         'migrate-to-cloud.resource-details.error-messages.alert-rules-group-quota-reached',
-        'Maximum number of alert rules groups reached. Please delete some alert rules groups or upgrade your plan and try again.'
+        'Maximum number of alert rule groups reached: Delete some alert rule groups or upgrade your plan and try again.'
       );
     case 'DATASOURCE_NAME_CONFLICT':
       return t(
