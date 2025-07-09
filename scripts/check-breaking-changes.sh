@@ -56,7 +56,7 @@ while IFS=" " read -r -a package; do
   if [ "$STATUS" -gt 0 ]; then
     EXIT_CODE=1
 
-    # add different format for forked repos to allow the message to be printed in stdout
+    # Add different format for forked repos to allow the message to be printed in stdout
     if [[ "$IS_FORK" == "true" ]]; then
       GITHUB_MESSAGE="${GITHUB_MESSAGE}${PACKAGE_PATH} has possible breaking changes\n"
       GITHUB_LEVITATE_MARKDOWN+="${PACKAGE_PATH}\n${CURRENT_REPORT}\n"
@@ -74,7 +74,7 @@ echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
 
 if [[ "$IS_FORK" == "true" ]]; then
-  # for forked repos, the report will be printed in stdout
+  # For forked repos, the report will be printed in stdout
   # and we will exit the workflow right away according to the exit code
   echo -e "$GITHUB_LEVITATE_MARKDOWN"
   exit $EXIT_CODE
