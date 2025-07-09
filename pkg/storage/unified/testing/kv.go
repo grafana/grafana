@@ -43,10 +43,6 @@ func GenerateRandomKVPrefix() string {
 
 // RunKVTest runs the KV test suite
 func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	if opts == nil {
 		opts = &KVTestOptions{}
 	}

@@ -8855,6 +8855,11 @@
     },
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
+    "name-details-mode": "Log Details panel mode",
+    "name-details-options": {
+      "label-inline": "Inline",
+      "label-sidebar": "Sidebar"
+    },
     "name-enable-infinite-scrolling": "Enable infinite scrolling",
     "name-enable-log-details": "Enable log details",
     "name-enable-syntax-highlighting": "Enable syntax highlighting",
