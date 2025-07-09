@@ -1,6 +1,7 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
+import { FolderDTO } from 'app/types/folders';
 
 import kbn from '../../../../core/utils/kbn';
 import {
@@ -15,9 +16,8 @@ import {
 } from '../../../../features/apiserver/types';
 import { useGetFolderQuery as useGetFolderQueryLegacy } from '../../../../features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
-import { refetchChildren } from '../../../../features/browse-dashboards/state';
+import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
-import { FolderDTO } from '../../../../types';
 import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
 import { generatedAPI } from './endpoints.gen';
