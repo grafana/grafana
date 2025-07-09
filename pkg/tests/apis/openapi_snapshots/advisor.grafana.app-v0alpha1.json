@@ -2303,6 +2303,7 @@
             ]
           },
           "spec": {
+            "description": "Spec is the spec of the Check",
             "default": {},
             "allOf": [
               {
@@ -2388,6 +2389,33 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReport": {
+        "type": "object",
+        "required": [
+          "count",
+          "failures"
+        ],
+        "properties": {
+          "count": {
+            "description": "Number of elements analyzed",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "failures": {
+            "description": "List of failures",
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure"
+                }
+              ]
+            }
+          }
+        }
       },
       "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure": {
         "type": "object",
@@ -2479,7 +2507,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckV0alpha1StatusReport"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReport"
               }
             ]
           }
@@ -2510,6 +2538,7 @@
             ]
           },
           "spec": {
+            "description": "Spec is the spec of the CheckType",
             "default": {},
             "allOf": [
               {
@@ -2679,33 +2708,6 @@
             "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckV0alpha1StatusReport": {
-        "type": "object",
-        "required": [
-          "count",
-          "failures"
-        ],
-        "properties": {
-          "count": {
-            "description": "Number of elements analyzed",
-            "type": "integer",
-            "format": "int64",
-            "default": 0
-          },
-          "failures": {
-            "description": "List of failures",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckReportFailure"
-                }
-              ]
-            }
           }
         }
       },

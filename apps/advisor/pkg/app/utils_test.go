@@ -95,9 +95,9 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
-	r := client.lastValue.(advisorv0alpha1.CheckReport)
-	assert.Equal(t, r.Count, int64(100))
-	assert.Len(t, r.Failures, 50)
+	r := client.values[0].(advisorv0alpha1.CheckStatus)
+	assert.Equal(t, r.Report.Count, int64(100))
+	assert.Len(t, r.Report.Failures, 50)
 }
 
 func TestProcessCheck_AlreadyProcessed(t *testing.T) {
@@ -291,11 +291,11 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 
 type mockClient struct {
 	resource.Client
-	lastValue any
+	values []any
 }
 
 func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
-	m.lastValue = req.Operations[0].Value
+	m.values = append(m.values, req.Operations[0].Value)
 	return nil
 }
 
