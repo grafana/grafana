@@ -3,9 +3,9 @@ import { createTheme, LogsSortOrder } from '@grafana/data';
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
 
+import { LOG_LINE_DETAILS_HEIGHT } from './LogLineDetails';
 import { LogListModel, PreProcessOptions } from './processing';
 import { LogLineVirtualization, getLogLineSize, DisplayOptions, FIELD_GAP_MULTIPLIER } from './virtualization';
-import { LOG_LINE_DETAILS_HEIGHT } from './LogLineDetails';
 
 describe('Virtualization', () => {
   let log: LogListModel, container: HTMLDivElement;
