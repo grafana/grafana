@@ -961,6 +961,92 @@ func TestGitHubRepositoryGitHubSpecificMethods(t *testing.T) {
 	})
 }
 
+func TestGitHubRepository_ReadTree(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name           string
+		config         *provisioning.Repository
+		ref            string
+		mockSetup      func(t *testing.T, gitRepo *git.MockGitRepository)
+		expectedResult []repository.FileTreeEntry
+		expectedError  error
+	}{
+		{
+			name: "delegates read tree to git repo",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Token:  "test-token",
+					},
+				},
+			},
+			ref: "main",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				expectedEntries := []repository.FileTreeEntry{
+					{Path: "file1.yaml", Size: 100, Hash: "hash1", Blob: true},
+					{Path: "dir/", Size: 0, Hash: "hash2", Blob: false},
+				}
+				gitRepo.On("ReadTree", ctx, "main").Return(expectedEntries, nil)
+			},
+			expectedResult: []repository.FileTreeEntry{
+				{Path: "file1.yaml", Size: 100, Hash: "hash1", Blob: true},
+				{Path: "dir/", Size: 0, Hash: "hash2", Blob: false},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "returns error from git repo",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Token:  "test-token",
+					},
+				},
+			},
+			ref: "main",
+			mockSetup: func(t *testing.T, gitRepo *git.MockGitRepository) {
+				gitRepo.On("ReadTree", ctx, "main").Return(nil, errors.New("git error"))
+			},
+			expectedResult: nil,
+			expectedError:  errors.New("git error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockGitRepo := git.NewMockGitRepository(t)
+
+			if tt.mockSetup != nil {
+				tt.mockSetup(t, mockGitRepo)
+			}
+
+			repo := &githubRepository{
+				config:  tt.config,
+				gitRepo: mockGitRepo,
+				owner:   "grafana",
+				repo:    "grafana",
+			}
+
+			result, err := repo.ReadTree(ctx, tt.ref)
+
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				assert.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedResult, result)
+			}
+
+			mockGitRepo.AssertExpectations(t)
+		})
+	}
+}
+
 func TestGitHubRepository_Read(t *testing.T) {
 	tests := []struct {
 		name           string
