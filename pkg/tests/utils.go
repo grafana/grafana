@@ -26,12 +26,12 @@ import (
 
 func SkipIntegrationTestInShortMode(t testing.TB) {
 	t.Helper()
-	if strings.HasPrefix(t.Name(), "TestIntegration") {
-		if testing.Short() {
-			t.Skip("skipping integration test in short mode")
-		}
+	if !strings.HasPrefix(t.Name(), "TestIntegration") {
+		t.Fatal("test is not an integration test")
 	}
-	t.Fatal("test is not an integration test")
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
 }
 
 func CreateUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
