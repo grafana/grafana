@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, LanguageProvider, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, LanguageProvider, SelectableValue, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
@@ -24,6 +24,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
   tagsV1?: string[];
   tagsV2?: Scope[];
+
   constructor(datasource: TempoDatasource, initialValues?: any) {
     super();
 
@@ -36,9 +37,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return res?.data;
   };
 
-  start = async () => {
+  start = async (range?: TimeRange, includeTimeRangeForTags?: boolean) => {
     if (!this.startTask) {
-      this.startTask = this.fetchTags().then(() => {
+      this.startTask = this.fetchTags(includeTimeRangeForTags, range).then(() => {
         return [];
       });
     }
@@ -50,10 +51,19 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return this.datasource.instanceSettings.jsonData?.tagLimit || TAGS_LIMIT;
   };
 
-  async fetchTags() {
+  async fetchTags(includeTimeRangeForTags?: boolean, range?: TimeRange) {
     let v1Resp, v2Resp;
+    
     try {
-      v2Resp = await this.request('/api/v2/search/tags', { limit: this.getTagsLimit() });
+      const params: { limit: number; start?: number; end?: number } = {
+        limit: this.getTagsLimit(),
+      };
+      if (includeTimeRangeForTags && range) {
+        // Get tags from first 15 minutes of the selected range (15 * 60 seconds)
+        params.start = range.from.unix();
+        params.end = range.from.unix() + 900;
+      }
+      v2Resp = await this.request(`/api/v2/search/tags`, params);
     } catch (error) {
       v1Resp = await this.request('/api/search/tags', []);
     }
@@ -144,14 +154,23 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return options;
   }
 
-  async getOptionsV2(tag: string, query?: string): Promise<Array<SelectableValue<string>>> {
+  async getOptionsV2(tag: string, query?: string, includeTimeRangeForTags?: boolean, range?: TimeRange): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
-    const response = await this.request(
-      `/api/v2/search/tag/${encodedTag}/values`,
-      query
-        ? { q: getTemplateSrv().replace(query, {}, VariableFormatID.Pipe), limit: this.getTagsLimit() }
-        : { limit: this.getTagsLimit() }
-    );
+    const params: { q?: string; limit: number; start?: number; end?: number } = {
+      limit: this.getTagsLimit(),
+    };
+
+    if (query) {
+      params.q = getTemplateSrv().replace(query, {}, VariableFormatID.Pipe);
+    }
+
+    if (includeTimeRangeForTags && range) {
+      // Get values from first 15 minutes of the selected range (15 * 60 seconds)
+      params.start = range.from.unix();
+      params.end = range.from.unix() + 900;
+    }
+
+    const response = await this.request(`/api/v2/search/tag/${encodedTag}/values`, params);
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
       response.tagValues.forEach((v: { type: string; value?: string }) => {

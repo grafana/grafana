@@ -321,6 +321,19 @@ You can configure this setting as follows:
 | **Time shift start**  | Time shift for start of search. Default: `30m`.             |
 | **Time shift end**    | Time shift for end of search. Default: `30m`.               |
 
+### Tags time range
+
+The **Tags time range** modifies how tags queries are run.
+When enabled, tags and tag values queries will include the time range.
+This setting is disabled by default.
+The start time is set to 15 minutes before end time to avoid searching over a long range of time while still allowing users to retrieve tags and tag values in the past.
+
+You can configure this setting as follows:
+
+| Name                  | Description                                                           |
+| --------------------- | --------------------------------------------------------------------- |
+| **Enable time range** | Use a time range in tags and tag values queries. Default: `disabled`. |
+
 ### Span bar
 
 The **Span bar** setting helps you display additional information in the span bar row.

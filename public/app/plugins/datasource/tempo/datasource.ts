@@ -21,6 +21,7 @@ import {
   ScopedVars,
   SelectableValue,
   TestDataSourceResponse,
+  TimeRange,
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
@@ -134,6 +135,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     metrics?: boolean;
   };
 
+  includeTimeRangeForTags?: boolean;
+
   // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
   tempoVersion?: string | null;
 
@@ -149,7 +152,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.traceQuery = instanceSettings.jsonData.traceQuery;
     this.streamingEnabled = instanceSettings.jsonData.streamingEnabled;
-
+    this.includeTimeRangeForTags = instanceSettings.jsonData.includeTimeRangeForTags;
     this.languageProvider = new TempoLanguageProvider(this);
 
     if (!this.search?.filters) {
@@ -170,7 +173,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.variables = new TempoVariableSupport(this);
   }
 
-  async executeVariableQuery(query: TempoVariableQuery) {
+  async executeVariableQuery(query: TempoVariableQuery, range?: TimeRange) {
     // Avoid failing if the user did not select the query type (label names, label values, etc.)
     if (query.type === undefined) {
       return new Promise<Array<{ text: string }>>(() => []);
@@ -178,10 +181,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     switch (query.type) {
       case TempoVariableQueryType.LabelNames: {
-        return await this.labelNamesQuery();
+        return await this.labelNamesQuery(this.includeTimeRangeForTags, range);
       }
       case TempoVariableQueryType.LabelValues: {
-        return this.labelValuesQuery(query.label);
+        return this.labelValuesQuery(query.label, this.includeTimeRangeForTags, range);
       }
       default: {
         throw Error('Invalid query type: ' + query.type);
@@ -189,16 +192,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   }
 
-  async labelNamesQuery(): Promise<Array<{ text: string }>> {
-    await this.languageProvider.fetchTags();
+  async labelNamesQuery(includeTimeRangeForTags?: boolean, range?: TimeRange): Promise<Array<{ text: string }>> {
+    await this.languageProvider.fetchTags(includeTimeRangeForTags, range);
     const tags = this.languageProvider.getAutocompleteTags();
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
 
-  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
+  async labelValuesQuery(labelName?: string, includeTimeRangeForTags?: boolean, range?: TimeRange): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
+
+    await this.languageProvider.fetchTags(includeTimeRangeForTags, range);
 
     let options;
     try {
@@ -217,7 +222,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
       const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
-      options = await this.languageProvider.getOptionsV2(scopeAndTag);
+      options = await this.languageProvider.getOptionsV2(scopeAndTag, undefined, includeTimeRangeForTags, range);
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
@@ -243,15 +248,15 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
     const query = this.languageProvider.generateQueryFromFilters({ adhocFilters: options.filters });
-    return this.tagValuesQuery(options.key, query);
+    return this.tagValuesQuery(options.key, query, this.includeTimeRangeForTags, options.timeRange);
   }
 
-  async tagValuesQuery(tag: string, query: string): Promise<Array<{ text: string }>> {
+  async tagValuesQuery(tag: string, query: string, includeTimeRangeForTags?: boolean, range?: TimeRange): Promise<Array<{ text: string }>> {
     let options;
     try {
       // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
       // unless the tag has intrinsic scope
-      options = await this.languageProvider.getOptionsV2(tag, query);
+      options = await this.languageProvider.getOptionsV2(tag, query, includeTimeRangeForTags, range);
     } catch {
       // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(getTagWithoutScope(tag));

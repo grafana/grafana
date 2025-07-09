@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { uniq } from 'lodash';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, Stack, useStyles2, InputActionMeta } from '@grafana/ui';
@@ -30,6 +30,8 @@ interface Props {
   isMulti?: boolean;
   allowCustomValue?: boolean;
   addVariablesToOptions?: boolean;
+  range?: TimeRange;
+  includeTimeRangeForTags?: boolean;
 }
 const SearchField = ({
   filter,
@@ -45,6 +47,8 @@ const SearchField = ({
   addVariablesToOptions,
   isMulti = true,
   allowCustomValue = true,
+  range,
+  includeTimeRangeForTags,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
@@ -57,7 +61,12 @@ const SearchField = ({
 
   const updateOptions = async () => {
     try {
-      const result = filter.tag ? await datasource.languageProvider.getOptionsV2(scopedTag, query) : [];
+      const result = filter.tag ? await datasource.languageProvider.getOptionsV2(
+        scopedTag,
+        query,
+        includeTimeRangeForTags,
+        range
+      ) : [];
       setAlertText(undefined);
       setError(null);
       return result;

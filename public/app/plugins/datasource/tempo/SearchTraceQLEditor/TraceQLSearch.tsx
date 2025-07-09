@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Stack, Select, useStyles2 } from '@grafana/ui';
@@ -28,11 +28,12 @@ interface Props {
   onClearResults: () => void;
   app?: CoreApp;
   addVariablesToOptions?: boolean;
+  range?: TimeRange;
 }
 
 const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
-const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVariablesToOptions = true }: Props) => {
+const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVariablesToOptions = true, range }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
   const [error, setError] = useState<Error | FetchError | null>(null);
@@ -74,7 +75,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        await datasource.languageProvider.start();
+        await datasource.languageProvider.start(range, datasource.includeTimeRangeForTags);
         setIsTagsLoading(false);
         setAlertText(undefined);
       } catch (error) {
@@ -84,7 +85,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
       }
     };
     fetchTags();
-  }, [datasource, setAlertText]);
+  }, [datasource, setAlertText, range, datasource.includeTimeRangeForTags]);
 
   useEffect(() => {
     // Initialize state with configured static filters that already have a value from the config
@@ -155,6 +156,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
                     hideTag={true}
                     query={generateQueryWithoutFilter(findFilter(f.id))}
                     addVariablesToOptions={addVariablesToOptions}
+                    range={range}
+                    includeTimeRangeForTags={datasource.includeTimeRangeForTags}
                   />
                 </InlineSearchField>
               )
@@ -179,6 +182,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               isMulti={false}
               allowCustomValue={false}
               addVariablesToOptions={addVariablesToOptions}
+              range={range}
+              includeTimeRangeForTags={datasource.includeTimeRangeForTags}
             />
           </InlineSearchField>
           <InlineSearchField
@@ -240,6 +245,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
               generateQueryWithoutFilter={generateQueryWithoutFilter}
               requireTagAndValue={true}
               addVariablesToOptions={addVariablesToOptions}
+              range={range}
+              includeTimeRangeForTags={datasource.includeTimeRangeForTags}
             />
           </InlineSearchField>
           <AggregateByAlert
