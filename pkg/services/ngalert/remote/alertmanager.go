@@ -274,7 +274,7 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 // CompareAndSendConfiguration checks whether a given configuration is being used by the remote Alertmanager.
 // If not, it sends the configuration to the remote Alertmanager.
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
-	payload, err := am.loadConfig(ctx, []byte(config.AlertmanagerConfiguration))
+	payload, err := am.parseConfiguration(ctx, []byte(config.AlertmanagerConfiguration))
 	if err != nil {
 		return fmt.Errorf("unable to load configuration: %w", err)
 	}
@@ -310,7 +310,7 @@ func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
 	}
 }
 
-func (am *Alertmanager) loadConfig(ctx context.Context, raw []byte) (remoteClient.GrafanaAlertmanagerConfig, error) {
+func (am *Alertmanager) parseConfiguration(ctx context.Context, raw []byte) (remoteClient.GrafanaAlertmanagerConfig, error) {
 	c, err := notifier.Load(raw)
 	if err != nil {
 		return remoteClient.GrafanaAlertmanagerConfig{}, err
@@ -429,7 +429,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		return err
 	}
 
-	payload, err := am.loadConfig(ctx, rawCopy)
+	payload, err := am.parseConfiguration(ctx, rawCopy)
 	if err != nil {
 		return fmt.Errorf("unable to load configuration: %w", err)
 	}
@@ -446,7 +446,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	am.log.Debug("Sending default configuration to a remote Alertmanager", "url", am.url)
-	payload, err := am.loadConfig(ctx, []byte(am.defaultConfig))
+	payload, err := am.parseConfiguration(ctx, []byte(am.defaultConfig))
 	if err != nil {
 		return fmt.Errorf("unable to load the default configuration: %w", err)
 	}
