@@ -2,8 +2,8 @@ import { GrafanaPlugin, NavModel, NavModelItem, PanelPluginMeta, PluginType } fr
 import { createMonitoringLogger } from '@grafana/runtime';
 
 import { importPanelPluginFromMeta } from './importPanelPlugin';
+import { importAppPlugin, importDataSourcePlugin } from './pluginLoader';
 import { getPluginSettings } from './pluginSettings';
-import { importAppPlugin, importDataSourcePlugin } from './plugin_loader';
 
 export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   const info = await getPluginSettings(pluginId);

@@ -11,7 +11,7 @@ import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/d
 // Loaded after the `unmock` above
 import { addedComponentsRegistry, addedLinksRegistry, exposedComponentsRegistry } from '../extensions/registry/setup';
 import { SystemJS } from '../loader/systemjs';
-import { importAppPlugin } from '../plugin_loader';
+import { importAppPlugin } from '../pluginLoader';
 
 jest.mock('../extensions/registry/setup');
 
