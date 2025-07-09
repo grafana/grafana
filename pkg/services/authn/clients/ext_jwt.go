@@ -75,6 +75,9 @@ type ExtendedJWT struct {
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.extjwt.Authenticate")
+	defer span.End()
+
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
 	accessTokenClaims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
