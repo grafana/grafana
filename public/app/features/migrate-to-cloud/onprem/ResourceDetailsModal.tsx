@@ -18,6 +18,11 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
         'migrate-to-cloud.resource-details.error-messages.alert-rules-quota-reached',
         'Maximum number of alert rules reached. Please delete some alert rules or upgrade your plan and try again.'
       );
+    case 'ALERT_RULES_GROUP_QUOTA_REACHED':
+      return t(
+        'migrate-to-cloud.resource-details.error-messages.alert-rules-group-quota-reached',
+        'Maximum number of alert rules groups reached. Please delete some alert rules groups or upgrade your plan and try again.'
+      );
     case 'DATASOURCE_NAME_CONFLICT':
       return t(
         'migrate-to-cloud.resource-details.error-messages.datasource-name-conflict',
@@ -61,17 +66,17 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
     case 'UNEXPECTED_STATUS_CODE':
       return t(
         'migrate-to-cloud.resource-details.error-messages.unexpected-error',
-        'There has been an error while migrating. Please check the Grafana server logs for more details.'
+        'There has been an error while migrating. Please check the Grafana server logs for more details. Unexpected error.'
       );
     case 'INTERNAL_SERVICE_ERROR':
       return t(
         'migrate-to-cloud.resource-details.error-messages.internal-service-error',
-        'There has been an error while migrating. Please check the Grafana server logs for more details.'
+        'There has been an error while migrating. Please check the Grafana server logs for more details. Internal service error.'
       );
     case 'GENERIC_ERROR':
       return t(
         'migrate-to-cloud.resource-details.error-messages.generic-error',
-        'There has been an error while migrating. Please check the cloud migration logs for more information.'
+        'There has been an error while migrating. Please check the cloud migration logs for more information. Generic error.'
       );
     // Handle new errors here
     default:
@@ -113,7 +118,7 @@ export function ResourceDetailsModal(props: ResourceDetailsModalProps) {
               <Text element="p">
                 {getTMessage(resource?.errorCode) ||
                   resource?.message ||
-                  'There has been an error while migrating. Please check the cloud migration logs for more information.'}
+                  'There has been an error while migrating. Please check the cloud migration logs for more information. Unknown error.'}
               </Text>
             </>
           ) : (
