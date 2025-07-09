@@ -7209,6 +7209,7 @@
       "when": "WHEN"
     },
     "expression-query-editor": {
+      "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",
       "label-operation": "Operation"
     },
     "math": {
@@ -11768,6 +11769,14 @@
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
+    "pill-cell-options-editor": {
+      "description-color-mode": "Choose how colors are assigned to pills",
+      "description-fixed-color": "All pills in this column will use this color",
+      "description-value-mappings-info": "For Value Mappings either use the global table Value Mappings or the Field overrides Value Mappings. The default will fall back to the Color Scheme. ",
+      "label-color-mode": "Color Mode",
+      "label-fixed-color": "Fixed Color",
+      "label-value-mappings-info": "Value Mappings"
+    },
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },

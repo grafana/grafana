@@ -4381,7 +4381,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "パブリック",
         "tooltip-view-as-scene": "シーンとして表示"
       }
     },
@@ -5154,7 +5153,6 @@
       "playlist-next": "次のダッシュボードに移動",
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
-      "public-dashboard": "パブリック",
       "refresh": "ダッシュボードを更新",
       "save": "ダッシュボードを保存",
       "save-dashboard": {
@@ -5455,15 +5453,9 @@
       "type": "タイプ"
     },
     "dashboard-preview-banner": {
-      "not-saved": "値はまだGrafanaデータベースに保存されていません",
       "not-yet-saved": "値はGrafanaデータベースに保存されていません",
-      "open-pull-request-in-git-hub": "GitHubでプルリクエストを開く",
-      "title-dashboard-loaded-branch-git-hub": "このダッシュボードはGitHubのブランチから読み込まれます。",
       "title-dashboard-loaded-external-repository": "このダッシュボードは外部リポジトリから読み込まれます",
-      "title-dashboard-loaded-request-git-hub": "このダッシュボードは、GitHubのプルリクエストから読み込まれます。",
-      "title-error-loading-dashboard": "ダッシュボードの読み込み中にエラーが発生しました",
-      "value-not-saved": "値はまだGrafanaデータベースに保存されていません",
-      "view-pull-request-in-git-hub": "GitHubでプルリクエストを表示する"
+      "title-error-loading-dashboard": "ダッシュボードの読み込み中にエラーが発生しました"
     },
     "dashboard-scene": {
       "text": {
@@ -7196,6 +7188,7 @@
       "when": "条件"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "操作"
     },
     "math": {
@@ -8479,7 +8472,7 @@
       "usage-count_other": "{{count}}件のダッシュボードで使用中"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "名前と詳細で検索"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "ライブラリパネル読み込み中..."
@@ -8618,12 +8611,9 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_other": "",
+          "parsedl-label_other": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8680,6 +8670,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8693,9 +8684,11 @@
       "fields-section": "",
       "hide-log-line": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
@@ -10282,6 +10275,17 @@
       "label-workflow": ""
     }
   },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-dashboard-loaded-branch-git-hub": "",
+    "title-dashboard-loaded-pull-request-git-hub": "",
+    "title-folder-created-branch-git-hub": "",
+    "title-folder-created-pull-request-git-hub": ""
+  },
   "provisioning": {
     "banner": {
       "message": "この機能は現在開発中です。最高の体験と最新の改善を利用するには、Grafanaの<2>ナイトリービルド</2>の使用をお勧めします。"
@@ -11726,6 +11730,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
