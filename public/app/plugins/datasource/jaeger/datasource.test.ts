@@ -34,8 +34,8 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('JaegerDatasource', () => {
-  it.skip('returns trace and graph when queried', async () => {
-    setupFetchMock('trace');
+  it.skip('should return trace, nodes, and edges when querying by trace ID', async () => {
+    setupQueryMock('trace');
 
     const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(ds.query(defaultQuery));
@@ -45,8 +45,8 @@ describe('JaegerDatasource', () => {
     expect(response.data[2].fields).toMatchObject(testResponseEdgesFields);
   });
 
-  it('returns trace when traceId with special characters is queried', async () => {
-    const mock = setupFetchMock('trace');
+  it('should handle trace IDs with special characters', async () => {
+    const mock = setupQueryMock('trace');
 
     const ds = new JaegerDatasource(defaultSettings);
     const query = {
@@ -62,7 +62,7 @@ describe('JaegerDatasource', () => {
     expect(mock).toHaveBeenCalledWith(expect.objectContaining({ targets: [{ query: 'a/b', refId: '1' }] }));
   });
 
-  it('returns empty response if trace id is not specified', async () => {
+  it('should return empty trace response when no trace ID is provided', async () => {
     const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(ds.query({ ...defaultQuery, targets: [] }));
     const field = response.data[0].fields[0];
@@ -71,7 +71,7 @@ describe('JaegerDatasource', () => {
     expect(field.values.length).toBe(0);
   });
 
-  it('should handle json file upload', async () => {
+  it('should process valid JSON file uploads', async () => {
     const ds = new JaegerDatasource(defaultSettings);
     ds.uploadedJson = JSON.stringify(mockJson);
     const response = await lastValueFrom(ds.query({ ...defaultQuery, targets: [{ queryType: 'upload', refId: 'A' }] }));
@@ -81,7 +81,7 @@ describe('JaegerDatasource', () => {
     expect(field.values.length).toBe(2);
   });
 
-  it('should fail on invalid json file upload', async () => {
+  it('should reject invalid JSON file uploads', async () => {
     const ds = new JaegerDatasource(defaultSettings);
     ds.uploadedJson = JSON.stringify({ key: 'value', arr: [] });
     const response = await lastValueFrom(
@@ -91,8 +91,8 @@ describe('JaegerDatasource', () => {
     expect(response.data.length).toBe(0);
   });
 
-  it('should return search results when the query type is search', async () => {
-    const mock = setupFetchMock('search');
+  it('should return search results when query type is search', async () => {
+    const mock = setupQueryMock('search');
     const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(
       ds.query({
@@ -111,8 +111,8 @@ describe('JaegerDatasource', () => {
     expect(response.data[0].fields[0].name).toBe('traceID');
   });
 
-  it.skip('should show the correct error message if no service name is selected', async () => {
-    setupFetchMock('search');
+  it.skip('should show error when no service is selected for search', async () => {
+    setupQueryMock('search');
     const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(
       ds.query({
@@ -123,8 +123,8 @@ describe('JaegerDatasource', () => {
     expect(response.error?.message).toBe('You must select a service.');
   });
 
-  it.skip('should resolve templates in traceID', async () => {
-    const mock = setupFetchMock('trace');
+  it.skip('should resolve template variables in trace ID', async () => {
+    const mock = setupQueryMock('trace');
     const ds = new JaegerDatasource(defaultSettings);
 
     await lastValueFrom(
@@ -151,8 +151,8 @@ describe('JaegerDatasource', () => {
     );
   });
 
-  it.skip('should resolve templates in tags', async () => {
-    const mock = setupFetchMock('trace');
+  it.skip('should resolve template variables in search tags', async () => {
+    const mock = setupQueryMock('search');
     const ds = new JaegerDatasource(defaultSettings);
     await lastValueFrom(
       ds.query({
@@ -171,8 +171,8 @@ describe('JaegerDatasource', () => {
     });
   });
 
-  it.skip('should interpolate variables correctly', async () => {
-    const mock = setupFetchMock('search');
+  it.skip('should interpolate template variables in search parameters', async () => {
+    const mock = setupQueryMock('search');
     const ds = new JaegerDatasource(defaultSettings);
     const text = 'interpolationText';
     await lastValueFrom(
@@ -201,7 +201,7 @@ describe('JaegerDatasource', () => {
     });
   });
 
-  it('should add node graph frames to response when nodeGraph is enabled and query is a trace ID query', async () => {
+  it('should include node graph frames when nodeGraph is enabled for trace queries', async () => {
     // Create a datasource with nodeGraph enabled
     const settings = {
       ...defaultSettings,
@@ -242,7 +242,7 @@ describe('JaegerDatasource', () => {
     expect(response.data.length).toBe(3);
   });
 
-  it('should not add node graph frames when nodeGraph is disabled', async () => {
+  it('should exclude node graph frames when nodeGraph is disabled for trace queries', async () => {
     // Create a datasource with nodeGraph disabled
     const settings = {
       ...defaultSettings,
@@ -284,7 +284,7 @@ describe('JaegerDatasource', () => {
     expect(response.data[0].fields).toMatchObject(testResponseDataFrameFields);
   });
 
-  it('test datasource should return successfully', async () => {
+  it('should successfully test datasource connection', async () => {
     setupTestDatasourceMock('success');
 
     const ds = new JaegerDatasource(defaultSettings);
@@ -293,7 +293,7 @@ describe('JaegerDatasource', () => {
     expect(response.message).toBe('Data source connected and services found.');
   });
 
-  it('test datasource should display an error', async () => {
+  it('should display error when datasource test returns no services', async () => {
     setupTestDatasourceMock('error');
 
     const ds = new JaegerDatasource(defaultSettings);
@@ -304,7 +304,7 @@ describe('JaegerDatasource', () => {
     );
   });
 
-  it('getTimeRange()', async () => {
+  it('should calculate correct time range', async () => {
     const ds = new JaegerDatasource(defaultSettings);
     const timeRange = ds.getTimeRange();
     const now = Date.now();
@@ -313,7 +313,7 @@ describe('JaegerDatasource', () => {
   });
 });
 
-function setupFetchMock(type: 'trace' | 'search') {
+function setupQueryMock(type: 'trace' | 'search') {
   return jest.spyOn(DataSourceWithBackend.prototype, 'query').mockImplementation(() => {
     if (type === 'search') {
       return of(mockSearchResponse);
