@@ -19,6 +19,8 @@ export const selectIsHelperShowing = createSelector(selectPanesEntries, (panes) 
   panes.some((pane) => pane[1].correlationEditorHelperData !== undefined)
 );
 
+export const selectCompactMode = (state: StoreState) => state.explore.compactMode || false;
+
 export const isLeftPaneSelector = (exploreId: string) =>
   createSelector(selectPanes, (panes) => {
     return Object.keys(panes)[0] === exploreId;
