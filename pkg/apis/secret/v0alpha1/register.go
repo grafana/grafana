@@ -4,10 +4,8 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/generic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -33,7 +31,6 @@ var SecureValuesResourceInfo = utils.NewResourceInfo(
 			{Name: "Description", Type: "string", Format: "string", Description: "Short description that explains the purpose of this SecureValue"},
 			{Name: "Keeper", Type: "string", Format: "string", Description: "Storage of the secure value"},
 			{Name: "Ref", Type: "string", Format: "string", Description: "If present, the reference to a secret"},
-			{Name: "Status", Type: "string", Format: "string", Description: "The status of the secure value"},
 		},
 		// Decodes the object into a concrete type. Return order in the slice must be the same as in `Definition`.
 		Reader: func(obj any) ([]interface{}, error) {
@@ -44,7 +41,6 @@ var SecureValuesResourceInfo = utils.NewResourceInfo(
 					r.Spec.Description,
 					r.Spec.Keeper,
 					r.Spec.Ref,
-					r.Status.Phase,
 				}, nil
 			}
 
@@ -92,13 +88,6 @@ var (
 	AddToScheme        = localSchemeBuilder.AddToScheme
 )
 
-// Adds the status phase to the selectable fields, besides the generic metadata name and namespace.
-func SelectableSecureValueFields(obj *SecureValue) fields.Set {
-	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
-		"status.phase": string(obj.Status.Phase),
-	})
-}
-
 // Adds the list of known types to the given scheme.
 func AddKnownTypes(scheme *runtime.Scheme, version string) error {
 	// TODO: do we need a type for the secure value decrypt?
@@ -112,20 +101,5 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) error {
 		// &secretV0.SecureValueActivityList{},
 	)
 
-	err := scheme.AddFieldLabelConversionFunc(
-		SecureValuesResourceInfo.GroupVersionKind(),
-		func(label, value string) (string, string, error) {
-			fieldSet := SelectableSecureValueFields(&SecureValue{})
-			for key := range fieldSet {
-				if label == key {
-					return label, value, nil
-				}
-			}
-			return "", "", fmt.Errorf("field label not supported for %s: %s", SecureValuesResourceInfo.GroupVersionKind(), label)
-		},
-	)
-	if err != nil {
-		return err
-	}
 	return nil
 }

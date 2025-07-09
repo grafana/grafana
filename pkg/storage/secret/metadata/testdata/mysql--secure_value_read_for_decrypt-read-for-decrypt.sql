@@ -2,9 +2,12 @@ SELECT
   `keeper`,
   `decrypters`,
   `ref`,
-  `external_id`
+  `external_id`,
+  `active`
 FROM
   `secret_secure_value`
-WHERE `namespace` = 'ns' AND
-  `name` = 'name'
+WHERE 
+  `namespace` = 'ns' AND
+  `name` = 'name' AND
+  `active` = true
 ;
