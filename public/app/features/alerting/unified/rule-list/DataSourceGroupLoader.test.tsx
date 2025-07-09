@@ -3,7 +3,7 @@ import { byRole } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
