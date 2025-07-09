@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { useState } from 'react';
 import { RequireAtLeastOne } from 'type-fest';
 
@@ -14,7 +15,7 @@ import {
   RuleGroupIdentifierV2,
   RuleIdentifier,
 } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleType, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { logWarning } from '../../Analytics';
 import { AlertRuleAction, skipToken, useGrafanaPromRuleAbility, useRulerRuleAbility } from '../../hooks/useAbilities';
@@ -69,6 +70,16 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
     return null;
   }
 
+  // determine if this rule can be silenced by checking for Grafana Alert rule type and extracting the UID
+  let ruleUid: string | undefined;
+  if (rulerRuleType.grafana.alertingRule(rule)) {
+    ruleUid = rule.grafana_alert.uid;
+  }
+
+  if (prometheusRuleType.grafana.alertingRule(promRule)) {
+    ruleUid = promRule.uid;
+  }
+
   if (canEditRule) {
     const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
@@ -101,8 +112,8 @@ export function RuleActionsButtons({ compact, rule, promRule, groupIdentifier }:
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}
       />
       {deleteModal}
-      {rulerRuleType.grafana.alertingRule(rule) && showSilenceDrawer && (
-        <SilenceGrafanaRuleDrawer rulerRule={rule} onClose={() => setShowSilenceDrawer(false)} />
+      {isString(ruleUid) && showSilenceDrawer && (
+        <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
       )}
       {redirectToClone?.identifier && (
         <RedirectToCloneRule
