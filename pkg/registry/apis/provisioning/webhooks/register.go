@@ -187,21 +187,30 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			return nil, fmt.Errorf("github configuration is required for nano git")
 		}
 
+		// Decrypt GitHub token if needed
+		ghToken := ghCfg.Token
+		if ghToken == "" {
+			decrypted, err := e.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
+			if err != nil {
+				return nil, fmt.Errorf("decrypt github token: %w", err)
+			}
+			ghToken = string(decrypted)
+		}
+
 		gitCfg := git.RepositoryConfig{
 			URL:            ghCfg.URL,
 			Branch:         ghCfg.Branch,
 			Path:           ghCfg.Path,
-			Token:          ghCfg.Token,
+			Token:          ghToken,
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		// TODO: secrets only once
-		gitRepo, err := git.NewGitRepository(ctx, e.secrets, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
 		if err != nil {
 			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, e.secrets)
+		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}

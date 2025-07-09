@@ -17,7 +17,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/options"
@@ -38,22 +37,13 @@ type gitRepository struct {
 	config    *provisioning.Repository
 	gitConfig RepositoryConfig
 	client    nanogit.Client
-	secrets   secrets.Service
 }
 
 func NewGitRepository(
 	ctx context.Context,
-	secrets secrets.Service,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
-	if gitConfig.Token == "" {
-		decrypted, err := secrets.Decrypt(ctx, gitConfig.EncryptedToken)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt token: %w", err)
-		}
-		gitConfig.Token = string(decrypted)
-	}
 
 	// Create nanogit client with authentication
 	client, err := nanogit.NewHTTPClient(
@@ -68,7 +58,6 @@ func NewGitRepository(
 		config:    config,
 		gitConfig: gitConfig,
 		client:    client,
-		secrets:   secrets,
 	}, nil
 }
 

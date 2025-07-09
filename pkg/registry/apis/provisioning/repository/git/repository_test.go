@@ -9,7 +9,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
 	"github.com/grafana/nanogit/protocol"
@@ -271,7 +270,6 @@ func (m *mockSecretsService) Encrypt(ctx context.Context, data []byte) ([]byte, 
 
 func TestNewGit(t *testing.T) {
 	ctx := context.Background()
-	mockSecrets := &mockSecretsService{}
 
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
@@ -288,7 +286,7 @@ func TestNewGit(t *testing.T) {
 
 	// This should succeed in creating the client but won't be able to connect
 	// We just test that the basic structure is created correctly
-	gitRepo, err := NewGitRepository(ctx, mockSecrets, config, gitConfig)
+	gitRepo, err := NewGitRepository(ctx, config, gitConfig)
 	require.NoError(t, err)
 	require.NotNil(t, gitRepo)
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
@@ -1729,57 +1727,21 @@ func TestGitRepository_createSignature(t *testing.T) {
 
 func TestNewGitRepository(t *testing.T) {
 	tests := []struct {
-		name        string
-		setupMock   func(*mockSecretsService)
-		gitConfig   RepositoryConfig
-		wantError   bool
-		expectURL   string
-		expectToken string
+		name      string
+		gitConfig RepositoryConfig
+		wantError bool
+		expectURL string
 	}{
 		{
 			name: "success - with token",
-			setupMock: func(mockSecrets *mockSecretsService) {
-				// No setup needed for token case
-			},
 			gitConfig: RepositoryConfig{
 				URL:    "https://git.example.com/owner/repo.git",
 				Branch: "main",
 				Token:  "plain-token",
 				Path:   "configs",
 			},
-			wantError:   false,
-			expectURL:   "https://git.example.com/owner/repo.git",
-			expectToken: "plain-token",
-		},
-		{
-			name: "success - with encrypted token",
-			setupMock: func(mockSecrets *mockSecretsService) {
-				// Mock will return decrypted token
-			},
-			gitConfig: RepositoryConfig{
-				URL:            "https://git.example.com/owner/repo.git",
-				Branch:         "main",
-				Token:          "", // Empty token, will use encrypted
-				EncryptedToken: []byte("encrypted-token"),
-				Path:           "configs",
-			},
-			wantError:   false,
-			expectURL:   "https://git.example.com/owner/repo.git",
-			expectToken: "decrypted-token", // From mock
-		},
-		{
-			name: "failure - decryption error",
-			setupMock: func(mockSecrets *mockSecretsService) {
-				// This test will use the separate mockSecretsServiceWithError
-			},
-			gitConfig: RepositoryConfig{
-				URL:            "https://git.example.com/owner/repo.git",
-				Branch:         "main",
-				Token:          "",
-				EncryptedToken: []byte("bad-encrypted-token"),
-				Path:           "configs",
-			},
-			wantError: true,
+			wantError: false,
+			expectURL: "https://git.example.com/owner/repo.git",
 		},
 	}
 
@@ -1787,20 +1749,13 @@ func TestNewGitRepository(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			var mockSecrets secrets.Service
-			if tt.name == "failure - decryption error" {
-				mockSecrets = &mockSecretsServiceWithError{shouldError: true}
-			} else {
-				mockSecrets = &mockSecretsService{}
-			}
-
 			config := &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
 				},
 			}
 
-			gitRepo, err := NewGitRepository(ctx, mockSecrets, config, tt.gitConfig)
+			gitRepo, err := NewGitRepository(ctx, config, tt.gitConfig)
 
 			if tt.wantError {
 				require.Error(t, err)
@@ -2289,30 +2244,6 @@ func (m *mockSecretsServiceWithError) Encrypt(ctx context.Context, data []byte) 
 	return []byte("encrypted-token"), nil
 }
 
-func TestNewGitRepository_DecryptionError(t *testing.T) {
-	ctx := context.Background()
-	mockSecrets := &mockSecretsServiceWithError{shouldError: true}
-
-	config := &provisioning.Repository{
-		Spec: provisioning.RepositorySpec{
-			Type: provisioning.GitHubRepositoryType,
-		},
-	}
-
-	gitConfig := RepositoryConfig{
-		URL:            "https://git.example.com/owner/repo.git",
-		Branch:         "main",
-		Token:          "",
-		EncryptedToken: []byte("encrypted-token"),
-		Path:           "configs",
-	}
-
-	gitRepo, err := NewGitRepository(ctx, mockSecrets, config, gitConfig)
-
-	require.Error(t, err)
-	require.Nil(t, gitRepo)
-	require.Contains(t, err.Error(), "decrypt token")
-}
 
 func TestGitRepository_ValidateBranchNames(t *testing.T) {
 	tests := []struct {
@@ -2781,7 +2712,6 @@ func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
 	// This test would require mocking nanogit.NewHTTPClient which is difficult
 	// We test the path where the client creation would fail by using invalid URL
 	ctx := context.Background()
-	mockSecrets := &mockSecretsService{}
 
 	config := &provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
@@ -2796,7 +2726,7 @@ func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
 		Path:   "configs",
 	}
 
-	gitRepo, err := NewGitRepository(ctx, mockSecrets, config, gitConfig)
+	gitRepo, err := NewGitRepository(ctx, config, gitConfig)
 
 	// We expect this to fail during client creation
 	require.Error(t, err)

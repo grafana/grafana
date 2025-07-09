@@ -1166,11 +1166,21 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	case provisioning.LocalRepositoryType:
 		return local.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
-		return git.NewGitRepository(ctx, b.secrets, r, git.RepositoryConfig{
+		// Decrypt token if needed
+		token := r.Spec.Git.Token
+		if token == "" {
+			decrypted, err := b.secrets.Decrypt(ctx, r.Spec.Git.EncryptedToken)
+			if err != nil {
+				return nil, fmt.Errorf("decrypt git token: %w", err)
+			}
+			token = string(decrypted)
+		}
+		
+		return git.NewGitRepository(ctx, r, git.RepositoryConfig{
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
 			Path:           r.Spec.Git.Path,
-			Token:          r.Spec.Git.Token,
+			Token:          token,
 			EncryptedToken: r.Spec.Git.EncryptedToken,
 		})
 	case provisioning.GitHubRepositoryType:
@@ -1182,20 +1192,30 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return nil, fmt.Errorf("github configuration is required for nano git")
 		}
 
+		// Decrypt GitHub token if needed
+		ghToken := ghCfg.Token
+		if ghToken == "" {
+			decrypted, err := b.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
+			if err != nil {
+				return nil, fmt.Errorf("decrypt github token: %w", err)
+			}
+			ghToken = string(decrypted)
+		}
+
 		gitCfg := git.RepositoryConfig{
 			URL:            ghCfg.URL,
 			Branch:         ghCfg.Branch,
 			Path:           ghCfg.Path,
-			Token:          ghCfg.Token,
+			Token:          ghToken,
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		gitRepo, err := git.NewGitRepository(ctx, b.secrets, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
 		if err != nil {
 			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, b.secrets)
+		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}

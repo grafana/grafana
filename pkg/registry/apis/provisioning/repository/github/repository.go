@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
@@ -47,21 +46,11 @@ func NewGitHub(
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,
 	factory *Factory,
-	secrets secrets.Service,
+	token string,
 ) (GithubRepository, error) {
 	owner, repo, err := ParseOwnerRepoGithub(config.Spec.GitHub.URL)
 	if err != nil {
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
-	}
-
-	// TODO: we are decrypting twice. Once for git and once for GH.
-	token := config.Spec.GitHub.Token
-	if token == "" {
-		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt token: %w", err)
-		}
-		token = string(decrypted)
 	}
 
 	return &githubRepository{
