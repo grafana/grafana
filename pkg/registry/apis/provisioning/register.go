@@ -1175,7 +1175,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			}
 			token = string(decrypted)
 		}
-		
+
 		return git.NewGitRepository(ctx, r, git.RepositoryConfig{
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
