@@ -25,7 +25,7 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 }
 
 func (s *Server) read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
-	if err := authorize(ctx, req.GetNamespace()); err != nil {
+	if err := authorize(ctx, req.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
 
