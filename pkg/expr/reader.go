@@ -135,7 +135,11 @@ func (h *ExpressionQueryReader) ReadQuery(
 		err = iter.ReadVal(q)
 		if err == nil {
 			eq.Properties = q
-			eq.Command, err = NewSQLCommand(common.RefID, q.Format, q.Expression, sqlExpressionCellLimit, 0, 0)
+			// TODO: Cascade limit from Grafana config in this (new Expression Parser) branch of the code
+			cellLimit := 0 // zero means no limit
+			eq.Command, err = NewSQLCommand(common.RefID, q.Format, q.Expression, int64(cellLimit), 0, 0)
+			// should we do this? I'm unclear because I'm trying to match what happens in st and it seems to fire here
+			// eq.Command, err = NewSQLCommand(common.RefID, q.Format, q.Expression, sqlExpressionCellLimit, 0, 0)
 		}
 
 	case QueryTypeThreshold:
