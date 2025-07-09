@@ -66,17 +66,17 @@ function getTMessage(errorCode: MigrateDataResponseItemDto['errorCode']): string
     case 'UNEXPECTED_STATUS_CODE':
       return t(
         'migrate-to-cloud.resource-details.error-messages.unexpected-error',
-        'There has been an error while migrating. Please check the Grafana server logs for more details. Unexpected error.'
+        'There has been an error while migrating. Please check the Grafana server logs for more details.'
       );
     case 'INTERNAL_SERVICE_ERROR':
       return t(
         'migrate-to-cloud.resource-details.error-messages.internal-service-error',
-        'There has been an error while migrating. Please check the Grafana server logs for more details. Internal service error.'
+        'There has been an error while migrating. Please check the Grafana server logs for more details.'
       );
     case 'GENERIC_ERROR':
       return t(
         'migrate-to-cloud.resource-details.error-messages.generic-error',
-        'There has been an error while migrating. Please check the cloud migration logs for more information. Generic error.'
+        'There has been an error while migrating. Please check the cloud migration logs for more information.'
       );
     // Handle new errors here
     default:
