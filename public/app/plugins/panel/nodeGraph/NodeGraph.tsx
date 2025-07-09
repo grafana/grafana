@@ -290,6 +290,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
                 onMouseLeave={clearEdgeHover}
                 svgIdNamespace={svgIdNamespace}
                 processedNodesLength={processed.nodes.length}
+                processedEdgesLength={processed.edges.length}
               />
             )}
             <Nodes
@@ -430,26 +431,28 @@ interface EdgesProps {
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
   processedNodesLength: number;
+  processedEdgesLength: number;
 }
 const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
-      {props.edges.map((e) => (
-        <Edge
-          key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}`}
-          edge={e}
-          hovering={
-            (e.source as NodeDatum).id === props.nodeHoveringId ||
-            (e.target as NodeDatum).id === props.nodeHoveringId ||
-            props.edgeHoveringId === e.id
-          }
-          onClick={props.onClick}
-          onMouseEnter={props.onMouseEnter}
-          onMouseLeave={props.onMouseLeave}
-          svgIdNamespace={props.svgIdNamespace}
-          processedNodesLength={props.processedNodesLength}
-        />
-      ))}
+      {props.edges.map((e, index) => {
+        return (
+          <Edge
+            key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}-${props.processedEdgesLength}-${index}`}
+            edge={e}
+            hovering={
+              (e.source as NodeDatum).id === props.nodeHoveringId ||
+              (e.target as NodeDatum).id === props.nodeHoveringId ||
+              props.edgeHoveringId === e.id
+            }
+            onClick={props.onClick}
+            onMouseEnter={props.onMouseEnter}
+            onMouseLeave={props.onMouseLeave}
+            svgIdNamespace={props.svgIdNamespace}
+          />
+        );
+      })}
     </>
   );
 });
@@ -462,7 +465,7 @@ interface EdgeLabelsProps {
 const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   return (
     <>
-      {props.edges.map((e, index) => {
+      {props.edges.map((e) => {
         // We show the edge label in case user hovers over the edge directly or if they hover over node edge is
         // connected to.
         const shouldShow =
