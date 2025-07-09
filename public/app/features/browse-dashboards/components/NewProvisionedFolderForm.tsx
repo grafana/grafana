@@ -12,13 +12,13 @@ import { RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/ap
 import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
-import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { FolderDTO } from 'app/types';
 
 import { useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
+import { validateFolderName } from './NewFolderForm';
 import { formatFolderName, hasFolderNameCharactersToReplace } from './utils';
 
 interface FormProps extends Props {
@@ -94,7 +94,7 @@ function FormContent({ initialValues, repository, workflowOptions, folder, isGit
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
 
     // Convert folder title to filename format (lowercase, replace spaces with hyphens)
-    const titleInFilenameFormat = formatFolderName(title);
+    const titleInFilenameFormat = formatFolderName(title); // TODO: this is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
 
     const prefix = basePath ? `${basePath}/` : '';
     const path = `${prefix}${titleInFilenameFormat}/`;
@@ -244,19 +244,6 @@ function FolderNamePreviewMessage({ folderName }: { folderName: string }) {
     </div>
   );
 }
-
-// TODO: this is currently not working, issue created https://github.com/grafana/git-ui-sync-project/issues/314
-const validateFolderName = async (folderName: string) => {
-  try {
-    await validationSrv.validateNewFolderName(folderName);
-    return true;
-  } catch (e) {
-    if (e instanceof Error) {
-      return e.message;
-    }
-    return t('browse-dashboards.new-provisioned-folder-form.error-invalid-folder-name', 'Invalid folder name');
-  }
-};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

@@ -28,7 +28,7 @@ export function hasFolderNameCharactersToReplace(folderName: string): boolean {
     return false;
   }
 
-  // whitespace that need to be replaced with hyphens
+  // whitespace that needs to be replaced with hyphens
   const hasWhitespace = /\s+/.test(folderName);
 
   // characters that are not lowercase letters, numbers, or hyphens

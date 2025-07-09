@@ -61,15 +61,15 @@ describe('formatFolderName', () => {
 
 describe('hasFolderNameCharactersToReplace', () => {
   it('should return false for non-string inputs', () => {
-    // @ts-ignore
+    // @ts-expect-error
     expect(hasFolderNameCharactersToReplace(null)).toBe(false);
-    // @ts-ignore
+    // @ts-expect-error
     expect(hasFolderNameCharactersToReplace(undefined)).toBe(false);
-    // @ts-ignore
+    // @ts-expect-error
     expect(hasFolderNameCharactersToReplace(123)).toBe(false);
-    // @ts-ignore
+    // @ts-expect-error
     expect(hasFolderNameCharactersToReplace({})).toBe(false);
-    // @ts-ignore
+    // @ts-expect-error
     expect(hasFolderNameCharactersToReplace([])).toBe(false);
   });
 
