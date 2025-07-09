@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
@@ -180,23 +179,9 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			gvr.Resource,
 			r.GetName(),
 		)
-		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			return gogit.Clone(ctx, e.clonedir, r, opts, e.secrets)
-		}
-
-		apiRepo, err := repository.NewGitHub(ctx, r, e.ghFactory, e.secrets, cloneFn)
-		if err != nil {
-			return nil, fmt.Errorf("create github API repository: %w", err)
-		}
 
 		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
-		if !e.features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
-			logger.Debug("Instantiating Github repository with go-git and Github API")
-			return NewGithubWebhookRepository(apiRepo, webhookURL, e.secrets), nil
-		}
-
-		logger.Info("Instantiating Github repository with nanogit")
-
+		logger.Info("Instantiating Github repository with webhooks")
 		ghCfg := r.Spec.GitHub
 		if ghCfg == nil {
 			return nil, fmt.Errorf("github configuration is required for nano git")
@@ -210,12 +195,16 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
+		// TODO: secrets only once
 		nanogitRepo, err := nanogit.NewGitRepository(ctx, e.secrets, r, gitCfg)
 		if err != nil {
 			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
 		}
 
-		basicRepo := nanogit.NewGithubRepository(apiRepo, nanogitRepo)
+		basicRepo, err := github.NewGitHub(ctx, r, nanogitRepo, e.ghFactory, e.secrets)
+		if err != nil {
+			return nil, fmt.Errorf("error creating github repository: %w", err)
+		}
 
 		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets), nil
 	}

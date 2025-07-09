@@ -98,7 +98,7 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 	}
 	if cfg.Branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !repository.IsValidGitBranchName(cfg.Branch) {
+	} else if !IsValidGitBranchName(cfg.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
 	}
 
@@ -615,7 +615,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 // ensureBranchExists checks if a branch exists and creates it if it doesn't,
 // returning the branch reference to avoid duplicate GetRef calls
 func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName string) (nanogit.Ref, error) {
-	if !repository.IsValidGitBranchName(branchName) {
+	if !IsValidGitBranchName(branchName) {
 		return nanogit.Ref{}, &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Code:    http.StatusBadRequest,

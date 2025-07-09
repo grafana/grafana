@@ -1,4 +1,4 @@
-package repository
+package github
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
@@ -137,21 +137,18 @@ func TestNewGitHub(t *testing.T) {
 				tt.setupMock(mockSecrets)
 			}
 
-			factory := pgh.ProvideFactory()
+			factory := ProvideFactory()
 			factory.Client = http.DefaultClient
 
-			// Create a mock clone function
-			cloneFn := func(ctx context.Context, opts CloneOptions) (ClonedRepository, error) {
-				return nil, nil
-			}
+			nanogitRepo := repository.NewMockGitRepository(t)
 
 			// Call the function under test
 			repo, err := NewGitHub(
 				context.Background(),
 				tt.config,
+				nanogitRepo,
 				factory,
 				mockSecrets,
-				cloneFn,
 			)
 
 			// Check results
@@ -167,8 +164,7 @@ func TestNewGitHub(t *testing.T) {
 				assert.Equal(t, tt.config, repo.Config())
 				concreteRepo, ok := repo.(*githubRepository)
 				require.True(t, ok)
-				assert.Equal(t, mockSecrets, concreteRepo.secrets)
-				assert.NotNil(t, concreteRepo.cloneFn)
+				assert.Equal(t, nanogitRepo, concreteRepo.nanogitRepo)
 			}
 
 			// Verify all mock expectations were met
@@ -177,45 +173,6 @@ func TestNewGitHub(t *testing.T) {
 	}
 }
 
-func TestIsValidGitBranchName(t *testing.T) {
-	tests := []struct {
-		name     string
-		branch   string
-		expected bool
-	}{
-		{"Valid branch name", "feature/add-tests", true},
-		{"Valid branch name with numbers", "feature/123-add-tests", true},
-		{"Valid branch name with dots", "feature.add.tests", true},
-		{"Valid branch name with hyphens", "feature-add-tests", true},
-		{"Valid branch name with underscores", "feature_add_tests", true},
-		{"Valid branch name with mixed characters", "feature/add_tests-123", true},
-		{"Starts with /", "/feature", false},
-		{"Ends with /", "feature/", false},
-		{"Ends with .", "feature.", false},
-		{"Ends with space", "feature ", false},
-		{"Contains consecutive slashes", "feature//branch", false},
-		{"Contains consecutive dots", "feature..branch", false},
-		{"Contains @{", "feature@{branch", false},
-		{"Contains invalid character ~", "feature~branch", false},
-		{"Contains invalid character ^", "feature^branch", false},
-		{"Contains invalid character :", "feature:branch", false},
-		{"Contains invalid character ?", "feature?branch", false},
-		{"Contains invalid character *", "feature*branch", false},
-		{"Contains invalid character [", "feature[branch", false},
-		{"Contains invalid character ]", "feature]branch", false},
-		{"Contains invalid character \\", "feature\\branch", false},
-		{"Empty branch name", "", false},
-		{"Only whitespace", " ", false},
-		{"Single valid character", "a", true},
-		{"Ends with .lock", "feature.lock", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, IsValidGitBranchName(tt.branch))
-		})
-	}
-}
 func TestGitHubRepositoryValidate(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -459,7 +416,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         *provisioning.Repository
-		mockSetup      func(t *testing.T, client *pgh.MockClient)
+		mockSetup      func(t *testing.T, client *MockClient)
 		expectedResult *provisioning.TestResults
 		expectedError  error
 	}{
@@ -474,7 +431,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("IsAuthenticated", mock.Anything).Return(errors.New("authentication failed"))
 			},
 			expectedResult: &provisioning.TestResults{
@@ -499,7 +456,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("IsAuthenticated", mock.Anything).Return(nil)
 			},
 			expectedResult: &provisioning.TestResults{
@@ -524,7 +481,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("IsAuthenticated", mock.Anything).Return(nil)
 				client.On("RepoExists", mock.Anything, "grafana", "nonexistent").Return(false, errors.New("failed to check if repo exists"))
 			},
@@ -550,7 +507,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("IsAuthenticated", mock.Anything).Return(nil)
 				client.On("RepoExists", mock.Anything, "grafana", "nonexistent").Return(false, nil)
 			},
@@ -575,7 +532,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("IsAuthenticated", mock.Anything).Return(nil)
 				client.On("RepoExists", mock.Anything, "grafana", "grafana").Return(true, nil)
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "nonexistent-branch").Return(false, nil)
@@ -601,7 +558,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("IsAuthenticated", mock.Anything).Return(nil)
 				client.On("RepoExists", mock.Anything, "grafana", "grafana").Return(true, nil)
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "main").Return(false, errors.New("API rate limit exceeded"))
@@ -628,7 +585,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 					},
 				},
 			},
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("IsAuthenticated", mock.Anything).Return(nil)
 				client.On("RepoExists", mock.Anything, "grafana", "grafana").Return(true, nil)
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "main").Return(true, nil)
@@ -644,7 +601,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock GitHub client
-			mockClient := pgh.NewMockClient(t)
+			mockClient := NewMockClient(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
@@ -705,83 +662,83 @@ func TestReadTree(t *testing.T) {
 		path          string
 		ref           string
 		expectedRef   string
-		tree          []pgh.RepositoryContent
-		expected      []FileTreeEntry
+		tree          []RepositoryContent
+		expected      []repository.FileTreeEntry
 		getTreeErr    error
 		truncated     bool
 		expectedError error
 	}{
-		{name: "empty ref", ref: "", expectedRef: "develop", tree: []pgh.RepositoryContent{}, expected: []FileTreeEntry{}},
-		{name: "unknown error to get tree", ref: "develop", expectedRef: "develop", tree: []pgh.RepositoryContent{}, getTreeErr: errors.New("unknown error"), expectedError: errors.New("get tree: unknown error")},
-		{name: "tree not found error", ref: "develop", expectedRef: "develop", tree: []pgh.RepositoryContent{}, getTreeErr: pgh.ErrResourceNotFound, expectedError: &apierrors.StatusError{
+		{name: "empty ref", ref: "", expectedRef: "develop", tree: []RepositoryContent{}, expected: []repository.FileTreeEntry{}},
+		{name: "unknown error to get tree", ref: "develop", expectedRef: "develop", tree: []RepositoryContent{}, getTreeErr: errors.New("unknown error"), expectedError: errors.New("get tree: unknown error")},
+		{name: "tree not found error", ref: "develop", expectedRef: "develop", tree: []RepositoryContent{}, getTreeErr: ErrResourceNotFound, expectedError: &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Message: "tree not found; ref=develop",
 				Code:    http.StatusNotFound,
 			},
 		}},
-		{name: "tree truncated", ref: "develop", expectedRef: "develop", tree: []pgh.RepositoryContent{}, truncated: true, expectedError: errors.New("tree truncated")},
-		{name: "empty tree", ref: "develop", expectedRef: "develop", tree: []pgh.RepositoryContent{}, expected: []FileTreeEntry{}},
-		{name: "single file", ref: "develop", expectedRef: "develop", tree: func() []pgh.RepositoryContent {
-			content := pgh.NewMockRepositoryContent(t)
+		{name: "tree truncated", ref: "develop", expectedRef: "develop", tree: []RepositoryContent{}, truncated: true, expectedError: errors.New("tree truncated")},
+		{name: "empty tree", ref: "develop", expectedRef: "develop", tree: []RepositoryContent{}, expected: []repository.FileTreeEntry{}},
+		{name: "single file", ref: "develop", expectedRef: "develop", tree: func() []RepositoryContent {
+			content := NewMockRepositoryContent(t)
 			content.EXPECT().GetPath().Return("file.txt")
 			content.EXPECT().GetSize().Return(int64(100))
 			content.EXPECT().GetSHA().Return("abc123")
 			content.EXPECT().IsDirectory().Return(false)
-			return []pgh.RepositoryContent{content}
-		}(), expected: []FileTreeEntry{
+			return []RepositoryContent{content}
+		}(), expected: []repository.FileTreeEntry{
 			{Path: "file.txt", Size: 100, Hash: "abc123", Blob: true},
 		}},
-		{name: "single directory", ref: "develop", expectedRef: "develop", tree: func() []pgh.RepositoryContent {
-			content := pgh.NewMockRepositoryContent(t)
+		{name: "single directory", ref: "develop", expectedRef: "develop", tree: func() []RepositoryContent {
+			content := NewMockRepositoryContent(t)
 			content.EXPECT().GetPath().Return("dir")
 			content.EXPECT().IsDirectory().Return(true)
 			content.EXPECT().GetSize().Return(int64(0))
 			content.EXPECT().GetSHA().Return("")
 
-			return []pgh.RepositoryContent{content}
-		}(), expected: []FileTreeEntry{
+			return []RepositoryContent{content}
+		}(), expected: []repository.FileTreeEntry{
 			{Path: "dir/", Blob: false},
 		}},
-		{name: "mixed content", ref: "develop", expectedRef: "develop", tree: func() []pgh.RepositoryContent {
-			file1 := pgh.NewMockRepositoryContent(t)
+		{name: "mixed content", ref: "develop", expectedRef: "develop", tree: func() []RepositoryContent {
+			file1 := NewMockRepositoryContent(t)
 			file1.EXPECT().GetPath().Return("file1.txt")
 			file1.EXPECT().GetSize().Return(int64(100))
 			file1.EXPECT().GetSHA().Return("abc123")
 			file1.EXPECT().IsDirectory().Return(false)
 
-			dir := pgh.NewMockRepositoryContent(t)
+			dir := NewMockRepositoryContent(t)
 			dir.EXPECT().GetPath().Return("dir")
 			dir.EXPECT().IsDirectory().Return(true)
 			dir.EXPECT().GetSize().Return(int64(0))
 			dir.EXPECT().GetSHA().Return("")
 
-			file2 := pgh.NewMockRepositoryContent(t)
+			file2 := NewMockRepositoryContent(t)
 			file2.EXPECT().GetPath().Return("file2.txt")
 			file2.EXPECT().GetSize().Return(int64(200))
 			file2.EXPECT().GetSHA().Return("def456")
 			file2.EXPECT().IsDirectory().Return(false)
 
-			return []pgh.RepositoryContent{file1, dir, file2}
-		}(), expected: []FileTreeEntry{
+			return []RepositoryContent{file1, dir, file2}
+		}(), expected: []repository.FileTreeEntry{
 			{Path: "file1.txt", Size: 100, Hash: "abc123", Blob: true},
 			{Path: "dir/", Blob: false},
 			{Path: "file2.txt", Size: 200, Hash: "def456", Blob: true},
 		}},
-		{name: "with path prefix", ref: "develop", expectedRef: "develop", tree: func() []pgh.RepositoryContent {
-			file := pgh.NewMockRepositoryContent(t)
+		{name: "with path prefix", ref: "develop", expectedRef: "develop", tree: func() []RepositoryContent {
+			file := NewMockRepositoryContent(t)
 			file.EXPECT().GetPath().Return("file.txt")
 			file.EXPECT().GetSize().Return(int64(100))
 			file.EXPECT().GetSHA().Return("abc123")
 			file.EXPECT().IsDirectory().Return(false)
 
-			dir := pgh.NewMockRepositoryContent(t)
+			dir := NewMockRepositoryContent(t)
 			dir.EXPECT().GetPath().Return("dir")
 			dir.EXPECT().GetSize().Return(int64(0))
 			dir.EXPECT().GetSHA().Return("")
 			dir.EXPECT().IsDirectory().Return(true)
 
-			return []pgh.RepositoryContent{file, dir}
-		}(), expected: []FileTreeEntry{
+			return []RepositoryContent{file, dir}
+		}(), expected: []repository.FileTreeEntry{
 			{Path: "file.txt", Size: 100, Hash: "abc123", Blob: true},
 			{Path: "dir/", Blob: false},
 		}},
@@ -789,7 +746,7 @@ func TestReadTree(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ghMock := pgh.NewMockClient(t)
+			ghMock := NewMockClient(t)
 			gh := &githubRepository{
 				owner: "owner",
 				repo:  "repo",
@@ -823,8 +780,8 @@ func TestGitHubRepository_Read(t *testing.T) {
 		config         *provisioning.Repository
 		filePath       string
 		ref            string
-		mockSetup      func(t *testing.T, client *pgh.MockClient)
-		expectedResult *FileInfo
+		mockSetup      func(t *testing.T, client *MockClient)
+		expectedResult *repository.FileInfo
 		expectedError  error
 	}{
 		{
@@ -839,14 +796,14 @@ func TestGitHubRepository_Read(t *testing.T) {
 			},
 			filePath: "dashboard.json",
 			ref:      "main",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, client *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetFileContent().Return("file content", nil)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboard.json", "main").
 					Return(fileContent, nil, nil)
 			},
-			expectedResult: &FileInfo{
+			expectedResult: &repository.FileInfo{
 				Path: "dashboard.json",
 				Ref:  "main",
 				Data: []byte("file content"),
@@ -866,14 +823,14 @@ func TestGitHubRepository_Read(t *testing.T) {
 			},
 			filePath: "dashboards",
 			ref:      "main",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
-				dirContent := []pgh.RepositoryContent{
+			mockSetup: func(t *testing.T, client *MockClient) {
+				dirContent := []RepositoryContent{
 					// Directory contents not used in this test
 				}
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboards", "main").
 					Return(nil, dirContent, nil)
 			},
-			expectedResult: &FileInfo{
+			expectedResult: &repository.FileInfo{
 				Path: "dashboards",
 				Ref:  "main",
 			},
@@ -891,12 +848,12 @@ func TestGitHubRepository_Read(t *testing.T) {
 			},
 			filePath: "nonexistent.json",
 			ref:      "main",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/nonexistent.json", "main").
-					Return(nil, nil, pgh.ErrResourceNotFound)
+					Return(nil, nil, ErrResourceNotFound)
 			},
 			expectedResult: nil,
-			expectedError:  ErrFileNotFound,
+			expectedError:  repository.ErrFileNotFound,
 		},
 		{
 			name: "Error getting file content",
@@ -910,8 +867,8 @@ func TestGitHubRepository_Read(t *testing.T) {
 			},
 			filePath: "dashboard.json",
 			ref:      "main",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, client *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetFileContent().Return("", errors.New("failed to decode content"))
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboard.json", "main").
 					Return(fileContent, nil, nil)
@@ -931,7 +888,7 @@ func TestGitHubRepository_Read(t *testing.T) {
 			},
 			filePath: "dashboard.json",
 			ref:      "main",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboard.json", "main").
 					Return(nil, nil, errors.New("API rate limit exceeded"))
 			},
@@ -950,14 +907,14 @@ func TestGitHubRepository_Read(t *testing.T) {
 			},
 			filePath: "dashboard.json",
 			ref:      "", // Empty ref should use default branch
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, client *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetFileContent().Return("file content", nil)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboard.json", "develop").
 					Return(fileContent, nil, nil)
 			},
-			expectedResult: &FileInfo{
+			expectedResult: &repository.FileInfo{
 				Path: "dashboard.json",
 				Ref:  "develop",
 				Data: []byte("file content"),
@@ -970,7 +927,7 @@ func TestGitHubRepository_Read(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock GitHub client
-			mockClient := pgh.NewMockClient(t)
+			mockClient := NewMockClient(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
@@ -1028,7 +985,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 		ref           string
 		data          []byte
 		comment       string
-		mockSetup     func(t *testing.T, mockClient *pgh.MockClient)
+		mockSetup     func(t *testing.T, mockClient *MockClient)
 		expectedError error
 	}{
 		{
@@ -1045,7 +1002,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("dashboard content"),
 			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "feature-branch", "Add new dashboard", []byte("dashboard content")).Return(nil)
 			},
@@ -1065,7 +1022,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "",
 			data:    []byte("dashboard content"),
 			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main", "Add new dashboard", []byte("dashboard content")).Return(nil)
 			},
@@ -1085,9 +1042,9 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("dashboard content"),
 			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
-				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(pgh.ErrResourceAlreadyExists)
+				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(ErrResourceAlreadyExists)
 			},
 			expectedError: &apierrors.StatusError{
 				ErrStatus: metav1.Status{
@@ -1110,7 +1067,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("dashboard content"),
 			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
 				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(fmt.Errorf("failed to create branch"))
 			},
@@ -1130,7 +1087,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("dashboard content"),
 			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
 				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "feature-branch", "Add new dashboard", []byte("dashboard content")).Return(nil)
@@ -1151,7 +1108,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "feature//branch",
 			data:    []byte("dashboard content"),
 			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				// No mock expectations needed as validation should fail before any GitHub API calls
 			},
 			expectedError: &apierrors.StatusError{
@@ -1175,7 +1132,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("dashboard content"),
 			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, fmt.Errorf("failed to check branch"))
 			},
 			expectedError: fmt.Errorf("check branch exists: %w", fmt.Errorf("failed to check branch")),
@@ -1194,9 +1151,9 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "main",
 			data:    []byte("dashboard content"),
 			comment: "Add new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
-				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main", "Add new dashboard", []byte("dashboard content")).Return(pgh.ErrResourceAlreadyExists)
+				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main", "Add new dashboard", []byte("dashboard content")).Return(ErrResourceAlreadyExists)
 			},
 			expectedError: &apierrors.StatusError{
 				ErrStatus: metav1.Status{
@@ -1219,7 +1176,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "main",
 			data:    nil,
 			comment: "Add dashboards directory",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/.keep", "main", "Add dashboards directory", []byte{}).Return(nil)
 			},
@@ -1239,7 +1196,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			ref:     "main",
 			data:    []byte("some data"),
 			comment: "Add dashboards directory",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 			},
 			expectedError: apierrors.NewBadRequest("data cannot be provided for a directory"),
@@ -1249,7 +1206,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock GitHub client
-			mockClient := pgh.NewMockClient(t)
+			mockClient := NewMockClient(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
@@ -1297,7 +1254,7 @@ func TestGitHubRepository_Update(t *testing.T) {
 		ref           string
 		data          []byte
 		comment       string
-		mockSetup     func(t *testing.T, client *pgh.MockClient)
+		mockSetup     func(t *testing.T, client *MockClient)
 		expectedError error
 	}{
 		{
@@ -1314,8 +1271,8 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, client *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				fileContent.EXPECT().IsDirectory().Return(false)
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
@@ -1340,8 +1297,8 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, client *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				fileContent.EXPECT().IsDirectory().Return(false)
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "main").Return(true, nil)
@@ -1366,7 +1323,7 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
 				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(errors.New("failed to create branch"))
 			},
@@ -1386,7 +1343,7 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "invalid//branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				// No mock calls expected
 			},
 			expectedError: &apierrors.StatusError{
@@ -1410,7 +1367,7 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, errors.New("failed to check branch"))
 			},
 			expectedError: errors.New("check branch exists: failed to check branch"),
@@ -1429,10 +1386,10 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
 				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(nil)
-				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				fileContent.EXPECT().IsDirectory().Return(false)
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
@@ -1456,9 +1413,9 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
-				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(pgh.ErrResourceAlreadyExists)
+				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(ErrResourceAlreadyExists)
 			},
 			expectedError: &apierrors.StatusError{
 				ErrStatus: metav1.Status{
@@ -1481,10 +1438,10 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
-					Return(nil, nil, pgh.ErrResourceNotFound)
+					Return(nil, nil, ErrResourceNotFound)
 			},
 			expectedError: &apierrors.StatusError{
 				ErrStatus: metav1.Status{
@@ -1507,7 +1464,7 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
 					Return(nil, nil, errors.New("API error"))
@@ -1528,11 +1485,11 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test directory",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+			mockSetup: func(t *testing.T, client *MockClient) {
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
 
 				// Create a directory file
-				dirFile := pgh.NewMockRepositoryContent(t)
+				dirFile := NewMockRepositoryContent(t)
 				dirFile.EXPECT().IsDirectory().Return(true)
 
 				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/directory", "feature-branch").
@@ -1554,8 +1511,8 @@ func TestGitHubRepository_Update(t *testing.T) {
 			ref:     "feature-branch",
 			data:    []byte("updated content"),
 			comment: "Update test file",
-			mockSetup: func(t *testing.T, client *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, client *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				fileContent.EXPECT().IsDirectory().Return(false)
 				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
@@ -1571,7 +1528,7 @@ func TestGitHubRepository_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock GitHub client
-			mockClient := pgh.NewMockClient(t)
+			mockClient := NewMockClient(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
@@ -1619,7 +1576,7 @@ func TestGitHubRepository_Write(t *testing.T) {
 		ref           string
 		data          []byte
 		message       string
-		mockSetup     func(t *testing.T, mockClient *pgh.MockClient)
+		mockSetup     func(t *testing.T, mockClient *MockClient)
 		expectedError error
 	}{
 		{
@@ -1636,8 +1593,8 @@ func TestGitHubRepository_Write(t *testing.T) {
 			ref:     "main",
 			data:    []byte("updated content"),
 			message: "Update dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetFileContent().Return("existing content", nil)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				fileContent.EXPECT().IsDirectory().Return(false)
@@ -1664,9 +1621,9 @@ func TestGitHubRepository_Write(t *testing.T) {
 			ref:     "main",
 			data:    []byte("new content"),
 			message: "Create new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/new-dashboard.json", "main").
-					Return(nil, nil, pgh.ErrResourceNotFound)
+					Return(nil, nil, ErrResourceNotFound)
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/new-dashboard.json", "main",
 					"Create new dashboard", []byte("new content")).Return(nil)
@@ -1687,8 +1644,8 @@ func TestGitHubRepository_Write(t *testing.T) {
 			ref:     "",
 			data:    []byte("content"),
 			message: "Update dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetFileContent().Return("existing content", nil)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				fileContent.EXPECT().IsDirectory().Return(false)
@@ -1715,7 +1672,7 @@ func TestGitHubRepository_Write(t *testing.T) {
 			ref:     "main",
 			data:    []byte("content"),
 			message: "Update dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
 					Return(nil, nil, errors.New("connection error"))
 			},
@@ -1735,8 +1692,8 @@ func TestGitHubRepository_Write(t *testing.T) {
 			ref:     "main",
 			data:    []byte("updated content"),
 			message: "Update dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().GetFileContent().Return("existing content", nil)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 				fileContent.EXPECT().IsDirectory().Return(false)
@@ -1763,9 +1720,9 @@ func TestGitHubRepository_Write(t *testing.T) {
 			ref:     "main",
 			data:    []byte("new content"),
 			message: "Create new dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/new-dashboard.json", "main").
-					Return(nil, nil, pgh.ErrResourceNotFound)
+					Return(nil, nil, ErrResourceNotFound)
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/new-dashboard.json", "main",
 					"Create new dashboard", []byte("new content")).Return(errors.New("create failed"))
@@ -1777,7 +1734,7 @@ func TestGitHubRepository_Write(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock GitHub client
-			mockClient := pgh.NewMockClient(t)
+			mockClient := NewMockClient(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
@@ -1816,7 +1773,7 @@ func TestGitHubRepository_Delete(t *testing.T) {
 		path          string
 		ref           string
 		comment       string
-		mockSetup     func(t *testing.T, mockClient *pgh.MockClient)
+		mockSetup     func(t *testing.T, mockClient *MockClient)
 		expectedError error
 	}{
 		{
@@ -1832,8 +1789,8 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "dashboard.json",
 			ref:     "main",
 			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().IsDirectory().Return(false)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 
@@ -1858,8 +1815,8 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "dashboard.json",
 			ref:     "",
 			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().IsDirectory().Return(false)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 
@@ -1884,27 +1841,27 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "dashboards",
 			ref:     "main",
 			comment: "Delete dashboards directory",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				dirContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				dirContent := NewMockRepositoryContent(t)
 				dirContent.EXPECT().IsDirectory().Return(true)
 
 				// Directory contents
-				file1Content := pgh.NewMockRepositoryContent(t)
+				file1Content := NewMockRepositoryContent(t)
 				file1Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard1.json")
 				file1Content.EXPECT().IsDirectory().Return(false)
 				file1Content.EXPECT().GetSHA().Return("file1-sha")
 
-				file2Content := pgh.NewMockRepositoryContent(t)
+				file2Content := NewMockRepositoryContent(t)
 				file2Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard2.json")
 				file2Content.EXPECT().IsDirectory().Return(false)
 				file2Content.EXPECT().GetSHA().Return("file2-sha")
 
-				subDirContent := pgh.NewMockRepositoryContent(t)
+				subDirContent := NewMockRepositoryContent(t)
 				subDirContent.EXPECT().GetPath().Return("grafana/dashboards/subfolder")
 				subDirContent.EXPECT().IsDirectory().Return(true)
 
 				// Subfolder contents
-				subFile1Content := pgh.NewMockRepositoryContent(t)
+				subFile1Content := NewMockRepositoryContent(t)
 				subFile1Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard.json")
 				subFile1Content.EXPECT().IsDirectory().Return(false)
 				subFile1Content.EXPECT().GetSHA().Return("subfile-sha")
@@ -1913,11 +1870,11 @@ func TestGitHubRepository_Delete(t *testing.T) {
 
 				// Get main directory
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards", "main").
-					Return(dirContent, []pgh.RepositoryContent{file1Content, file2Content, subDirContent}, nil)
+					Return(dirContent, []RepositoryContent{file1Content, file2Content, subDirContent}, nil)
 
 				// Get subfolder contents
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder", "main").
-					Return(subDirContent, []pgh.RepositoryContent{subFile1Content}, nil)
+					Return(subDirContent, []RepositoryContent{subFile1Content}, nil)
 
 				// Delete files in reverse order (depth-first)
 				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder/subdashboard.json", "main",
@@ -1942,47 +1899,47 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "dashboards",
 			ref:     "main",
 			comment: "Delete dashboards directory",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				dirContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				dirContent := NewMockRepositoryContent(t)
 				dirContent.EXPECT().IsDirectory().Return(true)
 
 				// Directory contents
-				file1Content := pgh.NewMockRepositoryContent(t)
+				file1Content := NewMockRepositoryContent(t)
 				file1Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard1.json")
 				file1Content.EXPECT().IsDirectory().Return(false)
 				file1Content.EXPECT().GetSHA().Return("file1-sha")
 
-				file2Content := pgh.NewMockRepositoryContent(t)
+				file2Content := NewMockRepositoryContent(t)
 				file2Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard2.json")
 				file2Content.EXPECT().IsDirectory().Return(false)
 				file2Content.EXPECT().GetSHA().Return("file2-sha")
 
-				subDirContent := pgh.NewMockRepositoryContent(t)
+				subDirContent := NewMockRepositoryContent(t)
 				subDirContent.EXPECT().IsDirectory().Return(true)
 				subDirContent.EXPECT().GetPath().Return("grafana/dashboards/subfolder")
 
 				// Subfolder contents
-				subFile1Content := pgh.NewMockRepositoryContent(t)
+				subFile1Content := NewMockRepositoryContent(t)
 				subFile1Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard.json")
 				subFile1Content.EXPECT().IsDirectory().Return(false)
 				subFile1Content.EXPECT().GetSHA().Return("subfile-sha")
 
-				subFile2Content := pgh.NewMockRepositoryContent(t)
+				subFile2Content := NewMockRepositoryContent(t)
 				subFile2Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard2.json")
 				subFile2Content.EXPECT().IsDirectory().Return(false)
 				subFile2Content.EXPECT().GetSHA().Return("subfile2-sha")
 
-				subFile3Content := pgh.NewMockRepositoryContent(t)
+				subFile3Content := NewMockRepositoryContent(t)
 
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 
 				// Get main directory
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards", "main").
-					Return(dirContent, []pgh.RepositoryContent{file1Content, file2Content, subDirContent}, nil)
+					Return(dirContent, []RepositoryContent{file1Content, file2Content, subDirContent}, nil)
 
 				// Get subfolder contents
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder", "main").
-					Return(subDirContent, []pgh.RepositoryContent{subFile1Content, subFile2Content, subFile3Content}, nil)
+					Return(subDirContent, []RepositoryContent{subFile1Content, subFile2Content, subFile3Content}, nil)
 
 				// Delete first file successfully
 				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard1.json", "main",
@@ -2014,12 +1971,12 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "nonexistent.json",
 			ref:     "main",
 			comment: "Delete nonexistent file",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/nonexistent.json", "main").
-					Return(nil, nil, pgh.ErrResourceNotFound)
+					Return(nil, nil, ErrResourceNotFound)
 			},
-			expectedError: ErrFileNotFound,
+			expectedError: repository.ErrFileNotFound,
 		},
 		{
 			name: "branch does not exist and creation fails",
@@ -2034,7 +1991,7 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "dashboard.json",
 			ref:     "feature",
 			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature").Return(false, nil)
 				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature").
 					Return(errors.New("failed to create branch"))
@@ -2054,7 +2011,7 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "dashboard.json",
 			ref:     "main",
 			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").
 					Return(false, errors.New("API error"))
 			},
@@ -2073,7 +2030,7 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "dashboard.json",
 			ref:     "main",
 			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
 					Return(nil, nil, errors.New("API rate limit exceeded"))
@@ -2093,8 +2050,8 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			path:    "dashboard.json",
 			ref:     "main",
 			comment: "Delete dashboard",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				fileContent := pgh.NewMockRepositoryContent(t)
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				fileContent := NewMockRepositoryContent(t)
 				fileContent.EXPECT().IsDirectory().Return(false)
 				fileContent.EXPECT().GetSHA().Return("abc123")
 
@@ -2111,7 +2068,7 @@ func TestGitHubRepository_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock GitHub client
-			mockClient := pgh.NewMockClient(t)
+			mockClient := NewMockClient(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
@@ -2149,7 +2106,7 @@ func TestGitHubRepository_History(t *testing.T) {
 		config        *provisioning.Repository
 		path          string
 		ref           string
-		mockSetup     func(t *testing.T, mockClient *pgh.MockClient)
+		mockSetup     func(t *testing.T, mockClient *MockClient)
 		expected      []provisioning.HistoryItem
 		expectedError error
 	}{
@@ -2164,17 +2121,17 @@ func TestGitHubRepository_History(t *testing.T) {
 			},
 			path: "dashboard.json",
 			ref:  "main",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				commits := []pgh.Commit{
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				commits := []Commit{
 					{
 						Ref:     "abc123",
 						Message: "Update dashboard",
-						Author: &pgh.CommitAuthor{
+						Author: &CommitAuthor{
 							Name:      "John Doe",
 							Username:  "johndoe",
 							AvatarURL: "https://example.com/avatar1.png",
 						},
-						Committer: &pgh.CommitAuthor{
+						Committer: &CommitAuthor{
 							Name:      "John Doe",
 							Username:  "johndoe",
 							AvatarURL: "https://example.com/avatar1.png",
@@ -2184,12 +2141,12 @@ func TestGitHubRepository_History(t *testing.T) {
 					{
 						Ref:     "def456",
 						Message: "Initial commit",
-						Author: &pgh.CommitAuthor{
+						Author: &CommitAuthor{
 							Name:      "Jane Smith",
 							Username:  "janesmith",
 							AvatarURL: "https://example.com/avatar2.png",
 						},
-						Committer: &pgh.CommitAuthor{
+						Committer: &CommitAuthor{
 							Name:      "Bob Johnson",
 							Username:  "bjohnson",
 							AvatarURL: "https://example.com/avatar3.png",
@@ -2245,17 +2202,17 @@ func TestGitHubRepository_History(t *testing.T) {
 			},
 			path: "dashboard.json",
 			ref:  "main",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				commits := []pgh.Commit{
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				commits := []Commit{
 					{
 						Ref:     "abc123",
 						Message: "Update dashboard",
-						Author: &pgh.CommitAuthor{
+						Author: &CommitAuthor{
 							Name:      "John Doe",
 							Username:  "johndoe",
 							AvatarURL: "https://example.com/avatar1.png",
 						},
-						Committer: &pgh.CommitAuthor{
+						Committer: &CommitAuthor{
 							Name:      "John Doe",
 							Username:  "johndoe",
 							AvatarURL: "https://example.com/avatar1.png",
@@ -2294,11 +2251,11 @@ func TestGitHubRepository_History(t *testing.T) {
 			},
 			path: "nonexistent.json",
 			ref:  "main",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().Commits(mock.Anything, "grafana", "grafana", "grafana/nonexistent.json", "main").
-					Return(nil, pgh.ErrResourceNotFound)
+					Return(nil, ErrResourceNotFound)
 			},
-			expectedError: ErrFileNotFound,
+			expectedError: repository.ErrFileNotFound,
 		},
 		{
 			name: "prefixed path",
@@ -2312,12 +2269,12 @@ func TestGitHubRepository_History(t *testing.T) {
 			},
 			path: "dashboard.json",
 			ref:  "main",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				commits := []pgh.Commit{
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				commits := []Commit{
 					{
 						Ref:     "abc123",
 						Message: "Update dashboard",
-						Author: &pgh.CommitAuthor{
+						Author: &CommitAuthor{
 							Name:      "John Doe",
 							Username:  "johndoe",
 							AvatarURL: "https://example.com/avatar1.png",
@@ -2356,7 +2313,7 @@ func TestGitHubRepository_History(t *testing.T) {
 			},
 			path: "dashboard.json",
 			ref:  "main",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
 				mockClient.EXPECT().Commits(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
 					Return(nil, errors.New("api error"))
 			},
@@ -2374,12 +2331,12 @@ func TestGitHubRepository_History(t *testing.T) {
 			},
 			path: "dashboard.json",
 			ref:  "",
-			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
-				commits := []pgh.Commit{
+			mockSetup: func(t *testing.T, mockClient *MockClient) {
+				commits := []Commit{
 					{
 						Ref:     "abc123",
 						Message: "Update dashboard",
-						Author: &pgh.CommitAuthor{
+						Author: &CommitAuthor{
 							Name:      "John Doe",
 							Username:  "johndoe",
 							AvatarURL: "https://example.com/avatar1.png",
@@ -2411,7 +2368,7 @@ func TestGitHubRepository_History(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock GitHub client
-			mockClient := pgh.NewMockClient(t)
+			mockClient := NewMockClient(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
@@ -2455,24 +2412,24 @@ func TestGitHubRepository_History(t *testing.T) {
 func TestGitHubRepository_LatestRef(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMock     func(mock *pgh.MockClient)
+		setupMock     func(mock *MockClient)
 		expectedRef   string
 		expectedError error
 	}{
 		{
 			name: "successful retrieval of latest ref",
-			setupMock: func(m *pgh.MockClient) {
+			setupMock: func(m *MockClient) {
 				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
-					Return(pgh.Branch{Sha: "abc123"}, nil)
+					Return(Branch{Sha: "abc123"}, nil)
 			},
 			expectedRef:   "abc123",
 			expectedError: nil,
 		},
 		{
 			name: "error getting branch",
-			setupMock: func(m *pgh.MockClient) {
+			setupMock: func(m *MockClient) {
 				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
-					Return(pgh.Branch{}, fmt.Errorf("branch not found"))
+					Return(Branch{}, fmt.Errorf("branch not found"))
 			},
 			expectedRef:   "",
 			expectedError: fmt.Errorf("get branch: branch not found"),
@@ -2482,7 +2439,7 @@ func TestGitHubRepository_LatestRef(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup mock GitHub client
-			mockGH := pgh.NewMockClient(t)
+			mockGH := NewMockClient(t)
 			tt.setupMock(mockGH)
 
 			// Create repository with mock
@@ -2520,31 +2477,31 @@ func TestGitHubRepository_LatestRef(t *testing.T) {
 func TestGitHubRepository_CompareFiles(t *testing.T) {
 	tests := []struct {
 		name            string
-		setupMock       func(m *pgh.MockClient)
+		setupMock       func(m *MockClient)
 		base            string
 		ref             string
-		expectedFiles   []VersionedFileChange
+		expectedFiles   []repository.VersionedFileChange
 		expectedError   error
 		shouldGetLatest bool
 	}{
 		{
 			name: "successfully compare files",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("dashboards/test.json")
 				commitFile1.On("GetStatus").Return("added")
 
-				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2 := NewMockCommitFile(t)
 				commitFile2.On("GetFilename").Return("dashboards/modified.json")
 				commitFile2.On("GetStatus").Return("modified")
 
-				commitFile3 := pgh.NewMockCommitFile(t)
+				commitFile3 := NewMockCommitFile(t)
 				commitFile3.On("GetFilename").Return("dashboards/renamed.json")
 				commitFile3.On("GetStatus").Return("renamed")
 				commitFile3.On("GetPreviousFilename").Return("dashboards/old.json")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 						commitFile2,
 						commitFile3,
@@ -2552,21 +2509,21 @@ func TestGitHubRepository_CompareFiles(t *testing.T) {
 			},
 			base: "abc123",
 			ref:  "def456",
-			expectedFiles: []VersionedFileChange{
+			expectedFiles: []repository.VersionedFileChange{
 				{
 					Path:   "test.json",
 					Ref:    "def456",
-					Action: FileActionCreated,
+					Action: repository.FileActionCreated,
 				},
 				{
 					Path:   "modified.json",
 					Ref:    "def456",
-					Action: FileActionUpdated,
+					Action: repository.FileActionUpdated,
 				},
 				{
 					Path:         "renamed.json",
 					Ref:          "def456",
-					Action:       FileActionRenamed,
+					Action:       repository.FileActionRenamed,
 					PreviousPath: "old.json",
 				},
 			},
@@ -2574,7 +2531,7 @@ func TestGitHubRepository_CompareFiles(t *testing.T) {
 		},
 		{
 			name: "error comparing commits",
-			setupMock: func(m *pgh.MockClient) {
+			setupMock: func(m *MockClient) {
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
 					Return(nil, fmt.Errorf("failed to compare commits"))
 			},
@@ -2585,292 +2542,292 @@ func TestGitHubRepository_CompareFiles(t *testing.T) {
 		},
 		{
 			name: "file outside configured path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("../outside/path.json")
 				commitFile1.On("GetStatus").Return("added")
 
-				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2 := NewMockCommitFile(t)
 				commitFile2.On("GetFilename").Return("dashboards/valid.json")
 				commitFile2.On("GetStatus").Return("added")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 						commitFile2,
 					}, nil)
 			},
 			base: "abc123",
 			ref:  "def456",
-			expectedFiles: []VersionedFileChange{
+			expectedFiles: []repository.VersionedFileChange{
 				{
 					Path:   "valid.json",
 					Ref:    "def456",
-					Action: FileActionCreated,
+					Action: repository.FileActionCreated,
 				},
 			},
 			expectedError: nil,
 		},
 		{
 			name: "modified file outside configured path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("../outside/modified.json")
 				commitFile1.On("GetStatus").Return("modified")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base:          "abc123",
 			ref:           "def456",
-			expectedFiles: []VersionedFileChange{},
+			expectedFiles: []repository.VersionedFileChange{},
 			expectedError: nil,
 		},
 		{
 			name: "copied file status",
-			setupMock: func(m *pgh.MockClient) {
+			setupMock: func(m *MockClient) {
 				// File inside configured path
-				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("dashboards/copied.json")
 				commitFile1.On("GetStatus").Return("copied")
 
 				// File outside configured path
-				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2 := NewMockCommitFile(t)
 				commitFile2.On("GetFilename").Return("../outside/copied.json")
 				commitFile2.On("GetStatus").Return("copied")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 						commitFile2,
 					}, nil)
 			},
 			base: "abc123",
 			ref:  "def456",
-			expectedFiles: []VersionedFileChange{
+			expectedFiles: []repository.VersionedFileChange{
 				{
 					Path:   "copied.json",
 					Ref:    "def456",
-					Action: FileActionCreated,
+					Action: repository.FileActionCreated,
 				},
 			},
 			expectedError: nil,
 		},
 		{
 			name: "removed file status - inside path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("dashboards/removed.json")
 				commitFile1.On("GetStatus").Return("removed")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base: "abc123",
 			ref:  "def456",
-			expectedFiles: []VersionedFileChange{
+			expectedFiles: []repository.VersionedFileChange{
 				{
 					Path:         "removed.json",
 					PreviousPath: "removed.json",
 					Ref:          "def456",
 					PreviousRef:  "abc123",
-					Action:       FileActionDeleted,
+					Action:       repository.FileActionDeleted,
 				},
 			},
 			expectedError: nil,
 		},
 		{
 			name: "renamed file status - both paths outside configured path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("../outside/renamed.json")
 				commitFile1.On("GetPreviousFilename").Return("../outside/original.json")
 				commitFile1.On("GetStatus").Return("renamed")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base:          "abc123",
 			ref:           "def456",
-			expectedFiles: []VersionedFileChange{},
+			expectedFiles: []repository.VersionedFileChange{},
 			expectedError: nil,
 		},
 		{
 			name: "renamed file status - both paths inside configured path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("dashboards/renamed.json")
 				commitFile1.On("GetPreviousFilename").Return("dashboards/original.json")
 				commitFile1.On("GetStatus").Return("renamed")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base: "abc123",
 			ref:  "def456",
-			expectedFiles: []VersionedFileChange{
+			expectedFiles: []repository.VersionedFileChange{
 				{
 					Path:         "renamed.json",
 					PreviousPath: "original.json",
 					Ref:          "def456",
 					PreviousRef:  "abc123",
-					Action:       FileActionRenamed,
+					Action:       repository.FileActionRenamed,
 				},
 			},
 			expectedError: nil,
 		},
 		{
 			name: "renamed file status - moving out of configured path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("../outside/renamed.json")
 				commitFile1.On("GetPreviousFilename").Return("dashboards/original.json")
 				commitFile1.On("GetStatus").Return("renamed")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base: "abc123",
 			ref:  "def456",
-			expectedFiles: []VersionedFileChange{
+			expectedFiles: []repository.VersionedFileChange{
 				{
 					Path:   "original.json",
 					Ref:    "abc123",
-					Action: FileActionDeleted,
+					Action: repository.FileActionDeleted,
 				},
 			},
 			expectedError: nil,
 		},
 		{
 			name: "renamed file status - moving into configured path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("dashboards/renamed.json")
 				commitFile1.On("GetPreviousFilename").Return("../outside/original.json")
 				commitFile1.On("GetStatus").Return("renamed")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base: "abc123",
 			ref:  "def456",
-			expectedFiles: []VersionedFileChange{
+			expectedFiles: []repository.VersionedFileChange{
 				{
 					Path:   "renamed.json",
 					Ref:    "def456",
-					Action: FileActionCreated,
+					Action: repository.FileActionCreated,
 				},
 			},
 			expectedError: nil,
 		},
 		{
 			name: "removed file status - outside path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("../outside/removed.json")
 				commitFile1.On("GetStatus").Return("removed")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base:          "abc123",
 			ref:           "def456",
-			expectedFiles: []VersionedFileChange{},
+			expectedFiles: []repository.VersionedFileChange{},
 			expectedError: nil,
 		},
 		{
 			name: "changed file outside configured path",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("../outside/changed.json")
 				commitFile1.On("GetStatus").Return("changed")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base:          "abc123",
 			ref:           "def456",
-			expectedFiles: []VersionedFileChange{},
+			expectedFiles: []repository.VersionedFileChange{},
 			expectedError: nil,
 		},
 		{
 			name: "get latest ref when ref is empty",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("dashboards/test.json")
 				commitFile1.On("GetStatus").Return("added")
 
 				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
-					Return(pgh.Branch{Sha: "latest123"}, nil)
+					Return(Branch{Sha: "latest123"}, nil)
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "latest123").
-					Return([]pgh.CommitFile{commitFile1}, nil)
+					Return([]CommitFile{commitFile1}, nil)
 			},
 			base:            "abc123",
 			ref:             "",
 			shouldGetLatest: true,
-			expectedFiles: []VersionedFileChange{
+			expectedFiles: []repository.VersionedFileChange{
 				{
 					Path:   "test.json",
 					Ref:    "latest123",
-					Action: FileActionCreated,
+					Action: repository.FileActionCreated,
 				},
 			},
 			expectedError: nil,
 		},
 		{
 			name: "unchanged file status",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetStatus").Return("unchanged")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base:          "abc123",
 			ref:           "def456",
-			expectedFiles: []VersionedFileChange{},
+			expectedFiles: []repository.VersionedFileChange{},
 			expectedError: nil,
 		},
 		{
 			name: "unknown file status",
-			setupMock: func(m *pgh.MockClient) {
-				commitFile1 := pgh.NewMockCommitFile(t)
+			setupMock: func(m *MockClient) {
+				commitFile1 := NewMockCommitFile(t)
 				commitFile1.On("GetFilename").Return("dashboards/unknown.json")
 				commitFile1.On("GetStatus").Return("unknown_status")
 
 				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
-					Return([]pgh.CommitFile{
+					Return([]CommitFile{
 						commitFile1,
 					}, nil)
 			},
 			base:          "abc123",
 			ref:           "def456",
-			expectedFiles: []VersionedFileChange{},
+			expectedFiles: []repository.VersionedFileChange{},
 			expectedError: nil,
 		},
 		{
 			name: "error getting latest ref",
-			setupMock: func(m *pgh.MockClient) {
+			setupMock: func(m *MockClient) {
 				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
-					Return(pgh.Branch{}, fmt.Errorf("branch not found"))
+					Return(Branch{}, fmt.Errorf("branch not found"))
 			},
 			base:            "abc123",
 			ref:             "",
@@ -2883,7 +2840,7 @@ func TestGitHubRepository_CompareFiles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup mock GitHub client
-			mockGH := pgh.NewMockClient(t)
+			mockGH := NewMockClient(t)
 			tt.setupMock(mockGH)
 
 			// Create repository with mock
@@ -2929,14 +2886,14 @@ func TestGitHubRepository_CompareFiles(t *testing.T) {
 func TestGitHubRepository_ResourceURLs(t *testing.T) {
 	tests := []struct {
 		name          string
-		file          *FileInfo
+		file          *repository.FileInfo
 		config        *provisioning.Repository
 		expectedURLs  *provisioning.ResourceURLs
 		expectedError error
 	}{
 		{
 			name: "file with ref",
-			file: &FileInfo{
+			file: &repository.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "feature-branch",
 			},
@@ -2958,7 +2915,7 @@ func TestGitHubRepository_ResourceURLs(t *testing.T) {
 		},
 		{
 			name: "file without ref uses default branch",
-			file: &FileInfo{
+			file: &repository.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "",
 			},
@@ -2978,7 +2935,7 @@ func TestGitHubRepository_ResourceURLs(t *testing.T) {
 		},
 		{
 			name: "file with ref same as branch",
-			file: &FileInfo{
+			file: &repository.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "main",
 			},
@@ -2998,7 +2955,7 @@ func TestGitHubRepository_ResourceURLs(t *testing.T) {
 		},
 		{
 			name: "empty path returns nil",
-			file: &FileInfo{
+			file: &repository.FileInfo{
 				Path: "",
 				Ref:  "feature-branch",
 			},
@@ -3015,7 +2972,7 @@ func TestGitHubRepository_ResourceURLs(t *testing.T) {
 		},
 		{
 			name: "nil github config returns nil",
-			file: &FileInfo{
+			file: &repository.FileInfo{
 				Path: "dashboards/test.json",
 				Ref:  "feature-branch",
 			},
@@ -3056,14 +3013,14 @@ func TestGitHubRepository_ResourceURLs(t *testing.T) {
 func TestGitHubRepository_Clone(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMock     func(m *MockCloneFn)
+		setupMock     func(m *repository.MockCloneFn)
 		config        *provisioning.Repository
 		expectedError error
 	}{
 		{
 			name: "successfully clone repository",
-			setupMock: func(m *MockCloneFn) {
-				m.On("Execute", mock.Anything, CloneOptions{
+			setupMock: func(m *repository.MockCloneFn) {
+				m.On("Execute", mock.Anything, repository.CloneOptions{
 					CreateIfNotExists: true,
 					PushOnWrites:      true,
 					MaxSize:           1024 * 1024 * 10, // 10MB
@@ -3083,8 +3040,8 @@ func TestGitHubRepository_Clone(t *testing.T) {
 		},
 		{
 			name: "error cloning repository",
-			setupMock: func(m *MockCloneFn) {
-				m.On("Execute", mock.Anything, CloneOptions{
+			setupMock: func(m *repository.MockCloneFn) {
+				m.On("Execute", mock.Anything, repository.CloneOptions{
 					CreateIfNotExists: true,
 					PushOnWrites:      true,
 					MaxSize:           1024 * 1024 * 10, // 10MB
@@ -3106,20 +3063,19 @@ func TestGitHubRepository_Clone(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockCloneFn := NewMockCloneFn(t)
+			mockCloneFn := repository.NewMockCloneFn(t)
 
 			tt.setupMock(mockCloneFn)
 
 			// Create repository with mock
 			repo := &githubRepository{
-				cloneFn: mockCloneFn.Execute,
-				config:  tt.config,
-				owner:   "grafana",
-				repo:    "grafana",
+				config: tt.config,
+				owner:  "grafana",
+				repo:   "grafana",
 			}
 
 			// Call the Clone method with a placeholder directory path
-			_, err := repo.Clone(context.Background(), CloneOptions{
+			_, err := repo.Clone(context.Background(), repository.CloneOptions{
 				CreateIfNotExists: true,
 				PushOnWrites:      true,
 				MaxSize:           1024 * 1024 * 10, // 10MB

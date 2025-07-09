@@ -147,17 +147,17 @@ func (r *localRepository) Validate() field.ErrorList {
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	path := field.NewPath("spec", "local", "path")
 	if r.config.Spec.Local.Path == "" {
-		return fromFieldError(field.Required(path, "no path is configured")), nil
+		return FromFieldError(field.Required(path, "no path is configured")), nil
 	}
 
 	_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
 	if err != nil {
-		return fromFieldError(field.Invalid(path, r.config.Spec.Local.Path, err.Error())), nil
+		return FromFieldError(field.Invalid(path, r.config.Spec.Local.Path, err.Error())), nil
 	}
 
 	_, err = os.Stat(r.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return fromFieldError(field.NotFound(path, r.config.Spec.Local.Path)), nil
+		return FromFieldError(field.NotFound(path, r.config.Spec.Local.Path)), nil
 	}
 
 	return &provisioning.TestResults{
