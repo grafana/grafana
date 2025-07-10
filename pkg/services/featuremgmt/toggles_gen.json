@@ -1542,6 +1542,7 @@
         "name": "jaegerBackendMigration",
         "resourceVersion": "1751465665226",
         "creationTimestamp": "2024-11-15T14:40:20Z",
+        "deletionTimestamp": "2025-07-07T14:12:35Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-07-02 14:14:25.226989 +0000 UTC"
         }
