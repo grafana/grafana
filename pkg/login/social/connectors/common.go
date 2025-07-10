@@ -37,6 +37,7 @@ const (
 	teamIdsKey = "team_ids"
 	// consider moving this to OAuthInfo
 	allowedOrganizationsKey = "allowed_organizations"
+	authPromptKey           = "auth_prompt"
 )
 
 var (

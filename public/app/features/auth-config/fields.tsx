@@ -44,6 +44,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'authPrompt',
         ],
       },
       {
@@ -871,6 +872,23 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'custom',
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
+    },
+    authPrompt: {
+      label: t('auth-config.fields.auth-prompt-label', 'Auth prompt'),
+      type: 'select',
+      description: t(
+        'auth-config.fields.auth-prompt-description',
+        'Indicates the type of user iteraction when the user logs in with the IdP.'
+      ),
+      multi: false,
+      options: [
+        { value: '', label: '' },
+        { value: 'login', label: t('auth-config.fields.auth-prompt-login', 'Login') },
+        { value: 'none', label: t('auth-config.fields.auth-prompt-none', 'None') },
+        { value: 'consent', label: t('auth-config.fields.auth-prompt-consent', 'Consent') },
+        { value: 'select_account', label: t('auth-config.fields.auth-prompt-select-account', 'Select account') },
+      ],
+      defaultValue: { value: '', label: '' },
     },
   };
 }
