@@ -206,8 +206,8 @@ func TestSQLExpressionCellLimitFromConfig(t *testing.T) {
 			cmdNode := node.(*CMDNode)
 			sqlCmd := cmdNode.Command.(*SQLCommand)
 
-			// Verify the SQL command has the correct limit
-			require.Equal(t, tt.expectedLimit, sqlCmd.limit, "SQL command has incorrect cell limit")
+			// Verify the SQL command has the correct inputLimit
+			require.Equal(t, tt.expectedLimit, sqlCmd.inputLimit, "SQL command has incorrect cell limit")
 		})
 	}
 }

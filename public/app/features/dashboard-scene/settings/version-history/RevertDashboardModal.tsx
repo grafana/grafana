@@ -1,6 +1,6 @@
+import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
@@ -44,7 +44,11 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
           </Trans>
         </p>
       }
-      confirmText={`Yes, restore to version ${version.version}`}
+      confirmText={t(
+        'dashboard-scene.revert-dashboard-modal.confirmText-restore-version',
+        'Yes, restore to version {{version}}',
+        { version: version.version }
+      )}
     />
   );
 };

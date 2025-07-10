@@ -37,7 +37,7 @@ type PlaylistDTO struct {
 	Interval string `json:"interval"`
 
 	// The ordered list of items that the playlist will iterate over.
-	Items []PlaylistItemDTO `json:"items,omitempty"`
+	Items []PlaylistItemDTO `json:"items"`
 
 	// Returned for k8s
 	CreatedAt int64 `json:"-" db:"created_at"`

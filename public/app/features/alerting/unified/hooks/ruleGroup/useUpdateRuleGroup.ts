@@ -1,6 +1,6 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 import {
   DataSourceRuleGroupIdentifier,
   GrafanaRuleGroupIdentifier,

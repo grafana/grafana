@@ -2,9 +2,10 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
+import { renderSingleLink } from '../../DataLinksActionsTooltip';
+import { useSingleLink } from '../hooks';
 import { BarGaugeCellProps } from '../types';
-import { extractPixelValue, getCellOptions, getAlignmentFactor, getCellLinks } from '../utils';
+import { extractPixelValue, getCellOptions, getAlignmentFactor } from '../utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -44,46 +45,27 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx }: Bar
       cellOptions.valueDisplayMode !== undefined ? cellOptions.valueDisplayMode : BarGaugeValueMode.Text;
   }
 
-  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
-
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
 
-  const renderComponent = (menuProps: DataLinksContextMenuApi) => {
-    const { openMenu } = menuProps;
-
-    return (
-      <BarGauge
-        width={width}
-        height={height - heightOffset}
-        field={config}
-        display={field.display}
-        text={{ valueSize: 14 }}
-        value={displayValue}
-        orientation={VizOrientation.Horizontal}
-        theme={theme}
-        alignmentFactors={alignmentFactors}
-        onClick={openMenu}
-        itemSpacing={1}
-        lcdCellWidth={8}
-        displayMode={barGaugeMode}
-        valueDisplayMode={valueDisplayMode}
-      />
-    );
-  };
-
-  // @TODO: Actions
-  return (
-    <>
-      {hasLinks ? (
-        <DataLinksContextMenu
-          links={() => getCellLinks(field, rowIdx) || []}
-          style={{ display: 'flex', width: '100%' }}
-        >
-          {(api) => renderComponent(api)}
-        </DataLinksContextMenu>
-      ) : (
-        renderComponent({})
-      )}
-    </>
+  const barGaugeComponent = (
+    <BarGauge
+      width={width}
+      height={height - heightOffset}
+      field={config}
+      display={field.display}
+      text={{ valueSize: 14 }}
+      value={displayValue}
+      orientation={VizOrientation.Horizontal}
+      theme={theme}
+      alignmentFactors={alignmentFactors}
+      itemSpacing={1}
+      lcdCellWidth={8}
+      displayMode={barGaugeMode}
+      valueDisplayMode={valueDisplayMode}
+    />
   );
+
+  const link = useSingleLink(field, rowIdx);
+
+  return link == null ? barGaugeComponent : renderSingleLink(link, barGaugeComponent);
 };

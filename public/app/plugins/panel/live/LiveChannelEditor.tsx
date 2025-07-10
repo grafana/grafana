@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   parseLiveChannelAddress,
 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { discoveryResources, getAPIGroupDiscoveryList, GroupDiscoveryResource } from 'app/features/apiserver/discovery';
@@ -110,14 +111,18 @@ export function LiveChannelEditor(props: Props) {
 
   return (
     <>
-      <Alert title="Grafana Live" severity="info">
-        This supports real-time event streams in grafana core. This feature is under heavy development. Expect the
-        intefaces and structures to change as this becomes more production ready.
+      <Alert title={t('live.live-channel-editor.title-grafana-live', 'Grafana Live')} severity="info">
+        <Trans i18nKey="live.live-channel-editor.description-grafana-live">
+          This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the
+          interfaces and structures to change as this becomes more production ready.
+        </Trans>
       </Alert>
 
       <div>
         <div className={style.dropWrap}>
-          <Label>Scope</Label>
+          <Label>
+            <Trans i18nKey="live.live-channel-editor.scope">Scope</Trans>
+          </Label>
           <Select options={scopes} value={scopes.find((s) => s.value === scope)} onChange={onScopeChanged} />
         </div>
 
@@ -125,7 +130,10 @@ export function LiveChannelEditor(props: Props) {
           <div className={style.dropWrap}>
             <Combobox
               options={getWatchableResources}
-              placeholder="Select watchable resource"
+              placeholder={t(
+                'live.live-channel-editor.placeholder-select-watchable-resource',
+                'Select watchable resource'
+              )}
               onChange={(v) => {
                 const resource = (v as any).resource as GroupDiscoveryResource;
                 if (resource) {
@@ -142,7 +150,9 @@ export function LiveChannelEditor(props: Props) {
 
         {scope && (
           <div className={style.dropWrap}>
-            <Label>Namespace</Label>
+            <Label>
+              <Trans i18nKey="live.live-channel-editor.namespace">Namespace</Trans>
+            </Label>
             <Select
               options={namespaces}
               value={
@@ -159,7 +169,9 @@ export function LiveChannelEditor(props: Props) {
 
         {scope && namespace && (
           <div className={style.dropWrap}>
-            <Label>Path</Label>
+            <Label>
+              <Trans i18nKey="live.live-channel-editor.path">Path</Trans>
+            </Label>
             <Select
               options={paths}
               value={findPathOption(paths, path)}

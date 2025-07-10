@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../../../../core/internationalization';
 import { CombinedRule } from '../../../../../types/unified-alerting';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { rulerRuleType } from '../../utils/rules';

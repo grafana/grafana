@@ -3,7 +3,7 @@ import { byRole } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
@@ -57,7 +57,7 @@ describe('DataSourceGroupLoader', () => {
 
       promGroup.rules.forEach((rule, index) => {
         const ruleLink = within(ruleListItems[index]).getByRole('link', { name: `prom-only-rule-${index + 1}` });
-        expect(ruleLink).toHaveAttribute('href', createViewLinkV2(groupIdentifier, rule));
+        expect(ruleLink).toHaveAttribute('href', expect.stringContaining(createViewLinkV2(groupIdentifier, rule)));
       });
     });
 
@@ -103,7 +103,7 @@ describe('DataSourceGroupLoader', () => {
       expect(ruleListItems).toHaveLength(1);
 
       const ruleLink = within(ruleListItems[0]).getByRole('link', { name: 'mimir-rule-1' });
-      expect(ruleLink).toHaveAttribute('href', getRuleLink(groupIdentifier, rulerRule));
+      expect(ruleLink).toHaveAttribute('href', expect.stringContaining(getRuleLink(groupIdentifier, rulerRule)));
     });
 
     it('should render Edit and More buttons for rules that are present in ruler and prometheus', async () => {

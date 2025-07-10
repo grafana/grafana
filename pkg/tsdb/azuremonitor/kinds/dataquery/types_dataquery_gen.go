@@ -13,7 +13,6 @@ package dataquery
 
 import (
 	json "encoding/json"
-	errors "errors"
 	fmt "fmt"
 )
 
@@ -52,13 +51,15 @@ type AzureMonitorQuery struct {
 	Region *string `json:"region,omitempty"`
 	// Custom namespace used in template variable queries
 	CustomNamespace *string `json:"customNamespace,omitempty"`
+	// Used only for exemplar queries from Prometheus
+	Query *string `json:"query,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource any `json:"datasource,omitempty"`
-	// Used only for exemplar queries from Prometheus
-	Query *string `json:"query,omitempty"`
+	// Used to configure the HTTP request timeout
+	Timeout *float64 `json:"timeout,omitempty"`
 }
 
 // NewAzureMonitorQuery creates a new AzureMonitorQuery object.
@@ -269,7 +270,9 @@ type BuilderQueryEditorWhereExpressionArray struct {
 
 // NewBuilderQueryEditorWhereExpressionArray creates a new BuilderQueryEditorWhereExpressionArray object.
 func NewBuilderQueryEditorWhereExpressionArray() *BuilderQueryEditorWhereExpressionArray {
-	return &BuilderQueryEditorWhereExpressionArray{}
+	return &BuilderQueryEditorWhereExpressionArray{
+		Expressions: []BuilderQueryEditorWhereExpression{},
+	}
 }
 
 type BuilderQueryEditorWhereExpression struct {
@@ -279,7 +282,9 @@ type BuilderQueryEditorWhereExpression struct {
 
 // NewBuilderQueryEditorWhereExpression creates a new BuilderQueryEditorWhereExpression object.
 func NewBuilderQueryEditorWhereExpression() *BuilderQueryEditorWhereExpression {
-	return &BuilderQueryEditorWhereExpression{}
+	return &BuilderQueryEditorWhereExpression{
+		Expressions: []BuilderQueryEditorWhereExpressionItems{},
+	}
 }
 
 type BuilderQueryEditorWhereExpressionItems struct {
@@ -314,7 +319,9 @@ type BuilderQueryEditorReduceExpressionArray struct {
 
 // NewBuilderQueryEditorReduceExpressionArray creates a new BuilderQueryEditorReduceExpressionArray object.
 func NewBuilderQueryEditorReduceExpressionArray() *BuilderQueryEditorReduceExpressionArray {
-	return &BuilderQueryEditorReduceExpressionArray{}
+	return &BuilderQueryEditorReduceExpressionArray{
+		Expressions: []BuilderQueryEditorReduceExpression{},
+	}
 }
 
 type BuilderQueryEditorReduceExpression struct {
@@ -347,7 +354,9 @@ type BuilderQueryEditorGroupByExpressionArray struct {
 
 // NewBuilderQueryEditorGroupByExpressionArray creates a new BuilderQueryEditorGroupByExpressionArray object.
 func NewBuilderQueryEditorGroupByExpressionArray() *BuilderQueryEditorGroupByExpressionArray {
-	return &BuilderQueryEditorGroupByExpressionArray{}
+	return &BuilderQueryEditorGroupByExpressionArray{
+		Expressions: []BuilderQueryEditorGroupByExpression{},
+	}
 }
 
 type BuilderQueryEditorGroupByExpression struct {
@@ -369,7 +378,9 @@ type BuilderQueryEditorOrderByExpressionArray struct {
 
 // NewBuilderQueryEditorOrderByExpressionArray creates a new BuilderQueryEditorOrderByExpressionArray object.
 func NewBuilderQueryEditorOrderByExpressionArray() *BuilderQueryEditorOrderByExpressionArray {
-	return &BuilderQueryEditorOrderByExpressionArray{}
+	return &BuilderQueryEditorOrderByExpressionArray{
+		Expressions: []BuilderQueryEditorOrderByExpression{},
+	}
 }
 
 type BuilderQueryEditorOrderByExpression struct {
@@ -397,12 +408,21 @@ type AzureResourceGraphQuery struct {
 	Query *string `json:"query,omitempty"`
 	// Specifies the format results should be returned as. Defaults to table.
 	ResultFormat *string `json:"resultFormat,omitempty"`
+	// Specifies the scope of the query. Defaults to subscription.
+	Scope *ARGScope `json:"scope,omitempty"`
 }
 
 // NewAzureResourceGraphQuery creates a new AzureResourceGraphQuery object.
 func NewAzureResourceGraphQuery() *AzureResourceGraphQuery {
 	return &AzureResourceGraphQuery{}
 }
+
+type ARGScope string
+
+const (
+	ARGScopeSubscription ARGScope = "subscription"
+	ARGScopeDirectory    ARGScope = "directory"
+)
 
 // Application Insights Traces sub-query properties
 type AzureTracesQuery struct {
@@ -436,7 +456,9 @@ type AzureTracesFilter struct {
 
 // NewAzureTracesFilter creates a new AzureTracesFilter object.
 func NewAzureTracesFilter() *AzureTracesFilter {
-	return &AzureTracesFilter{}
+	return &AzureTracesFilter{
+		Filters: []string{},
+	}
 }
 
 type GrafanaTemplateVariableQuery = AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery
@@ -696,7 +718,8 @@ func (resource AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscription
 	if resource.UnknownQuery != nil {
 		return json.Marshal(resource.UnknownQuery)
 	}
-	return nil, fmt.Errorf("no value for disjunction of refs")
+
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptionsQueryOrResourceGroupsQueryOrResourceNamesQueryOrMetricNamespaceQueryOrMetricDefinitionsQueryOrMetricNamesQueryOrWorkspacesQueryOrUnknownQuery` from JSON.
@@ -713,7 +736,7 @@ func (resource *AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptio
 
 	discriminator, found := parsedAsMap["kind"]
 	if !found {
-		return errors.New("discriminator field 'kind' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -799,7 +822,7 @@ func (resource *AppInsightsMetricNameQueryOrAppInsightsGroupByQueryOrSubscriptio
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `kind = %v`", discriminator)
+	return nil
 }
 
 type StringOrBoolOrFloat64OrSelectableValue struct {
@@ -812,4 +835,59 @@ type StringOrBoolOrFloat64OrSelectableValue struct {
 // NewStringOrBoolOrFloat64OrSelectableValue creates a new StringOrBoolOrFloat64OrSelectableValue object.
 func NewStringOrBoolOrFloat64OrSelectableValue() *StringOrBoolOrFloat64OrSelectableValue {
 	return &StringOrBoolOrFloat64OrSelectableValue{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrBoolOrFloat64OrSelectableValue` as JSON.
+func (resource StringOrBoolOrFloat64OrSelectableValue) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+	if resource.Bool != nil {
+		return json.Marshal(resource.Bool)
+	}
+	if resource.Float64 != nil {
+		return json.Marshal(resource.Float64)
+	}
+	if resource.SelectableValue != nil {
+		return json.Marshal(resource.SelectableValue)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode StringOrBoolOrFloat64OrSelectableValue from JSON.
+func (resource *StringOrBoolOrFloat64OrSelectableValue) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+	fields := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+
+	if fields["String"] != nil {
+		if err := json.Unmarshal(fields["String"], &resource.String); err != nil {
+			return fmt.Errorf("error decoding field 'String': %w", err)
+		}
+	}
+
+	if fields["Bool"] != nil {
+		if err := json.Unmarshal(fields["Bool"], &resource.Bool); err != nil {
+			return fmt.Errorf("error decoding field 'Bool': %w", err)
+		}
+	}
+
+	if fields["Float64"] != nil {
+		if err := json.Unmarshal(fields["Float64"], &resource.Float64); err != nil {
+			return fmt.Errorf("error decoding field 'Float64': %w", err)
+		}
+	}
+
+	if fields["SelectableValue"] != nil {
+		if err := json.Unmarshal(fields["SelectableValue"], &resource.SelectableValue); err != nil {
+			return fmt.Errorf("error decoding field 'SelectableValue': %w", err)
+		}
+	}
+
+	return nil
 }

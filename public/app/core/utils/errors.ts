@@ -1,4 +1,4 @@
-import { isFetchError } from '@grafana/runtime';
+import { FetchError, isFetchError } from '@grafana/runtime';
 
 export function getMessageFromError(err: unknown): string {
   if (typeof err === 'string') {
@@ -59,4 +59,11 @@ export function getMessageIdFromError(err: unknown): string | undefined {
   }
 
   return undefined;
+}
+
+export function getRequestConfigFromError(err: FetchError): string {
+  const method = err.config?.method ?? 'GET';
+  const url = err.config?.url;
+
+  return method && url ? `${method} ${url}` : 'request';
 }

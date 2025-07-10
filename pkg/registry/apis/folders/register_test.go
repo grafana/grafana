@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
@@ -169,16 +169,16 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	tests := []struct {
 		name          string
-		statsResponse *resource.ResourceStatsResponse_Stats
+		statsResponse *resourcepb.ResourceStatsResponse_Stats
 		wantErr       bool
 	}{
 		{
 			name:          "should allow deletion when folder is empty",
-			statsResponse: &resource.ResourceStatsResponse_Stats{Count: 0},
+			statsResponse: &resourcepb.ResourceStatsResponse_Stats{Count: 0},
 		},
 		{
 			name:          "should return folder not empty when the folder is not empty",
-			statsResponse: &resource.ResourceStatsResponse_Stats{Count: 2},
+			statsResponse: &resourcepb.ResourceStatsResponse_Stats{Count: 2},
 			wantErr:       true,
 		},
 	}
@@ -200,9 +200,9 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var setupFn = func(m *mock.Mock, stats *resource.ResourceStatsResponse_Stats) {
-				m.On("GetStats", mock.Anything, &resource.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
-					&resource.ResourceStatsResponse{Stats: []*resource.ResourceStatsResponse_Stats{stats}},
+			var setupFn = func(m *mock.Mock, stats *resourcepb.ResourceStatsResponse_Stats) {
+				m.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Folder: obj.Name}).Return(
+					&resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{stats}},
 					nil,
 				).Once()
 			}
@@ -479,7 +479,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				nil,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -491,13 +491,18 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				nil,
 				true,
 				&user.SignedInUser{},
-			), nil)
+			)
 
+			err := b.Validate(context.Background(), admAttr, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+
+			err = b.Mutate(context.Background(), admAttr, nil)
+			require.NoError(t, err)
+			require.Equal(t, tt.input, tt.expected)
 		})
 	}
 }
@@ -585,7 +590,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
+			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				existingObj,
 				folders.SchemeGroupVersion.WithKind("folder"),
@@ -597,13 +602,18 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 				nil,
 				true,
 				&user.SignedInUser{},
-			), nil)
+			)
 
+			err := b.Validate(context.Background(), admAttr, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+
+			err = b.Mutate(context.Background(), admAttr, nil)
+			require.NoError(t, err)
+			require.Equal(t, tt.input, tt.expected)
 		})
 	}
 }

@@ -205,9 +205,6 @@ var (
 	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
 	StatsTotalLibraryPanels prometheus.Gauge
 
-	// StatsTotalLibraryVariables is a metric of total number of library variables stored in Grafana.
-	StatsTotalLibraryVariables prometheus.Gauge
-
 	// StatsTotalDataKeys is a metric of total number of data keys stored in Grafana.
 	StatsTotalDataKeys *prometheus.GaugeVec
 
@@ -644,12 +641,6 @@ func init() {
 		Namespace: ExporterName,
 	})
 
-	StatsTotalLibraryVariables = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name:      "stat_totals_library_variables",
-		Help:      "total amount of library variables in the database",
-		Namespace: ExporterName,
-	})
-
 	StatsTotalDataKeys = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "stat_totals_data_keys",
 		Help:      "total amount of data keys in the database",
@@ -782,7 +773,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		StatsTotalAlertRules,
 		StatsTotalRuleGroups,
 		StatsTotalLibraryPanels,
-		StatsTotalLibraryVariables,
 		StatsTotalDataKeys,
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,

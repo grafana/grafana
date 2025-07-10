@@ -9,8 +9,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { ConcatenateFrameNameMode, ConcatenateTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, Input, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -91,4 +91,5 @@ export const concatenateTransformRegistryItem: TransformerRegistryItem<Concatena
     'Combine all fields into a single frame.  Values will be appended with undefined values if not the same length.',
   categories: new Set([TransformerCategory.Combine]),
   help: getTransformationContent(DataTransformerID.concatenate).helperDocs,
+  tags: new Set(['Combine']),
 };

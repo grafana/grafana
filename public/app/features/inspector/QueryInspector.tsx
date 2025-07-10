@@ -4,9 +4,9 @@ import { Subscription } from 'rxjs';
 
 import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Space, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getPanelInspectorStyles2 } from './styles';

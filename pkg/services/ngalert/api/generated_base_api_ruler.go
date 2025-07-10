@@ -37,6 +37,7 @@ type RulerApi interface {
 	RoutePostNameGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RoutePostNameRulesConfig(*contextmodel.ReqContext) response.Response
 	RoutePostRulesGroupForExport(*contextmodel.ReqContext) response.Response
+	RouteUpdateNamespaceRules(*contextmodel.ReqContext) response.Response
 }
 
 func (f *RulerApiHandler) RouteDeleteGrafanaRuleGroupConfig(ctx *contextmodel.ReqContext) response.Response {
@@ -143,6 +144,16 @@ func (f *RulerApiHandler) RoutePostRulesGroupForExport(ctx *contextmodel.ReqCont
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.handleRoutePostRulesGroupForExport(ctx, conf, namespaceParam)
+}
+func (f *RulerApiHandler) RouteUpdateNamespaceRules(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	// Parse Request Body
+	conf := apimodels.UpdateNamespaceRulesRequest{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRouteUpdateNamespaceRules(ctx, conf, namespaceParam)
 }
 
 func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
@@ -348,6 +359,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodPost,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}/export",
 				api.Hooks.Wrap(srv.RoutePostRulesGroupForExport),
+				m,
+			),
+		)
+		group.Patch(
+			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPatch, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodPatch,
+				"/api/ruler/grafana/api/v1/rules/{Namespace}",
+				api.Hooks.Wrap(srv.RouteUpdateNamespaceRules),
 				m,
 			),
 		)

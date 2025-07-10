@@ -3,8 +3,8 @@ import { createElement, useMemo } from 'react';
 
 import { DataFrame, DataTransformerConfig, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, JSONFormatter, useStyles2, Drawer } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { TransformationsEditorTransformation } from './types';
 

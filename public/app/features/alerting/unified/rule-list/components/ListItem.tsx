@@ -29,7 +29,7 @@ export const ListItem = (props: ListItemProps) => {
     >
       <Stack direction="row" alignItems="start" gap={1} wrap={false}>
         {/* icon */}
-        {icon}
+        <span className={styles.statusIcon}>{icon}</span>
 
         <Stack direction="column" gap={0} flex="1" minWidth={0}>
           {/* title */}
@@ -80,14 +80,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({
     position: 'relative',
     listStyle: 'none',
-    background: theme.colors.background.primary,
 
-    borderBottom: `solid 1px ${theme.colors.border.weak}`,
-    padding: `${theme.spacing(1)} ${theme.spacing(1)}`,
+    padding: theme.spacing(1),
+
+    '&:hover': {
+      background: theme.colors.action.hover,
+    },
   }),
   textOverflow: css({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: 'inherit',
+  }),
+  // this will line up the icon with the title of the rule
+  statusIcon: css({
+    marginTop: theme.spacing(0.5),
   }),
 });

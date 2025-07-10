@@ -49,7 +49,8 @@ func (p provisioningSecrets) reEncrypt(
 			Find(&rows)
 	}); err != nil {
 		logger.Warn("Could not find any provisioning secrets to re-encrypt", "error", err, "action", action)
-		return false
+		// resource table may not exists (when not using unified storage and right db), so we don't report error here.
+		return true
 	}
 
 	var failures int
@@ -101,7 +102,7 @@ func (p provisioningSecrets) reEncrypt(
 	} else {
 		logger.Info("Successfully rotated provisioning secrets", "action", action)
 	}
-	return failures > 0
+	return failures == 0
 }
 
 func (provisioningSecrets) reEncryptGitHubToken(

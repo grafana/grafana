@@ -610,7 +610,7 @@ func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertC
 		ngfakes.NewFakeReceiverPermissionsService(),
 		log.New("testlogger"),
 		secretsService,
-		featuremgmt.WithManager(featuremgmt.FlagAlertingSimplifiedRouting),
+		featuremgmt.WithManager(),
 	)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())

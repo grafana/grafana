@@ -83,8 +83,6 @@ Grafana can be configured to handle alert notifications using various Alertmanag
 
   The Cloud Alertmanager is available exclusively in Grafana Cloud and can handle both Grafana-managed and data source-managed alerts.
 
-  Some Grafana Cloud services, such as **Kubernetes Monitoring** and **Synthetic Monitoring** use the Cloud Alertmanager to create and manage alerts.
-
 - **Other Alertmanagers**: Grafana Alerting also supports sending alerts to other Alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), which can handle both Grafana-managed and data source-managed alerts.
 
 Grafana Alerting supports using a combination of Alertmanagers and can [enable other Alertmanagers to receive Grafana-managed alerts](#enable-an-alertmanager-to-receive-grafana-managed-alerts). The decision often depends on your alerting setup and where your alerts are generated.
@@ -101,9 +99,9 @@ For provisioning instructions, refer to the [Alertmanager data source documentat
 
 After adding an Alertmanager, you can use the Grafana Alerting UI to manage notification policies, contact points, silences, and other alerting resources from within Grafana.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When using Prometheus, you can manage silences in the Grafana Alerting UI. However, other Alertmanager resources such as contact points, notification policies, and templates are read-only because the Prometheus Alertmanager HTTP API does not support updates for these resources.
-{{% /admonition %}}
+{{< /admonition >}}
 
 When using multiple Alertmanagers, use the `Choose Alertmanager` dropdown to switch between Alertmanagers.
 
@@ -119,9 +117,9 @@ After enabling **Receive Grafana Alerts** in the Data Source Settings, you must 
 
 All Grafana-managed alerts are forwarded to Alertmanagers marked as `Receiving Grafana-managed alerts`.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana Alerting does not support forwarding Grafana-managed alerts to the AlertManager in Amazon Managed Service for Prometheus. For more details, refer to [this GitHub issue](https://github.com/grafana/grafana/issues/64064).
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Use an Alertmanager as a contact point to receive specific alerts
 

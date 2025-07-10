@@ -1,14 +1,13 @@
 ---
 aliases:
-  - ../../../auth/saml/
-  - ../../../enterprise/configure-saml/
-  - ../../../enterprise/saml/
-  - ../../../enterprise/saml/about-saml/
-  - ../../../enterprise/saml/configure-saml/
-  - ../../../enterprise/saml/enable-saml/
-  - ../../../enterprise/saml/set-up-saml-with-okta/
-  - ../../../enterprise/saml/troubleshoot-saml/
-  - ../../../saml/
+  - ../../../auth/saml/ # /docs/grafana/latest/auth/saml/
+  - ../../../enterprise/configure-saml/ # /docs/grafana/latest/enterprise/configure-saml/
+  - ../../../enterprise/saml/ # /docs/grafana/latest/enterprise/saml/
+  - ../../../enterprise/saml/about-saml/ # /docs/grafana/latest/enterprise/saml/about-saml/
+  - ../../../enterprise/saml/configure-saml/ # /docs/grafana/latest/enterprise/saml/configure-saml/
+  - ../../../enterprise/saml/enable-saml/ # /docs/grafana/latest/enterprise/saml/enable-saml/
+  - ../../../enterprise/saml/set-up-saml-with-okta/ # /docs/grafana/latest/enterprise/saml/set-up-saml-with-okta/
+  - ../../../enterprise/saml/troubleshoot-saml/ # /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
 description: Learn how to configure SAML authentication in Grafana's configuration
   file.
 labels:
@@ -41,7 +40,7 @@ If you are using Okta or Azure AD as Identity Provider, see the following docume
 - [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/)
 
 {{< admonition type="note" >}}
-The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle. You must also enable the `ssoSettingsApi` flag.
+The API and Terraform support are available in Public Preview in Grafana v11.1 behind the `ssoSettingsSAML` feature toggle.
 {{< /admonition >}}
 
 All methods offer the same configuration options. However, if you want to keep all of Grafana authentication settings in one place, use the Grafana configuration file or the Terraform provider. If you are a Grafana Cloud user, you do not have access to Grafana configuration file. Instead, configure SAML through the other methods.

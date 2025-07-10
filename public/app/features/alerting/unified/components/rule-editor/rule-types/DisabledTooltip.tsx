@@ -1,7 +1,7 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n';
 import { Tooltip } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 type Props = {
   visible: boolean;

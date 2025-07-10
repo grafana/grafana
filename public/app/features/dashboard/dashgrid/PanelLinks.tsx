@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { DataLink, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Dropdown, Icon, Menu, ToolbarButton, useStyles2, PanelChrome } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   panelLinks: DataLink[];

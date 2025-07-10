@@ -1,8 +1,8 @@
 import { css, keyframes } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface GroupStatusProps {
   status: 'deleting'; // We don't support other statuses yet

@@ -67,7 +67,8 @@ func TestIntegrationIdentity(t *testing.T) {
           "spec": {
             "email": "staff@Org1",
             "title": "staff"
-          }
+          },
+          "status": {}
         }
       ]
     }`, found)
@@ -83,18 +84,41 @@ func TestIntegrationIdentity(t *testing.T) {
 		// Get just the specs (avoids values that change with each deployment)
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
-			{},
 			{
-				"email": "admin-1",
-				"login": "admin-1"
+				"disabled": false,
+				"email": "admin@localhost",
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "admin",
+				"name": "",
+				"provisioned": false
 			},
 			{
+				"disabled": false,
+				"email": "admin2-1",
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "admin2-1",
+				"name": "",
+				"provisioned": false
+			},
+			{
+				"disabled": false,
 				"email": "editor-1",
-				"login": "editor-1"
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "editor-1",
+				"name": "",
+				"provisioned": false
 			},
 			{
+				"disabled": false,
 				"email": "viewer-1",
-				"login": "viewer-1"
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "viewer-1",
+				"name": "",
+				"provisioned": false
 			}
 		]`, found)
 
@@ -111,20 +135,40 @@ func TestIntegrationIdentity(t *testing.T) {
 		found = teamClient.SpecJSON(rsp)
 		require.JSONEq(t, `[
 			{
-				"email": "admin-1",
-				"login": "admin-1"
+				"disabled": false,
+				"email": "admin2-1",
+				"emailVerified": false,
+				"grafanaAdmin": true,
+				"login": "admin2-1",
+				"name": "",
+				"provisioned": false
 			},
 			{
-				"email": "admin-3",
-				"login": "admin-3"
+				"disabled": false,
+				"email": "admin2-2",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "admin2-2",
+				"name": "",
+				"provisioned": false
 			},
 			{
-				"email": "editor-3",
-				"login": "editor-3"
+				"disabled": false,
+				"email": "editor-2",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "editor-2",
+				"name": "",
+				"provisioned": false
 			},
 			{
-				"email": "viewer-3",
-				"login": "viewer-3"
+				"disabled": false,
+				"email": "viewer-2",
+				"emailVerified": false,
+				"grafanaAdmin": false,
+				"login": "viewer-2",
+				"name": "",
+				"provisioned": false
 			}
 		]`, found)
 	})

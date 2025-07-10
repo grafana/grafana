@@ -5,17 +5,17 @@ import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
-import { t } from '../../utils/i18n';
+import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
 import { Text } from '../Text/Text';
-import { Tooltip } from '../Tooltip';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { HoverWidget } from './HoverWidget';
 import { PanelDescription } from './PanelDescription';
@@ -344,7 +344,10 @@ export function PanelChrome({
     >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
-          <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
+          <LoadingBar
+            width={loadingBarWidth}
+            ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-loading', 'Panel loading bar')}
+          />
         ) : null}
       </div>
 
@@ -362,7 +365,11 @@ export function PanelChrome({
 
           {statusMessage && (
             <div className={styles.errorContainerFloating}>
-              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+              <PanelStatus
+                message={statusMessage}
+                onClick={statusMessageOnClick}
+                ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+              />
             </div>
           )}
         </>
@@ -380,7 +387,11 @@ export function PanelChrome({
         >
           {statusMessage && (
             <div className={dragClassCancel}>
-              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+              <PanelStatus
+                message={statusMessage}
+                onClick={statusMessageOnClick}
+                ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+              />
             </div>
           )}
 

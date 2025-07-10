@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   CollapsableSection,
@@ -14,7 +15,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';
 import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
@@ -282,6 +282,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
+
   const isGrafanaFlavoredAlertmanager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   return useMemo((): SilenceTableColumnProps[] => {
@@ -291,7 +292,7 @@ function useColumns(alertManagerSourceName: string) {
     const columns: SilenceTableColumnProps[] = [
       {
         id: 'state',
-        label: 'State',
+        label: t('alerting.use-columns.columns.label.state', 'State'),
         renderCell: function renderStateTag({ data: { status } }) {
           return <SilenceStateTag state={status.state} />;
         },
@@ -299,7 +300,7 @@ function useColumns(alertManagerSourceName: string) {
       },
       {
         id: 'alert-rule',
-        label: 'Alert rule targeted',
+        label: t('alerting.use-columns.columns.label.alert-rule-targeted', 'Alert rule targeted'),
         renderCell: function renderAlertRuleLink({ data: { metadata } }) {
           return metadata?.rule_title ? (
             <Link
@@ -315,7 +316,7 @@ function useColumns(alertManagerSourceName: string) {
       },
       {
         id: 'matchers',
-        label: 'Matching labels',
+        label: t('alerting.use-columns.columns.label.matching-labels', 'Matching labels'),
         renderCell: function renderMatchers({ data: { matchers } }) {
           const filteredMatchers = matchers?.filter((matcher) => matcher.name !== MATCHER_ALERT_RULE_UID) || [];
           return <Matchers matchers={filteredMatchers} />;
@@ -324,13 +325,13 @@ function useColumns(alertManagerSourceName: string) {
       },
       {
         id: 'alerts',
-        label: 'Alerts silenced',
+        label: t('alerting.use-columns.columns.label.alerts-silenced', 'Alerts silenced'),
         renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
           return (
             <span data-testid="alerts">
               {Array.isArray(silencedAlerts)
                 ? silencedAlerts.length
-                : // eslint-disable-next-line @grafana/no-untranslated-strings
+                : // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                   '-'}
             </span>
           );
@@ -339,7 +340,7 @@ function useColumns(alertManagerSourceName: string) {
       },
       {
         id: 'schedule',
-        label: 'Schedule',
+        label: t('alerting.use-columns.columns.label.schedule', 'Schedule'),
         renderCell: function renderSchedule({ data: { startsAt, endsAt } }) {
           const startsAtDate = dateMath.parse(startsAt);
           const endsAtDate = dateMath.parse(endsAt);
@@ -352,7 +353,7 @@ function useColumns(alertManagerSourceName: string) {
     if (updateSupported) {
       columns.push({
         id: 'actions',
-        label: 'Actions',
+        label: t('alerting.use-columns.label.actions', 'Actions'),
         renderCell: function renderActions({ data: silence }) {
           const isExpired = silence.status.state === SilenceState.Expired;
 

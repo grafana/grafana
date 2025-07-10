@@ -893,6 +893,7 @@
             ]
           },
           "spec": {
+            "description": "Spec is the spec of the Playlist",
             "default": {},
             "allOf": [
               {
@@ -910,11 +911,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "playlist.grafana.app",
-            "kind": "Playlist",
-            "version": "__internal"
-          },
           {
             "group": "playlist.grafana.app",
             "kind": "Playlist",
@@ -977,11 +973,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "playlist.grafana.app",
-            "kind": "PlaylistList",
-            "version": "__internal"
-          },
           {
             "group": "playlist.grafana.app",
             "kind": "PlaylistList",

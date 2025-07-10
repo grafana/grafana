@@ -915,6 +915,55 @@
         }
       ]
     },
+    "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}/children": {
+      "get": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "connect GET requests to children of Folder",
+        "operationId": "getFolderChildren",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "folder.grafana.app",
+          "version": "v1beta1",
+          "kind": "FolderList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the FolderList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/folder.grafana.app/v1beta1/namespaces/{namespace}/folders/{name}/counts": {
       "get": {
         "tags": [
@@ -1046,11 +1095,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "DescendantCounts",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "DescendantCounts",
             "version": "v1beta1"
           }
         ]
@@ -1101,11 +1145,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "Folder",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "Folder",
             "version": "v1beta1"
           }
         ]
@@ -1149,11 +1188,6 @@
           {
             "group": "folder.grafana.app",
             "kind": "FolderAccessInfo",
-            "version": "__internal"
-          },
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderAccessInfo",
             "version": "v1beta1"
           }
         ]
@@ -1193,6 +1227,9 @@
       "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderInfoList": {
         "description": "FolderInfoList returns a list of folder references (parents or children) Unlike FolderList, each item is not a full k8s object",
         "type": "object",
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1227,11 +1264,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderInfoList",
-            "version": "__internal"
-          },
           {
             "group": "folder.grafana.app",
             "kind": "FolderInfoList",
@@ -1275,11 +1307,6 @@
           }
         },
         "x-kubernetes-group-version-kind": [
-          {
-            "group": "folder.grafana.app",
-            "kind": "FolderList",
-            "version": "__internal"
-          },
           {
             "group": "folder.grafana.app",
             "kind": "FolderList",

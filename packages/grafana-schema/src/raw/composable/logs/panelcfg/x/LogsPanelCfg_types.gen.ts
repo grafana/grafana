@@ -15,10 +15,13 @@ export const pluginVersion = "12.1.0-pre";
 export interface Options {
   controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
+  detailsMode?: ('inline' | 'sidebar');
   displayedFields?: Array<string>;
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
+  fontSize?: ('default' | 'small');
   isFilterLabelActive?: unknown;
+  logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
   logRowMenuIconsBefore?: unknown;
   /**
@@ -39,6 +42,7 @@ export interface Options {
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
+  syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
 }
 

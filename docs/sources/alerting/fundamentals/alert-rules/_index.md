@@ -18,11 +18,6 @@ labels:
 title: Alert rules
 weight: 100
 refs:
-  shared-configure-prometheus-data-source-alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure-prometheus-data-source/#alerting
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure-prometheus-data-source/#alerting
   queries-and-conditions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#data-source-queries
@@ -33,14 +28,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#alert-condition
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#alert-condition
-  recorded-queries:
-    - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/
-  notification-images:
+  alert-rule-evaluation:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/rule-evaluation/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/images-in-notifications/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/rule-evaluation/
   notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
@@ -51,80 +43,50 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
-  expression-queries:
+  configure-grafana-alerts:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#advanced-options-expressions
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#advanced-options-expressions
-  alert-rule-evaluation:
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/
+  comparison-ds-grafana-rules:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/rule-evaluation/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/#comparison-with-grafana-managed-rules
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/rule-evaluation/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-data-source-managed-rule/#comparison-with-grafana-managed-rules
 ---
 
 # Alert rules
 
 An alert rule is a set of evaluation criteria for when an alert rule should fire. An alert rule consists of:
 
-- [Queries](ref:queries-and-conditions) that select the dataset to evaluate.
-- An [alert condition](ref:alert-condition) (the threshold) that the query must meet or exceed to trigger the alert instance.
-- An interval that specifies the frequency of [alert rule evaluation](ref:alert-rule-evaluation) and a duration indicating how long the condition must be met to trigger the alert instance.
-- Other customizable options, for example, setting what should happen in the absence of data, notification messages, and more.
+1. [Queries](ref:queries-and-conditions) that select the dataset to evaluate.
+1. An [alert condition](ref:alert-condition) (the threshold) that the query must meet or exceed to trigger the alert instance.
 
-Grafana supports two different alert rule types: Grafana-managed alert rules and data source-managed alert rules.
+   {{< figure src="/media/docs/alerting/alerting-query-conditions-default-options.png" max-width="750px" alt="Alert query using the Prometheus query editor and alert condition" >}}
 
-## Grafana-managed alert rules
+1. An interval that specifies the frequency of [alert rule evaluation](ref:alert-rule-evaluation) and a duration indicating how long the condition must be met to trigger the alert instance.
+1. Other customizable options, including expressions, labels, annotations, error and no data handling, notification routing, and more.
 
-Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alert rules that can act on data from any of the [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule.
+## Alert rule types
 
-{{< figure src="/media/docs/alerting/grafana-managed-alerting-architecture.png" max-width="750px" caption="How Grafana-managed alerting works by default" >}}
+Grafana Alerting inherits the Prometheus Alerting model for defining alert rules and supports two alert rule types:
 
-1. Alert rules are created and stored within Grafana.
-1. Alert rules can query one or more supported data sources.
-1. Alert rules are evaluated by the Alert Rule Evaluation Engine within Grafana.
-1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
+- **Data source-managed alert rules**
 
-### Supported data sources
+  These alert rules can only query Prometheus-based data sources such as Mimir, Loki, and Prometheus. The rules are stored in the data source.
 
-Grafana-managed alert rules can query backend data sources if Grafana Alerting is enabled by specifying `{"backend": true, "alerting": true}` in the `plugin.json` file.
+  Grafana Alerting supports this alert rule type for horizontal scalability with these data sources.
 
-Find the public data sources supporting Alerting in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting).
+- **Grafana-managed alert rules**
 
-## Data source-managed alert rules
+  The recommended alert rule type in Grafana Alerting.
 
-Data source-managed alert rules can only be created using Grafana Mimir or Grafana Loki data sources. Both data source backends can provide high availability and fault tolerance, enabling you to scale your alerting setup.
+  These alert rules can query a wider range of backend data sources, including multiple data sources in a single alert rule. They support expression-based transformations, advanced alert conditions, images in notifications, handling of error and no data states, and [more](ref:comparison-ds-grafana-rules).
 
-{{< figure src="/media/docs/alerting/mimir-managed-alerting-architecture-v2.png" max-width="750px" caption="Mimir-managed alerting architecture" >}}
-
-1. Alert rules are stored within the Mimir or Loki data source.
-1. Alert rules can query only their specific data source.
-1. Alert rules are evaluated by the Alert Rule Evaluation Engine within the data source.
-1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
-
-{{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Comparison between alert rule types
-
-We recommend using Grafana-managed alert rules whenever possible, and opting for data source-managed alert rules when you need to scale your alerting setup.
-
-The table below compares Grafana-managed and data source-managed alert rules.
-
-| <div style="width:200px">Feature</div>                                                                                  | <div style="width:200px">Grafana-managed alert rule</div>                                                         | <div style="width:200px">Data source-managed alert rule                         |
-| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Create alert rules<wbr /> that query [data sources supporting Alerting](#supported-data-sources)                        | Yes                                                                                                               | Only supports creating rules for Mimir and Loki.                                |
-| Mix and match data sources                                                                                              | Yes                                                                                                               | No                                                                              |
-| Add [expressions](ref:expression-queries) to transform<wbr /> your data and set [alert conditions](ref:alert-condition) | Yes                                                                                                               | No                                                                              |
-| Use [images in alert notifications](ref:notification-images)                                                            | Yes                                                                                                               | No                                                                              |
-| Support for [recording rules](#recording-rules)                                                                         | Yes                                                                                                               | Yes                                                                             |
-| Organization                                                                                                            | Organize and manage access with folders                                                                           | Use namespaces                                                                  |
-| Alert rule evaluation and delivery                                                                                      | Alert evaluation is done in Grafana, while delivery can be handled by Grafana or an external Alertmanager.        | Alert rule evaluation and alert delivery are distributed.                       |
-| Scaling                                                                                                                 | Alert rules are stored in the Grafana database, which may experience transient errors. It only scales vertically. | Alert rules are stored within the data source and allow for horizontal scaling. |
+  You can find the supported public data sources in the [Grafana Plugins directory](/grafana/plugins/data-source-plugins/?features=alerting). For step-by-step instructions, see [Configure Grafana-managed alert rules](ref:configure-grafana-alerts).
 
 ## Recording rules
 
 Similar to alert rules, recording rules are evaluated periodically. A recording rule pre-computes frequently used or computationally expensive queries, and saves the results as a new time series metric.
 
-The new recording metric can then be used in alert rules and dashboards to optimize their queries.
-
-For more details, refer to [Create recording rules](ref:create-recording-rules).
+The new recording metric can then be used in alert rules and dashboards to optimize their queries. For further details, refer to [Create recording rules](ref:create-recording-rules).

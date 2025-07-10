@@ -61,7 +61,7 @@ echo "  Date: $(git log -1 --format="%ad" --date=iso "$COMMIT_HASH")"
 
 # Extract original PR number and create link
 PR_NUMBER=$(git log -1 --pretty=format:"%B" "$COMMIT_HASH" | grep -o '#[0-9]\+' | head -n1 | tr -d '#')
-if [ ! -z "$PR_NUMBER" ]; then
+if [ -n "$PR_NUMBER" ]; then
     # Extract PR title (first line of commit message)
     PR_TITLE=$(git log -1 --pretty=format:"%s" "$COMMIT_HASH")
     echo "  PR: #$PR_NUMBER - $PR_TITLE"
@@ -104,7 +104,7 @@ done
 if [ ${#direct_tags[@]} -gt 0 ] || [ ${#included_tags[@]} -gt 0 ]; then
     echo "This commit has been included in these PREVIOUS on-prem releases:"
     # Get all tags sorted
-    all_tags=($(printf "%s\n" "${direct_tags[@]}" "${included_tags[@]}" | sort -V))
+    readarray -t all_tags < <(printf "%s\n" "${direct_tags[@]}" "${included_tags[@]}" | sort -V)
     # Get the first release
     first_release="${all_tags[0]}"
     # Print all tags with annotation for the first release

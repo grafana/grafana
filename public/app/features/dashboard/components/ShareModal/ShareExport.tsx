@@ -1,9 +1,9 @@
 import { saveAs } from 'file-saver';
 import { PureComponent } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { makeExportableV1 } from 'app/features/dashboard-scene/scene/export/exporters';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import {
@@ -17,7 +18,6 @@ import {
   Button,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { CatalogPlugin } from '../types';
@@ -36,7 +36,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
 
   const customLinks = plugin.details?.links?.filter((link) => {
     const customLinksFiltered = ![
-      plugin.url,
+      plugin.details?.repositoryUrl,
       plugin.details?.licenseUrl,
       plugin.details?.documentationUrl,
       plugin.details?.raiseAnIssueUrl,
@@ -47,7 +47,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
     return customLinksFiltered;
   });
   const shouldRenderLinks =
-    plugin.url ||
+    plugin.details?.repositoryUrl ||
     plugin.details?.licenseUrl ||
     plugin.details?.documentationUrl ||
     plugin.details?.raiseAnIssueUrl ||
@@ -105,9 +105,9 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           <>
             <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-regular-links">
               <Stack direction="column" gap={2}>
-                {plugin.url && (
+                {plugin.details?.repositoryUrl && (
                   <LinkButton
-                    href={plugin.url}
+                    href={plugin.details?.repositoryUrl}
                     variant="secondary"
                     fill="solid"
                     icon="code-branch"
@@ -246,7 +246,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                 This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email
                 us at:{' '}
               </Trans>
-              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+              {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
               <TextLink href="mailto:integrations+report-plugin@grafana.com">integrations@grafana.com</TextLink>
             </Text>
             <Text>

@@ -1,8 +1,8 @@
 import { ReactElement } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { ConditionalRendering } from './ConditionalRendering';
 import { ConditionalRenderingKindTypes, ConditionValues, ItemsWithConditionalRendering } from './types';

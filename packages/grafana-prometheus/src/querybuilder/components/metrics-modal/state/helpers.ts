@@ -4,17 +4,13 @@ import { AnyAction } from '@reduxjs/toolkit';
 import { reportInteraction } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../../../datasource';
-import { getMetadataHelp, getMetadataType } from '../../../../language_provider';
+import { PromMetricsMetadata } from '../../../../types';
 import { regexifyLabelValuesQueryString } from '../../../parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
-import { setFilteredMetricCount } from '../MetricsModal';
 import { HaystackDictionary, MetricData, MetricsData, PromFilterOption } from '../types';
 
-import { MetricsModalMetadata, MetricsModalState } from './state';
-
-// const { setFilteredMetricCount } = stateSlice.actions;
-
+import { MetricsModalMetadata, MetricsModalState, setFilteredMetricCount } from './state';
 export async function setMetrics(
   datasource: PrometheusDatasource,
   query: PromVisualQuery,
@@ -23,7 +19,7 @@ export async function setMetrics(
   // metadata is set in the metric select now
   // use this to disable metadata search and display
   let hasMetadata = true;
-  const metadata = datasource.languageProvider.metricsMetadata;
+  const metadata = datasource.languageProvider.retrieveMetricsMetadata();
   if (metadata && Object.keys(metadata).length === 0) {
     hasMetadata = false;
   }
@@ -64,9 +60,9 @@ export async function setMetrics(
  * @returns A MetricData object.
  */
 function buildMetricData(metric: string, datasource: PrometheusDatasource): MetricData {
-  let type = getMetadataType(metric, datasource.languageProvider.metricsMetadata!);
+  let type = getMetadataType(metric, datasource.languageProvider.retrieveMetricsMetadata());
 
-  const description = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata!);
+  const description = getMetadataHelp(metric, datasource.languageProvider.retrieveMetricsMetadata());
 
   ['histogram', 'summary'].forEach((t) => {
     if (description?.toLowerCase().includes(t) && type !== t) {
@@ -87,6 +83,14 @@ function buildMetricData(metric: string, datasource: PrometheusDatasource): Metr
   };
 
   return metricData;
+}
+
+export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  return metadata[metric]?.help;
+}
+
+export function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  return metadata[metric]?.type;
 }
 
 /**

@@ -13,9 +13,9 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { InlineField, Select, Themeable2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 

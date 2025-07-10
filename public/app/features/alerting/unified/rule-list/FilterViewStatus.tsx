@@ -1,5 +1,5 @@
+import { Trans, t } from '@grafana/i18n';
 import { Button, Card, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export type FilterProgressState = 'searching' | 'done' | 'aborted';
 interface FilterStatusProps {

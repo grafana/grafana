@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -30,12 +31,16 @@ type SQLCommand struct {
 	query       string
 	varsToQuery []string
 	refID       string
-	limit       int64
-	format      string
+
+	format string
+
+	inputLimit  int64
+	outputLimit int64
+	timeout     time.Duration
 }
 
 // NewSQLCommand creates a new SQLCommand.
-func NewSQLCommand(refID, format, rawSQL string, limit int64) (*SQLCommand, error) {
+func NewSQLCommand(refID, format, rawSQL string, intputLimit, outputLimit int64, timeout time.Duration) (*SQLCommand, error) {
 	if rawSQL == "" {
 		return nil, ErrMissingSQLQuery
 	}
@@ -63,13 +68,15 @@ func NewSQLCommand(refID, format, rawSQL string, limit int64) (*SQLCommand, erro
 		query:       rawSQL,
 		varsToQuery: tables,
 		refID:       refID,
-		limit:       limit,
+		inputLimit:  intputLimit,
+		outputLimit: outputLimit,
+		timeout:     timeout,
 		format:      format,
 	}, nil
 }
 
 // UnmarshalSQLCommand creates a SQLCommand from Grafana's frontend query.
-func UnmarshalSQLCommand(rn *rawNode, limit int64) (*SQLCommand, error) {
+func UnmarshalSQLCommand(rn *rawNode, cfg *setting.Cfg) (*SQLCommand, error) {
 	if rn.TimeRange == nil {
 		logger.Error("time range must be specified for refID", "refID", rn.RefID)
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
@@ -89,7 +96,7 @@ func UnmarshalSQLCommand(rn *rawNode, limit int64) (*SQLCommand, error) {
 	formatRaw := rn.Query["format"]
 	format, _ := formatRaw.(string)
 
-	return NewSQLCommand(rn.RefID, format, expression, limit)
+	return NewSQLCommand(rn.RefID, format, expression, cfg.SQLExpressionCellLimit, cfg.SQLExpressionOutputCellLimit, cfg.SQLExpressionTimeout)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -98,21 +105,24 @@ func (gr *SQLCommand) NeedsVars() []string {
 	return gr.varsToQuery
 }
 
-// Execute runs the command and returns the results or an error if the command
-// failed to execute.
-func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathExprResult mathexp.Results, resultError error) {
+// Execute runs the command and returns the results if successful.
+// If there is an error, it will set Results.Error and return (the return from the func should never error).
+func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	start := time.Now()
 	tc := int64(0)
+	rsp := mathexp.Results{}
 
 	defer func() {
 		span.End()
+		duration := float64(time.Since(start).Milliseconds())
+
 		statusLabel := "ok"
-		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		if resultError != nil {
+		if rsp.Error != nil {
 			statusLabel = "error"
-			metrics.SqlCommandErrorCount.WithLabelValues().Inc()
 		}
+
+		metrics.SqlCommandCount.WithLabelValues(statusLabel).Inc()
 		metrics.SqlCommandDuration.WithLabelValues(statusLabel).Observe(duration)
 		metrics.SqlCommandCellCount.WithLabelValues(statusLabel).Observe(float64(tc))
 	}()
@@ -131,21 +141,20 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	tc = totalCells(allFrames)
 
 	// limit of 0 or less means no limit (following convention)
-	if gr.limit > 0 && tc > gr.limit {
-		return mathexp.Results{},
-			fmt.Errorf(
-				"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
-				gr.limit,
-				tc,
-			)
+	if gr.inputLimit > 0 && tc > gr.inputLimit {
+		rsp.Error = fmt.Errorf(
+			"SQL expression: total cell count across all input tables exceeds limit of %d. Total cells: %d",
+			gr.inputLimit,
+			tc,
+		)
+		return rsp, nil
 	}
 
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 
 	db := sql.DB{}
-	frame, err := db.QueryFrames(ctx, gr.refID, gr.query, allFrames)
+	frame, err := db.QueryFrames(ctx, tracer, gr.refID, gr.query, allFrames, sql.WithMaxOutputCells(gr.outputLimit), sql.WithTimeout(gr.timeout))
 
-	rsp := mathexp.Results{}
 	if err != nil {
 		logger.Error("Failed to query frames", "error", err.Error())
 		rsp.Error = err

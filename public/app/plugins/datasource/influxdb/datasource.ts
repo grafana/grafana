@@ -47,14 +47,7 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
-import {
-  DEFAULT_POLICY,
-  InfluxOptions,
-  InfluxQuery,
-  InfluxQueryTag,
-  InfluxVariableQuery,
-  InfluxVersion,
-} from './types';
+import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxVariableQuery, InfluxVersion } from './types';
 import { InfluxVariableSupport } from './variables';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
@@ -71,6 +64,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   httpMode: string;
   version?: InfluxVersion;
   isProxyAccess: boolean;
+  showTagTime: string;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -92,6 +86,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const settingsData: InfluxOptions = instanceSettings.jsonData ?? {};
     this.database = settingsData.dbName ?? instanceSettings.database;
     this.interval = settingsData.timeInterval;
+    this.showTagTime = settingsData.showTagTime || '';
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
     this.version = settingsData.version ?? InfluxVersion.InfluxQL;
@@ -206,12 +201,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.version === InfluxVersion.SQL || this.isMigrationToggleOnAndIsAccessProxy()) {
       query = this.applyVariables(query, variables, filters);
       if (query.adhocFilters?.length) {
-        const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
+        query.adhocFilters = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
           asTag.value = this.templateSrv.replace(asTag.value ?? '', variables);
           return asTag;
         });
-        query.tags = [...(query.tags ?? []), ...adhocFiltersToTags];
+        query.tags = [...(query.tags ?? []), ...query.adhocFilters];
       }
     }
 
@@ -353,7 +348,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // we escape it. Otherwise, we return it directly.
     // The regex below searches for regexes within the query string
     const regexMatcher = new RegExp(
-      /\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
+      /(\s*(=|!)~\s*)\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
       'gm'
     );
     // If matches are found this regex is evaluated to check if the variable is contained in the regex /^...$/ (^ and $ is optional)
@@ -448,6 +443,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
+      withTimeFilter: this.showTagTime,
     });
 
     return this.metricFindQuery({ refId: 'get-tag-keys', query });
@@ -459,6 +455,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       templateService: this.templateSrv,
       database: this.database,
       withKey: options.key,
+      withTimeFilter: this.showTagTime,
     });
 
     return this.metricFindQuery({ refId: 'get-tag-values', query });

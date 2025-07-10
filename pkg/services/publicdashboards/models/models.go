@@ -80,16 +80,17 @@ type AnnotationsDto struct {
 }
 
 type AnnotationEvent struct {
-	Id          int64                     `json:"id"`
-	DashboardId int64                     `json:"dashboardId"`
-	PanelId     int64                     `json:"panelId"`
-	Tags        []string                  `json:"tags"`
-	IsRegion    bool                      `json:"isRegion"`
-	Text        string                    `json:"text"`
-	Color       string                    `json:"color"`
-	Time        int64                     `json:"time"`
-	TimeEnd     int64                     `json:"timeEnd"`
-	Source      dashboard.AnnotationQuery `json:"source"`
+	Id           int64                     `json:"id"`
+	DashboardId  int64                     `json:"dashboardId"`
+	DashboardUID string                    `json:"dashboardUID"`
+	PanelId      int64                     `json:"panelId"`
+	Tags         []string                  `json:"tags"`
+	IsRegion     bool                      `json:"isRegion"`
+	Text         string                    `json:"text"`
+	Color        string                    `json:"color"`
+	Time         int64                     `json:"time"`
+	TimeEnd      int64                     `json:"timeEnd"`
+	Source       dashboard.AnnotationQuery `json:"source"`
 }
 
 func (pd PublicDashboard) TableName() string {

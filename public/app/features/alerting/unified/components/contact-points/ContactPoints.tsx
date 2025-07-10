@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Button,
@@ -14,10 +15,9 @@ import {
   Text,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
@@ -196,8 +196,11 @@ const useTabQueryParam = (defaultTab: ActiveTab) => {
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [, showContactPointsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, canViewContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, canCreateContactPoints] = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
   const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+
+  const showContactPointsTab = canViewContactPoints || canCreateContactPoints;
 
   // Depending on permissions, user may not have access to all tabs,
   // but we can default to picking the first one that they definitely _do_ have access to

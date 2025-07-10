@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { RuleFormValues } from '../../../types/rule-form';
 import { isRecordingRuleByType } from '../../../utils/rules';
@@ -14,6 +14,7 @@ interface LabelsFieldInFormProps {
 }
 export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   const { watch } = useFormContext<RuleFormValues>();
+
   const labels = watch('labels');
   const type = watch('type');
 

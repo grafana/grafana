@@ -10,8 +10,8 @@ import {
   TimeZone,
   InternalTimeZones,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
-import { t } from '../../utils/i18n';
 import { Select } from '../Select/Select';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
@@ -86,28 +86,33 @@ interface SelectableZoneGroup extends SelectableValue<string> {
 const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): SelectableZoneGroup[] => {
   const now = Date.now();
 
-  const timeZoneGroups = getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {
-    const options = group.zones.reduce((options: SelectableZone[], zone) => {
-      const info = getTimeZoneInfo(zone, now);
+  const timeZoneGroups = useMemo(() => {
+    return getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {
+      const options = group.zones.reduce((options: SelectableZone[], zone) => {
+        const info = getTimeZoneInfo(zone, now);
 
-      if (!info) {
+        if (!info) {
+          return options;
+        }
+
+        const name = info.name.replace(/_/g, ' ');
+
+        options.push({
+          label: name,
+          value: info.zone,
+          searchIndex: getSearchIndex(name, info, now),
+        });
+
         return options;
-      }
+      }, []);
 
-      options.push({
-        label: info.name,
-        value: info.zone,
-        searchIndex: getSearchIndex(info, now),
-      });
+      return {
+        label: group.name,
+        options,
+      };
+    });
+  }, [includeInternal, now]);
 
-      return options;
-    }, []);
-
-    return {
-      label: group.name,
-      options,
-    };
-  });
   return timeZoneGroups;
 };
 
@@ -159,12 +164,16 @@ const useFilterBySearchIndex = () => {
   }, []);
 };
 
-const getSearchIndex = (info: TimeZoneInfo, timestamp: number): string => {
+const getSearchIndex = (label: string, info: TimeZoneInfo, timestamp: number): string => {
   const parts: string[] = [
-    toLower(info.name),
+    toLower(info.zone),
     toLower(info.abbreviation),
     toLower(formatUtcOffset(timestamp, info.zone)),
   ];
+
+  if (label !== info.zone) {
+    parts.push(toLower(label));
+  }
 
   for (const country of info.countries) {
     parts.push(toLower(country.name));

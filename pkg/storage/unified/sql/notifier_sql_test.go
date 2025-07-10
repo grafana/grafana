@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -209,7 +209,7 @@ func TestPollingNotifier(t *testing.T) {
 		defer close(done)
 
 		testEvent := &historyPollResponse{
-			Key: resource.ResourceKey{
+			Key: resourcepb.ResourceKey{
 				Namespace: "test-ns",
 				Group:     "test-group",
 				Resource:  "test-resource",

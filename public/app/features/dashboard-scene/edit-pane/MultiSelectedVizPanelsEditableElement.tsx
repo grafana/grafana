@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import { t } from '@grafana/i18n';
 import { appEvents } from 'app/core/core';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 

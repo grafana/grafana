@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { contextSrv } from '../../../../core/core';
-import { AccessControlAction } from '../../../../types';
 import { ROUTES } from '../../constants';
 
 const getStyles = (theme: GrafanaTheme2) => ({

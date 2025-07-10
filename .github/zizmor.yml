@@ -21,6 +21,8 @@ rules:
       - pr-frontend-unit-tests.yml
       - pr-test-integration.yml
       - publish-kinds-release.yml
+      - pr-e2e-tests.yml
+      - swagger-gen.yml
   dangerous-triggers:
     ignore:
       - auto-milestone.yml
@@ -29,3 +31,6 @@ rules:
       - pr-commands.yml
       - pr-patch-check-event.yml
       - run-dashboard-search-e2e.yml
+  excessive-permissions:
+    ignore:
+      - release-comms.yml

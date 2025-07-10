@@ -3,11 +3,12 @@ import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, LoadingPlaceholder, Modal, useStyles2, Space } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMonitorResource } from '../../types';
+import { AzureMonitorResource } from '../../types/query';
 import messageFromError from '../../utils/messageFromError';
 
 import AdvancedMulti from './AdvancedMulti';
@@ -173,7 +174,14 @@ const ResourcePicker = ({
     <>
       <Search searchFn={handleSearch} />
       {shouldShowLimitFlag ? (
-        <p className={styles.resultLimit}>Showing first {resourcePickerData.resultLimit} results</p>
+        <p className={styles.resultLimit}>
+          <Trans
+            i18nKey="components.resource-picker.result-limit"
+            values={{ numResults: resourcePickerData.resultLimit }}
+          >
+            Showing first {'{{numResults}}'} results
+          </Trans>
+        </p>
       ) : (
         <Space v={2} />
       )}
@@ -181,9 +189,15 @@ const ResourcePicker = ({
       <table className={styles.table}>
         <thead>
           <tr className={cx(styles.row, styles.header)}>
-            <td className={styles.cell}>Scope</td>
-            <td className={styles.cell}>Type</td>
-            <td className={styles.cell}>Location</td>
+            <td className={styles.cell}>
+              <Trans i18nKey="components.resource-picker.header-scope">Scope</Trans>
+            </td>
+            <td className={styles.cell}>
+              <Trans i18nKey="components.resource-picker.header-type">Type</Trans>
+            </td>
+            <td className={styles.cell}>
+              <Trans i18nKey="components.resource-picker.header-location">Location</Trans>
+            </td>
           </tr>
         </thead>
       </table>
@@ -194,14 +208,14 @@ const ResourcePicker = ({
             {isLoading && (
               <tr className={cx(styles.row)}>
                 <td className={styles.cell}>
-                  <LoadingPlaceholder text={'Loading...'} />
+                  <LoadingPlaceholder text={t('components.resource-picker.text-loading', 'Loading...')} />
                 </td>
               </tr>
             )}
             {!isLoading && rows.length === 0 && (
               <tr className={cx(styles.row)}>
                 <td className={styles.cell} aria-live="polite">
-                  No resources found
+                  <Trans i18nKey="components.resource-picker.text-no-resources">No resources found</Trans>
                 </td>
               </tr>
             )}
@@ -226,7 +240,9 @@ const ResourcePicker = ({
       <footer className={styles.selectionFooter}>
         {selectedRows.length > 0 && (
           <>
-            <h5>Selection</h5>
+            <h5>
+              <Trans i18nKey="components.resource-picker.heading-selection">Selection</Trans>
+            </h5>
 
             <div className={cx(styles.scrollableTable, styles.selectedTableScroller)}>
               <table className={styles.table}>
@@ -264,7 +280,13 @@ const ResourcePicker = ({
         {errorMessage && (
           <>
             <Space v={2} />
-            <Alert severity="error" title="An error occurred while requesting resources from Azure Monitor">
+            <Alert
+              severity="error"
+              title={t(
+                'components.resource-picker.title-error-occurred',
+                'An error occurred while requesting resources from Azure Monitor'
+              )}
+            >
               {errorMessage}
             </Alert>
           </>
@@ -272,14 +294,14 @@ const ResourcePicker = ({
 
         <Modal.ButtonRow>
           <Button onClick={onCancel} variant="secondary" fill="outline">
-            Cancel
+            <Trans i18nKey="components.resource-picker.button-cancel">Cancel</Trans>
           </Button>
           <Button
             disabled={!!errorMessage || !internalSelected.every(isValid)}
             onClick={handleApply}
             data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
           >
-            Apply
+            <Trans i18nKey="components.resource-picker.button-apply">Apply</Trans>
           </Button>
         </Modal.ButtonRow>
       </footer>

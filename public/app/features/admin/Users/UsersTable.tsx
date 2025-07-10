@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
   CellProps,
@@ -16,8 +17,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { Trans, t } from 'app/core/internationalization';
-import { UserDTO } from 'app/types';
+import { UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
 

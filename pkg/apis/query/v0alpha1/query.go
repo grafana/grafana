@@ -3,9 +3,10 @@ package v0alpha1
 import (
 	"net/http"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Generic query request with shared time across all values
@@ -30,11 +31,15 @@ type QueryDataResponse struct {
 // GetResponseCode return the right status code for the response by checking the responses.
 func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	if rsp == nil {
-		return http.StatusBadRequest
+		return http.StatusBadRequest // rsp is nil, so we return a 400
 	}
 	for _, res := range rsp.Responses {
+		if res.Error != nil && res.Status != 0 {
+			return int(res.Status)
+		}
+
 		if res.Error != nil {
-			return http.StatusBadRequest
+			return http.StatusBadRequest // Status is nil but we have an error, so we return a 400
 		}
 	}
 	return http.StatusOK
@@ -55,5 +60,5 @@ type QueryTypeDefinitionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []QueryTypeDefinition `json:"items,omitempty"`
+	Items []QueryTypeDefinition `json:"items"`
 }

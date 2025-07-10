@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -20,7 +20,7 @@ func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 	if err != nil {
 		return nil, err
 	}
-	var specs []model.Spec
+	var specs []model.TimeIntervalSpec
 	err = json.Unmarshal(data, &specs)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval
 		interval := intervals[idx]
 		spec := specs[idx]
 		item := buildTimeInterval(orgID, interval, spec, namespacer)
-		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableFields(&item)) {
+		if selector != nil && !selector.Empty() && !selector.Matches(model.TimeIntervalSelectableFields(&item)) {
 			continue
 		}
 		result.Items = append(result.Items, item)
@@ -44,7 +44,7 @@ func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 	if err != nil {
 		return nil, err
 	}
-	spec := model.Spec{}
+	spec := model.TimeIntervalSpec{}
 	err = json.Unmarshal(data, &spec)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 	return &result, nil
 }
 
-func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.Spec, namespacer request.NamespaceMapper) model.TimeInterval {
+func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
 	i := model.TimeInterval{
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(interval.UID), // TODO This is needed to make PATCH work

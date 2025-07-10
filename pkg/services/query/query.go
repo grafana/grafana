@@ -29,10 +29,12 @@ import (
 )
 
 const (
-	HeaderPluginID       = "X-Plugin-Id"      // can be used for routing
-	HeaderDatasourceUID  = "X-Datasource-Uid" // can be used for routing/ load balancing
-	HeaderDashboardUID   = "X-Dashboard-Uid"  // mainly useful for debugging slow queries
-	HeaderPanelID        = "X-Panel-Id"       // mainly useful for debugging slow queries
+	HeaderPluginID       = "X-Plugin-Id"       // can be used for routing
+	HeaderDatasourceUID  = "X-Datasource-Uid"  // can be used for routing/ load balancing
+	HeaderDashboardUID   = "X-Dashboard-Uid"   // mainly useful for debugging slow queries
+	HeaderPanelID        = "X-Panel-Id"        // mainly useful for debugging slow queries
+	HeaderDashboardTitle = "X-Dashboard-Title" // used for identifying the dashboard with heavy query load
+	HeaderPanelTitle     = "X-Panel-Title"     // used for identifying the panel with heavy query load
 	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
 	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries

@@ -15,8 +15,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestSimpleServer(t *testing.T) {
@@ -78,7 +80,7 @@ func TestSimpleServer(t *testing.T) {
 			}
 		}`)
 
-		key := &ResourceKey{
+		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
 			Namespace: "default",
@@ -86,8 +88,8 @@ func TestSimpleServer(t *testing.T) {
 		}
 
 		// Should be empty when we start
-		all, err := server.List(ctx, &ListRequest{Options: &ListOptions{
-			Key: &ResourceKey{
+		all, err := server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Group:    key.Group,
 				Resource: key.Resource,
 			},
@@ -96,12 +98,12 @@ func TestSimpleServer(t *testing.T) {
 		require.Len(t, all.Items, 0)
 
 		// should return 404 if not found
-		found, err := server.Read(ctx, &ReadRequest{Key: key})
+		found, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.NotNil(t, found.Error)
 		require.Equal(t, int32(http.StatusNotFound), found.Error.Code)
 
-		created, err := server.Create(ctx, &CreateRequest{
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key:   key,
 		})
@@ -110,7 +112,7 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, created.ResourceVersion > 0)
 
 		// The key does not include resource version
-		found, err = server.Read(ctx, &ReadRequest{Key: key})
+		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.Nil(t, found.Error)
 		require.Equal(t, created.ResourceVersion, found.ResourceVersion)
@@ -131,7 +133,7 @@ func TestSimpleServer(t *testing.T) {
 		})
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
-		updated, err := server.Update(ctx, &UpdateRequest{
+		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
@@ -142,7 +144,7 @@ func TestSimpleServer(t *testing.T) {
 		obj.SetLabels(nil)
 		raw, err = json.Marshal(tmp)
 		require.NoError(t, err)
-		updated, err = server.Update(ctx, &UpdateRequest{
+		updated, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
@@ -151,13 +153,13 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, updated.ResourceVersion > created.ResourceVersion)
 
 		// We should still get the latest
-		found, err = server.Read(ctx, &ReadRequest{Key: key})
+		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.Nil(t, found.Error)
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
-		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{
-			Key: &ResourceKey{
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Group:    key.Group,
 				Resource: key.Resource,
 			},
@@ -166,19 +168,19 @@ func TestSimpleServer(t *testing.T) {
 		require.Len(t, all.Items, 1)
 		require.Equal(t, updated.ResourceVersion, all.Items[0].ResourceVersion)
 
-		deleted, err := server.Delete(ctx, &DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
+		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: updated.ResourceVersion})
 		require.NoError(t, err)
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
 
 		// We should get not found status when trying to read the latest value
-		found, err = server.Read(ctx, &ReadRequest{Key: key})
+		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.NotNil(t, found.Error)
 		require.Equal(t, int32(404), found.Error.Code)
 
 		// And the deleted value should not be in the results
-		all, err = server.List(ctx, &ListRequest{Options: &ListOptions{
-			Key: &ResourceKey{
+		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
 				Group:    key.Group,
 				Resource: key.Resource,
 			},
@@ -213,14 +215,14 @@ func TestSimpleServer(t *testing.T) {
 			}
 		}`)
 
-		key := &ResourceKey{
+		key := &resourcepb.ResourceKey{
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
 			Namespace: "default",
 			Name:      "fdgsv37qslr0ga",
 		}
 
-		created, err := server.Create(ctx, &CreateRequest{
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key:   key,
 		})
@@ -228,13 +230,13 @@ func TestSimpleServer(t *testing.T) {
 
 		// Update should return an ErrOptimisticLockingFailed the second time
 
-		_, err = server.Update(ctx, &UpdateRequest{
+		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 
-		_, err = server.Update(ctx, &UpdateRequest{
+		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})

@@ -67,6 +67,7 @@ describe('ErrorBoundary', () => {
 
     await screen.findByText(problem.message);
     expect(renderCount).toBeGreaterThan(0);
+    // eslint-disable-next-line testing-library/render-result-naming-convention
     const oldRenderCount = renderCount;
 
     rerender(

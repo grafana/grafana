@@ -3,11 +3,10 @@ import { FormEvent, HTMLProps, useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { useStyles2, getInputStyles, sharedInputStyle, Tooltip, Icon, Spinner } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
-
-import { Role } from '../../../types';
+import { Role } from 'app/types/accessControl';
 
 import { ValueContainer } from './ValueContainer';
 import { ROLE_PICKER_WIDTH } from './constants';

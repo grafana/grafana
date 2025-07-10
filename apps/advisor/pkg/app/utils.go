@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -31,7 +32,7 @@ func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Che
 	return c, nil
 }
 
-func processCheck(ctx context.Context, log logging.Logger, client resource.Client, obj resource.Object, check checks.Check) error {
+func processCheck(ctx context.Context, log logging.Logger, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
 	status := checks.GetStatusAnnotation(obj)
 	if status != "" {
 		// Check already processed
@@ -42,16 +43,32 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		return fmt.Errorf("invalid object type")
 	}
 	// Get the items to check
+	err := check.Init(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing check: %w", err)
+	}
 	items, err := check.Items(ctx)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
 			return setErr
 		}
-		return fmt.Errorf("error initializing check: %w", err)
+		return fmt.Errorf("error listing items for check: %w", err)
+	}
+	// Get the check type
+	var checkType resource.Object
+	checkType, err = typesClient.Get(ctx, resource.Identifier{
+		Namespace: obj.GetNamespace(),
+		Name:      check.ID(),
+	})
+	if err != nil {
+		return err
 	}
 	// Run the steps
-	steps := check.Steps()
+	steps, err := filterSteps(checkType, check.Steps())
+	if err != nil {
+		return err
+	}
 	failures, err := runStepsInParallel(ctx, log, &c.Spec, steps, items)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -61,24 +78,24 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		return fmt.Errorf("error running steps: %w", err)
 	}
 
-	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
+	report := &advisorv0alpha1.CheckReport{
 		Failures: failures,
 		Count:    int64(len(items)),
 	}
-	err = checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationProcessed)
+	c.Status.Report = *report
+	err = checks.SetStatus(ctx, client, obj, c.Status)
 	if err != nil {
 		return err
 	}
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/status/report",
-			Value:     *report,
-		}},
-	}, resource.PatchOptions{}, obj)
+	// Set the status annotation to processed and annotate the steps ignored
+	annotations := checks.AddAnnotations(ctx, obj, map[string]string{
+		checks.StatusAnnotation:          checks.StatusAnnotationProcessed,
+		checks.IgnoreStepsAnnotationList: checkType.GetAnnotations()[checks.IgnoreStepsAnnotationList],
+	})
+	return checks.SetAnnotations(ctx, client, obj, annotations)
 }
 
-func processCheckRetry(ctx context.Context, log logging.Logger, client resource.Client, obj resource.Object, check checks.Check) error {
+func processCheckRetry(ctx context.Context, log logging.Logger, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
 	status := checks.GetStatusAnnotation(obj)
 	if status == "" || status == checks.StatusAnnotationError {
 		// Check not processed yet or errored
@@ -95,26 +112,45 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		return fmt.Errorf("invalid object type")
 	}
 	// Get the items to check
+	err := check.Init(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing check: %w", err)
+	}
+	failures := []advisorv0alpha1.CheckReportFailure{}
 	item, err := check.Item(ctx, itemToRetry)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
 			return setErr
 		}
-		return fmt.Errorf("error initializing check: %w", err)
+		return fmt.Errorf("error getting item for check: %w", err)
 	}
-	// Run the steps
-	steps := check.Steps()
-	failures, err := runStepsInParallel(ctx, log, &c.Spec, steps, []any{item})
-	if err != nil {
-		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
-		if setErr != nil {
-			return setErr
+	if item != nil {
+		// Get the check type
+		var checkType resource.Object
+		checkType, err = typesClient.Get(ctx, resource.Identifier{
+			Namespace: obj.GetNamespace(),
+			Name:      check.ID(),
+		})
+		if err != nil {
+			return err
 		}
-		return fmt.Errorf("error running steps: %w", err)
+		// Run the steps
+		steps, err := filterSteps(checkType, check.Steps())
+		if err != nil {
+			return err
+		}
+		failures, err = runStepsInParallel(ctx, log, &c.Spec, steps, []any{item})
+		if err != nil {
+			setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
+			if setErr != nil {
+				return setErr
+			}
+			return fmt.Errorf("error running steps: %w", err)
+		}
 	}
 	// Pull failures from the report for the items to retry
-	c.CheckStatus.Report.Failures = slices.DeleteFunc(c.CheckStatus.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
+	c.Status.Report.Failures = slices.DeleteFunc(c.Status.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
 		if f.ItemID == itemToRetry {
 			for _, newFailure := range failures {
 				if newFailure.StepID == f.StepID {
@@ -128,20 +164,13 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		// Failure not in the list of items to retry, keep it
 		return false
 	})
+	err = checks.SetStatus(ctx, client, obj, c.Status)
+	if err != nil {
+		return err
+	}
 	// Delete the retry annotation to mark the check as processed
-	annotations := obj.GetAnnotations()
-	delete(annotations, checks.RetryAnnotation)
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/status/report",
-			Value:     c.CheckStatus.Report,
-		}, {
-			Operation: resource.PatchOpAdd,
-			Path:      "/metadata/annotations",
-			Value:     annotations,
-		}},
-	}, resource.PatchOptions{}, obj)
+	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
+	return checks.SetAnnotations(ctx, client, obj, annotations)
 }
 
 func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportFailure, error) {
@@ -159,12 +188,12 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 			go func(step checks.Step, item any) {
 				defer wg.Done()
 				defer func() { <-limit }()
-				var stepErr *advisorv0alpha1.CheckReportFailure
+				var stepErr []advisorv0alpha1.CheckReportFailure
 				var err error
 				func() {
 					defer func() {
 						if r := recover(); r != nil {
-							err = fmt.Errorf("panic recovered in step %s: %v", step.ID(), r)
+							log.Error("panic recovered in step", "step", step.ID(), "error", r, "item", item)
 						}
 					}()
 					logger := log.With("step", step.ID())
@@ -176,12 +205,27 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 					internalErr = fmt.Errorf("error running step %s: %w", step.ID(), err)
 					return
 				}
-				if stepErr != nil {
-					reportFailures = append(reportFailures, *stepErr)
+				if len(stepErr) > 0 {
+					reportFailures = append(reportFailures, stepErr...)
 				}
 			}(step, item)
 		}
 	}
 	wg.Wait()
 	return reportFailures, internalErr
+}
+
+func filterSteps(checkType resource.Object, steps []checks.Step) ([]checks.Step, error) {
+	ignoreStepsList := checkType.GetAnnotations()[checks.IgnoreStepsAnnotationList]
+	if ignoreStepsList != "" {
+		filteredSteps := []checks.Step{}
+		ignoreStepsList := strings.Split(ignoreStepsList, ",")
+		for _, step := range steps {
+			if !slices.Contains(ignoreStepsList, step.ID()) {
+				filteredSteps = append(filteredSteps, step)
+			}
+		}
+		return filteredSteps, nil
+	}
+	return steps, nil
 }

@@ -21,7 +21,8 @@ title: 'Preferences API'
 Keys:
 
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
-- **homeDashboardId** - The numerical `:id` of a favorited dashboard, default: `0`
+- **homeDashboardId** - Deprecated. Use `homeDashboardUID` instead.
+- **homeDashboardUID**: The `:uid` of a dashboard
 - **timezone** - One of: `utc`, `browser`, or an empty string for the default
 
 Omitting a key will cause the current value to be replaced with the
@@ -139,6 +140,7 @@ Content-Type: application/json
 {
     "theme": "",
     "homeDashboardId": 0,
+    "homeDashboardUID": "",
     "timezone": "",
     "weekStart": "",
     "navbar": {

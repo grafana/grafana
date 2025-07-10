@@ -45,5 +45,5 @@ type DataSourceApiServerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []DataSourceApiServer `json:"items,omitempty"`
+	Items []DataSourceApiServer `json:"items"`
 }

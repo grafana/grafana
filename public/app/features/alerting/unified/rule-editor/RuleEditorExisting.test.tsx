@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
@@ -95,7 +95,7 @@ describe('RuleEditor grafana managed rules', () => {
     expect(nameInput).toHaveValue(grafanaRulerRule.grafana_alert.title);
     //check that folder is in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
-    expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations[Annotation.summary]);
+    expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations?.[Annotation.summary]);
     expect(screen.getByText('New folder')).toBeInTheDocument();
 
     //check that slashed folders are not in the list

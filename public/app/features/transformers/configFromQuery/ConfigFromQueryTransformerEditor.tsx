@@ -9,8 +9,8 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';

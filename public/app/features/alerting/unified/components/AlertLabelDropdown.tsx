@@ -3,8 +3,8 @@ import { FC, forwardRef } from 'react';
 import { GroupBase, OptionsOrGroups, createFilter } from 'react-select';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Field, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;

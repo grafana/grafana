@@ -11,9 +11,9 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { Badge, Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { categoriesLabels } from 'app/features/transformers/utils';
 
@@ -146,6 +146,7 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
       columnGap: '27px',
       rowGap: '16px',
       width: '100%',
+      paddingBottom: theme.spacing(1),
     }),
     searchInput: css({
       flexGrow: '1',
@@ -208,10 +209,24 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
             key={transform.id}
           >
             <Card.Heading className={styles.heading}>
-              <span>{transform.name}</span>
-              <span className={styles.pluginStateInfoWrapper}>
-                <PluginStateInfo state={transform.state} />
-              </span>
+              <div className={styles.titleRow}>
+                <span>{transform.name}</span>
+                <span className={styles.pluginStateInfoWrapper}>
+                  <PluginStateInfo state={transform.state} />
+                </span>
+              </div>
+              {transform.tags && transform.tags.size > 0 && (
+                <div className={styles.tagsWrapper}>
+                  {Array.from(transform.tags).map((tag) => (
+                    <Badge
+                      color="darkgrey"
+                      icon="tag-alt"
+                      key={tag}
+                      text={t('transformers.tag', '{{ tag }}', { tag })}
+                    />
+                  ))}
+                </div>
+              )}
             </Card.Heading>
             <Card.Description className={styles.description}>
               <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
@@ -242,10 +257,17 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
       '> button': {
         width: '100%',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'nowrap',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: theme.spacing(1),
       },
+    }),
+    titleRow: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexWrap: 'nowrap',
+      width: '100%',
     }),
     description: css({
       fontSize: '12px',
@@ -255,19 +277,19 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     }),
     image: css({
       display: 'block',
-      maxEidth: '100%`',
-      marginTop: `${theme.spacing(2)}`,
+      maxWidth: '100%',
+      marginTop: theme.spacing(2),
     }),
     grid: css({
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
       gridAutoRows: '1fr',
-      gap: `${theme.spacing(2)} ${theme.spacing(1)}`,
+      gap: theme.spacing(1),
       width: '100%',
+      padding: `${theme.spacing(1)} 0`,
     }),
     cardDisabled: css({
-      backgroundColor: 'rgb(204, 204, 220, 0.045)',
-      color: `${theme.colors.text.disabled} !important`,
+      backgroundColor: theme.colors.action.disabledBackground,
       img: {
         filter: 'grayscale(100%)',
         opacity: 0.33,
@@ -275,21 +297,27 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     }),
     cardApplicableInfo: css({
       position: 'absolute',
-      bottom: `${theme.spacing(1)}`,
-      right: `${theme.spacing(1)}`,
+      bottom: theme.spacing(1),
+      right: theme.spacing(1),
     }),
     newCard: css({
       gridTemplateRows: 'min-content 0 1fr 0',
+      marginBottom: 0,
     }),
     pluginStateInfoWrapper: css({
-      marginLeft: '5px',
+      marginLeft: theme.spacing(0.5),
+    }),
+    tagsWrapper: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.spacing(0.5),
     }),
   };
 }
 
 const getImagePath = (id: string, disabled: boolean) => {
   const folder = config.theme2.isDark ? 'dark' : 'light';
-  return `public/img/transformations/${folder}/${id}.svg`;
+  return `public/build/img/transformations/${folder}/${id}.svg`;
 };
 
 const TransformationDescriptionOverrides: { [key: string]: string } = {

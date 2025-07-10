@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { t } from '@grafana/i18n';
 import { ConfirmModal, IconButton } from '@grafana/ui';
-import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning';
-import { t } from 'app/core/internationalization';
+import { useDeleteRepositoryMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 interface Props {
   name: string;

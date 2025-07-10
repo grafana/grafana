@@ -17,7 +17,7 @@ import (
 )
 
 func TestNewCommand(t *testing.T) {
-	cmd, err := NewSQLCommand("a", "", "select a from foo, bar", 0)
+	cmd, err := NewSQLCommand("a", "", "select a from foo, bar", 0, 0, 0)
 	if err != nil && strings.Contains(err.Error(), "feature is not enabled") {
 		return
 	}
@@ -125,7 +125,7 @@ func TestSQLCommandCellLimits(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cmd, err := NewSQLCommand("a", "", "select a from foo, bar", tt.limit)
+			cmd, err := NewSQLCommand("a", "", "select a from foo, bar", tt.limit, 0, 0)
 			require.NoError(t, err, "Failed to create SQL command")
 
 			vars := mathexp.Vars{}
@@ -136,11 +136,11 @@ func TestSQLCommandCellLimits(t *testing.T) {
 				}
 			}
 
-			_, err = cmd.Execute(context.Background(), time.Now(), vars, &testTracer{}, metrics.NewTestMetrics())
+			res, _ := cmd.Execute(context.Background(), time.Now(), vars, &testTracer{}, metrics.NewTestMetrics())
 
 			if tt.expectError {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.errorContains)
+				require.Error(t, res.Error)
+				require.ErrorContains(t, res.Error, tt.errorContains)
 			} else {
 				require.NoError(t, err)
 			}
@@ -153,7 +153,7 @@ func TestSQLCommandMetrics(t *testing.T) {
 	m := metrics.NewTestMetrics()
 
 	// Create a command
-	cmd, err := NewSQLCommand("A", "someformat", "select * from foo", 0)
+	cmd, err := NewSQLCommand("A", "someformat", "select * from foo", 0, 0, 0)
 	require.NoError(t, err)
 
 	// Execute successful command
@@ -161,7 +161,7 @@ func TestSQLCommandMetrics(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify error count was not incremented
-	require.Equal(t, 0, testutil.CollectAndCount(m.SqlCommandErrorCount), "Expected error metric not to be recorded")
+	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandCount), "Expected error metric not to be recorded")
 
 	// Verify duration was recorded
 	require.Equal(t, 1, testutil.CollectAndCount(m.SqlCommandDuration), "Expected duration metric to be recorded")

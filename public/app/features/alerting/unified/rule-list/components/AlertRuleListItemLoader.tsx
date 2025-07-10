@@ -1,6 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n';
 import { GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import { stringifyErrorLike } from '../../utils/misc';
@@ -17,6 +17,7 @@ export function AlertRuleListItemSkeleton() {
       description={<Skeleton width={256} />}
       actions={<RuleActionsSkeleton />}
       data-testid="alert-rule-list-item-loader"
+      aria-disabled={true}
     />
   );
 }

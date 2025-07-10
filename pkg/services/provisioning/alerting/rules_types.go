@@ -203,12 +203,13 @@ func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
 }
 
 type NotificationSettingsV1 struct {
-	Receiver          values.StringValue   `json:"receiver" yaml:"receiver"`
-	GroupBy           []values.StringValue `json:"group_by,omitempty" yaml:"group_by"`
-	GroupWait         values.StringValue   `json:"group_wait,omitempty" yaml:"group_wait"`
-	GroupInterval     values.StringValue   `json:"group_interval,omitempty" yaml:"group_interval"`
-	RepeatInterval    values.StringValue   `json:"repeat_interval,omitempty" yaml:"repeat_interval"`
-	MuteTimeIntervals []values.StringValue `json:"mute_time_intervals,omitempty" yaml:"mute_time_intervals"`
+	Receiver            values.StringValue   `json:"receiver" yaml:"receiver"`
+	GroupBy             []values.StringValue `json:"group_by,omitempty" yaml:"group_by"`
+	GroupWait           values.StringValue   `json:"group_wait,omitempty" yaml:"group_wait"`
+	GroupInterval       values.StringValue   `json:"group_interval,omitempty" yaml:"group_interval"`
+	RepeatInterval      values.StringValue   `json:"repeat_interval,omitempty" yaml:"repeat_interval"`
+	MuteTimeIntervals   []values.StringValue `json:"mute_time_intervals,omitempty" yaml:"mute_time_intervals"`
+	ActiveTimeIntervals []values.StringValue `json:"active_time_intervals,omitempty" yaml:"active_time_intervals"`
 }
 
 func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, error) {
@@ -259,14 +260,25 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 			mute = append(mute, value.Value())
 		}
 	}
+	var active []string
+	if len(nsV1.ActiveTimeIntervals) > 0 {
+		active = make([]string, 0, len(nsV1.ActiveTimeIntervals))
+		for _, value := range nsV1.ActiveTimeIntervals {
+			if value.Value() == "" {
+				continue
+			}
+			active = append(active, value.Value())
+		}
+	}
 
 	return models.NotificationSettings{
-		Receiver:          nsV1.Receiver.Value(),
-		GroupBy:           groupBy,
-		GroupWait:         gw,
-		GroupInterval:     gi,
-		RepeatInterval:    ri,
-		MuteTimeIntervals: mute,
+		Receiver:            nsV1.Receiver.Value(),
+		GroupBy:             groupBy,
+		GroupWait:           gw,
+		GroupInterval:       gi,
+		RepeatInterval:      ri,
+		MuteTimeIntervals:   mute,
+		ActiveTimeIntervals: active,
 	}, nil
 }
 

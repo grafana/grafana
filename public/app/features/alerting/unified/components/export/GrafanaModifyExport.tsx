@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { RuleIdentifier } from '../../../../../types/unified-alerting';
 import { useRuleWithLocation } from '../../hooks/useCombinedRule';
@@ -95,7 +95,7 @@ function GrafanaModifyExportPage() {
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
-        text: 'Modify export',
+        text: t('alerting.grafana-modify-export-page.text.modify-export', 'Modify export'),
         subTitle:
           'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
       }}

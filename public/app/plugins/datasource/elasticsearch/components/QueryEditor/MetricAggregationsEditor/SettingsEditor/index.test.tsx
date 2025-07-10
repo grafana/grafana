@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { getDefaultTimeRange } from '@grafana/data';
+import { ElasticsearchDataQuery } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
 import { ElasticDatasource } from '../../../../datasource';
-import { ElasticsearchQuery } from '../../../../types';
 import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
 
 import { SettingsEditor } from '.';
@@ -13,7 +13,7 @@ describe('Settings Editor', () => {
     it('Should correctly render the settings editor and trigger correct state changes', () => {
       const metricId = '1';
       const initialSize = '500';
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         query: '',
         metrics: [
@@ -88,7 +88,7 @@ describe('Settings Editor', () => {
   describe('Rate aggregation', () => {
     it('should render correct settings', () => {
       const metricId = '1';
-      const query: ElasticsearchQuery = {
+      const query: ElasticsearchDataQuery = {
         refId: 'A',
         query: '',
         metrics: [

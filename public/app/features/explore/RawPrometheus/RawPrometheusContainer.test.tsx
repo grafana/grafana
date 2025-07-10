@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 
 import { FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { TABLE_RESULTS_STYLE } from 'app/types';
+import { TABLE_RESULTS_STYLE } from 'app/types/explore';
 
 import { RawPrometheusContainer } from './RawPrometheusContainer';
 

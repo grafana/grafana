@@ -8,8 +8,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineFieldRow } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';

@@ -2,9 +2,9 @@ import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
 import { TextArea } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { VariableLegend } from '../components/VariableLegend';
@@ -46,9 +46,9 @@ export function CustomVariableForm({
       </VariableLegend>
 
       <VariableTextAreaField
-        name="Values separated by comma"
+        name={t('dashboard-scene.custom-variable-form.name-values-separated-comma', 'Values separated by comma')}
         defaultValue={query}
-        // eslint-disable-next-line @grafana/no-untranslated-strings
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
         onBlur={onQueryChange}
         required

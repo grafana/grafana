@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal, ModalProps } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { stringifyErrorLike } from '../../../utils/misc';
 
@@ -90,21 +90,23 @@ export const useDeleteContactPointModal = (
 interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
   error: unknown;
 }
-const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => (
-  <Modal
-    isOpen={isOpen}
-    onDismiss={onDismiss}
-    closeOnBackdropClick={true}
-    closeOnEscape={true}
-    title={t('alerting.error-modal.title-something-went-wrong', 'Something went wrong')}
-  >
-    <p>
-      <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">
-        Failed to update your configuration:
-      </Trans>
-    </p>
-    <pre>
-      <code>{stringifyErrorLike(error)}</code>
-    </pre>
-  </Modal>
-);
+const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onDismiss={onDismiss}
+      closeOnBackdropClick={true}
+      closeOnEscape={true}
+      title={t('alerting.error-modal.title-something-went-wrong', 'Something went wrong')}
+    >
+      <p>
+        <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">
+          Failed to update your configuration:
+        </Trans>
+      </p>
+      <pre>
+        <code>{stringifyErrorLike(error)}</code>
+      </pre>
+    </Modal>
+  );
+};

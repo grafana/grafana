@@ -5,10 +5,10 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { IconName } from '../../types/icon';
-import { getTagColor, getTagColorsFromName } from '../../utils';
 import { SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
+import { getTagColor, getTagColorsFromName } from '../../utils/tags';
 import { Icon } from '../Icon/Icon';
 
 /**

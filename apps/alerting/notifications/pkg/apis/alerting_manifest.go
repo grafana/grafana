@@ -6,9 +6,12 @@
 package apis
 
 import (
-	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
+
+	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 )
 
 var appManifestData = app.ManifestData{
@@ -70,16 +73,24 @@ var appManifestData = app.ManifestData{
 	},
 }
 
-func jsonToMap(j string) map[string]any {
-	m := make(map[string]any)
-	json.Unmarshal([]byte(j), &j)
-	return m
-}
-
 func LocalManifest() app.Manifest {
 	return app.NewEmbeddedManifest(appManifestData)
 }
 
 func RemoteManifest() app.Manifest {
 	return app.NewAPIServerManifest("alerting")
+}
+
+var kindVersionToGoType = map[string]resource.Kind{
+	"Receiver/v0alpha1":      v0alpha1.ReceiverKind(),
+	"RoutingTree/v0alpha1":   v0alpha1.RoutingTreeKind(),
+	"TemplateGroup/v0alpha1": v0alpha1.TemplateGroupKind(),
+	"TimeInterval/v0alpha1":  v0alpha1.TimeIntervalKind(),
+}
+
+// ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
+// If there is no association for the provided Kind and Version, exists will return false.
+func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exists bool) {
+	goType, exists = kindVersionToGoType[fmt.Sprintf("%s/%s", kind, version)]
+	return goType, exists
 }

@@ -1,66 +1,40 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { Property } from 'csstype';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
-import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes';
-import { clearLinkButtonStyles } from '../../../Button';
-import { DataLinksContextMenu } from '../../../DataLinks/DataLinksContextMenu';
+import { useStyles2 } from '../../../../themes/ThemeContext';
+import { renderSingleLink } from '../../DataLinksActionsTooltip';
+import { TableCellOptions, TableCellDisplayMode } from '../../types';
+import { useSingleLink } from '../hooks';
 import { AutoCellProps } from '../types';
-import { getCellLinks } from '../utils';
 
 export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions }: AutoCellProps) {
   const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
-  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
-  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+  const link = useSingleLink(field, rowIdx);
 
   return (
     <div className={styles.cell}>
-      {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
-          {(api) => {
-            if (api.openMenu) {
-              return (
-                <button
-                  className={cx(clearButtonStyle, getLinkStyle(styles, cellOptions, api.targetClassName))}
-                  onClick={api.openMenu}
-                >
-                  {formattedValue}
-                </button>
-              );
-            } else {
-              return <div className={getLinkStyle(styles, cellOptions, api.targetClassName)}>{formattedValue}</div>;
-            }
-          }}
-        </DataLinksContextMenu>
-      ) : (
-        formattedValue
-      )}
+      {link == null ? formattedValue : renderSingleLink(link, formattedValue, getLinkStyle(styles, cellOptions))}
     </div>
   );
 }
 
-const getLinkStyle = (
-  styles: ReturnType<typeof getStyles>,
-  cellOptions: TableCellOptions,
-  targetClassName: string | undefined
-) => {
+const getLinkStyle = (styles: ReturnType<typeof getStyles>, cellOptions: TableCellOptions) => {
   if (cellOptions.type === TableCellDisplayMode.Auto) {
-    return cx(styles.linkCell, targetClassName);
+    return styles.linkCell;
   }
 
-  return cx(styles.cellLinkForColoredCell, targetClassName);
+  return styles.cellLinkForColoredCell;
 };
 
 const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
   cell: css({
     display: 'flex',
     justifyContent: justifyContent,
-
     a: {
       color: 'inherit',
     },
@@ -80,12 +54,9 @@ const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent
     textOverflow: 'ellipsis',
     userSelect: 'text',
     whiteSpace: 'nowrap',
-    color: theme.colors.text.link,
+    color: `${theme.colors.text.link} !important`,
     fontWeight: theme.typography.fontWeightMedium,
     paddingRight: theme.spacing(1.5),
-    a: {
-      color: theme.colors.text.link,
-    },
     '&:hover': {
       textDecoration: 'underline',
       color: theme.colors.text.link,

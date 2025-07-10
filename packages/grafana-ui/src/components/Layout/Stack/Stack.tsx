@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
-import { useStyles2 } from '../../../themes';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { AlignItems, Direction, FlexProps, JustifyContent, Wrap } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 import { getSizeStyles, SizeProps } from '../utils/styles';

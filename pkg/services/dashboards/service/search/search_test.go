@@ -3,37 +3,39 @@ package dashboardsearch
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 // regression test - parsing int32 values from search results was causing a panic
 func TestParseResults(t *testing.T) {
 	t.Run("should parse results", func(t *testing.T) {
-		resSearchResp := &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		resSearchResp := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: search.DASHBOARD_ERRORS_LAST_1_DAYS,
-						Type: resource.ResourceTableColumnDefinition_INT64,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 					{
 						Name: search.DASHBOARD_LINK_COUNT,
-						Type: resource.ResourceTableColumnDefinition_INT32,
+						Type: resourcepb.ResourceTableColumnDefinition_INT32,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},
@@ -54,33 +56,33 @@ func TestParseResults(t *testing.T) {
 	})
 
 	t.Run("should return error when trying to parse results with mismatch length between Columns and row Cells", func(t *testing.T) {
-		resSearchResp := &resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
+		resSearchResp := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{
 						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
+						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
 					{
 						Name: search.DASHBOARD_ERRORS_LAST_1_DAYS,
-						Type: resource.ResourceTableColumnDefinition_INT64,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 					{
 						Name: search.DASHBOARD_LINK_COUNT,
-						Type: resource.ResourceTableColumnDefinition_INT32,
+						Type: resourcepb.ResourceTableColumnDefinition_INT32,
 					},
 					{
 						Name: resource.SEARCH_FIELD_LEGACY_ID,
-						Type: resource.ResourceTableColumnDefinition_INT64,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
 					},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key: &resource.ResourceKey{
+						Key: &resourcepb.ResourceKey{
 							Name:     "uid",
 							Resource: "dashboard",
 						},

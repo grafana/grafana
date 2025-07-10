@@ -1,7 +1,7 @@
 import { TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
 import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEmbed';
 import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 

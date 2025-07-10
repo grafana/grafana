@@ -18,6 +18,7 @@ type RepositorySpecApplyConfiguration struct {
 	Type        *provisioningv0alpha1.RepositoryType      `json:"type,omitempty"`
 	Local       *LocalRepositoryConfigApplyConfiguration  `json:"local,omitempty"`
 	GitHub      *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
+	Git         *GitRepositoryConfigApplyConfiguration    `json:"git,omitempty"`
 }
 
 // RepositorySpecApplyConfiguration constructs a declarative configuration of the RepositorySpec type for use with
@@ -81,5 +82,13 @@ func (b *RepositorySpecApplyConfiguration) WithLocal(value *LocalRepositoryConfi
 // If called multiple times, the GitHub field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithGitHub(value *GitHubRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.GitHub = value
+	return b
+}
+
+// WithGit sets the Git field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Git field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithGit(value *GitRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Git = value
 	return b
 }

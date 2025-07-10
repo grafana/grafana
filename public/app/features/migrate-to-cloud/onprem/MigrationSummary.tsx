@@ -1,5 +1,5 @@
+import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Switch, Space, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { GetSessionApiResponse, GetSnapshotResponseDto } from '../api';

@@ -1,7 +1,7 @@
 import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
 import { useMemo, useRef, useState } from 'react';
 
-import { measureText } from '../../utils';
+import { measureText } from '../../utils/measureText';
 
 import {
   MENU_ITEM_FONT_SIZE,

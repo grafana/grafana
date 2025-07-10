@@ -1,3 +1,314 @@
+<!-- 12.0.2 START -->
+
+# 12.0.2 (2025-06-17)
+
+### Features and enhancements
+
+- **Dependencies:** Bump Go to v1.24.4 [#106565](https://github.com/grafana/grafana/pull/106565), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga to v1.8.13 to address CVE-2025-48371 [#106116](https://github.com/grafana/grafana/pull/106116), [@macabu](https://github.com/macabu)
+- **Storage:** Take `migration_locking` setting into account [#105951](https://github.com/grafana/grafana/pull/105951), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+
+### Bug fixes
+
+- **Alerting:** Fix $value type when single data source is queried [#106101](https://github.com/grafana/grafana/pull/106101), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **Alerting:** Fix group-level labels and query_offset in the import API [#106392](https://github.com/grafana/grafana/pull/106392), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **Azure:** Fix Application Insights metadata requests [#105838](https://github.com/grafana/grafana/pull/105838), [@aangelisc](https://github.com/aangelisc)
+- **Org:** Fix org deletion [#106461](https://github.com/grafana/grafana/pull/106461), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+- **Security:** Fixes CVE-2025-3415
+
+<!-- 12.0.2 END -->
+<!-- 11.6.3 START -->
+
+# 11.6.3 (2025-06-17)
+
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
+
+<!-- 11.6.3 END -->
+<!-- 11.5.6 START -->
+
+# 11.5.6 (2025-06-17)
+
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
+
+<!-- 11.5.6 END -->
+<!-- 11.4.6 START -->
+
+# 11.4.6 (2025-06-17)
+
+### Features and enhancements
+
+- **Dependencies:** Bump Go to v1.24.4 [#106569](https://github.com/grafana/grafana/pull/106569), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga to v1.8.13 to address CVE-2025-48371 [#106119](https://github.com/grafana/grafana/pull/106119), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
+
+<!-- 11.4.6 END -->
+<!-- 11.3.8 START -->
+
+# 11.3.8 (2025-06-17)
+
+### Features and enhancements
+
+- **Dependencies:** Bump Go to v1.24.4 [#106571](https://github.com/grafana/grafana/pull/106571), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga to v1.8.13 to address CVE-2025-48371 [#106120](https://github.com/grafana/grafana/pull/106120), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Security:** Fixes CVE-2025-3415
+
+<!-- 11.3.8 END -->
+<!-- 12.0.1+security-01 START -->
+
+# 12.0.1+security-01 (2025-06-13)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 12.0.1+security-01 END -->
+<!-- 11.6.2+security-01 START -->
+
+# 11.6.2+security-01 (2025-06-13)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.6.2+security-01 END -->
+<!-- 11.5.5+security-01 START -->
+
+# 11.5.5+security-01 (2025-06-13)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.5.5+security-01 END -->
+<!-- 11.4.5+security-01 START -->
+
+# 11.4.5+security-01 (2025-06-12)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.4.5+security-01 END -->
+<!-- 11.3.7+security-01 START -->
+
+# 11.3.7+security-01 (2025-06-12)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.3.7+security-01 END -->
+<!-- 11.2.10+security-01 START -->
+
+# 11.2.10+security-01 (2025-06-12)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 11.2.10+security-01 END -->
+<!-- 10.4.19+security-01 START -->
+
+# 10.4.19+security-01 (2025-06-12)
+
+### Bug fixes
+
+- **Security:** Fixed CVE-2025-3415
+
+<!-- 10.4.19+security-01 END -->
+<!-- 12.0.1 START -->
+
+# 12.0.1 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105101](https://github.com/grafana/grafana/pull/105101), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.6 to v1.8.12 [#105368](https://github.com/grafana/grafana/pull/105368), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.126.0 to v0.132.0 [#105249](https://github.com/grafana/grafana/pull/105249), [@macabu](https://github.com/macabu)
+- **K8s:** Dashboards: Add fine grained access control checks to /apis [#104419](https://github.com/grafana/grafana/pull/104419), [@stephaniehingtgen](https://github.com/stephaniehingtgen)
+
+### Bug fixes
+
+- **Dashboard:** Fix Panel Explore link subpath duplication (#104952) [#105056](https://github.com/grafana/grafana/pull/105056), [@axelavargas](https://github.com/axelavargas)
+- **Dashboard:** Fixes issue with row repeats and first row [#104469](https://github.com/grafana/grafana/pull/104469), [@torkelo](https://github.com/torkelo)
+- **Graphite:** Ensure template variables are interpolated correctly [#105389](https://github.com/grafana/grafana/pull/105389), [@aangelisc](https://github.com/aangelisc)
+- **Graphite:** Fix Graphite series interpolation [#104516](https://github.com/grafana/grafana/pull/104516), [@aangelisc](https://github.com/aangelisc)
+- **InfluxDB:** Fix nested variable interpolation [#104176](https://github.com/grafana/grafana/pull/104176), [@aangelisc](https://github.com/aangelisc)
+- **MetricsDrilldown:** Restore link to Metrics Drilldown from Explore [#104073](https://github.com/grafana/grafana/pull/104073), [@NWRichmond](https://github.com/NWRichmond)
+- **NestedFolderPicker:** Fix scroll jumps back to top [#105769](https://github.com/grafana/grafana/pull/105769), [@samsch](https://github.com/samsch)
+- **Preferences:** Disable the save button whilst saving preferences [#105612](https://github.com/grafana/grafana/pull/105612), [@ashharrison90](https://github.com/ashharrison90)
+- **Prometheus:** Fix semver import path [#104945](https://github.com/grafana/grafana/pull/104945), [@jackw](https://github.com/jackw)
+- **Themes:** Prevent duplicated API call in drawer [#105611](https://github.com/grafana/grafana/pull/105611), [@ashharrison90](https://github.com/ashharrison90)
+- **XYChart:** Coerce threshold steps to numbers [#104492](https://github.com/grafana/grafana/pull/104492), [@leeoniya](https://github.com/leeoniya)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
+
+<!-- 12.0.1 END -->
+<!-- 11.6.2 START -->
+
+# 11.6.2 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105103](https://github.com/grafana/grafana/pull/105103), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/blevesearch/bleve/v2 from v2.4.4-git to v2.5.0 [#105443](https://github.com/grafana/grafana/pull/105443), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.6 to v1.8.12 [#105369](https://github.com/grafana/grafana/pull/105369), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.126.0 to v0.132.0 [#105251](https://github.com/grafana/grafana/pull/105251), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Dashboard:** Fixes issue with row repeats and first row [#104467](https://github.com/grafana/grafana/pull/104467), [@torkelo](https://github.com/torkelo)
+- **Graphite:** Ensure template variables are interpolated correctly [#105388](https://github.com/grafana/grafana/pull/105388), [@aangelisc](https://github.com/aangelisc)
+- **Graphite:** Fix Graphite series interpolation [#104568](https://github.com/grafana/grafana/pull/104568), [@aangelisc](https://github.com/aangelisc)
+- **Prometheus:** Fix semver import path [#104943](https://github.com/grafana/grafana/pull/104943), [@jackw](https://github.com/jackw)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
+
+<!-- 11.6.2 END -->
+<!-- 11.5.5 START -->
+
+# 11.5.5 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105109](https://github.com/grafana/grafana/pull/105109), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/blevesearch/bleve/v2 from v2.4.3 to v2.5.0 [#105441](https://github.com/grafana/grafana/pull/105441), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.5 to v1.8.12 [#105373](https://github.com/grafana/grafana/pull/105373), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.126.0 to v0.132.0 [#105252](https://github.com/grafana/grafana/pull/105252), [@macabu](https://github.com/macabu)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
+
+<!-- 11.5.5 END -->
+<!-- 11.4.5 START -->
+
+# 11.4.5 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105110](https://github.com/grafana/grafana/pull/105110), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/blevesearch/bleve/v2 from v2.4.2 to v2.5.0 [#105445](https://github.com/grafana/grafana/pull/105445), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.5 to v1.8.12 [#105375](https://github.com/grafana/grafana/pull/105375), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.125.0 to v0.132.0 [#105253](https://github.com/grafana/grafana/pull/105253), [@macabu](https://github.com/macabu)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
+
+<!-- 11.4.5 END -->
+<!-- 11.3.7 START -->
+
+# 11.3.7 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105112](https://github.com/grafana/grafana/pull/105112), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/blevesearch/bleve/v2 from v2.4.2 to v2.5.0 [#105447](https://github.com/grafana/grafana/pull/105447), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.5 to v1.8.12 [#105376](https://github.com/grafana/grafana/pull/105376), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.125.0 to v0.132.0 [#105254](https://github.com/grafana/grafana/pull/105254), [@macabu](https://github.com/macabu)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
+
+<!-- 11.3.7 END -->
+<!-- 11.2.10 START -->
+
+# 11.2.10 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105113](https://github.com/grafana/grafana/pull/105113), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump github.com/openfga/openfga from v1.8.5 to v1.8.12 [#105378](https://github.com/grafana/grafana/pull/105378), [@macabu](https://github.com/macabu)
+- **Dependencies:** Unpin and bump github.com/getkin/kin-openapi from v0.125.0 to v0.132.0 [#105255](https://github.com/grafana/grafana/pull/105255), [@macabu](https://github.com/macabu)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
+
+<!-- 11.2.10 END -->
+<!-- 10.4.19 START -->
+
+# 10.4.19 (2025-05-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go version to 1.24.3 [#105115](https://github.com/grafana/grafana/pull/105115), [@macabu](https://github.com/macabu)
+- **Dependencies:** Bump golang.org/x/net from v0.37.0 to v0.40.0 [#105449](https://github.com/grafana/grafana/pull/105449), [@macabu](https://github.com/macabu)
+- **Security:** Fix CVE-2025-4123
+- **Security:** Fix CVE-2025-3580
+
+<!-- 10.4.19 END -->
+<!-- 12.0.0+security-01 START -->
+
+# 12.0.0+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 12.0.0+security-01 END -->
+<!-- 11.6.1+security-01 START -->
+
+# 11.6.1+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 11.6.1+security-01 END -->
+<!-- 11.5.4+security-01 START -->
+
+# 11.5.4+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 11.5.4+security-01 END -->
+<!-- 11.4.4+security-01 START -->
+
+# 11.4.4+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 11.4.4+security-01 END -->
+<!-- 11.3.6+security-01 START -->
+
+# 11.3.6+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 11.3.6+security-01 END -->
+<!-- 11.2.9+security-01 START -->
+
+# 11.2.9+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 11.2.9+security-01 END -->
+<!-- 10.4.18+security-01 START -->
+
+# 10.4.18+security-01 (2025-05-21)
+
+### Bug fixes
+
+- **Security:** Fix CVE-2025-4123
+
+<!-- 10.4.18+security-01 END -->
 <!-- 12.0.0 START -->
 
 # 12.0.0 (2025-05-05)

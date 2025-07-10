@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,21 +17,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -67,14 +57,7 @@ func testDashboardQuota(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	t.Run("when quota limit doesn't exceed, importing a dashboard should succeed", func(t *testing.T) {
 		// Import dashboard
@@ -126,26 +109,6 @@ func testDashboardQuota(t *testing.T, featureToggles []string) {
 	})
 }
 
-func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
-	t.Helper()
-
-	cfg.AutoAssignOrg = true
-	cfg.AutoAssignOrgId = 1
-
-	quotaService := quotaimpl.ProvideService(db, cfg)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
-	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
-	)
-	require.NoError(t, err)
-
-	u, err := usrSvc.Create(context.Background(), &cmd)
-	require.NoError(t, err)
-	return u.ID
-}
-
 func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -188,14 +151,7 @@ providers:
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
 	err = os.WriteFile(provDashboardFile, input, 0644)
 	require.NoError(t, err)
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// give provisioner some time since we don't have a way to know when provisioning is complete
 	// TODO https://github.com/grafana/grafana/issues/85617
@@ -355,14 +311,7 @@ func testCreate(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-	// Create user
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	t.Run("create dashboard should succeed", func(t *testing.T) {
 		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
@@ -518,14 +467,7 @@ func testPreserveSchemaVersion(t *testing.T, featureToggles []string) {
 		EnableFeatureToggles: featureToggles,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	store, cfg := env.SQLStore, env.Cfg
-
-	createUser(t, store, cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	schemaVersions := []*int{intPtr(1), intPtr(36), intPtr(40), nil}
 	for _, schemaVersion := range schemaVersions {
@@ -608,4 +550,215 @@ func testPreserveSchemaVersion(t *testing.T, featureToggles []string) {
 			}
 		})
 	}
+}
+
+func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	testImportDashboardWithLibraryPanels(t, []string{})
+}
+
+func TestIntegrationImportDashboardWithLibraryPanelsK8s(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	testImportDashboardWithLibraryPanels(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
+}
+
+func testImportDashboardWithLibraryPanels(t *testing.T, featureToggles []string) {
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous:     true,
+		EnableFeatureToggles: featureToggles,
+	})
+
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+
+	t.Run("import dashboard with library panels should create library panels and connections", func(t *testing.T) {
+		dashboardJSON := `{
+			"title": "Test Dashboard with Library Panels",
+			"panels": [
+				{
+					"id": 1,
+					"title": "Library Panel 1",
+					"type": "text",
+					"gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+					"libraryPanel": {
+						"uid": "test-lib-panel-1",
+						"name": "Test Library Panel 1"
+					}
+				},
+				{
+					"id": 2,
+					"title": "Library Panel 2", 
+					"type": "stat",
+					"gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+					"libraryPanel": {
+						"uid": "test-lib-panel-2",
+						"name": "Test Library Panel 2"
+					}
+				}
+			],
+			"__elements": {
+				"test-lib-panel-1": {
+					"uid": "test-lib-panel-1",
+					"name": "Test Library Panel 1",
+					"kind": 1,
+					"type": "text",
+					"model": {
+						"title": "Test Library Panel 1",
+						"type": "text",
+						"options": {
+							"content": "This is a test library panel"
+						}
+					}
+				},
+				"test-lib-panel-2": {
+					"uid": "test-lib-panel-2", 
+					"name": "Test Library Panel 2",
+					"kind": 1,
+					"type": "stat",
+					"model": {
+						"title": "Test Library Panel 2",
+						"type": "stat",
+						"options": {
+							"colorMode": "value",
+							"graphMode": "area",
+							"justifyMode": "auto",
+							"orientation": "auto",
+							"reduceOptions": {
+								"calcs": ["lastNotNull"],
+								"fields": "",
+								"values": false
+							},
+							"textMode": "auto"
+						},
+						"targets": [
+							{
+								"refId": "A",
+								"scenarioId": "csv_metric_values",
+								"stringInput": "1,20,90,30,5,0"
+							}
+						]
+					}
+				}
+			}
+		}`
+
+		data, err := simplejson.NewJson([]byte(dashboardJSON))
+		require.NoError(t, err)
+
+		buf := &bytes.Buffer{}
+		err = json.NewEncoder(buf).Encode(dashboardimport.ImportDashboardRequest{
+			Dashboard: data,
+		})
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/import", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", buf)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var importResp struct {
+			UID string `json:"uid"`
+		}
+		err = json.Unmarshal(b, &importResp)
+		require.NoError(t, err)
+		require.NotEmpty(t, importResp.UID)
+
+		t.Run("library panels should be created", func(t *testing.T) {
+			url := fmt.Sprintf("http://admin:admin@%s/api/library-elements/test-lib-panel-1", grafanaListedAddr)
+			// nolint:gosec
+			resp, err := http.Get(url)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+
+			panel, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			var panelRes struct {
+				Result struct {
+					UID  string `json:"uid"`
+					Name string `json:"name"`
+					Type string `json:"type"`
+				} `json:"result"`
+			}
+			err = json.Unmarshal(panel, &panelRes)
+			require.NoError(t, err)
+			assert.Equal(t, "test-lib-panel-1", panelRes.Result.UID)
+			assert.Equal(t, "Test Library Panel 1", panelRes.Result.Name)
+			assert.Equal(t, "text", panelRes.Result.Type)
+
+			url = fmt.Sprintf("http://admin:admin@%s/api/library-elements/test-lib-panel-2", grafanaListedAddr)
+			// nolint:gosec
+			resp, err = http.Get(url)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+
+			panel, err = io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			err = json.Unmarshal(panel, &panelRes)
+			require.NoError(t, err)
+			assert.Equal(t, "test-lib-panel-2", panelRes.Result.UID)
+			assert.Equal(t, "Test Library Panel 2", panelRes.Result.Name)
+			assert.Equal(t, "stat", panelRes.Result.Type)
+		})
+
+		t.Run("library panels should be connected to dashboard", func(t *testing.T) {
+			url := fmt.Sprintf("http://admin:admin@%s/api/library-elements/test-lib-panel-1/connections", grafanaListedAddr)
+			// nolint:gosec
+			connectionsResp, err := http.Get(url)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, connectionsResp.StatusCode)
+			t.Cleanup(func() {
+				err := connectionsResp.Body.Close()
+				require.NoError(t, err)
+			})
+
+			connections, err := io.ReadAll(connectionsResp.Body)
+			require.NoError(t, err)
+			var connectionsRes struct {
+				Result []struct {
+					ConnectionUID string `json:"connectionUid"`
+				} `json:"result"`
+			}
+			err = json.Unmarshal(connections, &connectionsRes)
+			require.NoError(t, err)
+			assert.Len(t, connectionsRes.Result, 1)
+			assert.Equal(t, importResp.UID, connectionsRes.Result[0].ConnectionUID)
+
+			url = fmt.Sprintf("http://admin:admin@%s/api/library-elements/test-lib-panel-2/connections", grafanaListedAddr)
+			// nolint:gosec
+			connectionsResp, err = http.Get(url)
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, connectionsResp.StatusCode)
+			t.Cleanup(func() {
+				err := connectionsResp.Body.Close()
+				require.NoError(t, err)
+			})
+
+			connections, err = io.ReadAll(connectionsResp.Body)
+			require.NoError(t, err)
+			err = json.Unmarshal(connections, &connectionsRes)
+			require.NoError(t, err)
+			assert.Len(t, connectionsRes.Result, 1)
+			assert.Equal(t, importResp.UID, connectionsRes.Result[0].ConnectionUID)
+		})
+	})
 }

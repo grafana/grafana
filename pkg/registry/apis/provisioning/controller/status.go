@@ -21,7 +21,7 @@ func NewRepositoryStatusPatcher(client client.ProvisioningV0alpha1Interface) *Re
 	}
 }
 
-func (r *RepositoryStatusPatcher) Patch(ctx context.Context, repo *provisioning.Repository, patchOperations []map[string]interface{}) error {
+func (r *RepositoryStatusPatcher) Patch(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error {
 	patch, err := json.Marshal(patchOperations)
 	if err != nil {
 		return fmt.Errorf("unable to marshal patch data: %w", err)

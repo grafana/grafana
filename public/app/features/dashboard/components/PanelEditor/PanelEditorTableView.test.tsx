@@ -146,6 +146,7 @@ describe('PanelEditorTableView', () => {
     // panel queries should have the updated time range
     expect(props.panel.runAllPanelQueries).toHaveBeenNthCalledWith(1, {
       dashboardTimezone: '',
+      dashboardTitle: 'No Title',
       dashboardUID: props.dashboard.uid,
       timeData: timeRangeUpdated,
       width: 100,
@@ -166,6 +167,7 @@ describe('PanelEditorTableView', () => {
     // panel queries should have the updated time range
     expect(props.panel.runAllPanelQueries).toHaveBeenLastCalledWith({
       dashboardTimezone: '',
+      dashboardTitle: 'No Title',
       dashboardUID: props.dashboard.uid,
       timeData: timeRangeUpdated2,
       width: 100,

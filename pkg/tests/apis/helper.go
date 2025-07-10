@@ -48,7 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -121,9 +121,9 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 
 	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
-	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resource.HealthCheckRequest{})
+	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
 	require.NoError(t, err, "unable to read resource client health check")
-	require.Equal(t, resource.HealthCheckResponse_SERVING, rsp.Status)
+	require.Equal(t, resourcepb.HealthCheckResponse_SERVING, rsp.Status)
 
 	return c
 }
@@ -133,7 +133,6 @@ func (c *K8sTestHelper) loadAPIGroups() {
 		rsp := DoRequest(c, RequestParams{
 			User: c.Org1.Viewer,
 			Path: "/apis",
-			// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
 		}, &metav1.APIGroupList{})
 
 		if rsp.Response.StatusCode == http.StatusOK {
@@ -536,7 +535,7 @@ func (c *K8sTestHelper) LoadYAMLOrJSON(body string) *unstructured.Unstructured {
 func (c *K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	c.t.Helper()
 	users := OrgUsers{
-		Admin:  c.CreateUser("admin", orgName, org.RoleAdmin, nil),
+		Admin:  c.CreateUser("admin2", orgName, org.RoleAdmin, nil),
 		Editor: c.CreateUser("editor", orgName, org.RoleEditor, nil),
 		Viewer: c.CreateUser("viewer", orgName, org.RoleViewer, nil),
 	}
@@ -707,7 +706,7 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 	disco := c.NewDiscoveryClient()
 	req := disco.RESTClient().Get().
 		Prefix("apis").
-		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json")
+		SetHeader("Accept", "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList,application/json")
 
 	result := req.Do(context.Background())
 	require.NoError(c.t, result.Error())
@@ -736,7 +735,7 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 		}
 	}
 
-	require.Fail(c.t, "could not find discovery info for: ", group)
+	require.Failf(c.t, "could not find discovery info for: %s", group)
 	return ""
 }
 

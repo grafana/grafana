@@ -5,7 +5,7 @@ import {
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
 
 import { validateUid } from './validation';
 
@@ -47,11 +47,15 @@ describe('validateUid', () => {
         getDashboardDTO: jest.fn().mockResolvedValue(legacyDashboard),
         deleteDashboard: jest.fn(),
         saveDashboard: jest.fn(),
+        listDeletedDashboards: jest.fn(),
+        restoreDashboard: jest.fn(),
       },
       v2: {
         getDashboardDTO: jest.fn().mockResolvedValue(v2Dashboard),
         deleteDashboard: jest.fn(),
         saveDashboard: jest.fn(),
+        listDeletedDashboards: jest.fn(),
+        restoreDashboard: jest.fn(),
       },
     });
   });

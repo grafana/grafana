@@ -2,70 +2,67 @@ package featuremgmt
 
 import (
 	"fmt"
+	"net/url"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
-const (
-	staticProviderType = "static"
-	goffProviderType   = "goff"
-
-	configSectionName  = "feature_toggles.openfeature"
-	contextSectionName = "feature_toggles.openfeature.context"
-)
-
 type OpenFeatureService struct {
+	log      log.Logger
 	provider openfeature.FeatureProvider
 	Client   openfeature.IClient
 }
 
+// ProvideOpenFeatureService is used for wiring dependencies in single tenant grafana
 func ProvideOpenFeatureService(cfg *setting.Cfg) (*OpenFeatureService, error) {
-	conf := cfg.Raw.Section(configSectionName)
-	provType := conf.Key("provider").MustString(staticProviderType)
-	url := conf.Key("url").MustString("")
-	key := conf.Key("targetingKey").MustString(cfg.AppURL)
-
-	var provider openfeature.FeatureProvider
-	var err error
-	if provType == goffProviderType {
-		provider, err = newGOFFProvider(url)
-	} else {
-		provider, err = newStaticProvider(cfg)
-	}
-
+	confFlags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create %s feature provider: %w", provType, err)
+		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
 	}
 
-	if err := openfeature.SetProviderAndWait(provider); err != nil {
-		return nil, fmt.Errorf("failed to set global %s feature provider: %w", provType, err)
+	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(cfg.OpenFeature.TargetingKey, cfg.OpenFeature.ContextAttrs))
+	return newOpenFeatureService(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags)
+}
+
+// TODO: might need to be public, so other MT services could set up open feature client
+func newOpenFeatureService(pType string, u *url.URL, staticFlags map[string]bool) (*OpenFeatureService, error) {
+	p, err := createProvider(pType, u, staticFlags)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create feature provider: type %s, %w", pType, err)
 	}
 
-	attrs := ctxAttrs(cfg)
-	openfeature.SetEvaluationContext(openfeature.NewEvaluationContext(key, attrs))
+	if err := openfeature.SetProviderAndWait(p); err != nil {
+		return nil, fmt.Errorf("failed to set global feature provider: %s, %w", pType, err)
+	}
 
 	client := openfeature.NewClient("grafana-openfeature-client")
-
 	return &OpenFeatureService{
-		provider: provider,
+		log:      log.New("openfeatureservice"),
+		provider: p,
 		Client:   client,
 	}, nil
 }
 
-// ctxAttrs uses config.ini [feature_toggles.openfeature.context] section to build the eval context attributes
-func ctxAttrs(cfg *setting.Cfg) map[string]any {
-	ctxConf := cfg.Raw.Section(contextSectionName)
-
-	attrs := map[string]any{}
-	for _, key := range ctxConf.KeyStrings() {
-		attrs[key] = ctxConf.Key(key).String()
+func createProvider(providerType string, u *url.URL, staticFlags map[string]bool) (openfeature.FeatureProvider, error) {
+	if providerType != setting.GOFFProviderType {
+		return newStaticProvider(staticFlags)
 	}
 
-	// Some default attributes
-	if _, ok := attrs["grafana_version"]; !ok {
-		attrs["grafana_version"] = setting.BuildVersion
+	if u.String() == "" {
+		return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
 	}
 
-	return attrs
+	return newGOFFProvider(u.String())
+}
+
+func createClient(provider openfeature.FeatureProvider) (openfeature.IClient, error) {
+	if err := openfeature.SetProviderAndWait(provider); err != nil {
+		return nil, fmt.Errorf("failed to set global feature provider: %w", err)
+	}
+
+	client := openfeature.NewClient("grafana-openfeature-client")
+	return client, nil
 }

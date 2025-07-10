@@ -8,8 +8,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';

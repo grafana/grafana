@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
@@ -65,14 +66,19 @@ export const GroupByItem: React.FC<GroupByItemProps> = ({
   return (
     <InputGroup>
       <Select
-        aria-label="column"
+        aria-label={t('components.group-by-item.aria-label-column', 'Column')}
         width={inputFieldSize}
         value={groupBy.property?.name ? { label: groupBy.property.name, value: groupBy.property.name } : null}
         options={selectableOptions}
         allowCustomValue
         onChange={handleChange}
       />
-      <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
+      <AccessoryButton
+        aria-label={t('components.group-by-item.aria-label-remove', 'Remove')}
+        icon="times"
+        variant="secondary"
+        onClick={onDelete}
+      />
     </InputGroup>
   );
 };

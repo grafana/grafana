@@ -10,18 +10,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Convert raw resource bytes into an IndexableDocument
 type DocumentBuilder interface {
 	// Convert raw bytes into an document that can be written
-	BuildDocument(ctx context.Context, key *ResourceKey, rv int64, value []byte) (*IndexableDocument, error)
+	BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error)
 }
 
 // Registry of the searchable document fields
 type SearchableDocumentFields interface {
 	Fields() []string
-	Field(name string) *ResourceTableColumnDefinition
+	Field(name string) *resourcepb.ResourceTableColumnDefinition
 }
 
 // Some kinds will require special processing for their namespace
@@ -51,7 +52,7 @@ type DocumentBuilderSupplier interface {
 // Although public, this is *NOT* an end user interface
 type IndexableDocument struct {
 	// The resource key
-	Key *ResourceKey `json:"key"`
+	Key *resourcepb.ResourceKey `json:"key"`
 
 	// The k8s name
 	Name string `json:"name,omitempty"`
@@ -102,7 +103,10 @@ type IndexableDocument struct {
 
 	// Maintain a list of resource references.
 	// Someday this will likely be part of https://github.com/grafana/gamma
-	References ResourceReferences `json:"reference,omitempty"`
+	References ResourceReferences `json:"references,omitempty"`
+
+	// internal field for mapping references to kind ( don't set this directly )
+	Reference map[string][]string `json:"reference,omitempty"` // map of kind to list of names
 
 	// When the resource is managed by an upstream repository
 	Manager *utils.ManagerProperties `json:"manager,omitempty"`
@@ -119,6 +123,12 @@ func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
 	m.TitlePhrase = strings.ToLower(m.Title) // Lowercase for case-insensitive sorting ?? in the analyzer?
 	if m.Manager != nil {
 		m.ManagedBy = fmt.Sprintf("%s:%s", m.Manager.Kind, m.Manager.Identity)
+	}
+
+	m.Reference = make(map[string][]string)
+	for _, ref := range m.References {
+		// Group and Version are ignored for now. This could be revisited.
+		m.Reference[ref.Kind] = append(m.Reference[ref.Kind], ref.Name)
 	}
 	return m
 }
@@ -165,7 +175,7 @@ func (m ResourceReferences) Less(i, j int) bool {
 }
 
 // Create a new indexable document based on a generic k8s resource
-func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAccessor) *IndexableDocument {
+func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.GrafanaMetaAccessor) *IndexableDocument {
 	title := obj.FindTitle(key.Name)
 	if title == key.Name {
 		// TODO: something wrong with FindTitle
@@ -216,7 +226,7 @@ func StandardDocumentBuilder() DocumentBuilder {
 
 type standardDocumentBuilder struct{}
 
-func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
 	if err != nil {
@@ -238,7 +248,7 @@ type searchableDocumentFields struct {
 }
 
 // This requires unique names
-func NewSearchableDocumentFields(columns []*ResourceTableColumnDefinition) (SearchableDocumentFields, error) {
+func NewSearchableDocumentFields(columns []*resourcepb.ResourceTableColumnDefinition) (SearchableDocumentFields, error) {
 	f := &searchableDocumentFields{
 		names:  make([]string, len(columns)),
 		fields: make(map[string]*resourceTableColumn),
@@ -261,7 +271,7 @@ func (x *searchableDocumentFields) Fields() []string {
 	return x.names
 }
 
-func (x *searchableDocumentFields) Field(name string) *ResourceTableColumnDefinition {
+func (x *searchableDocumentFields) Field(name string) *resourcepb.ResourceTableColumnDefinition {
 	name = strings.TrimPrefix(name, SEARCH_FIELD_PREFIX)
 
 	f, ok := x.fields[name]
@@ -308,97 +318,115 @@ var standardSearchFields SearchableDocumentFields
 func StandardSearchFields() SearchableDocumentFields {
 	standardSearchFieldsInit.Do(func() {
 		var err error
-		standardSearchFields, err = NewSearchableDocumentFields([]*ResourceTableColumnDefinition{
+		standardSearchFields, err = NewSearchableDocumentFields([]*resourcepb.ResourceTableColumnDefinition{
 			{
 				Name:        SEARCH_FIELD_ID,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Unique Identifier. {namespace}/{group}/{resource}/{name}",
-				Properties: &ResourceTableColumnDefinition_Properties{
+				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 					NotNull: true,
 				},
 			},
 			{
 				Name:        SEARCH_FIELD_GROUP_RESOURCE,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "The resource kind: {group}/{resource}",
-				Properties: &ResourceTableColumnDefinition_Properties{
+				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 					NotNull: true,
 				},
 			},
 			{
 				Name:        SEARCH_FIELD_NAMESPACE,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Tenant isolation",
-				Properties: &ResourceTableColumnDefinition_Properties{
+				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 					NotNull: true,
 				},
 			},
 			{
 				Name:        SEARCH_FIELD_NAME,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Kubernetes name.  Unique identifier within a namespace+group+resource",
-				Properties: &ResourceTableColumnDefinition_Properties{
+				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 					NotNull: true,
 				},
 			},
 			{
 				Name:        SEARCH_FIELD_TITLE,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Display name for the resource",
 			},
 			{
 				Name:        SEARCH_FIELD_DESCRIPTION,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "An account of the resource.",
-				Properties: &ResourceTableColumnDefinition_Properties{
+				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 					FreeText: true,
 				},
 			},
 			{
 				Name:        SEARCH_FIELD_TAGS,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				IsArray:     true,
 				Description: "Unique tags",
-				Properties: &ResourceTableColumnDefinition_Properties{
+				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 					Filterable: true,
 				},
 			},
 			{
 				Name:        SEARCH_FIELD_FOLDER,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Kubernetes name for the folder",
 			},
 			{
 				Name:        SEARCH_FIELD_RV,
-				Type:        ResourceTableColumnDefinition_INT64,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 				Description: "resource version",
 			},
 			{
 				Name:        SEARCH_FIELD_CREATED,
-				Type:        ResourceTableColumnDefinition_INT64,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 				Description: "created timestamp", // date?
 			},
 			{
 				Name:        SEARCH_FIELD_EXPLAIN,
-				Type:        ResourceTableColumnDefinition_OBJECT,
+				Type:        resourcepb.ResourceTableColumnDefinition_OBJECT,
 				Description: "Explain why this result matches (depends on the engine)",
 			},
 			{
 				Name:        SEARCH_FIELD_SCORE,
-				Type:        ResourceTableColumnDefinition_DOUBLE,
+				Type:        resourcepb.ResourceTableColumnDefinition_DOUBLE,
 				Description: "The search score",
 			},
 			{
 				Name:        SEARCH_FIELD_LEGACY_ID,
-				Type:        ResourceTableColumnDefinition_INT64,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
 				Description: "Deprecated legacy id of the resource",
 			},
 			{
 				Name:        SEARCH_FIELD_MANAGER_KIND,
-				Type:        ResourceTableColumnDefinition_STRING,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Type of manager, which is responsible for managing the resource",
 			},
+			// TODO: below fields only need to be returned from search, but do not need to be searchable
+			{
+				Name: SEARCH_FIELD_MANAGER_ID,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_TIME,
+				Type: resourcepb.ResourceTableColumnDefinition_INT64,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_PATH,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
+			{
+				Name: SEARCH_FIELD_SOURCE_CHECKSUM,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
 		})
+
 		if err != nil {
 			panic("failed to initialize standard search fields")
 		}

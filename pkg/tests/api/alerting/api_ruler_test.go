@@ -799,13 +799,8 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 	apiClient.CreateFolder(t, folderName, folderName)
 
 	createAlertInGrafana := func(metadata *apimodels.AlertRuleMetadata) apimodels.GettableRuleGroupConfig {
@@ -973,14 +968,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create user
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -1530,12 +1518,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+
 	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	namespaceUID := "default"
@@ -1697,13 +1681,6 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			}, nil)
 		require.NoError(t, err)
 	}
-
-	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -2117,7 +2094,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	// Create a users to make authenticated requests
+	// Create users to make authenticated requests
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -2127,11 +2104,6 @@ func TestIntegrationRulerAccess(t *testing.T) {
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "editor",
 		Login:          "editor",
-	})
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
 	})
 
 	client := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
@@ -4371,7 +4343,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		DisableAnonymous:             true,
 		AppModeProduction:            true,
 		NGAlertSchedulerBaseInterval: 1 * time.Second,
-		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagAlertingSimplifiedRouting},
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -4415,16 +4387,27 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		t.Log(body)
 	})
 
-	t.Run("create should fail if mute timing does not exist", func(t *testing.T) {
-		var copyD testData
-		err = json.Unmarshal(testDataRaw, &copyD)
-		group := copyD.RuleGroup
-		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
-		ns.MuteTimeIntervals = []string{"random-time-interval"}
+	t.Run("create should fail if time interval does not exist", func(t *testing.T) {
+		t.Run("mute time interval", func(t *testing.T) {
+			var copyD testData
+			err = json.Unmarshal(testDataRaw, &copyD)
+			group := copyD.RuleGroup
+			ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+			ns.MuteTimeIntervals = []string{"random-time-interval"}
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
-		require.Equalf(t, http.StatusBadRequest, status, body)
-		t.Log(body)
+			_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
+			require.Equalf(t, http.StatusBadRequest, status, body)
+		})
+		t.Run("active time interval", func(t *testing.T) {
+			var copyD testData
+			err = json.Unmarshal(testDataRaw, &copyD)
+			group := copyD.RuleGroup
+			ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+			ns.ActiveTimeIntervals = []string{"random-time-interval"}
+
+			_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
+			require.Equalf(t, http.StatusBadRequest, status, body)
+		})
 	})
 
 	t.Run("create should not fail if group_by is missing required labels but they should still be used", func(t *testing.T) {
@@ -4483,6 +4466,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 			assert.Nil(c, autogenRoute.GroupInterval)
 			assert.Nil(c, autogenRoute.RepeatInterval)
 			assert.Empty(c, autogenRoute.MuteTimeIntervals)
+			assert.Empty(c, autogenRoute.ActiveTimeIntervals)
 			assert.Empty(c, autogenRoute.GroupBy)
 			if !canContinue {
 				return
@@ -4511,6 +4495,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 			assert.Nil(c, receiverRoute.GroupInterval)
 			assert.Nil(c, receiverRoute.RepeatInterval)
 			assert.Empty(c, receiverRoute.MuteTimeIntervals)
+			assert.Empty(c, receiverRoute.ActiveTimeIntervals)
 			var groupBy []string
 			for _, name := range receiverRoute.GroupBy {
 				groupBy = append(groupBy, string(name))
@@ -4625,14 +4610,7 @@ func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
@@ -4782,12 +4760,6 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
 
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "editor",
@@ -4897,12 +4869,6 @@ func TestIntegrationRulePermanentlyDelete(t *testing.T) {
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
-
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
 
 	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),

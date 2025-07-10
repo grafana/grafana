@@ -72,35 +72,48 @@ func folderTreeCollector(folderService folder.Service) legacyTupleCollector {
 
 		ctx, ident := identity.WithServiceIdentity(ctx, orgID)
 
-		q := folder.GetFoldersQuery{
-			OrgID:        orgID,
-			SignedInUser: ident,
-		}
-
-		folders, err := folderService.GetFolders(ctx, q)
-		if err != nil {
-			return nil, err
-		}
-
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
-		for _, f := range folders {
-			var tuple *openfgav1.TupleKey
-			if f.ParentUID == "" {
-				continue
+		const pageSize = 1000
+		var page int64 = 1
+
+		for {
+			q := folder.GetFoldersQuery{
+				OrgID:        orgID,
+				SignedInUser: ident,
+				Limit:        pageSize,
+				Page:         page,
 			}
 
-			tuple = &openfgav1.TupleKey{
-				Object:   zanzana.NewTupleEntry(zanzana.TypeFolder, f.UID, ""),
-				Relation: zanzana.RelationParent,
-				User:     zanzana.NewTupleEntry(zanzana.TypeFolder, f.ParentUID, ""),
+			folders, err := folderService.GetFolders(ctx, q)
+			if err != nil {
+				return nil, err
 			}
 
-			if tuples[tuple.Object] == nil {
-				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			for _, f := range folders {
+				var tuple *openfgav1.TupleKey
+				if f.ParentUID == "" {
+					continue
+				}
+
+				tuple = &openfgav1.TupleKey{
+					Object:   zanzana.NewTupleEntry(zanzana.TypeFolder, f.UID, ""),
+					Relation: zanzana.RelationParent,
+					User:     zanzana.NewTupleEntry(zanzana.TypeFolder, f.ParentUID, ""),
+				}
+
+				if tuples[tuple.Object] == nil {
+					tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+				}
+
+				tuples[tuple.Object][tuple.String()] = tuple
 			}
 
-			tuples[tuple.Object][tuple.String()] = tuple
+			if int64(len(folders)) < pageSize {
+				break
+			}
+
+			page++
 		}
 
 		return tuples, nil
@@ -154,8 +167,11 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 				subject = zanzana.NewTupleEntry(zanzana.TypeUser, p.UserUID, "")
 			} else if len(p.TeamUID) > 0 {
 				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, zanzana.RelationTeamMember)
-			} else {
+			} else if len(p.BasicRoleName) > 0 {
 				subject = zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(p.BasicRoleName), zanzana.RelationAssignee)
+			} else {
+				reconcilerLogger.Debug("unrecognized permission", "permission", p)
+				continue
 			}
 
 			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)

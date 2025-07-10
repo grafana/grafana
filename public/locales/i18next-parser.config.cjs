@@ -12,6 +12,7 @@ module.exports = {
   input: [
     '../../public/**/*.{tsx,ts}',
     '!../../public/app/extensions/**/*', // Don't extract from Enterprise
+    '!../../public/app/plugins/datasource/**/*', // Don't extract from datasource plugins
     '../../packages/grafana-ui/**/*.{tsx,ts}',
   ],
   output: './public/locales/$LOCALE/$NAMESPACE.json',

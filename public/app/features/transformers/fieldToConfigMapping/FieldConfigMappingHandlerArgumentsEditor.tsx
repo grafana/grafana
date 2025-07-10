@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n';
 import { ColorPicker, Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { HandlerArguments } from './fieldToConfigMapping';
 

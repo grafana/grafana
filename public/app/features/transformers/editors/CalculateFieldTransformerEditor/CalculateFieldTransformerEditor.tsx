@@ -22,9 +22,9 @@ import {
   getNameFromOptions,
   defaultWindowOptions,
 } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../../docs/getTransformationContent';
 
@@ -61,7 +61,6 @@ const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.
 export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformerEditorProps) => {
   const { options, onChange, input } = props;
   const configuredOptions = options?.reduce?.include;
-
   const [state, setState] = useState<CalculateFieldTransformerEditorState>({ names: [], selected: [] });
 
   useEffect(() => {

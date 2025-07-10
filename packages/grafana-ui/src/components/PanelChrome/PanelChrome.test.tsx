@@ -1,4 +1,5 @@
-import { screen, render, fireEvent } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
@@ -16,7 +17,10 @@ const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   };
 
   Object.assign(props, propOverrides);
-  return render(<PanelChrome {...props} />);
+  return {
+    ...render(<PanelChrome {...props} />),
+    user: userEvent.setup(),
+  };
 };
 
 const setupWithToggleCollapsed = (propOverrides?: Partial<PanelChromeProps>) => {
@@ -37,7 +41,10 @@ const setupWithToggleCollapsed = (propOverrides?: Partial<PanelChromeProps>) => 
     return <PanelChrome {...props} collapsed={collapsed} onToggleCollapse={toggleCollapsed} />;
   };
 
-  return render(<ControlledCollapseComponent />);
+  return {
+    ...render(<ControlledCollapseComponent />),
+    user: userEvent.setup(),
+  };
 };
 
 it('renders an empty panel with required props only', () => {
@@ -154,17 +161,17 @@ it('renders streaming indicator in the panel header if loadingState is streaming
   expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
 });
 
-it('collapses the controlled panel when user clicks on the chevron or the title', () => {
-  setupWithToggleCollapsed({ title: 'Default title' });
+it('collapses the controlled panel when user clicks on the chevron or the title', async () => {
+  const { user } = setupWithToggleCollapsed({ title: 'Default title' });
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 
   const button = screen.getByRole('button', { name: 'Default title' });
   const content = screen.getByTestId(selectors.components.Panels.Panel.content);
   // collapse button should have same aria-controls as the panel's content
-  expect(button.getAttribute('aria-controls')).toBe(content.id);
+  expect(button).toHaveAttribute('aria-controls', content.id);
 
-  fireEvent.click(button);
+  await user.click(button);
 
   expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();
   // aria-controls should be removed when panel is collapsed
@@ -172,8 +179,8 @@ it('collapses the controlled panel when user clicks on the chevron or the title'
   expect(screen.queryByTestId(selectors.components.Panels.Panel.content)?.id).toBe(undefined);
 });
 
-it('collapses the uncontrolled panel when user clicks on the chevron or the title', () => {
-  setup({ title: 'Default title', collapsible: true });
+it('collapses the uncontrolled panel when user clicks on the chevron or the title', async () => {
+  const { user } = setup({ title: 'Default title', collapsible: true });
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 
@@ -181,9 +188,9 @@ it('collapses the uncontrolled panel when user clicks on the chevron or the titl
   const content = screen.getByTestId(selectors.components.Panels.Panel.content);
 
   // collapse button should have same aria-controls as the panel's content
-  expect(button.getAttribute('aria-controls')).toBe(content.id);
+  expect(button).toHaveAttribute('aria-controls', content.id);
 
-  fireEvent.click(button);
+  await user.click(button);
   expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();
   // aria-controls should be removed when panel is collapsed
   expect(button).not.toHaveAttribute('aria-controlls');

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
+import { Trans, t } from '@grafana/i18n';
 import { Button, Modal } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 

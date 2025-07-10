@@ -26,6 +26,7 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 			Root:          root,
 			FileThreshold: int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
 			BatchSize:     cfg.IndexMaxBatchSize,         // This is the batch size for how many objects to add to the index at once
+			IndexCacheTTL: cfg.IndexCacheTTL,             // How long to keep the index cache in memory
 		}, tracer, features, indexMetrics)
 
 		if err != nil {
@@ -33,10 +34,12 @@ func NewSearchOptions(features featuremgmt.FeatureToggles, cfg *setting.Cfg, tra
 		}
 
 		return resource.SearchOptions{
-			Backend:       bleve,
-			Resources:     docs,
-			WorkerThreads: cfg.IndexWorkers,
-			InitMinCount:  cfg.IndexMinCount,
+			Backend:         bleve,
+			Resources:       docs,
+			WorkerThreads:   cfg.IndexWorkers,
+			InitMinCount:    cfg.IndexMinCount,
+			InitMaxCount:    cfg.IndexMaxCount,
+			RebuildInterval: cfg.IndexRebuildInterval,
 		}, nil
 	}
 	return resource.SearchOptions{}, nil

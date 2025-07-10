@@ -56,7 +56,6 @@ jobs:
       - name: Run Commands
         uses: ./actions/commands
         with:
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
           token: ${{ steps.generate_token.outputs.token }}
           configPath: "issue-opened"
 

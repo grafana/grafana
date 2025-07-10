@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { DashboardLink } from '@grafana/schema';
 import { Button, DeleteButton, EmptyState, Icon, IconButton, Stack, TagList, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface DashboardLinkListProps {
   links: DashboardLink[];
@@ -23,6 +23,7 @@ export function DashboardLinkList({
   onDelete,
 }: DashboardLinkListProps) {
   const styles = useStyles2(getStyles);
+
   const isEmptyList = links.length === 0;
 
   if (isEmptyList) {

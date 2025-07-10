@@ -13,7 +13,6 @@ package dataquery
 
 import (
 	json "encoding/json"
-	errors "errors"
 	fmt "fmt"
 )
 
@@ -1116,7 +1115,8 @@ func (resource DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) Ma
 	if resource.Nested != nil {
 		return json.Marshal(resource.Nested)
 	}
-	return nil, fmt.Errorf("no value for disjunction of refs")
+
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested` from JSON.
@@ -1133,7 +1133,7 @@ func (resource *DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) U
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1187,7 +1187,7 @@ func (resource *DateHistogramOrHistogramOrTermsOrFiltersOrGeoHashGridOrNested) U
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {
@@ -1276,7 +1276,8 @@ func (resource CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSe
 	if resource.TopMetrics != nil {
 		return json.Marshal(resource.TopMetrics)
 	}
-	return nil, fmt.Errorf("no value for disjunction of refs")
+
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` from JSON.
@@ -1293,7 +1294,7 @@ func (resource *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrS
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1451,7 +1452,7 @@ func (resource *CountOrMovingAverageOrDerivativeOrCumulativeSumOrBucketScriptOrS
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type MovingAverageOrDerivativeOrCumulativeSumOrBucketScript struct {
@@ -1480,7 +1481,8 @@ func (resource MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) MarshalJS
 	if resource.BucketScript != nil {
 		return json.Marshal(resource.BucketScript)
 	}
-	return nil, fmt.Errorf("no value for disjunction of refs")
+
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `MovingAverageOrDerivativeOrCumulativeSumOrBucketScript` from JSON.
@@ -1497,7 +1499,7 @@ func (resource *MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) Unmarsha
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1535,7 +1537,7 @@ func (resource *MovingAverageOrDerivativeOrCumulativeSumOrBucketScript) Unmarsha
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type StringOrDataqueryInlineScript struct {
@@ -1546,6 +1548,43 @@ type StringOrDataqueryInlineScript struct {
 // NewStringOrDataqueryInlineScript creates a new StringOrDataqueryInlineScript object.
 func NewStringOrDataqueryInlineScript() *StringOrDataqueryInlineScript {
 	return &StringOrDataqueryInlineScript{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `StringOrDataqueryInlineScript` as JSON.
+func (resource StringOrDataqueryInlineScript) MarshalJSON() ([]byte, error) {
+	if resource.String != nil {
+		return json.Marshal(resource.String)
+	}
+	if resource.DataqueryInlineScript != nil {
+		return json.Marshal(resource.DataqueryInlineScript)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode StringOrDataqueryInlineScript from JSON.
+func (resource *StringOrDataqueryInlineScript) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+	fields := make(map[string]json.RawMessage)
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+
+	if fields["String"] != nil {
+		if err := json.Unmarshal(fields["String"], &resource.String); err != nil {
+			return fmt.Errorf("error decoding field 'String': %w", err)
+		}
+	}
+
+	if fields["DataqueryInlineScript"] != nil {
+		if err := json.Unmarshal(fields["DataqueryInlineScript"], &resource.DataqueryInlineScript); err != nil {
+			return fmt.Errorf("error decoding field 'DataqueryInlineScript': %w", err)
+		}
+	}
+
+	return nil
 }
 
 type BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics struct {
@@ -1630,7 +1669,8 @@ func (resource BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRaw
 	if resource.TopMetrics != nil {
 		return json.Marshal(resource.TopMetrics)
 	}
-	return nil, fmt.Errorf("no value for disjunction of refs")
+
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRawDocumentOrUniqueCountOrPercentilesOrExtendedStatsOrMinOrMaxOrSumOrAverageOrMovingAverageOrMovingFunctionOrLogsOrRateOrTopMetrics` from JSON.
@@ -1647,7 +1687,7 @@ func (resource *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRa
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -1797,5 +1837,5 @@ func (resource *BucketScriptOrCumulativeSumOrDerivativeOrSerialDiffOrRawDataOrRa
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }

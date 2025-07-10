@@ -106,9 +106,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
-	}
+	ssoSettings.RegisterReloadable(social.AzureADProviderName, provider)
 
 	return provider
 }
@@ -382,6 +380,12 @@ func validateClientAuthentication(info *social.OAuthInfo, requester identity.Req
 		}
 		if info.FederatedCredentialAudience == "" {
 			return ssosettings.ErrInvalidOAuthConfig("FIC audience is required for Managed identity authentication.")
+		}
+		return nil
+
+	case social.WorkloadIdentity:
+		if info.WorkloadIdentityTokenFile == "" {
+			return ssosettings.ErrInvalidOAuthConfig("Workload identity token file is required for Workload identity authentication.")
 		}
 		return nil
 

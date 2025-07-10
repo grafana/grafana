@@ -3,6 +3,7 @@ import React from 'react';
 import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromRuleType, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
+import { createReturnTo } from '../hooks/useReturnTo';
 import { Annotation } from '../utils/constants';
 import { fromRule, fromRulerRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRuleName, getRulePluginOrigin, rulerRuleType } from '../utils/rules';
@@ -21,6 +22,7 @@ export interface DataSourceRuleListItemProps {
   groupIdentifier: DataSourceRuleGroupIdentifier;
   application?: RulesSourceApplication;
   actions?: React.ReactNode;
+  showLocation?: boolean;
 }
 
 export function DataSourceRuleListItem({
@@ -29,13 +31,15 @@ export function DataSourceRuleListItem({
   groupIdentifier,
   application,
   actions,
+  showLocation = true,
 }: DataSourceRuleListItemProps) {
+  const returnTo = createReturnTo();
   const { rulesSource, namespace, groupName } = groupIdentifier;
 
   const ruleIdentifier = rulerRule
     ? fromRulerRule(rulesSource.name, namespace.name, groupName, rulerRule)
     : fromRule(rulesSource.name, namespace.name, groupName, rule);
-  const href = createViewLinkFromIdentifier(ruleIdentifier);
+  const href = createViewLinkFromIdentifier(ruleIdentifier, returnTo);
   const originMeta = getRulePluginOrigin(rule);
 
   // If ruler rule is available, we should use it as it contains fresh data
@@ -54,6 +58,7 @@ export function DataSourceRuleListItem({
     labels,
     actions,
     origin: originMeta,
+    showLocation,
   };
 
   switch (rule.type) {

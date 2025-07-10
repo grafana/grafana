@@ -187,6 +187,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
           >
             <Stack gap={0}>
               <Select
+                width="auto"
                 options={[
                   { label: 'span', value: 'span' },
                   { label: 'trace', value: 'trace' },
@@ -282,6 +283,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
           query={query}
           searchStreaming={datasource.isStreamingSearchEnabled() ?? false}
           metricsStreaming={datasource.isStreamingMetricsEnabled() ?? false}
+          app={app}
         />
       </div>
       {error ? (

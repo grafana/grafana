@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
+import { Trans, t } from '@grafana/i18n';
 import { Tooltip, Icon, InteractiveTable, type CellProps, Column, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
-import { LdapRole } from 'app/types';
+import { LdapRole } from 'app/types/ldap';
 
 interface Props {
   groups: LdapRole[];

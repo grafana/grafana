@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../irmHooks';
@@ -107,13 +107,13 @@ function OpenLinkButton(props: LinkButtonProps) {
   const { urlLink, label, urlLinkOnDone, labelOnDone, done } = props;
   const urlToGoWhenNotDone = urlLink?.url
     ? createRelativeUrl(urlLink.url, {
-        returnTo: location.pathname + location.search,
+        returnTo: window.location.pathname + window.location.search,
         ...urlLink.queryParams,
       })
     : '';
   const urlToGoWhenDone = urlLinkOnDone?.url
     ? createRelativeUrl(urlLinkOnDone.url, {
-        returnTo: location.pathname + location.search,
+        returnTo: window.location.pathname + window.location.search,
         ...urlLinkOnDone.queryParams,
       })
     : '';

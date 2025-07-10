@@ -38,5 +38,6 @@ When you set the **Tooltip mode** to **All**, the **Values sort order** option i
 ### Hover proximity
 
 Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.
+The following screen recording shows this option in a time series visualization:
 
 ![Adding a hover proximity limit for tooltips](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)

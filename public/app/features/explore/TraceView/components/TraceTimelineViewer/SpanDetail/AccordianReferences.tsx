@@ -16,8 +16,8 @@ import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { autoColor } from '../../Theme';
 import { TraceSpanReference } from '../../types/trace';
@@ -176,7 +176,6 @@ export function References(props: ReferenceItemProps) {
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
                 label={t('explore.references.label-attributes', 'attributes')}
-                linksGetter={null}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>

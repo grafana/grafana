@@ -3,9 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { dateTime, TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { PrometheusDatasource } from '../datasource';
-import PrometheusLanguageProvider from '../language_provider';
+import { PrometheusLanguageProviderInterface } from '../language_provider';
 import { migrateVariableEditorBackToVariableSupport } from '../migrations/variableMigration';
 import { selectOptionInTest } from '../test/helpers/selectOptionInTest';
 import { PromVariableQuery, PromVariableQueryType, StandardPromVariableQuery } from '../types';
@@ -137,27 +138,18 @@ describe('PromVariableQueryEditor', () => {
         hasLabelsMatchAPISupport: () => true,
         languageProvider: {
           start: () => Promise.resolve([]),
-          syntax: () => {},
-          getLabelKeys: () => [],
-          metrics: [],
-          metricsMetadata: {},
-          getLabelValues: jest.fn().mockImplementation(() => ['that']),
-          fetchLabelsWithMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
-        } as Partial<PrometheusLanguageProvider> as PrometheusLanguageProvider,
-        getDebounceTimeInMilliseconds: jest.fn(),
-        getTagKeys: jest
-          .fn()
-          .mockImplementation(() => Promise.resolve([{ text: 'this', value: 'this', label: 'this' }])),
-        getVariables: jest.fn().mockImplementation(() => []),
-        metricFindQuery: jest.fn().mockImplementation(() =>
-          Promise.resolve([
-            {
-              text: 'that',
-              value: 'that',
-              label: 'that',
-            },
-          ])
-        ),
+          queryLabelKeys: jest.fn().mockResolvedValue(['those']),
+          queryLabelValues: jest.fn().mockResolvedValue(['that']),
+        } as Partial<PrometheusLanguageProviderInterface>,
+        getTagKeys: jest.fn().mockResolvedValue([{ text: 'this', value: 'this', label: 'this' }]),
+        getVariables: jest.fn().mockReturnValue([]),
+        metricFindQuery: jest.fn().mockResolvedValue([
+          {
+            text: 'that',
+            value: 'that',
+            label: 'that',
+          },
+        ]),
       } as Partial<PrometheusDatasource> as PrometheusDatasource,
       query: {
         refId: 'test',
@@ -270,7 +262,9 @@ describe('PromVariableQueryEditor', () => {
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    const labelSelect = screen.getByLabelText('label-select');
+    const labelSelect = screen.getByTestId(
+      selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect
+    );
     await userEvent.type(labelSelect, 'this');
     await selectOptionInTest(labelSelect, 'this');
     //display label in label select
@@ -296,7 +290,9 @@ describe('PromVariableQueryEditor', () => {
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    const labelSelect = screen.getByLabelText('label-select');
+    const labelSelect = screen.getByTestId(
+      selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect
+    );
     await userEvent.type(labelSelect, 'this');
     await selectOptionInTest(labelSelect, 'this');
 

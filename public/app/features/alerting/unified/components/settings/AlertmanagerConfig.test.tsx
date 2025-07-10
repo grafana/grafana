@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
@@ -16,7 +16,7 @@ import {
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
   mockDataSources,
   setupVanillaAlertmanagerServer,
-} from './__mocks__/server';
+} from './mocks/server';
 
 const renderConfiguration = (
   alertManagerSourceName: string,

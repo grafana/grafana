@@ -56,7 +56,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const isEnabledViaUrl = (key: string) => values[key] === 'true' || values[key] === '';
 
     // Only allow hiding, never "unhiding" from url
-    // Becasue this should really only change on first init it's fine to do multiple setState here
+    // Because this should really only change on first init it's fine to do multiple setState here
 
     if (!hideTimeControls && isEnabledViaUrl('_dash.hideTimePicker')) {
       this.setState({ hideTimeControls: true });
@@ -122,7 +122,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const dashboard = getDashboardSceneFor(model);
   const { links, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
-  const showDebugger = location.search.includes('scene-debugger');
+  const showDebugger = window.location.search.includes('scene-debugger');
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered

@@ -201,9 +201,9 @@ Variables in data links and actions let you send people to a detailed dashboard 
 
 To see a list of available variables, enter `$` in the data link or action **URL** field.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Azure Monitor, [CloudWatch](ref:cloudwatch), and [Google Cloud Monitoring](ref:google-cloud-monitoring) have pre-configured data links called _deep links_.
 
@@ -324,16 +324,17 @@ To add a data link, follow these steps:
 1. Click **+ Add action**.
 1. In the dialog box that opens, define the API call settings:
 
-   | Option               | Description                                                                                                                                               |
-   | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                         |
-   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                     |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                |
-   | URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. |
-   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                             |
-   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                   |
-   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                          |
-   | Body                 | The body of the request.                                                                                                                                  |
+   | Option               | Description                                                                                                                                                                                                                                 |
+   | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
+   | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
+   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | URL                  | The request URL.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                                                                   |
+   | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
+   | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
+   | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
+   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                                                            |
+   | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save dashboard**.

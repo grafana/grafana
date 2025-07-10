@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { Trans, t } from '@grafana/i18n';
 import {
   Button,
   Checkbox,
@@ -14,9 +15,8 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
-import { t, Trans } from 'app/core/internationalization';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
@@ -56,6 +56,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     watch,
     getValues,
   } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
+
   const isEdit = Boolean(data?.metadata?.name);
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const navigate = useNavigate();

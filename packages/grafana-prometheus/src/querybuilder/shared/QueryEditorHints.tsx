@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, QueryHint } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -24,9 +25,15 @@ export function QueryEditorHints(props: PromQueryEditorProps) {
         <div className={styles.container}>
           {hints.map((hint) => {
             return (
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
               <Tooltip content={`${hint.label} ${hint.fix?.label}`} key={hint.type}>
                 <Button onClick={() => onHintButtonClick(hint, props)} fill="outline" size="sm" className={styles.hint}>
-                  hint: {hint.fix?.title || hint.fix?.action?.type.toLowerCase().replace('_', ' ')}
+                  <Trans
+                    i18nKey="grafana-prometheus.querybuilder.query-editor-hints.hint-details"
+                    values={{ hintDetails: hint.fix?.title || hint.fix?.action?.type.toLowerCase().replace('_', ' ') }}
+                  >
+                    hint: {'{{hintDetails}}'}
+                  </Trans>
                 </Button>
               </Tooltip>
             );

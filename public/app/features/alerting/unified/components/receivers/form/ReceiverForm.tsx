@@ -3,11 +3,11 @@ import * as React from 'react';
 import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { Trans, t } from 'app/core/internationalization';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 

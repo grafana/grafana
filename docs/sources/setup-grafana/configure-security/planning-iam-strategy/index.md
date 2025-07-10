@@ -133,14 +133,6 @@ In Grafana's audit logs it will still show up as the same service account.
 
 Service account access tokens inherit permissions from the service account.
 
-### API keys
-
-{{< admonition type="note" >}}
-Grafana recommends using service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts](./#service-accounts).
-{{< /admonition >}}
-
-You can use Grafana API keys to interact with data sources via HTTP APIs.
-
 ## How to work with roles?
 
 Grafana roles control the access of users and service accounts to specific resources and determine their authorized actions.

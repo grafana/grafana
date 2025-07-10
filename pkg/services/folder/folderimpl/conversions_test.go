@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestFolderConversions(t *testing.T) {
@@ -48,6 +49,7 @@ func TestFolderConversions(t *testing.T) {
 	created = created.Local()
 	require.NoError(t, err)
 
+	tracer := noop.NewTracerProvider().Tracer("TestFolderConversions")
 	fake := usertest.NewUserServiceFake()
 	fake.ExpectedListUsersByIdOrUid = []*user.User{
 		{
@@ -60,7 +62,7 @@ func TestFolderConversions(t *testing.T) {
 		},
 	}
 
-	fs := ProvideUnifiedStore(nil, fake)
+	fs := ProvideUnifiedStore(nil, fake, tracer)
 
 	converted, err := fs.UnstructuredToLegacyFolder(context.Background(), input)
 	require.NoError(t, err)
@@ -239,6 +241,7 @@ func TestFolderListConversions(t *testing.T) {
 	created = created.Local()
 	require.NoError(t, err)
 
+	tracer := noop.NewTracerProvider().Tracer("TestFolderListConversions")
 	fake := usertest.NewUserServiceFake()
 	fake.ExpectedListUsersByIdOrUid = []*user.User{
 		{
@@ -267,7 +270,7 @@ func TestFolderListConversions(t *testing.T) {
 		},
 	}
 
-	fs := ProvideUnifiedStore(nil, fake)
+	fs := ProvideUnifiedStore(nil, fake, tracer)
 
 	converted, err := fs.UnstructuredToLegacyFolderList(context.Background(), input)
 	require.NoError(t, err)

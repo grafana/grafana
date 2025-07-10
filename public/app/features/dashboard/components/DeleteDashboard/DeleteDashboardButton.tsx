@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { Button, ModalsController } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 

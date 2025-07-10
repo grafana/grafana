@@ -3,8 +3,8 @@ import { Draggable } from '@hello-pangea/dnd';
 import { FormEvent, useState, KeyboardEvent, useRef, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Icon, Input, IconButton, HorizontalGroup, FieldValidationMessage, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 type EnumMappingRowProps = {
   transformIndex: number;

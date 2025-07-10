@@ -2,6 +2,7 @@ import { render } from 'test/test-utils';
 import { byRole, byTitle } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types/accessControl';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaPromRuleDTO,
@@ -13,13 +14,13 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
-import { mockGrafanaPromAlertingRule, mockGrafanaRulerRule } from '../mocks';
+import { grantUserPermissions } from '../mocks';
 import { grafanaRulerGroup, grafanaRulerNamespace } from '../mocks/grafanaRulerApi';
-import { setGrafanaPromRules } from '../mocks/server/configure';
+import { setFolderAccessControl, setGrafanaPromRules } from '../mocks/server/configure';
 import { rulerRuleType } from '../utils/rules';
 import { intervalToSeconds } from '../utils/time';
 
-import { GrafanaGroupLoader, matchRules } from './GrafanaGroupLoader';
+import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
@@ -32,9 +33,36 @@ const ui = {
   ruleLink: (ruleName: string) => byRole('link', { name: ruleName }),
   editButton: () => byRole('link', { name: 'Edit' }),
   moreButton: () => byRole('button', { name: 'More' }),
+  // Menu items that appear when More button is clicked
+  menuItems: {
+    silence: () => byRole('menuitem', { name: /silence/i }),
+    duplicate: () => byRole('menuitem', { name: /duplicate/i }),
+    copyLink: () => byRole('menuitem', { name: /copy link/i }),
+    export: () => byRole('menuitem', { name: /export/i }),
+    delete: () => byRole('menuitem', { name: /delete/i }),
+    pause: () => byRole('menuitem', { name: /pause/i }),
+  },
 };
 
 describe('GrafanaGroupLoader', () => {
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleDelete,
+      AccessControlAction.AlertingSilenceCreate,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleRead,
+    ]);
+    // Grant necessary permissions for editing rules
+    setFolderAccessControl({
+      [AccessControlAction.AlertingRuleUpdate]: true,
+      [AccessControlAction.AlertingRuleDelete]: true,
+      [AccessControlAction.AlertingSilenceCreate]: true,
+      [AccessControlAction.AlertingRuleCreate]: true, // For duplicate action
+      [AccessControlAction.AlertingRuleRead]: true, // For export action
+    });
+  });
+
   it('should render rule with url when ruler and prom rule exist', async () => {
     setGrafanaPromRules([rulerGroupToPromGroup(grafanaRulerGroup)]);
 
@@ -49,11 +77,14 @@ describe('GrafanaGroupLoader', () => {
     expect(ruleStatus).toBeInTheDocument();
 
     const ruleLink = ui.ruleLink(rule1.grafana_alert.title).get(ruleListItem);
-    expect(ruleLink).toHaveAttribute('href', `/alerting/grafana/${rule1.grafana_alert.uid}/view`);
+    expect(ruleLink).toHaveAttribute(
+      'href',
+      expect.stringContaining(`/alerting/grafana/${rule1.grafana_alert.uid}/view`)
+    );
   });
 
-  it('should render rule with url and creating state when only ruler rule exists', async () => {
-    setGrafanaPromRules([]);
+  it('should render More button with action menu options', async () => {
+    setGrafanaPromRules([rulerGroupToPromGroup(grafanaRulerGroup)]);
 
     const groupIdentifier = getGroupIdentifier(grafanaRulerGroup);
 
@@ -62,89 +93,125 @@ describe('GrafanaGroupLoader', () => {
     const [rule1] = grafanaRulerGroup.rules;
     const ruleListItem = await ui.ruleItem(rule1.grafana_alert.title).find();
 
-    const creatingIcon = ui.ruleStatus('Creating').get(ruleListItem);
-    expect(creatingIcon).toBeInTheDocument();
+    // Check that More button is present
+    const moreButton = ui.moreButton().get(ruleListItem);
+    expect(moreButton).toBeInTheDocument();
 
-    const ruleLink = ui.ruleLink(rule1.grafana_alert.title).get(ruleListItem);
-    expect(ruleLink).toHaveAttribute('href', `/alerting/grafana/${rule1.grafana_alert.uid}/view`);
+    // Verify More button accessibility
+    expect(moreButton).toHaveAttribute('aria-label', 'More');
+    expect(moreButton).toHaveTextContent('More');
   });
 
-  it('should render delete rule operation list item when only prom rule exists', async () => {
-    const promOnlyGroup: GrafanaPromRuleGroupDTO = {
-      ...rulerGroupToPromGroup(grafanaRulerGroup),
-      name: 'prom-only-group',
+  it('should render multiple rules with their own action buttons', async () => {
+    // Create a group with multiple rules
+    const multiRuleGroup = {
+      ...grafanaRulerGroup,
+      rules: [
+        grafanaRulerGroup.rules[0],
+        {
+          ...grafanaRulerGroup.rules[0],
+          grafana_alert: {
+            ...grafanaRulerGroup.rules[0].grafana_alert,
+            uid: 'second-rule-uid',
+            title: 'Second Rule',
+          },
+        },
+      ],
     };
 
-    setGrafanaPromRules([promOnlyGroup]);
+    setGrafanaPromRules([rulerGroupToPromGroup(multiRuleGroup)]);
 
-    const groupIdentifier = getGroupIdentifier(promOnlyGroup);
+    const groupIdentifier = getGroupIdentifier(multiRuleGroup);
 
     render(<GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={grafanaRulerNamespace.name} />);
 
-    const [rule1] = promOnlyGroup.rules;
-    const promRule = await ui.ruleItem(rule1.name).find();
+    // Check first rule
+    const [rule1, rule2] = multiRuleGroup.rules;
+    const ruleListItem1 = await ui.ruleItem(rule1.grafana_alert.title).find();
+    const ruleListItem2 = await ui.ruleItem(rule2.grafana_alert.title).find();
 
-    const deletingIcon = ui.ruleStatus('Deleting').get(promRule);
-    expect(deletingIcon).toBeInTheDocument();
+    // Each rule should have its own More button
+    expect(ui.moreButton().get(ruleListItem1)).toBeInTheDocument();
+    expect(ui.moreButton().get(ruleListItem2)).toBeInTheDocument();
 
-    expect(ui.editButton().query(promRule)).not.toBeInTheDocument();
-    expect(ui.moreButton().query(promRule)).not.toBeInTheDocument();
-  });
-});
+    // Check that edit buttons are present and have correct URLs
+    const editButton1 = ui.editButton().get(ruleListItem1);
+    const editButton2 = ui.editButton().get(ruleListItem2);
 
-describe('matchRules', () => {
-  it('should return matches for all items and have empty promOnlyRules if all rules are matched by uid', () => {
-    const rulerRules = [
-      mockGrafanaRulerRule({ uid: '1' }),
-      mockGrafanaRulerRule({ uid: '2' }),
-      mockGrafanaRulerRule({ uid: '3' }),
-    ];
+    expect(editButton1).toBeInTheDocument();
+    expect(editButton2).toBeInTheDocument();
 
-    const promRules = rulerRules.map(rulerRuleToPromRule);
-
-    const { matches, promOnlyRules } = matchRules(promRules, rulerRules);
-
-    expect(matches.size).toBe(rulerRules.length);
-    expect(promOnlyRules).toHaveLength(0);
-
-    for (const [rulerRule, promRule] of matches) {
-      expect(rulerRule.grafana_alert.uid).toBe(promRule.uid);
-    }
+    // Check that edit buttons have correct URLs (the actual format is simpler)
+    expect(editButton1).toHaveAttribute('href', expect.stringContaining(`/alerting/${rule1.grafana_alert.uid}/edit`));
+    expect(editButton2).toHaveAttribute('href', expect.stringContaining(`/alerting/${rule2.grafana_alert.uid}/edit`));
   });
 
-  it('should return unmatched prometheus rules in promOnlyRules array', () => {
-    const rulerRules = [mockGrafanaRulerRule({ uid: '1' }), mockGrafanaRulerRule({ uid: '2' })];
+  it('should not render edit button when user lacks edit permissions', async () => {
+    // Override permissions to deny editing
+    setFolderAccessControl({
+      [AccessControlAction.AlertingRuleUpdate]: false,
+      [AccessControlAction.AlertingRuleDelete]: false,
+    });
 
-    const matchingPromRules = rulerRules.map(rulerRuleToPromRule);
-    const unmatchedPromRules = [mockGrafanaPromAlertingRule({ uid: '3' }), mockGrafanaPromAlertingRule({ uid: '4' })];
+    setGrafanaPromRules([rulerGroupToPromGroup(grafanaRulerGroup)]);
 
-    const allPromRules = [...matchingPromRules, ...unmatchedPromRules];
-    const { matches, promOnlyRules } = matchRules(allPromRules, rulerRules);
+    const groupIdentifier = getGroupIdentifier(grafanaRulerGroup);
 
-    expect(matches.size).toBe(rulerRules.length);
-    expect(promOnlyRules).toHaveLength(unmatchedPromRules.length);
-    expect(promOnlyRules).toEqual(expect.arrayContaining(unmatchedPromRules));
+    render(<GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={grafanaRulerNamespace.name} />);
+
+    const [rule1] = grafanaRulerGroup.rules;
+    const ruleListItem = await ui.ruleItem(rule1.grafana_alert.title).find();
+
+    // Edit button should not be present
+    expect(ui.editButton().query(ruleListItem)).not.toBeInTheDocument();
+
+    // More button should still be present (for other actions like viewing)
+    expect(ui.moreButton().get(ruleListItem)).toBeInTheDocument();
   });
 
-  it('should not include ruler rules in matches if they have no prometheus counterpart', () => {
-    const rulerRules = [
-      mockGrafanaRulerRule({ uid: '1' }),
-      mockGrafanaRulerRule({ uid: '2' }),
-      mockGrafanaRulerRule({ uid: '3' }),
-    ];
+  it('should render correct menu actions when More button is clicked', async () => {
+    setGrafanaPromRules([rulerGroupToPromGroup(grafanaRulerGroup)]);
 
-    // Only create prom rule for the second ruler rule
-    const promRules = [rulerRuleToPromRule(rulerRules[1])];
+    const groupIdentifier = getGroupIdentifier(grafanaRulerGroup);
 
-    const { matches, promOnlyRules } = matchRules(promRules, rulerRules);
+    const { user } = render(
+      <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={grafanaRulerNamespace.name} />
+    );
 
-    expect(matches.size).toBe(1);
-    expect(promOnlyRules).toHaveLength(0);
+    const [rule1] = grafanaRulerGroup.rules;
+    const ruleListItem = await ui.ruleItem(rule1.grafana_alert.title).find();
 
-    // Verify that only the second ruler rule is in matches
-    expect(matches.has(rulerRules[0])).toBe(false);
-    expect(matches.get(rulerRules[1])).toBe(promRules[0]);
-    expect(matches.has(rulerRules[2])).toBe(false);
+    // Find and click the More button
+    const moreButton = ui.moreButton().get(ruleListItem);
+    await user.click(moreButton);
+
+    // Check that the dropdown menu appears
+    const menu = byRole('menu').get();
+    expect(menu).toBeInTheDocument();
+
+    // With proper permissions, all 6 menu actions should be available:
+
+    // 1. Silence notifications - available for alerting rules (AlertingSilenceCreate permission)
+    expect(ui.menuItems.silence().get()).toBeInTheDocument();
+
+    // 2. Copy link - always available
+    expect(ui.menuItems.copyLink().get()).toBeInTheDocument();
+
+    // 3. Duplicate - should be available with create permissions (AlertingRuleCreate permission)
+    expect(ui.menuItems.duplicate().get()).toBeInTheDocument();
+
+    // 4. Export - should be available for Grafana alerting rules (AlertingRuleRead permission)
+    expect(ui.menuItems.export().get()).toBeInTheDocument();
+
+    // 5. Delete - should be available for Grafana alerting rules (AlertingRuleDelete permission)
+    expect(ui.menuItems.delete().get()).toBeInTheDocument();
+
+    // 6. Pause - should be available for Grafana alerting rules (AlertingRuleUpdate permission)
+    expect(ui.menuItems.pause().get()).toBeInTheDocument();
+
+    // Verify that the menu contains all 6 expected menu items
+    const menuItems = byRole('menuitem').getAll();
+    expect(menuItems.length).toBe(6);
   });
 });
 
@@ -168,6 +235,8 @@ function rulerRuleToPromRule(rule: RulerGrafanaRuleDTO): GrafanaPromRuleDTO {
     health: 'ok',
     state: PromAlertingRuleState.Inactive,
     type: rulerRuleType.grafana.alertingRule(rule) ? PromRuleType.Alerting : PromRuleType.Recording,
+    totals: {},
+    totalsFiltered: {},
   };
 }
 

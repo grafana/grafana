@@ -1,9 +1,9 @@
 import { ReactElement } from 'react';
 
 import { locationUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, Modal, Stack } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 type Props = {
   onDismiss: () => void;

@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { StoryFn } from '@storybook/react';
 
-import { ComponentSize } from '../../types';
+import { ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -12,7 +12,7 @@ import { ButtonGroup } from './ButtonGroup';
 const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
 
 export default {
-  title: 'Buttons/Button',
+  title: 'Inputs/Button',
   component: Button,
   parameters: {
     docs: {
@@ -100,7 +100,7 @@ export const Examples: StoryFn<typeof Button> = () => {
           <Button variant="secondary" icon="angle-down" />
         </ButtonGroup>
       </Stack>
-      <Card>
+      <Card noMargin>
         <Card.Heading>Button inside card</Card.Heading>
         <Card.Actions>
           {allButtonVariants.map((variant) => (

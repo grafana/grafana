@@ -2,8 +2,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
 import { Button, Icon, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { IrmCardConfiguration } from './ConfigureIRM';
 import { ProgressBar, StepsStatus } from './ProgressBar';
@@ -16,6 +16,7 @@ interface ConfigCardProps {
 
 export function ConfigCard({ config, handleActionClick, isLoading = false }: ConfigCardProps) {
   const styles = useStyles2(getStyles);
+
   return (
     <Stack direction={'column'} gap={1} justifyContent={'space-around'}>
       <div className={styles.cardContent}>

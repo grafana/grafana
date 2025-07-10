@@ -3,7 +3,7 @@ import { forwardRef, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */

@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { VariableModel, defaultDashboard } from '@grafana/schema';
 import {
@@ -12,7 +13,7 @@ import {
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
 
 export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise<DashboardDTO> {
   let variablesList = defaultDashboard.templating?.list;
@@ -55,7 +56,7 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
     dashboard: {
       ...defaultDashboard,
       uid: '',
-      title: 'New dashboard',
+      title: t('dashboard-scene.build-new-dashboard-save-model.data.title.new-dashboard', 'New dashboard'),
       panels: [],
       timezone: config.bootData.user?.timezone || defaultDashboard.timezone,
     },
@@ -112,7 +113,7 @@ export async function buildNewDashboardSaveModelV2(
     kind: 'DashboardWithAccessInfo',
     spec: {
       ...defaultDashboardV2Spec(),
-      title: 'New dashboard',
+      title: t('dashboard-scene.build-new-dashboard-save-model-v2.data.title.new-dashboard', 'New dashboard'),
       timeSettings: {
         ...defaultTimeSettingsSpec(),
         timezone: config.bootData.user?.timezone || defaultTimeSettingsSpec().timezone,

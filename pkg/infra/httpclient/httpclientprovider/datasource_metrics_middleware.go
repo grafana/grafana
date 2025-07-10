@@ -45,7 +45,7 @@ var (
 
 	datasourceResponseGauge = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace: "plugins",
+			Namespace: "grafana",
 			Name:      "datasource_response_size",
 			Help:      "gauge of external data source response sizes returned to Grafana in bytes",
 		}, []string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},

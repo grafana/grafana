@@ -2,10 +2,10 @@ import { debounce } from 'lodash';
 import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CoreApp, DataFrame, dateTimeFormat, LogRowContextOptions, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';
@@ -105,10 +105,7 @@ export const LogRow = ({
   );
   const levelStyles = useMemo(() => getLogLevelStyles(theme, row.logLevel), [row.logLevel, theme]);
   const processedRow = useMemo(
-    () =>
-      row.hasUnescapedContent && forceEscape
-        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
-        : row,
+    () => (row.hasUnescapedContent && forceEscape ? { ...row, entry: escapeUnescapedString(row.entry) } : row),
     [forceEscape, row]
   );
   const errorMessage = checkLogsError(row);
@@ -292,6 +289,7 @@ export const LogRow = ({
             mouseIsOver={mouseIsOver}
             onBlur={onMouseLeave}
             expanded={showDetails}
+            forceEscape={forceEscape}
             logRowMenuIconsBefore={logRowMenuIconsBefore}
             logRowMenuIconsAfter={logRowMenuIconsAfter}
           />

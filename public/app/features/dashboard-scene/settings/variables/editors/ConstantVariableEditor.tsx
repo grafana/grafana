@@ -1,9 +1,9 @@
 import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
+import { t } from '@grafana/i18n';
 import { ConstantVariable, SceneVariable } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { ConstantVariableForm } from '../components/ConstantVariableForm';

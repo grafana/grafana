@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	reflect "reflect"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -20,10 +20,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Convert the the protobuf model into k8s (will decode each value)
-func (x *ResourceTable) ToK8s() (metav1.Table, error) {
+func toK8s(x *resourcepb.ResourceTable) (metav1.Table, error) {
 	table := metav1.Table{
 		ListMeta: metav1.ListMeta{
 			Continue: x.NextPageToken,
@@ -103,7 +105,7 @@ func (x *ResourceTable) ToK8s() (metav1.Table, error) {
 }
 
 type TableBuilder struct {
-	ResourceTable
+	resourcepb.ResourceTable
 
 	lookup map[string]*resourceTableColumn
 
@@ -113,9 +115,9 @@ type TableBuilder struct {
 
 type ResourceColumnEncoder = func(v any) ([]byte, error)
 
-func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, error) {
+func NewTableBuilder(cols []*resourcepb.ResourceTableColumnDefinition) (*TableBuilder, error) {
 	table := &TableBuilder{
-		ResourceTable: ResourceTable{
+		ResourceTable: resourcepb.ResourceTable{
 			Columns: cols,
 		},
 
@@ -147,8 +149,8 @@ func (x *TableBuilder) Encoders() []ResourceColumnEncoder {
 	return encoders
 }
 
-func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) error {
-	row := &ResourceTableRow{
+func (x *TableBuilder) AddRow(key *resourcepb.ResourceKey, rv int64, vals map[string]any) error {
+	row := &resourcepb.ResourceTableRow{
 		Key:             key,
 		ResourceVersion: rv,
 		Cells:           make([][]byte, len(x.Columns)),
@@ -171,7 +173,7 @@ func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) e
 }
 
 type resourceTableColumn struct {
-	def   *ResourceTableColumnDefinition
+	def   *resourcepb.ResourceTableColumnDefinition
 	index int
 
 	// Used for array indexing
@@ -183,7 +185,7 @@ type resourceTableColumn struct {
 }
 
 // helper to decode a cell value
-func DecodeCell(columnDef *ResourceTableColumnDefinition, index int, cellVal []byte) (any, error) {
+func DecodeCell(columnDef *resourcepb.ResourceTableColumnDefinition, index int, cellVal []byte) (any, error) {
 	col, err := newResourceTableColumn(columnDef, index)
 	if err != nil {
 		return nil, err
@@ -196,48 +198,48 @@ func DecodeCell(columnDef *ResourceTableColumnDefinition, index int, cellVal []b
 }
 
 // nolint:gocyclo
-func newResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*resourceTableColumn, error) {
+func newResourceTableColumn(def *resourcepb.ResourceTableColumnDefinition, index int) (*resourceTableColumn, error) {
 	col := &resourceTableColumn{def: def, index: index}
 
 	// Initially ignore the array property, we wil wrap that at the end
 	switch def.Type {
-	case ResourceTableColumnDefinition_UNKNOWN_TYPE:
+	case resourcepb.ResourceTableColumnDefinition_UNKNOWN_TYPE:
 		return nil, fmt.Errorf("unknown column type")
 
-	case ResourceTableColumnDefinition_STRING:
+	case resourcepb.ResourceTableColumnDefinition_STRING:
 		col.OpenAPIType = "string"
 		col.reader = func(iter *jsoniter.Iterator) (any, error) {
 			return iter.ReadString()
 		}
 
-	case ResourceTableColumnDefinition_BOOLEAN:
+	case resourcepb.ResourceTableColumnDefinition_BOOLEAN:
 		col.OpenAPIType = "boolean"
 		col.reader = func(iter *jsoniter.Iterator) (any, error) {
 			return iter.ReadBool()
 		}
 
-	case ResourceTableColumnDefinition_INT32:
+	case resourcepb.ResourceTableColumnDefinition_INT32:
 		col.OpenAPIType = "number"
 		col.OpenAPIFormat = "int32"
 		col.reader = func(iter *jsoniter.Iterator) (any, error) {
 			return iter.ReadInt32()
 		}
 
-	case ResourceTableColumnDefinition_INT64:
+	case resourcepb.ResourceTableColumnDefinition_INT64:
 		col.OpenAPIType = "number"
 		col.OpenAPIFormat = "int64"
 		col.reader = func(iter *jsoniter.Iterator) (any, error) {
 			return iter.ReadInt64()
 		}
 
-	case ResourceTableColumnDefinition_DOUBLE:
+	case resourcepb.ResourceTableColumnDefinition_DOUBLE:
 		col.OpenAPIType = "number"
 		col.OpenAPIFormat = "double"
 		col.reader = func(iter *jsoniter.Iterator) (any, error) {
 			return iter.ReadFloat64()
 		}
 
-	case ResourceTableColumnDefinition_FLOAT:
+	case resourcepb.ResourceTableColumnDefinition_FLOAT:
 		col.OpenAPIType = "number"
 		col.OpenAPIFormat = "float"
 		col.reader = func(iter *jsoniter.Iterator) (any, error) {
@@ -245,10 +247,10 @@ func newResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*res
 		}
 
 	// Encode everything we can -- the lower conversion can happen later?
-	case ResourceTableColumnDefinition_DATE, ResourceTableColumnDefinition_DATE_TIME:
+	case resourcepb.ResourceTableColumnDefinition_DATE, resourcepb.ResourceTableColumnDefinition_DATE_TIME:
 		col.OpenAPIType = "string"
 		col.OpenAPIFormat = "date"
-		if def.Type == ResourceTableColumnDefinition_DATE_TIME {
+		if def.Type == resourcepb.ResourceTableColumnDefinition_DATE_TIME {
 			col.OpenAPIFormat = "date_time"
 		}
 		col.writer = func(v any, stream *jsoniter.Stream) error {
@@ -287,7 +289,7 @@ func newResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*res
 			}
 		}
 
-	case ResourceTableColumnDefinition_BINARY:
+	case resourcepb.ResourceTableColumnDefinition_BINARY:
 		col.OpenAPIType = "binary"
 		col.writer = func(v any, stream *jsoniter.Stream) error {
 			b, ok := v.([]byte)
@@ -306,7 +308,7 @@ func newResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*res
 			return base64.StdEncoding.DecodeString(str)
 		}
 
-	case ResourceTableColumnDefinition_OBJECT:
+	case resourcepb.ResourceTableColumnDefinition_OBJECT:
 		col.OpenAPIType = "string"
 		col.OpenAPIFormat = "json"
 
@@ -337,7 +339,7 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 	// Arrays will always use JSON formatting
 	if !x.def.IsArray {
 		switch x.def.Type {
-		case ResourceTableColumnDefinition_STRING:
+		case resourcepb.ResourceTableColumnDefinition_STRING:
 			{
 				s, ok := v.(string)
 				if !ok {
@@ -345,7 +347,7 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 				}
 				return []byte(s), nil
 			}
-		case ResourceTableColumnDefinition_BINARY:
+		case resourcepb.ResourceTableColumnDefinition_BINARY:
 			{
 				s, ok := v.([]byte)
 				if !ok {
@@ -353,7 +355,7 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 				}
 				return s, nil
 			}
-		case ResourceTableColumnDefinition_BOOLEAN:
+		case resourcepb.ResourceTableColumnDefinition_BOOLEAN:
 			{
 				b, ok := v.(bool)
 				if !ok {
@@ -375,7 +377,7 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 				}
 				return []byte{0}, nil
 			}
-		case ResourceTableColumnDefinition_DATE_TIME, ResourceTableColumnDefinition_DATE:
+		case resourcepb.ResourceTableColumnDefinition_DATE_TIME, resourcepb.ResourceTableColumnDefinition_DATE:
 			{
 				f, ok := v.(time.Time)
 				if !ok {
@@ -397,7 +399,7 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 				err := binary.Write(&buf, binary.BigEndian, ts)
 				return buf.Bytes(), err
 			}
-		case ResourceTableColumnDefinition_DOUBLE:
+		case resourcepb.ResourceTableColumnDefinition_DOUBLE:
 			{
 				f, ok := v.(float64)
 				if !ok {
@@ -420,7 +422,7 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 				err := binary.Write(&buf, binary.BigEndian, f)
 				return buf.Bytes(), err
 			}
-		case ResourceTableColumnDefinition_INT64:
+		case resourcepb.ResourceTableColumnDefinition_INT64:
 			{
 				f, ok := v.(int64)
 				if !ok {
@@ -516,15 +518,15 @@ func (x *resourceTableColumn) Decode(buff []byte) (any, error) {
 	}
 	if !x.def.IsArray {
 		switch x.def.Type {
-		case ResourceTableColumnDefinition_STRING:
+		case resourcepb.ResourceTableColumnDefinition_STRING:
 			return string(buff), nil
-		case ResourceTableColumnDefinition_BINARY:
+		case resourcepb.ResourceTableColumnDefinition_BINARY:
 			return buff, nil
-		case ResourceTableColumnDefinition_BOOLEAN:
+		case resourcepb.ResourceTableColumnDefinition_BOOLEAN:
 			if len(buff) == 1 {
 				return buff[0] != 0, nil
 			}
-		case ResourceTableColumnDefinition_DOUBLE:
+		case resourcepb.ResourceTableColumnDefinition_DOUBLE:
 			{
 				var f float64
 				count, err := binary.Decode(buff, binary.BigEndian, &f)
@@ -532,7 +534,7 @@ func (x *resourceTableColumn) Decode(buff []byte) (any, error) {
 					return f, nil
 				}
 			}
-		case ResourceTableColumnDefinition_INT64:
+		case resourcepb.ResourceTableColumnDefinition_INT64:
 			{
 				var f int64
 				count, err := binary.Decode(buff, binary.BigEndian, &f)
@@ -540,7 +542,7 @@ func (x *resourceTableColumn) Decode(buff []byte) (any, error) {
 					return f, nil
 				}
 			}
-		case ResourceTableColumnDefinition_DATE_TIME, ResourceTableColumnDefinition_DATE:
+		case resourcepb.ResourceTableColumnDefinition_DATE_TIME, resourcepb.ResourceTableColumnDefinition_DATE:
 			{
 				var f int64
 				count, err := binary.Decode(buff, binary.BigEndian, &f)
@@ -587,10 +589,10 @@ func (x *resourceTableColumn) Decode(buff []byte) (any, error) {
 }
 
 // AssertTableSnapshot will match a ResourceTable vs the saved value
-func AssertTableSnapshot(t *testing.T, path string, table *ResourceTable) {
+func AssertTableSnapshot(t *testing.T, path string, table *resourcepb.ResourceTable) {
 	t.Helper()
 
-	k8sTable, err := table.ToK8s()
+	k8sTable, err := toK8s(table)
 	require.NoError(t, err, "unable to create table response", path)
 	actual, err := json.MarshalIndent(k8sTable, "", "  ")
 	require.NoError(t, err, "unable to write table json", path)

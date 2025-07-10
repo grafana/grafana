@@ -68,7 +68,7 @@ For other languages, refer to the Grafana Foundation SDK documentation for detai
 
 The following example demonstrates how you can create a simple dashboard using TypeScript:
 
-```bash
+```typescript
 import { DashboardBuilder, RowBuilder } from '@grafana/grafana-foundation-sdk/dashboard';
 import { DataqueryBuilder } from '@grafana/grafana-foundation-sdk/prometheus';
 import { PanelBuilder } from '@grafana/grafana-foundation-sdk/timeseries';
@@ -76,7 +76,7 @@ const builder = new DashboardBuilder('Sample Dashboard')
   .uid('sample-dashboard')
   .tags(['example', 'typescript'])
   .refresh('1m')
-  .time({from: 'now-30m', to: 'now'})
+  .time({ from: 'now-30m', to: 'now' })
   .timezone('browser')
   .withRow(new RowBuilder('Overview'))
   .withPanel(
@@ -87,10 +87,9 @@ const builder = new DashboardBuilder('Sample Dashboard')
       .withTarget(
         new DataqueryBuilder()
           .expr('rate(node_network_receive_bytes_total{job="example-job", device!="lo"}[$__rate_interval]) * 8')
-          .legendFormat("{{ device }}")
+          .legendFormat('{{ device }}')
       )
-  )
-;
+  );
 console.log(JSON.stringify(builder.build(), null, 2));
 ```
 

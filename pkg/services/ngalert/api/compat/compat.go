@@ -367,6 +367,7 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 		ObjectMatchers:      route.ObjectMatchers,
 		ObjectMatchersSlice: matchers,
 		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(util.Pointer(route.ActiveTimeIntervals)),
 		Continue:            OmitDefault(util.Pointer(route.Continue)),
 		GroupWait:           toStringIfNotNil(route.GroupWait),
 		GroupInterval:       toStringIfNotNil(route.GroupInterval),
@@ -455,12 +456,13 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.Notificat
 	}
 	m := ns[0]
 	return &definitions.AlertRuleNotificationSettings{
-		Receiver:          m.Receiver,
-		GroupBy:           m.GroupBy,
-		GroupWait:         m.GroupWait,
-		GroupInterval:     m.GroupInterval,
-		RepeatInterval:    m.RepeatInterval,
-		MuteTimeIntervals: m.MuteTimeIntervals,
+		Receiver:            m.Receiver,
+		GroupBy:             m.GroupBy,
+		GroupWait:           m.GroupWait,
+		GroupInterval:       m.GroupInterval,
+		RepeatInterval:      m.RepeatInterval,
+		MuteTimeIntervals:   m.MuteTimeIntervals,
+		ActiveTimeIntervals: m.ActiveTimeIntervals,
 	}
 }
 
@@ -480,12 +482,13 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 	}
 
 	return &definitions.AlertRuleNotificationSettingsExport{
-		Receiver:          m.Receiver,
-		GroupBy:           m.GroupBy,
-		GroupWait:         toStringIfNotNil(m.GroupWait),
-		GroupInterval:     toStringIfNotNil(m.GroupInterval),
-		RepeatInterval:    toStringIfNotNil(m.RepeatInterval),
-		MuteTimeIntervals: m.MuteTimeIntervals,
+		Receiver:            m.Receiver,
+		GroupBy:             m.GroupBy,
+		GroupWait:           toStringIfNotNil(m.GroupWait),
+		GroupInterval:       toStringIfNotNil(m.GroupInterval),
+		RepeatInterval:      toStringIfNotNil(m.RepeatInterval),
+		MuteTimeIntervals:   m.MuteTimeIntervals,
+		ActiveTimeIntervals: m.ActiveTimeIntervals,
 	}
 }
 
@@ -496,12 +499,13 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 	}
 	return []models.NotificationSettings{
 		{
-			Receiver:          ns.Receiver,
-			GroupBy:           ns.GroupBy,
-			GroupWait:         ns.GroupWait,
-			GroupInterval:     ns.GroupInterval,
-			RepeatInterval:    ns.RepeatInterval,
-			MuteTimeIntervals: ns.MuteTimeIntervals,
+			Receiver:            ns.Receiver,
+			GroupBy:             ns.GroupBy,
+			GroupWait:           ns.GroupWait,
+			GroupInterval:       ns.GroupInterval,
+			RepeatInterval:      ns.RepeatInterval,
+			MuteTimeIntervals:   ns.MuteTimeIntervals,
+			ActiveTimeIntervals: ns.ActiveTimeIntervals,
 		},
 	}
 }
