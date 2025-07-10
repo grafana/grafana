@@ -291,11 +291,11 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 
 type mockClient struct {
 	resource.Client
-	lastValue any
+	values []any
 }
 
 func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
-	m.lastValue = req.Operations[0].Value
+	m.values = append(m.values, req.Operations[0].Value)
 	return nil
 }
 
