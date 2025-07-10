@@ -91,8 +91,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     fontSize: theme.typography.bodySmall.fontSize,
     lineHeight: theme.typography.bodySmall.lineHeight,
-    fontWeight: theme.typography.fontWeightMedium,
     whiteSpace: 'nowrap',
-    textAlign: 'center',
   }),
 });

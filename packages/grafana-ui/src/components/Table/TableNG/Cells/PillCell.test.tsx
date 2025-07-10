@@ -63,7 +63,7 @@ describe('PillCell', () => {
     it('single value', () => {
       expectHTML(
         render(<PillCell {...props} value="value1" />),
-        `<span class="css-575nom" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>`
+        `<span class="css-3mok4w" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>`
       );
     });
 
@@ -77,7 +77,7 @@ describe('PillCell', () => {
     // it('null', () => {
     //   expectHTML(
     //     render(<PillCell {...props} value={null} />),
-    //     '<span class="css-575nom" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>'
+    //     '<span class="css-3mok4w" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>'
     //   );
     // });
 
@@ -85,9 +85,9 @@ describe('PillCell', () => {
       expectHTML(
         render(<PillCell {...props} value="value1,value2,value3" />),
         `
-        <span class="css-575nom" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
-        <span class="css-575nom" style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
-        <span class="css-575nom" style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
+        <span class="css-3mok4w" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
+        <span class="css-3mok4w" style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
+        <span class="css-3mok4w" style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
         `
       );
     });
@@ -96,9 +96,9 @@ describe('PillCell', () => {
       expectHTML(
         render(<PillCell {...props} value='["value1","value2","value3"]' />),
         `
-        <span class="css-575nom" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
-        <span class="css-575nom" style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
-        <span class="css-575nom" style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
+        <span class="css-3mok4w" style="background-color: rgb(63, 43, 91); color: rgb(255, 255, 255);">value1</span>
+        <span class="css-3mok4w" style="background-color: rgb(252, 226, 222); color: rgb(0, 0, 0);">value2</span>
+        <span class="css-3mok4w" style="background-color: rgb(81, 149, 206); color: rgb(0, 0, 0);">value3</span>
         `
       );
     });
@@ -139,10 +139,10 @@ describe('PillCell', () => {
       expectHTML(
         render(<PillCell {...props} value="success,error,warning,unknown" />),
         `
-        <span class="css-575nom" style="background-color: rgb(0, 255, 0); color: rgb(0, 0, 0);">success</span>
-        <span class="css-575nom" style="background-color: rgb(255, 0, 0); color: rgb(0, 0, 0);">error</span>
-        <span class="css-575nom" style="background-color: rgb(255, 255, 0); color: rgb(0, 0, 0);">warning</span>
-        <span class="css-575nom" style="background-color: rgb(255, 120, 10); color: rgb(0, 0, 0);">unknown</span>
+        <span class="css-3mok4w" style="background-color: rgb(0, 255, 0); color: rgb(0, 0, 0);">success</span>
+        <span class="css-3mok4w" style="background-color: rgb(255, 0, 0); color: rgb(0, 0, 0);">error</span>
+        <span class="css-3mok4w" style="background-color: rgb(255, 255, 0); color: rgb(0, 0, 0);">warning</span>
+        <span class="css-3mok4w" style="background-color: rgb(255, 120, 10); color: rgb(0, 0, 0);">unknown</span>
         `
       );
     });
