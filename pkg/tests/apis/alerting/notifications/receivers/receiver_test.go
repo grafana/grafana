@@ -3,6 +3,7 @@ package receivers
 import (
 	"context"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"maps"
@@ -1251,15 +1252,18 @@ func TestIntegrationCRUD(t *testing.T) {
 
 		expected := newDefault.Copy().(*v0alpha1.Receiver)
 		expected.Spec.Integrations[0].Uid = updatedReceiver.Spec.Integrations[0].Uid // default integration does not have UID before first update
-		lineIntegration := expected.Spec.Integrations[1]
-		lineIntegration.SecureFields = map[string]bool{
-			"token": true,
-		}
-		delete(lineIntegration.Settings, "token")
+		expectedLineIntegration := expected.Spec.Integrations[1]
+
+		integration := ngmodels.IntegrationGen(ngmodels.IntegrationMuts.WithValidConfig("line"))()
+		assert.NoError(t, integration.Encrypt(func(s string) (string, error) { return base64.StdEncoding.EncodeToString([]byte(s)), nil }))
+
+		expectedLineIntegration.SecureFields = integration.SecureFields()
+		expectedLineIntegration.Settings = integration.Settings
+
 		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[1].Type) // this type is in the schema but not in backend
-		lineIntegration.Type = "LINE"
-		lineIntegration.Uid = updatedReceiver.Spec.Integrations[1].Uid
-		expected.Spec.Integrations[1] = lineIntegration
+		expectedLineIntegration.Type = "LINE"
+		expectedLineIntegration.Uid = updatedReceiver.Spec.Integrations[1].Uid
+		expected.Spec.Integrations[1] = expectedLineIntegration
 
 		assert.Equal(t, expected.Spec, updatedReceiver.Spec)
 	})
@@ -1319,7 +1323,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		export := legacyCli.ExportReceiverTyped(t, receiver.Spec.Title, true)
 		for _, integration := range export.Receivers {
 			expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)] // to lower because there is LINE that is in different casing in API
-			assert.JSONEqf(t, expected.Config, string(integration.Settings), "integration %s", integration.Type)
+			assert.JSONEqf(t, string(expected.GetRawNotifierConfig("").Settings), string(integration.Settings), "integration %s", integration.Type)
 		}
 	})
 
@@ -1330,9 +1334,9 @@ func TestIntegrationCRUD(t *testing.T) {
 		t.Run("should return secrets in secureFields but not settings", func(t *testing.T) {
 			for _, integration := range get.Spec.Integrations {
 				t.Run(integration.Type, func(t *testing.T) {
-					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)]
+					expected := notify.AllKnownConfigsForTesting[strings.ToLower(integration.Type)].GetRawNotifierConfig("")
 					var fields map[string]any
-					require.NoError(t, json.Unmarshal([]byte(expected.Config), &fields))
+					require.NoError(t, json.Unmarshal(expected.Settings, &fields))
 					secretFields, err := channels_config.GetSecretKeysForContactPointType(integration.Type)
 					require.NoError(t, err)
 					for _, field := range secretFields {
@@ -1522,7 +1526,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig)
 func createIntegration(t *testing.T, integrationType string) v0alpha1.ReceiverIntegration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
-	return createIntegrationWithSettings(t, integrationType, cfg.Config)
+	return createIntegrationWithSettings(t, integrationType, string(cfg.GetRawNotifierConfig("").Settings))
 }
 func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.ReceiverIntegration {
 	settings := common.Unstructured{}
