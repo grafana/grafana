@@ -243,6 +243,35 @@ describe('preProcessLogs', () => {
       expect(entry).toContain(longLog.body);
     });
 
+    test('Sets the collapsed state based on the new lines count', () => {
+      const entry = new Array(virtualization.getTruncationLineCount()).fill('test\n').join('');
+      const multilineLog = createLogLine(
+        { entry, labels: { field: 'value' } },
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
+      );
+
+      expect(multilineLog.collapsed).toBeUndefined();
+
+      multilineLog.updateCollapsedState([], container);
+
+      expect(multilineLog.collapsed).toBe(true);
+      expect(entry).toContain(multilineLog.body);
+    });
+
+    test('Correctly counts new lines', () => {
+      const entry = new Array(virtualization.getTruncationLineCount()-1).fill('test\n').join('');
+      const multilineLog = createLogLine(
+        { entry, labels: { field: 'value' } },
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
+      );
+
+      expect(multilineLog.collapsed).toBeUndefined();
+
+      multilineLog.updateCollapsedState([], container);
+
+      expect(multilineLog.collapsed).toBeUndefined();
+    });
+
     test('Considers the displayed fields to set the collapsed state', () => {
       // Make container half of the size
       jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(100);
@@ -253,6 +282,22 @@ describe('preProcessLogs', () => {
       longLog.updateCollapsedState(['field'], container);
 
       expect(longLog.collapsed).toBeUndefined();
+    });
+
+    test('Considers new lines in displayed fields to set the collapsed state', () => {
+      const entry = new Array(virtualization.getTruncationLineCount() - 1).fill('test\n').join('');
+      const field = 'test\n';
+      const multilineLog = createLogLine(
+        { entry, labels: { field } },
+        { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
+      );
+
+      expect(multilineLog.collapsed).toBeUndefined();
+
+      multilineLog.updateCollapsedState(['field', LOG_LINE_BODY_FIELD_NAME], container);
+
+      expect(multilineLog.collapsed).toBe(true);
+      expect(entry).toContain(multilineLog.body);
     });
 
     test('Updates the body based on the collapsed state', () => {
