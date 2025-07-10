@@ -561,8 +561,16 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         name: 'annotation-with-options',
         enable: true,
         iconColor: 'red',
-        customProp1: true,
-        customProp2: 'test',
+        legacyOptions: {
+          expr: 'rate(http_requests_total[5m])',
+          queryType: 'range',
+          legendFormat: '{{method}} {{endpoint}}',
+          useValueAsTime: true,
+        },
+        // Some other properties that aren't in the annotation spec
+        // and should be moved to options
+        customProp1: 'value1',
+        customProp2: 'value2',
       },
       name: 'layerWithOptions',
       isEnabled: true,
@@ -584,11 +592,19 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.annotations.length).toBe(1);
     expect(result.annotations[0].spec.legacyOptions).toBeDefined();
     expect(result.annotations[0].spec.legacyOptions).toEqual({
-      customProp1: true,
-      customProp2: 'test',
+      expr: 'rate(http_requests_total[5m])',
+      queryType: 'range',
+      legendFormat: '{{method}} {{endpoint}}',
+      useValueAsTime: true,
+      customProp1: 'value1',
+      customProp2: 'value2',
     });
 
     // Ensure these properties are not at the root level
+    expect(result).not.toHaveProperty('annotations[0].spec.expr');
+    expect(result).not.toHaveProperty('annotations[0].spec.queryType');
+    expect(result).not.toHaveProperty('annotations[0].spec.legendFormat');
+    expect(result).not.toHaveProperty('annotations[0].spec.useValueAsTime');
     expect(result).not.toHaveProperty('annotations[0].spec.customProp1');
     expect(result).not.toHaveProperty('annotations[0].spec.customProp2');
   });
