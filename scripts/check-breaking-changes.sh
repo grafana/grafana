@@ -68,8 +68,7 @@ mkdir -p ./levitate
 echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
 
 if [[ "$IS_FORK" == "true" ]]; then
-  # cat ./levitate/levitate.md >> "$GITHUB_STEP_SUMMARY"
-  echo "<h1>THIS IS A TEST</h1>" >> "$GITHUB_STEP_SUMMARY"
+  cat ./levitate/levitate.md >> "$GITHUB_STEP_SUMMARY"
   exit $EXIT_CODE
 fi
 
