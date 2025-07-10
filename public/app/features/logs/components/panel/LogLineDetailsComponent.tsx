@@ -13,9 +13,9 @@ import { createLogLineLinks } from '../logParser';
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsHeader } from './LogLineDetailsHeader';
+import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
-import { LogLineDetailsLog } from './LogLineDetailsLog';
 
 interface LogLineDetailsComponentProps {
   log: LogListModel;
