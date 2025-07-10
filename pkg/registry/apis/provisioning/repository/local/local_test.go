@@ -1,4 +1,4 @@
-package repository
+package local
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 func TestLocalResolver(t *testing.T) {
@@ -91,14 +92,14 @@ func TestLocalResolver(t *testing.T) {
 
 	// Verify all directories and files are present
 	expectedPaths := []string{
-		"another",
-		"another/path",
+		"another/",
+		"another/path/",
 		"another/path/file.txt",
-		"level1",
+		"level1/",
 		"level1/file1.txt",
-		"level1/level2",
+		"level1/level2/",
 		"level1/level2/file2.txt",
-		"level1/level2/level3",
+		"level1/level2/level3/",
 		"level1/level2/level3/file3.txt",
 		"root.txt",
 	}
@@ -542,6 +543,41 @@ func TestLocalRepository_Delete(t *testing.T) {
 			comment:     "test delete with ref",
 			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
 		},
+		{
+			name: "delete folder with nested files",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				nestedFolderPath := filepath.Join(tempDir, "folder")
+				err := os.MkdirAll(nestedFolderPath, 0700)
+				require.NoError(t, err)
+				subFolderPath := filepath.Join(nestedFolderPath, "nested-folder")
+				err = os.MkdirAll(subFolderPath, 0700)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(nestedFolderPath, "nested-dash.txt"), []byte("content1"), 0600)
+				require.NoError(t, err)
+
+				// Create repository with the temp directory as permitted prefix
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "folder/",
+			ref:         "",
+			comment:     "test delete folder with nested content",
+			expectedErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -668,7 +704,7 @@ func TestLocalRepository_Update(t *testing.T) {
 			ref:         "",
 			data:        []byte("content"),
 			comment:     "",
-			expectedErr: ErrFileNotFound,
+			expectedErr: repository.ErrFileNotFound,
 		},
 		{
 			name: "update directory",
@@ -1139,7 +1175,7 @@ func TestLocalRepository_Read(t *testing.T) {
 		path        string
 		ref         string
 		expectedErr error
-		expected    *FileInfo
+		expected    *repository.FileInfo
 	}{
 		{
 			name: "read existing file",
@@ -1168,7 +1204,7 @@ func TestLocalRepository_Read(t *testing.T) {
 				return tempDir, repo
 			},
 			path: "test-file.txt",
-			expected: &FileInfo{
+			expected: &repository.FileInfo{
 				Path:     "test-file.txt",
 				Modified: &metav1.Time{Time: time.Now()},
 				Data:     []byte("test content"),
@@ -1196,7 +1232,7 @@ func TestLocalRepository_Read(t *testing.T) {
 				return tempDir, repo
 			},
 			path:        "non-existent-file.txt",
-			expectedErr: ErrFileNotFound,
+			expectedErr: repository.ErrFileNotFound,
 		},
 		{
 			name: "read with ref should fail",
@@ -1254,7 +1290,7 @@ func TestLocalRepository_Read(t *testing.T) {
 				return tempDir, repo
 			},
 			path: "test-dir",
-			expected: &FileInfo{
+			expected: &repository.FileInfo{
 				Path:     "test-dir",
 				Modified: &metav1.Time{Time: time.Now()},
 			},
@@ -1292,7 +1328,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 		setup       func(t *testing.T) (string, *localRepository)
 		ref         string
 		expectedErr error
-		expected    []FileTreeEntry
+		expected    []repository.FileTreeEntry
 	}{
 		{
 			name: "read empty directory",
@@ -1314,7 +1350,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 
 				return tempDir, repo
 			},
-			expected:    []FileTreeEntry{},
+			expected:    []repository.FileTreeEntry{},
 			expectedErr: nil,
 		},
 		{
@@ -1344,10 +1380,10 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 
 				return tempDir, repo
 			},
-			expected: []FileTreeEntry{
+			expected: []repository.FileTreeEntry{
 				{Path: "file1.txt", Blob: true, Size: 8},
 				{Path: "file2.txt", Blob: true, Size: 8},
-				{Path: "subdir", Blob: false},
+				{Path: "subdir/", Blob: false},
 				{Path: "subdir/file3.txt", Blob: true, Size: 8},
 			},
 			expectedErr: nil,
@@ -1397,7 +1433,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 
 				return tempDir, repo
 			},
-			expected:    []FileTreeEntry{},
+			expected:    []repository.FileTreeEntry{},
 			expectedErr: nil,
 		},
 	}
