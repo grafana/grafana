@@ -516,6 +516,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Редактировать YAML",
@@ -1517,15 +1520,12 @@
     "group-details": {
       "ds-features-error": "Ошибка при загрузке сведений об источнике данных",
       "edit": "Редактировать",
-      "evaluations-to-fire": "Циклы оценки для отправки оповещений",
       "export": "Экспорт",
       "folder": "Папка",
       "group-loading-error": "Ошибка при загрузке группы",
       "interval": "Интервал",
       "namespace": "Пространство имен",
-      "pending-period": "Период ожидания",
-      "recording": "Запись",
-      "rule-name": "Имя правила"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Ошибка при загрузке сведений об источнике данных",
@@ -2255,6 +2255,9 @@
         "label-export-all": "Экспортировать всё"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Не удалось загрузить редактор запросов. Причина: {{errorMessage}}"
     },
@@ -2676,6 +2679,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Не удается найти нужный источник данных? Некоторые источники данных не поддерживаются для функции оповещения. Нажмите значок для получения подробной информации."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Добавить новый обработчик оповещений Alertmanager",
       "builtin-alertmanager": "Встроенный обработчик оповещений Alertmanager",
@@ -2910,6 +2918,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} назад)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -4435,7 +4448,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Общедоступный",
         "tooltip-view-as-scene": "Просмотр в виде сцены"
       }
     },
@@ -5211,7 +5223,6 @@
       "playlist-next": "Перейти к следующему дашборду",
       "playlist-previous": "Перейти к предыдущему дашборду",
       "playlist-stop": "Остановить плейлист",
-      "public-dashboard": "Общедоступный",
       "refresh": "Обновить дашборд",
       "save": "Сохранить дашборд",
       "save-dashboard": {
@@ -5512,15 +5523,9 @@
       "type": "Тип"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Значение еще не сохранено в базе данных Grafana",
       "not-yet-saved": "Значение не сохранено в базе данных Grafana",
-      "open-pull-request-in-git-hub": "Открыть запрос на включение изменений в GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Дашборд загружается из ветви в GitHub.",
       "title-dashboard-loaded-external-repository": "Дашборд загружается из внешнего репозитория",
-      "title-dashboard-loaded-request-git-hub": "Дашборд загружается из запроса на включение изменений в GitHub.",
-      "title-error-loading-dashboard": "Ошибка при загрузке дашборда",
-      "value-not-saved": "Значение еще не сохранено в базе данных Grafana",
-      "view-pull-request-in-git-hub": "Просмотр запроса на включение изменений в GitHub"
+      "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
     },
     "dashboard-scene": {
       "text": {
@@ -5703,6 +5708,20 @@
       "usage-count_few": "Используется на {{count}} дашбордах",
       "usage-count_many": "Используется на {{count}} дашбордах",
       "usage-count_other": "Используется на {{count}} дашбордах"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Дашборд с таким названием уже существует в выбранной папке. Все равно сохранить дашборд?",
@@ -7259,6 +7278,7 @@
       "when": "КОГДА"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Операция"
     },
     "math": {
@@ -8033,6 +8053,9 @@
       "filter-popup-match-case": "С учетом регистра",
       "inspect-drawer-title": "Проверить значение",
       "inspect-menu-label": "Проверить значение",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}"
     },
@@ -8551,7 +8574,7 @@
       "usage-count_other": "Используется на {{count}} дашборда"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Поиск по названию или описанию"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Загрузка панели библиотеки..."
@@ -8696,12 +8719,18 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_few": "",
+          "indexed-label_many": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_few": "",
+          "parsedl-label_many": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_few": "",
+          "structured-metadata_many": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8758,6 +8787,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8770,16 +8800,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8882,6 +8916,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9140,6 +9179,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Дашборд уже подготовлен в облачном экземпляре и управляется Grafana. Рекомендуем в будущем использовать подготовленный дашборд. Если вы всё же хотите скопировать дашборд в облачный экземпляр, измените его идентификатор в JSON-файле, сохраните новый снимок и загрузите его снова.",
         "datasource-already-managed": "Источник данных уже подготовлен в облачном экземпляре и управляется Grafana. Если это другой ресурс, установите другой UID и повторите попытку.",
         "datasource-invalid-url": "Существует источник данных с недопустимым URL-адресом. Укажите действительный URL-адрес и повторите попытку.",
@@ -10368,6 +10409,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11834,6 +11884,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

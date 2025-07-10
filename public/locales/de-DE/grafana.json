@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "YAML bearbeiten",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Fehler beim Laden der Datenquellendetails",
       "edit": "Bearbeiten",
-      "evaluations-to-fire": "Auszulösende Evaluierungszyklen",
       "export": "Exportieren",
       "folder": "Ordner",
       "group-loading-error": "Fehler beim Laden der Gruppe",
       "interval": "Intervall",
       "namespace": "Namensraum",
-      "pending-period": "Wartezeit",
-      "recording": "Aufzeichnung",
-      "rule-name": "Regelname"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Fehler beim Laden der Datenquellendetails",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Alles exportieren"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Der Abfrage-Editor konnte nicht geladen werden wegen: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Sie finden Ihre gewünschte Datenquelle nicht? Einige Datenquellen werden für Warnungen nicht unterstützt. Klicken Sie für weitere Informationen auf das Symbol."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Neuen Alertmanager hinzufügen",
       "builtin-alertmanager": "Integrierter Alertmanager",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "(vor {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -4399,7 +4412,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Öffentlich",
         "tooltip-view-as-scene": "Als Szene anzeigen"
       }
     },
@@ -5173,7 +5185,6 @@
       "playlist-next": "Zum nächsten Dashboard",
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
-      "public-dashboard": "Öffentlich",
       "refresh": "Dashboard aktualisieren",
       "save": "Dashboard speichern",
       "save-dashboard": {
@@ -5474,15 +5485,9 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Der Wert ist noch nicht in der Grafana-Datenbank gespeichert",
       "not-yet-saved": "Der Wert wird nicht in der Grafana-Datenbank gespeichert",
-      "open-pull-request-in-git-hub": "Pull-Anfrage in GitHub öffnen",
-      "title-dashboard-loaded-branch-git-hub": "Dieses Dashboard wird von einem Branch in GitHub geladen.",
       "title-dashboard-loaded-external-repository": "Dieses Dashboard wird von einem externen Repository geladen",
-      "title-dashboard-loaded-request-git-hub": "Dieses Dashboard wird von einer Pull-Anfrage in GitHub geladen.",
-      "title-error-loading-dashboard": "Fehler beim Laden des Dashboards",
-      "value-not-saved": "Der Wert ist noch nicht in der Grafana-Datenbank gespeichert",
-      "view-pull-request-in-git-hub": "Pull-Anfrage in GitHub anzeigen"
+      "title-error-loading-dashboard": "Fehler beim Laden des Dashboards"
     },
     "dashboard-scene": {
       "text": {
@@ -5663,6 +5668,20 @@
       "last-edited": "{{timeAgo}} von<person />",
       "usage-count_one": "Verwendet bei {{count}} Dashboards",
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Ein Dashboard mit demselben Namen im ausgewählten Ordner existiert bereits. Möchten Sie dieses Dashboard trotzdem speichern?",
@@ -7217,6 +7236,7 @@
       "when": "WANN"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Operation"
     },
     "math": {
@@ -7991,6 +8011,9 @@
       "filter-popup-match-case": "Groß-/Kleinschreibung beachten",
       "inspect-drawer-title": "Wert prüfen",
       "inspect-menu-label": "Wert prüfen",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Keine Werte",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen"
     },
@@ -8503,7 +8526,7 @@
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Suche nach Name oder Beschreibung"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Bibliotheks-Panel wird geladen ..."
@@ -8644,12 +8667,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8729,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8718,16 +8742,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8830,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9088,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Das Dashboard wird bereits von Grafana in der Cloud-Instanz bereitgestellt und verwaltet. Wir empfehlen, in Zukunft das bereitgestellte Dashboard zu verwenden. Wenn Sie das Dashboard weiterhin in die Cloud-Instanz kopieren möchten, ändern Sie bitte die Dashboard-ID im Dashboard-JSON, speichern Sie einen neuen Snapshot und laden Sie ihn erneut hoch.",
         "datasource-already-managed": "Die Datenquelle wird bereits von Grafana in der Cloud-Instanz bereitgestellt und verwaltet. Wenn es sich dabei um eine andere Ressource handelt, legen Sie bitte eine andere UID fest und versuchen Sie es erneut.",
         "datasource-invalid-url": "Es gibt eine Datenquelle mit einer ungültigen URL. Geben Sie eine gültige URL an und versuchen Sie es erneut.",
@@ -10310,6 +10345,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11762,6 +11806,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

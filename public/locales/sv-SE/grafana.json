@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Redigera YAML",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Fel vid laddning av information för datakälla",
       "edit": "Redigera",
-      "evaluations-to-fire": "Utvärderingscykler att utlösa",
       "export": "Exportera",
       "folder": "Mapp",
       "group-loading-error": "Fel vid laddning av gruppen",
       "interval": "Intervall",
       "namespace": "Namnområde",
-      "pending-period": "Väntande period",
-      "recording": "Registrering",
-      "rule-name": "Regelns namn"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Fel vid laddning av information för datakälla",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Exportera alla"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Kunde inte ladda frågeredigerare på grund av: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Hittar du inte den datakälla du söker? Vissa datakällor stöds inte för larm. Klicka på ikonen för mer information."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Lägg till ny Alertmanager",
       "builtin-alertmanager": "Inbyggd Alertmanager",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} sedan)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -4399,7 +4412,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Offentlig",
         "tooltip-view-as-scene": "Visa som scen"
       }
     },
@@ -5173,7 +5185,6 @@
       "playlist-next": "Gå till nästa instrumentpanel",
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
-      "public-dashboard": "Offentlig",
       "refresh": "Uppdatera instrumentpanel",
       "save": "Spara instrumentpanel",
       "save-dashboard": {
@@ -5474,15 +5485,9 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Värdet har ännu inte sparats i Grafana-databasen",
       "not-yet-saved": "Värdet sparades inte i Grafana-databasen",
-      "open-pull-request-in-git-hub": "Öppna pull-begäran i GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Den här instrumentpanelen laddas från en gren i GitHub.",
       "title-dashboard-loaded-external-repository": "Den här instrumentpanelen laddas från ett externt arkiv",
-      "title-dashboard-loaded-request-git-hub": "Den här instrumentpanelen laddas från en pull-begäran i GitHub.",
-      "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel",
-      "value-not-saved": "Värdet har ännu inte sparats i Grafana-databasen",
-      "view-pull-request-in-git-hub": "Visa pull-begäran i GitHub"
+      "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel"
     },
     "dashboard-scene": {
       "text": {
@@ -5663,6 +5668,20 @@
       "last-edited": "{{timeAgo}} av <person />",
       "usage-count_one": "Används på {{count}} instrumentpaneler",
       "usage-count_other": "Används på {{count}} instrumentpaneler"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "En instrumentpanel med samma namn finns redan i den valda mappen. Vill du fortfarande spara denna instrumentpanel?",
@@ -7217,6 +7236,7 @@
       "when": "NÄR"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Drift"
     },
     "math": {
@@ -7991,6 +8011,9 @@
       "filter-popup-match-case": "Matcha gemener/versaler",
       "inspect-drawer-title": "Inspektera värde",
       "inspect-menu-label": "Inspektera värde",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader"
     },
@@ -8503,7 +8526,7 @@
       "usage-count_other": "Används på {{count}} instrumentpaneler"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Sök efter namn eller beskrivning"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Laddar bibliotekspanel …"
@@ -8644,12 +8667,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8729,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8718,16 +8742,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8830,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9088,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Instrumentpanelen tillhandahålls och hanteras redan av Grafana i molninstansen. Vi rekommenderar att du använder den tillhandahållna instrumentpanelen framöver. Om du fortfarande vill kopiera instrumentpanelens molninstans ändrar du instrumentpanelens ID i instrumentpanelens JSON, sparar en ny ögonblicksbild och laddar sedan upp på nytt.",
         "datasource-already-managed": "Datakällan tillhandahålls och hanteras redan av Grafana i molninstansen. Om detta är en annan resurs, ange ett annat UID och försök igen.",
         "datasource-invalid-url": "Det finns en datakälla som har en ogiltig webbadress. Ange en giltig webbadress och försök igen.",
@@ -10310,6 +10345,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11762,6 +11806,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

@@ -51,7 +51,7 @@ export const ConvertFieldTypeTransformerEditor = ({
 
   const onSelectField = useCallback(
     (idx: number) => (value: string | undefined) => {
-      const conversions = options.conversions;
+      const conversions = [...options.conversions];
       conversions[idx] = { ...conversions[idx], targetField: value ?? '', dateFormat: undefined };
       onChange({
         ...options,
@@ -275,4 +275,5 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   description: standardTransformers.convertFieldTypeTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
   help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
+  tags: new Set(['Format field']),
 };
