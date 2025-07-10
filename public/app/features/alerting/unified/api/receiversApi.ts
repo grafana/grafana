@@ -6,6 +6,8 @@ import { CONTACT_POINTS_STATE_INTERVAL_MS } from '../utils/constants';
 
 import { alertingApi } from './alertingApi';
 import { fetchContactPointsState } from './grafana';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { notificationsAlertingV0alpha1Endpoints } from '@grafana/hackathon-13-registrar-private/rtk-query';
 
 export const receiversApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -33,3 +35,15 @@ export const useGetContactPointsState = (alertManagerSourceName: string) => {
   );
   return contactPointsState ?? contactPointsStateEmpty;
 };
+
+export const registrarAlertingNotificationsApi = createApi({
+  reducerPath: 'alertingNotificationsBaseApi',
+  baseQuery: fetchBaseQuery(),
+  endpoints: () => ({}),
+});
+
+export const alertingNotificationsApiFromRegistrar = registrarAlertingNotificationsApi.injectEndpoints({
+  endpoints: (build) => ({
+    ...notificationsAlertingV0alpha1Endpoints(build),
+  }),
+});

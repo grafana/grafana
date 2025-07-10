@@ -16,7 +16,7 @@ import { GrafanaManagedContactPoint, Receiver } from 'app/plugins/datasource/ale
 
 import { getAPINamespace } from '../../../../../api/utils';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { onCallApi } from '../../api/onCallApi';
+import { onCallApiFromRegistrar } from '../../api/onCallApi';
 import { useAsync } from '../../hooks/useAsync';
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
@@ -24,6 +24,8 @@ import { addReceiverAction, deleteReceiverAction, updateReceiverAction } from '.
 import { getIrmIfPresentOrOnCallPluginId } from '../../utils/config';
 
 import { enhanceContactPointsWithMetadata } from './utils';
+import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../receivers/grafanaAppReceivers/onCall/onCall';
+import { alertingNotificationsApiFromRegistrar } from '../../api/receiversApi';
 
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
@@ -41,7 +43,6 @@ const {
   useGrafanaNotifiersQuery,
   useLazyGetAlertmanagerConfigurationQuery,
 } = alertmanagerApi;
-const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
 const {
   useListNamespacedReceiverQuery,
   useReadNamespacedReceiverQuery,
@@ -62,7 +63,17 @@ const defaultOptions = {
  */
 const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
   const { installed, loading } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
-  const oncallIntegrationsResponse = useGrafanaOnCallIntegrationsQuery(undefined, { skip: skip || !installed });
+  const oncallIntegrationsResponse = onCallApiFromRegistrar.useAlertReceiveChannelsListQuery({
+    integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'],
+    filters: true,
+    skipPagination: true,
+  });
+
+  // just an example of using another API
+  const alertingNotificationsResponse = alertingNotificationsApiFromRegistrar.useListReceiverQuery({
+    namespace: 'default',
+  });
+  console.log({ alertingNotificationsResponse });
 
   return useMemo(() => {
     if (installed) {
@@ -157,7 +168,7 @@ export const useGrafanaContactPoints = ({
     const enhanced = enhanceContactPointsWithMetadata({
       status: contactPointsStatusResponse.data,
       notifiers: alertNotifiers.data,
-      onCallIntegrations: onCallResponse?.data,
+      onCallIntegrations: onCallResponse?.data?.results,
       contactPoints: contactPointsListResponse.data || [],
       alertmanagerConfiguration: alertmanagerConfigResponse.data,
     });

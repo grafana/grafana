@@ -3268,6 +3268,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/hackathon-13-registrar-private@file:../hack-13-registrar/generated/typescript/private::locator=grafana%40workspace%3A.":
+  version: 0.0.16
+  resolution: "@grafana/hackathon-13-registrar-private@file:../hack-13-registrar/generated/typescript/private#../hack-13-registrar/generated/typescript/private::hash=54deee&locator=grafana%40workspace%3A."
+  dependencies:
+    openapi-fetch: "npm:^0.12.0"
+  checksum: 10/4617be5e2589780b2c009dc3abd899e9f4f251870cc39b7f55a52d5e1399dad3b3fd335a2922eb86710d743cc9d963c082701985d7b688c5356084c41d707731
+  languageName: node
+  linkType: hard
+
 "@grafana/i18n@npm:12.1.0-pre, @grafana/i18n@workspace:*, @grafana/i18n@workspace:packages/grafana-i18n":
   version: 0.0.0-use.local
   resolution: "@grafana/i18n@workspace:packages/grafana-i18n"
@@ -18131,6 +18140,7 @@ __metadata:
     "@grafana/faro-web-tracing": "npm:^1.13.2"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.3.4"
+    "@grafana/hackathon-13-registrar-private": "file:../hack-13-registrar/generated/typescript/private"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.8"
     "@grafana/llm": "npm:0.22.1"
@@ -24246,6 +24256,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"openapi-fetch@npm:^0.12.0":
+  version: 0.12.5
+  resolution: "openapi-fetch@npm:0.12.5"
+  dependencies:
+    openapi-typescript-helpers: "npm:^0.0.15"
+  checksum: 10/e776633ab29fa5a5dba1cb85a72b55fba2d051afd53012dfe1659656b3674daaacc712e3955e39ca30e72ca0319cbb84944c72be83e2d006b6d989c8296ee47d
+  languageName: node
+  linkType: hard
+
 "openapi-path-templating@npm:^2.2.1":
   version: 2.2.1
   resolution: "openapi-path-templating@npm:2.2.1"
@@ -24268,6 +24287,13 @@ __metadata:
   version: 12.1.3
   resolution: "openapi-types@npm:12.1.3"
   checksum: 10/9d1d7ed848622b63d0a4c3f881689161b99427133054e46b8e3241e137f1c78bb0031c5d80b420ee79ac2e91d2e727ffd6fc13c553d1b0488ddc8ad389dcbef8
+  languageName: node
+  linkType: hard
+
+"openapi-typescript-helpers@npm:^0.0.15":
+  version: 0.0.15
+  resolution: "openapi-typescript-helpers@npm:0.0.15"
+  checksum: 10/63f8f0b8464aed3e5c6910428bd14839bd5c1dd6ddf841bcea9d5f536a6e03e942a028202920da1a8b1ed9e4304c6fca14943d01a8adff2942d1254a229b8c70
   languageName: node
   linkType: hard
 

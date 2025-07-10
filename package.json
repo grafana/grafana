@@ -280,6 +280,7 @@
     "@grafana/faro-web-tracing": "^1.13.2",
     "@grafana/flamegraph": "workspace:*",
     "@grafana/google-sdk": "0.3.4",
+    "@grafana/hackathon-13-registrar-private": "file:../hack-13-registrar/generated/typescript/private",
     "@grafana/i18n": "workspace:*",
     "@grafana/lezer-logql": "0.2.8",
     "@grafana/llm": "0.22.1",
