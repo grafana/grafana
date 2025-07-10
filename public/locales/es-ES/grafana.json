@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Editar YAML",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Error al cargar los detalles de la fuente de datos",
       "edit": "Editar",
-      "evaluations-to-fire": "Ciclos de evaluación para activar",
       "export": "Exportar",
       "folder": "Carpeta",
       "group-loading-error": "Error al cargar el grupo",
       "interval": "Intervalo",
       "namespace": "Nombre del espacio",
-      "pending-period": "Periodo pendiente",
-      "recording": "Registro",
-      "rule-name": "Nombre de la regla"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Error al cargar los detalles de la fuente de datos",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Exportar todo"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "No se ha podido cargar el editor de consultas debido a: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "¿No encuentras la fuente de datos que quieres? Algunas fuentes de datos no son compatibles con las alertas. Haz clic en el icono para obtener más información."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Añadir nuevo Alertmanager",
       "builtin-alertmanager": "Alertmanager integrado",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "(hace {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -5656,6 +5669,20 @@
       "usage-count_one": "Utilizado en {{count}} dashboards",
       "usage-count_other": "Utilizado en {{count}} dashboards"
     },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "Ya existe un dashboard con el mismo nombre en la carpeta seleccionada. ¿Seguro que quieres guardar este dashboard?",
       "title-name-already-exists": "Este nombre ya existe"
@@ -7984,6 +8011,9 @@
       "filter-popup-match-case": "Coincidir mayúsculas/minúsculas",
       "inspect-drawer-title": "Inspeccionar valor",
       "inspect-menu-label": "Inspeccionar valor",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Sin valores",
       "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas"
     },
@@ -8712,6 +8742,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8724,6 +8755,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8826,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9084,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "Aceptar",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "El panel de control ya está aprovisionado y gestionado por Grafana en la instancia en la nube. A partir de ahora, recomendamos utilizar el panel de control proporcionado. Si todavía quieres copiar el panel de control a la instancia en la nube, cambia el ID del panel de control en el JSON del panel de control, guarda una nueva instantánea y vuelve a subirla.",
         "datasource-already-managed": "La fuente de datos ya está aprovisionada y gestionada por Grafana en la instancia en la nube. Si se trata de un recurso distinto, configura otro UID e inténtalo de nuevo.",
         "datasource-invalid-url": "Hay una fuente de datos que tiene una URL no válida. Proporciona una URL válida e inténtalo de nuevo.",
@@ -10313,10 +10352,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
