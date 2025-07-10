@@ -141,6 +141,14 @@ describe('TableNG Cells renderers', () => {
           expect(container).toBeInTheDocument();
           expect(container.childNodes).toHaveLength(1);
         });
+
+        it('should return AutoCell when cellOptions is unmapped', () => {
+          const field = createField(FieldType.string);
+
+          const { container } = renderCell(field, { type: 'number' } as unknown as TableCellOptions);
+          expect(container).toBeInTheDocument();
+          expect(container.childNodes).toHaveLength(1);
+        });
       });
     });
 
