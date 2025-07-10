@@ -27,6 +27,7 @@ export interface Props {
   displayedFields: string[];
   index: number;
   log: LogListModel;
+  logs: LogListModel[];
   showTime: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
@@ -41,6 +42,7 @@ export const LogLine = ({
   displayedFields,
   index,
   log,
+  logs,
   style,
   styles,
   onClick,
@@ -57,6 +59,7 @@ export const LogLine = ({
         height={style.height}
         index={index}
         log={log}
+        logs={logs}
         styles={styles}
         onClick={onClick}
         onOverflow={onOverflow}
@@ -79,6 +82,7 @@ const LogLineComponent = memo(
     height,
     index,
     log,
+    logs,
     styles,
     onClick,
     onOverflow,
@@ -97,6 +101,7 @@ const LogLineComponent = memo(
       hasSampledLogs,
       onLogLineHover,
     } = useLogListContext();
+    console.log('render')
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
@@ -237,7 +242,7 @@ const LogLineComponent = memo(
             </Button>
           </div>
         )}
-        {detailsMode === 'inline' && detailsShown && <InlineLogLineDetails logs={[]} />}
+        {detailsMode === 'inline' && detailsShown && <InlineLogLineDetails logs={logs} />}
       </>
     );
   }
