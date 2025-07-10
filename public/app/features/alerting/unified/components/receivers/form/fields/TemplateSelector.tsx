@@ -28,7 +28,7 @@ import {
   useNotificationTemplates,
 } from 'app/features/alerting/unified/components/contact-points/useNotificationTemplates';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/types';
+import { NotificationChannelOption } from 'app/types/alerting';
 
 import { defaultPayloadString } from '../../TemplateForm';
 
@@ -142,7 +142,10 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
         'alerting.template-selector.template-options.label.select-notification-template',
         'Select notification template'
       ),
-      ariaLabel: 'Select notification template',
+      ariaLabel: t(
+        'alerting.template-selector.template-options.ariaLabel.select-notification-template',
+        'Select notification template'
+      ),
       value: 'Existing',
       description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
     },

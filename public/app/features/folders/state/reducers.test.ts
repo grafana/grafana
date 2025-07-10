@@ -1,4 +1,4 @@
-import { FolderDTO, FolderState } from 'app/types';
+import { FolderDTO, FolderState } from 'app/types/folders';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 

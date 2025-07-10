@@ -3,7 +3,7 @@ import { screen } from 'test/test-utils';
 import { byText } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { discoverFeaturesByUid } from '../api/buildInfo';
