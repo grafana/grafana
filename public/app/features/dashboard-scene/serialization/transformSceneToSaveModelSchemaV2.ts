@@ -43,7 +43,6 @@ import {
   DashboardCursorSync,
   FieldConfig,
   FieldColor,
-  defaultDataQueryKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -251,7 +250,7 @@ function getPanelLinks(panel: VizPanel): DataLink[] {
   return [];
 }
 
-export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferencesMapping): PanelQueryKind[] {
+function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSReferencesMapping): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
   const queryRunner = getQueryRunnerFor(vizPanel);
   const vizPanelQueries = queryRunner?.state.queries;
@@ -259,22 +258,12 @@ export function getVizPanelQueries(vizPanel: VizPanel, dsReferencesMapping?: DSR
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
       const queryDatasource = getElementDatasource(vizPanel, query, 'panel', queryRunner, dsReferencesMapping);
-
       const dataQuery: DataQueryKind = {
-        kind: 'DataQuery',
-        version: defaultDataQueryKind().version,
-        group: getDataQueryKind(query, queryRunner),
-        datasource: {
-          name: queryDatasource?.uid,
-        },
+        kind: getDataQueryKind(query, queryRunner),
         spec: omit(query, 'datasource', 'refId', 'hide'),
       };
-
-      if (!dataQuery.datasource?.name) {
-        delete dataQuery.datasource;
-      }
-
       const querySpec: PanelQuerySpec = {
+        datasource: queryDatasource,
         query: dataQuery,
         refId: query.refId,
         hidden: Boolean(query.hide),
@@ -418,35 +407,17 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
       continue;
     }
-    const datasource = getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping);
-
-    const layerDs = layer.state.query.datasource;
-    if (!layerDs) {
-      throw new Error('Misconfigured AnnotationsDataLayer: Datasource is required for annotations');
-    }
-
     const result: AnnotationQueryKind = {
       kind: 'AnnotationQuery',
       spec: {
         builtIn: Boolean(layer.state.query.builtIn),
         name: layer.state.query.name,
+        datasource: getElementDatasource(layer, layer.state.query, 'annotation', undefined, dsReferencesMapping),
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
         iconColor: layer.state.query.iconColor,
-        query: {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: layerDs.type!, // Annotation layer has a datasource type provided in runtime.
-          spec: {},
-        },
       },
     };
-
-    if (datasource) {
-      result.spec.query!.datasource = {
-        name: datasource.uid,
-      };
-    }
 
     // Transform v1 dashboard (using target) to v2 structure
     // adds extra condition to prioritize query over target
@@ -455,37 +426,24 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
       // Handle built-in annotations
       if (layer.state.query.builtIn) {
         result.spec.query = {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: 'grafana', // built-in annotations are always of type grafana
+          kind: 'grafana', // built-in annotations are always of type grafana
           spec: {
             ...layer.state.query.target,
           },
         };
       } else {
         result.spec.query = {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: datasource?.type!,
+          kind: getAnnotationQueryKind(layer.state.query),
           spec: {
             ...layer.state.query.target,
           },
         };
-
-        if (layer.state.query.datasource?.uid) {
-          result.spec.query.datasource = {
-            name: layer.state.query.datasource?.uid,
-          };
-        }
       }
     }
     // For annotations without query.query defined (e.g., grafana annotations without tags)
     else if (layer.state.query.query?.kind) {
       result.spec.query = {
-        kind: 'DataQuery',
-        version: defaultDataQueryKind().version,
-        group: layer.state.query.query.group || getAnnotationQueryKind(layer.state.query),
-        datasource: layer.state.query.query.datasource,
+        kind: layer.state.query.query.kind,
         spec: {
           ...layer.state.query.query.spec,
         },
@@ -508,15 +466,10 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
 
     // Store extra properties in the legacyOptions field instead of directly in the spec
     if (Object.keys(otherProps).length > 0) {
-      // // Extract options property and get the rest of the properties
+      // Extract options property and get the rest of the properties
       const { legacyOptions, ...restProps } = otherProps;
-      if (legacyOptions) {
-        // Merge options with the rest of the properties
-        result.spec.legacyOptions = { ...legacyOptions, ...restProps };
-      }
-      result.spec.query!.spec = {
-        ...otherProps,
-      };
+      // Merge options with the rest of the properties
+      result.spec.legacyOptions = { ...legacyOptions, ...restProps };
     }
 
     // If filter is an empty array, don't save it
