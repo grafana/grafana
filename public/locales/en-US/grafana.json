@@ -3550,11 +3550,11 @@
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
-      "error-invalid-folder-name": "Invalid folder name",
       "error-required": "Folder name is required",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
+      "text-your-folder-will-be-created-as": "Your folder will be created as {{folderName}}",
       "title-pull-request-created": "Pull request created",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -8011,6 +8011,9 @@
       "filter-popup-match-case": "Match case",
       "inspect-drawer-title": "Inspect value",
       "inspect-menu-label": "Inspect value",
+      "nested-table": {
+        "no-data": "No data"
+      },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
     },
@@ -8739,6 +8742,7 @@
       },
       "fields-section": "Fields",
       "hide-log-line": "Hide log line",
+      "inline-mode": "Display inline",
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
@@ -8751,6 +8755,7 @@
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
       "show-log-line": "Show log line",
+      "sidebar-mode": "Anchor to the right",
       "unpin-line": "Unpin log"
     },
     "log-line-menu": {
@@ -8853,6 +8858,11 @@
     },
     "name-common-labels": "Common labels",
     "name-deduplication": "Deduplication",
+    "name-details-mode": "Log Details panel mode",
+    "name-details-options": {
+      "label-inline": "Inline",
+      "label-sidebar": "Sidebar"
+    },
     "name-enable-infinite-scrolling": "Enable infinite scrolling",
     "name-enable-log-details": "Enable log details",
     "name-enable-syntax-highlighting": "Enable syntax highlighting",
@@ -9111,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "Maximum number of alert rule groups reached: Delete some alert rule groups or upgrade your plan and try again.",
+        "alert-rules-quota-reached": "Maximum number of alert rules reached: Delete some alert rules or upgrade your plan and try again.",
         "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
         "datasource-already-managed": "Data source is already provisioned and managed by Grafana in the cloud instance. If this is a different resource, set another UID and try again.",
         "datasource-invalid-url": "There is a data source which has an invalid URL. Provide a valid URL and try again.",
