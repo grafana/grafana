@@ -232,5 +232,4 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 	oas.Routes["/test/json"] = &testcopy
 
 	return oas, nil
-
 }

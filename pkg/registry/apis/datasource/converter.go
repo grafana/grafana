@@ -10,9 +10,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/types"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	secretV0 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -64,7 +64,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 	}
 
 	if ds.SecureJsonData != nil {
-		cfg.Secure = make(secretV0.InlineSecureValues)
+		cfg.Secure = make(common.InlineSecureValues)
 		for k := range ds.SecureJsonData {
 			h := sha256.New()
 			h.Write([]byte(ds.Type)) // group+resource
@@ -73,7 +73,7 @@ func (r *converter) asDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			h.Write([]byte("|"))
 			h.Write([]byte(k)) // property
 			n := hex.EncodeToString(h.Sum(nil))
-			cfg.Secure[k] = secretV0.InlineSecureValue{
+			cfg.Secure[k] = common.InlineSecureValue{
 				Name: "@" + n[0:10], // ??????
 			}
 		}
@@ -159,9 +159,6 @@ func toSecureJsonData(ds *datasourceV0.DataSource) (map[string]string, error) {
 
 	secure := map[string]string{}
 	for k, v := range ds.Secure {
-		if v.Shared {
-			return nil, fmt.Errorf("shared secrets not yet supported (%s)", k)
-		}
 		if v.Create != "" {
 			secure[k] = v.Create.DangerouslyExposeAndConsumeValue()
 		}

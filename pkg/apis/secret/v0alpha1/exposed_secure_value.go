@@ -40,10 +40,6 @@ func (s *ExposedSecureValue) DangerouslyExposeAndConsumeValue() string {
 	return string(tmp)
 }
 
-func (s ExposedSecureValue) IsZero() bool {
-	return s == "" // exclude from JSON
-}
-
 // String must not return the exposed secure value.
 func (s ExposedSecureValue) String() string {
 	return redacted

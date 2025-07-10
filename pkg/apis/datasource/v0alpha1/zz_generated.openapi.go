@@ -63,7 +63,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.InlineSecureValue"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue"),
 									},
 								},
 							},
@@ -74,7 +74,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSource(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceSpec", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.InlineSecureValue", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue", "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1.DataSourceSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

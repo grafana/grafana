@@ -4,7 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
 // +k8s:deepcopy-gen=true
@@ -18,7 +17,7 @@ type DataSource struct {
 	Spec DataSourceSpec `json:"spec"`
 
 	// Secure values placeholder (true for fields that exist)
-	Secure secret.InlineSecureValues `json:"secure,omitempty"`
+	Secure common.InlineSecureValues `json:"secure,omitempty"`
 }
 
 // DsAccess represents how the datasource connects to the remote service

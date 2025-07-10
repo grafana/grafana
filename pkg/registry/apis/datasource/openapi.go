@@ -8,7 +8,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	secretsV0 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
@@ -66,7 +66,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	}
 
 	if custom.SecureValues != nil {
-		example := secretsV0.InlineSecureValues{}
+		example := common.InlineSecureValues{}
 		ref := spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.secret.v0alpha1.InlineSecureValue")
 		secure := &spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -84,7 +84,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 			}
 			if v.Required {
 				secure.Required = append(secure.Required, v.Key)
-				example[v.Key] = secretsV0.InlineSecureValue{Create: "***"}
+				example[v.Key] = common.InlineSecureValue{Create: "***"}
 			}
 		}
 
