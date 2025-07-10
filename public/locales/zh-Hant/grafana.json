@@ -504,6 +504,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "編輯 YAML",
@@ -1499,15 +1502,12 @@
     "group-details": {
       "ds-features-error": "載入資料來源詳細資料時發生錯誤",
       "edit": "編輯",
-      "evaluations-to-fire": "待觸發的評估週期",
       "export": "匯出",
       "folder": "資料夾",
       "group-loading-error": "載入群組時發生錯誤",
       "interval": "間隔",
       "namespace": "命名空間",
-      "pending-period": "待處理期間",
-      "recording": "錄製",
-      "rule-name": "規則名稱"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "載入資料來源詳細資料時發生錯誤",
@@ -2228,6 +2228,9 @@
         "label-export-all": "匯出全部"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "由於以下原因，無法載入查詢編輯器：{{errorMessage}}"
     },
@@ -2637,6 +2640,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "找不到您想要的資料來源嗎？某些資料來源不支援警報。按一下該圖示了解更多資訊。"
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "新增 Alertmanager",
       "builtin-alertmanager": "內建的 Alertmanager",
@@ -2871,6 +2879,11 @@
     },
     "timestamp": {
       "time-ago": "（{{time}} 前）"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -4381,7 +4394,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "公共",
         "tooltip-view-as-scene": "以場景形式檢視"
       }
     },
@@ -5154,7 +5166,6 @@
       "playlist-next": "前往下一個儀表板",
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
-      "public-dashboard": "公共",
       "refresh": "重新整理儀表板",
       "save": "儲存儀表板",
       "save-dashboard": {
@@ -5455,15 +5466,9 @@
       "type": "類型"
     },
     "dashboard-preview-banner": {
-      "not-saved": "該數值尚未儲存在 Grafana 資料庫中",
       "not-yet-saved": "該數值未儲存在 Grafana 資料庫中",
-      "open-pull-request-in-git-hub": "在 GitHub 中開啟拉取請求",
-      "title-dashboard-loaded-branch-git-hub": "此儀表板是從 GitHub 的分支載入。",
       "title-dashboard-loaded-external-repository": "此儀表板是從外部存放庫載入",
-      "title-dashboard-loaded-request-git-hub": "此儀表板是從 GitHub 的拉取請求載入。",
-      "title-error-loading-dashboard": "載入控制面板發生錯誤",
-      "value-not-saved": "該數值尚未儲存在 Grafana 資料庫中",
-      "view-pull-request-in-git-hub": "在 GitHub 中檢視拉取請求"
+      "title-error-loading-dashboard": "載入控制面板發生錯誤"
     },
     "dashboard-scene": {
       "text": {
@@ -5643,6 +5648,20 @@
     "library-viz-panel-info": {
       "last-edited": "<person />在 {{timeAgo}}前",
       "usage-count_other": "用於 {{count}} 個儀表板"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "所選資料夾中已存在名稱相同的儀表板。仍要儲存此儀表板嗎？",
@@ -7196,6 +7215,7 @@
       "when": "當"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "操作"
     },
     "math": {
@@ -7970,6 +7990,9 @@
       "filter-popup-match-case": "區分大小寫",
       "inspect-drawer-title": "檢查值",
       "inspect-menu-label": "檢查值",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "沒有數值",
       "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列"
     },
@@ -8479,7 +8502,7 @@
       "usage-count_other": "用於 {{count}} 個儀表板"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "按名稱或描述搜尋"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "正在載入資料庫面板…"
@@ -8618,12 +8641,9 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_other": "",
+          "parsedl-label_other": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8680,6 +8700,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8692,16 +8713,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8804,6 +8829,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9062,6 +9092,8 @@
     "resource-details": {
       "dismiss-button": "確定",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "儀表板已由 Grafana 在雲端執行個體中佈建和管理。我們建議您將來使用已設定的儀表板。若您仍然希望將儀表板複製至雲端執行個體，請變更儀表板 JSON 中的儀表板 ID，儲存新的快照並重新上傳。",
         "datasource-already-managed": "資料來源已由 Grafana 在雲端執行個體中佈建和管理。如果這是不同的資源，請設定另一個 UID 並再試一次。",
         "datasource-invalid-url": "有一個資料來源的網址無效。請提供有效的網址，然後再試一次。",
@@ -10281,6 +10313,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11726,6 +11767,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

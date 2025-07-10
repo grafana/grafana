@@ -516,6 +516,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edytuj YAML",
@@ -1517,15 +1520,12 @@
     "group-details": {
       "ds-features-error": "Błąd podczas ładowania szczegółów źródła danych",
       "edit": "Edytuj",
-      "evaluations-to-fire": "Cykle oceny do uruchomienia",
       "export": "Eksport",
       "folder": "Folder",
       "group-loading-error": "Błąd podczas ładowania grupy",
       "interval": "Interwał",
       "namespace": "Przestrzeń nazw",
-      "pending-period": "Okres oczekiwania",
-      "recording": "Nagrywanie",
-      "rule-name": "Nazwa reguły"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Błąd podczas ładowania szczegółów źródła danych",
@@ -2255,6 +2255,9 @@
         "label-export-all": "Eksportuj wszystkie"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Nie udało się załadować edytora zapytań. Powód: {{errorMessage}}"
     },
@@ -2676,6 +2679,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Nie możesz znaleźć odpowiedniego źródła danych? Niektóre źródła danych nie są obsługiwane w przypadku alertów. Aby dowiedzieć się więcej, kliknij ikonę."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Dodaj nowego menedżera alertów",
       "builtin-alertmanager": "Wbudowany menedżer alertów",
@@ -2910,6 +2918,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} temu)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -4435,7 +4448,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Publiczny",
         "tooltip-view-as-scene": "Wyświetl jako scenę"
       }
     },
@@ -5211,7 +5223,6 @@
       "playlist-next": "Przejdź do następnego pulpitu",
       "playlist-previous": "Przejdź do poprzedniego pulpitu",
       "playlist-stop": "Zatrzymaj autoodtwarzanie",
-      "public-dashboard": "Publiczny",
       "refresh": "Odśwież pulpit",
       "save": "Zapisz pulpit",
       "save-dashboard": {
@@ -5512,15 +5523,9 @@
       "type": "Typ"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Wartość nie została jeszcze zapisana w bazie danych Grafana",
       "not-yet-saved": "Wartość nie została zapisana w bazie danych Grafana",
-      "open-pull-request-in-git-hub": "Otwórz pull request w GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Ten pulpit nawigacyjny jest ładowany z gałęzi w GitHub.",
       "title-dashboard-loaded-external-repository": "Ten pulpit nawigacyjny jest ładowany z zewnętrznego repozytorium",
-      "title-dashboard-loaded-request-git-hub": "Ten pulpit nawigacyjny jest ładowany z pull request w GitHub.",
-      "title-error-loading-dashboard": "Błąd wczytywania pulpitu",
-      "value-not-saved": "Wartość nie została jeszcze zapisana w bazie danych Grafana",
-      "view-pull-request-in-git-hub": "Wyświetl pull request w GitHub"
+      "title-error-loading-dashboard": "Błąd wczytywania pulpitu"
     },
     "dashboard-scene": {
       "text": {
@@ -5703,6 +5708,20 @@
       "usage-count_few": "Używane na {{count}} pulpitach",
       "usage-count_many": "Używane na {{count}} pulpitach",
       "usage-count_other": "Używane na {{count}} pulpitach"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie. Czy nadal chcesz zapisać ten pulpit?",
@@ -7259,6 +7278,7 @@
       "when": "KIEDY"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Operacja"
     },
     "math": {
@@ -8033,6 +8053,9 @@
       "filter-popup-match-case": "Dopasuj wielkość liter",
       "inspect-drawer-title": "Sprawdź wartość",
       "inspect-menu-label": "Sprawdź wartość",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Brak wartości",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} z {{numRows}} wierszy"
     },
@@ -8551,7 +8574,7 @@
       "usage-count_other": "Używane na {{count}} pulpitu"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Szukaj według nazwy lub opisu"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Wczytywanie panelu biblioteki…"
@@ -8696,12 +8719,18 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_few": "",
+          "indexed-label_many": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_few": "",
+          "parsedl-label_many": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_few": "",
+          "structured-metadata_many": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8758,6 +8787,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8770,16 +8800,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8882,6 +8916,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9140,6 +9179,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Pulpit jest już skonfigurowany w usłudze Grafana i zarządzany z jej poziomu w instancji w chmurze. Zalecamy korzystanie z pulpitu skonfigurowanego. Jeśli nadal chcesz skopiować pulpit do instancji w chmurze, zmień identyfikator pulpitu w jego pliku JSON, zapisz nową migawkę i prześlij ponownie.",
         "datasource-already-managed": "Źródło danych jest już skonfigurowane w usłudze Grafana i zarządzane z jej poziomu w instancji w chmurze. Jeśli jest to inny zasób, ustaw inny UID i spróbuj ponownie.",
         "datasource-invalid-url": "Istnieje źródło danych, które ma nieprawidłowy adres URL. Podaj prawidłowy adres URL i spróbuj ponownie.",
@@ -10368,6 +10409,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11834,6 +11884,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

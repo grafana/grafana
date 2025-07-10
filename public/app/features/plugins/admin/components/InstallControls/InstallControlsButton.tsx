@@ -9,7 +9,7 @@ import { Button, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { getExternalManageLink, isDisabledAngularPlugin } from '../../helpers';
 import {
