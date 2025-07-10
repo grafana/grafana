@@ -13,9 +13,9 @@ import { BackendSrv, DataSourceWithBackend } from '@grafana/runtime';
 
 import { JaegerDatasource, JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';
-import { JaegerQuery } from './types';
 import mockSearchResponse from './mockSearchResponse.json';
 import mockTraceResponse from './mockTraceResponse.json';
+import { JaegerQuery } from './types';
 
 export const backendSrv = { fetch: jest.fn() } as unknown as BackendSrv;
 
