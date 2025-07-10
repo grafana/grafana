@@ -605,6 +605,11 @@ replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091
 // This is required in order to get notification delivery errors from the receivers API.
 replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20250620093340-be61a673dee6
 
+// Use local version of authlib for development
+replace github.com/grafana/authlib => ../authlib
+
+replace github.com/grafana/authlib/types => ../authlib/types
+
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 // lock for mysql tsdb compat
