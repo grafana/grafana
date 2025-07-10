@@ -1,9 +1,11 @@
-import { css } from "@emotion/css";
-import { LogListModel } from "./processing";
-import { memo, useMemo } from "react";
-import { useLogListContext } from "./LogListContext";
-import { useStyles2 } from "@grafana/ui";
-import { getStyles } from "./LogLine";
+import { css } from '@emotion/css';
+import { memo, useMemo } from 'react';
+
+import { useStyles2 } from '@grafana/ui';
+
+import { getStyles } from './LogLine';
+import { useLogListContext } from './LogListContext';
+import { LogListModel } from './processing';
 
 interface Props {
   log: LogListModel;
@@ -16,7 +18,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog }: Props) => {
     const log = originalLog.clone();
     log.setCollapsedState(undefined);
     return log;
-  }, []);
+  }, [originalLog]);
 
   return (
     <div className={styles.logLineWrapper}>
@@ -30,7 +32,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog }: Props) => {
         </div>
       )}
     </div>
-  )
+  );
 });
 
 LogLineDetailsLog.displayName = 'LogLineDetailsLog';

@@ -259,7 +259,9 @@ function countNewLines(log: string, limit = Infinity) {
     } else if (log[i] === '\r') {
       count += 1;
       // skip LF in CRLF
-      if (log[i] === '\n') i += 1;
+      if (log[i] === '\n') {
+        i += 1;
+      }
     }
   }
   return count;
