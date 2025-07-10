@@ -51,6 +51,7 @@ import {
   getDisplayName,
   getIsNestedTable,
   getTextAlign,
+  getJustifyContent,
   getVisibleFields,
   shouldTextOverflow,
   getApplyToRowBgFn,
@@ -273,7 +274,7 @@ export function TableNG(props: TableNGProps) {
       let _rowHeight = 0;
 
       f.forEach((field, i) => {
-        const justifyContent = getTextAlign(field);
+        const justifyContent = getJustifyContent(field);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
@@ -297,10 +298,10 @@ export function TableNG(props: TableNGProps) {
         const cellType = cellOptions.type;
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
+        const maxWrappedLines = shouldWrap ? getMaxWrappedLines(field) : undefined;
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
 
         result.colsWithTooltip[displayName] = withTooltip;
-        const maxWrappedLines = getMaxWrappedLines(field);
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
@@ -837,10 +838,11 @@ const getCellStyles = (
 ) => {
   return {
     cell: css({
-      textOverflow: 'initial',
+      textOverflow: 'ellipsis',
       background: colors.bgColor ?? 'inherit',
       alignContent: 'center',
-      justifyContent: getTextAlign(field),
+      textAlign: getTextAlign(field),
+      justifyContent: getJustifyContent(field),
       paddingInline: TABLE.CELL_PADDING,
       height: '100%',
       minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
@@ -850,7 +852,7 @@ const getCellStyles = (
         // height properties need to override the default settings.
         height: 'auto',
         maxHeight: maxWrappedLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2,
-        minHeight: undefined,
+        minHeight: 'none',
         // see https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp for the latest on the line-clamp property
         display: '-webkit-box',
         '-webkit-line-clamp': String(maxWrappedLines),
@@ -865,12 +867,14 @@ const getCellStyles = (
         '.table-cell-actions': {
           display: 'flex',
         },
-        ...(shouldOverflow && {
+        ...((shouldOverflow || maxWrappedLines) && {
           zIndex: theme.zIndex.tooltip - 2,
           whiteSpace: 'pre-line',
           height: 'fit-content',
+          maxHeight: 'none',
           minWidth: 'fit-content',
-          paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
+          paddingBlock: TABLE.CELL_PADDING,
+          '-webkit-line-clamp': 'none',
         }),
       },
     }),

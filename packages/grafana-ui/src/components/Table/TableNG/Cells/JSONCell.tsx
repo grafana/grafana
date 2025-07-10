@@ -33,12 +33,11 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps
 
   const link = useSingleLink(field, rowIdx);
 
-  return <div className={styles.jsonText}>{link == null ? displayValue : renderSingleLink(link, displayValue)}</div>;
+  return <span className={styles.jsonText}>{link == null ? displayValue : renderSingleLink(link, displayValue)}</span>;
 };
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
+const getStyles = (_theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
   jsonText: css({
-    display: 'flex',
     cursor: 'pointer',
     fontFamily: 'monospace',
     justifyContent: justifyContent,

@@ -25,7 +25,7 @@ import {
   getComparator,
   getDefaultRowHeight,
   getIsNestedTable,
-  getTextAlign,
+  getJustifyContent,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
   getMaxWrapCell,
@@ -45,7 +45,7 @@ describe('TableNG utils', () => {
           },
         },
       };
-      expect(getTextAlign(leftField)).toBe('flex-start');
+      expect(getJustifyContent(leftField)).toBe('flex-start');
 
       // Test 'center' alignment
       const centerField = {
@@ -58,7 +58,7 @@ describe('TableNG utils', () => {
           },
         },
       };
-      expect(getTextAlign(centerField)).toBe('center');
+      expect(getJustifyContent(centerField)).toBe('center');
 
       // Test 'right' alignment
       const rightField = {
@@ -71,7 +71,7 @@ describe('TableNG utils', () => {
           },
         },
       };
-      expect(getTextAlign(rightField)).toBe('flex-end');
+      expect(getJustifyContent(rightField)).toBe('flex-end');
     });
 
     it('should default to flex-start when no alignment specified', () => {
@@ -83,11 +83,11 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start when no field is specified', () => {
-      expect(getTextAlign(undefined)).toBe('flex-start');
+      expect(getJustifyContent(undefined)).toBe('flex-start');
     });
 
     it('should default to flex-end for number types', () => {
@@ -99,7 +99,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-end');
+      expect(getJustifyContent(field)).toBe('flex-end');
     });
 
     it('should default to flex-start for string types', () => {
@@ -111,7 +111,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start for enum types', () => {
@@ -123,7 +123,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start for time types', () => {
@@ -135,7 +135,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
 
     it('should default to flex-start for boolean types', () => {
@@ -147,7 +147,7 @@ describe('TableNG utils', () => {
           custom: {},
         },
       };
-      expect(getTextAlign(field)).toBe('flex-start');
+      expect(getJustifyContent(field)).toBe('flex-start');
     });
   });
 

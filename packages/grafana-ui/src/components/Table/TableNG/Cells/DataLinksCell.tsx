@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -12,36 +12,46 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   const links = getCellLinks(field, rowIdx!);
 
   return (
-    <div>
+    <div className={styles.container}>
       {links &&
-        links.map((link, idx) => {
-          return !link.href && link.onClick == null ? (
-            <span key={idx} className={styles.cellLinkEmpty}>
+        links.map((link, idx) =>
+          !link.href && link.onClick == null ? (
+            <span key={idx} className={styles.linkCell}>
               {link.title}
             </span>
           ) : (
-            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-            <span key={idx} className={styles.linkCell} onClick={link.onClick}>
-              <a href={link.href} target={link.target}>
-                {link.title}
-              </a>
-            </span>
-          );
-        })}
+            <a
+              className={cx(styles.linkCell, styles.linkCellActive)}
+              key={idx}
+              onClick={link.onClick}
+              href={link.href}
+              target={link.target}
+            >
+              {link.title}
+            </a>
+          )
+        )}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    flexWrap: 'nowrap',
+    gap: theme.spacing(0.5),
+  }),
   linkCell: css({
-    cursor: 'pointer',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    flexShrink: 0,
     userSelect: 'text',
     whiteSpace: 'nowrap',
-    color: theme.colors.text.link,
     fontWeight: theme.typography.fontWeightMedium,
-    paddingRight: theme.spacing(1.5),
+  }),
+  linkCellActive: css({
+    cursor: 'pointer',
+    color: theme.colors.text.link,
     a: {
       color: theme.colors.text.link,
     },
@@ -49,13 +59,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
       color: theme.colors.text.link,
     },
-  }),
-  cellLinkEmpty: css({
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    userSelect: 'text',
-    whiteSpace: 'nowrap',
-    fontWeight: theme.typography.fontWeightMedium,
-    paddingRight: theme.spacing(1.5),
   }),
 });

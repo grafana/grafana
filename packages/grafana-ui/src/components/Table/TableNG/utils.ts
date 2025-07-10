@@ -136,21 +136,56 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
-  return (
-    field.type === FieldType.string &&
+  const cellOptions = getCellOptions(field);
+  const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-    // so we need to ensure we don't apply overflow hover states for type image
-    getCellOptions(field).type !== TableCellDisplayMode.Image &&
-    !shouldTextWrap(field) &&
-    !isCellInspectEnabled(field)
-  );
+    // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
+    (field.type === FieldType.string && cellOptions.type !== TableCellDisplayMode.Image) ||
+    // regardless of the underlying cell type, data links cells have text overflow.
+    cellOptions.type === TableCellDisplayMode.DataLinks;
+
+  return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
 }
 
 /**
  * @internal
- * Returns the text alignment for a field based on its type and configuration.
+ * Returns the text-align value for a inline-displayedd field based on its type and configuration.
  */
-export function getTextAlign(field?: Field): Property.JustifyContent {
+export function getTextAlign(field?: Field): Property.TextAlign {
+  if (!field) {
+    return 'inherit';
+  }
+
+  if (field.config.custom) {
+    const custom: TableFieldOptionsType = field.config.custom;
+
+    switch (custom.align) {
+      case 'right':
+        return 'right';
+      case 'left':
+        return 'left';
+      case 'center':
+        return 'center';
+    }
+  }
+
+  // Data links cells should use default alignment
+  if (getCellOptions(field).type === TableCellDisplayMode.DataLinks) {
+    return 'inherit';
+  }
+
+  if (field.type === FieldType.number) {
+    return 'right';
+  }
+
+  return 'inherit';
+}
+
+/**
+ * @internal
+ * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
+ */
+export function getJustifyContent(field?: Field): Property.JustifyContent {
   if (!field) {
     return 'flex-start';
   }
@@ -166,6 +201,11 @@ export function getTextAlign(field?: Field): Property.JustifyContent {
       case 'center':
         return 'center';
     }
+  }
+
+  // Data links cells should use default justification
+  if (getCellOptions(field).type === TableCellDisplayMode.DataLinks) {
+    return 'flex-start';
   }
 
   if (field.type === FieldType.number) {
