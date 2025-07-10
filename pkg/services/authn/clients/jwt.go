@@ -114,9 +114,6 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 	if !s.cfg.JWTAuth.SkipOrgRoleSync {
 		role, grafanaAdmin := s.extractRoleAndAdmin(claims)
-		if err != nil {
-			s.log.Warn("Failed to extract role", "err", err)
-		}
 
 		if s.cfg.JWTAuth.AllowAssignGrafanaAdmin {
 			id.IsGrafanaAdmin = &grafanaAdmin
