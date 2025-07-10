@@ -41,6 +41,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   axisGridShow: true,
   axisCenteredZero: false,
   axisBorderShow: false,
+  showValues: false,
 };
 
 export type NullEditorSettings = { isTime: boolean };
@@ -207,6 +208,15 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
             options: graphFieldOptions.showPoints,
           },
           showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
+        })
+        .addRadio({
+          path: 'showValues',
+          name: t('timeseries.config.get-graph-field-config.name-show-values', 'Show values'),
+          category: categoryStyles,
+          defaultValue: graphFieldOptions.showValues[0].value,
+          settings: {
+            options: graphFieldOptions.showValues,
+          },
         })
         .addSliderInput({
           path: 'pointSize',

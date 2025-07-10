@@ -49,6 +49,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   dataFrameFieldIndex?: DataFrameFieldIndex;
   theme: GrafanaTheme2;
   value?: uPlot.Series.Value;
+  showValues?: VisibilityMode;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {

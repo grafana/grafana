@@ -74,6 +74,7 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Auto,
+  showValues: VisibilityMode.Auto,
 };
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
@@ -529,6 +530,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       softMax: customConfig.axisSoftMax,
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
+      showValues: customConfig.showValues,
     });
 
     // Render thresholds in graph
@@ -552,6 +554,69 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   let stackingGroups = getStackingGroups(frame);
 
   builder.setStackingGroups(stackingGroups);
+
+  const shouldShowValues = frame.fields.slice(1).some((field) => {
+    const customConfig = { ...defaultConfig, ...field.config.custom };
+    if (customConfig.showValues === VisibilityMode.Always) {
+      return true;
+    }
+    if (
+      customConfig.showValues === VisibilityMode.Auto &&
+      field.type === FieldType.number &&
+      customConfig.showPoints !== VisibilityMode.Never
+    ) {
+      return true;
+    }
+    return false;
+  });
+
+  if (shouldShowValues) {
+    builder.addHook('draw', (u: uPlot) => {
+      const { ctx } = u;
+      ctx.save();
+      ctx.fillStyle = theme.colors.text.primary;
+      ctx.font = `12px ${theme.typography.fontFamily}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+
+      // Iterate through series (skip x-axis series at index 0)
+      for (let seriesIdx = 1; seriesIdx < u.data.length; seriesIdx++) {
+        const field = frame.fields[seriesIdx];
+        if (!field) {
+          continue;
+        }
+
+        const customConfig = { ...defaultConfig, ...field.config.custom };
+
+        if (customConfig.showValues === VisibilityMode.Never) {
+          continue;
+        }
+
+        const seriesData = u.data[seriesIdx];
+        const xData = u.data[0];
+
+        // Draw values for each data point
+        for (let dataIdx = 0; dataIdx < seriesData.length; dataIdx++) {
+          const value = seriesData[dataIdx];
+          const xValue = xData[dataIdx];
+
+          if (value != null && xValue != null) {
+            // Convert data coordinates to pixel coordinates
+            const x = u.valToPos(xValue, 'x', true);
+            const y = u.valToPos(value, u.series[seriesIdx].scale!, true);
+
+            const displayValue = field.display?.(value);
+            const text = displayValue?.text ?? String(value);
+
+            // Draw the value text above the data point
+            ctx.fillText(text, x, y - 5);
+          }
+        }
+      }
+
+      ctx.restore();
+    });
+  }
 
   // hook up custom/composite renderers
   renderers?.forEach((r) => {
