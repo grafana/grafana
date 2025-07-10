@@ -269,6 +269,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.NotNil(t, legacyCreate.Result)
 		uid := legacyCreate.Result.UID
 		require.NotEmpty(t, uid)
+		//nolint:staticcheck
 		id := legacyCreate.Result.ID
 		require.NotEmpty(t, id)
 		idStr := fmt.Sprintf("%d", id)
