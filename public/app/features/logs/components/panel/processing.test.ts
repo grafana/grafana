@@ -155,6 +155,21 @@ describe('preProcessLogs', () => {
       expect(logListModel.entry).toBe(entry);
       expect(logListModel.body).not.toBe(entry);
     });
+
+    test('Uses lossless parsing', () => {
+      const entry = '{"number": 90071992547409911}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false, // unwrapped
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).toContain('90071992547409911');
+    });
   });
 
   test('Orders logs', () => {

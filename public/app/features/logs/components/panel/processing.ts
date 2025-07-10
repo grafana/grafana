@@ -1,4 +1,5 @@
 import ansicolor from 'ansicolor';
+import { parse, stringify } from 'lossless-json';
 import Prism, { Grammar } from 'prismjs';
 
 import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
@@ -104,7 +105,10 @@ export class LogListModel implements LogRowModel {
   get body(): string {
     if (this._body === undefined) {
       try {
-        this.raw = JSON.stringify(JSON.parse(this.raw), undefined, 2);
+        const parsed = stringify(parse(this.raw), undefined, 2);
+        if (parsed) {
+          this.raw = parsed;
+        }
       } catch (error) {}
       this._body = this.collapsed
         ? this.raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
