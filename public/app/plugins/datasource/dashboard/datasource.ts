@@ -13,6 +13,7 @@ import {
   LoadingState,
   Field,
   FieldType,
+  AdHocVariableFilter,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -72,6 +73,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
+    // Extract AdHoc filters from the request
+    const adhocFilters = options.filters || [];
+
     return defer(() => {
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
         sourceDataProvider?.setContainerWidth(500);
@@ -83,7 +87,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         debounceTime(50),
         map((result) => {
           return {
-            data: this.getDataFramesForQueryTopic(result.data, query),
+            data: this.getDataFramesForQueryTopic(result.data, query, adhocFilters),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
@@ -96,7 +100,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     });
   }
 
-  private getDataFramesForQueryTopic(data: PanelData, query: DashboardQuery): DataFrame[] {
+  private getDataFramesForQueryTopic(
+    data: PanelData,
+    query: DashboardQuery,
+    filters: AdHocVariableFilter[]
+  ): DataFrame[] {
     const annotations = data.annotations ?? [];
     if (query.topic === DataTopic.Annotations) {
       return annotations.map((frame) => ({
@@ -124,8 +132,78 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      return [...series, ...annotations];
+      // Apply AdHoc filters to series data (copied and simplified from filterByValue.ts)
+      const filteredSeries =
+        filters.length > 0 ? series.map((frame) => this.applyAdHocFilters(frame, filters)) : series;
+
+      return [...filteredSeries, ...annotations];
     }
+  }
+
+  /**
+   * Apply AdHoc filters to a DataFrame
+   * Simplified version of the filterByValue transformer logic for string fields only
+   */
+  private applyAdHocFilters(frame: DataFrame, filters: AdHocVariableFilter[]): DataFrame {
+    if (filters.length === 0 || frame.length === 0) {
+      return frame;
+    }
+
+    const matchingRows = new Set<number>();
+
+    // Check each row to see if it matches all filters (AND logic)
+    for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+      const rowMatches = filters.every((filter) => {
+        // Find the field for this filter
+        const field = frame.fields.find((f) => f.name === filter.key);
+
+        // Skip if field doesn't exist or isn't a string field
+        if (!field || field.type !== FieldType.string) {
+          return true; // Ignore filters for non-string fields
+        }
+
+        const fieldValue = field.values[rowIndex];
+        const filterValue = filter.value;
+
+        // Apply the filter based on operator
+        switch (filter.operator) {
+          case '=':
+            return fieldValue === filterValue;
+          case '!=':
+            return fieldValue !== filterValue;
+          default:
+            // Unknown operator, skip this filter
+            return true;
+        }
+      });
+
+      if (rowMatches) {
+        matchingRows.add(rowIndex);
+      }
+    }
+
+    // Reconstruct the DataFrame with only matching rows
+    const fields: Field[] = frame.fields.map((field) => {
+      const newValues = [];
+
+      for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+        if (matchingRows.has(rowIndex)) {
+          newValues.push(field.values[rowIndex]);
+        }
+      }
+
+      return {
+        ...field,
+        values: newValues,
+        state: {}, // Clean the state as it's being recalculated
+      };
+    });
+
+    return {
+      ...frame,
+      fields: fields,
+      length: matchingRows.size,
+    };
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
