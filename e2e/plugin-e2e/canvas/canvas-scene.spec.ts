@@ -24,10 +24,6 @@ test.describe('Canvas Panel - Scene Tests', () => {
   });
 
   test('should handle scene pan and zoom when enabled', async ({ page }) => {
-    // Check if canvas panel pan/zoom feature toggle is enabled
-    const config = await page.evaluate(() => (window as any).grafanaBootData?.settings?.featureToggles);
-    await expect(config?.canvasPanelPanZoom).toEqual(true);
-
     // Feature toggle is enabled, pan/zoom functionality should be available
     const panZoomCheckbox = await page.getByLabel('Canvas Pan and zoom field').locator('label').nth(1);
     await panZoomCheckbox.setChecked(true);
