@@ -7,6 +7,7 @@ import {
   sizeExpression,
   opacityExpression,
   rotationExpression,
+  offsetExpression,
 } from './markers';
 
 // Mock dependencies
@@ -64,6 +65,7 @@ describe('getWebGLStyle', () => {
     expect(result['icon-height']).toEqual(sizeExpression);
     expect(result['icon-opacity']).toEqual(opacityExpression);
     expect(result['icon-rotation']).toEqual(rotationExpression);
+    expect(result['icon-displacement']).toEqual(offsetExpression);
   });
 
   it('includes background circle with opacity-adjusted stroke when opacity is provided', async () => {

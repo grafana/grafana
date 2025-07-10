@@ -318,6 +318,7 @@ export const colorExpression = ['color', ['get', 'red'], ['get', 'green'], ['get
 export const sizeExpression = ['get', 'size'];
 export const opacityExpression = ['get', 'opacity'];
 export const rotationExpression = ['get', 'rotation'];
+export const offsetExpression = ['array', ['get', 'offsetX'], ['get', 'offsetY']];
 
 // Base style for regular shapes
 export const baseShapeStyle = {
@@ -327,6 +328,7 @@ export const baseShapeStyle = {
   'shape-stroke-width': 1,
   'shape-opacity': opacityExpression,
   'shape-rotation': rotationExpression,
+  'shape-displacement': offsetExpression,
 };
 
 // Base style for circles
@@ -336,6 +338,7 @@ export const baseCircleStyle = {
   'circle-stroke-color': colorExpression,
   'circle-stroke-width': 1,
   'circle-opacity': opacityExpression,
+  'circle-displacement': offsetExpression,
 };
 
 // Returns style configuration for WebGL markers
@@ -372,10 +375,7 @@ export async function getWebGLStyle(symbol?: string, opacity?: number): Promise<
       'icon-height': sizeExpression,
       'icon-opacity': opacityExpression,
       'icon-rotation': rotationExpression,
-      'icon-offset': [
-        ['get', 'offsetX'],
-        ['get', 'offsetY'],
-      ],
+      'icon-displacement': offsetExpression,
       'icon-color': colorExpression,
     };
   }
