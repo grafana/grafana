@@ -259,7 +259,7 @@ describe('preProcessLogs', () => {
     });
 
     test('Correctly counts new lines', () => {
-      const entry = new Array(virtualization.getTruncationLineCount()-1).fill('test\n').join('');
+      const entry = new Array(virtualization.getTruncationLineCount() - 1).fill('test\n').join('');
       const multilineLog = createLogLine(
         { entry, labels: { field: 'value' } },
         { escape: false, order: LogsSortOrder.Descending, timeZone: 'browser', virtualization, wrapLogMessage: true }
