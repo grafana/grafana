@@ -15,33 +15,27 @@ import {
   throwIfAngular,
 } from '@grafana/data';
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
-import { addResourceBundle, getResolvedLanguage } from '@grafana/i18n/internal';
+import { getResolvedLanguage } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
-import builtInPlugins from './built_in_plugins';
+import builtInPlugins from '../built_in_plugins';
 import {
   addedComponentsRegistry,
   addedFunctionsRegistry,
   addedLinksRegistry,
   exposedComponentsRegistry,
-} from './extensions/registry/setup';
-import { registerPluginInCache } from './loader/cache';
-import { SystemJS } from './loader/systemjs';
-import { resolveModulePath } from './loader/utils';
-import { importPluginModuleInSandbox } from './sandbox/sandboxPluginLoader';
-import { shouldLoadPluginInFrontendSandbox } from './sandbox/sandboxPluginLoaderRegistry';
-import { pluginsLogger } from './utils';
+} from '../extensions/registry/setup';
+import { registerPluginInCache } from '../loader/cache';
+import { SystemJS } from '../loader/systemjs';
+import { resolveModulePath } from '../loader/utils';
+import { importPluginModuleInSandbox } from '../sandbox/sandboxPluginLoader';
+import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandboxPluginLoaderRegistry';
+import { pluginsLogger } from '../utils';
 
-type PluginImportInfo = {
-  path: string;
-  pluginId: string;
-  loadingStrategy: PluginLoadingStrategy;
-  version?: string;
-  moduleHash?: string;
-  translations?: Record<string, string>;
-};
+import { addTranslationsToI18n } from './addTranslationsToI18n';
+import { PluginImportInfo, PostImportStrategy, PreImportStrategy } from './types';
 
 async function importPluginModule({
   path,
@@ -111,54 +105,6 @@ async function importPluginModule({
   });
 }
 
-interface AddTranslationsToI18nOptions {
-  resolvedLanguage: string;
-  fallbackLanguage: string;
-  pluginId: string;
-  translations: Record<string, string>;
-}
-
-// exported for testing purposes only
-export async function addTranslationsToI18n({
-  resolvedLanguage,
-  fallbackLanguage,
-  pluginId,
-  translations,
-}: AddTranslationsToI18nOptions): Promise<void> {
-  const resolvedPath = translations[resolvedLanguage];
-  const fallbackPath = translations[fallbackLanguage];
-  const path = resolvedPath ?? fallbackPath;
-
-  if (!path) {
-    console.warn(`Could not find any translation for plugin ${pluginId}`, { resolvedLanguage, fallbackLanguage });
-    return;
-  }
-
-  try {
-    const module = await SystemJS.import(resolveModulePath(path));
-    if (!module.default) {
-      console.warn(`Could not find default export for plugin ${pluginId}`, {
-        resolvedLanguage,
-        fallbackLanguage,
-        path,
-      });
-      return;
-    }
-
-    const language = resolvedPath ? resolvedLanguage : fallbackLanguage;
-    addResourceBundle(language, pluginId, module.default);
-  } catch (error) {
-    console.warn(`Could not load translation for plugin ${pluginId}`, {
-      resolvedLanguage,
-      fallbackLanguage,
-      error,
-      path,
-    });
-  }
-}
-
-type PreImportStrategy<Meta extends PluginMeta = PluginMeta> = (meta: Meta) => PluginImportInfo;
-
 const defaultPreImport: PreImportStrategy = (plugin) => {
   throwIfAngular(plugin);
   const fallbackLoadingStrategy = plugin.loadingStrategy ?? PluginLoadingStrategy.fetch;
@@ -174,11 +120,6 @@ const defaultPreImport: PreImportStrategy = (plugin) => {
 
   return args;
 };
-
-type PostImportStrategy<
-  Meta extends PluginMeta = PluginMeta,
-  Plugin extends GrafanaPlugin<Meta> = GrafanaPlugin<Meta>,
-> = (meta: Meta, module: Promise<System.Module>) => Promise<Plugin>;
 
 const panelPluginPostImport: PostImportStrategy<PanelPluginMeta, PanelPlugin> = async (meta, module) => {
   return module
@@ -215,14 +156,12 @@ const datasourcePluginPostImport: PostImportStrategy<DataSourcePluginMeta, Gener
   }
 
   if (pluginExports.Datasource) {
-    const dsPlugin_1 = new DataSourcePlugin<
-      DataSourceApi<DataQuery, DataSourceJsonData>,
-      DataQuery,
-      DataSourceJsonData
-    >(pluginExports.Datasource);
-    dsPlugin_1.setComponentsFromLegacyExports(pluginExports);
-    dsPlugin_1.meta = meta;
-    return dsPlugin_1;
+    const dsPlugin = new DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>, DataQuery, DataSourceJsonData>(
+      pluginExports.Datasource
+    );
+    dsPlugin.setComponentsFromLegacyExports(pluginExports);
+    dsPlugin.meta = meta;
+    return dsPlugin;
   }
 
   throw new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export');
@@ -267,12 +206,9 @@ const getPostImportStrategy = (plugin: PluginMeta): PostImportStrategy<any, any>
 const panelPluginCache: Map<string, PanelPlugin> = new Map();
 const promisesCache: Map<string, Promise<GrafanaPlugin>> = new Map();
 
-const getPluginPromiseFromCache = <
-  Meta extends PluginMeta = PluginMeta,
-  Plugin extends GrafanaPlugin<Meta> = GrafanaPlugin<Meta>,
->(
-  meta: Meta
-): Promise<Plugin> => {
+const getPluginPromiseFromCache = <M extends PluginMeta = PluginMeta, P extends GrafanaPlugin<M> = GrafanaPlugin<M>>(
+  meta: M
+): Promise<P> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cached: any = promisesCache.get(meta.id);
   if (cached) {
@@ -282,12 +218,9 @@ const getPluginPromiseFromCache = <
   throw new Error(`Trying to get unknown plugin from cache`);
 };
 
-const importPlugin = async <
-  Meta extends PluginMeta = PluginMeta,
-  Plugin extends GrafanaPlugin<Meta> = GrafanaPlugin<Meta>,
->(
-  meta: Meta
-): Promise<Plugin> => {
+const importPlugin = async <M extends PluginMeta = PluginMeta, P extends GrafanaPlugin<M> = GrafanaPlugin<M>>(
+  meta: M
+): Promise<P> => {
   if (promisesCache.has(meta.id)) {
     return getPluginPromiseFromCache(meta);
   }
@@ -297,7 +230,7 @@ const importPlugin = async <
   const plugin = getPostImportStrategy(meta)(meta, module);
   promisesCache.set(meta.id, plugin);
 
-  return getPluginPromiseFromCache<Meta, Plugin>(meta);
+  return getPluginPromiseFromCache<M, P>(meta);
 };
 
 const importer = {

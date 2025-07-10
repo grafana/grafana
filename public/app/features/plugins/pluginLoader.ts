@@ -2,6 +2,7 @@ import { AppPlugin, DataSourcePluginMeta, PluginLoadingStrategy, PluginMeta } fr
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
+import { pluginImporter } from './importer/pluginImporter';
 import { getPluginFromCache } from './loader/cache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './loader/systemjs';
@@ -10,7 +11,6 @@ import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { buildImportMap } from './loader/utils';
-import { pluginImporter } from './pluginImporter';
 
 const imports = buildImportMap(sharedDependenciesMap);
 

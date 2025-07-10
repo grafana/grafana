@@ -1,7 +1,7 @@
 import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
 import config from 'app/core/config';
 
-import { pluginImporter } from './pluginImporter';
+import { pluginImporter } from './importer/pluginImporter';
 
 const promiseCache: Record<string, Promise<PanelPlugin>> = {};
 
