@@ -90,31 +90,37 @@ import (
 //	  }
 //	}
 func V30(dashboard map[string]interface{}) error {
-	// Process all panels in the dashboard
-	if panels, ok := dashboard["panels"].([]interface{}); ok {
-		for _, panel := range panels {
-			if panelMap, ok := panel.(map[string]interface{}); ok {
-				// Upgrade value mappings
-				upgradeValueMappingsForPanel(panelMap)
+	dashboard["schemaVersion"] = 30
 
-				// Migrate tooltip options
-				migrateTooltipOptions(panelMap)
-
-				// Handle nested panels in collapsed rows
-				if nestedPanels, ok := panelMap["panels"].([]interface{}); ok {
-					for _, nestedPanel := range nestedPanels {
-						if nestedPanelMap, ok := nestedPanel.(map[string]interface{}); ok {
-							upgradeValueMappingsForPanel(nestedPanelMap)
-							migrateTooltipOptions(nestedPanelMap)
-						}
-					}
-				}
-			}
-		}
+	panels, ok := dashboard["panels"].([]interface{})
+	if !ok {
+		return nil
 	}
 
-	// Update schema version
-	dashboard["schemaVersion"] = 30
+	for _, panel := range panels {
+		panelMap, ok := panel.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		upgradeValueMappingsForPanel(panelMap)
+		migrateTooltipOptions(panelMap)
+
+		// Handle nested panels in collapsed rows
+		nestedPanels, hasNested := panelMap["panels"].([]interface{})
+		if !hasNested {
+			continue
+		}
+
+		for _, nestedPanel := range nestedPanels {
+			nestedPanelMap, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			upgradeValueMappingsForPanel(nestedPanelMap)
+			migrateTooltipOptions(nestedPanelMap)
+		}
+	}
 
 	return nil
 }
@@ -138,21 +144,38 @@ func upgradeValueMappingsForPanel(panel map[string]interface{}) {
 	}
 
 	// Upgrade overrides mappings
-	if overrides, ok := fieldConfig["overrides"].([]interface{}); ok {
-		for _, override := range overrides {
-			if overrideMap, ok := override.(map[string]interface{}); ok {
-				if properties, ok := overrideMap["properties"].([]interface{}); ok {
-					for _, property := range properties {
-						if propertyMap, ok := property.(map[string]interface{}); ok {
-							if propertyMap["id"] == "mappings" {
-								if mappings, ok := propertyMap["value"].([]interface{}); ok {
-									propertyMap["value"] = upgradeValueMappings(mappings, nil)
-								}
-							}
-						}
-					}
-				}
+	overrides, hasOverrides := fieldConfig["overrides"].([]interface{})
+	if !hasOverrides {
+		return
+	}
+
+	for _, override := range overrides {
+		overrideMap, ok := override.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		properties, hasProperties := overrideMap["properties"].([]interface{})
+		if !hasProperties {
+			continue
+		}
+
+		for _, property := range properties {
+			propertyMap, ok := property.(map[string]interface{})
+			if !ok {
+				continue
 			}
+
+			if propertyMap["id"] != "mappings" {
+				continue
+			}
+
+			mappings, ok := propertyMap["value"].([]interface{})
+			if !ok {
+				continue
+			}
+
+			propertyMap["value"] = upgradeValueMappings(mappings, nil)
 		}
 	}
 }
@@ -334,15 +357,23 @@ func migrateTooltipOptions(panel map[string]interface{}) {
 	}
 
 	// Only migrate for specific panel types
-	if panelType == "timeseries" || panelType == "xychart" || panelType == "xychart2" {
-		if options, ok := panel["options"].(map[string]interface{}); ok {
-			if tooltipOptions, ok := options["tooltipOptions"]; ok {
-				// Rename tooltipOptions to tooltip
-				options["tooltip"] = tooltipOptions
-				delete(options, "tooltipOptions")
-			}
-		}
+	if panelType != "timeseries" && panelType != "xychart" && panelType != "xychart2" {
+		return
 	}
+
+	options, ok := panel["options"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	tooltipOptions, ok := options["tooltipOptions"]
+	if !ok {
+		return
+	}
+
+	// Rename tooltipOptions to tooltip
+	options["tooltip"] = tooltipOptions
+	delete(options, "tooltipOptions")
 }
 
 // stringifyValue converts a value to string
