@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "YAML düzenle",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Veri kaynağı ayrıntıları yüklenirken hata oluştu",
       "edit": "Düzenle",
-      "evaluations-to-fire": "Tetiklenecek değerlendirme döngüleri",
       "export": "Dışa aktar",
       "folder": "Klasör",
       "group-loading-error": "Grup yüklenirken hata oluştu",
       "interval": "Aralık",
       "namespace": "Ad alanı",
-      "pending-period": "Bekleme süresi",
-      "recording": "Kayıt",
-      "rule-name": "Kural adı"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Veri kaynağı ayrıntıları yüklenirken hata oluştu",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Tümünü dışa aktar"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Sorgu düzenleyici şu nedenle yüklenemedi: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "İstediğiniz veri kaynağını bulamıyor musunuz? Bazı veri kaynakları uyarılar için desteklenmiyor. Daha fazla bilgi için simgeye tıklayın."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Yeni Alertmanager ekle",
       "builtin-alertmanager": "Yerleşik Alertmanager",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} önce)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -5656,6 +5669,20 @@
       "usage-count_one": "{{count}} panoda kullanılıyor",
       "usage-count_other": "{{count}} panoda kullanılıyor"
     },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "Seçilen klasörde aynı isimde bir pano zaten mevcut. Yine de bu panoyu kaydetmek istiyor musunuz?",
       "title-name-already-exists": "Bu ad zaten mevcut"
@@ -7984,6 +8011,9 @@
       "filter-popup-match-case": "Büyük/küçük harf duyarlılığı",
       "inspect-drawer-title": "Değeri incele",
       "inspect-menu-label": "Değeri incele",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır"
     },
@@ -8712,6 +8742,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8724,6 +8755,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8826,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9084,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "Tamam",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Pano zaten bulut örneğinde Grafana tarafından sağlanmış ve yönetilmektedir. Bundan sonra sağlanan panoyu kullanmanızı öneririz. Yine de panoyu bulut örneğine kopyalamak istiyorsanız pano JSON'unda pano kimliğini değiştirin, yeni bir anlık görüntü kaydedin ve tekrar yükleyin.",
         "datasource-already-managed": "Veri kaynağı zaten bulut örneğinde Grafana tarafından sağlanmış ve yönetilmektedir. Bu farklı bir kaynaksa başka bir UID belirleyin ve tekrar deneyin.",
         "datasource-invalid-url": "Geçersiz bir URL içeren bir veri kaynağı var. Geçerli bir URL girin ve tekrar deneyin.",
@@ -10313,10 +10352,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
