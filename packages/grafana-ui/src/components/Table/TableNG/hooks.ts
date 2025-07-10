@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { Column, DataGridProps, SortColumn } from 'react-data-grid';
+import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject, MutableRefObject } from 'react';
+import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
@@ -607,4 +607,26 @@ export function useSingleLink(field: Field, rowIdx: number): LinkModel | undefin
   const actionsCount = field.config.actions?.length ?? 0;
   const shouldShowLink = linksCount === 1 && actionsCount === 0;
   return useMemo(() => (shouldShowLink ? (getCellLinks(field, rowIdx) ?? []) : [])[0], [field, shouldShowLink, rowIdx]);
+}
+
+export function useScrollbarWidth(
+  ref: MutableRefObject<DataGridHandle | undefined>,
+  height: number,
+  renderedRows: TableRow[]
+) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(
+    () => {
+      let el = ref.current?.element;
+      if (el) {
+        setScrollbarWidth(el.offsetWidth - el.clientWidth);
+      }
+    },
+    // todo: account for pagination, subtable expansion, default row height changes, height changes, data length
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [height, renderedRows]
+  );
+
+  return scrollbarWidth;
 }
