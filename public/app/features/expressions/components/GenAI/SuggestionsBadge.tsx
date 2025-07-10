@@ -15,7 +15,7 @@ export const SuggestionsBadge = ({ suggestions, handleOpenDrawer, hasUnseenSugge
 
   return (
     <div className={styles.buttonWrapper}>
-      <Button variant="secondary" size="sm" onClick={handleOpenDrawer} icon="list-ol">
+      <Button variant="secondary" fill="outline" size="sm" onClick={handleOpenDrawer} icon="list-ol">
         <Stack direction="row" gap={1} alignItems="center">
           <Trans i18nKey="sql-expressions.suggestions">Suggestions</Trans>
           <span className={styles.countBadge}>
