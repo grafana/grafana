@@ -2,6 +2,7 @@ package clientapi
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -13,10 +14,14 @@ type QueryDataClient interface {
 }
 
 type InstanceConfigurationSettings struct {
-	StackID        uint32
-	FeatureToggles featuremgmt.FeatureToggles
-	FullConfig     map[string]map[string]string // configuration file settings
-	Options        map[string]string            // additional settings related to an instance as set by grafana
+	StackID                      uint32
+	FeatureToggles               featuremgmt.FeatureToggles
+	FullConfig                   map[string]map[string]string // configuration file settings
+	Options                      map[string]string            // additional settings related to an instance as set by grafana
+	SQLExpressionCellLimit       int64
+	SQLExpressionOutputCellLimit int64
+	SQLExpressionTimeout         time.Duration
+	ExpressionsEnabled           bool
 }
 
 type DataSourceClientSupplier interface {

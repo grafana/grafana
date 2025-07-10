@@ -231,10 +231,14 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				responder.Error(err)
 				return
 			}
-
 			// TODO shouldn't we pass in config for expressions enabled
 			exprService := expr.ProvideService(
-				&setting.Cfg{ExpressionsEnabled: true},
+				&setting.Cfg{
+					ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
+					SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
+					SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
+					SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
+				},
 				nil,
 				nil,
 				instanceConfig.FeatureToggles,
