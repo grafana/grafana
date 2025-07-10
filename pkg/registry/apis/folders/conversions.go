@@ -94,10 +94,3 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
 }
-
-func descr(str string) *string {
-	if str == "" {
-		return nil
-	}
-	return &str
-}
