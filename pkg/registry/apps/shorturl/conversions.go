@@ -2,15 +2,18 @@ package shorturl
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
+
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -57,4 +60,24 @@ func getLegacyID(item *unstructured.Unstructured) int64 {
 		return 0
 	}
 	return meta.GetDeprecatedInternalID() // nolint:staticcheck
+}
+
+func LegacyCreateCommandToUnstructured(cmd dtos.CreateShortURLCmd) unstructured.Unstructured {
+	obj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"path": cmd.Path,
+			},
+		},
+	}
+	obj.SetName(util.GenerateShortUID())
+	return obj
+}
+
+func UnstructuredToLegacyShortURLDTO(item unstructured.Unstructured) *dtos.ShortURL {
+	spec := item.Object["spec"].(map[string]any)
+	return &dtos.ShortURL{
+		UID: item.GetName(),
+		URL: spec["shortURL"].(string),
+	}
 }
