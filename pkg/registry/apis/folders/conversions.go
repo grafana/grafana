@@ -57,7 +57,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		},
 		Spec: folders.FolderSpec{
 			Title:       v.Title,
-			Description: descr(v.Description),
+			Description: &v.Description,
 		},
 	}
 
@@ -93,11 +93,4 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
-}
-
-func descr(str string) *string {
-	if str == "" {
-		return nil
-	}
-	return &str
 }
