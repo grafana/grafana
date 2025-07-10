@@ -48,7 +48,7 @@ describe('createAndCopyShortLink', () => {
   it('copies short link to clipboard via navigator.clipboard.writeText when ClipboardItem is undefined', async () => {
     window.isSecureContext = true;
     await createAndCopyShortLink('www.verylonglinkwehavehere.com');
-    expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('www.short.com');
   });
 
   it('copies short link to clipboard via navigator.clipboard.write and ClipboardItem when it is defined', async () => {
