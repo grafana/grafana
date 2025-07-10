@@ -24,7 +24,6 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
-  defaultDataQueryKind,
   AdHocFilterWithLabels,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
@@ -295,30 +294,14 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
-      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
-
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: datasource?.type ?? getDataQueryKind(query),
-          ...(datasource?.uid && {
-            datasource: {
-              name: datasource.uid,
-            },
-          }),
+          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
           spec: getDataQuerySpec(query),
         };
       } else {
         dataQuery = {
-          kind: 'DataQuery',
-          version: defaultDataQueryKind().version,
-          group: datasource?.type ?? getDataQueryKind(query),
-          ...(datasource?.uid && {
-            datasource: {
-              name: datasource.uid,
-            },
-          }),
+          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
           spec: {
             [LEGACY_STRING_VALUE_KEY]: query,
           },
@@ -332,6 +315,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
+          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,
