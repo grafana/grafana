@@ -37,7 +37,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	ctx := context.Background()
 
 	inputFiles := []string{
-		// "testdata/github-readonly.json.tmpl", // FIXME: re-enable this test once we can test pure git
+		"testdata/github-readonly.json.tmpl",
 		"testdata/local-readonly.json.tmpl",
 	}
 
@@ -115,8 +115,8 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 			}
 		}
 		require.Equal(t, map[string]any{
-			// "stats.repository.github.count": 1.0, // FIXME: re-enable this test once we can test pure git
-			"stats.repository.local.count": 1.0,
+			"stats.repository.github.count": 1.0,
+			"stats.repository.local.count":  1.0,
 		}, stats)
 	})
 }
@@ -204,8 +204,6 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
-	t.Skip("skipping integration test until we convert them to git server tests") // FIXME: reenable this one when we can test pure git.
-
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -281,8 +279,10 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	for _, v := range found.Items {
 		names = append(names, v.GetName())
 	}
-	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
-	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+	require.Len(t, names, 3, "should have three dashboards")
+	assert.Contains(t, names, "adg5vbj", "should contain dashboard.json's contents")
+	assert.Contains(t, names, "admfz74", "should contain dashboard2.yaml's contents")
+	assert.Contains(t, names, "adn5mxb", "should contain dashboard2.yaml's contents")
 
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")

@@ -45,11 +45,12 @@ func NewGitRepository(
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
-	// Create nanogit client with authentication
-	client, err := nanogit.NewHTTPClient(
-		gitConfig.URL,
-		options.WithBasicAuth("git", gitConfig.Token),
-	)
+	var opts []options.Option
+	if len(gitConfig.Token) > 0 {
+		opts = append(opts, options.WithBasicAuth("git", gitConfig.Token))
+	}
+
+	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create nanogit client: %w", err)
 	}
@@ -91,8 +92,11 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
 	}
 
-	if cfg.Token == "" && len(cfg.EncryptedToken) == 0 {
-		list = append(list, field.Required(field.NewPath("spec", t, "token"), "a git access token is required"))
+	// If the repository has workflows, we require a token or encrypted token
+	if len(r.config.Spec.Workflows) > 0 {
+		if cfg.Token == "" && len(cfg.EncryptedToken) == 0 {
+			list = append(list, field.Required(field.NewPath("spec", t, "token"), "a git access token is required"))
+		}
 	}
 
 	if err := safepath.IsSafe(cfg.Path); err != nil {

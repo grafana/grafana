@@ -1194,7 +1194,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
-		if ghToken == "" {
+		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
 			decrypted, err := b.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)
