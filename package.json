@@ -227,7 +227,7 @@
     "pa11y-ci": "^3.1.0",
     "pdf-parse": "^1.1.1",
     "plop": "^4.0.1",
-    "postcss": "8.5.1",
+    "postcss": "8.5.6",
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
     "postcss-scss": "4.0.9",
