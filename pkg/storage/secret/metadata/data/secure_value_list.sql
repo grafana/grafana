@@ -8,15 +8,17 @@ SELECT
   {{ .Ident "created_by" }},
   {{ .Ident "updated" }},
   {{ .Ident "updated_by" }},
-  {{ .Ident "status_phase" }},
-  {{ .Ident "status_message" }},
   {{ .Ident "description" }},
   {{ .Ident "keeper" }},
   {{ .Ident "decrypters" }},
   {{ .Ident "ref" }},
-  {{ .Ident "external_id" }}
+  {{ .Ident "external_id" }},
+  {{ .Ident "version" }},
+  {{ .Ident "active" }}
 FROM
   {{ .Ident "secret_secure_value" }}
-WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
+WHERE 
+  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+  {{ .Ident "active" }} = true
 ORDER BY {{ .Ident "updated" }} DESC
 ;
