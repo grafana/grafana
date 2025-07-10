@@ -37,7 +37,7 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 	ctx := context.Background()
 
 	inputFiles := []string{
-		"testdata/github-readonly.json.tmpl",
+		// "testdata/github-readonly.json.tmpl", // FIXME: re-enable this test once we can test pure git
 		"testdata/local-readonly.json.tmpl",
 	}
 
@@ -173,7 +173,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	}, time.Second*10, time.Millisecond*10, "Expected to be able to start a sync job")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		//helper.TriggerJobProcessing(t)
+		// helper.TriggerJobProcessing(t)
 		result, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(jobObj.GetUID()))
 
@@ -204,6 +204,8 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
+	t.Skip("skipping integration test until we convert them to git server tests") // FIXME: reenable this one when we can test pure git.
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
