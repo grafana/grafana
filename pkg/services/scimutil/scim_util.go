@@ -83,11 +83,7 @@ func (s *SCIMUtil) fetchDynamicSCIMSetting(ctx context.Context, orgID int64, set
 	case "group":
 		enabled = scimConfig.EnableGroupSync
 	case "allowNonProvisionedUsers":
-		if scimConfig.AllowNonProvisionedUsers != nil {
-			enabled = *scimConfig.AllowNonProvisionedUsers
-		} else {
-			enabled = false
-		}
+		enabled = scimConfig.AllowNonProvisionedUsers
 	default:
 		s.logger.Error("Invalid setting type provided to fetchDynamicSCIMSetting", "settingType", settingType)
 		return false, false
@@ -112,9 +108,9 @@ func (s *SCIMUtil) getOrgSCIMConfig(ctx context.Context, orgID int64) (*SCIMConf
 
 // SCIMConfigSpec represents the spec part of a SCIMConfig resource
 type SCIMConfigSpec struct {
-	EnableUserSync           bool  `json:"enableUserSync"`
-	EnableGroupSync          bool  `json:"enableGroupSync"`
-	AllowNonProvisionedUsers *bool `json:"allowNonProvisionedUsers,omitempty"`
+	EnableUserSync           bool `json:"enableUserSync"`
+	EnableGroupSync          bool `json:"enableGroupSync"`
+	AllowNonProvisionedUsers bool `json:"allowNonProvisionedUsers"`
 }
 
 // unstructuredToSCIMConfig converts an unstructured object to a SCIMConfigSpec
@@ -139,6 +135,6 @@ func (s *SCIMUtil) unstructuredToSCIMConfig(obj *unstructured.Unstructured) (*SC
 	return &SCIMConfigSpec{
 		EnableUserSync:           enableUserSync,
 		EnableGroupSync:          enableGroupSync,
-		AllowNonProvisionedUsers: &allowNonProvisionedUsers,
+		AllowNonProvisionedUsers: allowNonProvisionedUsers,
 	}, nil
 }
