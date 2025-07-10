@@ -166,6 +166,7 @@ require (
 	github.com/shopspring/decimal v1.4.0 // @grafana/grafana-datasources-core-services
 	github.com/spf13/cobra v1.9.1 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.6 // @grafana-app-platform-squad
+	github.com/spyzhov/ajson v0.9.6 // @grafana/grafana-backend-group
 	github.com/stretchr/testify v1.10.0 // @grafana/grafana-backend-group
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/grafana-backend-group
 	github.com/tjhop/slog-gokit v0.1.3 // @grafana/grafana-app-platform-squad
@@ -217,6 +218,7 @@ require (
 	k8s.io/client-go v0.33.2 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.33.2 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // @grafana/partner-datasources
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
@@ -234,6 +236,7 @@ require (
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
+	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 
@@ -243,8 +246,6 @@ require (
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 )
-
-require pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
 
 require (
 	cel.dev/expr v0.23.1 // indirect
