@@ -1,7 +1,7 @@
 import ansicolor from 'ansicolor';
 import Prism, { Grammar } from 'prismjs';
 
-import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
@@ -124,7 +124,11 @@ export class LogListModel implements LogRowModel {
     if (this._highlightedBody === undefined) {
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedBody = Prism.highlight(this.body, { ...extraGrammar, ...this._grammar }, 'lokiql');
+      this._highlightedBody = Prism.highlight(
+        textUtil.sanitize(this.body),
+        { ...extraGrammar, ...this._grammar },
+        'lokiql'
+      );
     }
     return this._highlightedBody;
   }
