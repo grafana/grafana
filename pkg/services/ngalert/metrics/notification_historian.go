@@ -8,8 +8,8 @@ import (
 
 type NotificationHistorian struct {
 	Info          prometheus.Gauge
-	WritesTotal   *prometheus.CounterVec
-	WritesFailed  *prometheus.CounterVec
+	WritesTotal   prometheus.Counter
+	WritesFailed  prometheus.Counter
 	WriteDuration *instrument.HistogramCollector
 	BytesWritten  prometheus.Counter
 }
@@ -22,18 +22,18 @@ func NewNotificationHistorianMetrics(r prometheus.Registerer) *NotificationHisto
 			Name:      "notification_history_info",
 			Help:      "Information about the notification history store.",
 		}),
-		WritesTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
+		WritesTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "notification_history_writes_total",
 			Help:      "The total number of notification history batches that were attempted to be written.",
-		}, []string{"org"}),
-		WritesFailed: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
+		}),
+		WritesFailed: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "notification_history_writes_failed_total",
 			Help:      "The total number of failed writes of notification history batches.",
-		}, []string{"org"}),
+		}),
 		WriteDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,

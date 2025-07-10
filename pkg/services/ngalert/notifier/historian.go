@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	models2 "github.com/grafana/alerting/models"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
@@ -17,9 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
+	prometheusModel "github.com/prometheus/common/model"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const LokiClientSpanName = "ngalert.notification-historian.client"
+const NotificationHistoryWriteTimeout = time.Minute
+const NotificationHistoryKey = "from"
+const NotificationHistoryLabelValue = "notify-history"
 
 type NotificationHistoryLokiEntry struct {
 	SchemaVersion int                                 `json:"schemaVersion"`
@@ -29,19 +34,6 @@ type NotificationHistoryLokiEntry struct {
 	GroupLabels   map[string]string                   `json:"groupLabels"`
 	Alerts        []NotificationHistoryLokiEntryAlert `json:"alerts"`
 	Error         string                              `json:"error,omitempty"`
-
-	// TODO ?
-	//RuleIDs       string                              `json:"ruleIDs"`
-
-	//DashboardUID  string           `json:"dashboardUID"`
-	//PanelID       int64            `json:"panelID"`
-	//Fingerprint   string           `json:"fingerprint"`
-	//RuleTitle     string           `json:"ruleTitle"`
-	//RuleID        int64            `json:"ruleID"`
-	//RuleUID       string           `json:"ruleUID"`
-	//// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
-	//// These should not be conflated with labels associated with log streams.
-	//InstanceLabels map[string]string `json:"labels"`
 }
 
 type NotificationHistoryLokiEntryAlert struct {
@@ -50,17 +42,6 @@ type NotificationHistoryLokiEntryAlert struct {
 	Annotations map[string]string `json:"annotations"`
 	StartsAt    time.Time         `json:"startsAt"`
 	EndsAt      time.Time         `json:"endsAt"`
-	//GeneratorURL  string             `json:"generatorURL"`
-	//Fingerprint   string             `json:"fingerprint"`
-	//SilenceURL    string             `json:"silenceURL"`
-	//DashboardURL  string             `json:"dashboardURL"`
-	//PanelURL      string             `json:"panelURL"`
-	//Values        map[string]float64 `json:"values"`
-	//ValueString   string             `json:"valueString"` // TODO: Remove in Grafana 10
-	//ImageURL      string             `json:"imageURL,omitempty"`
-	//EmbeddedImage string             `json:"embeddedImage,omitempty"`
-	//OrgID         *int64             `json:"orgId,omitempty"`
-
 }
 
 type remoteLokiClient interface {
@@ -73,10 +54,6 @@ type NotificationHistorian struct {
 	externalLabels map[string]string
 	metrics        *metrics.NotificationHistorian
 	log            log.Logger
-
-	// TODO
-	//ac             AccessControl
-	//ruleStore      RuleStore
 }
 
 func NewNotificationHistorian(logger log.Logger, cfg lokiclient.LokiConfig, req client.Requester, metrics *metrics.NotificationHistorian, tracer tracing.Tracer) *NotificationHistorian {
@@ -86,127 +63,54 @@ func NewNotificationHistorian(logger log.Logger, cfg lokiclient.LokiConfig, req 
 		metrics:        metrics,
 		log:            logger,
 	}
-
-}
-
-func (h *NotificationHistorian) NotificationHistoryLogToStream(ctx context.Context, alerts []*types.Alert, notificationError error) (lokiclient.Stream, error) {
-	receiverName, _ := notify.ReceiverName(ctx)
-	now, _ := notify.Now(ctx)
-
-	labels := make(map[string]string)
-	labels["from"] = "notify-history"
-	// TODO
-	//labels[OrgIDLabel] = fmt.Sprint(orgID)
-	//labels[GroupLabel] = fmt.Sprint(rule.Group)
-	//labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
-	//labels["receiver"] = receiver
-	//labels["status"] = status
-
-	ruleUIDs := make([]string, 0)
-	seen := make(map[string]bool)
-	for _, alert := range alerts {
-		ruleUID := string(alert.Labels[models2.RuleUIDLabel])
-		if ruleUID == "" {
-			continue
-		}
-		if _, exists := seen[ruleUID]; !exists {
-			seen[ruleUID] = true
-			ruleUIDs = append(ruleUIDs, ruleUID)
-		}
-	}
-
-	// TODO: rename
-	alertss := make([]NotificationHistoryLokiEntryAlert, len(alerts))
-	for i, alert := range alerts {
-		alertss[i] = NotificationHistoryLokiEntryAlert{
-			Labels:      make(map[string]string),
-			Annotations: make(map[string]string),
-			Status:      string(alert.Status()),
-			StartsAt:    alert.StartsAt,
-			EndsAt:      alert.EndsAt,
-		}
-		for k, v := range alert.Labels {
-			if !strings.HasPrefix(string(k), "__") && !strings.HasSuffix(string(k), "__") {
-				alertss[i].Labels[string(k)] = string(v)
-			}
-		}
-		for k, v := range alert.Annotations {
-			if !strings.HasPrefix(string(k), "__") && !strings.HasSuffix(string(k), "__") {
-				alertss[i].Annotations[string(k)] = string(v)
-			}
-		}
-	}
-
-	notificationErrorStr := ""
-	if notificationError != nil {
-		notificationErrorStr = notificationError.Error()
-	}
-
-	entry := NotificationHistoryLokiEntry{
-		SchemaVersion: 1,
-		RuleUIDs:      ruleUIDs,
-		Receiver:      receiverName,
-		Status:        "?",
-		// TODO: add group labels
-		GroupLabels: make(map[string]string),
-		Alerts:      alertss,
-		Error:       notificationErrorStr,
-	}
-
-	// Marshal to JSON for the historian
-	entryJSON, jsonErr := json.Marshal(entry)
-	if jsonErr != nil {
-		return lokiclient.Stream{}, jsonErr
-	}
-
-	return lokiclient.Stream{
-		Stream: labels,
-		Values: []lokiclient.Sample{
-			{
-				T: now,
-				V: string(entryJSON),
-			}},
-	}, nil
-}
-
-func (h *NotificationHistorian) Record(ctx context.Context, alerts []*types.Alert, notificationErr error) error {
-	// TODO: goroutine
-
-	stream, err := h.NotificationHistoryLogToStream(ctx, alerts, notificationErr)
-	if err != nil {
-		h.log.FromContext(ctx).Error("Failed to convert notification history to stream", "error", err)
-		return fmt.Errorf("failed to convert notification history to stream: %w", err)
-	}
-
-	logger := h.log.FromContext(ctx)
-	logger.Debug("Saving notification history", "samples", len(stream.Values))
-
-	// TODO metrics
-	//org := fmt.Sprint(orgID)
-	//h.metrics.WritesTotal.WithLabelValues(org, "loki").Inc()
-
-	if err := h.client.Push(ctx, []lokiclient.Stream{stream}); err != nil {
-		// TODO metrics
-		//h.metrics.WritesFailed.WithLabelValues(org, "loki").Inc()
-		logger.Error("Failed to save notification history", "error", err)
-		return err
-	}
-
-	receiverName, _ := notify.ReceiverName(ctx)
-	groupLabels, _ := notify.GroupLabels(ctx)
-	groupKey, _ := notify.GroupKey(ctx)
-	now, _ := notify.Now(ctx)
-
-	logger.Debug("ctx", "receiverName", receiverName, "groupLabels", groupLabels, "groupKey", groupKey, "now", now)
-	logger.Debug("Done saving notification history", "samples", len(stream.Values))
-	return nil
 }
 
 func (h *NotificationHistorian) TestConnection(ctx context.Context) error {
 	return h.client.Ping(ctx)
 }
 
-// TODO: reuse the one from state historian?
+func (h *NotificationHistorian) Record(ctx context.Context, alerts []*types.Alert, notificationErr error) <-chan error {
+	stream, err := h.prepareStream(ctx, alerts, notificationErr)
+	logger := h.log.FromContext(ctx)
+	errCh := make(chan error, 1)
+	if err != nil {
+		logger.Error("Failed to convert notification history to stream", "error", err)
+		errCh <- fmt.Errorf("failed to convert notification history to stream: %w", err)
+		close(errCh)
+		return errCh
+	}
+
+	if len(stream.Values) == 0 {
+		close(errCh)
+		return errCh
+	}
+
+	// This is a new background job, so let's create a new context for it.
+	// We want it to be isolated, i.e. we don't want grafana shutdowns to interrupt this work
+	// immediately but rather try to flush writes.
+	// This also prevents timeouts or other lingering objects (like transactions) from being
+	// incorrectly propagated here from other areas.
+	writeCtx := context.Background()
+	writeCtx, cancel := context.WithTimeout(writeCtx, NotificationHistoryWriteTimeout)
+	writeCtx = trace.ContextWithSpan(writeCtx, trace.SpanFromContext(ctx))
+
+	go func(ctx context.Context) {
+		defer cancel()
+		defer close(errCh)
+		logger := h.log.FromContext(ctx)
+		logger.Debug("Saving notification history batch", "samples", len(stream.Values))
+		h.metrics.WritesTotal.Inc()
+
+		if err := h.recordStream(ctx, stream, logger); err != nil {
+			logger.Error("Failed to save notification history batch", "error", err)
+			h.metrics.WritesFailed.Inc()
+			errCh <- fmt.Errorf("failed to save notification history batch: %w", err)
+		}
+	}(writeCtx)
+	return errCh
+}
+
+// NewLokiConfig is a copy of historian.NewLokiConfig
 func NewLokiConfig(cfg setting.UnifiedAlertingNotificationHistorySettings) (lokiclient.LokiConfig, error) {
 	read, write := cfg.LokiReadURL, cfg.LokiWriteURL
 	if read == "" {
@@ -244,4 +148,100 @@ func NewLokiConfig(cfg setting.UnifiedAlertingNotificationHistorySettings) (loki
 		// Snappy-compressed protobuf is the default, same goes for Promtail.
 		Encoder: lokiclient.SnappyProtoEncoder{},
 	}, nil
+}
+
+func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*types.Alert, notificationError error) (lokiclient.Stream, error) {
+	receiverName, ok := notify.ReceiverName(ctx)
+	if !ok {
+		return lokiclient.Stream{}, fmt.Errorf("receiver name not found in context")
+	}
+	groupLabels, ok := notify.GroupLabels(ctx)
+	if !ok {
+		return lokiclient.Stream{}, fmt.Errorf("group labels not found in context")
+	}
+	now, ok := notify.Now(ctx)
+	if !ok {
+		return lokiclient.Stream{}, fmt.Errorf("now not found in context")
+	}
+
+	// Get unique rule UIDs from the alerts
+	ruleUIDs := make([]string, 0)
+	seen := make(map[string]bool)
+	for _, alert := range alerts {
+		ruleUID := string(alert.Labels[alertingModels.RuleUIDLabel])
+		if ruleUID == "" {
+			return lokiclient.Stream{}, fmt.Errorf("alert missing rule UID label: %v", alert.Labels)
+		}
+		if _, exists := seen[ruleUID]; !exists {
+			seen[ruleUID] = true
+			ruleUIDs = append(ruleUIDs, ruleUID)
+		}
+	}
+
+	entryAlerts := make([]NotificationHistoryLokiEntryAlert, len(alerts))
+	for i, alert := range alerts {
+		labels := prepareLabels(alert.Labels)
+		annotations := prepareLabels(alert.Annotations)
+		entryAlerts[i] = NotificationHistoryLokiEntryAlert{
+			Labels:      labels,
+			Annotations: annotations,
+			Status:      string(alert.StatusAt(now)),
+			StartsAt:    alert.StartsAt,
+			EndsAt:      alert.EndsAt,
+		}
+	}
+
+	notificationErrorStr := ""
+	if notificationError != nil {
+		notificationErrorStr = notificationError.Error()
+	}
+
+	entry := NotificationHistoryLokiEntry{
+		SchemaVersion: 1,
+		RuleUIDs:      ruleUIDs,
+		Receiver:      receiverName,
+		Status:        string(types.Alerts(alerts...).StatusAt(now)),
+		GroupLabels:   prepareLabels(groupLabels),
+		Alerts:        entryAlerts,
+		Error:         notificationErrorStr,
+	}
+
+	entryJSON, err := json.Marshal(entry)
+	if err != nil {
+		return lokiclient.Stream{}, err
+	}
+
+	streamLabels := make(map[string]string)
+	streamLabels[NotificationHistoryKey] = NotificationHistoryLabelValue
+	for k, v := range h.externalLabels {
+		streamLabels[k] = v
+	}
+
+	return lokiclient.Stream{
+		Stream: streamLabels,
+		Values: []lokiclient.Sample{
+			{
+				T: now,
+				V: string(entryJSON),
+			}},
+	}, nil
+}
+
+func (h *NotificationHistorian) recordStream(ctx context.Context, stream lokiclient.Stream, logger log.Logger) error {
+	if err := h.client.Push(ctx, []lokiclient.Stream{stream}); err != nil {
+		return err
+	}
+	logger.Debug("Done saving notification history batch", "samples", len(stream.Values))
+	return nil
+}
+
+func prepareLabels(labels prometheusModel.LabelSet) map[string]string {
+	result := make(map[string]string)
+	for k, v := range labels {
+		// Remove private labels
+		if !strings.HasPrefix(string(k), "__") && !strings.HasSuffix(string(k), "__") {
+			result[string(k)] = string(v)
+		}
+	}
+	return result
 }
