@@ -13,6 +13,9 @@ import {
   LoadingState,
   Field,
   FieldType,
+  MetricFindValue,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -174,5 +177,88 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({ message: '', status: '' });
+  }
+
+  /**
+   * Get tag keys for adhoc filters
+   * Returns commonly available field names that can be used as filter keys
+   */
+  async getTagKeys(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+    // For now, return a basic set of commonly available field names
+    // Later, this could be enhanced to dynamically discover fields from dashboard panels
+    const commonFields = [
+      'Time',
+      'Value',
+      'host',
+      'instance',
+      'job',
+      'service',
+      'container',
+      'pod',
+      'namespace',
+      'environment',
+      'region',
+      'zone',
+      'cluster',
+      'node',
+      'application',
+      'version',
+      'status',
+      'method',
+      'path',
+      'code',
+      'level',
+      'logger',
+      'component',
+      'source',
+      'target',
+      'type',
+      'name',
+      'label',
+      'tag',
+      'category',
+      'group',
+      'team',
+      'owner',
+    ];
+
+    // Filter out keys that are already being used in existing filters
+    const usedKeys = new Set(options?.filters?.map((f) => f.key) || []);
+    const availableKeys = commonFields.filter((key) => !usedKeys.has(key));
+
+    return availableKeys.map((key) => ({ text: key }));
+  }
+
+  /**
+   * Get tag values for adhoc filters
+   * Returns possible values for a given filter key
+   */
+  async getTagValues(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]> {
+    const { key } = options;
+
+    // For now, return some common placeholder values based on the key
+    // Later, this could be enhanced to dynamically discover values from dashboard panels
+    const commonValues: Record<string, string[]> = {
+      environment: ['production', 'staging', 'development', 'test'],
+      status: ['success', 'error', 'warning', 'info'],
+      level: ['error', 'warn', 'info', 'debug'],
+      method: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+      code: ['200', '201', '400', '401', '403', '404', '500', '502', '503'],
+      region: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'],
+      zone: ['us-east-1a', 'us-east-1b', 'us-west-2a', 'us-west-2b'],
+      namespace: ['default', 'kube-system', 'monitoring', 'logging'],
+      container: ['app', 'sidecar', 'init', 'proxy'],
+      service: ['api', 'frontend', 'backend', 'database', 'cache'],
+      application: ['web-app', 'api-server', 'worker', 'scheduler'],
+      version: ['v1.0.0', 'v1.1.0', 'v2.0.0', 'latest'],
+      type: ['request', 'response', 'system', 'application'],
+      category: ['business', 'system', 'security', 'performance'],
+      team: ['backend', 'frontend', 'devops', 'data'],
+      owner: ['team-a', 'team-b', 'team-c', 'platform'],
+    };
+
+    const values = commonValues[key.toLowerCase()] || ['value1', 'value2', 'value3'];
+
+    return values.map((value) => ({ text: value }));
   }
 }
