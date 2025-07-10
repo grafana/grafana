@@ -942,3 +942,32 @@ func indexTestDocs(ns resource.NamespacedResource, docs int) func(index resource
 		return int64(docs), err
 	}
 }
+
+func TestCleanOldIndexes(t *testing.T) {
+	dir := t.TempDir()
+
+	b := setupBleveBackend(t, 5, time.Nanosecond, dir)
+
+	t.Run("with skip", func(t *testing.T) {
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0755))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0755))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0755))
+
+		b.cleanOldIndexes(dir, "index-2")
+		files, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		require.Len(t, files, 1)
+		require.Equal(t, "index-2", files[0].Name())
+	})
+
+	t.Run("without skip", func(t *testing.T) {
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0755))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0755))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0755))
+
+		b.cleanOldIndexes(dir, "")
+		files, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		require.Len(t, files, 0)
+	})
+}

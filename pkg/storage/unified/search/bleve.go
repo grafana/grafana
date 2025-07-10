@@ -312,7 +312,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Start a background task to cleanup the old index directories. If we have built a new file-based index,
-	// the new name is ignored. If we have created in-memory index, all old directories can be removed.
+	// the new name is ignored. If we have created in-memory index and fileIndexName is empty, all old directories can be removed.
 	go b.cleanOldIndexes(resourceDir, fileIndexName)
 
 	return idx, nil
@@ -324,6 +324,8 @@ func cleanFileSegment(input string) string {
 	return input
 }
 
+// cleanOldIndexes deletes all subdirectories inside dir, skipping directory with "skipName".
+// "skipName" can be empty.
 func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
@@ -334,11 +336,13 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
 		return
 	}
 	for _, file := range files {
-		if file.IsDir() && (skipName == "" || file.Name() != skipName) {
+		if file.IsDir() && file.Name() != skipName {
 			fpath := filepath.Join(dir, file.Name())
-			if !isPathWithinRoot(dir, b.opts.Root) {
-				b.log.Error("Path is not valid", "directory", fpath, "error", err)
+			if !isPathWithinRoot(fpath, b.opts.Root) {
+				b.log.Warn("Skipping cleanup of directory", "directory", fpath)
+				continue
 			}
+
 			err = os.RemoveAll(fpath)
 			if err != nil {
 				b.log.Error("Unable to remove old index folder", "directory", fpath, "error", err)
