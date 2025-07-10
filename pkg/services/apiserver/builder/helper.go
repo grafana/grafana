@@ -346,7 +346,7 @@ func InstallAPIs(
 				return nil, err
 			}
 
-			builderMetrics.recordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
+			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
 
 			switch currentMode {
 			case grafanarest.Mode0:

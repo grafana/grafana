@@ -7,9 +7,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -40,7 +42,7 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 	}
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
 		for storagePath, restStorage := range storageMap {
-			grafanaStorage, ok := restStorage.(grafanarest.Storage)
+			genericStorage, ok := restStorage.(*genericregistry.Store)
 			if !ok {
 				continue
 			}
@@ -52,12 +54,15 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				Group:    s.installer.ManifestData().Group,
 				Resource: resource,
 			}
+			genericStorage.KeyRootFunc = grafanaregistry.KeyRootFunc(gr)
+			genericStorage.KeyFunc = grafanaregistry.NamespaceKeyFunc(gr)
+
 			dw, err := NewDualWriter(
 				s.ctx,
 				gr,
 				s.storageOpts,
 				legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
-				grafanaStorage,
+				grafanarest.Storage(genericStorage),
 				s.kvStore,
 				s.lock,
 				s.namespaceMapper,
