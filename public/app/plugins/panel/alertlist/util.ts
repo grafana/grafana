@@ -30,7 +30,8 @@ export function filterAlerts(
         (stateFilter.pending &&
           (hasAlertState(alert, GrafanaAlertState.Pending) || hasAlertState(alert, PromAlertingRuleState.Pending))) ||
         (stateFilter.noData && hasAlertState(alert, GrafanaAlertState.NoData)) ||
-        (stateFilter.normal && hasAlertState(alert, GrafanaAlertState.Normal)) ||
+        (stateFilter.normal && (hasAlertState(alert, GrafanaAlertState.Normal) ||
+          hasAlertState(alert, PromAlertingRuleState.Inactive))) ||
         (stateFilter.error && hasAlertState(alert, GrafanaAlertState.Error)) ||
         (stateFilter.inactive && hasAlertState(alert, PromAlertingRuleState.Inactive))) &&
       (alertInstanceLabelFilter ? hasLabelFilter(options.alertInstanceLabelFilter, alert.labels) : true)

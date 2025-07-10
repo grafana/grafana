@@ -1,18 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
-import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
 import {
   alertStateToReadable,
   alertStateToState,
   getFirstActiveAt,
   isAlertingRule,
 } from 'app/features/alerting/unified/utils/rules';
-import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
@@ -38,7 +35,6 @@ function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState
 const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances, hideViewRuleLinkText }: Props) => {
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
-  const { href: returnTo } = useLocation();
 
   const rulesToDisplay = rules.length <= options.maxItems ? rules : rules.slice(0, options.maxItems);
 
@@ -46,13 +42,11 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
     <>
       <ol className={styles.alertRuleList}>
         {rulesToDisplay.map((ruleWithLocation, index) => {
-          const { namespaceName, groupName, dataSourceName } = ruleWithLocation;
+          const { namespaceName, groupName } = ruleWithLocation;
           const alertingRule: AlertingRule | undefined = isAlertingRule(ruleWithLocation.promRule)
             ? ruleWithLocation.promRule
             : undefined;
           const firstActiveAt = getFirstActiveAt(alertingRule);
-          const indentifier = fromCombinedRule(ruleWithLocation.dataSourceName, ruleWithLocation);
-          const strIndentifier = stringifyIdentifier(indentifier);
 
           const grafanaInstancesTotal =
             ruleWithLocation.dataSourceName === GRAFANA_RULES_SOURCE_NAME
@@ -63,10 +57,9 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
               ? getGrafanaInstancesTotal(ruleWithLocation.filteredInstanceTotals)
               : undefined;
 
-          const href = createRelativeUrl(
-            `/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
-            { returnTo: returnTo ?? '' }
-          );
+          const monitorID = ruleWithLocation?.labels?.['_oodle_monitor_id'];
+          const severity = ruleWithLocation?.labels?.['severity'];
+          const href = monitorID ? '/alerts?view=' + monitorID : undefined;
           if (alertingRule) {
             return (
               <li
@@ -87,6 +80,11 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                         {ruleWithLocation.name}
                       </div>
                       <Spacer />
+                      {severity && (
+                        <div className={styles.severityTag}>
+                          {severity.toUpperCase()} Monitor
+                        </div>
+                      )}
                       {href && (
                         <a
                           href={href}
@@ -95,7 +93,7 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                           rel="noopener"
                           aria-label="View alert rule"
                         >
-                          <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>View alert rule</span>
+                          <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>View alert</span>
                           <Icon name={'external-link-alt'} size="sm" />
                         </a>
                       )}
