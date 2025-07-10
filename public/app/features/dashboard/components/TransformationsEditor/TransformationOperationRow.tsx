@@ -138,7 +138,17 @@ export const TransformationOperationRow = ({
       .subscribe(setOutput);
     const prevOutputSubscription = transformDataFrame(prevInputTransforms, data.series, ctx)
       .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
-      .subscribe(setPrevOutput);
+      .subscribe((result) => {
+        let mergedResult = [...result];
+        // add refIds that were requested even if they did not return a result
+        data.request?.targets.forEach((series) => {
+          const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
+          if (!refIdInResult) {
+            mergedResult.push({ refId: series.refId, fields: [], length: 0 });
+          }
+        });
+        setPrevOutput(mergedResult);
+      });
 
     return function unsubscribe() {
       inputSubscription.unsubscribe();
