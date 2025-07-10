@@ -673,65 +673,65 @@ func TestSafeInt64ToInt(t *testing.T) {
 	}
 }
 
-func Test_isValidPath(t *testing.T) {
+func Test_isPathWithinRoot(t *testing.T) {
 	tests := []struct {
-		name    string
-		dir     string
-		safeDir string
-		want    bool
+		name string
+		dir  string
+		root string
+		want bool
 	}{
 		{
-			name:    "valid path",
-			dir:     "/path/to/my-file/",
-			safeDir: "/path/to/",
-			want:    true,
+			name: "valid path",
+			dir:  "/path/to/my-file/",
+			root: "/path/to/",
+			want: true,
 		},
 		{
-			name:    "valid path without trailing slash",
-			dir:     "/path/to/my-file",
-			safeDir: "/path/to",
-			want:    true,
+			name: "valid path without trailing slash",
+			dir:  "/path/to/my-file",
+			root: "/path/to",
+			want: true,
 		},
 		{
-			name:    "path with double slashes",
-			dir:     "/path//to//my-file/",
-			safeDir: "/path/to/",
-			want:    true,
+			name: "path with double slashes",
+			dir:  "/path//to//my-file/",
+			root: "/path/to/",
+			want: true,
 		},
 		{
-			name:    "invalid path: ..",
-			dir:     "/path/../above/",
-			safeDir: "/path/to/",
+			name: "invalid path: ..",
+			dir:  "/path/../above/",
+			root: "/path/to/",
 		},
 		{
-			name:    "invalid path: \\",
-			dir:     "\\path/to",
-			safeDir: "/path/to/",
+			name: "invalid path: \\",
+			dir:  "\\path/to",
+			root: "/path/to/",
 		},
 		{
-			name:    "invalid path: not under safe dir",
-			dir:     "/path/to.txt",
-			safeDir: "/path/to/",
+			name: "invalid path: not under safe dir",
+			dir:  "/path/to.txt",
+			root: "/path/to/",
 		},
 		{
-			name:    "invalid path: empty paths",
-			dir:     "",
-			safeDir: "/path/to/",
+			name: "invalid path: empty paths",
+			dir:  "",
+			root: "/path/to/",
 		},
 		{
-			name:    "invalid path: different path",
-			dir:     "/other/path/to/my-file/",
-			safeDir: "/Some/other/path",
+			name: "invalid path: different path",
+			dir:  "/other/path/to/my-file/",
+			root: "/Some/other/path",
 		},
 		{
-			name:    "invalid path: empty safe path",
-			dir:     "/path/to/",
-			safeDir: "",
+			name: "invalid path: empty safe path",
+			dir:  "/path/to/",
+			root: "",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, isValidPath(tt.dir, tt.safeDir))
+			require.Equal(t, tt.want, isPathWithinRoot(tt.dir, tt.root))
 		})
 	}
 }

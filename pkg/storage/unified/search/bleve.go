@@ -64,7 +64,6 @@ type bleveBackend struct {
 	tracer trace.Tracer
 	log    *slog.Logger
 	opts   BleveOptions
-	start  time.Time
 
 	cacheMx sync.RWMutex
 	cache   map[resource.NamespacedResource]*bleveIndex
@@ -77,6 +76,12 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
 	}
+	absRoot, err := filepath.Abs(opts.Root)
+	if err != nil {
+		return nil, fmt.Errorf("error getting absolute path for bleve root folder %w", err)
+	}
+	opts.Root = absRoot
+
 	root, err := os.Stat(opts.Root)
 	if err != nil {
 		return nil, fmt.Errorf("error opening bleve root folder %w", err)
@@ -90,7 +95,6 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, features featuremgm
 		tracer:       tracer,
 		cache:        map[resource.NamespacedResource]*bleveIndex{},
 		opts:         opts,
-		start:        time.Now(),
 		features:     features,
 		indexMetrics: indexMetrics,
 	}
@@ -203,7 +207,7 @@ func (b *bleveBackend) BuildIndex(
 
 	logWithDetails := b.log.With("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "size", size, "rv", resourceVersion)
 
-	resourceDir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
+	resourceDir := filepath.Join(b.opts.Root, cleanFileSegment(key.Namespace), cleanFileSegment(fmt.Sprintf("%s.%s", key.Resource, key.Group)))
 
 	if size > b.opts.FileThreshold {
 		// We only check for the existing file-based index if we don't already have an open index for this key.
@@ -225,8 +229,8 @@ func (b *bleveBackend) BuildIndex(
 			for index == nil {
 				fileIndexName = formatIndexName(time.Now(), resourceVersion)
 				indexDir = filepath.Join(resourceDir, fileIndexName)
-				if !isValidPath(indexDir, b.opts.Root) {
-					b.log.Error("Directory is not valid", "directory", indexDir)
+				if !isPathWithinRoot(indexDir, b.opts.Root) {
+					return nil, fmt.Errorf("invalid path %s", indexDir)
 				}
 
 				index, err = bleve.New(indexDir, mapper)
@@ -314,6 +318,12 @@ func (b *bleveBackend) BuildIndex(
 	return idx, nil
 }
 
+func cleanFileSegment(input string) string {
+	input = strings.Replace(input, string(filepath.Separator), "_", -1)
+	input = strings.Replace(input, "..", "_", -1)
+	return input
+}
+
 func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
@@ -326,7 +336,7 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
 	for _, file := range files {
 		if file.IsDir() && (skipName == "" || file.Name() != skipName) {
 			fpath := filepath.Join(dir, file.Name())
-			if !isValidPath(dir, b.opts.Root) {
+			if !isPathWithinRoot(dir, b.opts.Root) {
 				b.log.Error("Path is not valid", "directory", fpath, "error", err)
 			}
 			err = os.RemoveAll(fpath)
@@ -339,19 +349,20 @@ func (b *bleveBackend) cleanOldIndexes(dir string, skipName string) {
 	}
 }
 
-// isValidPath does a sanity check in case it tries to access a different dir
-func isValidPath(path, safeDir string) bool {
-	if path == "" || safeDir == "" {
+// isPathWithinRoot verifies that path is within given absoluteRoot.
+func isPathWithinRoot(path, absoluteRoot string) bool {
+	if path == "" || absoluteRoot == "" {
 		return false
 	}
-	cleanPath := filepath.Clean(path)
-	cleanSafeDir := filepath.Clean(safeDir)
 
-	rel, err := filepath.Rel(cleanSafeDir, cleanPath)
+	path, err := filepath.Abs(path)
 	if err != nil {
 		return false
 	}
-	return !strings.HasPrefix(rel, "..") && !strings.Contains(rel, "\\")
+	if !strings.HasPrefix(path, absoluteRoot) {
+		return false
+	}
+	return true
 }
 
 // cacheKeys returns list of keys for indexes in the cache (including possibly expired ones).
