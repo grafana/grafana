@@ -340,7 +340,7 @@ func TestService_getUserTeams(t *testing.T) {
 			s.identityStore = identityStore
 
 			if tc.cacheHit {
-				s.teamCache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), tc.expectedTeams)
+				s.userTeamCache.Set(ctx, userTeamCacheKey(ns.Value, userIdentifiers.UID), tc.expectedTeams)
 			}
 
 			teams, err := s.getUserTeams(ctx, ns, userIdentifiers)
@@ -1525,7 +1525,7 @@ func setupService() *Service {
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, shortCacheTTL),
 		permDenialCache: newCacheWrap[bool](cache, logger, tracer, shortCacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, tracer, shortCacheTTL),
+		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, longCacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, shortCacheTTL),
 		settings:        Settings{AnonOrgRole: "Viewer"},

@@ -58,9 +58,10 @@ type Service struct {
 	idCache         cacheWrap[store.UserIdentifiers]
 	permCache       cacheWrap[map[string]bool]
 	permDenialCache cacheWrap[bool]
-	teamCache       cacheWrap[[]int64]
+	userTeamCache   cacheWrap[[]int64]
 	basicRoleCache  cacheWrap[store.BasicRole]
 	folderCache     cacheWrap[folderTree]
+	teamIDCache     cacheWrap[map[int64]string]
 }
 
 type Settings struct {
@@ -97,9 +98,10 @@ func NewService(
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
 		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
+		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, settings.CacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, settings.CacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, settings.CacheTTL),
+		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, settings.CacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
@@ -435,6 +437,8 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		}
 		scopeMap := getScopeMap(permissions)
 
+		scopeMap = s.resolveScopeMap(ctx, ns, scopeMap)
+
 		s.permCache.Set(ctx, userPermKey, scopeMap)
 		span.SetAttributes(attribute.Int("num_permissions_fetched", len(permissions)))
 
@@ -516,7 +520,7 @@ func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, user
 
 	teamIDs := make([]int64, 0, 50)
 	teamsCacheKey := userTeamCacheKey(ns.Value, userIdentifiers.UID)
-	if cached, ok := s.teamCache.Get(ctx, teamsCacheKey); ok {
+	if cached, ok := s.userTeamCache.Get(ctx, teamsCacheKey); ok {
 		return cached, nil
 	}
 
@@ -538,7 +542,7 @@ func (s *Service) getUserTeams(ctx context.Context, ns types.NamespaceInfo, user
 			break
 		}
 	}
-	s.teamCache.Set(ctx, teamsCacheKey, teamIDs)
+	s.userTeamCache.Set(ctx, teamsCacheKey, teamIDs)
 	span.SetAttributes(attribute.Int("num_user_teams", len(teamIDs)))
 
 	return teamIDs, nil
