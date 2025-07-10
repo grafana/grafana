@@ -5,7 +5,7 @@ import * as i18nModule from '@grafana/i18n/internal';
 import { server } from './loader/pluginLoader.mock';
 import { SystemJS } from './loader/systemjs';
 import { SystemJSWithLoaderHooks } from './loader/types';
-import { addTranslationsToI18n } from './pluginLoader';
+import { addTranslationsToI18n } from './pluginImporter';
 
 describe('pluginLoader', () => {
   describe('addTranslationsToI18n', () => {
