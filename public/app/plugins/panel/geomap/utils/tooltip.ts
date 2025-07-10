@@ -16,14 +16,17 @@ import { getMapLayerState } from './layers';
 
 export const setTooltipListeners = (panel: GeomapPanel) => {
   // Tooltip listener
-  panel.map?.on('singleclick', panel.pointerClickListener as any);
-  panel.map?.on('pointermove', debounce(panel.pointerMoveListener, 200) as any);
+  panel.map?.on('singleclick', (evt) => pointerClickListener(evt, panel));
+  panel.map?.on(
+    'pointermove',
+    debounce((evt) => pointerMoveListener(evt, panel), 200)
+  );
   panel.map?.getViewport().addEventListener('mouseout', (evt: MouseEvent) => {
     panel.props.eventBus.publish(new DataHoverClearEvent());
   });
 };
 
-export const pointerClickListener = (evt: MapBrowserEvent<any>, panel: GeomapPanel) => {
+export const pointerClickListener = (evt: MapBrowserEvent, panel: GeomapPanel) => {
   if (pointerMoveListener(evt, panel)) {
     evt.preventDefault();
     evt.stopPropagation();
@@ -32,7 +35,7 @@ export const pointerClickListener = (evt: MapBrowserEvent<any>, panel: GeomapPan
   }
 };
 
-export const pointerMoveListener = (evt: MapBrowserEvent<any>, panel: GeomapPanel) => {
+export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) => {
   // If measure menu is open, bypass tooltip logic and display measuring mouse events
   if (panel.state.measureMenuActive) {
     return true;
@@ -40,6 +43,10 @@ export const pointerMoveListener = (evt: MapBrowserEvent<any>, panel: GeomapPane
 
   // Eject out of this function if map is not loaded or valid tooltip is already open
   if (!panel.map || (panel.state.ttipOpen && panel.state?.ttip?.layers?.length)) {
+    return false;
+  }
+
+  if (!(evt.originalEvent instanceof MouseEvent)) {
     return false;
   }
 
