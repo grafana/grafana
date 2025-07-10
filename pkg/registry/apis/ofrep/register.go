@@ -32,6 +32,8 @@ var _ builder.APIGroupVersionProvider = (*APIBuilder)(nil)
 
 const ofrepPath = "/ofrep/v1/evaluate/flags"
 
+const namespaceMismatchMsg = "rejecting request with namespace mismatch"
+
 var groupVersion = schema.GroupVersion{
 	Group:   "features.grafana.app",
 	Version: "v0alpha1",
@@ -225,8 +227,8 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 
 func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	if !b.validateNamespace(r) {
-		b.logger.Error("evaluation context namespace does not match namespace in request")
-		http.Error(w, "evaluation context namespace does not match namespace in request", http.StatusUnauthorized)
+		b.logger.Error(namespaceMismatchMsg)
+		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
@@ -255,8 +257,8 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 
 func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	if !b.validateNamespace(r) {
-		b.logger.Error("evaluation context namespace does not match namespace in request")
-		http.Error(w, "evaluation context namespace does not match namespace in request", http.StatusUnauthorized)
+		b.logger.Error(namespaceMismatchMsg)
+		http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 		return
 	}
 
@@ -292,8 +294,8 @@ func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
 		return ""
 	}
 
-	if len(evalCtx.Context.Namespace) == 0 {
-		b.logger.Debug("Invalid or missing namespace in evaluation context", "namescape", evalCtx.Context.Namespace)
+	if evalCtx.Context.Namespace == "" {
+		b.logger.Debug("namespace missing from evaluation context", "namescape", evalCtx.Context.Namespace)
 		return ""
 	}
 
