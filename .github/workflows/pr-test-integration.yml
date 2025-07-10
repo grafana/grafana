@@ -1,11 +1,13 @@
 name: Integration Tests
 
 on:
-  push:
-    branches:
-      - main
-      - release-*.*.*
-  pull_request:
+  # @PERCONA - disable workflow
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  #     - release-*.*.*
+  # pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

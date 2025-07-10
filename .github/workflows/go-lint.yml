@@ -1,13 +1,15 @@
 name: golangci-lint
 on:
-  push:
-    paths:
-      - pkg/**
-      - .github/workflows/go-lint.yml
-      - go.*
-    branches:
-      - main
-  pull_request:
+  # @PERCONA - disable workflow
+  workflow_dispatch:
+  # push:
+  #   paths:
+  #     - pkg/**
+  #     - .github/workflows/go-lint.yml
+  #     - go.*
+  #   branches:
+  #     - main
+  # pull_request:
 
 permissions:
   contents: read
