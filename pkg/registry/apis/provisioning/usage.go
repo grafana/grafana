@@ -14,13 +14,8 @@ import (
 )
 
 func (b *APIBuilder) collectProvisioningStats(ctx context.Context) (metrics map[string]any, err error) {
-	// TODO: tracer
 	ctx, span := b.tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
 	defer func() {
-		if err != nil {
-			// TODO: log it as warning
-		}
-
 		span.SetStatus(codes.Error, fmt.Sprintf("failed to fetch provisioning usage stats: %v", err))
 		span.End()
 	}()
