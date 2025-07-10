@@ -22,6 +22,7 @@ type configStore interface {
 type remoteAlertmanager interface {
 	notifier.Alertmanager
 	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
+	GetRemoteState(context.Context) (RemoteState, error)
 	SendState(context.Context) error
 }
 

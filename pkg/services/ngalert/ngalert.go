@@ -191,7 +191,8 @@ func (ng *AlertNG) init() error {
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-	if remotePrimary || remoteSecondary {
+	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
+	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		smtpCfg := remoteClient.SmtpConfig{
 			FromAddress:    ng.Cfg.Smtp.FromAddress,
@@ -256,18 +257,38 @@ func (ng *AlertNG) init() error {
 			// This function will be used by the MOA to create new Alertmanagers.
 			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-					// Create internal Alertmanager.
-					internalAM, err := factoryFn(ctx, orgID)
-					if err != nil {
-						return nil, err
-					}
-
 					// Create remote Alertmanager.
 					cfg.OrgID = orgID
 					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
 					if err != nil {
-						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
-						return internalAM, nil
+						if remoteSecondaryWithRemoteState {
+							// We can't start the internal Alertmanger without the remote state.
+							return nil, fmt.Errorf("failed to create remote Alertmanager: %w", err)
+						}
+						moaLogger.Warn("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+					}
+
+					// Create internal Alertmanager.
+					internalAM, err := factoryFn(ctx, orgID)
+					if err != nil {
+						return nil, fmt.Errorf("failed to create internal Alertmanager: %w", err)
+					}
+
+					if remoteSecondaryWithRemoteState {
+						// Pull and merge the remote Alertmanager state.
+						rs, err := remoteAM.GetRemoteState(ctx)
+						if err != nil {
+							return nil, fmt.Errorf("failed to fetch remote state: %w", err)
+						}
+
+						// The internal Alertmanager should implement the StateMerger interface.
+						sm := internalAM.(notifier.StateMerger)
+						if err := sm.MergeNflog(rs.Nflog); err != nil {
+							return nil, fmt.Errorf("failed to merge remote nflog entries: %w", err)
+						}
+						if err := sm.MergeSilences(rs.Silences); err != nil {
+							return nil, fmt.Errorf("failed to merge remote silences: %w", err)
+						}
 					}
 
 					// Use both Alertmanager implementations in the forked Alertmanager.
