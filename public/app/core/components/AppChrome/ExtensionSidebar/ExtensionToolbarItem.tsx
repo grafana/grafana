@@ -72,6 +72,7 @@ export function ExtensionToolbarItem() {
 
   return (
     <>
+      // renders a single `ExtensionToolbarItemButton` for each plugin; if a plugin has multiple components, it renders them inside a `Dropdown`
       {Array.from(availableComponents.entries()).map(
         ([pluginId, { addedComponents }]: [string, { addedComponents: ExtensionInfo[] }]) =>
           renderPluginButton(
