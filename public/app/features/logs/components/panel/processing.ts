@@ -97,8 +97,15 @@ export class LogListModel implements LogRowModel {
     this.raw = raw;
   }
 
+  clone() {
+    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+  }
+
   get body(): string {
     if (this._body === undefined) {
+      try {
+        this.raw = JSON.stringify(JSON.parse(this.raw), undefined, 2);
+      } catch (error) {}
       this._body = this.collapsed
         ? this.raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : this.raw;
