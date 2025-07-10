@@ -739,7 +739,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v2 := apiregistry.MergeProvisioningExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, secretsService, v2)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, secretsService, tracingService, v2)
 	if err != nil {
 		return nil, err
 	}
@@ -1252,7 +1252,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	legacyMigrator := legacy.ProvideLegacyMigrator(sqlStore, provisioningServiceImpl, libraryPanelService, accessControl)
 	webhookExtraBuilder := webhooks.ProvideWebhooks(cfg, featureToggles, secretsService, factory, renderingService, resourceClient, eventualRestConfigProvider)
 	v2 := apiregistry.MergeProvisioningExtras(webhookExtraBuilder)
-	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, secretsService, v2)
+	apiBuilder, err := provisioning2.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, resourceClient, eventualRestConfigProvider, factory, accessClient, legacyMigrator, dualwriteService, usageStats, secretsService, tracingService, v2)
 	if err != nil {
 		return nil, err
 	}
