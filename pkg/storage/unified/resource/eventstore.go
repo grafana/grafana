@@ -147,16 +147,15 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 		return Event{}, fmt.Errorf("invalid event key: %w", err)
 	}
 
-	obj, err := n.kv.Get(ctx, eventsSection, key.String())
+	reader, err := n.kv.Get(ctx, eventsSection, key.String())
 	if err != nil {
 		return Event{}, err
 	}
+	defer func() { _ = reader.Close() }()
 	var event Event
-	if err = json.NewDecoder(obj.Value).Decode(&event); err != nil {
-		_ = obj.Value.Close()
+	if err = json.NewDecoder(reader).Decode(&event); err != nil {
 		return Event{}, err
 	}
-	defer func() { _ = obj.Value.Close() }()
 	return event, nil
 }
 
@@ -173,14 +172,16 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64) iter.Seq2[Eve
 			if err != nil {
 				return
 			}
-			obj, err := n.kv.Get(ctx, eventsSection, key)
+			reader, err := n.kv.Get(ctx, eventsSection, key)
 			if err != nil {
 				return
 			}
 			var event Event
-			if err := json.NewDecoder(obj.Value).Decode(&event); err != nil {
+			if err := json.NewDecoder(reader).Decode(&event); err != nil {
+				_ = reader.Close()
 				return
 			}
+			_ = reader.Close()
 			if !yield(event, nil) {
 				return
 			}
