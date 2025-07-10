@@ -75,7 +75,6 @@ export function BrowseActions({ folderDTO }: Props) {
 
   const showDeleteModal = () => {
     const { hasProvisioned, hasNonProvisioned } = provisioningStatus;
-    console.log('showDeleteModal', { provisioningStatus, hasProvisioned, hasNonProvisioned });
     if (hasProvisioned && hasNonProvisioned) {
       // Mixed selection
       // This is a placeholder for future implementation
