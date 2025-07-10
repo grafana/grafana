@@ -179,7 +179,6 @@ export class LogListModel implements LogRowModel {
     // Newlines truncation
     if (!collapsed && this._virtualization) {
       const truncationLimit = this._virtualization.getTruncationLineCount();
-      console.log(truncationLimit);
       collapsed = countNewLines(this.raw, truncationLimit) >= truncationLimit ? true : collapsed;
     }
 
