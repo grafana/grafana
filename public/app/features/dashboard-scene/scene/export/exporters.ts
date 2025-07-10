@@ -12,12 +12,15 @@ import {
   LibraryPanelRef,
   LibraryPanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { notifyApp } from 'app/core/actions';
 import config from 'app/core/config';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegex } from 'app/features/variables/utils';
+import { dispatch } from 'app/store/store';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -348,6 +351,15 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
     return inlinePanel;
   } catch (error) {
     console.error(`Failed to load library panel ${libraryPanel.uid}:`, error);
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    dispatch(
+      notifyApp(
+        createErrorNotification(
+          `Unable to load library panel "${libraryPanel.name}": ${errorMessage}. It will appear as a placeholder in the export.`
+        )
+      )
+    );
 
     // Return a placeholder panel if library panel can't be loaded
     return {
