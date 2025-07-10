@@ -23,8 +23,7 @@ export function usePluginFunctions<Signature>({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(deps);
 
   return useMemo(() => {
-    // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
-    const enableRestrictions = isGrafanaDevMode() && pluginContext;
+    const isInsidePlugin = Boolean(pluginContext);
     const results: Array<PluginExtensionFunction<Signature>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
@@ -32,11 +31,16 @@ export function usePluginFunctions<Signature>({
       pluginId,
       extensionPointId,
     });
-    if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
+
+    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin })) {
       pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
+      return {
+        isLoading: false,
+        functions: [],
+      };
     }
 
-    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+    if (isGrafanaDevMode() && pluginContext && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
       pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
         isLoading: false,

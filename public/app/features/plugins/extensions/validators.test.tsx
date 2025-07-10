@@ -198,7 +198,6 @@ describe('Plugin Extension Validators', () => {
 
   describe('isExtensionPointIdValid()', () => {
     test.each([
-      // We (for now allow core Grafana extension points to run without a version)
       ['grafana/extension-point', ''],
       ['grafana/extension-point', 'grafana'],
       ['myorg-extensions-app/extension-point', 'myorg-extensions-app'],
@@ -217,6 +216,7 @@ describe('Plugin Extension Validators', () => {
         isExtensionPointIdValid({
           extensionPointId,
           pluginId,
+          isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
         })
       ).toBe(true);
     });
@@ -237,6 +237,7 @@ describe('Plugin Extension Validators', () => {
         isExtensionPointIdValid({
           extensionPointId,
           pluginId,
+          isInsidePlugin: true,
         })
       ).toBe(false);
     });

@@ -513,22 +513,6 @@ describe('usePluginComponents()', () => {
     expect(log.error).not.toHaveBeenCalled();
   });
 
-  it('should not validate the extension point id if used in Grafana core (no plugin context)', () => {
-    // Imitate running in dev mode
-    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
-
-    // No plugin context -> used in Grafana core
-    wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
-    );
-
-    let { result } = renderHook(() => usePluginComponents({ extensionPointId: 'invalid-extension-point-id' }), {
-      wrapper,
-    });
-    expect(result.current.components.length).toBe(0);
-    expect(log.error).not.toHaveBeenCalled();
-  });
-
   it('should validate if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
     // Imitate running in dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);

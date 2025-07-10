@@ -28,8 +28,7 @@ export function usePluginComponents<Props extends object = {}>({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
-    // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
-    const enableRestrictions = isGrafanaDevMode() && pluginContext;
+    const isInsidePlugin = Boolean(pluginContext);
     const components: Array<ComponentTypeWithExtensionMeta<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
@@ -39,12 +38,16 @@ export function usePluginComponents<Props extends object = {}>({
     });
 
     // Only log error for an invalid `extensionPointId` in DEV mode
-    if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
+    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin })) {
       pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
+      return {
+        isLoading: false,
+        components: [],
+      };
     }
 
     // Don't show extensions if the extension-point misses meta info (plugin.json) in DEV mode
-    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+    if (isGrafanaDevMode() && pluginContext && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
       pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
         isLoading: false,
