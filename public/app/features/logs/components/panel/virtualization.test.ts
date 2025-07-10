@@ -67,6 +67,18 @@ describe('Virtualization', () => {
       expect(size).toBe(SINGLE_LINE_HEIGHT + DETAILS_HEIGHT);
     });
 
+    test('Should not throw when an undefined index is passed', () => {
+      const size = getLogLineSize(
+        virtualization,
+        [log],
+        container,
+        [],
+        { ...defaultOptions, showTime: true, showDetails: [log], detailsMode: 'inline' },
+        1 // Index out of bounds
+      );
+      expect(size).toBe(SINGLE_LINE_HEIGHT);
+    });
+
     test('Returns the a single line if the line is not loaded yet', () => {
       const logs = [log];
       const size = getLogLineSize(

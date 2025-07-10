@@ -255,7 +255,7 @@ export function getLogLineSize(
   }
   const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
   const detailsHeight =
-    detailsMode === 'inline' && showDetails.findIndex((log) => log.uid === logs[index].uid) >= 0
+    detailsMode === 'inline' && logs[index] && showDetails.findIndex((log) => log.uid === logs[index].uid) >= 0
       ? window.innerHeight * (LOG_LINE_DETAILS_HEIGHT / 100) + gap / 2
       : 0;
   // !logs[index] means the line is not yet loaded by infinite scrolling
