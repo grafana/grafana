@@ -115,20 +115,22 @@ export function getMinMaxAndDelta(field: Field): NumericRange {
 
   // Calculate min/max if required
   if (!isNumber(min) || !isNumber(max)) {
+    let calculatedMin = 0;
+    let calculatedMax = 100;
     if (field.values && field.values.length) {
       if (field.type === FieldType.frame) {
         const result = findNumericFieldMinMax(field.values);
-        min = isNumber(min) ? min : result.min;
-        max = isNumber(max) ? max : result.max;
+        calculatedMin = result.min != null ? result.min : calculatedMin;
+        calculatedMax = result.max != null ? result.max : calculatedMax;
       } else if (field.type === FieldType.number) {
         const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-        min = isNumber(min) ? min : stats[ReducerID.min];
-        max = isNumber(max) ? max : stats[ReducerID.max];
+        calculatedMin = stats[ReducerID.min];
+        calculatedMax = stats[ReducerID.max];
       }
-    } else {
-      min = 0;
-      max = 100;
     }
+
+    min = isNumber(min) ? min : calculatedMin;
+    max = isNumber(max) ? max : calculatedMax;
   }
 
   return {
