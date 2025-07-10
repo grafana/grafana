@@ -156,10 +156,17 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: it should be possible to configure this registration
+	availableRepositoryTypes := []provisioning.RepositoryType{
+		provisioning.LocalRepositoryType,
+		provisioning.GitHubRepositoryType,
+	}
+
 	settings := provisioning.RepositoryViewList{
 		Items: make([]provisioning.RepositoryView, len(all)),
 		// FIXME: this shouldn't be here in provisioning but at the dual writer or something about the storage
-		LegacyStorage: dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
+		LegacyStorage:            dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, b.storageStatus),
+		AvailableRepositoryTypes: availableRepositoryTypes,
 	}
 	for i, val := range all {
 		branch := ""

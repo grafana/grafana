@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -1169,6 +1170,10 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	}
 
 	switch r.Spec.Type {
+	case provisioning.BitbucketRepositoryType:
+		return nil, errors.New("Bitbucket repository type is supported")
+	case provisioning.GitLabRepositoryType:
+		return nil, errors.New("GitLab repository type is supported")
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
