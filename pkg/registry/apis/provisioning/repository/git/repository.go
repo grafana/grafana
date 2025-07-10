@@ -1,6 +1,7 @@
-package nanogit
+package git
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -18,7 +19,6 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/options"
@@ -39,28 +39,19 @@ type gitRepository struct {
 	config    *provisioning.Repository
 	gitConfig RepositoryConfig
 	client    nanogit.Client
-	secrets   secrets.Service
 }
 
 func NewGitRepository(
 	ctx context.Context,
-	secrets secrets.Service,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
-) (repository.GitRepository, error) {
-	if gitConfig.Token == "" {
-		decrypted, err := secrets.Decrypt(ctx, gitConfig.EncryptedToken)
-		if err != nil {
-			return nil, fmt.Errorf("decrypt token: %w", err)
-		}
-		gitConfig.Token = string(decrypted)
+) (GitRepository, error) {
+	var opts []options.Option
+	if len(gitConfig.Token) > 0 {
+		opts = append(opts, options.WithBasicAuth("git", gitConfig.Token))
 	}
 
-	// Create nanogit client with authentication
-	client, err := nanogit.NewHTTPClient(
-		gitConfig.URL,
-		options.WithBasicAuth("git", gitConfig.Token),
-	)
+	client, err := nanogit.NewHTTPClient(gitConfig.URL, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create nanogit client: %w", err)
 	}
@@ -69,7 +60,6 @@ func NewGitRepository(
 		config:    config,
 		gitConfig: gitConfig,
 		client:    client,
-		secrets:   secrets,
 	}, nil
 }
 
@@ -99,12 +89,15 @@ func (r *gitRepository) Validate() (list field.ErrorList) {
 	}
 	if cfg.Branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !repository.IsValidGitBranchName(cfg.Branch) {
+	} else if !IsValidGitBranchName(cfg.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), cfg.Branch, "invalid branch name"))
 	}
 
-	if cfg.Token == "" && len(cfg.EncryptedToken) == 0 {
-		list = append(list, field.Required(field.NewPath("spec", t, "token"), "a git access token is required"))
+	// If the repository has workflows, we require a token or encrypted token
+	if len(r.config.Spec.Workflows) > 0 {
+		if cfg.Token == "" && len(cfg.EncryptedToken) == 0 {
+			list = append(list, field.Required(field.NewPath("spec", t, "token"), "a git access token is required"))
+		}
 	}
 
 	if err := safepath.IsSafe(cfg.Path); err != nil {
@@ -413,11 +406,15 @@ func (r *gitRepository) Write(ctx context.Context, path string, ref string, data
 	}
 
 	ctx, _ = r.logger(ctx, ref)
-	_, err := r.Read(ctx, path, ref)
+	info, err := r.Read(ctx, path, ref)
 	if err != nil && !(errors.Is(err, repository.ErrFileNotFound)) {
 		return fmt.Errorf("check if file exists before writing: %w", err)
 	}
 	if err == nil {
+		// If the value already exists and is the same, we don't need to do anything
+		if bytes.Equal(info.Data, data) {
+			return nil
+		}
 		return r.Update(ctx, path, ref, data, message)
 	}
 
@@ -584,7 +581,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	return changes, nil
 }
 
-func (r *gitRepository) Clone(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
+func (r *gitRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
 	return NewStagedGitRepository(ctx, r, opts)
 }
 
@@ -592,7 +589,7 @@ func (r *gitRepository) Clone(ctx context.Context, opts repository.CloneOptions)
 func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.Hash, error) {
 	// Use default branch if ref is empty
 	if ref == "" {
-		ref = fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch)
+		ref = r.gitConfig.Branch
 	}
 
 	// Try to parse ref as a hash first
@@ -601,6 +598,9 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 		// Valid hash, return it
 		return refHash, nil
 	}
+
+	// Prefix ref with refs/heads/
+	ref = fmt.Sprintf("refs/heads/%s", ref)
 
 	// Not a valid hash, try to resolve as a branch reference
 	branchRef, err := r.client.GetRef(ctx, ref)
@@ -617,7 +617,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 // ensureBranchExists checks if a branch exists and creates it if it doesn't,
 // returning the branch reference to avoid duplicate GetRef calls
 func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName string) (nanogit.Ref, error) {
-	if !repository.IsValidGitBranchName(branchName) {
+	if !IsValidGitBranchName(branchName) {
 		return nanogit.Ref{}, &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Code:    http.StatusBadRequest,
