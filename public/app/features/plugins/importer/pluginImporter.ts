@@ -34,7 +34,7 @@ import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandboxPluginLoade
 import { pluginsLogger } from '../utils';
 
 import { addTranslationsToI18n } from './addTranslationsToI18n';
-import { PluginImportInfo, PostImportStrategy, PreImportStrategy } from './types';
+import { PluginImporter, PluginImportInfo, PostImportStrategy, PreImportStrategy } from './types';
 
 async function importPluginModule({
   path,
@@ -195,44 +195,28 @@ const getPromiseFromCache = <M extends PluginMeta, P extends GrafanaPlugin<M>>(m
   throw new Error(`Trying to get unknown plugin type ${meta.type} from cache for plugin ${meta.id}`);
 };
 
-const importer = {
-  importPanelPlugin: (meta: PanelPluginMeta): Promise<PanelPlugin> => {
-    if (promisesCache.has(meta.id)) {
-      return getPromiseFromCache(meta);
-    }
-
-    const args = defaultPreImport(meta);
-    const module = importPluginModule(args);
-    const plugin = panelPluginPostImport(meta, module);
-    promisesCache.set(meta.id, plugin);
-
+const importPlugin = <M extends PluginMeta, P extends GrafanaPlugin<M>>(
+  meta: M,
+  postImportStrategy: PostImportStrategy<M, P>,
+  preImportStrategy: PreImportStrategy<M> = defaultPreImport
+): Promise<P> => {
+  if (promisesCache.has(meta.id)) {
     return getPromiseFromCache(meta);
-  },
-  importDatasourcePlugin: (meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> => {
-    if (promisesCache.has(meta.id)) {
-      return getPromiseFromCache(meta);
-    }
+  }
 
-    const args = defaultPreImport(meta);
-    const module = importPluginModule(args);
-    const plugin = datasourcePluginPostImport(meta, module);
-    promisesCache.set(meta.id, plugin);
+  const args = preImportStrategy(meta);
+  const module = importPluginModule(args);
+  const plugin = postImportStrategy(meta, module);
+  promisesCache.set(meta.id, plugin);
 
-    return getPromiseFromCache(meta);
-  },
-  importAppPlugin: (meta: AppPluginMeta): Promise<AppPlugin> => {
-    if (promisesCache.has(meta.id)) {
-      return getPromiseFromCache(meta);
-    }
-
-    const args = defaultPreImport(meta);
-    const module = importPluginModule(args);
-    const plugin = appPluginPostImport(meta, module);
-    promisesCache.set(meta.id, plugin);
-
-    return getPromiseFromCache(meta);
-  },
-  getPanelPlugin: (id: string) => panelPluginCache.get(id),
+  return getPromiseFromCache(meta);
 };
 
-export const pluginImporter = () => importer;
+const importer: PluginImporter = {
+  importPanelPlugin: (meta) => importPlugin(meta, panelPluginPostImport),
+  importDatasourcePlugin: (meta) => importPlugin(meta, datasourcePluginPostImport),
+  importAppPlugin: (meta) => importPlugin(meta, appPluginPostImport),
+  getPanelPlugin: (id) => panelPluginCache.get(id),
+};
+
+export const pluginImporter = (): PluginImporter => importer;
