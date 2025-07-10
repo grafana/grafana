@@ -68,6 +68,10 @@ func NewBadgerKV(db *badger.DB) *badgerKV {
 }
 
 func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObject, error) {
+	if k.db.IsClosed() {
+		return KVObject{}, fmt.Errorf("database is closed")
+	}
+
 	txn := k.db.NewTransaction(false)
 	defer txn.Discard()
 
@@ -101,6 +105,10 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObjec
 }
 
 func (k *badgerKV) Save(ctx context.Context, section string, key string, value io.Reader) error {
+	if k.db.IsClosed() {
+		return fmt.Errorf("database is closed")
+	}
+
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
@@ -123,6 +131,10 @@ func (k *badgerKV) Save(ctx context.Context, section string, key string, value i
 }
 
 func (k *badgerKV) Delete(ctx context.Context, section string, key string) error {
+	if k.db.IsClosed() {
+		return fmt.Errorf("database is closed")
+	}
+
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
@@ -149,6 +161,11 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 }
 
 func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	if k.db.IsClosed() {
+		return func(yield func(string, error) bool) {
+			yield("", fmt.Errorf("database is closed"))
+		}
+	}
 	if section == "" {
 		return func(yield func(string, error) bool) {
 			yield("", fmt.Errorf("section is required"))
