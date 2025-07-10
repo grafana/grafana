@@ -1,9 +1,13 @@
 package rbac
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 )
 
 // Mapper maps a verb to a RBAC action and a resource name to a RBAC scope.
@@ -12,7 +16,7 @@ type Mapper interface {
 	// If no action is found, it returns false.
 	Action(verb string) (string, bool)
 	// scope returns the scope for the given resource name.
-	Scope(name string) string
+	Scope(ctx context.Context, namespace types.NamespaceInfo, name string) string
 	// prefix returns the scope prefix for the translation.
 	Prefix() string
 	// AllActions returns all the actions for the translation.
@@ -26,6 +30,7 @@ type translation struct {
 	attribute     string
 	verbMapping   map[string]string
 	folderSupport bool
+	resolver      NameResolver
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -33,7 +38,20 @@ func (t translation) Action(verb string) (string, bool) {
 	return action, ok
 }
 
-func (t translation) Scope(name string) string {
+func (t translation) Scope(ctx context.Context, namespace types.NamespaceInfo, name string) string {
+	if t.resolver != nil {
+		resolved, err := t.resolver(ctx, namespace, name)
+		if err != nil {
+			logger := logging.FromContext(ctx)
+			logger.Warn("Failed to resolve scope for resource",
+				"resource", t.resource,
+				"attribute", t.attribute,
+				"name", name,
+				"error", err.Error())
+		} else {
+			name = resolved
+		}
+	}
 	return t.resource + ":" + t.attribute + ":" + name
 }
 
@@ -69,7 +87,7 @@ type MapperRegistry interface {
 
 type mapperRegistry map[string]map[string]Mapper
 
-func newResourceTranslation(resource string, attribute string, folderSupport bool) *translation {
+func newResourceTranslation(resource string, attribute string, folderSupport bool, nameResolver NameResolver) *translation {
 	defaultMapping := func(r string) map[string]string {
 		return map[string]string{
 			utils.VerbGet:              fmt.Sprintf("%s:read", r),
@@ -90,24 +108,27 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 		attribute:     attribute,
 		verbMapping:   defaultMapping(resource),
 		folderSupport: folderSupport,
+		resolver:      nameResolver,
 	}
 }
 
-func NewMapperRegistry() MapperRegistry {
+type NameResolver func(ctx context.Context, namespace types.NamespaceInfo, name string) (string, error)
+
+func NewMapperRegistry(teamScopeResolver NameResolver) MapperRegistry {
 	mapper := mapperRegistry(map[string]map[string]Mapper{
 		"dashboard.grafana.app": {
-			"dashboards": newResourceTranslation("dashboards", "uid", true),
+			"dashboards": newResourceTranslation("dashboards", "uid", true, nil),
 		},
 		"folder.grafana.app": {
-			"folders": newResourceTranslation("folders", "uid", true),
+			"folders": newResourceTranslation("folders", "uid", true, nil),
 		},
 		"iam.grafana.app": {
-			"teams":     newResourceTranslation("teams", "id", false),
-			"coreroles": newResourceTranslation("roles", "uid", false),
+			"teams":     newResourceTranslation("teams", "id", false, teamScopeResolver),
+			"coreroles": newResourceTranslation("roles", "uid", false, nil),
 		},
 		"secret.grafana.app": {
-			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),
-			"keepers":      newResourceTranslation("secret.keepers", "uid", false),
+			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, nil),
+			"keepers":      newResourceTranslation("secret.keepers", "uid", false, nil),
 		},
 		"query.grafana.app": {
 			"query": translation{
@@ -150,4 +171,26 @@ func (m mapperRegistry) GetAll(group string) []Mapper {
 	}
 
 	return translations
+}
+
+// Resolvers
+func NewTeamResolver(store legacy.LegacyIdentityStore) NameResolver {
+	return func(ctx context.Context, namespace types.NamespaceInfo, name string) (string, error) {
+		if name == "" {
+			return "", fmt.Errorf("team name cannot be empty")
+		}
+
+		team, err := store.GetTeamInternalID(ctx, namespace, legacy.GetTeamInternalIDQuery{
+			OrgID: namespace.OrgID,
+			UID:   name,
+		})
+		if err != nil {
+			return "", err
+		}
+		if team == nil {
+			return "", fmt.Errorf("team %s not found", name)
+		}
+
+		return fmt.Sprintf("%d", team.ID), nil
+	}
 }

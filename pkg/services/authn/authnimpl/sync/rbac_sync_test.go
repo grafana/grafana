@@ -588,7 +588,7 @@ func setupTestEnv(t *testing.T) *RBACSync {
 		log:          log.NewNopLogger(),
 		tracer:       tracing.InitializeTracerForTest(),
 		permRegistry: permRegistry,
-		mapper:       rbac.NewMapperRegistry(),
+		mapper:       rbac.NewMapperRegistry(nil),
 	}
 	return s
 }

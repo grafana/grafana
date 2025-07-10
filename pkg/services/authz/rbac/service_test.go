@@ -1519,7 +1519,7 @@ func setupService() *Service {
 	tracer := tracing.NewNoopTracerService()
 	return &Service{
 		logger:          logger,
-		mapper:          NewMapperRegistry(),
+		mapper:          NewMapperRegistry(NewTeamResolver(&fakeIdentityStore{})),
 		tracer:          tracer,
 		metrics:         newMetrics(nil),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
