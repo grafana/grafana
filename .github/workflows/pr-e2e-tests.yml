@@ -1,11 +1,13 @@
 name: End-to-end tests
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-      - release-*.*.*
+  # @PERCONA - disable workflow
+  workflow_dispatch:
+  # pull_request:
+  # push:
+  #   branches:
+  #     - main
+  #     - release-*.*.*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

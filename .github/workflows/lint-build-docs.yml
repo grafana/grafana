@@ -1,20 +1,22 @@
 name: Documentation
 
 on:
-  pull_request:
-    paths:
-      - '*.md'
-      - 'docs/**'
-      - 'packages/**/*.md'
-      - 'latest.json'
-  push:
-    branches:
-      - main
-    paths:
-      - '*.md'
-      - 'docs/**'
-      - 'packages/**/*.md'
-      - 'latest.json'
+  # @PERCONA - disable workflow
+  workflow_dispatch:
+  # pull_request:
+  #   paths:
+  #     - '*.md'
+  #     - 'docs/**'
+  #     - 'packages/**/*.md'
+  #     - 'latest.json'
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - '*.md'
+  #     - 'docs/**'
+  #     - 'packages/**/*.md'
+  #     - 'latest.json'
 
 jobs:
   docs:

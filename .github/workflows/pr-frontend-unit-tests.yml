@@ -1,10 +1,13 @@
 name: Frontend tests
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-      - release-*.*.*
+  # @PERCONA - disable workflow
+  workflow_dispatch:
+  # pull_request:
+  # push:
+  #   branches:
+  #     - main
+  #     - release-*.*.*
+
 
 permissions: {}
 

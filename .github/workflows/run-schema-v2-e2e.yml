@@ -1,12 +1,14 @@
 name: Run dashboard schema v2 e2e
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - '**' 
+  # @PERCONA - disable workflow
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  # pull_request:
+  #   branches:
+  #     - '**' 
 
 env:
   ARCH: linux-amd64

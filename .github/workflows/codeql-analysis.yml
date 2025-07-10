@@ -6,18 +6,19 @@
 name: "CodeQL checks"
 
 on:
+  # @PERCONA - disable workflow
   workflow_dispatch:
-  push:
-    branches: ['**'] # run on all branches
-    paths-ignore:
-      - '**/*.cue'
-      - '**/*.json'
-      - '**/*.md'
-      - '**/*.txt'
-      - '**/*.yml'
-      - pkg/storage/unified/sql/db/dbimpl/db.go # Ignoring warnings on the whole file for now while inline comments is not supported in Go (https://github.com/github/codeql/issues/11427)
-  schedule:
-    - cron: '0 4 * * 6'
+  # push:
+  #   branches: ['**'] # run on all branches
+  #   paths-ignore:
+  #     - '**/*.cue'
+  #     - '**/*.json'
+  #     - '**/*.md'
+  #     - '**/*.txt'
+  #     - '**/*.yml'
+  #     - pkg/storage/unified/sql/db/dbimpl/db.go # Ignoring warnings on the whole file for now while inline comments is not supported in Go (https://github.com/github/codeql/issues/11427)
+  # schedule:
+  #   - cron: '0 4 * * 6'
 
 permissions:
   security-events: write
