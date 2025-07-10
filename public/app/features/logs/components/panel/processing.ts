@@ -184,6 +184,8 @@ export class LogListModel implements LogRowModel {
 
     if (this.collapsed === undefined || collapsed === undefined) {
       this.collapsed = collapsed;
+      this._body = undefined;
+      this._highlightedBody = undefined;
     }
     return this.collapsed;
   }
