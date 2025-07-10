@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useAsyncFn } from 'react-use';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -13,9 +13,9 @@ import { ShareExportDashboardButton } from './ShareExportDashboardButton';
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton;
 
 export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
-  const handleShareButtonClick = useCallback(() => {
+  const [_, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
-    buildShareUrl(dashboard);
+    await buildShareUrl(dashboard);
   }, [dashboard]);
 
   return (
@@ -30,7 +30,7 @@ export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
       buttonLabel={t('dashboard.toolbar.new.share.title', 'Share')}
       buttonTooltip={t('dashboard.toolbar.new.share.tooltip', 'Copy link')}
       buttonTestId={newShareButtonSelector.container}
-      onButtonClick={handleShareButtonClick}
+      onButtonClick={buildUrl}
       arrowLabel={t('dashboard.toolbar.new.share.arrow', 'Share')}
       arrowTestId={newShareButtonSelector.arrowMenu}
       dashboard={dashboard}

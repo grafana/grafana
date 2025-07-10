@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
+import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -19,9 +20,9 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleShareButtonClick = useCallback(() => {
+  const [_, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
-    buildShareUrl(dashboard, panel);
+    await buildShareUrl(dashboard, panel);
   }, [dashboard, panel]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
@@ -40,7 +41,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
         data-testid={newShareButtonSelector.shareLink}
         size="sm"
         tooltip={t('share-dashboard.share-button-tooltip', 'Copy link')}
-        onClick={handleShareButtonClick}
+        onClick={buildUrl}
       >
         <Trans i18nKey="share-dashboard.share-button">Share</Trans>
       </Button>
