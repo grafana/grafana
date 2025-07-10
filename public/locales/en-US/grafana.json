@@ -3449,6 +3449,7 @@
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
+      "bulk-delete-provisioned-resources-not-implemented": "Bulk delete for provisioned resources is not implemented yet.",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3467,7 +3468,9 @@
       "move-modal-text": "This action will move the following content:",
       "move-modal-title": "Move",
       "moving": "Moving...",
-      "new-folder-name-required-phrase": "Folder name is required."
+      "new-folder-name-required-phrase": "Folder name is required.",
+      "selected-mix-resources-modal-text": "These cannot be deleted together. Please review your selection and try again.",
+      "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
     "actions": {
       "button-to-recently-deleted": "Recently deleted"

@@ -87,8 +87,7 @@ export function BrowseActions({ folderDTO }: Props) {
       );
     } else if (hasProvisioned) {
       // Only provisioned items
-      // TODO: Implement bulk delete for provisioned resources
-      // setShowBulkDeleteProvisionedResource(true);
+      setShowBulkDeleteProvisionedResource(true);
     } else {
       // Only non-provisioned items
       appEvents.publish(
@@ -130,7 +129,10 @@ export function BrowseActions({ folderDTO }: Props) {
           onClose={() => setShowBulkDeleteProvisionedResource(false)}
           size="md"
         >
-          <div></div>
+          {/* TODO: Implement bulk delete for provisioned resources, PR will merge soon https://github.com/grafana/grafana/pull/107800 */}
+          <Trans i18nKey="browse-dashboards.action.bulk-delete-provisioned-resources-not-implemented">
+            Bulk delete for provisioned resources is not implemented yet.
+          </Trans>
         </Drawer>
       )}
     </>
