@@ -395,9 +395,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}()
 
 	resp := &backend.QueryDataResponse{}
-	mtDSClient, err := s.mtClientProvider.GetMTDatasourceClient(dn.datasource.Type, dn.datasource.UID)
+	mtDSClient, err := s.mtDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
 
-	if err != nil { // use single tenant client
+	if mtDSClient == nil { // use single tenant client
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
 		if err != nil {
 			return mathexp.Results{}, err
@@ -407,8 +407,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		if err != nil {
 			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 		}
-
-	} else { // use multi tenant client
+	} else {
 		// transform request from backend.QueryDataRequest to k8s request
 		k8sReq := &data.QueryDataRequest{}
 		for _, q := range req.Queries {

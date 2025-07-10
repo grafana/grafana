@@ -323,7 +323,7 @@ var wireBasicSet = wire.NewSet(
 	serviceaccountsmanager.ProvideServiceAccountsService,
 	serviceaccountsproxy.ProvideServiceAccountsProxy,
 	wire.Bind(new(serviceaccounts.Service), new(*serviceaccountsproxy.ServiceAccountsProxy)),
-	expr.ProvideMTDatasourceClientProvider,
+	expr.NewNullMTDatasourceClientBuilder,
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,

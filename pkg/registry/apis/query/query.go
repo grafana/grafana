@@ -27,7 +27,6 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
@@ -181,8 +180,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		// Parses the request and splits it into multiple sub queries (if necessary)
-		req, err := b.parser.parseRequest(ctx, raw) //TODO replace this somehow
+		// format queries for metric request
 		var jsonQueries []*simplejson.Json
 		for _, query := range raw.Queries {
 			jsonBytes, err := json.Marshal(query)
@@ -199,76 +197,18 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 
 			jsonQueries = append(jsonQueries, sjQuery)
 		}
-		cache := &MyCacheService{
-			legacy: b.parser.legacy,
-		}
-		zz, hasExpression, err := sse_query.Parse(ctx, b.log, cache, dtos.MetricRequest{
+		mReq := dtos.MetricRequest{
 			From:    raw.From,
 			To:      raw.To,
 			Queries: jsonQueries,
-		})
-		spew.Dump("1", zz)
-		// client, err := b.clientSupplier.GetDataSourceClient(
-		// 	ctx,
-		// 	v0alpha1.DataSourceRef{
-		// 		Type: req.PluginId,
-		// 		UID:  req.UID,
-		// 	},
-		// 	req.Headers,
-		// 	instanceConfig,
-		// )
-		// if err != nil {
-		// 	b.log.Debug("error getting single datasource client", "error", err, "reqUid", req.UID)
-		// 	qdr := buildErrorResponse(err, req)
-		// 	return qdr, err
-		// }
-
-		if hasExpression {
-			headers := ExtractKnownHeaders(httpreq.Header)
-			instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
-			if err != nil {
-				b.log.Error("failed to get instance configuration settings", "err", err)
-				responder.Error(err)
-				return
-			}
-			// TODO shouldn't we pass in config for expressions enabled
-			exprService := expr.ProvideService(
-				&setting.Cfg{
-					ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
-					SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
-					SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
-					SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
-				},
-				nil,
-				nil,
-				instanceConfig.FeatureToggles,
-				nil,
-				b.tracer,
-				&mtClientProvider{
-					getClient: func(pluginId string, uid string) (clientapi.QueryDataClient, error) {
-						return b.clientSupplier.GetDataSourceClient(
-							ctx,
-							v0alpha1.DataSourceRef{
-								Type: pluginId,
-								UID:  uid,
-							},
-							headers,
-							instanceConfig,
-						)
-					},
-				},
-			)
-			// headers := ExtractKnownHeaders(httpreq.Header)
-			qdr, err := sse_query.Handle(ctx, b.log, cache, zz, exprService)
-			if err != nil {
-				spew.Dump(err)
-			}
-			spew.Dump("IT WORKED?!?!?!", qdr)
-			responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
-				QueryDataResponse: *qdr, // wrap the backend response as a QueryDataResponse
-			})
-			return
 		}
+
+		cache := &MyCacheService{
+			legacy: b.parser.legacy,
+		}
+
+		req, hasExpression, err := sse_query.Parse(ctx, b.log, cache, mReq)
+
 		if err != nil {
 			var refError ErrorWithRefID
 			statusCode := http.StatusBadRequest
@@ -301,26 +241,55 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		for i := range req.Requests {
-			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
-		}
-
-		// Fetch information on the grafana instance (e.g. feature toggles)
+		headers := ExtractKnownHeaders(httpreq.Header)
 		instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
 		if err != nil {
-			msg := "failed to get instance configuration settings"
-			b.log.Error(msg, "err", err)
-			responder.Error(errors.New(msg))
+			b.log.Error("failed to get instance configuration settings", "err", err)
+			responder.Error(err)
 			return
 		}
 
-		// Actually run the query (includes expressions)
-		rsp, err := b.execute(ctx, req, instanceConfig)
+		var qdr *backend.QueryDataResponse
+		if hasExpression {
+			exprService := expr.ProvideService(
+				&setting.Cfg{
+					ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
+					SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
+					SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
+					SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
+				},
+				nil,
+				nil,
+				instanceConfig.FeatureToggles,
+				nil,
+				b.tracer,
+				expr.NewMtDatasourceClientBuilderWithClientSupplier(
+					b.clientSupplier,
+					ctx,
+					headers,
+					instanceConfig,
+				),
+			)
+			qdr, err = sse_query.Handle(ctx, b.log, cache, req, exprService)
+		} else {
+			// TODO is there a way to delete code from this path?
+			// also does it make sense to have 2 different parsers?
+			req, err := b.parser.parseRequest(ctx, raw)
+			for i := range req.Requests {
+				req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
+			}
+			if err != nil {
+				b.log.Error("error parsing request", "err", err)
+				responder.Error(err)
+				return
+			}
+			qdr, err = b.execute(ctx, req, instanceConfig)
+		}
 		if err != nil {
-			b.log.Error("execute error", "http code", query.GetResponseCode(rsp), "err", err)
-			if rsp != nil { // if we have a response, we assume the err is set in the response
-				responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
-					QueryDataResponse: *rsp,
+			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
+			if qdr != nil { // if we have a response, we assume the err is set in the response
+				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+					QueryDataResponse: *qdr,
 				})
 				return
 			} else {
@@ -331,8 +300,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			}
 		}
 
-		responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
-			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
+		responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+			QueryDataResponse: *qdr, // wrap the backend response as a QueryDataResponse
 		})
 	}), nil
 }
@@ -662,12 +631,4 @@ func isSingleAlertQuery(req parsedRequestInfo) bool {
 		return true
 	}
 	return false
-}
-
-type mtClientProvider struct {
-	getClient func(pluginId string, uid string) (clientapi.QueryDataClient, error)
-}
-
-func (m *mtClientProvider) GetMTDatasourceClient(pluginId string, uid string) (clientapi.QueryDataClient, error) {
-	return m.getClient(pluginId, uid)
 }
