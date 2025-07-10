@@ -912,14 +912,14 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
 }
 
-func ToResourceReference(obj GrafanaMetaAccessor) common.ResourceReference {
+func ToObjectReference(obj GrafanaMetaAccessor) common.ObjectReference {
 	gvk := obj.GetGroupVersionKind()
-	return common.ResourceReference{
-		Group:     gvk.Group,
-		Version:   gvk.Version,
-		Kind:      gvk.Kind,
-		Namespace: obj.GetNamespace(),
-		Name:      obj.GetName(),
-		UID:       obj.GetUID(),
+	return common.ObjectReference{
+		APIGroup:   gvk.Group,
+		APIVersion: gvk.Version,
+		Kind:       gvk.Kind,
+		Namespace:  obj.GetNamespace(),
+		Name:       obj.GetName(),
+		UID:        obj.GetUID(),
 	}
 }

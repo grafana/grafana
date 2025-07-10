@@ -66,7 +66,7 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 		}
 	}
 
-	owner := utils.ToResourceReference(obj)
+	owner := utils.ToObjectReference(obj)
 	secure, err = store.UpdateSecureValues(ctx, owner, secure)
 	if err != nil {
 		return false, err
@@ -90,7 +90,7 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 		v.Remove = true // Set the remove flag on everything
 		secure[k] = v
 	}
-	_, err = store.UpdateSecureValues(ctx, utils.ToResourceReference(obj), secure)
+	_, err = store.UpdateSecureValues(ctx, utils.ToObjectReference(obj), secure)
 	if err != nil {
 		return err
 	}

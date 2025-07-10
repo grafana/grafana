@@ -36,7 +36,7 @@ type inlineStorage struct {
 }
 
 // CanReference implements contracts.InlineSecureValueStore.
-func (i *inlineStorage) CanReference(ctx context.Context, owner common.ResourceReference, values common.InlineSecureValues) (bool, error) {
+func (i *inlineStorage) CanReference(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) (bool, error) {
 	actor, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return false, apierrors.NewBadRequest("missing auth info")
@@ -85,7 +85,7 @@ func (i *inlineStorage) CanReference(ctx context.Context, owner common.ResourceR
 }
 
 // UpdateSecureValues implements contracts.InlineSecureValueStore.
-func (i *inlineStorage) UpdateSecureValues(ctx context.Context, owner common.ResourceReference, values common.InlineSecureValues) (common.InlineSecureValues, error) {
+func (i *inlineStorage) UpdateSecureValues(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) (common.InlineSecureValues, error) {
 	actor, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, apierrors.NewBadRequest("missing auth info")

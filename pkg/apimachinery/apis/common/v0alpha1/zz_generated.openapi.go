@@ -18,7 +18,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.InlineSecureValue": schema_apimachinery_apis_common_v0alpha1_InlineSecureValue(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ObjectReference":   schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref),
-		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ResourceReference": schema_apimachinery_apis_common_v0alpha1_ResourceReference(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Scope":             schema_apimachinery_apis_common_v0alpha1_Scope(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ScopeFilter":       schema_apimachinery_apis_common_v0alpha1_ScopeFilter(ref),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ScopeSpec":         schema_apimachinery_apis_common_v0alpha1_ScopeSpec(ref),
@@ -119,27 +118,9 @@ func schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref common.Referen
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Similar to https://dev-k8sref-io.web.app/docs/common-definitions/objectreference-/ ObjectReference contains enough information to let you inspect or modify the referred object. Deprecated: this should be removed",
+				Description: "Similar to https://dev-k8sref-io.web.app/docs/common-definitions/objectreference-/ ObjectReference contains enough information to let you inspect or modify the referred object.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"resource": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"namespace": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
 					"apiGroup": {
 						SchemaProps: spec.SchemaProps{
 							Description: "APIGroup is the name of the API group that contains the referred object. The empty string represents the core API group.",
@@ -154,55 +135,39 @@ func schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref common.Referen
 							Format:      "",
 						},
 					},
-				},
-			},
-		},
-	}
-}
-
-func schema_apimachinery_apis_common_v0alpha1_ResourceReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Similar to metav1.OwenerReference, but it includes the namespace",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"group": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "See https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"namespace": {
 						SchemaProps: spec.SchemaProps{
-							Description: "or resource?",
+							Description: "Tenant isolation",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "This does not exist in metav1.OwnerReference",
+							Description: "Explicit resource identifier",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"fieldPath": {
+						SchemaProps: spec.SchemaProps{
+							Description: "May contain a valid JSON/Go field access statement",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"uid": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "Sepcific deployment of an object",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},
