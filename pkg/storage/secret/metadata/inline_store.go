@@ -17,25 +17,26 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
-var _ contracts.InlineSecureValueStore = (*inlineStorage)(nil)
+var _ contracts.InlineSecureValueSupport = (*inlineStorage)(nil)
 
-func ProvideInlineSecureValueStore(
+func ProvideInlineSecureValueSupport(
 	db contracts.SecureValueMetadataStorage,
 	access authlib.AccessClient,
-) (contracts.InlineSecureValueStore, error) {
+) (contracts.InlineSecureValueSupport, error) {
 	return &inlineStorage{
 		db:     db,
 		access: access,
 	}, nil
 }
 
+// TODO! this needs real attention :) and likely explicit support from the DB
 // inlineStorage is the actual implementation of the secure value (metadata) storage.
 type inlineStorage struct {
 	db     contracts.SecureValueMetadataStorage
 	access authlib.AccessChecker
 }
 
-// CanReference implements contracts.InlineSecureValueStore.
+// CanReference implements contracts.InlineSecureValueSupport.
 func (i *inlineStorage) CanReference(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) (bool, error) {
 	actor, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
@@ -84,7 +85,7 @@ func (i *inlineStorage) CanReference(ctx context.Context, owner common.ObjectRef
 	return true, nil
 }
 
-// UpdateSecureValues implements contracts.InlineSecureValueStore.
+// UpdateSecureValues implements contracts.InlineSecureValueSupport.
 func (i *inlineStorage) UpdateSecureValues(ctx context.Context, owner common.ObjectReference, values common.InlineSecureValues) (common.InlineSecureValues, error) {
 	actor, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {

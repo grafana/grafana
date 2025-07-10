@@ -206,7 +206,7 @@ type ResourceServerOptions struct {
 	AccessClient claims.AccessClient
 
 	// Manage secure values
-	SecureValues secrets.InlineSecureValueStore
+	SecureValues secrets.InlineSecureValueSupport
 
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
@@ -331,7 +331,7 @@ type server struct {
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
-	secure         secrets.InlineSecureValueStore
+	secure         secrets.InlineSecureValueSupport
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient

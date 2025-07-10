@@ -62,7 +62,7 @@ type StorageOptions struct {
 	RequireDeprecatedInternalID bool
 
 	// Process inline secure values
-	SecureValues secrets.InlineSecureValueStore
+	SecureValues secrets.InlineSecureValueSupport
 
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter

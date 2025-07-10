@@ -21,7 +21,7 @@ import (
 )
 
 func TestSecureUpdates(t *testing.T) {
-	store := secret.NewMockInlineSecureValueStore(t)
+	store := secret.NewMockInlineSecureValueSupport(t)
 	obj, err := resourceFromYAML(t, `
 apiVersion: something.grafana.app/v1beta1
 kind: CustomKind

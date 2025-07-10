@@ -42,7 +42,7 @@ type Options struct {
 	Reg          prometheus.Registerer
 	Authzc       types.AccessClient
 	Docs         resource.DocumentBuilderSupplier
-	SecureValues secrets.InlineSecureValueStore
+	SecureValues secrets.InlineSecureValueSupport
 }
 
 type clientMetrics struct {
@@ -86,7 +86,7 @@ func newClient(opts options.StorageOptions,
 	docs resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
-	secure secrets.InlineSecureValueStore,
+	secure secrets.InlineSecureValueSupport,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 

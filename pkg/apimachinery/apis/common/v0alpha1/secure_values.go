@@ -10,29 +10,30 @@ import (
 
 const redacted = "[REDACTED]"
 
-// RawSecretValue contains the raw decrypted secure value.
-type RawSecretValue string
+// RawSecureValue contains the raw decrypted secure value.
+type RawSecureValue string
 
 var (
-	_ fmt.Stringer   = (*RawSecretValue)(nil)
-	_ fmt.Formatter  = (*RawSecretValue)(nil)
-	_ fmt.GoStringer = (*RawSecretValue)(nil)
-	_ json.Marshaler = (*RawSecretValue)(nil)
-	_ yaml.Marshaler = (*RawSecretValue)(nil)
+	_ fmt.Stringer   = (*RawSecureValue)(nil)
+	_ fmt.Formatter  = (*RawSecureValue)(nil)
+	_ fmt.GoStringer = (*RawSecureValue)(nil)
+	_ json.Marshaler = (*RawSecureValue)(nil)
+	_ yaml.Marshaler = (*RawSecureValue)(nil)
 )
 
-// Access secure values inside any resource
+// Allow access to a secure value inside
 // +k8s:openapi-gen=true
 type InlineSecureValue struct {
 	// Create a secure value -- this is only used for POST/PUT
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=24576
-	Create RawSecretValue `json:"create,omitempty"`
+	Create RawSecureValue `json:"create,omitempty"`
 
 	// Name in the secret service (reference)
 	Name string `json:"name,omitempty"`
 
-	// Remove this value -- cascading delete to the secret service if necessary
+	// Remove this value from the secure value map
+	// Values owned by this resource will be deleted if necessary
 	Remove bool `json:"remove,omitempty,omitzero"`
 }
 
@@ -45,14 +46,14 @@ func (v InlineSecureValue) IsZero() bool {
 type InlineSecureValues = map[string]InlineSecureValue
 
 // NewSecretValue creates a new exposed secure value wrapper.
-func NewSecretValue(v string) RawSecretValue {
-	return RawSecretValue(v)
+func NewSecretValue(v string) RawSecureValue {
+	return RawSecureValue(v)
 }
 
 // DangerouslyExposeAndConsumeValue will move the decrypted secure value out of the wrapper and return it.
 // Further attempts to call this method will panic.
 // The function name is intentionally kept long and weird because this is a dangerous operation and should be used carefully!
-func (s *RawSecretValue) DangerouslyExposeAndConsumeValue() string {
+func (s *RawSecureValue) DangerouslyExposeAndConsumeValue() string {
 	if *s == "" {
 		panic("underlying value is empty or was consumed")
 	}
@@ -63,31 +64,31 @@ func (s *RawSecretValue) DangerouslyExposeAndConsumeValue() string {
 	return string(tmp)
 }
 
-func (s RawSecretValue) IsZero() bool {
+func (s RawSecureValue) IsZero() bool {
 	return s == "" // exclude from JSON
 }
 
 // String must not return the exposed secure value.
-func (s RawSecretValue) String() string {
+func (s RawSecureValue) String() string {
 	return redacted
 }
 
 // Format must not return the exposed secure value.
-func (s RawSecretValue) Format(f fmt.State, _verb rune) {
+func (s RawSecureValue) Format(f fmt.State, _verb rune) {
 	_, _ = fmt.Fprint(f, redacted)
 }
 
 // GoString must not return the exposed secure value.
-func (s RawSecretValue) GoString() string {
+func (s RawSecureValue) GoString() string {
 	return redacted
 }
 
 // MarshalJSON must not return the exposed secure value.
-func (s RawSecretValue) MarshalJSON() ([]byte, error) {
+func (s RawSecureValue) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(redacted)), nil
 }
 
 // MarshalYAML must not return the exposed secure value.
-func (s RawSecretValue) MarshalYAML() (any, error) {
+func (s RawSecureValue) MarshalYAML() (any, error) {
 	return redacted, nil
 }

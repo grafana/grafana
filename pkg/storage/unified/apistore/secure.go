@@ -11,7 +11,7 @@ import (
 )
 
 // Mutation hook that will update secure values
-func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore, obj utils.GrafanaMetaAccessor, previousObject utils.GrafanaMetaAccessor) (changed bool, err error) {
+func handleSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor, previousObject utils.GrafanaMetaAccessor) (changed bool, err error) {
 	secure, err := obj.GetSecureValues()
 	if err != nil {
 		return false, err
@@ -76,7 +76,7 @@ func handleSecureValues(ctx context.Context, store secret.InlineSecureValueStore
 }
 
 // Mutation hook that will update secure values
-func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValueStore, obj utils.GrafanaMetaAccessor) error {
+func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor) error {
 	secure, err := obj.GetSecureValues()
 	if err != nil || len(secure) == 0 {
 		return err

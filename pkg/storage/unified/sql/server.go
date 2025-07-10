@@ -37,7 +37,7 @@ type ServerOptions struct {
 	IndexMetrics   *resource.BleveIndexMetrics
 	Features       featuremgmt.FeatureToggles
 	QOSQueue       QOSEnqueueDequeuer
-	SecureValues   secrets.InlineSecureValueStore
+	SecureValues   secrets.InlineSecureValueSupport
 }
 
 // Creates a new ResourceServer
