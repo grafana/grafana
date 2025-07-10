@@ -101,7 +101,6 @@ const LogLineComponent = memo(
       hasSampledLogs,
       onLogLineHover,
     } = useLogListContext();
-    console.log('render')
     const [collapsed, setCollapsed] = useState<boolean | undefined>(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
