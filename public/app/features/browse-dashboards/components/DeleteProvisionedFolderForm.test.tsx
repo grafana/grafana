@@ -279,13 +279,21 @@ describe('DeleteProvisionedFolderForm', () => {
       });
     });
 
-    it('should handle branch workflow success without navigation', async () => {
+    it('should handle branch workflow success with navigation', async () => {
       const branchFormData = { ...mockFormData, workflow: 'branch' } as unknown as typeof mockFormData;
-      const successState = { isLoading: false, isSuccess: true, isError: false, error: null };
-      setup({}, { ...defaultHookData, initialValues: branchFormData }, successState);
+      const successState = {
+        isLoading: false,
+        isSuccess: true,
+        isError: false,
+        error: null,
+        data: { urls: { newPullRequestURL: 'https://github.com/test/repo/pull/new' } },
+      };
+      const { mockNavigate } = setup({}, { ...defaultHookData, initialValues: branchFormData }, successState);
 
       await waitFor(() => {
-        expect(window.location.href).toBe('');
+        expect(mockNavigate).toHaveBeenCalledWith(
+          '/dashboards?new_pull_request_url=https://github.com/test/repo/pull/new'
+        );
       });
     });
   });
