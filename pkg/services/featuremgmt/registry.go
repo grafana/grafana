@@ -1290,6 +1290,7 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			FrontendOnly:      true,
 			Expression:        "false",
 		},
 		{
@@ -1299,6 +1300,7 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			FrontendOnly:      true,
 			Expression:        "false",
 		},
 		{
@@ -1308,6 +1310,7 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			FrontendOnly:      true,
 			Expression:        "false",
 		},
 		{
@@ -1317,6 +1320,7 @@ var (
 			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			FrontendOnly:      true,
 			Expression:        "false",
 		},
 		{
