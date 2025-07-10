@@ -60,8 +60,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Generate Go code
-        run: make gen-go
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -109,8 +107,6 @@ jobs:
       - run: go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
 
       # Run code
-      - name: Generate Go code
-        run: make gen-go
       - name: Run unit tests
         env:
           SHARD: ${{ matrix.shard }}

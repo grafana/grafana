@@ -7,9 +7,9 @@ import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Dashboard, DashboardCursorSync, FieldConfigSource, Panel, ThresholdsMode } from '@grafana/schema/src';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import * as appTypes from 'app/types';
-import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
+import { StoreState } from 'app/types/store';
 
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
@@ -45,12 +45,12 @@ jest.mock('app/features/dashboard/state/initDashboard', () => ({
   initDashboard: jest.fn(),
 }));
 
-jest.mock('app/types', () => ({
-  ...jest.requireActual('app/types'),
+jest.mock('app/types/store', () => ({
+  ...jest.requireActual('app/types/store'),
   useDispatch: () => jest.fn(),
 }));
 
-const setup = (propOverrides?: Partial<Props>, initialState?: Partial<appTypes.StoreState>) => {
+const setup = (propOverrides?: Partial<Props>, initialState?: Partial<StoreState>) => {
   const store = configureStore(initialState);
   const props: Props = {
     ...getRouteComponentProps({

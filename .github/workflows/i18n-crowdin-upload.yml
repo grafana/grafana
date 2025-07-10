@@ -14,6 +14,7 @@ on:
 
 jobs:
   upload-sources-to-crowdin:
+    if: github.repository == 'grafana/grafana'
     uses: grafana/grafana-github-actions/.github/workflows/crowdin-upload.yml@main
     with:
       crowdin_project_id: 5

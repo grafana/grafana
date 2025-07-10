@@ -55,6 +55,10 @@
       },
       "query-header": {
         "content-invalid-query": "",
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        },
         "label-dataset": "",
         "label-filter": "篩選",
         "label-format": "格式",

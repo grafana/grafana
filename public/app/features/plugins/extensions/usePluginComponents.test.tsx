@@ -266,9 +266,12 @@ describe('usePluginComponents()', () => {
 
     // Should also render the component if it wants to change the props
     expect(() => render(<Component foo={originalFoo} override />)).not.toThrow();
-    expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "foo4"`, {
-      stack: expect.any(String),
-    });
+    expect(log.error).toHaveBeenCalledWith(
+      `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app`,
+      {
+        stack: expect.any(String),
+      }
+    );
 
     // Check if the original property hasn't been changed
     expect(originalFoo.foo2.foo3.foo4).toBe('bar');
@@ -327,9 +330,12 @@ describe('usePluginComponents()', () => {
 
     // Should also render the component if it wants to change the props
     expect(() => render(<Component foo={originalFoo} override />)).not.toThrow();
-    expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "foo4"`, {
-      stack: expect.any(String),
-    });
+    expect(log.warning).toHaveBeenCalledWith(
+      `Attempted to mutate object property "foo4" from extension with id myorg-extensions-app`,
+      {
+        stack: expect.any(String),
+      }
+    );
 
     // Check if the original property hasn't been changed
     expect(originalFoo.foo2.foo3.foo4).toBe('bar');

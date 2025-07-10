@@ -3,7 +3,7 @@ let handler: (e: DashboardLoadedEvent<CloudWatchQuery>) => {};
 import { config, reportInteraction } from '@grafana/runtime';
 
 import './module';
-import { CloudWatchDashboardLoadedEvent } from './__mocks__/dashboardOnLoadedEvent';
+import { CloudWatchDashboardLoadedEvent } from './mocks/dashboardOnLoadedEvent';
 import { CloudWatchQuery } from './types';
 
 jest.mock('@grafana/runtime', () => {

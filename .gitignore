@@ -115,6 +115,7 @@ profile.cov
 # Extensions
 /pkg/cmd/grafana-cli/runner/wireexts_enterprise.go
 /pkg/server/wireexts_enterprise.go
+/pkg/server/enterprise_wire_gen.go
 /pkg/build/cmd/enterprise.go
 /pkg/extensions/*
 !/pkg/extensions/.keep
@@ -203,9 +204,6 @@ compilation-stats.json
 
 # auto generated frontend docs
 /docs/sources/packages_api
-
-# wire generated files
-**/wire_gen.go
 
 # Auto-generated internationalization files
 public/locales/_build/

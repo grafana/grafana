@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { findField } from 'app/features/dimensions';
+import { findField } from 'app/features/dimensions/utils';
 
 import { prepareGraphableFields } from '../timeseries/utils';
 

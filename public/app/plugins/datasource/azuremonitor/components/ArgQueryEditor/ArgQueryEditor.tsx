@@ -9,7 +9,8 @@ import { Combobox } from '@grafana/ui';
 import { ARGScope } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { AzureMonitorQuery } from '../../types/query';
+import { AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
 import { Field } from '../shared/Field';
 
 import QueryField from './QueryField';

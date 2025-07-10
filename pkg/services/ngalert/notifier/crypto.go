@@ -6,12 +6,23 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
+)
+
+const (
+	// encryptedContentPrefix is a marker that identifies encrypted Alertmanager configurations.
+	// When this prefix is present at the beginning of a configuration string:
+	// 1. During encryption: It indicates the content is already encrypted and should be skipped
+	// 2. During decryption: It indicates the content (minus this prefix) should be base64 decoded
+	//    and then decrypted using the secrets service
+	// This prefix helps maintain idempotency in encryption/decryption operations.
+	cryptoPrefix = "crypto_"
 )
 
 // Crypto allows decryption of Alertmanager Configuration and encryption of arbitrary payloads.
@@ -28,16 +39,16 @@ type Crypto interface {
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
 type alertmanagerCrypto struct {
-	secrets secrets.Service
+	*ExtraConfigsCrypto
 	configs configurationStore
 	log     log.Logger
 }
 
 func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logger) Crypto {
 	return &alertmanagerCrypto{
-		secrets: secrets,
-		configs: configs,
-		log:     log,
+		ExtraConfigsCrypto: NewExtraConfigsCrypto(secrets),
+		configs:            configs,
+		log:                log,
 	}
 }
 
@@ -241,24 +252,44 @@ func (c *alertmanagerCrypto) Decrypt(ctx context.Context, payload []byte) ([]byt
 	return c.secrets.Decrypt(ctx, payload)
 }
 
-func (c *alertmanagerCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+type ExtraConfigsCrypto struct {
+	secrets secretService
+}
+
+func NewExtraConfigsCrypto(secrets secretService) *ExtraConfigsCrypto {
+	return &ExtraConfigsCrypto{
+		secrets: secrets,
+	}
+}
+
+func (c *ExtraConfigsCrypto) EncryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
 	for i := range config.ExtraConfigs {
+		// If it has prefix, consider it encrypted already
+		if strings.HasPrefix(config.ExtraConfigs[i].AlertmanagerConfig, cryptoPrefix) {
+			continue
+		}
+
 		encryptedValue, err := c.secrets.Encrypt(ctx, []byte(config.ExtraConfigs[i].AlertmanagerConfig), secrets.WithoutScope())
 		if err != nil {
 			return fmt.Errorf("failed to encrypt extra configuration: %w", err)
 		}
 
-		config.ExtraConfigs[i].AlertmanagerConfig = base64.StdEncoding.EncodeToString(encryptedValue)
+		config.ExtraConfigs[i].AlertmanagerConfig = cryptoPrefix + base64.StdEncoding.EncodeToString(encryptedValue)
 	}
 
 	return nil
 }
 
-func (c *alertmanagerCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
+func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *definitions.PostableUserConfig) error {
 	for i := range config.ExtraConfigs {
-		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig)
+		// If it does not have prefix, consider it decrypted already
+		if !strings.HasPrefix(config.ExtraConfigs[i].AlertmanagerConfig, cryptoPrefix) {
+			continue
+		}
+		// Check if the config is encrypted by trying to base64 decode it
+		encryptedValue, err := base64.StdEncoding.DecodeString(config.ExtraConfigs[i].AlertmanagerConfig[len(cryptoPrefix):])
 		if err != nil {
-			return fmt.Errorf("failed to base64 decode extra configuration: %w", err)
+			return fmt.Errorf("failed to decode extra configuration: %w", err)
 		}
 
 		decryptedValue, err := c.secrets.Decrypt(ctx, encryptedValue)

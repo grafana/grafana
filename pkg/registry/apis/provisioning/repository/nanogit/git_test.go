@@ -695,7 +695,7 @@ func TestGitRepository_Read(t *testing.T) {
 					Hash: hash.Hash{},
 				}, nil)
 				mockClient.GetCommitReturns(&nanogit.Commit{
-					Tree: hash.Hash([]byte("tree-hash")),
+					Tree: hash.MustFromHex("abcdef1234567890abcdef1234567890abcdef12"),
 				}, nil)
 				mockClient.GetTreeByPathReturns(&nanogit.Tree{
 					Hash: hash.Hash{},
@@ -1199,7 +1199,7 @@ func TestGitRepository_LatestRef(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3}, // Non-empty hash
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}, // Non-empty hash
 				}, nil)
 			},
 			gitConfig: RepositoryConfig{
@@ -1420,11 +1420,11 @@ func TestGitRepository_CompareFiles(t *testing.T) {
 				// Return refs for base and ref
 				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 					Name: "refs/heads/feature",
-					Hash: hash.Hash{4, 5, 6},
+					Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 				}, nil)
 
 				// Return comparison results
@@ -1457,11 +1457,11 @@ func TestGitRepository_CompareFiles(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 
 				mockClient.CompareCommitsReturns([]nanogit.CommitFile{}, nil)
@@ -1555,7 +1555,7 @@ func TestGitRepository_ensureBranchExists(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/feature",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 			},
 			gitConfig: RepositoryConfig{
@@ -1573,7 +1573,7 @@ func TestGitRepository_ensureBranchExists(t *testing.T) {
 				// Second call - get source branch
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				// CreateRef succeeds
 				mockClient.CreateRefReturns(nil)
@@ -1870,7 +1870,7 @@ func TestGitRepository_resolveRefToHash(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 			},
 			gitConfig: RepositoryConfig{
@@ -1895,7 +1895,7 @@ func TestGitRepository_resolveRefToHash(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/feature",
-					Hash: hash.Hash{4, 5, 6},
+					Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 				}, nil)
 			},
 			gitConfig: RepositoryConfig{
@@ -1947,7 +1947,7 @@ func TestGitRepository_resolveRefToHash(t *testing.T) {
 
 			if tt.wantError {
 				require.Error(t, err)
-				require.Nil(t, refHash)
+				require.Equal(t, hash.Zero, refHash)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, refHash)
@@ -2220,7 +2220,7 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 		mockClient := &mocks.FakeClient{}
 		mockClient.GetRefReturns(nanogit.Ref{
 			Name: "refs/heads/main",
-			Hash: hash.Hash{1, 2, 3},
+			Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 		}, nil)
 
 		mockWriter := &mocks.FakeStagedWriter{}
@@ -2259,7 +2259,7 @@ func TestGitRepository_EdgeCases(t *testing.T) {
 		mockClient := &mocks.FakeClient{}
 		mockClient.GetRefReturns(nanogit.Ref{
 			Name: "refs/heads/main",
-			Hash: hash.Hash{1, 2, 3},
+			Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 		}, nil)
 		mockClient.GetCommitReturns(&nanogit.Commit{Tree: hash.Hash{}}, nil)
 		mockClient.GetBlobByPathReturns(&nanogit.Blob{}, errors.New("some read error"))
@@ -2409,7 +2409,7 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/invalid-hex",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 			},
 			ref:       "invalid-hex-zzz",
@@ -2420,7 +2420,7 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/feature",
-					Hash: hash.Hash{4, 5, 6},
+					Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 				}, nil)
 			},
 			ref:       "refs/heads/feature",
@@ -2431,7 +2431,7 @@ func TestGitRepository_ResolveRefToHash_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/tags/v1.0.0",
-					Hash: hash.Hash{7, 8, 9},
+					Hash: hash.Hash{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
 				}, nil)
 			},
 			ref:       "refs/tags/v1.0.0",
@@ -2548,11 +2548,11 @@ func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 					Name: "refs/heads/feature",
-					Hash: hash.Hash{4, 5, 6},
+					Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 				}, nil)
 				mockClient.CompareCommitsReturns(nil, errors.New("compare error"))
 			},
@@ -2566,11 +2566,11 @@ func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 					Name: "refs/heads/feature",
-					Hash: hash.Hash{4, 5, 6},
+					Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 				}, nil)
 				mockClient.CompareCommitsReturns([]nanogit.CommitFile{
 					{
@@ -2588,11 +2588,11 @@ func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 					Name: "refs/heads/feature",
-					Hash: hash.Hash{4, 5, 6},
+					Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 				}, nil)
 				mockClient.CompareCommitsReturns([]nanogit.CommitFile{
 					{
@@ -2614,11 +2614,11 @@ func TestGitRepository_CompareFiles_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 					Name: "refs/heads/feature",
-					Hash: hash.Hash{4, 5, 6},
+					Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 				}, nil)
 				mockClient.CompareCommitsReturns([]nanogit.CommitFile{
 					{
@@ -2691,7 +2691,7 @@ func TestGitRepository_ReadTree_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.GetFlatTreeReturns(nil, errors.New("flat tree error"))
 			},
@@ -2702,23 +2702,23 @@ func TestGitRepository_ReadTree_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.GetFlatTreeReturns(&nanogit.FlatTree{
 					Entries: []nanogit.FlatTreeEntry{
 						{
 							Path: "other/file.yaml", // Outside configs/
-							Hash: hash.Hash{4, 5, 6},
+							Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 							Type: protocol.ObjectTypeBlob,
 						},
 						{
 							Path: "configs/included.yaml", // Inside configs/
-							Hash: hash.Hash{7, 8, 9},
+							Hash: hash.Hash{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
 							Type: protocol.ObjectTypeBlob,
 						},
 						{
 							Path: "configs/dir", // Directory without trailing slash
-							Hash: hash.Hash{10, 11, 12},
+							Hash: hash.Hash{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
 							Type: protocol.ObjectTypeTree,
 						},
 					},
@@ -2836,7 +2836,7 @@ func TestGitRepository_ensureBranchExists_ErrorConditions(t *testing.T) {
 				// Second call - get source branch
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				// CreateRef fails
 				mockClient.CreateRefReturns(errors.New("create ref failed"))
@@ -2888,10 +2888,10 @@ func TestGitRepository_Read_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121315"),
 				}, nil)
 				mockClient.GetCommitReturns(&nanogit.Commit{
-					Tree: hash.Hash([]byte("tree-hash")),
+					Tree: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockClient.GetTreeByPathReturns(nil, errors.New("tree error"))
 			},
@@ -2903,7 +2903,7 @@ func TestGitRepository_Read_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockClient.GetCommitReturns(nil, errors.New("commit error"))
 			},
@@ -2915,10 +2915,10 @@ func TestGitRepository_Read_EdgeCases(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockClient.GetCommitReturns(&nanogit.Commit{
-					Tree: hash.Hash{4, 5, 6},
+					Hash: hash.MustFromHex("0102030405060708092a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockClient.GetBlobByPathReturns(nil, errors.New("blob error"))
 			},
@@ -2973,7 +2973,7 @@ func TestGitRepository_Create_ErrorConditions(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.NewStagedWriterReturns(nil, errors.New("staged writer error"))
 			},
@@ -2985,7 +2985,7 @@ func TestGitRepository_Create_ErrorConditions(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockWriter := &mocks.FakeStagedWriter{}
 				mockWriter.CreateBlobReturns(hash.Hash{}, errors.New("create blob error"))
@@ -3038,7 +3038,7 @@ func TestGitRepository_Update_ErrorConditions(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
 				}, nil)
 				mockClient.NewStagedWriterReturns(nil, errors.New("staged writer error"))
 			},
@@ -3050,7 +3050,7 @@ func TestGitRepository_Update_ErrorConditions(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockWriter := &mocks.FakeStagedWriter{}
 				mockWriter.UpdateBlobReturns(hash.Hash{}, errors.New("update blob error"))
@@ -3104,7 +3104,7 @@ func TestGitRepository_Delete_ErrorConditions(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockClient.NewStagedWriterReturns(nil, errors.New("staged writer error"))
 			},
@@ -3117,7 +3117,7 @@ func TestGitRepository_Delete_ErrorConditions(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockWriter := &mocks.FakeStagedWriter{}
 				mockWriter.DeleteBlobReturns(hash.Hash{}, errors.New("delete blob error"))
@@ -3132,7 +3132,7 @@ func TestGitRepository_Delete_ErrorConditions(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockWriter := &mocks.FakeStagedWriter{}
 				mockWriter.DeleteTreeReturns(hash.Hash{}, errors.New("delete tree error"))
@@ -3147,7 +3147,7 @@ func TestGitRepository_Delete_ErrorConditions(t *testing.T) {
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.GetRefReturns(nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				mockWriter := &mocks.FakeStagedWriter{}
 				mockWriter.DeleteTreeReturns(hash.Hash{}, nanogit.ErrObjectNotFound)
@@ -3194,7 +3194,7 @@ func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
 	// Only setup for ref resolution
 	mockClient.GetRefReturns(nanogit.Ref{
 		Name: "refs/heads/feature",
-		Hash: hash.Hash{4, 5, 6},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.CompareCommitsReturns([]nanogit.CommitFile{
 		{
@@ -3226,8 +3226,8 @@ func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
 	// Verify CompareCommits was called with empty base hash and feature hash
 	require.Equal(t, 1, mockClient.CompareCommitsCallCount())
 	_, baseHash, refHash := mockClient.CompareCommitsArgsForCall(0)
-	require.Nil(t, baseHash) // Empty hash for empty base
-	require.Equal(t, hash.Hash{4, 5, 6}, refHash)
+	require.Equal(t, hash.Zero, baseHash) // Empty hash for empty base
+	require.Equal(t, hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"), refHash)
 }
 
 func TestGitRepository_EmptyRefHandling(t *testing.T) {
@@ -3245,7 +3245,7 @@ func TestGitRepository_EmptyRefHandling(t *testing.T) {
 			mockClient := &mocks.FakeClient{}
 			mockClient.GetRefReturns(nanogit.Ref{
 				Name: "refs/heads/main",
-				Hash: hash.Hash{1, 2, 3},
+				Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 			}, nil)
 
 			mockWriter := &mocks.FakeStagedWriter{}
@@ -3307,7 +3307,7 @@ func TestGitRepository_CompareFiles_ResolveErrors(t *testing.T) {
 				// First call succeeds for base
 				mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 					Name: "refs/heads/main",
-					Hash: hash.Hash{1, 2, 3},
+					Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				}, nil)
 				// Second call fails for ref
 				mockClient.GetRefReturnsOnCall(1, nanogit.Ref{}, errors.New("ref error"))
@@ -3349,14 +3349,14 @@ func TestGitRepository_Read_EmptyRef(t *testing.T) {
 	mockClient := &mocks.FakeClient{}
 	mockClient.GetRefReturns(nanogit.Ref{
 		Name: "refs/heads/main",
-		Hash: hash.Hash{1, 2, 3},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.GetCommitReturns(&nanogit.Commit{
-		Tree: hash.Hash{4, 5, 6},
+		Tree: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
 	}, nil)
 	mockClient.GetBlobByPathReturns(&nanogit.Blob{
 		Content: []byte("file content"),
-		Hash:    hash.Hash{7, 8, 9},
+		Hash:    hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 
 	gitRepo := &gitRepository{
@@ -3384,13 +3384,13 @@ func TestGitRepository_ReadTree_EmptyRef(t *testing.T) {
 	mockClient := &mocks.FakeClient{}
 	mockClient.GetRefReturns(nanogit.Ref{
 		Name: "refs/heads/main",
-		Hash: hash.Hash{1, 2, 3},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.GetFlatTreeReturns(&nanogit.FlatTree{
 		Entries: []nanogit.FlatTreeEntry{
 			{
 				Path: "configs/test.yaml",
-				Hash: hash.Hash{4, 5, 6},
+				Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 				Type: protocol.ObjectTypeBlob,
 			},
 		},
@@ -3512,17 +3512,17 @@ func TestGitRepository_Write_DefaultRef(t *testing.T) {
 	// First call for Read check - file not found
 	mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 		Name: "refs/heads/main",
-		Hash: hash.Hash{1, 2, 3},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.GetCommitReturns(&nanogit.Commit{
-		Tree: hash.Hash{4, 5, 6},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.GetBlobByPathReturns(&nanogit.Blob{}, nanogit.ErrObjectNotFound)
 
 	// Second call for Create
 	mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 		Name: "refs/heads/main",
-		Hash: hash.Hash{1, 2, 3},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockWriter := &mocks.FakeStagedWriter{}
 	mockWriter.CreateBlobReturns(hash.Hash{}, nil)
@@ -3553,14 +3553,14 @@ func TestGitRepository_Read_RefInFileInfo(t *testing.T) {
 	mockClient := &mocks.FakeClient{}
 	mockClient.GetRefReturns(nanogit.Ref{
 		Name: "refs/heads/feature",
-		Hash: hash.Hash{1, 2, 3},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.GetCommitReturns(&nanogit.Commit{
-		Tree: hash.Hash{4, 5, 6},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.GetBlobByPathReturns(&nanogit.Blob{
 		Content: []byte("file content"),
-		Hash:    hash.Hash{7, 8, 9},
+		Hash:    hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 
 	gitRepo := &gitRepository{
@@ -3590,10 +3590,10 @@ func TestGitRepository_Read_GetTreeByPath_NotFound(t *testing.T) {
 	mockClient := &mocks.FakeClient{}
 	mockClient.GetRefReturns(nanogit.Ref{
 		Name: "refs/heads/main",
-		Hash: hash.Hash{1, 2, 3},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.GetCommitReturns(&nanogit.Commit{
-		Tree: hash.Hash([]byte("tree-hash")),
+		Tree: hash.Hash{30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49},
 	}, nil)
 	mockClient.GetTreeByPathReturns(nil, nanogit.ErrObjectNotFound)
 
@@ -3622,7 +3622,7 @@ func TestGitRepository_ReadTree_GetFlatTree_NotFound(t *testing.T) {
 	mockClient := &mocks.FakeClient{}
 	mockClient.GetRefReturns(nanogit.Ref{
 		Name: "refs/heads/main",
-		Hash: hash.Hash{1, 2, 3},
+		Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 	}, nil)
 	mockClient.GetFlatTreeReturns(nil, nanogit.ErrObjectNotFound)
 
@@ -3663,11 +3663,11 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 			mockClient := &mocks.FakeClient{}
 			mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
 				Name: "refs/heads/main",
-				Hash: hash.Hash{1, 2, 3},
+				Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"),
 			}, nil)
 			mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
 				Name: "refs/heads/feature",
-				Hash: hash.Hash{4, 5, 6},
+				Hash: hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121315"),
 			}, nil)
 			mockClient.CompareCommitsReturns([]nanogit.CommitFile{
 				{

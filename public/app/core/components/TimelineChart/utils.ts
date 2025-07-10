@@ -327,7 +327,7 @@ export function prepareTimelineFields(
     for (let i = 0; i < frame.fields.length; i++) {
       let f = frame.fields[i];
 
-      if (f.type === FieldType.time) {
+      if (f.type === FieldType.time && typeof f.values[0] === 'number') {
         if (startFieldIdx === -1) {
           startFieldIdx = i;
         } else if (endFieldIdx === -1) {
@@ -390,9 +390,11 @@ export function prepareTimelineFields(
     for (let field of frame.fields) {
       switch (field.type) {
         case FieldType.time:
-          isTimeseries = true;
-          hasTimeseries = true;
-          fields.push(field);
+          if (typeof field.values[0] === 'number') {
+            isTimeseries = true;
+            hasTimeseries = true;
+            fields.push(field);
+          }
           break;
         case FieldType.enum:
         case FieldType.number:

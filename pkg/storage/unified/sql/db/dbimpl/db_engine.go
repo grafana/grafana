@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
@@ -20,27 +19,21 @@ import (
 // driver.
 const tlsConfigName = "db_engine_tls"
 
-func getEngine(cfg *setting.Cfg) (*xorm.Engine, error) {
-	dbSection := cfg.SectionWithEnvOverrides("database")
-	dbType := dbSection.Key("type").String()
-	if dbType == "" {
-		return nil, fmt.Errorf("no database type specified")
-	}
-
-	switch dbType {
+func getEngine(config *sqlstore.DatabaseConfig) (*xorm.Engine, error) {
+	switch config.Type {
 	case dbTypeMySQL, dbTypePostgres, dbTypeSQLite:
-		config, err := sqlstore.NewDatabaseConfig(cfg, nil)
-		if err != nil {
-			return nil, nil
-		}
-
-		engine, err := xorm.NewEngine(dbType, config.ConnectionString)
+		engine, err := xorm.NewEngine(config.Type, config.ConnectionString)
 		if err != nil {
 			return nil, fmt.Errorf("open database: %w", err)
 		}
+
+		engine.SetMaxOpenConns(config.MaxOpenConn)
+		engine.SetMaxIdleConns(config.MaxIdleConn)
+		engine.SetConnMaxLifetime(time.Duration(config.ConnMaxLifetime) * time.Second)
+
 		return engine, nil
 	default:
-		return nil, fmt.Errorf("unsupported database type: %s", dbType)
+		return nil, fmt.Errorf("unsupported database type: %s", config.Type)
 	}
 }
 
@@ -87,9 +80,10 @@ func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
-	engine.SetMaxOpenConns(0)
-	engine.SetMaxIdleConns(2)
-	engine.SetConnMaxLifetime(4 * time.Hour)
+	engine.SetMaxOpenConns(getter.Int("max_open_conn", 0))
+	engine.SetMaxIdleConns(getter.Int("max_idle_conn", 4))
+	maxLifetime := time.Duration(getter.Int("conn_max_lifetime", 14400)) * time.Second
+	engine.SetConnMaxLifetime(maxLifetime)
 
 	return engine, nil
 }
@@ -187,6 +181,11 @@ func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
+
+	engine.SetMaxOpenConns(getter.Int("max_open_conn", 0))
+	engine.SetMaxIdleConns(getter.Int("max_idle_conn", 4))
+	maxLifetime := time.Duration(getter.Int("conn_max_lifetime", 14400)) * time.Second
+	engine.SetConnMaxLifetime(maxLifetime)
 
 	return engine, nil
 }

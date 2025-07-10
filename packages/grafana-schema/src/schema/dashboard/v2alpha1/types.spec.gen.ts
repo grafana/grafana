@@ -11,19 +11,19 @@ export const defaultAnnotationQueryKind = (): AnnotationQueryKind => ({
 });
 
 export interface AnnotationQuerySpec {
-	datasource?: DataSourceRef;
-	query?: DataQueryKind;
+	query: DataQueryKind;
 	enable: boolean;
 	hide: boolean;
 	iconColor: string;
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
-	// Catch-all field for datasource-specific properties
+	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
 	legacyOptions?: Record<string, any>;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
+	query: defaultDataQueryKind(),
 	enable: false,
 	hide: false,
 	iconColor: "",
@@ -31,24 +31,22 @@ export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	builtIn: false,
 });
 
-export interface DataSourceRef {
-	// The plugin type-id
-	type?: string;
-	// Specific datasource instance
-	uid?: string;
-}
-
-export const defaultDataSourceRef = (): DataSourceRef => ({
-});
-
 export interface DataQueryKind {
-	// The kind of a DataQueryKind is the datasource type
-	kind: string;
+	kind: "DataQuery";
+	group: string;
+	version: string;
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	datasource?: {
+		name?: string;
+	};
 	spec: Record<string, any>;
 }
 
 export const defaultDataQueryKind = (): DataQueryKind => ({
-	kind: "",
+	kind: "DataQuery",
+	group: "",
+	version: "v0",
 	spec: {},
 });
 
@@ -151,7 +149,6 @@ export const defaultPanelQueryKind = (): PanelQueryKind => ({
 
 export interface PanelQuerySpec {
 	query: DataQueryKind;
-	datasource?: DataSourceRef;
 	refId: string;
 	hidden: boolean;
 }
@@ -994,7 +991,6 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
-	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
 	sort: VariableSort;
@@ -1281,6 +1277,18 @@ export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	multi: false,
 	hide: "dontHide",
 	skipUrlSync: false,
+});
+
+// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
+// This type is widely used in the codebase and changing it will have a big impact
+export interface DataSourceRef {
+	// The plugin type-id
+	type?: string;
+	// Specific datasource instance
+	uid?: string;
+}
+
+export const defaultDataSourceRef = (): DataSourceRef => ({
 });
 
 // Adhoc variable kind
