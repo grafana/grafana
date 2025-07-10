@@ -1,4 +1,4 @@
-import { pick } from 'lodash';
+import { pick, uniq } from 'lodash';
 import memoize from 'micro-memoize';
 
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
@@ -31,22 +31,60 @@ import {
   mergePartialAmRouteWithRouteTree,
   omitRouteFromRouteTree,
 } from '../../utils/routeTree';
-import { NAMED_ROOT_LABEL_NAME } from './Policy';
+import uFuzzy from '@leeoniya/ufuzzy';
+import { useMemo } from 'react';
 
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
 const {
+  useDeleteNamespacedRoutingTreeMutation,
   useListNamespacedRoutingTreeQuery,
   useReplaceNamespacedRoutingTreeMutation,
   useLazyReadNamespacedRoutingTreeQuery,
+  useReadNamespacedRoutingTreeQuery,
 } = routingTreeApi;
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-export const useNotificationPolicyRoute = ({ alertmanager }: BaseAlertmanagerArgs, { skip }: Skippable = {}) => {
+export const useNotificationPolicyRoute = ({ alertmanager }: BaseAlertmanagerArgs, routeName: string = ROOT_ROUTE_NAME, { skip }: Skippable = {}) => {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
-  const k8sRouteQuery = useListNamespacedRoutingTreeQuery(
+  const k8sRouteQuery = useReadNamespacedRoutingTreeQuery(
+    { namespace: getAPINamespace(), name: routeName },
+    {
+      skip: skip || !k8sApiSupported,
+      selectFromResult: (result) => {
+        return {
+          ...result,
+          currentData: result.currentData ? k8sRoutesToRoutesMemoized([result.currentData])[0] : undefined,
+          data: result.data ? k8sRoutesToRoutesMemoized([result.data])[0] : undefined,
+        };
+      },
+    }
+  );
+
+  const amConfigQuery = useGetAlertmanagerConfigurationQuery(alertmanager, {
+    skip: skip || k8sApiSupported,
+    selectFromResult: (result) => {
+      return {
+        ...result,
+        currentData: result.currentData?.alertmanager_config?.route
+          ? parseAmConfigRoute(result.currentData.alertmanager_config.route)
+          : undefined,
+        data: result.data?.alertmanager_config?.route
+          ? parseAmConfigRoute(result.data.alertmanager_config.route)
+          : undefined,
+      };
+    },
+  });
+
+  return k8sApiSupported ? k8sRouteQuery : amConfigQuery;
+};
+
+export const useListNotificationPolicyRoutes = ({ alertmanager }: BaseAlertmanagerArgs, { skip }: Skippable = {}) => {
+  const k8sApiSupported = shouldUseK8sApi(alertmanager);
+
+  return useListNamespacedRoutingTreeQuery(
     { namespace: getAPINamespace() },
     {
       skip: skip || !k8sApiSupported,
@@ -59,23 +97,6 @@ export const useNotificationPolicyRoute = ({ alertmanager }: BaseAlertmanagerArg
       },
     }
   );
-
-  const amConfigQuery = useGetAlertmanagerConfigurationQuery(alertmanager, {
-    skip: skip || k8sApiSupported,
-    selectFromResult: (result) => {
-      return {
-        ...result,
-        currentData: result.currentData?.alertmanager_config?.route
-          ? [parseAmConfigRoute(result.currentData.alertmanager_config.route)]
-          : undefined,
-        data: result.data?.alertmanager_config?.route
-          ? [parseAmConfigRoute(result.data.alertmanager_config.route)]
-          : undefined,
-      };
-    },
-  });
-
-  return k8sApiSupported ? k8sRouteQuery : amConfigQuery;
 };
 
 const parseAmConfigRoute = memoize((route: Route): Route => {
@@ -229,17 +250,63 @@ export function useAddNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs)
   return k8sApiSupported ? addToK8sApi : addToAlertmanagerConfiguration;
 }
 
+type DeleteRoutingTreeArgs = { name: string; resourceVersion?: string };
+export function useDeleteRoutingTree() {
+  const [deleteNamespacedRoutingTree] = useDeleteNamespacedRoutingTreeMutation();
+
+  return useAsync(async ({ name, resourceVersion }: DeleteRoutingTreeArgs) => {
+    const namespace = getAPINamespace();
+
+    return deleteNamespacedRoutingTree({
+      name: name,
+      namespace,
+      ioK8SApimachineryPkgApisMetaV1DeleteOptions: { preconditions: { resourceVersion } },
+    }).unwrap();
+  });
+}
+
+const fuzzyFinder = new uFuzzy({
+  intraMode: 1,
+  intraIns: 1,
+  intraSub: 1,
+  intraDel: 1,
+  intraTrn: 1,
+});
+
+export const useRootRouteSearch = (
+  policies: Route[],
+  search?: string | null
+): Route[] => {
+  const nameHaystack = useMemo(() => {
+    return policies.map((policy) => policy.name ?? '');
+  }, [policies]);
+
+  const receiverHaystack = useMemo(() => {
+    return policies.map((policy) => policy.receiver ?? '');
+  }, [policies]);
+
+  if (!search) {
+    return policies;
+  }
+
+  const nameHits = fuzzyFinder.filter(nameHaystack, search) ?? [];
+  const typeHits = fuzzyFinder.filter(receiverHaystack, search) ?? [];
+
+  const hits = [...nameHits, ...typeHits];
+
+  return uniq(hits).map((id) => policies[id]) ?? [];
+};
+
 function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree[]): Route[] {
   return routes?.map((route) => {
     return {
       ...route.spec.defaults,
       routes: route.spec.routes?.map((subroute) => (k8sSubRouteToRoute(subroute, route.spec.defaults.name))),
-      // TODO: Improve this special case for named routes.
-      object_matchers: route.spec.defaults.name === '' || route.spec.defaults.name === ROOT_ROUTE_NAME ? undefined : [[NAMED_ROOT_LABEL_NAME, MatcherOperator.equal, route.spec.defaults.name]],
       [ROUTES_META_SYMBOL]: {
         provisioned: isK8sEntityProvisioned(route),
         resourceVersion: route.metadata.resourceVersion,
         name: route.metadata.name,
+        metadata: route.metadata,
       },
     };
   });

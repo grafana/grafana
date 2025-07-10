@@ -1,6 +1,6 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
-import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/routesApi.gen';
 
 export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
 
@@ -146,6 +146,7 @@ export type Route = {
     provisioned?: boolean;
     resourceVersion?: string;
     name?: string;
+    metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
   };
 };
 

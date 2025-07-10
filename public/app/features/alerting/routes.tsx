@@ -86,6 +86,21 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/notifications/routes/:name/edit',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        ...PERMISSIONS_NOTIFICATION_POLICIES_READ,
+        ...PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "EditRoutingTreePage" */ 'app/features/alerting/unified/components/notification-policies/EditRoutingTreePage'
+            )
+      ),
+    },
+    {
       path: '/alerting/silences',
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceRead,
