@@ -11,7 +11,7 @@ import {
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey } from '../../utils/clone';
+import { getCloneKey, isClonedKeyOf } from '../../utils/clone';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -125,7 +125,7 @@ export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, co
       clonedTabs.push(tabClone);
     }
   }
-
+  // updateLayout(tab.parent, clonedTabs, tab.state.key!);
   tab.setState({ repeatedTabs: clonedTabs });
   tab.publishEvent(new DashboardRepeatsProcessedEvent({ source: tab }), true);
 }
@@ -157,4 +157,37 @@ function getPrevRepeatValues(mainTab: TabItem, varName: string): VariableValueSi
   }
 
   return values;
+}
+
+function getTabsFilterOutRepeatClones(layout: TabsLayoutManager, tabKey: string) {
+  return layout.state.tabs.filter((tab) => !isClonedKeyOf(tab.state.key!, tabKey));
+}
+
+function removeRepeatedTabs(layout: TabsLayoutManager, tab: TabItem) {
+  // const tab = this._getTab();
+  // const layout = this._getLayout();
+  const tabs = getTabsFilterOutRepeatClones(layout, tab.state.key!);
+
+  layout.setState({ tabs });
+
+  // // Remove behavior and the scoped local variable
+  // tab.setState({ $behaviors: tab.state.$behaviors!.filter((b) => b !== this), $variables: undefined });
+}
+
+function updateLayout(layout: TabsLayoutManager, tabs: TabItem[], tabKey: string) {
+  const allTabs = getTabsFilterOutRepeatClones(layout, tabKey);
+  const index = allTabs.findIndex((tab) => tab.state.key!.includes(tabKey));
+
+  if (index === -1) {
+    throw new Error('TabItemRepeaterBehavior: Tab not found in layout');
+  }
+  const newTabs = [...allTabs.slice(0, index + 1), ...tabs, ...allTabs.slice(index + 1)];
+
+  console.log(
+    allTabs.map((tab) => tab.state.title),
+    index,
+    newTabs.map((tab) => tab.state.title)
+  );
+
+  layout.setState({ tabs: newTabs });
 }
