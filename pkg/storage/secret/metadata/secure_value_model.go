@@ -29,8 +29,8 @@ type secureValueDB struct {
 	UpdatedBy   string
 
 	// Kubernetes Status
-	Phase   string
-	Message sql.NullString
+	Active  bool
+	Version int64
 
 	// Spec
 	Description string
@@ -74,8 +74,8 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 			Decrypters:  decrypters,
 		},
 		Status: secretv0alpha1.SecureValueStatus{
-			Phase:      secretv0alpha1.SecureValuePhase(sv.Phase),
 			ExternalID: sv.ExternalID,
+			Version:    sv.Version,
 		},
 	}
 
@@ -85,10 +85,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	if sv.Ref.Valid {
 		resource.Spec.Ref = &sv.Ref.String
 	}
-	if sv.Message.Valid {
-		resource.Status.Message = sv.Message.String
-	}
-	resource.Status.Phase = secretv0alpha1.SecureValuePhase(sv.Phase)
+
 	resource.Status.ExternalID = sv.ExternalID
 
 	// Set all meta fields here for consistency.
@@ -125,24 +122,6 @@ func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID string) (*secureValueD
 	row.GUID = uuid.New().String()
 	row.Created = now
 	row.CreatedBy = actorUID
-	row.Updated = now
-	row.UpdatedBy = actorUID
-
-	return row, nil
-}
-
-// toUpdateRow maps a Kubernetes resource into a DB row for existing resources being updated.
-func toUpdateRow(currentRow *secureValueDB, newSecureValue *secretv0alpha1.SecureValue, actorUID, externalID string) (*secureValueDB, error) {
-	row, err := toRow(newSecureValue, externalID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create: %w", err)
-	}
-
-	now := time.Now().UTC().Unix()
-
-	row.GUID = currentRow.GUID
-	row.Created = currentRow.Created
-	row.CreatedBy = currentRow.CreatedBy
 	row.Updated = now
 	row.UpdatedBy = actorUID
 
@@ -201,11 +180,6 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
-	var statusMessage *string
-	if sv.Status.Message != "" {
-		statusMessage = &sv.Status.Message
-	}
-
 	return &secureValueDB{
 		GUID:        string(sv.UID),
 		Name:        sv.Name,
@@ -217,8 +191,7 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		Updated:     updatedTimestamp,
 		UpdatedBy:   meta.GetUpdatedBy(),
 
-		Phase:   string(sv.Status.Phase),
-		Message: toNullString(statusMessage),
+		Version: sv.Status.Version,
 
 		Description: sv.Spec.Description,
 		Keeper:      toNullString(sv.Spec.Keeper),
@@ -233,6 +206,7 @@ type secureValueForDecrypt struct {
 	Keeper     sql.NullString
 	Decrypters sql.NullString
 	Ref        sql.NullString
+	Active     bool
 	ExternalID string
 }
 

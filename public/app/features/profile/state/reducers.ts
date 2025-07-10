@@ -5,7 +5,9 @@ import { dateTimeFormatTimeAgo, setWeekStart, TimeZone } from '@grafana/data';
 import { getWeekStart, WeekStart } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { Team, ThunkResult, UserDTO, UserOrg, UserSession } from 'app/types';
+import { ThunkResult } from 'app/types/store';
+import { Team } from 'app/types/teams';
+import { UserDTO, UserOrg, UserSession } from 'app/types/user';
 
 export interface UserState {
   orgId: number;

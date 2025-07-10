@@ -16,8 +16,8 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
 
-import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../../index';
-import { TraceSpan, Trace } from '../../types';
+import { ViewRange, TUpdateViewRangeTimeFunction, ViewRangeTimeUpdate } from '../../TraceTimelineViewer/types';
+import { Trace, TraceSpan } from '../../types/trace';
 
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';

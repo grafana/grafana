@@ -247,8 +247,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 	})
 
-	t.Run("DeleteDataSourceById", func(t *testing.T) {
-		t.Run("can delete datasource", func(t *testing.T) {
+	t.Run("DeleteDataSource", func(t *testing.T) {
+		t.Run("can delete datasource with ID", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
@@ -263,10 +263,28 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.Equal(t, 0, len(dataSources))
 		})
 
-		t.Run("Can not delete datasource with wrong orgID", func(t *testing.T) {
+		t.Run("can delete datasource with UID", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
+
+			err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{UID: ds.UID, OrgID: ds.OrgID})
+			require.NoError(t, err)
+
+			query := datasources.GetDataSourcesQuery{OrgID: 10}
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
+			require.NoError(t, err)
+
+			require.Equal(t, 0, len(dataSources))
+		})
+
+		t.Run("Can not delete datasource with wrong orgID", func(t *testing.T) {
+			db := db.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := SqlStore{
+				db:     db,
+				logger: log.NewNopLogger(),
+			}
 
 			err := ss.DeleteDataSource(context.Background(),
 				&datasources.DeleteDataSourceCommand{ID: ds.ID, OrgID: 123123})
@@ -307,7 +325,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {
 		db := db.InitTestDB(t)
-		ss := SqlStore{db: db}
+		ss := SqlStore{
+			db:     db,
+			logger: log.NewNopLogger(),
+		}
 
 		var called bool
 		db.Bus().AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {

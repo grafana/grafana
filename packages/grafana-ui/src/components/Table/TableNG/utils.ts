@@ -1,7 +1,6 @@
 import { Property } from 'csstype';
 import { SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
-import { varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -31,26 +30,6 @@ export type CellHeightCalculator = (text: string, cellWidth: number) => number;
 
 /**
  * @internal
- * Returns a function that calculates the height of a cell based on its text content and width.
- */
-export function getCellHeightCalculator(
-  // should be pre-configured with font and letterSpacing
-  ctx: CanvasRenderingContext2D,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding = 0
-) {
-  const { count } = varPreLine(ctx);
-
-  return (text: string, cellWidth: number) => {
-    const numLines = count(text, cellWidth);
-    const totalHeight = numLines * lineHeight + 2 * padding;
-    return Math.max(totalHeight, defaultRowHeight);
-  };
-}
-
-/**
- * @internal
  * Returns the default row height based on the theme and cell height setting.
  */
 export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCellHeight): number {
@@ -71,17 +50,92 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight?: TableCell
 
 /**
  * @internal
+ * Returns true if cell inspection (hover to see full content) is enabled for the field.
+ */
+export function isCellInspectEnabled(field: Field): boolean {
+  return field.config?.custom?.inspect ?? false;
+}
+
+/**
+ * @internal
+ * Returns true if text wrapping should be applied to the cell.
+ */
+export function shouldTextWrap(field: Field): boolean {
+  const cellOptions = getCellOptions(field);
+  // @ts-ignore - a handful of cellTypes have boolean wrapText, but not all of them.
+  // we should be very careful to only use boolean type for cellOptions.wrapText.
+  // TBH we will probably move this up to a field option which is showIf rendered anyway,
+  // but that'll be a migration to do, so it needs to happen post-GA.
+  return Boolean(cellOptions?.wrapText);
+}
+
+// matches characters which CSS
+const spaceRegex = /[\s-]/;
+
+export interface GetMaxWrapCellOptions {
+  colWidths: number[];
+  avgCharWidth: number;
+  wrappedColIdxs: boolean[];
+}
+
+/**
+ * @internal
+ * loop through the fields and their values, determine which cell is going to determine the
+ * height of the row based on its content and width, and then return the text, index, and number of lines for that cell.
+ */
+export function getMaxWrapCell(
+  fields: Field[],
+  rowIdx: number,
+  { colWidths, avgCharWidth, wrappedColIdxs }: GetMaxWrapCellOptions
+): {
+  text: string;
+  idx: number;
+  numLines: number;
+} {
+  let maxLines = 1;
+  let maxLinesIdx = -1;
+  let maxLinesText = '';
+
+  // TODO: consider changing how we store this, using a record by column key instead of an array
+  for (let i = 0; i < colWidths.length; i++) {
+    if (wrappedColIdxs[i]) {
+      const field = fields[i];
+      // special case: for the header, provide `-1` as the row index.
+      const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
+
+      if (cellTextRaw != null) {
+        const cellText = String(cellTextRaw);
+
+        if (spaceRegex.test(cellText)) {
+          const charsPerLine = colWidths[i] / avgCharWidth;
+          const approxLines = cellText.length / charsPerLine;
+
+          if (approxLines > maxLines) {
+            maxLines = approxLines;
+            maxLinesIdx = i;
+            maxLinesText = cellText;
+          }
+        }
+      }
+    }
+  }
+
+  return { text: maxLinesText, idx: maxLinesIdx, numLines: maxLines };
+}
+
+/**
+ * @internal
  * Returns true if text overflow handling should be applied to the cell.
  */
-export function shouldTextOverflow(
-  fieldType: FieldType,
-  cellType: TableCellDisplayMode,
-  textWrap: boolean,
-  cellInspect: boolean
-): boolean {
-  // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
-  // so we need to ensure we don't apply overflow hover states fo type image
-  return fieldType === FieldType.string && cellType !== TableCellDisplayMode.Image && !textWrap && !cellInspect;
+export function shouldTextOverflow(field: Field): boolean {
+  return (
+    field.type === FieldType.string &&
+    // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
+    // so we need to ensure we don't apply overflow hover states for type image
+    getCellOptions(field).type !== TableCellDisplayMode.Image &&
+    !shouldTextWrap(field) &&
+    !isCellInspectEnabled(field)
+  );
 }
 
 /**
@@ -118,6 +172,7 @@ const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
 /**
  * @internal
  * Returns the cell options for a field, migrating from legacy displayMode if necessary.
+ * TODO: remove live migration in favor of doing it in dashboard or panel migrator
  */
 export function getCellOptions(field: Field): TableCellOptions {
   if (field.config.custom?.displayMode) {
@@ -558,4 +613,13 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
       return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
     }
   }
+}
+
+/** @internal */
+export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDisplayMode) {
+  return (
+    cellType !== TableCellDisplayMode.DataLinks &&
+    cellType !== TableCellDisplayMode.Actions &&
+    (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
+  );
 }

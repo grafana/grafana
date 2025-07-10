@@ -9,7 +9,7 @@ import { AzureQueryType } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
-import { AzureMonitorQuery } from '../../types';
+import { AzureMonitorQuery } from '../../types/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import Filters from './Filters';

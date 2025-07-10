@@ -3,7 +3,7 @@ import { monacoTypes } from '@grafana/ui';
 import { LogsTokenTypes } from '../../language/logs/completion/types';
 import { CLOUDWATCH_LOGS_LANGUAGE_DEFINITION_ID } from '../../language/logs/definition';
 
-export const singleLineFullQuery = {
+export const logsTestDataSingleLineFullQuery = {
   query: `fields @timestamp, @message | limit 20 # this is a comment`,
   tokens: [
     [

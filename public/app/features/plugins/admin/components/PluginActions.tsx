@@ -6,7 +6,7 @@ import { Trans } from '@grafana/i18n';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
-import { InstallControlsButton } from '../components/InstallControls';
+import { InstallControlsButton } from '../components/InstallControls/InstallControlsButton';
 import {
   getLatestCompatibleVersion,
   hasInstallControlWarning,

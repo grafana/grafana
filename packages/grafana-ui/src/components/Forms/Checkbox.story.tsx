@@ -9,7 +9,7 @@ import mdx from './Checkbox.mdx';
 import { Field } from './Field';
 
 const meta: Meta<typeof Checkbox> = {
-  title: 'Forms/Checkbox',
+  title: 'Inputs/Checkbox',
   component: Checkbox,
   parameters: {
     docs: {
