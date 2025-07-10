@@ -1595,8 +1595,6 @@ ${buildImageContent(
   imageRenderType,
   'A time series visualization with a curved line representing the polynomial function'
 )}
-
-> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`regressionTransformation\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
   `;
     },
   },

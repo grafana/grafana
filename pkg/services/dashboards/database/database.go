@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
@@ -68,6 +69,33 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 
 func (d *dashboardStore) emitEntityEvent() bool {
 	return d.features != nil && d.features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch)
+}
+
+func (d *dashboardStore) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.database.GetDashboardsByLibraryPanelUID")
+	defer span.End()
+
+	connectedDashboards := make([]*dashboards.DashboardRef, 0)
+	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.store.WithDbSession(ctx, func(session *db.Session) error {
+		builder := db.NewSqlBuilder(d.cfg, d.features, d.store.GetDialect(), recursiveQueriesAreSupported)
+		builder.Write("SELECT d.*")
+		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
+		builder.Write(" INNER JOIN " + model.LibraryElementTableName + " AS le ON lec.element_id = le.id")
+		builder.Write(" INNER JOIN dashboard AS d ON lec.connection_id = d.id")
+		builder.Write(` WHERE le.uid=? AND le.org_id=?`, libraryPanelUID, orgID)
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&connectedDashboards); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return connectedDashboards, err
 }
 
 func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dash *dashboards.Dashboard, overwrite bool) (bool, error) {

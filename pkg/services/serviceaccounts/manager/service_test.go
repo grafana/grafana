@@ -117,7 +117,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
+func TestIntegrationProvideServiceAccount_DeleteServiceAccount(t *testing.T) {
 	storeMock := newServiceAccountStoreFake()
 	acSvc := actest.FakeService{}
 	pSvc := &actest.FakePermissionsService{}

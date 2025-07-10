@@ -13,12 +13,10 @@ import {
 import { getDataSourceSrv, usePluginComponents, UsePluginComponentsResult } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
-import { DataSourceSettingsState, useDispatch } from 'app/types';
+import { DataSourceSettingsState } from 'app/types/datasources';
+import { useDispatch } from 'app/types/store';
 
 import {
-  dataSourceLoaded,
-  setDataSourceName,
-  setIsDefault,
   useDataSource,
   useDataSourceExploreUrl,
   useDataSourceMeta,
@@ -28,7 +26,8 @@ import {
   useInitDataSourceSettings,
   useTestDataSource,
   useUpdateDatasource,
-} from '../state';
+} from '../state/hooks';
+import { setIsDefault, setDataSourceName, dataSourceLoaded } from '../state/reducers';
 import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { DataSourceRights } from '../types';
 
@@ -123,6 +122,16 @@ export function EditDataSourceView({
   let currentJsonData = dataSource.jsonData;
   let currentSecureJsonData = dataSource.secureJsonData;
 
+  const isPDCInjected = components.some((component) => component.meta.pluginId === 'grafana-pdc-app');
+
+  const dataSourceWithIsPDCInjected = {
+    ...dataSource,
+    jsonData: {
+      ...dataSource.jsonData,
+      pdcInjected: isPDCInjected,
+    },
+  };
+
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
@@ -190,7 +199,7 @@ export function EditDataSourceView({
         <DataSourcePluginContextProvider instanceSettings={dsi}>
           <DataSourcePluginSettings
             plugin={plugin}
-            dataSource={dataSource}
+            dataSource={dataSourceWithIsPDCInjected}
             dataSourceMeta={dataSourceMeta}
             onModelChange={onOptionsChange}
           />

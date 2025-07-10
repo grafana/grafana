@@ -177,6 +177,13 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/story-rules',
+    files: ['packages/grafana-ui/src/**/*.story.tsx'],
+    rules: {
+      '@grafana/consistent-story-titles': 'error',
+    },
+  },
+  {
     name: 'grafana/public-dashboards-overrides',
     files: ['public/dashboards/scripted*.js'],
     rules: {

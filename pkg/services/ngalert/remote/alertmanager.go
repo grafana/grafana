@@ -48,12 +48,14 @@ func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.Postab
 	return nil
 }
 
-// DecryptFn is a function that takes in an encrypted value and returns it decrypted.
-type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
+type Crypto interface {
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
+	DecryptExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error
+}
 
 type Alertmanager struct {
 	autogenFn         AutogenFn
-	decrypt           DecryptFn
+	crypto            Crypto
 	defaultConfig     string
 	defaultConfigHash string
 	log               log.Logger
@@ -120,7 +122,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -204,7 +206,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	return &Alertmanager{
 		amClient:          amc,
 		autogenFn:         autogenFn,
-		decrypt:           decryptFn,
+		crypto:            crypto,
 		defaultConfig:     string(rawCfg),
 		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
 		log:               logger,
@@ -281,22 +283,30 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	if err := am.autogenFn(ctx, am.log, am.orgID, &c.AlertmanagerConfig, true); err != nil {
 		return err
 	}
+
 	decryptedCfg, err := am.decryptConfiguration(ctx, c)
 	if err != nil {
 		return err
 	}
-	rawDecrypted, err := json.Marshal(decryptedCfg)
+
+	// Decrypt and merge extra configs
+	if err := am.mergeExtraConfigs(ctx, decryptedCfg); err != nil {
+		return fmt.Errorf("unable to merge extra configurations: %w", err)
+	}
+	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
+	rawPayload, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("unable to marshal decrypted configuration: %w", err)
 	}
-	configHash := md5.Sum(rawDecrypted)
+
+	configHash := md5.Sum(rawPayload)
 
 	// Send the configuration only if we need to.
 	if !am.shouldSendConfig(ctx, configHash) {
 		return nil
 	}
 
-	return am.sendConfiguration(ctx, decryptedCfg, config.ConfigurationHash, config.CreatedAt, am.isDefaultConfiguration(configHash))
+	return am.sendConfiguration(ctx, payload, fmt.Sprintf("%x", configHash), config.CreatedAt, am.isDefaultConfiguration(configHash))
 }
 
 func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
@@ -318,7 +328,7 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 	}
 
 	// Decrypt the receivers in the configuration.
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfgCopy.AlertmanagerConfig.Receivers, decrypter(ctx, am.decrypt))
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfgCopy.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt receivers: %w", err)
 	}
@@ -327,13 +337,13 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 	return cfgCopy, nil
 }
 
-func decrypter(ctx context.Context, decryptFn DecryptFn) models.DecryptFn {
+func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
 	return func(value string) (string, error) {
 		decoded, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
 			return "", err
 		}
-		decrypted, err := decryptFn(ctx, decoded)
+		decrypted, err := crypto.Decrypt(ctx, decoded)
 		if err != nil {
 			return "", err
 		}
@@ -341,11 +351,32 @@ func decrypter(ctx context.Context, decryptFn DecryptFn) models.DecryptFn {
 	}
 }
 
-func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
+// mergeExtraConfigs decrypts and applies merged configuration if extra configs exist.
+func (am *Alertmanager) mergeExtraConfigs(ctx context.Context, config *apimodels.PostableUserConfig) error {
+	if len(config.ExtraConfigs) == 0 {
+		return nil
+	}
+
+	if err := am.crypto.DecryptExtraConfigs(ctx, config); err != nil {
+		return fmt.Errorf("unable to decrypt extra configs: %w", err)
+	}
+
+	mergeResult, err := config.GetMergedAlertmanagerConfig()
+	if err != nil {
+		return fmt.Errorf("unable to get merged Alertmanager configuration: %w", err)
+	}
+	config.AlertmanagerConfig = mergeResult.Config
+	// Clear ExtraConfigs to avoid re-processing them later
+	config.ExtraConfigs = nil
+
+	return nil
+}
+
+func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg *remoteClient.GrafanaAlertmanagerConfig, hash string, createdAt int64, isDefault bool) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
-		decrypted,
+		cfg,
 		hash,
 		createdAt,
 		isDefault,
@@ -379,13 +410,6 @@ func (am *Alertmanager) SendState(ctx context.Context) error {
 
 // SaveAndApplyConfig decrypts and sends a configuration to the remote Alertmanager.
 func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
-	// Get the hash for the encrypted configuration.
-	rawCfg, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
-
 	// Add auto-generated routes and decrypt before sending.
 	if err := am.autogenFn(ctx, am.log, am.orgID, &cfg.AlertmanagerConfig, false); err != nil {
 		return err
@@ -395,7 +419,17 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		return err
 	}
 
-	return am.sendConfiguration(ctx, decryptedCfg, hash, time.Now().Unix(), false)
+	if err := am.mergeExtraConfigs(ctx, decryptedCfg); err != nil {
+		return fmt.Errorf("unable to merge extra configurations: %w", err)
+	}
+	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
+	rawCfg, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
+
+	return am.sendConfiguration(ctx, payload, hash, time.Now().Unix(), false)
 }
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
@@ -414,10 +448,17 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		return err
 	}
 
+	payload := PostableUserConfigToGrafanaAlertmanagerConfig(decryptedCfg)
+	rawCfg, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	hash := fmt.Sprintf("%x", md5.Sum(rawCfg))
+
 	return am.sendConfiguration(
 		ctx,
-		decryptedCfg,
-		am.defaultConfigHash,
+		payload,
+		hash,
 		time.Now().Unix(),
 		true,
 	)
@@ -573,7 +614,7 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.Receivers, decrypter(ctx, am.decrypt))
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.Receivers, decrypter(ctx, am.crypto))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
 	}

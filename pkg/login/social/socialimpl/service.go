@@ -25,11 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	allOauthes = []string{social.GitHubProviderName, social.GitlabProviderName, social.GoogleProviderName, social.GenericOAuthProviderName, social.GrafanaNetProviderName,
-		social.GrafanaComProviderName, social.AzureADProviderName, social.OktaProviderName}
-)
-
 type SocialService struct {
 	cfg *setting.Cfg
 
@@ -53,56 +48,30 @@ func ProvideService(cfg *setting.Cfg,
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		allSettings, err := ssoSettings.List(context.Background())
+	allSettings, err := ssoSettings.List(context.Background())
+	if err != nil {
+		ss.log.Error("Failed to get SSO settings", "error", err)
+	}
+
+	for _, ssoSetting := range allSettings {
+		// ignore non-oauth2 providers
+		if !slices.Contains(ssosettings.AllOAuthProviders, ssoSetting.Provider) {
+			continue
+		}
+
+		info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, ssoSetting.Provider, ssoSetting.Settings)
 		if err != nil {
-			ss.log.Error("Failed to get SSO settings", "error", err)
+			ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", ssoSetting.Provider)
+			continue
 		}
 
-		for _, ssoSetting := range allSettings {
-			// ignore non-oauth2 providers
-			if !slices.Contains(ssosettings.AllOAuthProviders, ssoSetting.Provider) {
-				continue
-			}
-
-			info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, ssoSetting.Provider, ssoSetting.Settings)
-			if err != nil {
-				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", ssoSetting.Provider)
-				continue
-			}
-
-			conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, orgRoleMapper, ssoSettings, features, cache)
-			if err != nil {
-				ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
-				continue
-			}
-
-			ss.socialMap[ssoSetting.Provider] = conn
+		conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, orgRoleMapper, ssoSettings, features, cache)
+		if err != nil {
+			ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
+			continue
 		}
-	} else {
-		for _, name := range allOauthes {
-			sec := cfg.Raw.Section("auth." + name)
 
-			settingsKVs := convertIniSectionToMap(sec)
-
-			info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, name, settingsKVs)
-			if err != nil {
-				ss.log.Error("Failed to create OAuthInfo for provider", "error", err, "provider", name)
-				continue
-			}
-
-			if !info.Enabled {
-				continue
-			}
-
-			if name == social.GrafanaNetProviderName {
-				name = social.GrafanaComProviderName
-			}
-
-			conn, _ := createOAuthConnector(name, info, cfg, orgRoleMapper, ssoSettings, features, cache)
-
-			ss.socialMap[name] = conn
-		}
+		ss.socialMap[ssoSetting.Provider] = conn
 	}
 
 	ss.registerSupportBundleCollectors(bundleRegistry)

@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+import { CoreApp, getDefaultTimeRange, LogRowModel, LogsDedupStrategy, LogsSortOrder, store } from '@grafana/data';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
-import { createLogRow } from '../__mocks__/logRow';
+import { createLogRow } from '../mocks/logRow';
 
 import { LogList, Props } from './LogList';
 
@@ -75,6 +75,12 @@ describe('LogList', () => {
   });
 
   test('Supports showing log details', async () => {
+    jest.spyOn(store, 'get').mockImplementation((option: string) => {
+      if (option === 'storage-key.detailsMode') {
+        return 'sidebar';
+      }
+      return undefined;
+    });
     const onClickFilterLabel = jest.fn();
     const onClickFilterOutLabel = jest.fn();
     const onClickShowField = jest.fn();
@@ -86,6 +92,50 @@ describe('LogList', () => {
         onClickFilterLabel={onClickFilterLabel}
         onClickFilterOutLabel={onClickFilterOutLabel}
         onClickShowField={onClickShowField}
+        logOptionsStorageKey="storage-key"
+      />
+    );
+
+    await userEvent.click(screen.getByText('log message 1'));
+    await screen.findByText('Fields');
+
+    expect(screen.getByText('name_of_the_label')).toBeInTheDocument();
+    expect(screen.getByText('value of the label')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+    expect(onClickFilterLabel).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+    expect(onClickFilterOutLabel).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
+    expect(onClickShowField).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByLabelText('Close log details'));
+
+    expect(screen.queryByText('Fields')).not.toBeInTheDocument();
+    expect(screen.queryByText('Close log details')).not.toBeInTheDocument();
+  });
+
+  test('Supports showing inline log details', async () => {
+    jest.spyOn(store, 'get').mockImplementation((option: string) => {
+      if (option === 'storage-key.detailsMode') {
+        return 'inline';
+      }
+      return undefined;
+    });
+    const onClickFilterLabel = jest.fn();
+    const onClickFilterOutLabel = jest.fn();
+    const onClickShowField = jest.fn();
+
+    render(
+      <LogList
+        {...defaultProps}
+        enableLogDetails={true}
+        onClickFilterLabel={onClickFilterLabel}
+        onClickFilterOutLabel={onClickFilterOutLabel}
+        onClickShowField={onClickShowField}
+        logOptionsStorageKey="storage-key"
       />
     );
 

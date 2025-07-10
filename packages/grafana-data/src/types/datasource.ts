@@ -307,6 +307,11 @@ abstract class DataSourceApi<
   metricFindQuery?(query: any, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
 
   /**
+   * Verify adhoc filters applicability based on queries and current filters
+   */
+  getApplicableFilters?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<string[]>;
+
+  /**
    * Get tag keys for adhoc filters
    */
   getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;

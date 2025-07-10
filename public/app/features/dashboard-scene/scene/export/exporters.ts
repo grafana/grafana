@@ -447,7 +447,8 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
   const removeDataSourceRefs = (
     obj: AnnotationQueryKind['spec'] | QueryVariableKind['spec'] | PanelQueryKind['spec']
   ) => {
-    const datasourceUid = obj.datasource?.uid;
+    const datasourceUid = obj.query?.datasource?.name;
+
     if (datasourceUid?.startsWith('${') && datasourceUid?.endsWith('}')) {
       const varName = datasourceUid.slice(2, -1);
       // if there's a match we don't want to remove the datasource ref
@@ -457,7 +458,7 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       }
     }
 
-    obj.datasource = undefined;
+    obj.query && (obj.query.datasource = undefined);
   };
 
   const processPanel = (panel: PanelKind) => {
