@@ -80,11 +80,6 @@ func (h *NotificationHistorian) Record(ctx context.Context, alerts []*types.Aler
 		return errCh
 	}
 
-	if len(stream.Values) == 0 {
-		close(errCh)
-		return errCh
-	}
-
 	// This is a new background job, so let's create a new context for it.
 	// We want it to be isolated, i.e. we don't want grafana shutdowns to interrupt this work
 	// immediately but rather try to flush writes.
@@ -98,13 +93,13 @@ func (h *NotificationHistorian) Record(ctx context.Context, alerts []*types.Aler
 		defer cancel()
 		defer close(errCh)
 		logger := h.log.FromContext(ctx)
-		logger.Debug("Saving notification history batch", "samples", len(stream.Values))
+		logger.Debug("Saving notification history")
 		h.metrics.WritesTotal.Inc()
 
 		if err := h.recordStream(ctx, stream, logger); err != nil {
-			logger.Error("Failed to save notification history batch", "error", err)
+			logger.Error("Failed to save notification history", "error", err)
 			h.metrics.WritesFailed.Inc()
-			errCh <- fmt.Errorf("failed to save notification history batch: %w", err)
+			errCh <- fmt.Errorf("failed to save notification history: %w", err)
 		}
 	}(writeCtx)
 	return errCh
@@ -231,7 +226,7 @@ func (h *NotificationHistorian) recordStream(ctx context.Context, stream lokicli
 	if err := h.client.Push(ctx, []lokiclient.Stream{stream}); err != nil {
 		return err
 	}
-	logger.Debug("Done saving notification history batch", "samples", len(stream.Values))
+	logger.Debug("Done saving notification history")
 	return nil
 }
 
