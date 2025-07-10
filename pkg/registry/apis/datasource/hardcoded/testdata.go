@@ -1,4 +1,4 @@
-package testdatasource
+package hardcoded
 
 import (
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -7,7 +7,7 @@ import (
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
-func OpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error) {
+func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error) {
 	oas := &datasourceV0.DataSourceOpenAPIExtension{
 		SecureValues: []datasourceV0.SecureValueInfo{{
 			Key:         "aaa",

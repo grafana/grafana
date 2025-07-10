@@ -1,4 +1,4 @@
-package testdatasource
+package hardcoded
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestSpec(t *testing.T) {
-	info, err := OpenAPIExtension()
+	info, err := TestdataOpenAPIExtension()
 	require.NoError(t, err)
 	require.NotNil(t, info)
 

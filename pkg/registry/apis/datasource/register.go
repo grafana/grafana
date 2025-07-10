@@ -22,12 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/hardcoded"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 )
 
@@ -100,7 +100,7 @@ func RegisterAPIService(
 
 		// HARDCODE spec access
 		if ds.ID == "grafana-testdata-datasource" {
-			builder.specProvider = testdatasource.OpenAPIExtension
+			builder.specProvider = hardcoded.TestdataOpenAPIExtension
 		}
 
 		apiRegistrar.RegisterAPI(builder)
