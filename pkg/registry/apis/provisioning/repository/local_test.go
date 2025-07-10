@@ -91,14 +91,14 @@ func TestLocalResolver(t *testing.T) {
 
 	// Verify all directories and files are present
 	expectedPaths := []string{
-		"another",
-		"another/path",
+		"another/",
+		"another/path/",
 		"another/path/file.txt",
-		"level1",
+		"level1/",
 		"level1/file1.txt",
-		"level1/level2",
+		"level1/level2/",
 		"level1/level2/file2.txt",
-		"level1/level2/level3",
+		"level1/level2/level3/",
 		"level1/level2/level3/file3.txt",
 		"root.txt",
 	}
@@ -541,6 +541,41 @@ func TestLocalRepository_Delete(t *testing.T) {
 			ref:         "main",
 			comment:     "test delete with ref",
 			expectedErr: apierrors.NewBadRequest("local repository does not support ref"),
+		},
+		{
+			name: "delete folder with nested files",
+			setup: func(t *testing.T) (string, *localRepository) {
+				tempDir := t.TempDir()
+				nestedFolderPath := filepath.Join(tempDir, "folder")
+				err := os.MkdirAll(nestedFolderPath, 0700)
+				require.NoError(t, err)
+				subFolderPath := filepath.Join(nestedFolderPath, "nested-folder")
+				err = os.MkdirAll(subFolderPath, 0700)
+				require.NoError(t, err)
+				err = os.WriteFile(filepath.Join(nestedFolderPath, "nested-dash.txt"), []byte("content1"), 0600)
+				require.NoError(t, err)
+
+				// Create repository with the temp directory as permitted prefix
+				repo := &localRepository{
+					config: &provisioning.Repository{
+						Spec: provisioning.RepositorySpec{
+							Local: &provisioning.LocalRepositoryConfig{
+								Path: tempDir,
+							},
+						},
+					},
+					resolver: &LocalFolderResolver{
+						PermittedPrefixes: []string{tempDir},
+					},
+					path: tempDir,
+				}
+
+				return tempDir, repo
+			},
+			path:        "folder/",
+			ref:         "",
+			comment:     "test delete folder with nested content",
+			expectedErr: nil,
 		},
 	}
 
@@ -1347,7 +1382,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 			expected: []FileTreeEntry{
 				{Path: "file1.txt", Blob: true, Size: 8},
 				{Path: "file2.txt", Blob: true, Size: 8},
-				{Path: "subdir", Blob: false},
+				{Path: "subdir/", Blob: false},
 				{Path: "subdir/file3.txt", Blob: true, Size: 8},
 			},
 			expectedErr: nil,
