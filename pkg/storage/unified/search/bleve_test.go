@@ -949,9 +949,9 @@ func TestCleanOldIndexes(t *testing.T) {
 	b := setupBleveBackend(t, 5, time.Nanosecond, dir)
 
 	t.Run("with skip", func(t *testing.T) {
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0755))
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0755))
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0755))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
 
 		b.cleanOldIndexes(dir, "index-2")
 		files, err := os.ReadDir(dir)
@@ -961,9 +961,9 @@ func TestCleanOldIndexes(t *testing.T) {
 	})
 
 	t.Run("without skip", func(t *testing.T) {
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0755))
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0755))
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0755))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
 
 		b.cleanOldIndexes(dir, "")
 		files, err := os.ReadDir(dir)

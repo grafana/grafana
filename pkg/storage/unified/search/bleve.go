@@ -235,8 +235,8 @@ func (b *bleveBackend) BuildIndex(
 
 				index, err = bleve.New(indexDir, mapper)
 				if errors.Is(err, bleve.ErrorIndexPathExists) {
-					now.Add(time.Second) // Bump time for next try
-					index = nil          // Bleve actually returns non-nil value with ErrorIndexPathExists
+					now = now.Add(time.Second) // Bump time for next try
+					index = nil                // Bleve actually returns non-nil value with ErrorIndexPathExists
 					continue
 				}
 				if err != nil {
@@ -319,8 +319,8 @@ func (b *bleveBackend) BuildIndex(
 }
 
 func cleanFileSegment(input string) string {
-	input = strings.Replace(input, string(filepath.Separator), "_", -1)
-	input = strings.Replace(input, "..", "_", -1)
+	input = strings.ReplaceAll(input, string(filepath.Separator), "_")
+	input = strings.ReplaceAll(input, "..", "_")
 	return input
 }
 
