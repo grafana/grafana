@@ -9,13 +9,12 @@ role: {
 	pluralName: "Roles"
 	current:    "v0alpha1"
 
-	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
-	}
-
 	versions: {
 		"v0alpha1": {
+			codegen: {
+				ts: { enabled: false }
+				go: { enabled: true }
+			}
 			schema: {
 				spec:   v0alpha1.RoleSpec
 			}
@@ -28,13 +27,12 @@ corerole: {
 	pluralName: "CoreRoles"
 	current:    "v0alpha1"
 
-	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
-	}
-
 	versions: {
 		"v0alpha1": {
+			codegen: {
+				ts: { enabled: false }
+				go: { enabled: true }
+			}
 			schema: {
 				spec:   v0alpha1.RoleSpec
 			}
@@ -47,13 +45,12 @@ globalrole: {
 	pluralName: "GlobalRoles"
 	current:    "v0alpha1"
 
-	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
-	}
-
 	versions: {
 		"v0alpha1": {
+			codegen: {
+				ts: { enabled: false }
+				go: { enabled: true }
+			}
 			schema: {
 				spec:   v0alpha1.RoleSpec
 			}

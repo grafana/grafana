@@ -4,19 +4,17 @@ check: {
 	kind:	   "Check"
 	pluralName: "Checks"
 	current:	"v0alpha1"
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	versions: {
 		"v0alpha1": {
 			codegen: {
-				backend:  true
-				// Frontend code is generated following the instructions from
-				// https://github.com/grafana/grafana/blob/main/public/app/api/README.md
-				frontend: false
-			}
-			validation: {
-				operations: [
-					"CREATE",
-					"UPDATE",
-				]
+				ts: {enabled: false}
+				go: {enabled: true}
 			}
 			schema: {
 				#Data: {

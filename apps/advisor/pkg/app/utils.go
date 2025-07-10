@@ -170,6 +170,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 	}
 	// Delete the retry annotation to mark the check as processed
 	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
+
 	return checks.SetAnnotations(ctx, client, obj, annotations)
 }
 

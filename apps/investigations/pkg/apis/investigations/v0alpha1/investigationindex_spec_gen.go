@@ -35,8 +35,9 @@ type InvestigationIndexInvestigationSummary struct {
 // NewInvestigationIndexInvestigationSummary creates a new InvestigationIndexInvestigationSummary object.
 func NewInvestigationIndexInvestigationSummary() *InvestigationIndexInvestigationSummary {
 	return &InvestigationIndexInvestigationSummary{
-		CreatedByProfile: *NewInvestigationIndexPerson(),
-		ViewMode:         *NewInvestigationIndexViewMode(),
+		CreatedByProfile:     *NewInvestigationIndexPerson(),
+		ViewMode:             *NewInvestigationIndexViewMode(),
+		CollectableSummaries: []InvestigationIndexCollectableSummary{},
 	}
 }
 
@@ -79,7 +80,8 @@ type InvestigationIndexSpec struct {
 // NewInvestigationIndexSpec creates a new InvestigationIndexSpec object.
 func NewInvestigationIndexSpec() *InvestigationIndexSpec {
 	return &InvestigationIndexSpec{
-		Owner: *NewInvestigationIndexPerson(),
+		Owner:                  *NewInvestigationIndexPerson(),
+		InvestigationSummaries: []InvestigationIndexInvestigationSummary{},
 	}
 }
 
