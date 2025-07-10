@@ -128,7 +128,11 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       let finalSpec = exportable;
       if (isSharingExternally && isDashboardV2Spec(exportable)) {
         const specCopy = JSON.parse(JSON.stringify(exportable));
-        finalSpec = await makeExportableV2(specCopy, isSharingExternally);
+        const result = await makeExportableV2(specCopy, isSharingExternally);
+        if ('error' in result) {
+          throw new Error(`Export failed: ${result.error}`);
+        }
+        finalSpec = result;
       }
 
       return {
