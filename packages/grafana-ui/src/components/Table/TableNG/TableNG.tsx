@@ -153,7 +153,7 @@ export function TableNG(props: TableNGProps) {
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
-  const gridRef = useRef<DataGridHandle>();
+  const gridRef = useRef<DataGridHandle | null>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height, sortedRows);
   const availableWidth = useMemo(
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,

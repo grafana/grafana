@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject, MutableRefObject } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, MutableRefObject } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
@@ -610,7 +610,7 @@ export function useSingleLink(field: Field, rowIdx: number): LinkModel | undefin
 }
 
 export function useScrollbarWidth(
-  ref: MutableRefObject<DataGridHandle | undefined>,
+  ref: MutableRefObject<DataGridHandle | null>,
   height: number,
   renderedRows: TableRow[]
 ) {
