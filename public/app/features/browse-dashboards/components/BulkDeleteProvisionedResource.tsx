@@ -6,6 +6,7 @@ import { getAppEvents } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import {
   DeleteRepositoryFilesWithPathApiArg,
+  DeleteRepositoryFilesWithPathApiResponse,
   RepositoryView,
   useDeleteRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
@@ -15,9 +16,8 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-s
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
-import { useSelector } from 'app/types/store';
 
-import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
+import { useChildrenByParentUIDState } from '../state/hooks';
 import { findItem } from '../state/utils';
 import { DashboardTreeSelection } from '../types';
 
@@ -43,6 +43,13 @@ interface BulkDeleteProvisionResourceProps {
   onDismiss?: () => void;
 }
 
+type BulkSuccessResponse = Array<{
+  index: number;
+  item: DeleteRepositoryFilesWithPathApiArg;
+  data: DeleteRepositoryFilesWithPathApiResponse;
+}>;
+type BulkFailureResponse = Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; error: unknown }>;
+
 function FormContent({
   initialValues,
   selectedItems,
@@ -56,7 +63,6 @@ function FormContent({
 
   const methods = useForm<BulkDeleteFormData>({ defaultValues: initialValues });
   const childrenByParentUID = useChildrenByParentUIDState();
-  const rootItems = useSelector(rootItemsSelector);
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
 
@@ -76,19 +82,43 @@ function FormContent({
     }
   };
 
+  const handleSuccess = (successes: BulkSuccessResponse) => {
+    getAppEvents().publish({
+      type: AppEvents.alertSuccess.name,
+      payload: [
+        t('browse-dashboard.bulk-delete-resources-form.api-success', `Successfully deleted ${successes.length} items`),
+      ],
+    });
+
+    if (workflow === 'branch') {
+      // when push to new branch, we reload page with repo_url
+      const url = new URL(window.location.href);
+      const repoUrl = successes[0].data.urls?.repositoryURL;
+      if (repoUrl) {
+        url.searchParams.set('repo_url', repoUrl);
+        window.location.href = url.toString();
+      }
+      onDismiss?.();
+      window.location.reload();
+    } else {
+      // if workflow is 'write'
+      onDismiss?.();
+      window.location.reload();
+    }
+  };
+
   const handleSubmitForm = async (data: BulkDeleteFormData) => {
     const buildDeleteParams = (
       items: Record<string, boolean | undefined>,
       isFolder: boolean
     ): DeleteRepositoryFilesWithPathApiArg[] => {
       return Object.keys(items).map((key) => {
-        console.log(key);
         const path = getPath(key, isFolder);
         return {
           name: repository.name,
           path,
           ref: workflow === 'write' ? undefined : data.ref,
-          message: data.comment,
+          message: data.comment || `Delete resources ${path}`,
         };
       });
     };
@@ -100,8 +130,8 @@ function FormContent({
 
     const results = await Promise.allSettled(deleteRequests.map((params) => deleteRepoFile(params).unwrap()));
 
-    const successes: Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; data: unknown }> = [];
-    const failures: Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; error: unknown }> = [];
+    const successes: BulkSuccessResponse = [];
+    const failures: BulkFailureResponse = [];
 
     results.forEach((result, index) => {
       const item = deleteRequests[index];
@@ -113,20 +143,10 @@ function FormContent({
     });
 
     if (successes.length > 0) {
-      console.log('Successes:', successes);
-      getAppEvents().publish({
-        type: AppEvents.alertSuccess.name,
-        payload: [
-          t(
-            'browse-dashboard.bulk-delete-resources-form.api-success',
-            `Successfully deleted ${successes.length} items`
-          ),
-        ],
-      });
+      handleSuccess(successes);
     }
 
     if (failures.length > 0) {
-      console.error('Failures:', failures);
       getAppEvents().publish({
         type: AppEvents.alertError.name,
         payload: [

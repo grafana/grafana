@@ -130,7 +130,7 @@ export function SaveProvisionedDashboardForm({
       ref,
       name: repo,
       path,
-      message: comment,
+      message: comment || `Saving dashboard: ${title}`,
       body,
     });
   };

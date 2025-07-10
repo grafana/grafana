@@ -76,7 +76,7 @@ export function BrowseActions({ folderDTO }: Props) {
 
   const showDeleteModal = () => {
     // Note: this logic will be soon update with this PR: https://github.com/grafana/grafana/pull/107919
-    if (isProvisionedInstance) {
+    if (isProvisionedInstance || folderDTO?.managedBy === 'repo') {
       setShowBulkDeleteProvisionedResource(true);
     } else {
       // if all selected items are non-provisioned
@@ -122,7 +122,10 @@ export function BrowseActions({ folderDTO }: Props) {
           <BulkDeleteProvisionedResource
             selectedItems={selectedItems}
             folderUid={folderDTO?.uid || ''}
-            onDismiss={() => setShowBulkDeleteProvisionedResource(false)}
+            onDismiss={() => {
+              setShowBulkDeleteProvisionedResource(false);
+              onActionComplete();
+            }}
           />
         </Drawer>
       )}
