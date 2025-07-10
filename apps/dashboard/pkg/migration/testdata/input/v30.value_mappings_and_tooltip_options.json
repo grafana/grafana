@@ -101,7 +101,7 @@
       "title": "Graph panel gets migrated to timeseries and tooltip",
       "id": 4,
       "options": {
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       }

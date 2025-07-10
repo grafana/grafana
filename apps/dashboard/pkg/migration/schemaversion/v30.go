@@ -8,7 +8,7 @@ import (
 //
 // This migration addresses two key improvements to panel configurations:
 // 1. Value mappings upgrade: Converts legacy value mapping format to the new structured format
-// 2. Tooltip options migration: Renames tooltipOptions to tooltip in specific panel types
+// 2. Tooltip options migration: Renames tooltipOptions to tooltip in specific panel types: timeseries, xychart, xychart2
 //
 // The migration works by:
 // 1. Iterating through all panels in the dashboard, including nested panels in collapsed rows
@@ -94,20 +94,16 @@ func V30(dashboard map[string]interface{}) error {
 	if panels, ok := dashboard["panels"].([]interface{}); ok {
 		for _, panel := range panels {
 			if panelMap, ok := panel.(map[string]interface{}); ok {
-				// Apply automatic panel type migrations (graph -> timeseries, etc.)
-				ApplyPanelTypeMigration(panelMap)
-
 				// Upgrade value mappings
 				upgradeValueMappingsForPanel(panelMap)
 
-				// Migrate tooltip options (must be after panel type migration)
+				// Migrate tooltip options
 				migrateTooltipOptions(panelMap)
 
 				// Handle nested panels in collapsed rows
 				if nestedPanels, ok := panelMap["panels"].([]interface{}); ok {
 					for _, nestedPanel := range nestedPanels {
 						if nestedPanelMap, ok := nestedPanel.(map[string]interface{}); ok {
-							ApplyPanelTypeMigration(nestedPanelMap)
 							upgradeValueMappingsForPanel(nestedPanelMap)
 							migrateTooltipOptions(nestedPanelMap)
 						}
