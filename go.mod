@@ -221,6 +221,7 @@ require (
 	k8s.io/kube-aggregator v0.33.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // @grafana/partner-datasources
+	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // @grafana-app-platform-squad
 	xorm.io/builder v0.3.6 // @grafana/grafana-backend-group
@@ -236,7 +237,6 @@ require (
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/aggregator v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
-	pgregory.net/rapid v1.2.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 
