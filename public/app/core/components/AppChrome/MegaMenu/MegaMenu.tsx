@@ -11,7 +11,7 @@ import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { InviteUserButton } from '../../InviteUserButton/InviteUserButton';
 import { shouldRenderInviteUserButton } from '../../InviteUserButton/utils';

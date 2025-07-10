@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "YAML szerkesztése",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Hiba történt az adatforrás adatainak betöltésekor",
       "edit": "Szerkesztés",
-      "evaluations-to-fire": "Aktiválandó értékelési ciklusok",
       "export": "Exportálás",
       "folder": "Mappa",
       "group-loading-error": "Hiba a csoport betöltésekor",
       "interval": "Intervallum",
       "namespace": "Névtér",
-      "pending-period": "Függőben lévő időszak",
-      "recording": "Felvételkészítés",
-      "rule-name": "Szabálynév"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Hiba történt az adatforrás adatainak betöltésekor",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Összes exportálása"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Nem sikerült betölteni a lekérdezésszerkesztőt a következők miatt: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Nem találja a kívánt adatforrást? Egyes adatforrások nem támogatottak a riasztáshoz. További információért kattintson az ikonra."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Új riasztáskezelő hozzáadása",
       "builtin-alertmanager": "Beépített riasztáskezelő",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "(ennyi ideje: {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -4399,7 +4412,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Nyilvános",
         "tooltip-view-as-scene": "Megtekintés jelenetként"
       }
     },
@@ -5173,7 +5185,6 @@
       "playlist-next": "Ugrás a következő irányítópulthoz",
       "playlist-previous": "Ugrás az előző irányítópulthoz",
       "playlist-stop": "Lejátszási lista leállítása",
-      "public-dashboard": "Nyilvános",
       "refresh": "Irányítópult frissítése",
       "save": "Irányítópult mentése",
       "save-dashboard": {
@@ -5474,15 +5485,9 @@
       "type": "Típus"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Az érték még nincs mentve a Grafana-adatbázisban",
       "not-yet-saved": "Az érték nincs mentve a Grafana-adatbázisban",
-      "open-pull-request-in-git-hub": "Összefésülési kérelem megnyitása a GitHubon",
-      "title-dashboard-loaded-branch-git-hub": "Ez az irányítópult a GitHub egyik ágából töltődik be.",
       "title-dashboard-loaded-external-repository": "Ez az irányítópult külső adattárból töltődik be",
-      "title-dashboard-loaded-request-git-hub": "Ez az irányítópult a GitHub egyik összefésülési kérelméből töltődik be.",
-      "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor",
-      "value-not-saved": "Az érték még nincs mentve a Grafana-adatbázisban",
-      "view-pull-request-in-git-hub": "Összefésülési kérelem megtekintése a GitHubon"
+      "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor"
     },
     "dashboard-scene": {
       "text": {
@@ -5663,6 +5668,20 @@
       "last-edited": "{{timeAgo}}, <person />",
       "usage-count_one": "{{count}} irányítópulton használatos",
       "usage-count_other": "{{count}} irányítópulton használatos"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában. Biztosan menti ezt az irányítópultot?",
@@ -7217,6 +7236,7 @@
       "when": "WHEN"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Művelet"
     },
     "math": {
@@ -7991,6 +8011,9 @@
       "filter-popup-match-case": "Nagybetűérzékeny",
       "inspect-drawer-title": "Érték ellenőrzése",
       "inspect-menu-label": "Érték ellenőrzése",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor"
     },
@@ -8503,7 +8526,7 @@
       "usage-count_other": "{{count}} irányítópulton használatos"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Keresés név vagy leírás alapján"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Könyvtárpanel betöltése…"
@@ -8644,12 +8667,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8729,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8718,16 +8742,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8830,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9088,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Az irányítópultot a Grafana már kiépítette és felügyeli a felhőpéldányban. Javasoljuk, hogy a továbbiakban használja a kiépített irányítópultot. Ha továbbra is át szeretné másolni az irányítópultot a felhőpéldányba, akkor módosítsa az irányítópult azonosítóját az irányítópult JSON-fájljában, mentse az új pillanatképet, és töltse fel újra.",
         "datasource-already-managed": "Az adatforrást a Grafana már kiépítette és felügyeli a felhőpéldányban. Ha ez egy másik erőforrás, állítson be egy másik UID-t, és próbálkozzon újra.",
         "datasource-invalid-url": "Egy adatforrás érvénytelen URL-címmel rendelkezik. Adjon meg egy érvényes URL-címet, és próbálkozzon újra.",
@@ -10310,6 +10345,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11762,6 +11806,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

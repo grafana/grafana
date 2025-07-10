@@ -1,8 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { OrgRole, SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2, PopoverContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
 

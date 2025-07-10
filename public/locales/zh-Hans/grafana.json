@@ -504,6 +504,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "编辑 YAML",
@@ -1499,15 +1502,12 @@
     "group-details": {
       "ds-features-error": "加载数据源详情时出错",
       "edit": "编辑",
-      "evaluations-to-fire": "待触发的评估周期",
       "export": "导出",
       "folder": "文件夹",
       "group-loading-error": "加载组时出错",
       "interval": "间隔",
       "namespace": "命名空间",
-      "pending-period": "待处理时段",
-      "recording": "录制",
-      "rule-name": "规则名称"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "加载数据源详情时出错",
@@ -2228,6 +2228,9 @@
         "label-export-all": "导出全部"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "由于以下原因，无法加载查询编辑器：{{errorMessage}}"
     },
@@ -2637,6 +2640,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "找不到您想要的数据源？某些数据源不支持警报。点击图标以获取更多信息。"
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "添加新的 Alertmanager",
       "builtin-alertmanager": "内置 Alertmanager",
@@ -2871,6 +2879,11 @@
     },
     "timestamp": {
       "time-ago": "（{{time}}前）"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -4381,7 +4394,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "公开",
         "tooltip-view-as-scene": "作为场景查看"
       }
     },
@@ -5154,7 +5166,6 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
-      "public-dashboard": "公开",
       "refresh": "刷新仪表板",
       "save": "保存仪表板",
       "save-dashboard": {
@@ -5455,15 +5466,9 @@
       "type": "类型"
     },
     "dashboard-preview-banner": {
-      "not-saved": "该值尚未保存在 Grafana 数据库中",
       "not-yet-saved": "该值未保存在 Grafana 数据库中",
-      "open-pull-request-in-git-hub": "在 GitHub 中打开拉取请求",
-      "title-dashboard-loaded-branch-git-hub": "此数据面板从 GitHub 的分支加载。",
       "title-dashboard-loaded-external-repository": "此数据面板从外部存储库加载",
-      "title-dashboard-loaded-request-git-hub": "此数据面板从 GitHub 的拉取请求加载。",
-      "title-error-loading-dashboard": "加载数据面板时出错",
-      "value-not-saved": "该值尚未保存在 Grafana 数据库中",
-      "view-pull-request-in-git-hub": "在 GitHub 中查看拉取请求"
+      "title-error-loading-dashboard": "加载数据面板时出错"
     },
     "dashboard-scene": {
       "text": {
@@ -5643,6 +5648,20 @@
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}}由 <person />",
       "usage-count_other": "用于 {{count}} 个数据面板"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "所选文件夹中已存在具有相同名称的数据面板。您仍然要保存此数据面板吗？",
@@ -7196,6 +7215,7 @@
       "when": "满足以下条件时"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "运算"
     },
     "math": {
@@ -7970,6 +7990,9 @@
       "filter-popup-match-case": "区分大小写",
       "inspect-drawer-title": "检查值",
       "inspect-menu-label": "检查值",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行"
     },
@@ -8479,7 +8502,7 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "按名称或描述搜索"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "正在加载库面板..."
@@ -8618,12 +8641,9 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_other": "",
+          "parsedl-label_other": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8680,6 +8700,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8692,16 +8713,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8804,6 +8829,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9062,6 +9092,8 @@
     "resource-details": {
       "dismiss-button": "好",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "数据面板已由 Grafana 在云实例中配置和管理。我们建议您今后使用已配置的数据面板。如果您仍然希望将数据面板复制到云实例，请更改数据面板 JSON 中的数据面板 ID，保存新的快照并再次上传。",
         "datasource-already-managed": "数据源已由 Grafana 在云实例中配置和管理。如果这是其他资源，请设置另一个 UID，然后重试。",
         "datasource-invalid-url": "有一个数据源的 URL 无效。请提供有效的 URL，然后重试。",
@@ -10281,6 +10313,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11726,6 +11767,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },

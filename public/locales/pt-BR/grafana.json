@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Editar YAML",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Erro ao carregar detalhes da fonte de dados",
       "edit": "Editar",
-      "evaluations-to-fire": "Ciclos de avaliação para acionar",
       "export": "Exportar",
       "folder": "Pasta",
       "group-loading-error": "Erro ao carregar o grupo",
       "interval": "Intervalo",
       "namespace": "Nomenclatura",
-      "pending-period": "Período pendente",
-      "recording": "Registrando",
-      "rule-name": "Nome da regra"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Erro ao carregar detalhes da fonte de dados",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Exportar tudo"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Não foi possível carregar o editor de consultas devido a: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Não está encontrando a fonte de dados que você procura? Algumas fontes de dados não são compatíveis com alertas. Clique no ícone para mais informações."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Adicionar novo Alertmanager",
       "builtin-alertmanager": "Alertmanager integrado",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "(há {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -4399,7 +4412,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Pública",
         "tooltip-view-as-scene": "Visualizar como cena"
       }
     },
@@ -5173,7 +5185,6 @@
       "playlist-next": "Ir para o próximo painel de controle",
       "playlist-previous": "Ir para o painel de controle anterior",
       "playlist-stop": "Parar lista de reprodução",
-      "public-dashboard": "Público",
       "refresh": "Atualizar painel de controle",
       "save": "Salvar painel de controle",
       "save-dashboard": {
@@ -5474,15 +5485,9 @@
       "type": "Tipo"
     },
     "dashboard-preview-banner": {
-      "not-saved": "O valor ainda não está salvo no banco de dados da Grafana",
       "not-yet-saved": "O valor não está salvo no banco de dados da Grafana",
-      "open-pull-request-in-git-hub": "Abrir solicitação de pull no GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Este painel de controle é carregado a partir de um branch no GitHub.",
       "title-dashboard-loaded-external-repository": "Este painel de controle é carregado a partir de um repositório externo",
-      "title-dashboard-loaded-request-git-hub": "Este painel de controle é carregado a partir de uma solicitação de pull no GitHub.",
-      "title-error-loading-dashboard": "Erro ao carregar o painel de controle",
-      "value-not-saved": "O valor ainda não está salvo no banco de dados da Grafana",
-      "view-pull-request-in-git-hub": "Ver solicitação de pull no GitHub"
+      "title-error-loading-dashboard": "Erro ao carregar o painel de controle"
     },
     "dashboard-scene": {
       "text": {
@@ -5663,6 +5668,20 @@
       "last-edited": "{{timeAgo}} por<person />",
       "usage-count_one": "Usado em {{count}} painéis",
       "usage-count_other": "Usado em {{count}} painéis"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Já existe um painel com o mesmo nome na pasta selecionada. Deseja salvar este painel mesmo assim?",
@@ -7217,6 +7236,7 @@
       "when": "QUANDO"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Operação"
     },
     "math": {
@@ -7991,6 +8011,9 @@
       "filter-popup-match-case": "Diferenciar maiúsculas/minúsculas",
       "inspect-drawer-title": "Inspecionar valor",
       "inspect-menu-label": "Inspecionar valor",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Sem valores",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas"
     },
@@ -8503,7 +8526,7 @@
       "usage-count_other": "Usado em {{count}} painéis"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Pesquisar por nome ou descrição"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Carregando painel da biblioteca…"
@@ -8644,12 +8667,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8729,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8718,16 +8742,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8830,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9088,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "O painel de controle já está provisionado e é gerenciado pela Grafana na instância na nuvem. Recomendamos que você passe a usar o painel de controle provisionado. Se você ainda quiser copiar o painel de controle para a instância na nuvem, altere o ID do painel de controle no JSON do painel de controle, salve uma nova captura e envie novamente.",
         "datasource-already-managed": "A fonte de dados já está provisionada e é gerenciada pela Grafana na instância na nuvem. Caso se trate de outro recurso, defina outro UID e tente novamente.",
         "datasource-invalid-url": "Há uma fonte de dados com uma URL inválida. Forneça uma URL válida e tente novamente.",
@@ -10310,6 +10345,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11762,6 +11806,14 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
+    "pill-cell-options-editor": {
+      "description-color-mode": "",
+      "description-fixed-color": "",
+      "description-value-mappings-info": "",
+      "label-color-mode": "",
+      "label-fixed-color": "",
+      "label-value-mappings-info": ""
+    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
