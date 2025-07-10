@@ -330,8 +330,6 @@ export function trackFolderBulkActionsUnpauseFail() {
   reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
 }
 
-
-
 export type AlertRuleTrackingProps = {
   user_id: number;
   grafana_version?: string;
