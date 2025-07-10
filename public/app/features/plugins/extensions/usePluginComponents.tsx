@@ -37,9 +37,8 @@ export function usePluginComponents<Props extends object = {}>({
       extensionPointId,
     });
 
-    // Only log error for an invalid `extensionPointId` in DEV mode
-    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin })) {
-      pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
+    // Don't show extensions if the extension-point id is invalid in DEV mode
+    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, log: pointLog })) {
       return {
         isLoading: false,
         components: [],

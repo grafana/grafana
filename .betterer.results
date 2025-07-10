@@ -2535,6 +2535,9 @@ exports[`better eslint`] = {
     "public/app/features/plugins/extensions/usePluginFunctions.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/plugins/extensions/validators.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/plugins/loader/sharedDependencies.ts:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],

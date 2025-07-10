@@ -32,8 +32,7 @@ export function usePluginFunctions<Signature>({
       extensionPointId,
     });
 
-    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin })) {
-      pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
+    if (isGrafanaDevMode() && !isExtensionPointIdValid({ extensionPointId, pluginId, isInsidePlugin, log: pointLog })) {
       return {
         isLoading: false,
         functions: [],

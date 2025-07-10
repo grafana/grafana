@@ -69,19 +69,32 @@ export function isExtensionPointIdValid({
   extensionPointId,
   pluginId,
   isInsidePlugin,
+  log,
 }: {
   extensionPointId: string;
   pluginId: string;
   isInsidePlugin: boolean;
+  log: ExtensionsLog;
 }) {
-  if (isInsidePlugin) {
-    return (
-      Boolean(extensionPointId.startsWith(`plugins/${pluginId}/`)) ||
-      Boolean(extensionPointId.startsWith(`${pluginId}/`))
-    );
+  const startsWithPluginId =
+    extensionPointId.startsWith(`${pluginId}/`) || extensionPointId.startsWith(`plugins/${pluginId}/`);
+
+  if (isInsidePlugin && !startsWithPluginId) {
+    log.error(errors.INVALID_EXTENSION_POINT_ID_PLUGIN(pluginId, extensionPointId));
+    return false;
   }
 
-  return Boolean(extensionPointId.startsWith('grafana/'));
+  if (!isInsidePlugin && !extensionPointId.startsWith('grafana/')) {
+    log.error(errors.INVALID_EXTENSION_POINT_ID_GRAFANA_PREFIX(extensionPointId));
+    return false;
+  }
+
+  if (!isInsidePlugin && !Object.values(PluginExtensionPoints).includes(extensionPointId as PluginExtensionPoints)) {
+    log.error(errors.INVALID_EXTENSION_POINT_ID_GRAFANA_EXPOSED);
+    return false;
+  }
+
+  return true;
 }
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {
