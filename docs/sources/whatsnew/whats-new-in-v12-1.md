@@ -13,7 +13,12 @@ labels:
     - oss
 title: What's new in Grafana v12.1
 posts:
-
+  - title: Data sources
+    items:
+      - docs/grafana-cloud/whats-new/2025-06-20-support-for-service-account-impersonation-in-bigquery.md
+  - title: Breaking changes
+    items:
+      - docs/grafana-cloud/whats-new/2025-07-08-dashboard-v2-schena-breaking-change-because-of-datasource-query-future-proof-refactor.md
 whats_new_grafana_version: 12.1
 weight: -50
 ---
