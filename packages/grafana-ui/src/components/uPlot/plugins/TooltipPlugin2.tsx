@@ -10,6 +10,7 @@ import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
+import { FILTER_FOR_OPERATOR, AdHocFilterItem } from '../../Table/types';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
@@ -28,6 +29,8 @@ export const enum TooltipHoverMode {
 }
 
 type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
+type GetFilterInfoCallback = (seriesIdx: number, dataIdx: number) => { key: string; value: string } | null;
+type OnAddAdHocFilterCallback = (filter: AdHocFilterItem) => void;
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
@@ -43,6 +46,10 @@ interface TooltipPlugin2Props {
 
   onSelectRange?: OnSelectRangeCallback;
   getDataLinks?: GetDataLinksCallback;
+
+  // AdHoc filter support
+  onAddAdHocFilter?: OnAddAdHocFilterCallback;
+  getFilterInfo?: GetFilterInfoCallback;
 
   render: (
     u: uPlot,
@@ -124,6 +131,8 @@ export const TooltipPlugin2 = ({
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
+  onAddAdHocFilter,
+  getFilterInfo,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -355,6 +364,16 @@ export const TooltipPlugin2 = ({
 
             if (oneClickLink != null) {
               window.open(oneClickLink.href, oneClickLink.target ?? '_self');
+            } else if (dataLinks.length === 0 && onAddAdHocFilter && getFilterInfo) {
+              // If no data links and filter is available, trigger one-click filtering
+              const filterInfo = getFilterInfo(closestSeriesIdx, seriesIdxs[closestSeriesIdx]!);
+              if (filterInfo) {
+                onAddAdHocFilter({
+                  key: filterInfo.key,
+                  value: filterInfo.value,
+                  operator: FILTER_FOR_OPERATOR,
+                });
+              }
             } else {
               setTimeout(() => {
                 _isPinned = true;
