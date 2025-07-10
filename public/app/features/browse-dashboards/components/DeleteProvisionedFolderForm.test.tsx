@@ -16,6 +16,11 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom-v5-compat', () => ({
+  useNavigate: () => mockNavigate,
+}));
+
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useDeleteRepositoryFilesWithPathMutation: jest.fn(),
   provisioningAPI: {
@@ -140,6 +145,7 @@ function setup(
     ...renderResult,
     onDismiss,
     mockDeleteRepoFile,
+    mockNavigate,
     clickDeleteButton,
   };
 }
@@ -147,6 +153,7 @@ function setup(
 describe('DeleteProvisionedFolderForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockNavigate.mockClear();
     jest.spyOn(console, 'error').mockImplementation(() => {});
     // Mock window.location.href
     Object.defineProperty(window, 'location', {
