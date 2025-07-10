@@ -4,11 +4,11 @@ import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
 import { useActionSelectionState } from '../../state/hooks';
@@ -17,6 +17,7 @@ import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
+import { SelectedMixResourcesMsgModal } from './SelectedMixResourcesMsgModal';
 import { useSelectionProvisioningStatus } from './useSelectionProvisioningStatus';
 
 export interface Props {
@@ -31,8 +32,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
-  const provisioningStatus = useSelectionProvisioningStatus(selectedItems);
-  const isProvisionedInstance = useIsProvisionedInstance();
+  const provisioningStatus = useSelectionProvisioningStatus(selectedItems, folderDTO?.managedBy === ManagerKind.Repo);
 
   // Folders can only be moved if nested folders is enabled
   const moveIsInvalid = useMemo(
@@ -76,18 +76,19 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showDeleteModal = () => {
-    if (!isProvisionedInstance) {
-      console.log('isProvisionedInstance', isProvisionedInstance);
-      console.log('showDeleteModal', { selectedItems });
-    }
     const { hasProvisioned, hasNonProvisioned } = provisioningStatus;
-    console.log('showDeleteModal', { provisioningStatus, hasProvisioned, hasNonProvisioned });
     if (hasProvisioned && hasNonProvisioned) {
       // Mixed selection
-      // This is a placeholder for future implementation
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: SelectedMixResourcesMsgModal,
+          props: {},
+        })
+      );
     } else if (hasProvisioned) {
       // Only provisioned items
-      setShowBulkDeleteProvisionedResource(true);
+      // TODO: Implement bulk delete for provisioned resources
+      // setShowBulkDeleteProvisionedResource(true);
     } else {
       // Only non-provisioned items
       appEvents.publish(

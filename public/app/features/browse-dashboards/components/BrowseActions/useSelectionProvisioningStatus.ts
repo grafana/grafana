@@ -1,49 +1,49 @@
 import { useMemo } from 'react';
 
 import { ManagerKind } from 'app/features/apiserver/types';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSelector } from 'app/types/store';
 
+import { findItem } from '../../state/utils';
 import { DashboardTreeSelection } from '../../types';
 
 interface SelectionProvisioningStatus {
   hasProvisioned: boolean;
   hasNonProvisioned: boolean;
-  provisionedCount: number;
-  nonProvisionedCount: number;
-  totalCount: number;
 }
 
 export function useSelectionProvisioningStatus(
-  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
+  isParentProvisioned: boolean
 ): SelectionProvisioningStatus {
   const browseState = useSelector((state) => state.browseDashboards);
+  const isProvisionedInstance = useIsProvisionedInstance();
 
   return useMemo(() => {
-    let provisionedCount = 0;
-    let nonProvisionedCount = 0;
+    if (isProvisionedInstance || isParentProvisioned) {
+      // If the instance is provisioned, all resources should be considered provisioned
+      return {
+        hasProvisioned: true,
+        hasNonProvisioned: false,
+      };
+    }
+
+    let hasProvisioned = false,
+      hasNonProvisioned = false;
 
     const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
     const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
 
     // find item in Redux state
-    const findItemInState = (uid: string): { managedBy?: ManagerKind } | undefined => {
-      // Check root items
-      const rootItem = browseState.rootItems?.items.find((item) => item.uid === uid);
-      if (rootItem) {
-        return rootItem;
+    const findItemInState = (uid: string): { parentUID?: string; managedBy?: ManagerKind } | undefined => {
+      // First check browse state
+      const browseItem = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, uid);
+      if (browseItem) {
+        return {
+          parentUID: browseItem.parentUID,
+          managedBy: browseItem.managedBy,
+        };
       }
-
-      // Check children in all loaded folders
-      for (const parentUID in browseState.childrenByParentUID) {
-        const collection = browseState.childrenByParentUID[parentUID];
-        if (collection) {
-          const childItem = collection.items.find((item) => item.uid === uid);
-          if (childItem) {
-            return childItem;
-          }
-        }
-      }
-
       return undefined;
     };
 
@@ -51,55 +51,44 @@ export function useSelectionProvisioningStatus(
     for (const folderUID of selectedFolders) {
       const item = findItemInState(folderUID);
       if (item?.managedBy === ManagerKind.Repo) {
-        provisionedCount++;
+        hasProvisioned = true;
       } else {
-        nonProvisionedCount++;
+        hasNonProvisioned = true;
+      }
+
+      // Early exit if we found both types
+      if (hasProvisioned && hasNonProvisioned) {
+        break;
       }
     }
 
     // Check selected dashboards
     for (const dashboardUID of selectedDashboards) {
-      // Check if dashboard is in root
-      const isInRoot = browseState.rootItems?.items.some((item) => item.uid === dashboardUID);
+      const dashboardItem = findItemInState(dashboardUID);
+      let parentFolderUID = dashboardItem?.parentUID;
 
-      if (isInRoot) {
-        // Dashboard is in root - check if instance is provisioned
-        // TODO: Add instance provisioning check here
-        // If instance is provisioned, all resources should be considered provisioned
-        // For now, assume non-provisioned until instance check is implemented
-        nonProvisionedCount++;
-      } else {
-        // Dashboard is in a folder - find parent folder and use its provisioning status
-        let parentFolderUID: string | undefined;
-
-        for (const parentUID in browseState.childrenByParentUID) {
-          const collection = browseState.childrenByParentUID[parentUID];
-          if (collection?.items.some((item) => item.uid === dashboardUID)) {
-            parentFolderUID = parentUID;
-            break;
-          }
-        }
-
-        if (parentFolderUID) {
-          const parentFolder = findItemInState(parentFolderUID);
-          if (parentFolder?.managedBy === ManagerKind.Repo) {
-            provisionedCount++;
-          } else {
-            nonProvisionedCount++;
-          }
+      // If dashboard has a parent folder → check if parent is provisioned
+      // If dashboard has no parent (not found OR in root) → it's non-provisioned
+      if (parentFolderUID) {
+        const parentFolder = findItemInState(parentFolderUID);
+        if (parentFolder?.managedBy === ManagerKind.Repo) {
+          hasProvisioned = true;
         } else {
-          // Dashboard not found in state, assume non-provisioned
-          nonProvisionedCount++;
+          hasNonProvisioned = true;
         }
+      } else {
+        hasNonProvisioned = true;
+      }
+
+      // Early exit if we found both types
+      if (hasProvisioned && hasNonProvisioned) {
+        break;
       }
     }
 
     return {
-      hasProvisioned: provisionedCount > 0,
-      hasNonProvisioned: nonProvisionedCount > 0,
-      provisionedCount,
-      nonProvisionedCount,
-      totalCount: provisionedCount + nonProvisionedCount,
+      hasProvisioned,
+      hasNonProvisioned,
     };
-  }, [selectedItems, browseState]);
+  }, [selectedItems, browseState, isProvisionedInstance, isParentProvisioned]);
 }

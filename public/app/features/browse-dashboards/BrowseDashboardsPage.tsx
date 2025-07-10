@@ -171,7 +171,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
         </div>
 
         {hasSelection ? (
-          <BrowseActions />
+          <BrowseActions folderDTO={folderDTO} />
         ) : (
           <div className={styles.filters}>
             <BrowseFilters />
