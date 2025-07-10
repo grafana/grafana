@@ -6,14 +6,19 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/pkg/services/shorturls"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-app-sdk/simple"
 	shorturlv0alpha1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v0alpha1"
+)
+
+// Local error definitions to avoid importing the main shorturls package
+var (
+	ErrShortURLAbsolutePath = fmt.Errorf("path should be relative")
+	ErrShortURLInvalidPath  = fmt.Errorf("invalid short URL path")
 )
 
 type ShortURLConfig struct {
@@ -53,7 +58,7 @@ func New(cfg app.Config) (app.App, error) {
 						}
 
 						// Set calculated fields in spec
-						shortURL.Spec.ShortURL = fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(shortURLConfig.AppURL, "/"), shortURL.Name, shortURL.Namespace)
+						shortURL.Spec.ShortURL = fmt.Sprintf("%s/goto/%s?orgId=%s", strings.TrimSuffix(shortURLConfig.AppURL, "/"), shortURL.Name, shortURL.Namespace)
 						return &app.MutatingResponse{
 							UpdatedObject: shortURL,
 						}, nil
@@ -70,10 +75,10 @@ func New(cfg app.Config) (app.App, error) {
 						relPath := strings.TrimSpace(shortURL.Spec.Path)
 
 						if path.IsAbs(relPath) {
-							return shorturls.ErrShortURLAbsolutePath.Errorf("expected relative path: %s", relPath)
+							return fmt.Errorf("%w: %s", ErrShortURLAbsolutePath, relPath)
 						}
 						if strings.Contains(relPath, "../") {
-							return shorturls.ErrShortURLInvalidPath.Errorf("path cannot contain '../': %s", relPath)
+							return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, relPath)
 						}
 						return nil
 					},

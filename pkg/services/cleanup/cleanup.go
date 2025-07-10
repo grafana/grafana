@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
@@ -44,14 +43,13 @@ type CleanUpService struct {
 	deleteExpiredImageService *image.DeleteExpiredService
 	tempUserService           tempuser.Service
 	annotationCleaner         annotations.Cleaner
-	dashboardService          dashboards.DashboardService
 	alertRuleService          AlertRuleService
 }
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, dashboardService dashboards.DashboardService, service AlertRuleService) *CleanUpService {
+	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		ServerLockService:         serverLockService,
@@ -65,7 +63,6 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 		tempUserService:           tempUserService,
 		tracer:                    tracer,
 		annotationCleaner:         annotationCleaner,
-		dashboardService:          dashboardService,
 		alertRuleService:          service,
 	}
 	return s

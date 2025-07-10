@@ -534,7 +534,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dashboardService, dBstore)
+	cleanUpService := cleanup.ProvideService(cfg, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
@@ -1073,7 +1073,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dashboardService, dBstore)
+	cleanUpService := cleanup.ProvideService(cfg, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
