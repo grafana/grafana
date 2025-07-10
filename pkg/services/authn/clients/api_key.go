@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
@@ -35,16 +37,18 @@ const (
 	metaKeySkipLastUsed = "keySkipLastUsed"
 )
 
-func ProvideAPIKey(apiKeyService apikey.Service) *APIKey {
+func ProvideAPIKey(apiKeyService apikey.Service, tracer trace.Tracer) *APIKey {
 	return &APIKey{
 		log:           log.New(authn.ClientAPIKey),
 		apiKeyService: apiKeyService,
+		tracer:        tracer,
 	}
 }
 
 type APIKey struct {
 	log           log.Logger
 	apiKeyService apikey.Service
+	tracer        trace.Tracer
 }
 
 func (s *APIKey) Name() string {
@@ -52,6 +56,8 @@ func (s *APIKey) Name() string {
 }
 
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.Authenticate")
+	defer span.End()
 	key, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
 		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
@@ -84,6 +90,8 @@ func (s *APIKey) IsEnabled() bool {
 }
 
 func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.getAPIKey")
+	defer span.End()
 	fn := s.getFromToken
 	if !strings.HasPrefix(token, satokengen.GrafanaPrefix) {
 		fn = s.getFromTokenLegacy
@@ -98,6 +106,8 @@ func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, e
 }
 
 func (s *APIKey) getFromToken(ctx context.Context, token string) (*apikey.APIKey, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.getFromToken")
+	defer span.End()
 	decoded, err := satokengen.Decode(token)
 	if err != nil {
 		return nil, err
@@ -112,6 +122,8 @@ func (s *APIKey) getFromToken(ctx context.Context, token string) (*apikey.APIKey
 }
 
 func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.APIKey, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.getFromTokenLegacy")
+	defer span.End()
 	decoded, err := apikeygen.Decode(token)
 	if err != nil {
 		return nil, err
@@ -144,6 +156,9 @@ func (s *APIKey) Priority() uint {
 }
 
 func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "authn.apikey.Hook") //nolint:ineffassign,staticcheck
+	defer span.End()
+
 	if r.GetMeta(metaKeySkipLastUsed) != "" {
 		return nil
 	}

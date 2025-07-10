@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -18,17 +20,20 @@ var (
 
 var _ authn.PasswordClient = new(Password)
 
-func ProvidePassword(loginAttempts loginattempt.Service, clients ...authn.PasswordClient) *Password {
-	return &Password{loginAttempts, clients, log.New("authn.password")}
+func ProvidePassword(loginAttempts loginattempt.Service, tracer trace.Tracer, clients ...authn.PasswordClient) *Password {
+	return &Password{loginAttempts, clients, log.New("authn.password"), tracer}
 }
 
 type Password struct {
 	loginAttempts loginattempt.Service
 	clients       []authn.PasswordClient
 	log           log.Logger
+	tracer        trace.Tracer
 }
 
 func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
+	ctx, span := c.tracer.Start(ctx, "authn.password.AuthenticatePassword")
+	defer span.End()
 	r.SetMeta(authn.MetaKeyUsername, username)
 
 	ok, err := c.loginAttempts.Validate(ctx, username)
