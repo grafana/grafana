@@ -8012,7 +8012,10 @@
       "inspect-drawer-title": "Inspect value",
       "inspect-menu-label": "Inspect value",
       "no-values-label": "No values",
-      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sparkline-cell": {
+        "no-data": "no data"
+      }
     },
     "tags": {
       "list-label": "Tags"
