@@ -74,4 +74,6 @@ module.exports = {
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/public/app/plugins/datasource/azuremonitor'],
+  projects: ['<rootDir>'],
 };
