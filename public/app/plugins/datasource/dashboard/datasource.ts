@@ -12,6 +12,7 @@ import {
   DataFrame,
   LoadingState,
   Field,
+  FieldType,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -111,6 +112,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           ...s,
           fields: s.fields.map((field: Field) => ({
             ...field,
+            config: {
+              ...field.config,
+              // Enable AdHoc filtering for string fields (similar to Loki/Prometheus pattern)
+              filterable: field.type === FieldType.string,
+            },
             state: {
               ...field.state,
             },
