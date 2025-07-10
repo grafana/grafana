@@ -59,11 +59,38 @@ export function useSelectionProvisioningStatus(
 
     // Check selected dashboards
     for (const dashboardUID of selectedDashboards) {
-      const item = findItemInState(dashboardUID);
-      if (item?.managedBy === ManagerKind.Repo) {
-        provisionedCount++;
-      } else {
+      // Check if dashboard is in root
+      const isInRoot = browseState.rootItems?.items.some((item) => item.uid === dashboardUID);
+
+      if (isInRoot) {
+        // Dashboard is in root - check if instance is provisioned
+        // TODO: Add instance provisioning check here
+        // If instance is provisioned, all resources should be considered provisioned
+        // For now, assume non-provisioned until instance check is implemented
         nonProvisionedCount++;
+      } else {
+        // Dashboard is in a folder - find parent folder and use its provisioning status
+        let parentFolderUID: string | undefined;
+
+        for (const parentUID in browseState.childrenByParentUID) {
+          const collection = browseState.childrenByParentUID[parentUID];
+          if (collection?.items.some((item) => item.uid === dashboardUID)) {
+            parentFolderUID = parentUID;
+            break;
+          }
+        }
+
+        if (parentFolderUID) {
+          const parentFolder = findItemInState(parentFolderUID);
+          if (parentFolder?.managedBy === ManagerKind.Repo) {
+            provisionedCount++;
+          } else {
+            nonProvisionedCount++;
+          }
+        } else {
+          // Dashboard not found in state, assume non-provisioned
+          nonProvisionedCount++;
+        }
       }
     }
 

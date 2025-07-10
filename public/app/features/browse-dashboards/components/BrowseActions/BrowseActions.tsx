@@ -8,6 +8,7 @@ import { useSearchStateManager } from 'app/features/search/state/SearchStateMana
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
 import { useActionSelectionState } from '../../state/hooks';
@@ -31,6 +32,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
   const provisioningStatus = useSelectionProvisioningStatus(selectedItems);
+  const isProvisionedInstance = useIsProvisionedInstance();
 
   // Folders can only be moved if nested folders is enabled
   const moveIsInvalid = useMemo(
@@ -74,6 +76,10 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showDeleteModal = () => {
+    if (!isProvisionedInstance) {
+      console.log('isProvisionedInstance', isProvisionedInstance);
+      console.log('showDeleteModal', { selectedItems });
+    }
     const { hasProvisioned, hasNonProvisioned } = provisioningStatus;
     console.log('showDeleteModal', { provisioningStatus, hasProvisioned, hasNonProvisioned });
     if (hasProvisioned && hasNonProvisioned) {
