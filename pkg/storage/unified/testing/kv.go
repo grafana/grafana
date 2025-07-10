@@ -401,7 +401,10 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 					if err != nil {
 						return
 					}
-					defer writer.Close()
+					defer func() {
+						err := writer.Close()
+						require.NoError(t, err)
+					}()
 					_, err = io.Copy(writer, strings.NewReader(value))
 					if err != nil {
 						return
@@ -450,7 +453,10 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 				if err != nil {
 					return
 				}
-				defer writer.Close()
+				defer func() {
+					err := writer.Close()
+					require.NoError(t, err)
+				}()
 				_, err = io.Copy(writer, strings.NewReader(value))
 				if err != nil {
 					return
@@ -526,7 +532,6 @@ func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, ke
 	t.Helper()
 	writer, err := kv.Save(ctx, section, key)
 	require.NoError(t, err)
-	defer writer.Close()
 	_, err = io.Copy(writer, value)
 	require.NoError(t, err)
 	err = writer.Close()

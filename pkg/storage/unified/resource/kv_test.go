@@ -262,7 +262,6 @@ func saveKVHelper(t *testing.T, kv KV, ctx context.Context, section, key string,
 	t.Helper()
 	writer, err := kv.Save(ctx, section, key)
 	require.NoError(t, err)
-	defer writer.Close()
 	_, err = io.Copy(writer, value)
 	require.NoError(t, err)
 	err = writer.Close()
