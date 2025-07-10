@@ -82,7 +82,7 @@ func schema_apimachinery_apis_common_v0alpha1_InlineSecureValue(ref common.Refer
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Access secure values inside any resource",
+				Description: "Allow access to a secure value inside",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"create": {
@@ -103,7 +103,7 @@ func schema_apimachinery_apis_common_v0alpha1_InlineSecureValue(ref common.Refer
 					},
 					"remove": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Remove this value -- cascading delete to the secret service if necessary",
+							Description: "Remove this value from the secure value map Values owned by this resource will be deleted if necessary",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
