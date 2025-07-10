@@ -139,7 +139,7 @@ export const TransformationOperationRow = ({
     const prevOutputSubscription = transformDataFrame(prevInputTransforms, data.series, ctx)
       .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
       .subscribe((result) => {
-        let mergedResult = result;
+        let mergedResult = [...result];
         // add refIds that were requested even if they did not return a result
         data.request?.targets.forEach((series) => {
           const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
