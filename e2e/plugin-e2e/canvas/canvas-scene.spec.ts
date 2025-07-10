@@ -1,5 +1,6 @@
-import { test, expect } from '@grafana/plugin-e2e';
 import { Locator } from '@playwright/test';
+
+import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
   featureToggles: {
