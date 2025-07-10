@@ -54,6 +54,10 @@ func (nps *NotificationPolicyService) GetPolicySubTree(ctx context.Context, orgI
 		return definitions.Route{}, "", err
 	}
 
+	if name == "" {
+		name = UserDefinedRoutingTreeName
+	}
+
 	subtree, err := rev.GetNamedRoute(name, nps.log)
 	if err != nil {
 		return definitions.Route{}, "", err
@@ -100,6 +104,10 @@ func (nps *NotificationPolicyService) DeletePolicySubTree(ctx context.Context, o
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
+	}
+
+	if name == "" {
+		name = UserDefinedRoutingTreeName
 	}
 
 	existing, err := revision.GetNamedRoute(name, nps.log)
@@ -197,6 +205,10 @@ func (nps *NotificationPolicyService) UpdatePolicySubTree(ctx context.Context, o
 	revision, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
 		return definitions.Route{}, "", err
+	}
+
+	if subtree.Name == "" {
+		subtree.Name = UserDefinedRoutingTreeName
 	}
 
 	existing, err := revision.GetNamedRoute(subtree.Name, nps.log)
