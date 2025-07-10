@@ -37,6 +37,7 @@ import (
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
@@ -75,6 +76,7 @@ var (
 type APIBuilder struct {
 	features featuremgmt.FeatureToggles
 
+	tracer              tracing.Tracer
 	getter              rest.Getter
 	localFileResolver   *local.LocalFolderResolver
 	parsers             resources.ParserFactory
@@ -115,6 +117,7 @@ func NewAPIBuilder(
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	access authlib.AccessChecker,
+	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
@@ -122,6 +125,7 @@ func NewAPIBuilder(
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
+		tracer:              tracer,
 		localFileResolver:   local,
 		features:            features,
 		ghFactory:           ghFactory,
@@ -162,6 +166,7 @@ func RegisterAPIService(
 	usageStatsService usagestats.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
+	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -178,6 +183,7 @@ func RegisterAPIService(
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		secrets.NewSingleTenant(secretsSvc), access,
+		tracer,
 		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
