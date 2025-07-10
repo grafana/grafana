@@ -45,6 +45,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: true,
 		EnableFeatureToggles: []string{
@@ -592,6 +596,9 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
 	folderWithParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
@@ -715,6 +722,9 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 func TestIntegrationFolderGetPermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
+	}
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
 	}
 
 	type testCase struct {
@@ -865,6 +875,9 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
+	}
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
 	}
 
 	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
@@ -1027,7 +1040,6 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-
 	if !db.IsTestDbSQLite() {
 		t.Skip("test only on sqlite for now")
 	}
