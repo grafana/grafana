@@ -72,9 +72,11 @@ func processPanelsV31(panels []interface{}) {
 
 		// Process nested panels if this is a row panel
 		if p["type"] == "row" {
-			if nestedPanels, ok := p["panels"].([]interface{}); ok {
-				processPanelsV31(nestedPanels)
+			nestedPanels, hasNested := p["panels"].([]interface{})
+			if !hasNested {
+				continue
 			}
+			processPanelsV31(nestedPanels)
 			continue
 		}
 
