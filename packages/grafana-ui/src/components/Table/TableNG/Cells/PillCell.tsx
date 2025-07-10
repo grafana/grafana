@@ -33,26 +33,22 @@ export function PillCell({ value, field }: TableCellRendererProps) {
   const styles = useStyles2(getStyles);
 
   const pills: Pill[] = useMemo(() => {
-    const pillValues = inferPills(value);
+    const pillValues = inferPills(String(value));
     return createPills(pillValues, field);
   }, [value, field]);
 
-  return (
-    <>
-      {pills.map((pill) => (
-        <span
-          key={pill.key}
-          className={styles.pill}
-          style={{
-            backgroundColor: pill.bgColor,
-            color: pill.color,
-          }}
-        >
-          {pill.value}
-        </span>
-      ))}
-    </>
-  );
+  return pills.map((pill) => (
+    <span
+      key={pill.key}
+      className={styles.pill}
+      style={{
+        backgroundColor: pill.bgColor,
+        color: pill.color,
+      }}
+    >
+      {pill.value}
+    </span>
+  ));
 }
 
 const SPLIT_RE = /\s*,\s*/;
@@ -98,6 +94,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
     whiteSpace: 'nowrap',
     textAlign: 'center',
-    minWidth: 'fit-content',
   }),
 });
