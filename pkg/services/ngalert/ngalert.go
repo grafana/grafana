@@ -733,18 +733,9 @@ func configureHistorianBackend(
 func configureNotificationHistorian(
 	ctx context.Context,
 	cfg setting.UnifiedAlertingNotificationHistorySettings,
-	//ar annotations.Repository,
-	//ds dashboards.DashboardService,
-	//rs historian.RuleStore,
 	met *metrics.NotificationHistorian,
 	l log.Logger,
 	tracer tracing.Tracer,
-	// ac historian.AccessControl,
-	// datasourceService datasources.DataSourceService,
-	// httpClientProvider httpclient.Provider,
-	// pluginContextProvider *plugincontext.Provider,
-	// clock clock.Clock,
-	// mw *metrics.RemoteWriter,
 ) (*notifier.NotificationHistorian, error) {
 	if !cfg.Enabled {
 		met.Info.Set(0)
