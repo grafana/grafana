@@ -16,4 +16,4 @@ For each threshold, set the following options:
 | Thresholds mode | Choose from **Absolute** and **Percentage**.                                         |
 | Show thresholds | Choose from a variety of display options including not displaying thresholds at all. |
 
-To learn more, refer to [Configure thresholds](../../configure-thresholds/).
+To learn more, refer to [Configure thresholds](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-thresholds/).

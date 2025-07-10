@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -32,18 +33,18 @@ var _ auth.IDService = (*Service)(nil)
 
 func ProvideService(
 	cfg *setting.Cfg, signer auth.IDSigner,
-	cache remotecache.CacheStorage,
-	authnService authn.Service,
-	reg prometheus.Registerer,
+	cache remotecache.CacheStorage, authnService authn.Service,
+	reg prometheus.Registerer, tracer trace.Tracer,
 ) *Service {
 	s := &Service{
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
 		metrics:  newMetrics(reg),
 		nsMapper: request.GetNamespaceMapper(cfg),
+		tracer:   tracer,
 	}
 
-	authnService.RegisterPostAuthHook(s.hook, 140)
+	authnService.RegisterPostAuthHook(s.SyncIDToken, 140)
 
 	return s
 }
@@ -55,10 +56,14 @@ type Service struct {
 	cache    remotecache.CacheStorage
 	si       singleflight.Group
 	metrics  *metrics
+	tracer   trace.Tracer
 	nsMapper request.NamespaceMapper
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, *authnlib.Claims[authnlib.IDTokenClaims], error) {
+	ctx, span := s.tracer.Start(ctx, "user.sync.SignIdentity")
+	defer span.End()
+
 	defer func(t time.Time) {
 		s.metrics.tokenSigningDurationHistogram.Observe(time.Since(t).Seconds())
 	}(time.Now())
@@ -140,10 +145,15 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 }
 
 func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
+	ctx, span := s.tracer.Start(ctx, "user.sync.RemoveIDToken")
+	defer span.End()
+
 	return s.cache.Delete(ctx, getCacheKey(id))
 }
 
-func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+func (s *Service) SyncIDToken(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "user.sync.SyncIDToken")
+	defer span.End()
 	// FIXME(kalleep): we should probably lazy load this
 	token, idClaims, err := s.SignIdentity(ctx, identity)
 	if err != nil {

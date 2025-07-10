@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"regexp"
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -67,6 +68,10 @@ func NewBadgerKV(db *badger.DB) *badgerKV {
 }
 
 func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObject, error) {
+	if k.db.IsClosed() {
+		return KVObject{}, fmt.Errorf("database is closed")
+	}
+
 	txn := k.db.NewTransaction(false)
 	defer txn.Discard()
 
@@ -100,6 +105,10 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (KVObjec
 }
 
 func (k *badgerKV) Save(ctx context.Context, section string, key string, value io.Reader) error {
+	if k.db.IsClosed() {
+		return fmt.Errorf("database is closed")
+	}
+
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
@@ -122,6 +131,10 @@ func (k *badgerKV) Save(ctx context.Context, section string, key string, value i
 }
 
 func (k *badgerKV) Delete(ctx context.Context, section string, key string) error {
+	if k.db.IsClosed() {
+		return fmt.Errorf("database is closed")
+	}
+
 	if section == "" {
 		return fmt.Errorf("section is required")
 	}
@@ -131,7 +144,16 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 
 	key = section + "/" + key
 
-	err := txn.Delete([]byte(key))
+	// Check if key exists before deleting
+	_, err := txn.Get([]byte(key))
+	if err != nil {
+		if errors.Is(err, badger.ErrKeyNotFound) {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	err = txn.Delete([]byte(key))
 	if err != nil {
 		return err
 	}
@@ -139,6 +161,11 @@ func (k *badgerKV) Delete(ctx context.Context, section string, key string) error
 }
 
 func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	if k.db.IsClosed() {
+		return func(yield func(string, error) bool) {
+			yield("", fmt.Errorf("database is closed"))
+		}
+	}
 	if section == "" {
 		return func(yield func(string, error) bool) {
 			yield("", fmt.Errorf("section is required"))
@@ -206,4 +233,18 @@ func PrefixRangeEnd(prefix string) string {
 		}
 	}
 	return string(end)
+}
+
+var (
+	// validKeyRegex validates keys used in the unified storage
+	// Keys can contain lowercase alphanumeric characters, '-', '.', '/', and '~'
+	// Any combination of these characters is allowed as long as the key is not empty
+	validKeyRegex = regexp.MustCompile(`^[a-z0-9./~-]+$`)
+)
+
+func IsValidKey(key string) bool {
+	if key == "" {
+		return false
+	}
+	return validKeyRegex.MatchString(key)
 }

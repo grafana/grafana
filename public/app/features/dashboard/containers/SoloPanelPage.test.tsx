@@ -5,9 +5,9 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { Dashboard } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { DashboardMeta, DashboardRoutes } from 'app/types';
+import { DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
-import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
+import { getRouteComponentProps } from '../../../core/navigation/mocks/routeProps';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';

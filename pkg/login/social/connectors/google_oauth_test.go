@@ -204,7 +204,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 					AutoAssignOrgRole: "",
 				},
 				nil,
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures())
 
 			got, err := s.retrieveGroups(context.Background(), tt.args.client, tt.args.userData)
@@ -693,7 +693,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				},
 				cfg,
 				ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
-				&ssosettingstests.MockService{},
+				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures())
 
 			gotData, err := s.UserInfo(context.Background(), tt.args.client, tt.args.token)
@@ -834,7 +834,7 @@ func TestSocialGoogle_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -915,7 +915,7 @@ func TestSocialGoogle_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -968,7 +968,7 @@ func TestIsHDAllowed(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			info := &social.OAuthInfo{}
 			info.AllowedDomains = tc.allowedDomains
-			s := NewGoogleProvider(info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures())
 			s.validateHD = tc.validateHD
 			err := s.isHDAllowed(tc.email)
 

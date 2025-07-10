@@ -180,7 +180,6 @@
 /pkg/tests/apis/query @grafana/grafana-datasources-core-services
 /pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/tests/api/correlations/ @grafana/datapro
-/pkg/tests/apis/secret/ @grafana/grafana-operator-experience-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
 /pkg/util/ @grafana/grafana-backend-group
@@ -711,6 +710,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/anonymous/ @grafana/identity-access-team
 /pkg/services/auth/ @grafana/identity-squad
 /pkg/services/authn/ @grafana/identity-squad
+/pkg/services/scimutil/ @grafana/identity-squad
 /pkg/services/authz/ @grafana/access-squad
 /pkg/services/signingkeys/ @grafana/identity-squad
 /pkg/services/dashboards/accesscontrol.go @grafana/access-squad
@@ -773,6 +773,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-backend-group
 /.github/actions/setup-grafana-bench/ @Proximyst
 /.github/actions/build-package @grafana/grafana-developer-enablement-squad
+/.github/actions/change-detection @grafana/grafana-developer-enablement-squad
 /.github/workflows/actionlint-format.txt @grafana/grafana-developer-enablement-squad
 /.github/workflows/actionlint.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
@@ -834,6 +835,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-create-tasks.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-verify.yml @grafana/grafana-frontend-platform
+/.github/workflows/deploy-storybook-preview.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/crowdin/create-tasks.ts @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad

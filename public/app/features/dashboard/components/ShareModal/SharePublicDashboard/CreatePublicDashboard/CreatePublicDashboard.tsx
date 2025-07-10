@@ -10,7 +10,8 @@ import { useCreatePublicDashboardMutation } from 'app/features/dashboard/api/pub
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { AccessControlAction, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useSelector } from 'app/types/store';
 
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';

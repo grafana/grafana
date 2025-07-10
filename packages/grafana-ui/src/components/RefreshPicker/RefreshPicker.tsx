@@ -118,8 +118,8 @@ export class RefreshPicker extends PureComponent<Props> {
         {!noIntervalPicker && (
           <ButtonSelect
             className={css({
-              borderTopLeftRadius: 0,
-              borderBottomLeftRadius: 0,
+              borderTopLeftRadius: 'unset',
+              borderBottomLeftRadius: 'unset',
             })}
             value={selectedValue}
             options={options}

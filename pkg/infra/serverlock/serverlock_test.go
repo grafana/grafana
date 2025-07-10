@@ -30,7 +30,7 @@ func createTestableServerLock(t *testing.T) *ServerLockService {
 	}
 }
 
-func TestServerLock(t *testing.T) {
+func TestIntegrationServerLock(t *testing.T) {
 	sl := createTestableServerLock(t)
 	operationUID := "test-operation"
 
@@ -66,7 +66,7 @@ func TestServerLock(t *testing.T) {
 	})
 }
 
-func TestLockAndRelease(t *testing.T) {
+func TestIntegrationLockAndRelease(t *testing.T) {
 	operationUID := "test-operation-release"
 
 	t.Run("create lock and then release it", func(t *testing.T) {

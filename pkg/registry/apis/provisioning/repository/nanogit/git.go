@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -450,7 +451,8 @@ func (r *gitRepository) delete(ctx context.Context, path string, writer nanogit.
 	finalPath := safepath.Join(r.gitConfig.Path, path)
 	// Check if it's a directory - use DeleteTree for directories, DeleteBlob for files
 	if safepath.IsDir(path) {
-		if _, err := writer.DeleteTree(ctx, finalPath); err != nil {
+		trimmed := strings.TrimSuffix(finalPath, "/")
+		if _, err := writer.DeleteTree(ctx, trimmed); err != nil {
 			if errors.Is(err, nanogit.ErrObjectNotFound) {
 				return repository.ErrFileNotFound
 			}
@@ -595,7 +597,7 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 
 	// Try to parse ref as a hash first
 	refHash, err := hash.FromHex(ref)
-	if err == nil && refHash != nil {
+	if err == nil && refHash != hash.Zero {
 		// Valid hash, return it
 		return refHash, nil
 	}
@@ -604,9 +606,9 @@ func (r *gitRepository) resolveRefToHash(ctx context.Context, ref string) (hash.
 	branchRef, err := r.client.GetRef(ctx, ref)
 	if err != nil {
 		if errors.Is(err, nanogit.ErrObjectNotFound) {
-			return nil, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
+			return hash.Zero, fmt.Errorf("ref not found: %s: %w", ref, repository.ErrRefNotFound)
 		}
-		return nil, fmt.Errorf("get ref %s: %w", ref, err)
+		return hash.Zero, fmt.Errorf("get ref %s: %w", ref, err)
 	}
 
 	return branchRef.Hash, nil

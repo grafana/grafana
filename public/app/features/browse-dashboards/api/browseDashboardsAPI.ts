@@ -15,17 +15,11 @@ import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } fro
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { dispatch } from 'app/store/store';
-import {
-  DescendantCount,
-  DescendantCountDTO,
-  FolderDTO,
-  FolderListItemDTO,
-  ImportDashboardResponseDTO,
-  PermissionLevelString,
-  SaveDashboardResponseDTO,
-} from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
+import { SaveDashboardResponseDTO, ImportDashboardResponseDTO } from 'app/types/dashboard';
+import { FolderListItemDTO, FolderDTO, DescendantCount, DescendantCountDTO } from 'app/types/folders';
 
-import { refetchChildren, refreshParents } from '../state';
+import { refetchChildren, refreshParents } from '../state/actions';
 import { DashboardTreeSelection } from '../types';
 
 import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
