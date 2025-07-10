@@ -43,7 +43,7 @@ func NewModule(opts Options,
 	tracer tracing.Tracer, // Ensures tracing is initialized
 	license licensing.Licensing,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, reg, promGatherer, license, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +64,7 @@ func newModuleServer(opts Options,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
 	license licensing.Licensing,
+	tracer tracing.Tracer,
 ) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
@@ -85,6 +86,7 @@ func newModuleServer(opts Options,
 		promGatherer:     promGatherer,
 		registerer:       reg,
 		license:          license,
+		tracer:           tracer,
 	}
 
 	return s, nil
@@ -109,6 +111,7 @@ type ModuleServer struct {
 	storageMetrics   *resource.StorageMetrics
 	indexMetrics     *resource.BleveIndexMetrics
 	license          licensing.Licensing
+	tracer           tracing.Tracer
 
 	pidFile     string
 	version     string
@@ -193,7 +196,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return frontend.ProvideFrontendService(s.cfg, s.promGatherer, s.license)
+		return frontend.ProvideFrontendService(s.cfg, s.features, s.promGatherer, s.registerer, s.license, s.tracer)
 	})
 
 	m.RegisterModule(modules.All, nil)
