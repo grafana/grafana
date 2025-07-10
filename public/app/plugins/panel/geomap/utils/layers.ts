@@ -1,5 +1,6 @@
 import { FeatureLike } from 'ol/Feature';
 import OpenLayersMap from 'ol/Map';
+import BaseLayer from 'ol/layer/Base';
 import LayerGroup from 'ol/layer/Group';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import { Subject } from 'rxjs';
@@ -13,6 +14,8 @@ import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry'
 import { MapLayerState } from '../types';
 
 import { getNextLayerName } from './utils';
+
+const layerStateMap = new WeakMap<BaseLayer, MapLayerState>();
 
 export const applyLayerFilter = (
   handler: MapLayerHandler<unknown>,
@@ -120,7 +123,7 @@ export async function initLayer(
     options.config.attribution = textUtil.sanitizeTextPanelContent(options.config.attribution);
   }
 
-  const handler = await item.create(map as any, options, panel.props.eventBus, config.theme2);
+  const handler = await item.create(map, options, panel.props.eventBus, config.theme2);
   const layer = handler.init(); // eslint-disable-line
   if (options.opacity != null) {
     layer.setOpacity(options.opacity);
@@ -135,7 +138,7 @@ export async function initLayer(
     // UID, // unique name when added to the map (it may change and will need special handling)
     isBasemap,
     options,
-    layer: layer as any,
+    layer: layer,
     handler,
     mouseEvents: new Subject<FeatureLike | undefined>(),
 
@@ -148,18 +151,16 @@ export async function initLayer(
   };
 
   panel.byName.set(UID, state);
-  // eslint-disable-next-line
-  (state.layer as any).__state = state;
+  layerStateMap.set(state.layer, state);
 
   // Pass state into WebGLPointsLayers contained in a LayerGroup
   if (layer instanceof LayerGroup) {
-    (layer as any)
+    layer
       .getLayers()
       .getArray()
-      .forEach((layer: any) => {
+      .forEach((layer: BaseLayer) => {
         if (layer instanceof WebGLPointsLayer) {
-          // eslint-disable-next-line
-          (layer as any).__state = state;
+          layerStateMap.set(layer, state);
         }
       });
   }
@@ -169,6 +170,6 @@ export async function initLayer(
   return state;
 }
 
-export const getMapLayerState = (l: any): MapLayerState => {
-  return l?.__state;
+export const getMapLayerState = (l: BaseLayer | undefined): MapLayerState | undefined => {
+  return l ? layerStateMap.get(l) : undefined;
 };
