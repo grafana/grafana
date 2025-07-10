@@ -132,7 +132,7 @@ const panelPluginPostImport: PostImportStrategy<PanelPluginMeta, PanelPlugin> = 
     })
     .then((plugin: PanelPlugin) => {
       plugin.meta = meta;
-      panelPluginCache.set(meta.id, plugin);
+      pluginsCache.set(meta.id, plugin);
       return plugin;
     })
     .catch((err) => {
@@ -151,6 +151,7 @@ const datasourcePluginPostImport: PostImportStrategy<DataSourcePluginMeta, Gener
   if (pluginExports.plugin) {
     const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
     dsPlugin.meta = meta;
+    pluginsCache.set(meta.id, dsPlugin);
     return dsPlugin;
   }
 
@@ -160,6 +161,7 @@ const datasourcePluginPostImport: PostImportStrategy<DataSourcePluginMeta, Gener
     );
     dsPlugin.setComponentsFromLegacyExports(pluginExports);
     dsPlugin.meta = meta;
+    pluginsCache.set(meta.id, dsPlugin);
     return dsPlugin;
   }
 
@@ -179,10 +181,10 @@ const appPluginPostImport: PostImportStrategy<AppPluginMeta, AppPlugin> = async 
   addedLinksRegistry.register({ pluginId: meta.id, configs: plugin.addedLinkConfigs || [] });
   addedFunctionsRegistry.register({ pluginId: meta.id, configs: plugin.addedFunctionConfigs || [] });
 
+  pluginsCache.set(meta.id, plugin);
   return plugin;
 };
 
-const panelPluginCache: Map<string, PanelPlugin> = new Map();
 const promisesCache: Map<string, Promise<unknown>> = new Map();
 
 const getPromiseFromCache = <M extends PluginMeta, P extends GrafanaPlugin<M>>(meta: M): Promise<P> => {
@@ -193,6 +195,19 @@ const getPromiseFromCache = <M extends PluginMeta, P extends GrafanaPlugin<M>>(m
   }
 
   throw new Error(`Trying to get unknown plugin type ${meta.type} from cache for plugin ${meta.id}`);
+};
+
+const pluginsCache: Map<string, unknown> = new Map();
+
+const getPluginFromCache = <P extends PanelPlugin | GenericDataSourcePlugin | AppPlugin>(id: string): P | undefined => {
+  const cached = pluginsCache.get(id);
+  // TODO: investigate if we can get this from the SystemJS registry instead?
+  if (cached) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return cached as P;
+  }
+
+  return undefined;
 };
 
 const importPlugin = <M extends PluginMeta, P extends GrafanaPlugin<M>>(
@@ -216,7 +231,7 @@ const importer: PluginImporter = {
   importPanelPlugin: (meta) => importPlugin(meta, panelPluginPostImport),
   importDatasourcePlugin: (meta) => importPlugin(meta, datasourcePluginPostImport),
   importAppPlugin: (meta) => importPlugin(meta, appPluginPostImport),
-  getPanelPlugin: (id) => panelPluginCache.get(id),
+  getPanelPlugin: (id) => getPluginFromCache<PanelPlugin>(id),
 };
 
 export const pluginImporter = (): PluginImporter => importer;
