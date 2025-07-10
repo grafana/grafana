@@ -28,18 +28,6 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
     'browse-dashboards.action.new-folder-name-required-phrase',
     'Folder name is required.'
   );
-  const validateFolderName = async (folderName: string) => {
-    try {
-      await validationSrv.validateNewFolderName(folderName);
-      return true;
-    } catch (e) {
-      if (e instanceof Error) {
-        return e.message;
-      } else {
-        throw e;
-      }
-    }
-  };
 
   const fieldNameLabel = t('browse-dashboards.new-folder-form.name-label', 'Folder name');
 
@@ -74,4 +62,17 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
       </Stack>
     </form>
   );
+}
+
+export async function validateFolderName(folderName: string) {
+  try {
+    await validationSrv.validateNewFolderName(folderName);
+    return true;
+  } catch (e) {
+    if (e instanceof Error) {
+      return e.message;
+    } else {
+      throw e;
+    }
+  }
 }
