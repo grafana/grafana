@@ -168,7 +168,7 @@ export class LogListModel implements LogRowModel {
     const line =
       displayedFields.length > 0
         ? displayedFields.map((field) => this.getDisplayedFieldValue(field, true)).join('')
-        : this.entry;
+        : this.body;
 
     // Length truncation
     let collapsed =
