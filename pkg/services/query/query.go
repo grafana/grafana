@@ -80,6 +80,7 @@ type ServiceImpl struct {
 	pCtxProvider               *plugincontext.Provider
 	log                        log.Logger
 	concurrentQueryLimit       int
+	mtDatasourceClientBuilder  *expr.mtDatasourceClientBuilder // TODO
 }
 
 // Run ServiceImpl.
@@ -214,6 +215,16 @@ func Handle(ctx context.Context, log log.Logger, dscache datasources.CacheServic
 	return s.handleExpressions(ctx, nil, req)
 }
 
+func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	s := &ServiceImpl{
+		log:                        log,
+		dataSourceCache:            dscache,
+		expressionService:          exprService,
+		dataSourceRequestValidator: validations.ProvideValidator(),
+	}
+	return s.QueryData(ctx, nil, false, reqDTO)
+}
+
 // QUESTION: is this comment accurate?
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
@@ -271,7 +282,7 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 			return nil, fmt.Errorf("all queries must have the same datasource - found %s and %s", ds.UID, pq.datasource.UID)
 		}
 	}
-
+	// TODO s.mtDatasourceClientBuilder
 	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 	if err != nil {
 		return nil, err

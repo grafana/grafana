@@ -207,40 +207,6 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			legacy: b.parser.legacy,
 		}
 
-		req, hasExpression, err := sse_query.Parse(ctx, b.log, cache, mReq)
-
-		if err != nil {
-			var refError ErrorWithRefID
-			statusCode := http.StatusBadRequest
-			message := err
-			refID := "A"
-
-			if errors.Is(err, datasources.ErrDataSourceNotFound) {
-				statusCode = http.StatusNotFound
-				message = errors.New("datasource not found")
-			}
-
-			if errors.As(err, &refError) {
-				refID = refError.refId
-			}
-
-			qdr := &query.QueryDataResponse{
-				QueryDataResponse: backend.QueryDataResponse{
-					Responses: backend.Responses{
-						refID: {
-							Error:  message,
-							Status: backend.Status(statusCode),
-						},
-					},
-				},
-			}
-
-			b.log.Error("Error parsing query", "refId", refID, "message", message)
-
-			responder.Object(statusCode, qdr)
-			return
-		}
-
 		headers := ExtractKnownHeaders(httpreq.Header)
 		instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
 		if err != nil {
@@ -249,42 +215,28 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		var qdr *backend.QueryDataResponse
-		if hasExpression {
-			exprService := expr.ProvideService(
-				&setting.Cfg{
-					ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
-					SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
-					SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
-					SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
-				},
-				nil,
-				nil,
-				instanceConfig.FeatureToggles,
-				nil,
-				b.tracer,
-				expr.NewMtDatasourceClientBuilderWithClientSupplier(
-					b.clientSupplier,
-					ctx,
-					headers,
-					instanceConfig,
-				),
-			)
-			qdr, err = sse_query.Handle(ctx, b.log, cache, req, exprService)
-		} else {
-			// TODO is there a way to delete code from this path?
-			// also does it make sense to have 2 different parsers?
-			req, err := b.parser.parseRequest(ctx, raw)
-			for i := range req.Requests {
-				req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
-			}
-			if err != nil {
-				b.log.Error("error parsing request", "err", err)
-				responder.Error(err)
-				return
-			}
-			qdr, err = b.execute(ctx, req, instanceConfig)
-		}
+		exprService := expr.ProvideService(
+			&setting.Cfg{
+				ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
+				SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
+				SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
+				SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
+			},
+			nil,
+			nil,
+			instanceConfig.FeatureToggles,
+			nil,
+			b.tracer,
+			expr.NewMtDatasourceClientBuilderWithClientSupplier(
+				b.clientSupplier,
+				ctx,
+				headers,
+				instanceConfig,
+			),
+		)
+
+		qdr, err := sse_query.QueryData(ctx, b.log, cache, exprService, mReq)
+
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
 			if qdr != nil { // if we have a response, we assume the err is set in the response
