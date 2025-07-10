@@ -9,7 +9,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -22,8 +21,8 @@ func TestMain(m *testing.M) {
 }
 
 const (
-	passThroughProvider encryption.ProviderID = "PASS_THROUGH_PROVIDER"
-	base64Provider      encryption.ProviderID = "BASE64_PROVIDER"
+	passThroughProvider contracts.EncryptionProvider = "PASS_THROUGH_PROVIDER"
+	base64Provider      contracts.EncryptionProvider = "BASE64_PROVIDER"
 )
 
 func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {

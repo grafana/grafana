@@ -36,7 +36,7 @@ func Test_SQLKeeperSetup(t *testing.T) {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "sdDkslslld",
-			EncryptionProvider: "secretKey.v1",
+			EncryptionProvider: contracts.ProviderSecretKey,
 		},
 	}
 

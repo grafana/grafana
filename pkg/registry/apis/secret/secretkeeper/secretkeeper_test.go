@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -27,7 +28,7 @@ func Test_OSSKeeperService(t *testing.T) {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "sdDkslslld",
-			EncryptionProvider: "secretKey.v1",
+			EncryptionProvider: contracts.ProviderSecretKey,
 		},
 	}
 	keeperService, err := setupTestService(t, cfg)

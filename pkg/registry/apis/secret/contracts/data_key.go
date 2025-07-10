@@ -4,8 +4,16 @@ import (
 	"context"
 	"errors"
 	"time"
+)
 
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+type EncryptionProvider string
+
+const (
+	ProviderSecretKey      EncryptionProvider = "secret_key"
+	ProviderAWSKMS         EncryptionProvider = "aws_kms"
+	ProviderAzureKV        EncryptionProvider = "azure_kv"
+	ProviderGoogleKMS      EncryptionProvider = "google_kms"
+	ProviderHashicorpVault EncryptionProvider = "hashicorp_vault"
 )
 
 var (
@@ -18,7 +26,7 @@ type SecretDataKey struct {
 	Active        bool
 	Namespace     string
 	Label         string
-	Provider      encryption.ProviderID
+	Provider      EncryptionProvider
 	EncryptedData []byte
 	Created       time.Time
 	Updated       time.Time

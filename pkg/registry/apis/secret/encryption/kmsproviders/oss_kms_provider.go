@@ -1,4 +1,4 @@
-package defaultprovider
+package kmsproviders
 
 import (
 	"context"
@@ -7,12 +7,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 )
 
+var _ encryption.EncryptionProvider = &grafanaProvider{}
+
 type grafanaProvider struct {
 	sk         string
 	encryption cipher.Cipher
 }
 
-func New(sk string, encryption cipher.Cipher) encryption.Provider {
+func NewOSSKMSProvider(sk string, encryption cipher.Cipher) encryption.EncryptionProvider {
 	return grafanaProvider{
 		sk:         sk,
 		encryption: encryption,

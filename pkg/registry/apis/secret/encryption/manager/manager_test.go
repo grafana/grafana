@@ -8,12 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -161,22 +160,14 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		svc := setupTestService(t)
-		assert.Equal(t, encryption.ProviderID("secretKey.v1"), svc.currentProviderID)
+		assert.Equal(t, contracts.ProviderSecretKey, svc.currentEncryptionProviderID)
 	})
 
-	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
-		rawCfg := `
-		[secrets_manager.encryption.fakeProvider.v1]
-		`
-
-		raw, err := ini.Load([]byte(rawCfg))
-		require.NoError(t, err)
-
+	t.Run("Should use encrypt/decrypt methods of the OSS encryption provider", func(t *testing.T) {
 		cfg := &setting.Cfg{
-			Raw: raw,
 			SecretsManagement: setting.SecretsManagerSettings{
 				SecretKey:          "sdDkslslld",
-				EncryptionProvider: "secretKey.v1",
+				EncryptionProvider: contracts.ProviderSecretKey,
 			},
 		}
 
@@ -191,7 +182,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			encryptionStore,
 			cfg,
 			&usagestats.UsageStatsMock{T: t},
-			encryption.ProvideThirdPartyProviderMap(),
+			kmsproviders.ProvideEnterpriseKMSProvider(),
 		)
 		require.NoError(t, err)
 
@@ -199,8 +190,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		//override default provider with fake, and register the fake separately
 		fake := &fakeProvider{}
-		encryptionManager.providers[encryption.ProviderID("fakeProvider.v1")] = fake
-		encryptionManager.currentProviderID = "fakeProvider.v1"
+		encryptionManager.ossEncryptionProvider = fake
 
 		namespace := "test-namespace"
 		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{})
@@ -214,13 +204,12 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			encryptionStore,
 			cfg,
 			&usagestats.UsageStatsMock{T: t},
-			encryption.ProvideThirdPartyProviderMap(),
+			kmsproviders.ProvideEnterpriseKMSProvider(),
 		)
 		require.NoError(t, err)
 
 		svcDecrypt := svcDecryptMgr.(*EncryptionManager)
-		svcDecrypt.providers[encryption.ProviderID("fakeProvider.v1")] = fake
-		svcDecrypt.currentProviderID = "fakeProvider.v1"
+		svcDecrypt.ossEncryptionProvider = fake
 
 		_, _ = svcDecrypt.Decrypt(context.Background(), namespace, encrypted)
 		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
@@ -371,7 +360,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			cfg := &setting.Cfg{
 				SecretsManagement: setting.SecretsManagerSettings{
 					SecretKey:          defaultKey,
-					EncryptionProvider: "secretKey.v1",
+					EncryptionProvider: contracts.ProviderSecretKey,
 				},
 			}
 			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
@@ -384,7 +373,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 				store,
 				cfg,
 				usageStats,
-				encryption.ProvideThirdPartyProviderMap(),
+				kmsproviders.ProvideEnterpriseKMSProvider(),
 			)
 			require.NoError(t, err)
 
@@ -415,19 +404,11 @@ func TestIntegration_SecretsService(t *testing.T) {
 	}
 }
 
-func TestEncryptionService_ReInitReturnsError(t *testing.T) {
-	svc := setupTestService(t)
-	err := svc.InitProviders(encryption.ProviderMap{
-		"fakeProvider.v1": &fakeProvider{},
-	})
-	require.Error(t, err)
-}
-
-func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
+func TestEncryptionService_ThirdPartyProvidersFailsInOSS(t *testing.T) {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "SdlklWklckeLS",
-			EncryptionProvider: "secretKey.v1",
+			EncryptionProvider: contracts.ProviderAWSKMS,
 		},
 	}
 
@@ -436,13 +417,15 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 		nil,
 		cfg,
 		&usagestats.UsageStatsMock{},
-		encryption.ProviderMap{
-			"fakeProvider.v1": &fakeProvider{},
-		},
+		kmsproviders.ProvideEnterpriseKMSProvider(),
 	)
 	require.NoError(t, err)
 
-	encMgr := svc.(*EncryptionManager)
-	require.Len(t, encMgr.providers, 2)
-	require.Contains(t, encMgr.providers, encryption.ProviderID("fakeProvider.v1"))
+	_, err = svc.Encrypt(context.Background(), "test-namespace", []byte("test"))
+	require.Error(t, err)
+	require.Equal(t, err, kmsproviders.ErrorEnterpriseKMSProviderNotAvailable)
+
+	_, err = svc.Decrypt(context.Background(), "test-namespace", []byte("test"))
+	require.Error(t, err)
+	require.Equal(t, err, kmsproviders.ErrorEnterpriseKMSProviderNotAvailable)
 }

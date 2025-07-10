@@ -7,7 +7,8 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,7 +29,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          defaultKey,
-			EncryptionProvider: "secretKey.v1",
+			EncryptionProvider: contracts.ProviderSecretKey,
 		},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
@@ -41,7 +42,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 		store,
 		cfg,
 		usageStats,
-		encryption.ProvideThirdPartyProviderMap(),
+		kmsproviders.ProvideEnterpriseKMSProvider(),
 	)
 	require.NoError(tb, err)
 

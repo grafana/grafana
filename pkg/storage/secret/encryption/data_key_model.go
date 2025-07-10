@@ -3,7 +3,7 @@ package encryption
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 // SecretDataKey does not have a mirrored K8s resource
@@ -12,7 +12,7 @@ type SecretDataKey struct {
 	Active        bool
 	Namespace     string
 	Label         string
-	Provider      encryption.ProviderID
+	Provider      contracts.EncryptionProvider
 	EncryptedData []byte
 	Created       time.Time
 	Updated       time.Time

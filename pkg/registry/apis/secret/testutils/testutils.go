@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -76,7 +76,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          defaultKey,
-			EncryptionProvider: "secretKey.v1",
+			EncryptionProvider: contracts.ProviderSecretKey,
 		},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
@@ -89,7 +89,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		store,
 		cfg,
 		usageStats,
-		encryption.ProvideThirdPartyProviderMap(),
+		kmsproviders.ProvideEnterpriseKMSProvider(),
 	)
 	require.NoError(t, err)
 

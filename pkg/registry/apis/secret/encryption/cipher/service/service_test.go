@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,7 +19,7 @@ func newGcmService(t *testing.T) *Service {
 	settings := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "SdlklWklckeLS",
-			EncryptionProvider: "secretKey.v1",
+			EncryptionProvider: contracts.ProviderSecretKey,
 		},
 	}
 
