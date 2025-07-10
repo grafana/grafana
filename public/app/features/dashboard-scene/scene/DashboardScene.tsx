@@ -184,9 +184,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
-  // keeps track of the current url if the url is the url of this dashboard scene
-  private _currentQueryParams?: string;
-
   protected _renderBeforeActivation = true;
 
   public serializer: DashboardSceneSerializerLike<
@@ -225,20 +222,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     const unlisten = locationService.getHistory().listen((a) => {
-      if (this.state.uid && a.pathname.includes(this.state.uid)) {
-        this._currentQueryParams = a.search;
-        preserveDashboardSceneStateInLocalStorage(new URLSearchParams(this._currentQueryParams), this.state.uid);
+      if (this.state.uid && a.pathname.includes(this.state.uid) && this.state.version !== 0) {
+        preserveDashboardSceneStateInLocalStorage(new URLSearchParams(a.search), this.state.uid);
       }
     });
 
-    // return a function to unlisten to the url and preserve the current query params if the url is the url of this dashboard scene.
     return () => {
       unlisten();
-
-      if (this._currentQueryParams) {
-        preserveDashboardSceneStateInLocalStorage(new URLSearchParams(this._currentQueryParams), this.state.uid);
-        this._currentQueryParams = undefined;
-      }
     };
   };
 
