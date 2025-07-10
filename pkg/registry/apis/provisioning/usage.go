@@ -30,7 +30,7 @@ func (b *APIBuilder) collectProvisioningStats(ctx context.Context) (metrics map[
 	// we could discover the set of valid namespaces, but that would count everything for
 	// each instance in cloud.
 	ns := "default"
-	ctx, _, err = identity.WithProvisioningIdentity(context.Background(), ns)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, ns)
 	if err != nil {
 		return nil, err
 	}
