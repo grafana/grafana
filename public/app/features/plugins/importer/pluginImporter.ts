@@ -11,7 +11,6 @@ import {
   PanelPluginMeta,
   PluginLoadingStrategy,
   PluginMeta,
-  PluginType,
   throwIfAngular,
 } from '@grafana/data';
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
@@ -183,60 +182,56 @@ const appPluginPostImport: PostImportStrategy<AppPluginMeta, AppPlugin> = async 
   return plugin;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getPreImportStrategy = (plugin: PluginMeta): PreImportStrategy<any> => defaultPreImport;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getPostImportStrategy = (plugin: PluginMeta): PostImportStrategy<any, any> => {
-  if (plugin.type === PluginType.panel) {
-    return panelPluginPostImport;
-  }
-
-  if (plugin.type === PluginType.datasource) {
-    return datasourcePluginPostImport;
-  }
-
-  if (plugin.type === PluginType.app) {
-    return appPluginPostImport;
-  }
-
-  return (meta: PluginMeta, module: Promise<System.Module>) => Promise.resolve(module);
-};
-
 const panelPluginCache: Map<string, PanelPlugin> = new Map();
-const promisesCache: Map<string, Promise<GrafanaPlugin>> = new Map();
+const promisesCache: Map<string, Promise<unknown>> = new Map();
 
-const getPluginPromiseFromCache = <M extends PluginMeta = PluginMeta, P extends GrafanaPlugin<M> = GrafanaPlugin<M>>(
-  meta: M
-): Promise<P> => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cached: any = promisesCache.get(meta.id);
+const getPromiseFromCache = <M extends PluginMeta, P extends GrafanaPlugin<M>>(meta: M): Promise<P> => {
+  const cached = promisesCache.get(meta.id);
   if (cached) {
-    return cached;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return cached as Promise<P>;
   }
 
-  throw new Error(`Trying to get unknown plugin from cache`);
-};
-
-const importPlugin = async <M extends PluginMeta = PluginMeta, P extends GrafanaPlugin<M> = GrafanaPlugin<M>>(
-  meta: M
-): Promise<P> => {
-  if (promisesCache.has(meta.id)) {
-    return getPluginPromiseFromCache(meta);
-  }
-
-  const args = getPreImportStrategy(meta)(meta);
-  const module = importPluginModule(args);
-  const plugin = getPostImportStrategy(meta)(meta, module);
-  promisesCache.set(meta.id, plugin);
-
-  return getPluginPromiseFromCache<M, P>(meta);
+  throw new Error(`Trying to get unknown plugin type ${meta.type} from cache for plugin ${meta.id}`);
 };
 
 const importer = {
-  importPanelPlugin: (plugin: PanelPluginMeta): Promise<PanelPlugin> => importPlugin(plugin),
-  importDatasourcePlugin: (plugin: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> => importPlugin(plugin),
-  importAppPlugin: (plugin: AppPluginMeta): Promise<AppPlugin> => importPlugin(plugin),
+  importPanelPlugin: (meta: PanelPluginMeta): Promise<PanelPlugin> => {
+    if (promisesCache.has(meta.id)) {
+      return getPromiseFromCache(meta);
+    }
+
+    const args = defaultPreImport(meta);
+    const module = importPluginModule(args);
+    const plugin = panelPluginPostImport(meta, module);
+    promisesCache.set(meta.id, plugin);
+
+    return getPromiseFromCache(meta);
+  },
+  importDatasourcePlugin: (meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> => {
+    if (promisesCache.has(meta.id)) {
+      return getPromiseFromCache(meta);
+    }
+
+    const args = defaultPreImport(meta);
+    const module = importPluginModule(args);
+    const plugin = datasourcePluginPostImport(meta, module);
+    promisesCache.set(meta.id, plugin);
+
+    return getPromiseFromCache(meta);
+  },
+  importAppPlugin: (meta: AppPluginMeta): Promise<AppPlugin> => {
+    if (promisesCache.has(meta.id)) {
+      return getPromiseFromCache(meta);
+    }
+
+    const args = defaultPreImport(meta);
+    const module = importPluginModule(args);
+    const plugin = appPluginPostImport(meta, module);
+    promisesCache.set(meta.id, plugin);
+
+    return getPromiseFromCache(meta);
+  },
   getPanelPlugin: (id: string) => panelPluginCache.get(id),
 };
 
