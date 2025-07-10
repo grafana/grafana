@@ -18355,6 +18355,7 @@ __metadata:
     leven: "npm:^4.0.0"
     lodash: "npm:4.17.21"
     logfmt: "npm:^1.3.2"
+    lossless-json: "npm:^4.1.1"
     lru-cache: "npm:11.1.0"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
@@ -22157,6 +22158,13 @@ __metadata:
   bin:
     loose-envify: cli.js
   checksum: 10/6517e24e0cad87ec9888f500c5b5947032cdfe6ef65e1c1936a0c48a524b81e65542c9c3edc91c97d5bddc806ee2a985dbc79be89215d613b1de5db6d1cfe6f4
+  languageName: node
+  linkType: hard
+
+"lossless-json@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "lossless-json@npm:4.1.1"
+  checksum: 10/1e22e9e4ad8ebf169567a8c24553403bfd7abc33c141f4918f1b9626417f80477b849e6175a315a224e0c68072759c69a0e332a925de80269a7f9720af3a7fbd
   languageName: node
   linkType: hard
 
