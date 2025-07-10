@@ -2,6 +2,7 @@ import { defaults, each, sortBy } from 'lodash';
 
 import { DataSourceRef, PanelPluginMeta, VariableOption, VariableRefresh } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { Panel } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   PanelKind,
@@ -12,6 +13,7 @@ import {
   LibraryPanelKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import config from 'app/core/config';
+import { buildPanelKind } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
@@ -339,65 +341,10 @@ async function convertLibraryPanelToInlinePanel(libraryPanelElement: LibraryPane
   try {
     // Load the full library panel definition
     const fullLibraryPanel = await getLibraryPanel(libraryPanel.uid, true);
-    const panelModel = fullLibraryPanel.model;
-
-    // Convert the library panel model to V2 PanelKind format
-    const inlinePanel: PanelKind = {
-      kind: 'Panel',
-      spec: {
-        id,
-        title: title || panelModel.title || libraryPanel.name,
-        description: panelModel.description || '',
-        links: (panelModel.links || [])
-          .filter((link: any) => link.url)
-          .map((link: any) => ({
-            ...link,
-            url: link.url as string,
-          })),
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries:
-              panelModel.targets?.map((target: any, index: number) => ({
-                kind: 'PanelQuery',
-                spec: {
-                  query: {
-                    kind: target.queryType || 'grafana',
-                    spec: target,
-                  },
-                  datasource: target.datasource,
-                  refId: target.refId || String.fromCharCode(65 + index), // A, B, C...
-                  hidden: target.hide || false,
-                },
-              })) || [],
-            transformations:
-              panelModel.transformations?.map((transform: any) => ({
-                kind: 'Transformation',
-                spec: transform,
-              })) || [],
-            queryOptions: {
-              maxDataPoints: panelModel.maxDataPoints,
-              interval: panelModel.interval,
-              timeFrom: panelModel.timeFrom,
-              timeShift: panelModel.timeShift,
-              hideTimeOverride: panelModel.hideTimeOverride,
-            },
-          },
-        },
-        vizConfig: {
-          kind: panelModel.type || 'text',
-          spec: {
-            pluginVersion: panelModel.pluginVersion || '',
-            options: panelModel.options || {},
-            fieldConfig: panelModel.fieldConfig
-              ? JSON.parse(JSON.stringify(panelModel.fieldConfig))
-              : { defaults: {}, overrides: [] },
-          },
-        },
-        transparent: panelModel.transparent,
-      },
-    };
-
+    const panelModel: Panel = fullLibraryPanel.model;
+    const inlinePanel = buildPanelKind(panelModel);
+    // keep the original id
+    inlinePanel.spec.id = id;
     return inlinePanel;
   } catch (error) {
     console.error(`Failed to load library panel ${libraryPanel.uid}:`, error);
