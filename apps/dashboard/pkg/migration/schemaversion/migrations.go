@@ -27,6 +27,7 @@ type DataSourceInfoProvider interface {
 func GetMigrations(dsInfoProvider DataSourceInfoProvider) map[int]SchemaVersionMigrationFunc {
 	return map[int]SchemaVersionMigrationFunc{
 		31: V31,
+		32: V32,
 		33: V33(dsInfoProvider),
 		34: V34,
 		35: V35,
