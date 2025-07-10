@@ -153,7 +153,6 @@
       "type": "xychart2"
     },
     {
-      "autoMigrateFrom": "graph",
       "datasource": {
         "apiVersion": "v1",
         "type": "prometheus",
@@ -176,7 +175,7 @@
         }
       ],
       "title": "Graph panel gets migrated to timeseries and tooltip",
-      "type": "timeseries"
+      "type": "graph"
     },
     {
       "datasource": {

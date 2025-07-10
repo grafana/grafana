@@ -199,8 +199,8 @@ func TestV30(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"type":  "graph",
-						"title": "Graph panel gets migrated to timeseries and tooltip",
+						"type":  "xychart2",
+						"title": "XY Chart2 with tooltipOptions",
 						"id":    3,
 						"options": map[string]interface{}{
 							"tooltipOptions": map[string]interface{}{
@@ -235,10 +235,9 @@ func TestV30(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"type":            "timeseries",
-						"autoMigrateFrom": "graph",
-						"title":           "Graph panel gets migrated to timeseries and tooltip",
-						"id":              3,
+						"type":  "xychart2",
+						"title": "XY Chart2 with tooltipOptions",
+						"id":    3,
 						"options": map[string]interface{}{
 							"tooltip": map[string]interface{}{
 								"mode": "single",
@@ -371,9 +370,9 @@ func TestV30(t *testing.T) {
 			},
 		},
 		{
-			name: "panel type migration sets autoMigrateFrom correctly",
+			name: "panels remain unchanged when no V30 specific migrations apply",
 			input: map[string]interface{}{
-				"title":         "V30 Panel Type Migration Test Dashboard",
+				"title":         "V30 Panel Types Unchanged Test Dashboard",
 				"schemaVersion": 29,
 				"panels": []interface{}{
 					map[string]interface{}{
@@ -394,20 +393,18 @@ func TestV30(t *testing.T) {
 				},
 			},
 			expected: map[string]interface{}{
-				"title":         "V30 Panel Type Migration Test Dashboard",
+				"title":         "V30 Panel Types Unchanged Test Dashboard",
 				"schemaVersion": 30,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"type":            "timeseries",
-						"autoMigrateFrom": "graph",
-						"title":           "Graph panel",
-						"id":              1,
+						"type":  "graph",
+						"title": "Graph panel",
+						"id":    1,
 					},
 					map[string]interface{}{
-						"type":            "stat",
-						"autoMigrateFrom": "singlestat",
-						"title":           "Singlestat panel",
-						"id":              2,
+						"type":  "singlestat",
+						"title": "Singlestat panel",
+						"id":    2,
 					},
 					map[string]interface{}{
 						"type":  "timeseries",
@@ -418,14 +415,14 @@ func TestV30(t *testing.T) {
 			},
 		},
 		{
-			name: "complex graph panel migrations based on configuration",
+			name: "graph panels with different configurations remain unchanged in V30",
 			input: map[string]interface{}{
-				"title":         "V30 Complex Graph Panel Migration Test Dashboard",
+				"title":         "V30 Graph Panel Configurations Test Dashboard",
 				"schemaVersion": 29,
 				"panels": []interface{}{
 					map[string]interface{}{
 						"type":  "graph",
-						"title": "Graph to Bargauge",
+						"title": "Graph with series mode and legend values",
 						"id":    1,
 						"xaxis": map[string]interface{}{
 							"mode": "series",
@@ -436,7 +433,7 @@ func TestV30(t *testing.T) {
 					},
 					map[string]interface{}{
 						"type":  "graph",
-						"title": "Graph to Barchart",
+						"title": "Graph with series mode",
 						"id":    2,
 						"xaxis": map[string]interface{}{
 							"mode": "series",
@@ -444,7 +441,7 @@ func TestV30(t *testing.T) {
 					},
 					map[string]interface{}{
 						"type":  "graph",
-						"title": "Graph to Histogram",
+						"title": "Graph with histogram mode",
 						"id":    3,
 						"xaxis": map[string]interface{}{
 							"mode": "histogram",
@@ -452,20 +449,19 @@ func TestV30(t *testing.T) {
 					},
 					map[string]interface{}{
 						"type":  "graph",
-						"title": "Graph to Timeseries (default)",
+						"title": "Graph with default configuration",
 						"id":    4,
 					},
 				},
 			},
 			expected: map[string]interface{}{
-				"title":         "V30 Complex Graph Panel Migration Test Dashboard",
+				"title":         "V30 Graph Panel Configurations Test Dashboard",
 				"schemaVersion": 30,
 				"panels": []interface{}{
 					map[string]interface{}{
-						"type":            "bargauge",
-						"autoMigrateFrom": "graph",
-						"title":           "Graph to Bargauge",
-						"id":              1,
+						"type":  "graph",
+						"title": "Graph with series mode and legend values",
+						"id":    1,
 						"xaxis": map[string]interface{}{
 							"mode": "series",
 						},
@@ -474,28 +470,25 @@ func TestV30(t *testing.T) {
 						},
 					},
 					map[string]interface{}{
-						"type":            "barchart",
-						"autoMigrateFrom": "graph",
-						"title":           "Graph to Barchart",
-						"id":              2,
+						"type":  "graph",
+						"title": "Graph with series mode",
+						"id":    2,
 						"xaxis": map[string]interface{}{
 							"mode": "series",
 						},
 					},
 					map[string]interface{}{
-						"type":            "histogram",
-						"autoMigrateFrom": "graph",
-						"title":           "Graph to Histogram",
-						"id":              3,
+						"type":  "graph",
+						"title": "Graph with histogram mode",
+						"id":    3,
 						"xaxis": map[string]interface{}{
 							"mode": "histogram",
 						},
 					},
 					map[string]interface{}{
-						"type":            "timeseries",
-						"autoMigrateFrom": "graph",
-						"title":           "Graph to Timeseries (default)",
-						"id":              4,
+						"type":  "graph",
+						"title": "Graph with default configuration",
+						"id":    4,
 					},
 				},
 			},
