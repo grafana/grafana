@@ -16,7 +16,6 @@ export const LogLineDetailsLog = memo(({ log: originalLog }: Props) => {
   const logStyles = useStyles2(getStyles);
   const log = useMemo(() => {
     const log = originalLog.clone();
-    log.setCollapsedState(undefined);
     return log;
   }, [originalLog]);
 

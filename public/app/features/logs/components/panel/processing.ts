@@ -99,7 +99,12 @@ export class LogListModel implements LogRowModel {
   }
 
   clone() {
-    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+    const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+    // Unless this function is required outside of <LogLineDetailsLog />, we create a wrapped clone, so new lines are not stripped.
+    clone._wrapLogMessage = true;
+    clone._body = undefined;
+    clone._highlightedBody = undefined;
+    return clone;
   }
 
   get body(): string {
