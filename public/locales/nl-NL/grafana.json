@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "YAML bewerken",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Er is een fout opgetreden bij het laden van de gegevensbrondetails",
       "edit": "Bewerken",
-      "evaluations-to-fire": "Evaluatiecycli tot activering",
       "export": "Exporteren",
       "folder": "Map",
       "group-loading-error": "Er is een fout opgetreden bij het laden van de groep",
       "interval": "Interval",
       "namespace": "Namespace",
-      "pending-period": "Wachttijd",
-      "recording": "Opnemen",
-      "rule-name": "Regelnaam"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Er is een fout opgetreden bij het laden van de gegevensbrondetails",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Alles exporteren"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Kon querybewerker niet laden vanwege: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Kun je de gewenste gegevensbron niet vinden? Sommige gegevensbronnen worden niet ondersteund voor waarschuwingen. Klik op het pictogram voor meer informatie."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Nieuwe Alertmanager toevoegen",
       "builtin-alertmanager": "Ingebouwde Alertmanager",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} geleden)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -5656,6 +5669,20 @@
       "usage-count_one": "Gebruikt op {{count}} dashboards",
       "usage-count_other": "Gebruikt op {{count}} dashboards"
     },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map. Wil je dit dashboard nog steeds opslaan?",
       "title-name-already-exists": "Naam bestaat al"
@@ -7984,6 +8011,9 @@
       "filter-popup-match-case": "Case matchen",
       "inspect-drawer-title": "Waarde inspecteren",
       "inspect-menu-label": "Waarde inspecteren",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen"
     },
@@ -8712,6 +8742,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8724,6 +8755,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8826,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9084,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Dashboard is al provisioned en beheerd door Grafana in de cloudinstantie. We raden je aan om voortaan het provisioned dashboard te gebruiken. Als je het dashboard nog steeds naar de cloud-instantie wilt kopiëren, wijzig dan het dashboard-ID in het dashboard-JSON, sla een nieuw snapshot op en upload opnieuw.",
         "datasource-already-managed": "Dashboard is al provisioned en beheerd door Grafana in de cloudinstantie. Als dit een andere bron is, stel dan een andere UID in en probeer het opnieuw.",
         "datasource-invalid-url": "Er is een gegevensbron met een ongeldige URL. Geef een geldige URL op en probeer het opnieuw.",
@@ -10313,10 +10352,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {

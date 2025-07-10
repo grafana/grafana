@@ -1,4 +1,4 @@
-package repository
+package local
 
 import (
 	"context"
@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
@@ -75,9 +76,9 @@ func (r *LocalFolderResolver) LocalPath(p string) (string, error) {
 }
 
 var (
-	_ Repository = (*localRepository)(nil)
-	_ Writer     = (*localRepository)(nil)
-	_ Reader     = (*localRepository)(nil)
+	_ repository.Repository = (*localRepository)(nil)
+	_ repository.Writer     = (*localRepository)(nil)
+	_ repository.Reader     = (*localRepository)(nil)
 )
 
 type localRepository struct {
@@ -147,17 +148,17 @@ func (r *localRepository) Validate() field.ErrorList {
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	path := field.NewPath("spec", "local", "path")
 	if r.config.Spec.Local.Path == "" {
-		return fromFieldError(field.Required(path, "no path is configured")), nil
+		return repository.FromFieldError(field.Required(path, "no path is configured")), nil
 	}
 
 	_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
 	if err != nil {
-		return fromFieldError(field.Invalid(path, r.config.Spec.Local.Path, err.Error())), nil
+		return repository.FromFieldError(field.Invalid(path, r.config.Spec.Local.Path, err.Error())), nil
 	}
 
 	_, err = os.Stat(r.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return fromFieldError(field.NotFound(path, r.config.Spec.Local.Path)), nil
+		return repository.FromFieldError(field.NotFound(path, r.config.Spec.Local.Path)), nil
 	}
 
 	return &provisioning.TestResults{
@@ -176,7 +177,7 @@ func (r *localRepository) validateRequest(ref string) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, filePath string, ref string) (*FileInfo, error) {
+func (r *localRepository) Read(ctx context.Context, filePath string, ref string) (*repository.FileInfo, error) {
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
@@ -184,13 +185,13 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 	actualPath := safepath.Join(r.path, filePath)
 	info, err := os.Stat(actualPath)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil, ErrFileNotFound
+		return nil, repository.ErrFileNotFound
 	} else if err != nil {
 		return nil, fmt.Errorf("stat file: %w", err)
 	}
 
 	if info.IsDir() {
-		return &FileInfo{
+		return &repository.FileInfo{
 			Path: filePath,
 			Modified: &metav1.Time{
 				Time: info.ModTime(),
@@ -209,7 +210,7 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 		return nil, fmt.Errorf("calculate hash of file: %w", err)
 	}
 
-	return &FileInfo{
+	return &repository.FileInfo{
 		Path: filePath,
 		Data: data,
 		Hash: hash,
@@ -220,7 +221,7 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error) {
+func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
@@ -228,16 +229,16 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 	// Return an empty list when folder does not exist
 	_, err := os.Stat(r.path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return []FileTreeEntry{}, nil
+		return []repository.FileTreeEntry{}, nil
 	}
 
 	rootlen := len(r.path)
-	entries := make([]FileTreeEntry, 0, 100)
+	entries := make([]repository.FileTreeEntry, 0, 100)
 	err = filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		entry := FileTreeEntry{
+		entry := repository.FileTreeEntry{
 			Path: strings.TrimLeft(path[rootlen:], "/"),
 			Size: info.Size(),
 		}
@@ -251,8 +252,10 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 			if err != nil {
 				return fmt.Errorf("read and calculate hash of path %s: %w", path, err)
 			}
+		} else if !strings.HasSuffix(entry.Path, "/") {
+			// ensure trailing slash for directories
+			entry.Path = entry.Path + "/"
 		}
-		// TODO: do folders have a trailing slash?
 		entries = append(entries, entry)
 		return err
 	})
@@ -263,7 +266,7 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 func (r *localRepository) calculateFileHash(path string) (string, int64, error) {
 	// Treats https://securego.io/docs/rules/g304.html
 	if !safepath.InDir(path, r.path) {
-		return "", 0, ErrFileNotFound
+		return "", 0, repository.ErrFileNotFound
 	}
 
 	// We've already made sure the path is safe, so we'll ignore the gosec lint.
@@ -329,7 +332,7 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 
 	f, err := os.Stat(path)
 	if err != nil && errors.Is(err, os.ErrNotExist) {
-		return ErrFileNotFound
+		return repository.ErrFileNotFound
 	}
 	if f.IsDir() {
 		return apierrors.NewBadRequest("path exists but it is a directory")
@@ -360,5 +363,12 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 		return err
 	}
 
-	return os.Remove(safepath.Join(r.path, path))
+	fullPath := safepath.Join(r.path, path)
+
+	if safepath.IsDir(path) {
+		// if it is a folder, delete all of its contents
+		return os.RemoveAll(fullPath)
+	}
+
+	return os.Remove(fullPath)
 }
