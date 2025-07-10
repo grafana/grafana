@@ -43,7 +43,7 @@ export const folderAPIv1beta1 = generatedAPI.enhanceEndpoints({
 const { useGetFolderParentsQuery, useGetFolderAccessQuery } = folderAPIv1beta1;
 export const { useGetFolderQuery } = folderAPIv1beta1;
 
-function folderUrl(uid: string, title: string): string {
+function getFolderUrl(uid: string, title: string): string {
   // mimics https://github.com/grafana/grafana/blob/79fe8a9902335c7a28af30e467b904a4ccfac503/pkg/services/dashboards/models.go#L188
   // Not the same slugify as on the backend https://github.com/grafana/grafana/blob/aac66e91198004bc044754105e18bfff8fbfd383/pkg/infra/slugify/slugify.go#L86
   // Probably does not matter as it seems to be only for better human readability.
@@ -102,7 +102,7 @@ export function useGetFolderQueryFacade(uid?: string) {
         // url: result.data.metadata.annotations?.[AnnoKeyFolderUrl] || '',
         // general folder does not come with url
         // see https://github.com/grafana/grafana/blob/8a05378ef3ae5545c6f7429eae5c174d3c0edbfe/pkg/services/folder/folderimpl/folder_unifiedstorage.go#L88
-        url: uid === GENERAL_FOLDER_UID ? '' : folderUrl(result.data.metadata.name!, result.data.spec.title!),
+        url: uid === GENERAL_FOLDER_UID ? '' : getFolderUrl(result.data.metadata.name!, result.data.spec.title!),
         version: result.data.metadata.generation || 1,
       };
 
@@ -114,7 +114,7 @@ export function useGetFolderQueryFacade(uid?: string) {
             uid: i.name,
             // No idea how to make slug, on the server it uses a go lib: https://github.com/grafana/grafana/blob/aac66e91198004bc044754105e18bfff8fbfd383/pkg/infra/slugify/slugify.go#L56
             // Don't think slug is needed for the URL to work though
-            url: folderUrl(i.name, i.title),
+            url: getFolderUrl(i.name, i.title),
           }));
       }
     }
