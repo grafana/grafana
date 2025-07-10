@@ -689,7 +689,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				updated = deserializeRuleGroup(t, response.Body())
 				require.NotNil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
-				require.Equal(t, 5, *updated.Rules[0].MissingSeriesEvalsToResolve)
+				require.Equal(t, int64(5), *updated.Rules[0].MissingSeriesEvalsToResolve)
 
 				// Reset the value again
 				group.Rules[0].MissingSeriesEvalsToResolve = nil

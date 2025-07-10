@@ -554,8 +554,8 @@ func TestDiff(t *testing.T) {
 		if rule1.MissingSeriesEvalsToResolve != rule2.MissingSeriesEvalsToResolve {
 			diff := diffs.GetDiffsForField("MissingSeriesEvalsToResolve")
 			assert.Len(t, diff, 1)
-			assert.Equal(t, *rule1.MissingSeriesEvalsToResolve, int(diff[0].Left.Int()))
-			assert.Equal(t, *rule2.MissingSeriesEvalsToResolve, int(diff[0].Right.Int()))
+			assert.Equal(t, *rule1.MissingSeriesEvalsToResolve, diff[0].Left.Int())
+			assert.Equal(t, *rule2.MissingSeriesEvalsToResolve, diff[0].Right.Int())
 			difCnt++
 		}
 
@@ -1001,14 +1001,14 @@ func TestAlertRuleGetMissingSeriesEvalsToResolve(t *testing.T) {
 	t.Run("should return the default 2 if MissingSeriesEvalsToResolve is nil", func(t *testing.T) {
 		rule := RuleGen.GenerateRef()
 		rule.MissingSeriesEvalsToResolve = nil
-		require.Equal(t, 2, rule.GetMissingSeriesEvalsToResolve())
+		require.Equal(t, int64(2), rule.GetMissingSeriesEvalsToResolve())
 	})
 
 	t.Run("should return the correct value", func(t *testing.T) {
 		rule := RuleGen.With(
 			RuleMuts.WithMissingSeriesEvalsToResolve(3),
 		).GenerateRef()
-		require.Equal(t, 3, rule.GetMissingSeriesEvalsToResolve())
+		require.Equal(t, int64(3), rule.GetMissingSeriesEvalsToResolve())
 	})
 }
 
