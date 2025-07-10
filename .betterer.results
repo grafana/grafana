@@ -2348,8 +2348,7 @@ exports[`better eslint`] = {
     "public/app/features/geo/utils/frameVectorSource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/features/inspector/InspectDataOptions.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -3773,9 +3772,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/geomap/layers/data/geojsonDynamic.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/panel/geomap/layers/data/markersLayer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/geomap/layers/data/routeLayer.tsx:5381": [

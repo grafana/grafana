@@ -1,7 +1,6 @@
 import OpenLayersMap from 'ol/Map';
 import { Point } from 'ol/geom';
 import { VectorImage } from 'ol/layer';
-import BaseLayer from 'ol/layer/Base';
 import LayerGroup from 'ol/layer/Group';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
 import { ReactNode } from 'react';
@@ -100,7 +99,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     }
 
     return {
-      init: () => layers as BaseLayer,
+      init: () => layers,
       legend: legend,
       update: (data: PanelData) => {
         if (!data.series?.length) {
