@@ -90,14 +90,19 @@ export const TimeSeriesTooltip = ({
     const field = series.fields[seriesIdx];
     const hasOneClickLink = dataLinks.some((dataLink) => dataLink.oneClick === true);
 
+    // Check if the field supports filtering (similar to table implementation)
+    const showFilters = Boolean(xField.config.filterable && onAddAdHocFilter != null);
+
     // create the filter click handler based on hovered series index and row index:
-    const onFilterClick = () => {
-      onAddAdHocFilter?.({
-        key: xField.name,
-        operator: FILTER_FOR_OPERATOR,
-        value: String(xField.values[dataIdxs[0]!]),
-      });
-    };
+    const onFilterClick = showFilters
+      ? () => {
+          onAddAdHocFilter?.({
+            key: xField.name,
+            operator: FILTER_FOR_OPERATOR,
+            value: String(xField.values[dataIdxs[0]!]),
+          });
+        }
+      : undefined;
 
     if (isPinned || hasOneClickLink) {
       const dataIdx = dataIdxs[seriesIdx]!;
