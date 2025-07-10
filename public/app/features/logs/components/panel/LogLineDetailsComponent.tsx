@@ -13,6 +13,7 @@ import { createLogLineLinks } from '../logParser';
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsHeader } from './LogLineDetailsHeader';
+import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
@@ -102,7 +103,7 @@ export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentPr
           isOpen={logLineOpen}
           onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
         >
-          <div className={styles.logLineWrapper}>{log.raw}</div>
+          <LogLineDetailsLog log={log} />
         </ControlledCollapse>
         {displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
@@ -188,9 +189,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
-  }),
-  logLineWrapper: css({
-    maxHeight: '50vh',
-    overflow: 'auto',
   }),
 });
