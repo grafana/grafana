@@ -61,7 +61,6 @@ export function preserveDashboardSceneStateInLocalStorage(search: URLSearchParam
   if (!config.featureToggles.preserveDashboardStateWhenNavigating) {
     return;
   }
-  // console.log('preserveDashboardSceneStateInLocalStorage', search.toString());
 
   // Skipping saving state for default home dashboard
   if (!uid) {
