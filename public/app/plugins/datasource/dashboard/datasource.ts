@@ -12,6 +12,9 @@ import {
   DataFrame,
   LoadingState,
   Field,
+  FieldType,
+  AdHocVariableFilter,
+  MetricFindValue,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -71,6 +74,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
+    // Extract AdHoc filters from the request
+    const adhocFilters = options.filters || [];
+
     return defer(() => {
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
         sourceDataProvider?.setContainerWidth(500);
@@ -82,7 +88,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         debounceTime(50),
         map((result) => {
           return {
-            data: this.getDataFramesForQueryTopic(result.data, query),
+            data: this.getDataFramesForQueryTopic(result.data, query, adhocFilters),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
@@ -95,7 +101,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     });
   }
 
-  private getDataFramesForQueryTopic(data: PanelData, query: DashboardQuery): DataFrame[] {
+  private getDataFramesForQueryTopic(
+    data: PanelData,
+    query: DashboardQuery,
+    filters: AdHocVariableFilter[]
+  ): DataFrame[] {
     const annotations = data.annotations ?? [];
     if (query.topic === DataTopic.Annotations) {
       return annotations.map((frame) => ({
@@ -111,6 +121,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           ...s,
           fields: s.fields.map((field: Field) => ({
             ...field,
+            config: {
+              ...field.config,
+              // Enable AdHoc filtering for string fields (similar to Loki/Prometheus pattern)
+              filterable: field.type === FieldType.string,
+            },
             state: {
               ...field.state,
             },
@@ -118,8 +133,140 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      return [...series, ...annotations];
+      // Apply AdHoc filters to series data (copied and simplified from filterByValue.ts)
+      const filteredSeries =
+        filters.length > 0 ? series.map((frame) => this.applyAdHocFilters(frame, filters)) : series;
+
+      return [...filteredSeries, ...annotations];
     }
+  }
+
+  /**
+   * Apply AdHoc filters to a DataFrame
+   * Optimized version with pre-computed field indices for better performance
+   */
+  private applyAdHocFilters(frame: DataFrame, filters: AdHocVariableFilter[]): DataFrame {
+    if (filters.length === 0 || frame.length === 0) {
+      return frame;
+    }
+
+    // Pre-compute field indices for better performance - O(m × f) instead of O(n × m × f)
+    const filterFieldIndices = filters
+      .map((filter) => {
+        const fieldIndex = frame.fields.findIndex((f) => f.name === filter.key);
+        return { filter, fieldIndex };
+      })
+      .filter(({ filter, fieldIndex }) => {
+        // If field is not present:
+        // - Keep filters with '=' operator (will always be false - reject rows)
+        // - Remove filters with '!=' operator (will always be true - no effect)
+        if (fieldIndex === -1) {
+          return filter.operator === '=';
+        }
+        return true;
+      });
+
+    // If no filters remain after optimization, return original frame
+    if (filterFieldIndices.length === 0) {
+      return frame;
+    }
+
+    // Short-circuit: if any filter has '=' operator with missing field, reject all rows
+    const hasImpossibleFilter = filterFieldIndices.some(({ fieldIndex }) => fieldIndex === -1);
+    if (hasImpossibleFilter) {
+      return this.reconstructDataFrame(frame, new Set<number>());
+    }
+
+    const matchingRows = new Set<number>();
+
+    // Check each row to see if it matches all filters (AND logic)
+    for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+      const rowMatches = filterFieldIndices.every(({ filter, fieldIndex }) => {
+        // Handle case where field doesn't exist (fieldIndex === -1)
+        if (fieldIndex === -1) {
+          return this.handleNonStringFieldFilter(filter);
+        }
+
+        const field = frame.fields[fieldIndex];
+
+        // Skip if field isn't a string field
+        if (field.type !== FieldType.string) {
+          return this.handleNonStringFieldFilter(filter);
+        }
+
+        const fieldValue = field.values[rowIndex];
+        return this.evaluateFilter(fieldValue, filter);
+      });
+
+      if (rowMatches) {
+        matchingRows.add(rowIndex);
+      }
+    }
+
+    return this.reconstructDataFrame(frame, matchingRows);
+  }
+
+  /**
+   * Handle filtering behavior for non-string fields
+   * Consistent with Prometheus DS behavior
+   */
+  private handleNonStringFieldFilter(filter: AdHocVariableFilter): boolean {
+    // Be consistent with Prometheus DS behavior:
+    // - reject when operator is '=' (field must exist and match)
+    // - allow when operator is '!=' (field doesn't exist, so it's "not equal")
+    switch (filter.operator) {
+      case '=':
+        return false; // Field doesn't exist or isn't string, so can't match
+      case '!=':
+        return true; // Field doesn't exist or isn't string, so it's "not equal"
+      default:
+        return true; // Unknown operator, skip this filter
+    }
+  }
+
+  /**
+   * Evaluate a filter against a field value
+   */
+  private evaluateFilter(fieldValue: any, filter: AdHocVariableFilter): boolean {
+    // Handle null/undefined values
+    if (fieldValue == null) {
+      return filter.operator === '!=' && filter.value !== '';
+    }
+
+    const filterValue = filter.value;
+
+    // Apply the filter based on operator
+    switch (filter.operator) {
+      case '=':
+        return fieldValue === filterValue;
+      case '!=':
+        return fieldValue !== filterValue;
+      default:
+        // Unknown operator, skip this filter
+        return true;
+    }
+  }
+
+  /**
+   * Reconstruct DataFrame with only matching rows
+   * Optimized to avoid repeated array operations
+   */
+  private reconstructDataFrame(frame: DataFrame, matchingRows: Set<number>): DataFrame {
+    const fields: Field[] = frame.fields.map((field) => {
+      const newValues = Array.from(matchingRows, (rowIndex) => field.values[rowIndex]);
+
+      return {
+        ...field,
+        values: newValues,
+        state: {}, // Clean the state as it's being recalculated
+      };
+    });
+
+    return {
+      ...frame,
+      fields: fields,
+      length: matchingRows.size,
+    };
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
@@ -168,5 +315,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({ message: '', status: '' });
+  }
+
+  getTagKeys(): Promise<MetricFindValue[]> {
+    // Stub implementation to indicate AdHoc filter support
+    // Full implementation will be added in future PRs
+    return Promise.resolve([]);
   }
 }
