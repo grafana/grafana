@@ -320,6 +320,38 @@ describe('applyFieldOverrides', () => {
     expect(range.min).toEqual(-20);
   });
 
+  it('will apply set min/max for a frame field when asked', () => {
+    const fOuter = createDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'nested',
+          type: FieldType.frame,
+          values: [f0],
+          config: {
+            min: -20,
+            max: 0,
+          },
+        },
+      ],
+    });
+
+    const data = applyFieldOverrides({
+      data: [fOuter], // the frame
+      fieldConfig: src as FieldConfigSource, // defaults + overrides
+      replaceVariables: undefined as unknown as InterpolateFunction,
+      theme: createTheme(),
+    })[0];
+    const valueColumn = data.fields[0];
+    const range = valueColumn.state!.range!;
+
+    // Keep max from the original setting
+    expect(range.max).toEqual(0);
+
+    // Don't Automatically pick the min value
+    expect(range.min).toEqual(-20);
+  });
+
   it('should calculate min/max per field when fieldMinMax is set', () => {
     const df = toDataFrame([
       { title: 'AAA', value: 100, value2: 1234 },
@@ -350,6 +382,43 @@ describe('applyFieldOverrides', () => {
     const range2 = valueColumn2.state!.range!;
     expect(range2.max).toEqual(1234);
     expect(range2.min).toEqual(1000);
+  });
+
+  it('should calculate min/max per field when fieldMinMax is set for a frame across all fields', () => {
+    const df = toDataFrame([
+      { title: 'AAA', value: 100, value2: 1234 },
+      { title: 'BBB', value: -20, value2: null },
+      { title: 'CCC', value: 200, value2: 1000 },
+    ]);
+    const fOuter = createDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'nested',
+          type: FieldType.frame,
+          values: [df],
+        },
+      ],
+    });
+
+    const fieldCfgSource: FieldConfigSource = {
+      defaults: {
+        fieldMinMax: true,
+      },
+      overrides: [],
+    };
+    const data = applyFieldOverrides({
+      data: [fOuter], // the frame
+      fieldConfig: fieldCfgSource,
+      replaceVariables: undefined as unknown as InterpolateFunction,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    const valueColumn1 = data.fields[0];
+    const range1 = valueColumn1.state!.range!;
+    expect(range1.max).toEqual(1234);
+    expect(range1.min).toEqual(-20);
   });
 
   it('should calculate min/max locally for fields with fieldMinMax and globally for other fields', () => {

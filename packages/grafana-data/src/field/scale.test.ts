@@ -5,7 +5,7 @@ import { Field, FieldType } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 import { ThresholdsMode } from '../types/thresholds';
 
-import { findNumericFieldMinMax, getScaleCalculator } from './scale';
+import { findNumericFieldMinMax, getMinMaxAndDelta, getScaleCalculator } from './scale';
 import { sortThresholds } from './thresholds';
 
 describe('getScaleCalculator', () => {
@@ -68,6 +68,105 @@ describe('getScaleCalculator', () => {
   });
 });
 
+describe('getMinMaxAndDelta', () => {
+  it('should return min, max and delta', () => {
+    const field: Field = {
+      name: 'test',
+      type: FieldType.number,
+      values: [1, 2, 3],
+      config: {},
+    };
+
+    const result = getMinMaxAndDelta(field);
+    expect(result.min).toBe(1);
+    expect(result.max).toBe(3);
+    expect(result.delta).toBe(2);
+  });
+
+  it('should handle non-numeric field', () => {
+    const field: Field = {
+      name: 'test',
+      type: FieldType.string,
+      values: [],
+      config: {},
+    };
+
+    const result = getMinMaxAndDelta(field);
+    expect(result.min).toBe(0);
+    expect(result.max).toBe(100);
+    expect(result.delta).toBe(100);
+  });
+
+  it('should handle single value field', () => {
+    const field: Field = {
+      name: 'test',
+      type: FieldType.number,
+      values: [42],
+      config: {},
+    };
+
+    const result = getMinMaxAndDelta(field);
+    expect(result.min).toBe(42);
+    expect(result.max).toBe(42);
+    expect(result.delta).toBe(0);
+  });
+
+  it('should use a configured min if provided', () => {
+    const field: Field = {
+      name: 'test',
+      type: FieldType.number,
+      values: [42, 42, 42],
+      config: {
+        min: 10,
+      },
+    };
+
+    const result = getMinMaxAndDelta(field);
+    expect(result.min).toBe(10);
+    expect(result.max).toBe(42);
+    expect(result.delta).toBe(32);
+  });
+
+  it('should use a configured max if provided', () => {
+    const field: Field = {
+      name: 'test',
+      type: FieldType.number,
+      values: [42, 42, 42],
+      config: {
+        max: 100,
+      },
+    };
+
+    const result = getMinMaxAndDelta(field);
+    expect(result.min).toBe(42);
+    expect(result.max).toBe(100);
+    expect(result.delta).toBe(58);
+  });
+
+  it('should support frame fields by calculating a min/max across all numeric fields', () => {
+    const f0 = toDataFrame([
+      { title: 'AAA', value: 100, value2: 1234 },
+      { title: 'BBB', value: -20, value2: -10000 },
+    ]);
+    const f1 = toDataFrame([
+      { title: 'CCC', value: 200, value2: -555 },
+      { title: 'DDD', value: 10000, value2: 333 },
+    ]);
+
+    const field: Field = {
+      name: 'test',
+      type: FieldType.frame,
+      values: [f0, f1],
+      config: {},
+    };
+
+    const result = getMinMaxAndDelta(field);
+    expect(result.min).toBe(-10000);
+    expect(result.max).toBe(10000);
+    expect(result.delta).toBe(20000);
+  });
+});
+
 describe('findNumericFieldMinMax', () => {
   it('find global min max', () => {
     const f0 = new ArrayDataFrame<{ title: string; value: number; value2: number | null }>([
@@ -126,6 +225,30 @@ describe('findNumericFieldMinMax', () => {
 
       expect(min).toBe(0);
       expect(max).toBe(2);
+    });
+  });
+
+  describe('when field is a frame', () => {
+    it('should find min/max in nested frames', () => {
+      const f0 = toDataFrame([
+        { title: 'AAA', value: 100 },
+        { title: 'BBB', value: -20 },
+      ]);
+      const f1 = toDataFrame([
+        { title: 'CCC', value: 200 },
+        { title: 'DDD', value: 50 },
+      ]);
+
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2] },
+          { name: 'Values', type: FieldType.frame, values: [f0, f1] },
+        ],
+      });
+
+      const minmax = findNumericFieldMinMax([frame]);
+      expect(minmax.min).toEqual(-20);
+      expect(minmax.max).toEqual(200);
     });
   });
 });
