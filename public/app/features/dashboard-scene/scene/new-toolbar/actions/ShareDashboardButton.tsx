@@ -15,7 +15,7 @@ const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButt
 export const ShareDashboardButton = ({ dashboard }: ToolbarActionProps) => {
   const [_, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
-    return await buildShareUrl(dashboard);
+    await buildShareUrl(dashboard);
   }, [dashboard]);
 
   return (

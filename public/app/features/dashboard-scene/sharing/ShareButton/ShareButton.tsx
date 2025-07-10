@@ -22,8 +22,8 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
 
   const [_, buildUrl] = useAsyncFn(async () => {
     DashboardInteractions.toolbarShareClick();
-    return await buildShareUrl(dashboard, panel);
-  }, [dashboard]);
+    await buildShareUrl(dashboard, panel);
+  }, [dashboard, panel]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
     if (isOpen) {
