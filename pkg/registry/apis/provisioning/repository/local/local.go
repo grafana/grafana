@@ -252,8 +252,10 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]repositor
 			if err != nil {
 				return fmt.Errorf("read and calculate hash of path %s: %w", path, err)
 			}
+		} else if !strings.HasSuffix(entry.Path, "/") {
+			// ensure trailing slash for directories
+			entry.Path = entry.Path + "/"
 		}
-		// TODO: do folders have a trailing slash?
 		entries = append(entries, entry)
 		return err
 	})
@@ -361,5 +363,12 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 		return err
 	}
 
-	return os.Remove(safepath.Join(r.path, path))
+	fullPath := safepath.Join(r.path, path)
+
+	if safepath.IsDir(path) {
+		// if it is a folder, delete all of its contents
+		return os.RemoveAll(fullPath)
+	}
+
+	return os.Remove(fullPath)
 }
