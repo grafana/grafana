@@ -16,6 +16,8 @@ function getPluginIcon(pluginId?: string): string {
   switch (pluginId) {
     case 'grafana-grafanadocsplugin-app':
       return 'book';
+    case 'grafana-investigations-app':
+      return 'eye';
     default:
       return 'ai-sparkle';
   }
