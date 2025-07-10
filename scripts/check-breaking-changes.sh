@@ -55,15 +55,8 @@ while IFS=" " read -r -a package; do
   # (non-zero if any of the packages failed the checks)
   if [ "$STATUS" -gt 0 ]; then
     EXIT_CODE=1
-
-    # add different format for forked repos to allow the message to be printed in stdout
-    if [[ "$IS_FORK" == "true" ]]; then
-      GITHUB_MESSAGE="${GITHUB_MESSAGE}${PACKAGE_PATH} has possible breaking changes\n"
-      GITHUB_LEVITATE_MARKDOWN+="${PACKAGE_PATH}\n${CURRENT_REPORT}\n"
-    else
-      GITHUB_MESSAGE="${GITHUB_MESSAGE}**<code>${PACKAGE_PATH}</code>** has possible breaking changes<br />"
-      GITHUB_LEVITATE_MARKDOWN+="<h3>${PACKAGE_PATH}</h3>${CURRENT_REPORT}<br>"
-    fi
+    GITHUB_MESSAGE="${GITHUB_MESSAGE}**<code>${PACKAGE_PATH}</code>** has possible breaking changes<br />"
+    GITHUB_LEVITATE_MARKDOWN+="<h3>${PACKAGE_PATH}</h3>${CURRENT_REPORT}<br>"
   fi
 
 done <<<"$PACKAGES"
@@ -72,14 +65,11 @@ done <<<"$PACKAGES"
 echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
+echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
 
 if [[ "$IS_FORK" == "true" ]]; then
-  # for forked repos, the report will be printed in stdout
-  # and we will exit the workflow right away according to the exit code
-  echo -e "$GITHUB_LEVITATE_MARKDOWN"
+  cat ./levitate/levitate.md >> "$GITHUB_STEP_SUMMARY"
   exit $EXIT_CODE
-else
-  echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
 fi
 
 # We will exit the workflow accordingly at another step
