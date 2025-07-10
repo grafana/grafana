@@ -1413,9 +1413,9 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							Format:      "",
 						},
 					},
-					"AvailableRepositoryTypes": {
+					"availableRepositoryTypes": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Available repository types supported in this instance (e.g. git, bitbucket, github, etc)",
+							Description: "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -1448,7 +1448,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"AvailableRepositoryTypes", "items"},
+				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{

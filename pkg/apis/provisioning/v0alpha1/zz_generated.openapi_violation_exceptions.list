@@ -16,7 +16,6 @@ API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ManagerStats,Identity
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositorySpec,GitHub
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositorySpec,GitLab
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositoryViewList,AvailableRepositoryTypes
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ResourceWrapper,URLs
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,SyncStatus,JobID
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,WebhookResponse,Message

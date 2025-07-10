@@ -3400,12 +3400,15 @@
         "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
         "type": "object",
         "required": [
-          "AvailableRepositoryTypes",
           "items"
         ],
         "properties": {
-          "AvailableRepositoryTypes": {
-            "description": "Available repository types supported in this instance (e.g. git, bitbucket, github, etc)",
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "availableRepositoryTypes": {
+            "description": "AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)",
             "type": "array",
             "items": {
               "type": "string",
@@ -3418,10 +3421,6 @@
                 "local"
               ]
             }
-          },
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
           },
           "items": {
             "type": "array",

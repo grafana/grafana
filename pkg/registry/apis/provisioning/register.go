@@ -99,7 +99,8 @@ type APIBuilder struct {
 	access           authlib.AccessChecker
 	statusPatcher    *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
-	extras []Extra
+	extras                   []Extra
+	availableRepositoryTypes map[provisioning.RepositoryType]bool
 }
 
 // NewAPIBuilder creates an API builder.
@@ -137,10 +138,21 @@ func NewAPIBuilder(
 		secrets:             secrets,
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
+		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
+			provisioning.LocalRepositoryType:  true,
+			provisioning.GitHubRepositoryType: true,
+		},
 	}
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
+	}
+
+	// Add the available repository types from the extras
+	for _, extra := range b.extras {
+		for _, t := range extra.RepositoryTypes() {
+			b.availableRepositoryTypes[t] = true
+		}
 	}
 
 	return b
@@ -1169,11 +1181,15 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		}
 	}
 
+	if !b.availableRepositoryTypes[r.Spec.Type] {
+		return nil, fmt.Errorf("repository type %s is not available", r.Spec.Type)
+	}
+
 	switch r.Spec.Type {
 	case provisioning.BitbucketRepositoryType:
-		return nil, errors.New("Bitbucket repository type is supported")
+		return nil, errors.New("repository type bitbucket is not available")
 	case provisioning.GitLabRepositoryType:
-		return nil, errors.New("GitLab repository type is supported")
+		return nil, errors.New("repository type gitlab is not available")
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
