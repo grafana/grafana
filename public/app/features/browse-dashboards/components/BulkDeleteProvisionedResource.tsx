@@ -15,7 +15,10 @@ import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-s
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
+import { useSelector } from 'app/types/store';
 
+import { useChildrenByParentUIDState, rootItemsSelector } from '../state/hooks';
+import { findItem } from '../state/utils';
 import { DashboardTreeSelection } from '../types';
 
 import { DescendantCount } from './BrowseActions/DescendantCount';
@@ -28,7 +31,7 @@ interface BulkDeleteFormData {
 
 interface FormProps extends BulkDeleteProvisionResourceProps {
   initialValues: BulkDeleteFormData;
-  repository?: RepositoryView;
+  repository: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   isGitHub: boolean;
   folderPath?: string;
@@ -52,73 +55,84 @@ function FormContent({
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
 
   const methods = useForm<BulkDeleteFormData>({ defaultValues: initialValues });
+  const childrenByParentUID = useChildrenByParentUIDState();
+  const rootItems = useSelector(rootItemsSelector);
   const { handleSubmit, watch } = methods;
   const workflow = watch('workflow');
 
-  const handleSubmitForm = async (data: BulkDeleteFormData) => {
-    if (!repository) {
-      console.error('No repository found');
-      return;
+  const getPath = (uid: string, isFolder: boolean): string => {
+    // Find the dashboard item by UID
+    const item = findItem([], childrenByParentUID, uid);
+
+    if (!item) {
+      return '';
     }
 
+    if (isFolder) {
+      return `${folderPath}/${item.title}/`;
+    } else {
+      const dashboardTitle = item.title;
+      return `${folderPath}/${dashboardTitle}.json`;
+    }
+  };
+
+  const handleSubmitForm = async (data: BulkDeleteFormData) => {
     const buildDeleteParams = (
       items: Record<string, boolean | undefined>,
       isFolder: boolean
-    ): DeleteRepositoryFilesWithPathApiArg[] =>
-      Object.keys(items).map((key) => ({
-        name: repository.name,
-        path: `${folderPath}/${key}${isFolder ? '/' : ''}`,
-        ref: workflow === 'write' ? undefined : data.ref,
-        message: data.comment,
-      }));
+    ): DeleteRepositoryFilesWithPathApiArg[] => {
+      return Object.keys(items).map((key) => {
+        console.log(key);
+        const path = getPath(key, isFolder);
+        return {
+          name: repository.name,
+          path,
+          ref: workflow === 'write' ? undefined : data.ref,
+          message: data.comment,
+        };
+      });
+    };
 
     const deleteRequests = [
       ...buildDeleteParams(selectedItems.folder, true),
       ...buildDeleteParams(selectedItems.dashboard, false),
     ];
 
-    try {
-      const results = await Promise.allSettled(deleteRequests.map((params) => deleteRepoFile(params).unwrap()));
+    const results = await Promise.allSettled(deleteRequests.map((params) => deleteRepoFile(params).unwrap()));
 
-      const successes: Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; data: unknown }> = [];
-      const failures: Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; error: unknown }> = [];
+    const successes: Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; data: unknown }> = [];
+    const failures: Array<{ index: number; item: DeleteRepositoryFilesWithPathApiArg; error: unknown }> = [];
 
-      results.forEach((result, index) => {
-        const item = deleteRequests[index];
-        if (result.status === 'fulfilled') {
-          successes.push({ index, item, data: result.value });
-        } else {
-          failures.push({ index, item, error: result.reason });
-        }
+    results.forEach((result, index) => {
+      const item = deleteRequests[index];
+      if (result.status === 'fulfilled') {
+        successes.push({ index, item, data: result.value });
+      } else {
+        failures.push({ index, item, error: result.reason });
+      }
+    });
+
+    if (successes.length > 0) {
+      console.log('Successes:', successes);
+      getAppEvents().publish({
+        type: AppEvents.alertSuccess.name,
+        payload: [
+          t(
+            'browse-dashboard.bulk-delete-resources-form.api-success',
+            `Successfully deleted ${successes.length} items`
+          ),
+        ],
       });
+    }
 
-      if (successes.length > 0) {
-        console.log('Successes:', successes);
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [
-            t(
-              'browse-dashboard.bulk-delete-resources-form.api-success',
-              `Successfully deleted ${successes.length} items`
-            ),
-          ],
-        });
-      }
-
-      if (failures.length > 0) {
-        console.error('Failures:', failures);
-        getAppEvents().publish({
-          type: AppEvents.alertError.name,
-          payload: [
-            t('browse-dashboard.bulk-delete-resources-form.api-error', `Failed to delete ${failures.length} items`),
-            failures.map((f) => `${f.item.path}`).join('\n'),
-          ],
-        });
-      }
-    } catch (error) {
+    if (failures.length > 0) {
+      console.error('Failures:', failures);
       getAppEvents().publish({
         type: AppEvents.alertError.name,
-        payload: [t('browse-dashboard.bulk-delete-resources-form.api-error', `Bulk delete failed: ${error}`)],
+        payload: [
+          t('browse-dashboard.bulk-delete-resources-form.api-error', `Failed to delete ${failures.length} items`),
+          failures.map((f) => `${f.item.path}`).join('\n'),
+        ],
       });
     }
   };
@@ -179,7 +193,6 @@ export function BulkDeleteProvisionedResource({
   };
 
   if (!repository) {
-    console.error('Repository not found');
     return null;
   }
 

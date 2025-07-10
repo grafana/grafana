@@ -75,7 +75,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showDeleteModal = () => {
-    // if all selected items are provisioned
+    // Note: this logic will be soon update with this PR: https://github.com/grafana/grafana/pull/107919
     if (isProvisionedInstance) {
       setShowBulkDeleteProvisionedResource(true);
     } else {
@@ -90,8 +90,6 @@ export function BrowseActions({ folderDTO }: Props) {
         })
       );
     }
-
-    // TODO: mixed selection of provisioned and non-provisioned items
   };
 
   const moveButton = (
