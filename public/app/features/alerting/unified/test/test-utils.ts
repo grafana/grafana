@@ -2,7 +2,7 @@ import { act } from '@testing-library/react';
 
 import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions } from '../mocks';
 import { setFolderAccessControl } from '../mocks/server/configure';

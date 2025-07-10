@@ -19,7 +19,7 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { prometheusRuleType } from 'app/features/alerting/unified/utils/rules';
 import { dispatch } from 'app/store/store';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 

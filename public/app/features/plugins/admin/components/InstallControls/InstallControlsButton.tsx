@@ -9,7 +9,7 @@ import { Button, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { getExternalManageLink, isDisabledAngularPlugin } from '../../helpers';
 import {
@@ -139,8 +139,11 @@ export function InstallControlsButton({
         title={t('plugins.install-controls-button.title-uninstall-modal', 'Uninstall {{plugin}}', {
           plugin: plugin.name,
         })}
-        body="Are you sure you want to uninstall this plugin?"
-        confirmText="Confirm"
+        body={t(
+          'plugins.install-controls-button.uninstall-controls.body-uninstall-plugin',
+          'Are you sure you want to uninstall this plugin?'
+        )}
+        confirmText={t('plugins.install-controls-button.uninstall-controls.confirmText-confirm', 'Confirm')}
         icon="exclamation-triangle"
         onConfirm={onUninstall}
         onDismiss={hideConfirmModal}

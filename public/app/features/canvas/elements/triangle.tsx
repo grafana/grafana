@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from 'app/core/config';
-import { DimensionContext } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 

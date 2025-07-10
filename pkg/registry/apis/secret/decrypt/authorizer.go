@@ -61,8 +61,10 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 	// TEMPORARY: while we can't onboard every app into secrets, we can block them from decrypting
 	// securevalues preemptively here before even reaching out to the database.
 	// This check can be removed once we open the gates for any service to use secrets.
-	if _, exists := a.allowList[serviceIdentity]; !exists || serviceIdentity == "" {
-		return serviceIdentity, false
+	if len(a.allowList) > 0 {
+		if _, exists := a.allowList[serviceIdentity]; !exists || serviceIdentity == "" {
+			return serviceIdentity, false
+		}
 	}
 
 	// Checks whether the token has the permission to decrypt secure values.
