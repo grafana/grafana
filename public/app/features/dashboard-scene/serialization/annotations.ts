@@ -84,7 +84,7 @@ export function transformV2ToV1AnnotationQuery(annotation: AnnotationQueryKind):
     // TOOO: mappings
   };
 
-  if (Object.keys(dataQuery.spec).length > 0) {
+  if (dataQuery.spec && Object.keys(dataQuery.spec).length > 0) {
     // @ts-expect-error DataQueryKind spec should be typed as DataQuery interface
     annoQuerySpec.target = {
       ...dataQuery?.spec,
