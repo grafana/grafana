@@ -1,0 +1,52 @@
+{
+  "data": [
+    {
+      "fields": [
+        {
+          "name": "traceID",
+          "values": ["test-trace-id"],
+          "config": {
+            "displayName": "Trace ID",
+            "links": [
+              {
+                "title": "Trace: ${__value.raw}",
+                "internal": {
+                  "query": {
+                    "query": "${__value.raw}"
+                  },
+                  "datasourceUid": "test-uid",
+                  "datasourceName": "test-name"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "traceName",
+          "values": ["test-service: test-operation"],
+          "config": {
+            "displayName": "Trace name"
+          }
+        },
+        {
+          "name": "startTime",
+          "values": [1605873894680],
+          "config": {
+            "displayName": "Start time"
+          }
+        },
+        {
+          "name": "duration",
+          "values": [1000],
+          "config": {
+            "displayName": "Duration",
+            "unit": "µs"
+          }
+        }
+      ],
+      "meta": {
+        "preferredVisualisationType": "table"
+      }
+    }
+  ]
+}

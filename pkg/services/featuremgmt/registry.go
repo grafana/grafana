@@ -1262,13 +1262,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "jaegerBackendMigration",
-			Description: "Enables querying the Jaeger data source without the proxy",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true",
-		},
-		{
 			Name:         "alertingUIOptimizeReducer",
 			Description:  "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
 			Stage:        FeatureStageGeneralAvailability,
