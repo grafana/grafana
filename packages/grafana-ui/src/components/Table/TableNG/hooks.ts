@@ -615,18 +615,13 @@ export function useScrollbarWidth(
   renderedRows: TableRow[]
 ) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
+  const el = ref.current?.element;
 
-  useLayoutEffect(
-    () => {
-      let el = ref.current?.element;
-      if (el) {
-        setScrollbarWidth(el.offsetWidth - el.clientWidth);
-      }
-    },
-    // todo: account for pagination, subtable expansion, default row height changes, height changes, data length
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [height, renderedRows]
-  );
+  useLayoutEffect(() => {
+    if (el) {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    }
+  }, [el, height, renderedRows]);
 
   return scrollbarWidth;
 }
