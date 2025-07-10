@@ -138,10 +138,11 @@ func TestGitRepository_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "missing token",
+			name: "missing token for R/W repository",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
-					Type: "test_type",
+					Type:      "test_type",
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 				},
 			},
 			gitConfig: RepositoryConfig{
@@ -152,6 +153,21 @@ func TestGitRepository_Validate(t *testing.T) {
 			want: field.ErrorList{
 				field.Required(field.NewPath("spec", "test_type", "token"), "a git access token is required"),
 			},
+		},
+		{
+			name: "missing token for read-only repository",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      "test_type",
+					Workflows: nil, // read-only
+				},
+			},
+			gitConfig: RepositoryConfig{
+				URL:    "https://git.example.com/repo.git",
+				Branch: "main",
+				Token:  "", // Empty token
+			},
+			want: nil,
 		},
 		{
 			name: "unsafe path",
