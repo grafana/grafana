@@ -106,7 +106,7 @@ func TestWrapWithStageAndPushIfPossible(t *testing.T) {
 			operation: func(repo Repository, staged bool) error {
 				return nil
 			},
-			expectedError: "push failed",
+			expectedError: "wrapped push error: push failed",
 		},
 		{
 			name: "remove failure should only log",
