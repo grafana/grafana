@@ -140,6 +140,21 @@ describe('preProcessLogs', () => {
       );
       expect(logListModel.getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME, true)).toBe('log message 1');
     });
+
+    test('Prettifies JSON', () => {
+      const entry = '{"key": "value", "otherKey": "otherValue"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false, // unwrapped
+        }
+      );
+      expect(logListModel.entry).toBe(entry);
+      expect(logListModel.body).not.toBe(entry);
+    });
   });
 
   test('Orders logs', () => {
