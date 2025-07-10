@@ -99,7 +99,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 			"./devenv",
 
 			// Must build test plugins to run e2e tests
-			"./e2e/test-plugins",
+			"./e2e-playwright/test-plugins",
 			"./packages/grafana-plugin-configs",
 
 			"./scripts/grafana-server/custom.ini",
@@ -119,7 +119,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 			"packages/*/package.json",
 			"packages/grafana-plugin-configs",
 			"public/app/plugins/*/*/package.json",
-			"e2e/test-plugins/*/package.json",
+			"e2e-playwright/test-plugins/*/package.json",
 			".nvmrc",
 		},
 	})
@@ -136,7 +136,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 
 			// e2e files
 			"e2e-playwright",
-			"e2e/test-plugins",
+			"e2e-playwright/test-plugins",
 			"playwright.config.ts",
 		},
 		Exclude: []string{

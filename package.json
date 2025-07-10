@@ -454,7 +454,7 @@
     "packages": [
       "packages/*",
       "public/app/plugins/*/*",
-      "e2e/test-plugins/*"
+      "e2e-playwright/test-plugins/*"
     ]
   },
   "engines": {

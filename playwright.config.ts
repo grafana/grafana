@@ -95,7 +95,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'extensions-test-app',
-      testDir: 'e2e/test-plugins/grafana-extensionstest-app',
+      testDir: path.join(testDirRoot, '/test-plugins/grafana-extensionstest-app'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -104,7 +104,7 @@ export default defineConfig<PluginOptions>({
     },
     {
       name: 'grafana-e2etest-datasource',
-      testDir: 'e2e/test-plugins/grafana-test-datasource',
+      testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
