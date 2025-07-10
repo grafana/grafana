@@ -110,6 +110,26 @@ func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string, preinstallP
 	}
 }
 
+// readPluginAPIRestrictionsSection reads a plugin API restrictions section and returns a map of API names to plugin lists
+func readPluginAPIRestrictionsSection(iniFile *ini.File, sectionName string) map[string][]string {
+	result := make(map[string][]string)
+
+	if !iniFile.HasSection(sectionName) {
+		return result
+	}
+
+	section := iniFile.Section(sectionName)
+	for _, key := range section.Keys() {
+		apiName := key.Name()
+		pluginList := util.SplitString(key.MustString(""))
+		if len(pluginList) > 0 {
+			result[apiName] = pluginList
+		}
+	}
+
+	return result
+}
+
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
 
@@ -178,6 +198,10 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
 
 	cfg.PluginUpdateStrategy = pluginsSection.Key("update_strategy").In(PluginUpdateStrategyLatest, []string{PluginUpdateStrategyLatest, PluginUpdateStrategyMinor})
+
+	// Plugin API restrictions - read from sections
+	cfg.PluginRestrictedAPIsWhitelist = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_whitelist")
+	cfg.PluginRestrictedAPIsBlacklist = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_blacklist")
 
 	return nil
 }
