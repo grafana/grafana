@@ -81,28 +81,16 @@ type ResourceIndex interface {
 
 // SearchBackend contains the technology specific logic to support search
 type SearchBackend interface {
-	// This will return nil if the key does not exist
+	// GetIndex returns existing index, or nil.
 	GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error)
 
-	// Build an index from scratch
-	BuildIndex(ctx context.Context,
-		key NamespacedResource,
+	// BuildIndex builds an index from scratch.
+	// Depending on the size, the backend may choose different options (eg: memory vs disk).
+	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
+	// The builder will write all documents before returning.
+	BuildIndex(ctx context.Context, key NamespacedResource, size int64, resourceVersion int64, nonStandardFields SearchableDocumentFields, builder func(index ResourceIndex) (int64, error)) (ResourceIndex, error)
 
-	// When the size is known, it will be passed along here
-	// Depending on the size, the backend may choose different options (eg: memory vs disk)
-		size int64,
-
-	// The last known resource version (can be used to know that nothing has changed)
-		resourceVersion int64,
-
-	// The non-standard index fields
-		fields SearchableDocumentFields,
-
-	// The builder will write all documents before returning
-		builder func(index ResourceIndex) (int64, error),
-	) (ResourceIndex, error)
-
-	// Gets the total number of documents across all indexes
+	// TotalDocs returns the total number of documents across all indexes.
 	TotalDocs() int64
 }
 
