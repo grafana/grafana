@@ -3,7 +3,7 @@ package setting
 import "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 
 type SecretsManagerSettings struct {
-	SecretKey          string
+	SecretKey          string // TODO: Consider replacing with a wrapper
 	EncryptionProvider contracts.EncryptionProvider
 }
 

@@ -59,6 +59,11 @@ func ProvideEncryptionManager(
 		return nil, fmt.Errorf("failed to create encryption service: %w", err)
 	}
 
+	// TODO: Secret key is currently required on the Enterprise side, so keeping it the same here for consistency.
+	// If we can firmly establish that we only need an OSS provider *or* an Enterprise provider, we can merge the two.
+	if cfg.SecretsManagement.SecretKey == "" {
+		return nil, fmt.Errorf("secret key is required for OSS encryption provider")
+	}
 	ossEncryptionProvider := kmsproviders.NewOSSKMSProvider(cfg.SecretsManagement.SecretKey, enc)
 
 	s := &EncryptionManager{
