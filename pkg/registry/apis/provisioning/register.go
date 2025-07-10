@@ -45,9 +45,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -76,7 +76,7 @@ type APIBuilder struct {
 	features featuremgmt.FeatureToggles
 
 	getter              rest.Getter
-	localFileResolver   *repository.LocalFolderResolver
+	localFileResolver   *local.LocalFolderResolver
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -105,7 +105,7 @@ type APIBuilder struct {
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
-	local *repository.LocalFolderResolver,
+	local *local.LocalFolderResolver,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
@@ -168,14 +168,7 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	logger := logging.DefaultLogger.With("logger", "provisioning startup")
-	if features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
-		logger.Info("Using nanogit for repositories")
-	} else {
-		logger.Debug("Using go-git and Github API for repositories")
-	}
-
-	folderResolver := &repository.LocalFolderResolver{
+	folderResolver := &local.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}
@@ -606,11 +599,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			b.repositoryLister = repoInformer.Lister()
 
+			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
 				export.ExportAll,
-				repository.WrapWithCloneAndPushIfPossible,
+				stageIfPossible,
 			)
 
 			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
@@ -636,7 +630,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				legacyResources,
 				storageSwapper,
 				syncWorker,
-				repository.WrapWithCloneAndPushIfPossible,
+				stageIfPossible,
 			)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
@@ -1170,52 +1164,63 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver), nil
+		return local.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
-		return nanogit.NewGitRepository(ctx, b.secrets, r, nanogit.RepositoryConfig{
+		// Decrypt token if needed
+		token := r.Spec.Git.Token
+		if token == "" {
+			decrypted, err := b.secrets.Decrypt(ctx, r.Spec.Git.EncryptedToken)
+			if err != nil {
+				return nil, fmt.Errorf("decrypt git token: %w", err)
+			}
+			token = string(decrypted)
+		}
+
+		return git.NewGitRepository(ctx, r, git.RepositoryConfig{
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
 			Path:           r.Spec.Git.Path,
-			Token:          r.Spec.Git.Token,
+			Token:          token,
 			EncryptedToken: r.Spec.Git.EncryptedToken,
 		})
 	case provisioning.GitHubRepositoryType:
-		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
-		}
-
-		apiRepo, err := repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
-		if err != nil {
-			return nil, fmt.Errorf("create github API repository: %w", err)
-		}
-
 		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
-		if !b.features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
-			logger.Debug("Instantiating Github repository with go-git and Github API")
-			return apiRepo, nil
-		}
-
-		logger.Info("Instantiating Github repository with nanogit")
+		logger.Info("Instantiating Github repository")
 
 		ghCfg := r.Spec.GitHub
 		if ghCfg == nil {
 			return nil, fmt.Errorf("github configuration is required for nano git")
 		}
 
-		gitCfg := nanogit.RepositoryConfig{
+		// Decrypt GitHub token if needed
+		ghToken := ghCfg.Token
+		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
+			decrypted, err := b.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
+			if err != nil {
+				return nil, fmt.Errorf("decrypt github token: %w", err)
+			}
+			ghToken = string(decrypted)
+		}
+
+		gitCfg := git.RepositoryConfig{
 			URL:            ghCfg.URL,
 			Branch:         ghCfg.Branch,
 			Path:           ghCfg.Path,
-			Token:          ghCfg.Token,
+			Token:          ghToken,
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		nanogitRepo, err := nanogit.NewGitRepository(ctx, b.secrets, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
 		if err != nil {
-			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
+			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		return nanogit.NewGithubRepository(apiRepo, nanogitRepo), nil
+		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken)
+		if err != nil {
+			return nil, fmt.Errorf("error creating github repository: %w", err)
+		}
+
+		return ghRepo, nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

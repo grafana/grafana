@@ -25,14 +25,14 @@ type WebhookRepository interface {
 }
 
 type GithubWebhookRepository interface {
-	repository.GithubRepository
+	pgh.GithubRepository
 	repository.Hooks
 
 	WebhookRepository
 }
 
 type githubWebhookRepository struct {
-	repository.GithubRepository
+	pgh.GithubRepository
 	config     *provisioning.Repository
 	owner      string
 	repo       string
@@ -42,7 +42,7 @@ type githubWebhookRepository struct {
 }
 
 func NewGithubWebhookRepository(
-	basic repository.GithubRepository,
+	basic pgh.GithubRepository,
 	webhookURL string,
 	secrets secrets.Service,
 ) GithubWebhookRepository {

@@ -1,4 +1,4 @@
-package repository
+package local
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 func TestLocalResolver(t *testing.T) {
@@ -703,7 +704,7 @@ func TestLocalRepository_Update(t *testing.T) {
 			ref:         "",
 			data:        []byte("content"),
 			comment:     "",
-			expectedErr: ErrFileNotFound,
+			expectedErr: repository.ErrFileNotFound,
 		},
 		{
 			name: "update directory",
@@ -1174,7 +1175,7 @@ func TestLocalRepository_Read(t *testing.T) {
 		path        string
 		ref         string
 		expectedErr error
-		expected    *FileInfo
+		expected    *repository.FileInfo
 	}{
 		{
 			name: "read existing file",
@@ -1203,7 +1204,7 @@ func TestLocalRepository_Read(t *testing.T) {
 				return tempDir, repo
 			},
 			path: "test-file.txt",
-			expected: &FileInfo{
+			expected: &repository.FileInfo{
 				Path:     "test-file.txt",
 				Modified: &metav1.Time{Time: time.Now()},
 				Data:     []byte("test content"),
@@ -1231,7 +1232,7 @@ func TestLocalRepository_Read(t *testing.T) {
 				return tempDir, repo
 			},
 			path:        "non-existent-file.txt",
-			expectedErr: ErrFileNotFound,
+			expectedErr: repository.ErrFileNotFound,
 		},
 		{
 			name: "read with ref should fail",
@@ -1289,7 +1290,7 @@ func TestLocalRepository_Read(t *testing.T) {
 				return tempDir, repo
 			},
 			path: "test-dir",
-			expected: &FileInfo{
+			expected: &repository.FileInfo{
 				Path:     "test-dir",
 				Modified: &metav1.Time{Time: time.Now()},
 			},
@@ -1327,7 +1328,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 		setup       func(t *testing.T) (string, *localRepository)
 		ref         string
 		expectedErr error
-		expected    []FileTreeEntry
+		expected    []repository.FileTreeEntry
 	}{
 		{
 			name: "read empty directory",
@@ -1349,7 +1350,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 
 				return tempDir, repo
 			},
-			expected:    []FileTreeEntry{},
+			expected:    []repository.FileTreeEntry{},
 			expectedErr: nil,
 		},
 		{
@@ -1379,7 +1380,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 
 				return tempDir, repo
 			},
-			expected: []FileTreeEntry{
+			expected: []repository.FileTreeEntry{
 				{Path: "file1.txt", Blob: true, Size: 8},
 				{Path: "file2.txt", Blob: true, Size: 8},
 				{Path: "subdir/", Blob: false},
@@ -1432,7 +1433,7 @@ func TestLocalRepository_ReadTree(t *testing.T) {
 
 				return tempDir, repo
 			},
-			expected:    []FileTreeEntry{},
+			expected:    []repository.FileTreeEntry{},
 			expectedErr: nil,
 		},
 	}

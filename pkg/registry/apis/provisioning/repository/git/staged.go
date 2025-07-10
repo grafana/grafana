@@ -1,4 +1,4 @@
-package nanogit
+package git
 
 import (
 	"context"
@@ -15,17 +15,11 @@ import (
 // once that happens we could do more magic here.
 type stagedGitRepository struct {
 	*gitRepository
-	opts   repository.CloneOptions
+	opts   repository.StageOptions
 	writer nanogit.StagedWriter
 }
 
-func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-	if opts.BeforeFn != nil {
-		if err := opts.BeforeFn(); err != nil {
-			return nil, err
-		}
-	}
-
+func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repository.StageOptions) (repository.StagedRepository, error) {
 	if opts.Timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
@@ -89,10 +83,17 @@ func (r *stagedGitRepository) Create(ctx context.Context, path, ref string, data
 	}
 
 	if r.opts.PushOnWrites {
-		return r.Push(ctx, repository.PushOptions{})
+		return r.Push(ctx)
 	}
 
 	return nil
+}
+
+func (r *stagedGitRepository) blobExists(ctx context.Context, path string) (bool, error) {
+	if r.gitConfig.Path != "" {
+		path = safepath.Join(r.gitConfig.Path, path)
+	}
+	return r.writer.BlobExists(ctx, path)
 }
 
 func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data []byte, message string) error {
@@ -100,17 +101,17 @@ func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data 
 		return errors.New("ref is not supported for staged repository")
 	}
 
-	ok, err := r.writer.BlobExists(ctx, path)
+	exists, err := r.blobExists(ctx, path)
 	if err != nil {
 		return fmt.Errorf("check if file exists: %w", err)
 	}
 
-	if !ok {
-		if err := r.create(ctx, path, data, r.writer); err != nil {
+	if exists {
+		if err := r.update(ctx, path, data, r.writer); err != nil {
 			return err
 		}
 	} else {
-		if err := r.update(ctx, path, data, r.writer); err != nil {
+		if err := r.create(ctx, path, data, r.writer); err != nil {
 			return err
 		}
 	}
@@ -120,7 +121,7 @@ func (r *stagedGitRepository) Write(ctx context.Context, path, ref string, data 
 	}
 
 	if r.opts.PushOnWrites {
-		return r.Push(ctx, repository.PushOptions{})
+		return r.Push(ctx)
 	}
 
 	return nil
@@ -144,7 +145,7 @@ func (r *stagedGitRepository) Update(ctx context.Context, path, ref string, data
 	}
 
 	if r.opts.PushOnWrites {
-		return r.Push(ctx, repository.PushOptions{})
+		return r.Push(ctx)
 	}
 
 	return nil
@@ -164,22 +165,16 @@ func (r *stagedGitRepository) Delete(ctx context.Context, path, ref, message str
 	}
 
 	if r.opts.PushOnWrites {
-		return r.Push(ctx, repository.PushOptions{})
+		return r.Push(ctx)
 	}
 
 	return nil
 }
 
-func (r *stagedGitRepository) Push(ctx context.Context, opts repository.PushOptions) error {
-	if opts.BeforeFn != nil {
-		if err := opts.BeforeFn(); err != nil {
-			return err
-		}
-	}
-
-	if opts.Timeout > 0 {
+func (r *stagedGitRepository) Push(ctx context.Context) error {
+	if r.opts.Timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, opts.Timeout)
+		ctx, cancel = context.WithTimeout(ctx, r.opts.Timeout)
 		defer cancel()
 	}
 
