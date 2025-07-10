@@ -671,10 +671,6 @@ const (
 	// Enables browser crash detection reporting to Faro.
 	FlagCrashDetection = "crashDetection"
 
-	// FlagJaegerBackendMigration
-	// Enables querying the Jaeger data source without the proxy
-	FlagJaegerBackendMigration = "jaegerBackendMigration"
-
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
