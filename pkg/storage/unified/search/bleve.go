@@ -56,7 +56,7 @@ type BleveOptions struct {
 	// ?? not totally sure the units
 	BatchSize int
 
-	// Index cache TTL for bleve indices. 0 disables expiration.
+	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	IndexCacheTTL time.Duration
 }
 
@@ -219,7 +219,7 @@ func (b *bleveBackend) BuildIndex(
 
 		if index != nil {
 			build = false
-			logWithDetails.Info("Existing index found on filesystem", "directory", filepath.Join(resourceDir, fileIndexName))
+			logWithDetails.Debug("Existing index found on filesystem", "directory", filepath.Join(resourceDir, fileIndexName))
 		} else {
 			// Building index from scratch. Index name has a time component in it to be unique, but if
 			// we happen to create non-unique name, we bump the time and try again.
