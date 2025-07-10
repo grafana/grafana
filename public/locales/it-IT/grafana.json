@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Modifica YAML",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Errore durante il caricamento dei dettagli dell'origine dati",
       "edit": "Modifica",
-      "evaluations-to-fire": "Cicli di valutazione da attivare",
       "export": "Esporta",
       "folder": "Cartella",
       "group-loading-error": "Errore durante il caricamento del gruppo",
       "interval": "Intervallo",
       "namespace": "Namespace",
-      "pending-period": "Periodo di attesa",
-      "recording": "Registrazione",
-      "rule-name": "Nome regola"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Errore durante il caricamento dei dettagli dell'origine dati",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Esporta tutto"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Impossibile caricare l'editor di query a causa di: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Non trovi l'origine dei dati che desideri? Alcune origini dei dati non sono supportate per gli avvisi. Fai clic sull'icona per ulteriori informazioni."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Aggiungi nuovo Alertmanager",
       "builtin-alertmanager": "Alertmanager integrato",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} fa)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -5656,6 +5669,20 @@
       "usage-count_one": "Utilizzato su {{count}} dashboard",
       "usage-count_other": "Utilizzato su {{count}} dashboard"
     },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "Esiste già una dashboard con lo stesso nome nella cartella selezionata. Desideri comunque salvare questa dashboard?",
       "title-name-already-exists": "Nome già in uso"
@@ -7984,6 +8011,9 @@
       "filter-popup-match-case": "Corrispondenza",
       "inspect-drawer-title": "Ispeziona valore",
       "inspect-menu-label": "Ispeziona valore",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Nessun valore",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} di {{numRows}} righe"
     },
@@ -8712,6 +8742,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8724,6 +8755,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8826,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9084,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Il dashboard è già stato predisposto e viene gestito da Grafana nell'istanza cloud. In futuro, ti consigliamo di utilizzare il dashboard con provisioning. Se desideri comunque copiare il dashboard nell'istanza cloud, modifica l'ID del dashboard nel JSON del dashboard, salva una nuova istantanea e carica di nuovo.",
         "datasource-already-managed": "L'origine dati è già stata predisposta e viene gestita da Grafana nell'istanza cloud. Se si tratta di una risorsa diversa, imposta un altro UID e riprova.",
         "datasource-invalid-url": "È presente un'origine dati con un URL non valido. Fornisci un URL valido e riprova.",
@@ -10313,10 +10352,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {

@@ -504,6 +504,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "YAMLを編集",
@@ -1499,15 +1502,12 @@
     "group-details": {
       "ds-features-error": "データソースの読み込み中にエラーが発生しました",
       "edit": "編集",
-      "evaluations-to-fire": "発生する評価サイクル",
       "export": "エクスポート",
       "folder": "フォルダ",
       "group-loading-error": "グループの読み込み中にエラーが発生しました",
       "interval": "間隔",
       "namespace": "名前空間",
-      "pending-period": "保留期間",
-      "recording": "記録",
-      "rule-name": "ルール名"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "データソースの読み込み中にエラーが発生しました",
@@ -2228,6 +2228,9 @@
         "label-export-all": "すべてをエクスポート"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "次の理由によりクエリエディタを読み込めませんでした：{{errorMessage}}"
     },
@@ -2637,6 +2640,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "お探しのデータソースが見つかりませんか？一部のデータソースはアラートに対応していません。詳細についてはアイコンをクリックしてください。"
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "新しいAlertmanagerを追加",
       "builtin-alertmanager": "内蔵Alertmanager",
@@ -2871,6 +2879,11 @@
     },
     "timestamp": {
       "time-ago": "（{{time}}前）"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -5636,6 +5649,20 @@
       "last-edited": "<person />が{{timeAgo}}に実施",
       "usage-count_other": "{{count}}件のダッシュボードで使用中"
     },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "選択したフォルダに同じ名前のダッシュボードがすでに存在します。このダッシュボードの保存を続行しますか？",
       "title-name-already-exists": "名前はすでに存在します"
@@ -7963,6 +7990,9 @@
       "filter-popup-match-case": "大文字/小文字を区別",
       "inspect-drawer-title": "値を検査",
       "inspect-menu-label": "値を検査",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）"
     },
@@ -8683,6 +8713,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8695,6 +8726,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8797,6 +8829,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9055,6 +9092,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "ダッシュボードは、クラウドインスタンスでGrafanaによってすでにプロビジョニングおよび管理されています。今後は、プロビジョニングされたダッシュボードの使用をお勧めします。それでもダッシュボードをクラウドインスタンスにコピーする場合は、ダッシュボードJSONでダッシュボードIDを変更し、新しいスナップショットを保存して再度アップロードしてください。",
         "datasource-already-managed": "ダッシュボードは、クラウドインスタンスでGrafanaによってすでにプロビジョニングおよび管理されています。これが別のリソースである場合は、別のUIDを設定して再試行してください。",
         "datasource-invalid-url": "URLが無効なデータソースがあります。有効なURLを入力して、再試行してください。",
@@ -10281,10 +10320,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {

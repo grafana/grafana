@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Redigera YAML",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Fel vid laddning av information för datakälla",
       "edit": "Redigera",
-      "evaluations-to-fire": "Utvärderingscykler att utlösa",
       "export": "Exportera",
       "folder": "Mapp",
       "group-loading-error": "Fel vid laddning av gruppen",
       "interval": "Intervall",
       "namespace": "Namnområde",
-      "pending-period": "Väntande period",
-      "recording": "Registrering",
-      "rule-name": "Regelns namn"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Fel vid laddning av information för datakälla",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Exportera alla"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Kunde inte ladda frågeredigerare på grund av: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Hittar du inte den datakälla du söker? Vissa datakällor stöds inte för larm. Klicka på ikonen för mer information."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Lägg till ny Alertmanager",
       "builtin-alertmanager": "Inbyggd Alertmanager",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} sedan)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -5656,6 +5669,20 @@
       "usage-count_one": "Används på {{count}} instrumentpaneler",
       "usage-count_other": "Används på {{count}} instrumentpaneler"
     },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
+    },
     "name-already-exists-error": {
       "body-name-already-exists": "En instrumentpanel med samma namn finns redan i den valda mappen. Vill du fortfarande spara denna instrumentpanel?",
       "title-name-already-exists": "Namnet finns redan"
@@ -7984,6 +8011,9 @@
       "filter-popup-match-case": "Matcha gemener/versaler",
       "inspect-drawer-title": "Inspektera värde",
       "inspect-menu-label": "Inspektera värde",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader"
     },
@@ -8712,6 +8742,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8724,6 +8755,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8826,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9084,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Instrumentpanelen tillhandahålls och hanteras redan av Grafana i molninstansen. Vi rekommenderar att du använder den tillhandahållna instrumentpanelen framöver. Om du fortfarande vill kopiera instrumentpanelens molninstans ändrar du instrumentpanelens ID i instrumentpanelens JSON, sparar en ny ögonblicksbild och laddar sedan upp på nytt.",
         "datasource-already-managed": "Datakällan tillhandahålls och hanteras redan av Grafana i molninstansen. Om detta är en annan resurs, ange ett annat UID och försök igen.",
         "datasource-invalid-url": "Det finns en datakälla som har en ogiltig webbadress. Ange en giltig webbadress och försök igen.",
@@ -10313,10 +10352,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
