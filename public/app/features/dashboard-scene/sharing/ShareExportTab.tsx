@@ -215,7 +215,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       const spec = transformSceneToSaveModelSchemaV2(scene);
       const specCopy = JSON.parse(JSON.stringify(spec));
       const statelessSpec = await makeExportableV2(specCopy, isSharingExternally);
-      // For V2 Resource mode, always use the processed version when the toggle is enabled
       const exportableV2 = isSharingExternally ? statelessSpec : spec;
 
       return {
