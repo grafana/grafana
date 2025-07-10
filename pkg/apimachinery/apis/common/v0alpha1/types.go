@@ -24,7 +24,7 @@ type ObjectReference struct {
 	// Tenant isolation
 	Namespace string `json:"namespace,omitempty"`
 
-	// Explicit resource identifer
+	// Explicit resource identifier
 	Name string `json:"name,omitempty"`
 
 	// May contain a valid JSON/Go field access statement

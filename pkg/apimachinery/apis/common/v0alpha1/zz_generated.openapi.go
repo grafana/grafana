@@ -113,7 +113,7 @@ func schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref common.Referen
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Explicit resource identifer",
+							Description: "Explicit resource identifier",
 							Type:        []string{"string"},
 							Format:      "",
 						},
