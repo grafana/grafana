@@ -105,7 +105,7 @@ function TabRepeatSelect({ tab }: { tab: TabItem }) {
     <>
       <RepeatRowSelect2
         sceneContext={dashboard}
-        repeat={tab.getRepeatVariable()}
+        repeat={tab.state.repeatByVariable}
         onChange={(repeat) => tab.onChangeRepeat(repeat)}
       />
       {isAnyPanelUsingDashboardDS ? (

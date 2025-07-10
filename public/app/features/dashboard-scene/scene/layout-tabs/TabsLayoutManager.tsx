@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
+  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
@@ -21,7 +22,6 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
-import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
 interface TabsLayoutManagerState extends SceneObjectState {
@@ -88,7 +88,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
     if (typeof values[key] === 'string') {
       // find tab with matching slug
-      const matchIndex = this.state.tabs.findIndex((tab) => tab.getSlug() === urlValue);
+      const matchIndex = this.state.tabs.findIndex((tab) => {
+        // console.log('URL', tab.getSlug(), urlValue, tab.getSlug() === urlValue);
+        return tab.getSlug() === urlValue;
+      });
       if (matchIndex !== -1) {
         this.setState({ currentTabIndex: matchIndex });
       }
@@ -134,7 +137,19 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public getOutlineChildren() {
-    return this.state.tabs;
+    const outlineChildren: SceneObject[] = [];
+
+    for (const tab of this.state.tabs) {
+      outlineChildren.push(tab);
+
+      if (tab.state.repeatedTabs) {
+        for (const clone of tab.state.repeatedTabs!) {
+          outlineChildren.push(clone);
+        }
+      }
+    }
+
+    return outlineChildren;
   }
 
   public addNewTab(tab?: TabItem) {
@@ -173,22 +188,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const scene = getDashboardSceneFor(this);
     const tab = getTabFromClipboard(scene);
     this.addNewTab(tab);
-  }
-
-  public activateRepeaters() {
-    this.state.tabs.forEach((tab) => {
-      if (!tab.isActive) {
-        tab.activate();
-      }
-
-      const behavior = (tab.state.$behaviors ?? []).find((b) => b instanceof TabItemRepeaterBehavior);
-
-      if (!behavior?.isActive) {
-        behavior?.activate();
-      }
-
-      tab.getLayout().activateRepeaters?.();
-    });
   }
 
   public shouldUngroup(): boolean {
@@ -286,12 +285,13 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         const conditionalRendering = row.state.conditionalRendering;
         conditionalRendering?.clearParent();
 
-        const $behaviors = row.state.repeatByVariable
-          ? [new TabItemRepeaterBehavior({ variableName: row.state.repeatByVariable })]
-          : undefined;
-
         tabs.push(
-          new TabItem({ layout: row.state.layout.clone(), title: row.state.title, conditionalRendering, $behaviors })
+          new TabItem({
+            layout: row.state.layout.clone(),
+            title: row.state.title,
+            conditionalRendering,
+            repeatByVariable: row.state.repeatByVariable,
+          })
         );
       }
     } else {
