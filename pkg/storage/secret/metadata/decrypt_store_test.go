@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -76,7 +77,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       common.NewSecretValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -113,7 +114,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       common.NewSecretValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -152,7 +153,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       common.NewSecretValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -184,7 +185,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       common.NewSecretValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -217,7 +218,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       common.NewSecretValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -249,7 +250,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       common.NewSecretValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -282,7 +283,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv0alpha1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       secretv0alpha1.NewExposedSecureValue("value"),
+			Value:       common.NewSecretValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = svName

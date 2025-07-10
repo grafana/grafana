@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 var (
@@ -97,7 +99,7 @@ func (s ExternalID) String() string {
 type Keeper interface {
 	Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, exposedValueOrRef string) (ExternalID, error)
 	Update(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID, exposedValueOrRef string) error
-	Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) (secretv0alpha1.ExposedSecureValue, error)
+	Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) (common.RawSecureValue, error)
 	Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID ExternalID) error
 }
 

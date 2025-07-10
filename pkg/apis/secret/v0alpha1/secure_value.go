@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -39,7 +41,7 @@ type SecureValueSpec struct {
 	// Minimum and maximum lengths in bytes.
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=24576
-	Value ExposedSecureValue `json:"value,omitempty"`
+	Value common.RawSecureValue `json:"value,omitempty"`
 
 	// When using a third-party keeper, the `ref` is used to reference a value inside the remote storage.
 	// This should not contain sensitive information.
