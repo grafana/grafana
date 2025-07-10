@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -362,18 +361,12 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 	defer span.End()
 
-	// pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
-	// if err != nil {
-	// 	return mathexp.Results{}, err
-	// }
-
 	span.SetAttributes(
 		attribute.String("datasource.type", dn.datasource.Type),
 		attribute.String("datasource.uid", dn.datasource.UID),
 	)
 
 	req := &backend.QueryDataRequest{
-		// PluginContext: pCtx,
 		Queries: []backend.DataQuery{
 			{
 				RefID:         dn.refID,
@@ -401,40 +394,37 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
 	}()
 
-	// dataservice is nil!
-	// if s.client is not nil
-	// then call s.client.queryData
 	resp := &backend.QueryDataResponse{}
-	var err error
 	mtDSClient, err := s.mtClientProvider.GetMTDatasourceClient(dn.datasource.Type, dn.datasource.UID)
-	if err == nil {
+
+	if err != nil { // use single tenant client
+		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
+		if err != nil {
+			return mathexp.Results{}, err
+		}
+		req.PluginContext = pCtx
+		resp, err = s.dataService.QueryData(ctx, req)
+		if err != nil {
+			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
+		}
+
+	} else { // use multi tenant client
+		// transform request from backend.QueryDataRequest to k8s request
 		k8sReq := &data.QueryDataRequest{}
 		for _, q := range req.Queries {
-			spew.Dump(q)
-			// START HERE WE ARE REALLY CLOSE
-			// Convert backend.DataQuery to data.DataQuery
-			jsonBytes, err := json.Marshal(q)
-			if err != nil {
-				return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
-			}
-			spew.Dump(jsonBytes)
-
 			var dataQuery data.DataQuery
 			err = json.Unmarshal(q.JSON, &dataQuery)
 			if err != nil {
 				return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 			}
 
-			spew.Dump(dataQuery)
-
 			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
 		}
+
+		// make the query with a mt client
 		resp, err = mtDSClient.QueryData(ctx, *k8sReq)
-		if err != nil {
-			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
-		}
-	} else {
-		resp, err = s.dataService.QueryData(ctx, req)
+
+		// handle error
 		if err != nil {
 			return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 		}

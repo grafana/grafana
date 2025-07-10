@@ -78,7 +78,7 @@ type MTDatasourceClientProvider interface {
 type nullMtClientProvider struct{}
 
 func (n nullMtClientProvider) GetMTDatasourceClient(pluginId string, uid string) (clientapi.QueryDataClient, error) {
-	return nil, errors.New("not implemented")
+	return nil, errors.New("not implemented, use single tenant datasource client instead")
 }
 
 // TODO CAN WE REDUCE LAYERS HERE?
