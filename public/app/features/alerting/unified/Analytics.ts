@@ -411,6 +411,37 @@ export const trackAITriageCancelled = () => {
   reportInteraction('grafana_alerting_ai_triage_cancelled');
 };
 
+// AI Response Feedback Tracking
+export const trackAIResponseFeedback = (props: { 
+  helpful: boolean; 
+  aiFeature: string; 
+  comment?: string;
+  responseLength?: number;
+  timeToFeedback?: number;
+}) => {
+  reportInteraction('grafana_alerting_ai_response_feedback', props);
+};
+
+export const trackAIAlertRuleFeedback = (props: { helpful: boolean; comment?: string }) => {
+  reportInteraction('grafana_alerting_ai_alert_rule_feedback', props);
+};
+
+export const trackAITemplateFeedback = (props: { helpful: boolean; comment?: string }) => {
+  reportInteraction('grafana_alerting_ai_template_feedback', props);
+};
+
+export const trackAIImproveLabelsFeeback = (props: { helpful: boolean; comment?: string }) => {
+  reportInteraction('grafana_alerting_ai_improve_labels_feedback', props);
+};
+
+export const trackAIImproveAnnotationsFeedback = (props: { helpful: boolean; comment?: string }) => {
+  reportInteraction('grafana_alerting_ai_improve_annotations_feedback', props);
+};
+
+export const trackAITriageFeedback = (props: { helpful: boolean; comment?: string }) => {
+  reportInteraction('grafana_alerting_ai_triage_feedback', props);
+};
+
 export type AlertRuleTrackingProps = {
   user_id: number;
   grafana_version?: string;
