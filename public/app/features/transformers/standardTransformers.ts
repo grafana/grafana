@@ -7,6 +7,7 @@ import { configFromQueryTransformRegistryItem } from './configFromQuery/ConfigFr
 import { calculateFieldTransformRegistryItem } from './editors/CalculateFieldTransformerEditor';
 import { concatenateTransformRegistryItem } from './editors/ConcatenateTransformerEditor';
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
+import { fieldNameMappingRegistryItem } from './editors/FieldNameMappingEditor';
 import { filterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefIdTransformerEditor';
 import { formatStringTransformerRegistryItem } from './editors/FormatStringTransformerEditor';
@@ -39,6 +40,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
   return [
     reduceTransformRegistryItem,
     filterFieldsByNameTransformRegistryItem,
+    fieldNameMappingRegistryItem,
     renameByRegexTransformRegistryItem,
     filterFramesByRefIdTransformRegistryItem,
     filterByValueTransformRegistryItem,

@@ -430,6 +430,45 @@ You'll get the following output:
 
 This transformation lets you augment your data by fetching additional information from external sources, providing a more comprehensive dataset for analysis and visualization.
 
+### Rename fields by mapping
+
+Use this transformation to rename fields of all queries by using a mapping from one query.
+
+#### Dataset Example
+
+**Query: Mapping**
+
+| Letter | Name    |
+| ------ | ------- |
+| A      | Alpha   |
+| B      | Beta    |
+| C      | Charlie |
+| D      | Delta   |
+
+**Query: Curves**
+
+| Timestamp           | A   | D   |
+| ------------------- | --- | --- |
+| 1636678740000000000 | 1   | 2   |
+| 1636678680000000000 | 5   | 6   |
+| 1636678620000000000 | 7   | 8   |
+
+With this configuration:
+
+- Series: Mapping
+- Replace: Letter
+- With: Name
+
+You'll get the following output:
+
+#### Transformed Data
+
+| Timestamp           | Alpha | Delta |
+| ------------------- | ----- | ----- |
+| 1636678740000000000 | 1     | 2     |
+| 1636678680000000000 | 5     | 6     |
+| 1636678620000000000 | 7     | 8     |
+
 ### Filter data by query refId
 
 Use this transformation to hide one or more queries in panels that have multiple queries.
