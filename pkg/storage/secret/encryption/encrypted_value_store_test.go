@@ -105,13 +105,13 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		createdEV, err := sut.EncryptedValueStorage.Create(t.Context(), "test-namespace", "test-name", 1, []byte("ttttest-data"))
 		require.NoError(t, err)
 
-		obtainedEV, err := sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
+		_, err = sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
 		require.NoError(t, err)
 
 		err = sut.EncryptedValueStorage.Delete(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
 		require.NoError(t, err)
 
-		obtainedEV, err = sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
+		obtainedEV, err := sut.EncryptedValueStorage.Get(t.Context(), createdEV.Namespace, createdEV.Name, createdEV.Version)
 		require.Error(t, err)
 		require.Nil(t, obtainedEV)
 	})
