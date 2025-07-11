@@ -70,6 +70,8 @@ export function sanitize(unsanitizedString: string): string {
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return escapeHtml(unsanitizedString);
+  } finally {
+    DOMPurify.removeHook('afterSanitizeAttributes');
   }
 }
 
