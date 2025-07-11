@@ -3550,11 +3550,11 @@
       "button-create": "Crear",
       "button-creating": "Creando...",
       "cancel": "Cancelar",
-      "error-invalid-folder-name": "Nombre de carpeta no válido",
       "error-required": "Nombre de la carpeta obligatorio",
       "folder-name-input-placeholder-enter-folder-name": "Introducir el nombre de la carpeta",
       "label-folder-name": "Nombre de la carpeta",
       "text-pull-request-created": "Se ha creado una solicitud de extracción con cambios en esta carpeta:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Solicitud de extracción creada",
       "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
     },
@@ -12549,6 +12549,7 @@
         "transform": "Transformar"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Estadística",
       "label-time-field": "Campo de tiempo",

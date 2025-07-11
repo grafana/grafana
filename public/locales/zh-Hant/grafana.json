@@ -3532,11 +3532,11 @@
       "button-create": "建立",
       "button-creating": "正在建立…",
       "cancel": "取消",
-      "error-invalid-folder-name": "無效的資料夾名稱",
       "error-required": "資料夾名稱為必填",
       "folder-name-input-placeholder-enter-folder-name": "輸入資料夾名稱",
       "label-folder-name": "資料夾名稱",
       "text-pull-request-created": "已建立拉取請求，其中包含對此資料夾的變更：",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "已建立拉取請求",
       "title-this-repository-is-read-only": "此存放庫為唯讀"
     },
@@ -12510,6 +12510,7 @@
         "transform": "轉變"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "統計資料",
       "label-time-field": "時間欄位",

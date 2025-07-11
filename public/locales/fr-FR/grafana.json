@@ -3550,11 +3550,11 @@
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
-      "error-invalid-folder-name": "Nom de dossier non valide",
       "error-required": "Un nom de dossier est obligatoire",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
       "label-folder-name": "Nom du dossier",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Demande de fusion créée",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
@@ -12549,6 +12549,7 @@
         "transform": "Transformer"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Champ horaire",

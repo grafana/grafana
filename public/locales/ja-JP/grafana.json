@@ -3532,11 +3532,11 @@
       "button-create": "作成",
       "button-creating": "作成中...",
       "cancel": "キャンセル",
-      "error-invalid-folder-name": "無効なフォルダ名",
       "error-required": "フォルダ名は必須です",
       "folder-name-input-placeholder-enter-folder-name": "フォルダ名を入力してください",
       "label-folder-name": "フォルダ名",
       "text-pull-request-created": "このフォルダへの変更を含むプルリクエストが作成されました。",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "プルリクエストが作成されました",
       "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
     },
@@ -12510,6 +12510,7 @@
         "transform": "変換"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "統計",
       "label-time-field": "時間フィールド",

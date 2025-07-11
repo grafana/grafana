@@ -3586,11 +3586,11 @@
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
-      "error-invalid-folder-name": "Neplatný název složky",
       "error-required": "Název složky je povinný",
       "folder-name-input-placeholder-enter-folder-name": "Zadejte název složky",
       "label-folder-name": "Název složky",
       "text-pull-request-created": "Byl vytvořen pull request se změnami v této složce:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Pull request byl vytvořen",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
@@ -12627,6 +12627,7 @@
         "transform": "Transformovat"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Statistika",
       "label-time-field": "Pole času",

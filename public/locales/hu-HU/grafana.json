@@ -3550,11 +3550,11 @@
       "button-create": "Létrehozás",
       "button-creating": "Létrehozás…",
       "cancel": "Mégse",
-      "error-invalid-folder-name": "Érvénytelen mappanév",
       "error-required": "A mappa nevének megadása kötelező",
       "folder-name-input-placeholder-enter-folder-name": "Mappanév megadása",
       "label-folder-name": "Mappa neve",
       "text-pull-request-created": "A lekérési kérelem ennek a mappának a módosításával lett létrehozva:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Lekérési kérelem létrehozva",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
     },
@@ -12549,6 +12549,7 @@
         "transform": "Átalakítás"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Statisztika",
       "label-time-field": "Időmező",
