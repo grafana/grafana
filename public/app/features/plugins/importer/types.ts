@@ -2,7 +2,6 @@ import {
   AppPlugin,
   AppPluginMeta,
   DataSourcePluginMeta,
-  GrafanaPlugin,
   PanelPlugin,
   PanelPluginMeta,
   PluginLoadingStrategy,
@@ -48,7 +47,7 @@ export interface PluginImportInfo {
 
 export type PreImportStrategy<M extends PluginMeta = PluginMeta> = (meta: M) => PluginImportInfo;
 
-export type PostImportStrategy<M extends PluginMeta = PluginMeta, P extends GrafanaPlugin<M> = GrafanaPlugin<M>> = (
-  meta: M,
-  module: Promise<System.Module>
-) => Promise<P>;
+export type PostImportStrategy<
+  P extends PanelPlugin | GenericDataSourcePlugin | AppPlugin,
+  M extends PluginMeta = PluginMeta,
+> = (meta: M, module: Promise<System.Module>) => Promise<P>;

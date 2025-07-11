@@ -6,7 +6,6 @@ import {
   DataSourceJsonData,
   DataSourcePlugin,
   DataSourcePluginMeta,
-  GrafanaPlugin,
   PanelPlugin,
   PanelPluginMeta,
   PluginLoadingStrategy,
@@ -42,7 +41,7 @@ const defaultPreImport: PreImportStrategy = (plugin) => {
   return args;
 };
 
-const panelPluginPostImport: PostImportStrategy<PanelPluginMeta, PanelPlugin> = async (meta, module) => {
+const panelPluginPostImport: PostImportStrategy<PanelPlugin, PanelPluginMeta> = async (meta, module) => {
   return module
     .then((pluginExports) => {
       if (pluginExports.plugin) {
@@ -64,7 +63,7 @@ const panelPluginPostImport: PostImportStrategy<PanelPluginMeta, PanelPlugin> = 
     });
 };
 
-const datasourcePluginPostImport: PostImportStrategy<DataSourcePluginMeta, GenericDataSourcePlugin> = async (
+const datasourcePluginPostImport: PostImportStrategy<GenericDataSourcePlugin, DataSourcePluginMeta> = async (
   meta,
   module
 ) => {
@@ -90,7 +89,7 @@ const datasourcePluginPostImport: PostImportStrategy<DataSourcePluginMeta, Gener
   throw new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export');
 };
 
-const appPluginPostImport: PostImportStrategy<AppPluginMeta, AppPlugin> = async (meta, module) => {
+const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async (meta, module) => {
   const pluginExports = await module;
 
   const { plugin = new AppPlugin() } = pluginExports;
@@ -107,9 +106,11 @@ const appPluginPostImport: PostImportStrategy<AppPluginMeta, AppPlugin> = async 
   return plugin;
 };
 
-const promisesCache: Map<string, Promise<unknown>> = new Map();
+const promisesCache: Map<string, Promise<PanelPlugin | GenericDataSourcePlugin | AppPlugin>> = new Map();
 
-const getPromiseFromCache = <M extends PluginMeta, P extends GrafanaPlugin<M>>(meta: M): Promise<P> => {
+const getPromiseFromCache = <M extends PluginMeta, P extends PanelPlugin | GenericDataSourcePlugin | AppPlugin>(
+  meta: M
+): Promise<P> => {
   const cached = promisesCache.get(meta.id);
   if (cached) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -119,7 +120,7 @@ const getPromiseFromCache = <M extends PluginMeta, P extends GrafanaPlugin<M>>(m
   throw new Error(`Trying to get unknown plugin type ${meta.type} from cache for plugin ${meta.id}`);
 };
 
-const pluginsCache: Map<string, unknown> = new Map();
+const pluginsCache: Map<string, PanelPlugin | GenericDataSourcePlugin | AppPlugin> = new Map();
 
 const getPluginFromCache = <P extends PanelPlugin | GenericDataSourcePlugin | AppPlugin>(id: string): P | undefined => {
   const cached = pluginsCache.get(id);
@@ -131,17 +132,16 @@ const getPluginFromCache = <P extends PanelPlugin | GenericDataSourcePlugin | Ap
   return undefined;
 };
 
-const importPlugin = <M extends PluginMeta, P extends GrafanaPlugin<M>>(
+const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataSourcePlugin | AppPlugin>(
   meta: M,
-  postImportStrategy: PostImportStrategy<M, P>,
+  postImportStrategy: PostImportStrategy<P, M>,
   preImportStrategy: PreImportStrategy<M> = defaultPreImport
 ): Promise<P> => {
   if (promisesCache.has(meta.id)) {
     return getPromiseFromCache(meta);
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const cached = pluginsCache.get(meta.id) as P;
+  const cached = getPluginFromCache<P>(meta.id);
   if (cached) {
     return Promise.resolve(cached);
   }
