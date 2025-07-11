@@ -1,4 +1,4 @@
-import { act, getAllByTestId, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormEvent } from 'react';
 import * as React from 'react';
