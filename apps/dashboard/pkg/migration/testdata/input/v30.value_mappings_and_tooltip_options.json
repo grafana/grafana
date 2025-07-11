@@ -185,6 +185,30 @@
           "displayMode": "list"
         }
       }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with empty mappings array - should return null",
+      "id": 9,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "empty-field"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": []
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 } 
