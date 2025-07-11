@@ -94,12 +94,10 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 
 // badgerWriteCloser implements io.WriteCloser for badgerKV
 type badgerWriteCloser struct {
-	ctx     context.Context
-	db      *badger.DB
-	section string
-	key     string
-	buf     *bytes.Buffer
-	closed  bool
+	db             *badger.DB
+	keyWithSection string
+	buf            *bytes.Buffer
+	closed         bool
 }
 
 // Write implements io.Writer
@@ -121,17 +119,12 @@ func (w *badgerWriteCloser) Close() error {
 		return fmt.Errorf("database is closed")
 	}
 
-	if w.section == "" {
-		return fmt.Errorf("section is required")
-	}
-
-	key := w.section + "/" + w.key
 	data := w.buf.Bytes()
 
 	txn := w.db.NewTransaction(true)
 	defer txn.Discard()
 
-	err := txn.Set([]byte(key), data)
+	err := txn.Set([]byte(w.keyWithSection), data)
 	if err != nil {
 		return err
 	}
@@ -147,13 +140,15 @@ func (k *badgerKV) Save(ctx context.Context, section string, key string) (io.Wri
 		return nil, fmt.Errorf("section is required")
 	}
 
+	if key == "" {
+		return nil, fmt.Errorf("key is required")
+	}
+
 	return &badgerWriteCloser{
-		ctx:     ctx,
-		db:      k.db,
-		section: section,
-		key:     key,
-		buf:     &bytes.Buffer{},
-		closed:  false,
+		db:             k.db,
+		keyWithSection: section + "/" + key,
+		buf:            &bytes.Buffer{},
+		closed:         false,
 	}, nil
 }
 
