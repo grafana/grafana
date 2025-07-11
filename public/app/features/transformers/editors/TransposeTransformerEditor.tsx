@@ -9,7 +9,7 @@ import { TransposeTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
-export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
+export const TransposeTransformerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
   return (
     <>
       <InlineFieldRow>
@@ -45,7 +45,7 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
 
 export const getTransposeTransformerRegistryItem: () => TransformerRegistryItem<TransposeTransformerOptions> = () => ({
   id: DataTransformerID.transpose,
-  editor: TransposeTransfomerEditor,
+  editor: TransposeTransformerEditor,
   transformation: standardTransformers.transposeTransformer,
   name: t('transformers.transpose-transformer-editor.name.transpose', 'Transpose'),
   description: t(
@@ -53,4 +53,9 @@ export const getTransposeTransformerRegistryItem: () => TransformerRegistryItem<
     'Transpose the data frame.'
   ),
   categories: new Set([TransformerCategory.Reformat]),
+  tags: new Set([
+    t('transformers.transpose-transformer-editor.tags.pivot', 'Pivot'),
+    t('transformers.transpose-transformer-editor.tags.translate', 'Translate'),
+    t('transformers.transpose-transformer-editor.tags.transform', 'Transform'),
+  ]),
 });

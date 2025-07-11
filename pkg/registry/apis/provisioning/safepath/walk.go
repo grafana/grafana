@@ -3,6 +3,7 @@ package safepath
 import (
 	"context"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -42,4 +43,23 @@ func Split(p string) []string {
 		return []string{}
 	}
 	return strings.Split(trimmed, "/")
+}
+
+// SortByDepth will sort any resource, by its path depth. You must pass in
+// a way to get said path. Ties are alphabetical by default.
+func SortByDepth[T any](items []T, pathExtractor func(T) string, asc bool) {
+	sort.Slice(items, func(i, j int) bool {
+		pathI, pathJ := pathExtractor(items[i]), pathExtractor(items[j])
+		depthI, depthJ := Depth(pathI), Depth(pathJ)
+
+		if depthI == depthJ {
+			// alphabetical by default if depth is the same
+			return pathI < pathJ
+		}
+
+		if asc {
+			return depthI < depthJ
+		}
+		return depthI > depthJ
+	})
 }

@@ -111,4 +111,5 @@ export const getConcatenateTransformRegistryItem: () => TransformerRegistryItem<
     ),
     categories: new Set([TransformerCategory.Combine]),
     help: getTransformationContent(DataTransformerID.concatenate).helperDocs,
+    tags: new Set([t('transformers.editors.concatenate-transformer-editor.tags.combine', 'Combine')]),
   });

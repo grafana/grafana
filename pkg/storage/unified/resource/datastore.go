@@ -239,11 +239,7 @@ func (d *dataStore) Get(ctx context.Context, key DataKey) (io.ReadCloser, error)
 		return nil, fmt.Errorf("invalid data key: %w", err)
 	}
 
-	obj, err := d.kv.Get(ctx, dataSection, key.String())
-	if err != nil {
-		return nil, err
-	}
-	return obj.Value, nil
+	return d.kv.Get(ctx, dataSection, key.String())
 }
 
 func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) error {

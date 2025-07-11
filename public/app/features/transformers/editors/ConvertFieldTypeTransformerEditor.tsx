@@ -279,4 +279,5 @@ export const getConvertFieldTypeTransformRegistryItem: () => TransformerRegistry
     ),
     categories: new Set([TransformerCategory.Reformat]),
     help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
+    tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
   });
