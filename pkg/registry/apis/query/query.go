@@ -241,6 +241,52 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 
 		qdr, err := sse_query.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
 
+		// TODO fix this
+		parsedReqAgain, parsingErr := b.parser.parseRequest(ctx, raw)
+		if parsingErr != nil {
+			var refError ErrorWithRefID
+			statusCode := http.StatusBadRequest
+			message := err
+			refID := "A"
+
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				statusCode = http.StatusNotFound
+				message = errors.New("datasource not found")
+			}
+
+			if errors.As(err, &refError) {
+				refID = refError.refId
+			}
+
+			qdr := &query.QueryDataResponse{
+				QueryDataResponse: backend.QueryDataResponse{
+					Responses: backend.Responses{
+						refID: {
+							Error:  message,
+							Status: backend.Status(statusCode),
+						},
+					},
+				},
+			}
+
+			b.log.Error("Error parsing query", "refId", refID, "message", message)
+
+			responder.Object(statusCode, qdr)
+			return
+		}
+
+		for i := range parsedReqAgain.Requests {
+			parsedReqAgain.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
+		}
+
+		if err == nil && isSingleAlertQuery(parsedReqAgain) {
+			b.log.Debug("handling alert query with single query")
+			qdr, err = b.convertQueryFromAlerting(ctx, parsedReqAgain.Requests[0], qdr)
+			if err != nil {
+				b.log.Debug("convertQueryFromAlerting failed", "err", err)
+			}
+		}
+
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
 			if qdr != nil { // if we have a response, we assume the err is set in the response
