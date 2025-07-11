@@ -37,69 +37,95 @@ jobs:
 
       - name: Check for plugin extension changes
         id: check-changes
-        run: |
-          # Get the diff between base and head, only for packages/ and public/ directories
-          git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- packages/ public/ > changed_files.txt
-          
-          # Check if any files contain the plugin extension keywords
-          plugin_extension_changes=false
-          keywords="$PLUGIN_EXTENSION_KEYWORDS"
-          
-          echo "Checking for plugin extension changes..."
-          
-          # Check each changed file for the keywords and collect them
-          changed_files_with_keywords=""
-          while IFS= read -r file; do
-            # Only process files in packages/ or public/ directories
-            if [[ "$file" =~ ^(packages/|public/) ]] && [[ "$file" =~ ^[a-zA-Z0-9._/-]+$ ]] && [[ -f "$file" ]]; then
-              for keyword in $keywords; do
-                if git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- "$file" | grep -q -F "$keyword"; then
-                  echo "Found $keyword in $file"
-                  plugin_extension_changes=true
-                  # Add file to list if not already present
-                  if [[ "$changed_files_with_keywords" != *"$file"* ]]; then
-                    if [[ -n "$changed_files_with_keywords" ]]; then
-                      changed_files_with_keywords="$changed_files_with_keywords, $file"
-                    else
-                      changed_files_with_keywords="$file"
-                    fi
-                  fi
-                  break
-                fi
-              done
-            fi
-          done < changed_files.txt
-          
-          echo "plugin_extension_changes=$plugin_extension_changes" >> $GITHUB_OUTPUT
-          
-          # Format changed files for Slack display
-          if [[ -n "$changed_files_with_keywords" ]]; then
-            formatted_changed_files=$(echo "$changed_files_with_keywords" | sed 's/, /`, `/g' | sed 's/^/`/' | sed 's/$/`/')
-            echo "formatted_changed_files=$formatted_changed_files" >> $GITHUB_OUTPUT
-          else
-            echo "formatted_changed_files=" >> $GITHUB_OUTPUT
-          fi
-          
-          # Create a summary of changes
-          if [[ "$plugin_extension_changes" == "true" ]]; then
-            echo "### Plugin Extension Changes Detected 🔧" > extension_changes_summary.md
-            echo "" >> extension_changes_summary.md
-            echo "The following plugin extension-related changes were detected:" >> extension_changes_summary.md
-            echo "" >> extension_changes_summary.md
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const fs = require('fs');
             
-            while IFS= read -r file; do
-              if [[ "$file" =~ ^(packages/|public/) ]] && [[ -f "$file" ]]; then
-                for keyword in $keywords; do
-                  if git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- "$file" | grep -q "$keyword"; then
-                    echo "- **$keyword** in \`$file\`" >> extension_changes_summary.md
-                  fi
-                done
-              fi
-            done < changed_files.txt
+            // Plugin extension keywords from environment
+            const keywords = process.env.PLUGIN_EXTENSION_KEYWORDS.split(' ');
+            const baseSha = '${{ github.event.pull_request.base.sha }}';
+            const headSha = '${{ github.event.pull_request.head.sha }}';
             
-            echo "" >> extension_changes_summary.md
-            echo "Please review these changes carefully as they affect plugin extension points." >> extension_changes_summary.md
-          fi
+            console.log('Checking for plugin extension changes...');
+            console.log('Keywords:', keywords);
+            
+            // Get changed files in packages/ and public/ directories
+            let changedFiles = [];
+            try {
+              const diffOutput = execSync(
+                `git diff --name-only ${baseSha}...${headSha} -- packages/ public/`,
+                { encoding: 'utf8' }
+              ).trim();
+              
+              if (diffOutput) {
+                changedFiles = diffOutput.split('\n').filter(file => {
+                  // Validate file path and ensure it's in target directories
+                  return file.match(/^(packages\/|public\/)/) && 
+                         file.match(/^[a-zA-Z0-9._/-]+$/) && 
+                         fs.existsSync(file);
+                });
+              }
+            } catch (error) {
+              console.log('Error getting changed files:', error.message);
+              return;
+            }
+            
+            console.log('Changed files to check:', changedFiles);
+            
+            // Check each file for plugin extension keywords
+            const filesWithChanges = new Set();
+            let hasPluginExtensionChanges = false;
+            
+            for (const file of changedFiles) {
+              try {
+                // Get the diff for this specific file
+                const fileDiff = execSync(
+                  `git diff ${baseSha}...${headSha} -- "${file}"`,
+                  { encoding: 'utf8' }
+                );
+                
+                // Check if any keywords are in the diff
+                for (const keyword of keywords) {
+                  if (fileDiff.includes(keyword)) {
+                    console.log(`Found ${keyword} in ${file}`);
+                    filesWithChanges.add(file);
+                    hasPluginExtensionChanges = true;
+                    break; // Found at least one keyword, move to next file
+                  }
+                }
+              } catch (error) {
+                console.log(`Error checking file ${file}:`, error.message);
+              }
+            }
+            
+            // Set outputs
+            const filesArray = Array.from(filesWithChanges);
+            const formattedFiles = filesArray.length > 0 
+              ? '`' + filesArray.join('`, `') + '`'
+              : '';
+            
+            core.setOutput('plugin_extension_changes', hasPluginExtensionChanges.toString());
+            core.setOutput('formatted_changed_files', formattedFiles);
+            
+            // Create summary if changes detected
+            if (hasPluginExtensionChanges) {
+              const summary = [
+                '### Plugin Extension Changes Detected 🔧',
+                '',
+                'The following plugin extension-related changes were detected:',
+                '',
+                ...filesArray.map(file => `- Changes in \`${file}\``),
+                '',
+                'Please review these changes carefully as they affect plugin extension points.'
+              ].join('\n');
+              
+              fs.writeFileSync('extension_changes_summary.md', summary);
+            }
+            
+            console.log('Plugin extension changes detected:', hasPluginExtensionChanges);
+            console.log('Files with changes:', filesArray);
 
       - name: Send Slack Message via Payload
         id: slack
