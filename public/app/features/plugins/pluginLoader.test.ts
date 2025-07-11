@@ -13,7 +13,7 @@ import { addedComponentsRegistry, addedLinksRegistry, exposedComponentsRegistry 
 import { SystemJS } from './loader/systemjs';
 import { importAppPlugin } from './pluginLoader';
 
-jest.mock('../extensions/registry/setup');
+jest.mock('./extensions/registry/setup');
 
 describe('Load App', () => {
   const app = new AppPlugin();
