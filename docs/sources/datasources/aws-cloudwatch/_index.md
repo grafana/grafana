@@ -72,11 +72,11 @@ Once you've added the data source, you can [configure it](#configure-the-data-so
 To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
 {{< /admonition >}}
 
-## Query the data source
+<!-- ## Query the data source
 
 The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor.
 
-For details, see the [query editor documentation](query-editor/).
+For details, see the [query editor documentation](query-editor/). -->
 
 ## Query caching
 

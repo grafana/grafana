@@ -77,25 +77,88 @@ Complete the following steps to set up a new PostgreSQL data source:
 1. Select the **CloudWatch data source**.
 1. Click **Add new data source** in the upper right.
 
-You are taken to the **Settings** tab where you will configure the data source.
+Grafana takes you to the **Settings** tab, where you will set up your Microsoft SQL Server configuration.
+
+## Configure the data source in the UI
+
+The following are configuration options for the Microsoft SQL Server data source:
+
+
+| **Setting** | **Description** |
+|-------------|----------------|
+| **Name**    | The data source name. Sets the name you use to refer to the data source in panels and queries. |
+| **Default** | Toggle to select as the default name in dashboard panels. When you go to a dashboard panel, this will be the default selected data source. |
+
+A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
+The IAM user or IAM role must have the associated policies to perform certain API actions.
+
+For authentication options and configuration details, refer to [AWS authentication](aws-authentication/).
+
+
+**Authentication:** - Specify which AWS credentials chain to use. 
+
+**Access & secret key:**
+
+You must use both an access key ID AND secret access key to authenticate.
+
+| Setting               | Description                    |
+|-----------------------|--------------------------------|
+| **Access Key ID**     | Enter your key ID.             |
+| **Secret Access Key** | Enter the secret access key.   |
+
+
+Assume Role
+
+| Setting              | Description                                                                                                                                   |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| **Assume Role ARN**  | *Optional.* Specify the ARN of an IAM role to assume. This ensures the selected authentication method is used to assume the role, not used directly. |
+| **External ID**      | If you're assuming a role in another AWS account that requires an external ID, specify it here.                                               |
+
+
+<!-- Assume Role ARN:  *Optional*. Specifying the ARN of a role ensures that the selected authentication provider is used to assume the role rather than the credentials directly.
+
+External ID:  If you are assuming a role in another account that has been created with an external ID, specify it here.
+
+Enter the external ID if you're assuming a role in another AWS account that was configured to require one.  -->
+
+**Additional Settings:**
+
+<!-- Endpoint - _Optional_. Specify a custom endpoint for the AWS service.
+
+Default Region - Specify the AWS region. Example: If the region is US West (Oregon) use ` us-west-2 `.
+
+Namespaces of Custom Metrics - Add any namespace or namespaces. -->
+
+| Setting                        | Description                                                                 |
+|-------------------------------|-----------------------------------------------------------------------------|
+| **Endpoint**                  | _Optional_. Specify a custom endpoint for the AWS service.                 |
+| **Default Region**            | Specify the AWS region. Example: If the region is US West (Oregon), use `us-west-2`. |
+| **Namespaces of Custom Metrics** | Add one or more custom metric namespaces. Example:  `Namespace1,Namespace2`.   |
+
+
+**X-Ray trace link:**
+
+To automatically create links in your logs when they include the `@xrayTraceId` field, connect an X-Ray data source in the "X-Ray trace link" section of the data source settings.
+
+<!-- To automatically add links in your logs when the log contains the `@xrayTraceId` field, link an X-Ray data source in the "X-Ray trace link" section of the data source configuration. -->
+
+{{< figure src="/static/img/docs/cloudwatch/xray-trace-link-configuration-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link configuration" >}}
+
+The data source select contains only existing data source instances of type X-Ray.
+To use this feature, you must already have an X-Ray data source configured.
+For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/).
+
+To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel](ref:logs) to view the log details section.
+
+To log the `@xrayTraceId`, see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html).
+
+To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
+
+{{< figure src="/static/img/docs/cloudwatch/xray-link-log-details-8-2.png" max-width="800px" class="docs-image--no-shadow" caption="Trace link in log details" >}}
 
 
 
 
-
-
-
-
-
-
-
-
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `CloudWatch` in the search bar.
-1. Click **CloudWatch**.
-
-   The **Settings** tab of the data source is displayed.
 
 ## Configure AWS authentication
 
