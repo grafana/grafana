@@ -8,7 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -671,65 +673,301 @@ func TestSafeInt64ToInt(t *testing.T) {
 	}
 }
 
-func Test_isValidPath(t *testing.T) {
+func Test_isPathWithinRoot(t *testing.T) {
 	tests := []struct {
-		name    string
-		dir     string
-		safeDir string
-		want    bool
+		name string
+		dir  string
+		root string
+		want bool
 	}{
 		{
-			name:    "valid path",
-			dir:     "/path/to/my-file/",
-			safeDir: "/path/to/",
-			want:    true,
+			name: "valid path",
+			dir:  "/path/to/my-file/",
+			root: "/path/to/",
+			want: true,
 		},
 		{
-			name:    "valid path without trailing slash",
-			dir:     "/path/to/my-file",
-			safeDir: "/path/to",
-			want:    true,
+			name: "valid path without trailing slash",
+			dir:  "/path/to/my-file",
+			root: "/path/to",
+			want: true,
 		},
 		{
-			name:    "path with double slashes",
-			dir:     "/path//to//my-file/",
-			safeDir: "/path/to/",
-			want:    true,
+			name: "path with double slashes",
+			dir:  "/path//to//my-file/",
+			root: "/path/to/",
+			want: true,
 		},
 		{
-			name:    "invalid path: ..",
-			dir:     "/path/../above/",
-			safeDir: "/path/to/",
+			name: "invalid path: ..",
+			dir:  "/path/../above/",
+			root: "/path/to/",
 		},
 		{
-			name:    "invalid path: \\",
-			dir:     "\\path/to",
-			safeDir: "/path/to/",
+			name: "invalid path: \\",
+			dir:  "\\path/to",
+			root: "/path/to/",
 		},
 		{
-			name:    "invalid path: not under safe dir",
-			dir:     "/path/to.txt",
-			safeDir: "/path/to/",
+			name: "invalid path: not under safe dir",
+			dir:  "/path/to.txt",
+			root: "/path/to/",
 		},
 		{
-			name:    "invalid path: empty paths",
-			dir:     "",
-			safeDir: "/path/to/",
+			name: "invalid path: empty paths",
+			dir:  "",
+			root: "/path/to/",
 		},
 		{
-			name:    "invalid path: different path",
-			dir:     "/other/path/to/my-file/",
-			safeDir: "/Some/other/path",
+			name: "invalid path: different path",
+			dir:  "/other/path/to/my-file/",
+			root: "/Some/other/path",
 		},
 		{
-			name:    "invalid path: empty safe path",
-			dir:     "/path/to/",
-			safeDir: "",
+			name: "invalid path: empty safe path",
+			dir:  "/path/to/",
+			root: "",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, isValidPath(tt.dir, tt.safeDir))
+			require.Equal(t, tt.want, isPathWithinRoot(tt.dir, tt.root))
 		})
 	}
+}
+
+func setupBleveBackend(t *testing.T, fileThreshold int, cacheTTL time.Duration, dir string) *bleveBackend {
+	if dir == "" {
+		dir = t.TempDir()
+	}
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          dir,
+		FileThreshold: int64(fileThreshold),
+		IndexCacheTTL: cacheTTL,
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	require.NoError(t, err)
+	require.NotNil(t, backend)
+	t.Cleanup(backend.closeAllIndexes)
+	return backend
+}
+
+func TestBleveInMemoryIndexExpiration(t *testing.T) {
+	backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	builtIndex, err := backend.BuildIndex(context.Background(), ns, 1 /* below FileThreshold */, 100, nil, indexTestDocs(ns, 1))
+	require.NoError(t, err)
+
+	// Wait for index expiration, which is 1ns
+	time.Sleep(10 * time.Millisecond)
+	idx, err := backend.GetIndex(context.Background(), ns)
+	require.NoError(t, err)
+	require.Nil(t, idx)
+
+	// Verify that builtIndex is now closed.
+	_, err = builtIndex.DocCount(context.Background(), "")
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+}
+
+func TestBleveFileIndexExpiration(t *testing.T) {
+	backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	// size=100 is above FileThreshold, this will be file-based index
+	builtIndex, err := backend.BuildIndex(context.Background(), ns, 100, 100, nil, indexTestDocs(ns, 1))
+	require.NoError(t, err)
+
+	// Wait for index expiration, which is 1ns
+	time.Sleep(10 * time.Millisecond)
+	idx, err := backend.GetIndex(context.Background(), ns)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	// Verify that builtIndex is still open.
+	cnt, err := builtIndex.DocCount(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(1), cnt)
+}
+
+func TestFileIndexIsReusedOnSameSizeAndRV(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, indexTestDocs(ns, 10))
+	require.NoError(t, err)
+	backend1.closeAllIndexes()
+
+	// We open new backend using same directory, and run indexing with same size (10) and RV (100). This should reuse existing index, and skip indexing.
+	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	idx, err := backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 100, nil, indexTestDocs(ns, 1000))
+	require.NoError(t, err)
+
+	// Verify that we're reusing existing index and there is only 10 documents in it, not 1000.
+	cnt, err := idx.DocCount(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(10), cnt)
+}
+
+func TestFileIndexIsNotReusedOnDifferentSize(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, indexTestDocs(ns, 10))
+	require.NoError(t, err)
+	backend1.closeAllIndexes()
+
+	// We open new backend using same directory, but with different size. Index should be rebuilt.
+	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	idx, err := backend2.BuildIndex(context.Background(), ns, 100, 100, nil, indexTestDocs(ns, 100))
+	require.NoError(t, err)
+
+	// Verify that index has updated number of documents.
+	cnt, err := idx.DocCount(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(100), cnt)
+}
+
+func TestFileIndexIsNotReusedOnDifferentRV(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	tmpDir := t.TempDir()
+
+	backend1 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	_, err := backend1.BuildIndex(context.Background(), ns, 10, 100, nil, indexTestDocs(ns, 10))
+	require.NoError(t, err)
+	backend1.closeAllIndexes()
+
+	// We open new backend using same directory, but with different RV. Index should be rebuilt.
+	backend2 := setupBleveBackend(t, 5, time.Nanosecond, tmpDir)
+	idx, err := backend2.BuildIndex(context.Background(), ns, 10 /* file based */, 999999, nil, indexTestDocs(ns, 100))
+	require.NoError(t, err)
+
+	// Verify that index has updated number of documents.
+	cnt, err := idx.DocCount(context.Background(), "")
+	require.NoError(t, err)
+	require.Equal(t, int64(100), cnt)
+}
+
+func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
+	ns := resource.NamespacedResource{
+		Namespace: "test",
+		Group:     "group",
+		Resource:  "resource",
+	}
+
+	for name, testCase := range map[string]struct {
+		firstInMemory  bool
+		secondInMemory bool
+	}{
+		"in-memory, in-memory": {true, true},
+		"in-memory, file":      {true, false},
+		"file, in-memory":      {false, true},
+		"file, file":           {false, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			backend := setupBleveBackend(t, 5, time.Nanosecond, "")
+
+			firstSize := 100
+			if testCase.firstInMemory {
+				firstSize = 1
+			}
+			firstIndex, err := backend.BuildIndex(context.Background(), ns, int64(firstSize), 100, nil, indexTestDocs(ns, firstSize))
+			require.NoError(t, err)
+
+			secondSize := 100
+			if testCase.firstInMemory {
+				secondSize = 1
+			}
+			secondIndex, err := backend.BuildIndex(context.Background(), ns, int64(secondSize), 100, nil, indexTestDocs(ns, secondSize))
+			require.NoError(t, err)
+
+			// Verify that first and second index are different, and first one is now closed.
+			require.NotEqual(t, firstIndex, secondIndex)
+
+			_, err = firstIndex.DocCount(context.Background(), "")
+			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+
+			cnt, err := secondIndex.DocCount(context.Background(), "")
+			require.NoError(t, err)
+			require.Equal(t, int64(secondSize), cnt)
+		})
+	}
+}
+
+func indexTestDocs(ns resource.NamespacedResource, docs int) func(index resource.ResourceIndex) (int64, error) {
+	return func(index resource.ResourceIndex) (int64, error) {
+		var items []*resource.BulkIndexItem
+		for i := 0; i < docs; i++ {
+			items = append(items, &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns.Namespace,
+						Group:     ns.Group,
+						Resource:  ns.Resource,
+						Name:      fmt.Sprintf("doc%d", i),
+					},
+					Title: fmt.Sprintf("Document %d", i),
+				},
+			})
+		}
+
+		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		return int64(docs), err
+	}
+}
+
+func TestCleanOldIndexes(t *testing.T) {
+	dir := t.TempDir()
+
+	b := setupBleveBackend(t, 5, time.Nanosecond, dir)
+
+	t.Run("with skip", func(t *testing.T) {
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
+
+		b.cleanOldIndexes(dir, "index-2")
+		files, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		require.Len(t, files, 1)
+		require.Equal(t, "index-2", files[0].Name())
+	})
+
+	t.Run("without skip", func(t *testing.T) {
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-1/a"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-2/b"), 0750))
+		require.NoError(t, os.MkdirAll(filepath.Join(dir, "index-3/c"), 0750))
+
+		b.cleanOldIndexes(dir, "")
+		files, err := os.ReadDir(dir)
+		require.NoError(t, err)
+		require.Len(t, files, 0)
+	})
 }

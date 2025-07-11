@@ -68,7 +68,8 @@ mkdir -p ./levitate
 echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
 
 if [[ "$IS_FORK" == "true" ]]; then
-  cat ./levitate/levitate.md
+  cat ./levitate/levitate.md >> "$GITHUB_STEP_SUMMARY"
+  exit $EXIT_CODE
 fi
 
 # We will exit the workflow accordingly at another step

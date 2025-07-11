@@ -881,3 +881,7 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend
 /conf/provisioning/sample/ @grafana/grafana-git-ui-sync-team
+
+# Security
+/relyance.yaml @grafana/security-team
+/.github/workflows/relyance-scan.yml @grafana/security-team
