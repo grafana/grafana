@@ -212,6 +212,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// * Reading and modifying a repository's configuration requires administrator privileges.
 			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
 			// * Reading a repository's files requires viewer privileges.
+			// * Reading a repository's refs requires viewer privileges.
 			// * Editing a repository's files requires editor privileges.
 			// * Syncing a repository requires editor privileges.
 			// * Exporting a repository requires administrator privileges.
@@ -243,6 +244,12 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
+				case "refs":
+					// This is strictly a read operation. It is handy on the frontend for viewers.
+					if id.GetOrgRole().Includes(identity.RoleViewer) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "viewer role is required", nil
 				case "files":
 					// Access to files is controlled by the AccessClient
 					return authorizer.DecisionAllow, "", nil
@@ -363,6 +370,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		getter: b,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -775,6 +783,22 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	if sub != nil {
 		sub.Get.Description = "Get the history of a path"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
+	}
+
+	// Show refs endpoint documentation
+	sub = oas.Paths.Paths[repoprefix+"/refs"]
+	if sub != nil {
+		sub.Get.Description = "Get the repository references"
+		sub.Get.Summary = "Repository refs listing"
+		sub.Get.Parameters = []*spec3.Parameter{}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs[defsBase+"RefList"].Schema
+		mt["*/*"].Schema = &s
 	}
 
 	// Show a special list command

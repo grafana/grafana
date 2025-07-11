@@ -500,3 +500,21 @@ type HistoryItem struct {
 	Authors   []Author `json:"authors"`
 	CreatedAt int64    `json:"createdAt"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type RefList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// +listType=atomic
+	Items []RefItem `json:"items"`
+}
+
+type RefItem struct {
+	// The name of the reference (branch or tag)
+	Name string `json:"name"`
+	// The SHA hash of the commit this ref points to
+	Hash string `json:"hash,omitempty"`
+	// The URL to the reference (branch or tag)
+	RefURL string `json:"refURL,omitempty"`
+}
