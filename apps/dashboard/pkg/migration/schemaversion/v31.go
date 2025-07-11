@@ -103,7 +103,7 @@ func processPanelsV31(panels []interface{}) {
 		}
 
 		// Create new transformations array with merge transformations added
-		newTransformations := make([]interface{}, 0, len(transformations)*2)
+		newTransformations := []interface{}{}
 
 		for _, transformation := range transformations {
 			t, ok := transformation.(map[string]interface{})
