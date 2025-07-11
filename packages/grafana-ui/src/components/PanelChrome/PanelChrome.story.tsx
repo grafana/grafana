@@ -22,7 +22,7 @@ const PANEL_WIDTH = 400;
 const PANEL_HEIGHT = 150;
 
 const meta: Meta<typeof PanelChrome> = {
-  title: 'Visualizations/PanelChrome',
+  title: 'Plugins/PanelChrome',
   component: PanelChrome,
   parameters: {
     controls: {

@@ -64,12 +64,12 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
   );
 };
 
-export const sortByTransformRegistryItem: TransformerRegistryItem<SortByTransformerOptions> = {
+export const getSortByTransformRegistryItem: () => TransformerRegistryItem<SortByTransformerOptions> = () => ({
   id: DataTransformerID.sortBy,
   editor: SortByTransformerEditor,
   transformation: standardTransformers.sortByTransformer,
-  name: standardTransformers.sortByTransformer.name,
-  description: standardTransformers.sortByTransformer.description,
+  name: t('transformers.sort-by-transformer-editor.name.sort-by', 'Sort by'),
+  description: t('transformers.sort-by-transformer-editor.description.sort-fields', 'Sort fields in a frame.'),
   categories: new Set([TransformerCategory.ReorderAndRename]),
   help: getTransformationContent(DataTransformerID.sortBy).helperDocs,
-};
+});

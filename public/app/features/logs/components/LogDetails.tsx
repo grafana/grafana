@@ -43,7 +43,6 @@ export interface Props extends Themeable2 {
 
   onPinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
-  mode?: 'inline' | 'sidebar';
   links?: Record<string, LinkModel[]>;
 }
 
@@ -51,7 +50,7 @@ interface LinkModelWithIcon extends LinkModel {
   icon?: IconName;
 }
 
-const useAttributesExtensionLinks = (row: LogRowModel) => {
+export const useAttributesExtensionLinks = (row: LogRowModel) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
     return {
@@ -121,7 +120,6 @@ class UnThemedLogDetails extends PureComponent<Props> {
       onPinLine,
       styles,
       pinLineButtonTooltipTitle,
-      mode = 'inline',
       links,
     } = this.props;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
@@ -152,14 +150,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
     return (
       <tr className={cx(className, styles.logDetails)}>
         {showDuplicates && <td />}
-        {mode === 'inline' && (
-          <td
-            className={levelClassName}
-            aria-label={t('logs.un-themed-log-details.aria-label-log-level', 'Log level')}
-          />
-        )}
+        <td className={levelClassName} aria-label={t('logs.un-themed-log-details.aria-label-log-level', 'Log level')} />
         <td colSpan={4}>
-          <div className={mode === 'inline' ? styles.logDetailsContainer : styles.logDetailsSidebarContainer}>
+          <div className={styles.logDetailsContainer}>
             <table className={styles.logDetailsTable}>
               <tbody>
                 {displayedFields && displayedFields.length > 0 && (
@@ -168,7 +161,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       <td
                         colSpan={100}
                         className={styles.logDetailsHeading}
-                        aria-label={t('logs.un-themed-log-details.aria-label-fields', 'Fields')}
+                        aria-label={t('logs.un-themed-log-details.aria-label-line', 'Log line')}
                       >
                         <Trans i18nKey="logs.log-details.log-line">Log line</Trans>
                       </td>

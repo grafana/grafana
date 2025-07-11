@@ -43,10 +43,6 @@ Ensure you know how to create a GitHub OAuth app. Consult GitHub's documentation
 
 ## Configure GitHub authentication client using the Grafana UI
 
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default.
-{{< /admonition >}}
-
 As a Grafana Admin, you can configure GitHub OAuth client from within Grafana using the GitHub UI. To do this, navigate to **Administration > Authentication > GitHub** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
 After you have filled in the form, click **Save**. If the save was successful, Grafana will apply the new configurations.
@@ -60,10 +56,6 @@ If you run Grafana in high availability mode, configuration changes may not get 
 Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure GitHub authentication client using the Terraform provider
-
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default. Supported in the Terraform provider since v2.12.0.
-{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "github_sso_settings" {
@@ -219,7 +211,7 @@ role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
 ## Configure team synchronization
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and Grafana Cloud.
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
 By using Team Sync, you can map teams from your GitHub organization to teams within Grafana. This will automatically assign users to the appropriate teams.

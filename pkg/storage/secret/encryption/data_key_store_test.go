@@ -31,7 +31,7 @@ func TestEncryptionStoreImpl_DataKeyLifecycle(t *testing.T) {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB), tracer, features, nil)
+	store, err := ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()

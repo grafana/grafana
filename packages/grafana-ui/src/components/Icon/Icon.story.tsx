@@ -13,7 +13,7 @@ import { Icon } from './Icon';
 import mdx from './Icon.mdx';
 
 const meta: Meta<typeof Icon> = {
-  title: 'Docs overview/Icon',
+  title: 'Iconography/Icon',
   component: Icon,
   parameters: {
     options: {

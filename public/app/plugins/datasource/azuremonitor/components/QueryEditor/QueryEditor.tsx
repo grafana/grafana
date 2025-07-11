@@ -9,13 +9,8 @@ import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import {
-  AzureMonitorDataSourceJsonData,
-  AzureMonitorErrorish,
-  AzureMonitorOption,
-  AzureMonitorQuery,
-  AzureQueryType,
-} from '../../types';
+import { AzureMonitorQuery, AzureQueryType } from '../../types/query';
+import { AzureMonitorDataSourceJsonData, AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';

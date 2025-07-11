@@ -16,7 +16,7 @@ import { PureComponent } from 'react';
 
 import TNil from '../../../types/TNil';
 import DraggableManager from '../DraggableManager';
-import { DraggableBounds, DraggingUpdate } from '../index';
+import { DraggableBounds, DraggingUpdate } from '../types';
 
 import './DividerDemo.css';
 

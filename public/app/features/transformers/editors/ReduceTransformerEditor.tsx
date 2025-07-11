@@ -117,12 +117,15 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
   );
 };
 
-export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransformerOptions> = {
+export const getReduceTransformRegistryItem: () => TransformerRegistryItem<ReduceTransformerOptions> = () => ({
   id: DataTransformerID.reduce,
   editor: ReduceTransformerEditor,
   transformation: standardTransformers.reduceTransformer,
-  name: standardTransformers.reduceTransformer.name,
-  description: standardTransformers.reduceTransformer.description,
+  name: t('transformers.reduce-transformer-editor.name.reduce', 'Reduce'),
+  description: t(
+    'transformers.reduce-transformer-editor.description.reduce-to-single-value',
+    'Reduce all rows or data points to a single value (ex. max, mean).'
+  ),
   categories: new Set([TransformerCategory.CalculateNewFields]),
   help: getTransformationContent(DataTransformerID.reduce).helperDocs,
-};
+});

@@ -1,4 +1,4 @@
-package metadata
+package metadata_test
 
 import (
 	"context"
@@ -10,8 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts.KeeperMetadataStorage, name, namespace string) string {
@@ -36,16 +38,17 @@ func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts
 func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	ctx := context.Background()
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	db := database.ProvideDatabase(testDB)
+	tracer := noop.NewTracerProvider().Tracer("test")
+	db := database.ProvideDatabase(testDB, tracer)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the secure value storage
-	secureValueStorage, err := ProvideSecureValueMetadataStorage(db, features)
+	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 
 	// Initialize the keeper storage
-	keeperStorage, err := ProvideKeeperMetadataStorage(db, features)
+	keeperStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, features, nil)
 	require.NoError(t, err)
 
 	t.Run("create and read a secure value", func(t *testing.T) {
@@ -71,7 +74,8 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "default", createdSecureValue.Namespace)
 		require.Equal(t, "test description", createdSecureValue.Spec.Description)
 		require.Equal(t, keeperName, *createdSecureValue.Spec.Keeper)
-		require.Equal(t, secretv0alpha1.SecureValuePhasePending, createdSecureValue.Status.Phase)
+
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
 
 		// Read the secure value back
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test", contracts.ReadOpts{})
@@ -81,7 +85,6 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "default", readSecureValue.Namespace)
 		require.Equal(t, "test description", readSecureValue.Spec.Description)
 		require.Equal(t, keeperName, *readSecureValue.Spec.Keeper)
-		require.Equal(t, secretv0alpha1.SecureValuePhasePending, readSecureValue.Status.Phase)
 
 		// List secure values and verify our value is in the list
 		secureValues, err := secureValueStorage.List(ctx, xkube.Namespace("default"))
@@ -96,7 +99,6 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 				require.Equal(t, "default", sv.Namespace)
 				require.Equal(t, "test description", sv.Spec.Description)
 				require.Equal(t, keeperName, *sv.Spec.Keeper)
-				require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
 				break
 			}
 		}
@@ -123,6 +125,8 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, createdSecureValue)
 
+		require.NoError(t, secureValueStorage.SetVersionToActive(ctx, xkube.Namespace(createdSecureValue.Namespace), createdSecureValue.Name, createdSecureValue.Status.Version))
+
 		// Read the secure value to verify it exists
 		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2", contracts.ReadOpts{})
 		require.NoError(t, err)
@@ -130,7 +134,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "sv-test-2", readSecureValue.Name)
 
 		// Delete the secure value
-		err = secureValueStorage.Delete(ctx, xkube.Namespace("default"), "sv-test-2")
+		err = secureValueStorage.SetVersionToInactive(ctx, xkube.Namespace("default"), "sv-test-2", readSecureValue.Status.Version)
 		require.NoError(t, err)
 
 		// Try to read the deleted secure value - should return error

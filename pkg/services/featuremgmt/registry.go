@@ -338,13 +338,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "nanoGit",
-			Description:     "Use experimental git library for provisioning",
-			Stage:           FeatureStageExperimental,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-		},
-		{
 			Name:            "grafanaAPIServerEnsureKubectlAccess",
 			Description:     "Start an additional https handler and write kubectl options",
 			Stage:           FeatureStageExperimental,
@@ -652,15 +645,6 @@ var (
 			Owner:        grafanaOperatorExperienceSquad,
 		},
 		{
-			Name:           "ssoSettingsApi",
-			Description:    "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			AllowSelfServe: true,
-			FrontendOnly:   false,
-			Owner:          identityAccessTeam,
-		},
-		{
 			Name:         "canvasPanelPanZoom",
 			Description:  "Allow pan and zoom in canvas panel",
 			Stage:        FeatureStagePublicPreview,
@@ -698,14 +682,11 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			// this is mainly used as a way to quickly disable query hints as a safeguard for our infrastructure
-			Name:           "lokiQueryHints",
-			Description:    "Enables query hints for Loki",
-			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly:   true,
-			Expression:     "true",
-			Owner:          grafanaObservabilityLogsSquad,
-			AllowSelfServe: false,
+			Name:         "regressionTransformation",
+			Description:  "Enables regression analysis transformation",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:              "kubernetesFeatureToggles",
@@ -1274,12 +1255,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "jaegerBackendMigration",
-			Description: "Enables querying the Jaeger data source without the proxy",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOSSBigTent,
-		},
-		{
 			Name:         "alertingUIOptimizeReducer",
 			Description:  "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1331,6 +1306,8 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
+			// since users on v2.9 need it to disable the feature, as it doesn't work for them.
 			Name:        "lokiLabelNamesQueryApi",
 			Description: "Defaults to using the Loki `/labels` API instead of `/series`",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1689,11 +1666,11 @@ var (
 		{
 			Name:              "skipTokenRotationIfRecent",
 			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
-			Stage:             FeatureStagePrivatePreview,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
-			Expression:        "false",
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:              "alertEnrichment",
@@ -1725,7 +1702,7 @@ var (
 			Description: "Use fixed-width numbers globally in the UI",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
+			Expression:  "false",
 		},
 		{
 			Name:         "newInfluxDSConfigPageDesign",
@@ -1744,6 +1721,16 @@ var (
 			HideFromDocs:      true,
 			FrontendOnly:      true,
 			Expression:        "false", // extensions will be disabled by default
+		},
+		{
+			Name:              "foldersAppPlatformAPI",
+			Description:       "Enables use of app platform API for folders",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendSearchNavOrganise,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false",
 		},
 	}
 )

@@ -50,10 +50,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardSceneForViewers`             | Enables dashboard rendering using Scenes for viewer roles                                                                                                     | Yes                |
 | `dashboardSceneSolo`                   | Enables rendering dashboards using scenes for solo panels                                                                                                     | Yes                |
 | `dashboardScene`                       | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
-| `ssoSettingsApi`                       | Enables the SSO settings API and the OAuth configuration UIs in Grafana                                                                                       | Yes                |
 | `logsInfiniteScrolling`                | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                                                       | Yes                |
 | `logRowsPopoverMenu`                   | Enable filtering menu displayed when text of a log line is selected                                                                                           | Yes                |
-| `lokiQueryHints`                       | Enables query hints for Loki                                                                                                                                  | Yes                |
 | `alertingQueryOptimization`            | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.                                 | Yes                |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                              | Yes                |
@@ -83,7 +81,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
-| `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    | Yes                |
+| `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 
 ## Public preview feature toggles
 
@@ -103,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`          | Runs CloudWatch metrics queries as separate batches                                                    |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
+| `regressionTransformation`        | Enables regression analysis transformation                                                             |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage                                              |
 | `tableNextGen`                    | Allows access to the new react-data-grid based table component.                                        |
 | `enableSCIM`                      | Enables SCIM support for user and group management                                                     |

@@ -18,13 +18,14 @@ import {
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
-import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk, StoreState, ThunkDispatch } from 'app/types/store';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import * as richHistory from '../../../core/utils/richHistory';
 import { configureStore } from '../../../store/configureStore';
 import { setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { makeLogs } from '../__mocks__/makeLogs';
+import { makeLogs } from '../mocks/makeLogs';
 import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
 import { saveCorrelationsAction } from './explorePane';

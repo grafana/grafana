@@ -5,11 +5,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { selectors as rawSelectors } from '@grafana/e2e-selectors';
 
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
+import { AzureQueryType } from '../../public/app/plugins/datasource/azuremonitor/types/query';
 import {
   AzureMonitorDataSourceJsonData,
   AzureMonitorDataSourceSecureJsonData,
-  AzureQueryType,
-} from '../../public/app/plugins/datasource/azuremonitor/types';
+} from '../../public/app/plugins/datasource/azuremonitor/types/types';
 import { e2e } from '../utils';
 
 const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;

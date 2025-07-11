@@ -16,7 +16,7 @@ import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
-import { DEFAULTS, DEGREES, ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+import { DEFAULTS, DEGREES, ModelType, getRegressionTransformer, RegressionTransformerOptions } from './regression';
 
 const fieldNamePickerSettings = {
   editor: FieldNamePicker,
@@ -157,12 +157,15 @@ export const RegressionTransformerEditor = ({
   );
 };
 
-export const regressionTransformerRegistryItem: TransformerRegistryItem<RegressionTransformerOptions> = {
-  id: DataTransformerID.regression,
-  editor: RegressionTransformerEditor,
-  transformation: RegressionTransformer,
-  name: RegressionTransformer.name,
-  description: RegressionTransformer.description,
-  categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(DataTransformerID.regression).helperDocs,
+export const getRegressionTransformerRegistryItem: () => TransformerRegistryItem<RegressionTransformerOptions> = () => {
+  const regressionTransformer = getRegressionTransformer();
+  return {
+    id: DataTransformerID.regression,
+    editor: RegressionTransformerEditor,
+    transformation: regressionTransformer,
+    name: regressionTransformer.name,
+    description: regressionTransformer.description,
+    categories: new Set([TransformerCategory.CalculateNewFields]),
+    help: getTransformationContent(DataTransformerID.regression).helperDocs,
+  };
 };

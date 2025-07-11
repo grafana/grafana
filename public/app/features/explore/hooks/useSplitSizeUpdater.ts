@@ -2,7 +2,7 @@ import { inRange } from 'lodash';
 import { useState } from 'react';
 import { useWindowSize } from 'react-use';
 
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { splitSizeUpdateAction } from '../state/main';
 import { isSplit, selectPanesEntries } from '../state/selectors';

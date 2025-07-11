@@ -158,7 +158,7 @@ export function validatePath<OriginalPath extends string>(path: OriginalPath): O
     originalDecoded = cleaned;
 
     // If the original string contains traversal attempts, block it
-    if (originalDecoded.includes('..') || originalDecoded.includes('/\\')) {
+    if (/\.\.|\/\\|[\t\n\r]/.test(originalDecoded)) {
       throw new PathValidationError();
     }
 
