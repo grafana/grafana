@@ -64,11 +64,10 @@ func TestBadgerKV_UnderlyingStorage(t *testing.T) {
 		expectedInternalKey := section + "/" + key
 
 		// Save through KV interface
-		err := kv.Save(ctx, section, key, strings.NewReader(value))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader(value))
 
 		// Verify the raw key exists in badger with correct format
-		err = db.View(func(txn *badger.Txn) error {
+		err := db.View(func(txn *badger.Txn) error {
 			item, err := txn.Get([]byte(expectedInternalKey))
 			require.NoError(t, err)
 
@@ -90,13 +89,11 @@ func TestBadgerKV_UnderlyingStorage(t *testing.T) {
 		value2 := "value-from-section2"
 
 		// Save same key in different sections
-		err := kv.Save(ctx, section1, key, strings.NewReader(value1))
-		require.NoError(t, err)
-		err = kv.Save(ctx, section2, key, strings.NewReader(value2))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section1, key, strings.NewReader(value1))
+		saveKVHelper(t, kv, ctx, section2, key, strings.NewReader(value2))
 
 		// Verify both keys exist in badger with different internal keys
-		err = db.View(func(txn *badger.Txn) error {
+		err := db.View(func(txn *badger.Txn) error {
 			// Check section1 key
 			item1, err := txn.Get([]byte(section1 + "/" + key))
 			require.NoError(t, err)
@@ -140,11 +137,10 @@ func TestBadgerKV_UnderlyingStorage(t *testing.T) {
 		internalKey := section + "/" + key
 
 		// Save and verify it exists
-		err := kv.Save(ctx, section, key, strings.NewReader(value))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader(value))
 
 		// Verify it exists in badger
-		err = db.View(func(txn *badger.Txn) error {
+		err := db.View(func(txn *badger.Txn) error {
 			_, err := txn.Get([]byte(internalKey))
 			return err
 		})
@@ -172,12 +168,10 @@ func TestBadgerKV_UnderlyingStorage(t *testing.T) {
 		keys2 := []string{"b1", "b2", "b3"}
 
 		for _, k := range keys1 {
-			err := kv.Save(ctx, section1, k, strings.NewReader("value"+k))
-			require.NoError(t, err)
+			saveKVHelper(t, kv, ctx, section1, k, strings.NewReader("value"+k))
 		}
 		for _, k := range keys2 {
-			err := kv.Save(ctx, section2, k, strings.NewReader("value"+k))
-			require.NoError(t, err)
+			saveKVHelper(t, kv, ctx, section2, k, strings.NewReader("value"+k))
 		}
 
 		// List keys from section1 only
@@ -261,4 +255,15 @@ func TestIsValidKey(t *testing.T) {
 				"IsValidKey(%q) = %v, expected %v", tt.key, result, tt.expected)
 		})
 	}
+}
+
+// saveKVHelper is a helper function to save data to KV store using the new WriteCloser interface
+func saveKVHelper(t *testing.T, kv KV, ctx context.Context, section, key string, value io.Reader) {
+	t.Helper()
+	writer, err := kv.Save(ctx, section, key)
+	require.NoError(t, err)
+	_, err = io.Copy(writer, value)
+	require.NoError(t, err)
+	err = writer.Close()
+	require.NoError(t, err)
 }

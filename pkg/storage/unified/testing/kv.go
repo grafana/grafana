@@ -81,8 +81,7 @@ func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 	t.Run("get existing key", func(t *testing.T) {
 		// First save a key
 		testValue := "test value for get"
-		err := kv.Save(ctx, section, "existing-key", strings.NewReader(testValue))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, "existing-key", strings.NewReader(testValue))
 
 		// Now get it
 		reader, err := kv.Get(ctx, section, "existing-key")
@@ -117,8 +116,7 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("save new key", func(t *testing.T) {
 		testValue := "new test value"
-		err := kv.Save(ctx, section, "new-key", strings.NewReader(testValue))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, "new-key", strings.NewReader(testValue))
 
 		// Verify it was saved
 		reader, err := kv.Get(ctx, section, "new-key")
@@ -133,13 +131,11 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("save overwrite existing key", func(t *testing.T) {
 		// First save
-		err := kv.Save(ctx, section, "overwrite-key", strings.NewReader("old value"))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, "overwrite-key", strings.NewReader("old value"))
 
 		// Overwrite
 		newValue := "new value"
-		err = kv.Save(ctx, section, "overwrite-key", strings.NewReader(newValue))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, "overwrite-key", strings.NewReader(newValue))
 
 		// Verify it was updated
 		reader, err := kv.Get(ctx, section, "overwrite-key")
@@ -153,15 +149,14 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 	})
 
 	t.Run("save with empty section", func(t *testing.T) {
-		err := kv.Save(ctx, "", "some-key", strings.NewReader("some value"))
+		_, err := kv.Save(ctx, "", "some-key")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "section is required")
 	})
 
 	t.Run("save binary data", func(t *testing.T) {
 		binaryData := []byte{0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD}
-		err := kv.Save(ctx, section, "binary-key", bytes.NewReader(binaryData))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, "binary-key", bytes.NewReader(binaryData))
 
 		// Verify binary data
 		reader, err := kv.Get(ctx, section, "binary-key")
@@ -176,8 +171,7 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("save key with no data", func(t *testing.T) {
 		// Save a key with empty data
-		err := kv.Save(ctx, section, "empty-key", strings.NewReader(""))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, "empty-key", strings.NewReader(""))
 
 		// Verify it was saved with empty data
 		reader, err := kv.Get(ctx, section, "empty-key")
@@ -198,11 +192,10 @@ func runTestKVDelete(t *testing.T, kv resource.KV, nsPrefix string) {
 
 	t.Run("delete existing key", func(t *testing.T) {
 		// First create a key
-		err := kv.Save(ctx, section, "delete-key", strings.NewReader("delete me"))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, "delete-key", strings.NewReader("delete me"))
 
 		// Verify it exists
-		_, err = kv.Get(ctx, section, "delete-key")
+		_, err := kv.Get(ctx, section, "delete-key")
 		require.NoError(t, err)
 
 		// Delete it
@@ -235,8 +228,7 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 	// Setup test data
 	testKeys := []string{"a1", "a2", "b1", "b2", "c1"}
 	for _, key := range testKeys {
-		err := kv.Save(ctx, section, key, strings.NewReader("value"+key))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("value"+key))
 	}
 
 	t.Run("list all keys", func(t *testing.T) {
@@ -284,8 +276,7 @@ func runTestKVKeysWithLimits(t *testing.T, kv resource.KV, nsPrefix string) {
 	// Setup test data
 	testKeys := []string{"a1", "a2", "b1", "b2", "c1", "c2", "d1", "d2"}
 	for _, key := range testKeys {
-		err := kv.Save(ctx, section, key, strings.NewReader("value"+key))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("value"+key))
 	}
 
 	t.Run("keys with limit", func(t *testing.T) {
@@ -339,8 +330,7 @@ func runTestKVKeysWithSort(t *testing.T, kv resource.KV, nsPrefix string) {
 	// Setup test data
 	testKeys := []string{"a1", "a2", "b1", "b2", "c1"}
 	for _, key := range testKeys {
-		err := kv.Save(ctx, section, key, strings.NewReader("value"+key))
-		require.NoError(t, err)
+		saveKVHelper(t, kv, ctx, section, key, strings.NewReader("value"+key))
 	}
 
 	t.Run("keys in ascending order (default)", func(t *testing.T) {
@@ -407,7 +397,19 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 					value := fmt.Sprintf("concurrent-value-%d-%d", goroutineID, j)
 
 					// Save
-					err = kv.Save(ctx, section, key, strings.NewReader(value))
+					writer, err := kv.Save(ctx, section, key)
+					if err != nil {
+						return
+					}
+					defer func() {
+						err := writer.Close()
+						require.NoError(t, err)
+					}()
+					_, err = io.Copy(writer, strings.NewReader(value))
+					if err != nil {
+						return
+					}
+					err = writer.Close()
 					if err != nil {
 						return
 					}
@@ -447,7 +449,19 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 				value := fmt.Sprintf("concurrent-ops-value-%d", goroutineID)
 
 				// Save
-				err = kv.Save(ctx, section, key, strings.NewReader(value))
+				writer, err := kv.Save(ctx, section, key)
+				if err != nil {
+					return
+				}
+				defer func() {
+					err := writer.Close()
+					require.NoError(t, err)
+				}()
+				_, err = io.Copy(writer, strings.NewReader(value))
+				if err != nil {
+					return
+				}
+				err = writer.Close()
 				if err != nil {
 					return
 				}
@@ -511,4 +525,15 @@ func runTestKVUnixTimestamp(t *testing.T, kv resource.KV, nsPrefix string) {
 		// Should be very close (within 1 second)
 		require.InDelta(t, timestamp1, timestamp2, 1)
 	})
+}
+
+// saveKVHelper is a helper function to save data to KV store using the new WriteCloser interface
+func saveKVHelper(t *testing.T, kv resource.KV, ctx context.Context, section, key string, value io.Reader) {
+	t.Helper()
+	writer, err := kv.Save(ctx, section, key)
+	require.NoError(t, err)
+	_, err = io.Copy(writer, value)
+	require.NoError(t, err)
+	err = writer.Close()
+	require.NoError(t, err)
 }

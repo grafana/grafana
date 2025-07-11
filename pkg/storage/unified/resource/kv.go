@@ -36,8 +36,8 @@ type KV interface {
 	// Get retrieves the value for a key from the store
 	Get(ctx context.Context, section string, key string) (io.ReadCloser, error)
 
-	// Save a new value
-	Save(ctx context.Context, section string, key string, value io.Reader) error
+	// Save a new value - returns a WriteCloser to write the value to
+	Save(ctx context.Context, section string, key string) (io.WriteCloser, error)
 
 	// Delete a value
 	Delete(ctx context.Context, section string, key string) error
@@ -92,30 +92,64 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 	return io.NopCloser(bytes.NewReader(value)), nil
 }
 
-func (k *badgerKV) Save(ctx context.Context, section string, key string, value io.Reader) error {
-	if k.db.IsClosed() {
+// badgerWriteCloser implements io.WriteCloser for badgerKV
+type badgerWriteCloser struct {
+	db             *badger.DB
+	keyWithSection string
+	buf            *bytes.Buffer
+	closed         bool
+}
+
+// Write implements io.Writer
+func (w *badgerWriteCloser) Write(p []byte) (int, error) {
+	if w.closed {
+		return 0, fmt.Errorf("write to closed writer")
+	}
+	return w.buf.Write(p)
+}
+
+// Close implements io.Closer - stores the buffered data in BadgerDB
+func (w *badgerWriteCloser) Close() error {
+	if w.closed {
+		return nil
+	}
+	w.closed = true
+
+	if w.db.IsClosed() {
 		return fmt.Errorf("database is closed")
 	}
 
-	if section == "" {
-		return fmt.Errorf("section is required")
-	}
+	data := w.buf.Bytes()
 
-	key = section + "/" + key
-
-	data, err := io.ReadAll(value)
-	if err != nil {
-		return fmt.Errorf("failed to read value: %w", err)
-	}
-
-	txn := k.db.NewTransaction(true)
+	txn := w.db.NewTransaction(true)
 	defer txn.Discard()
 
-	err = txn.Set([]byte(key), data)
+	err := txn.Set([]byte(w.keyWithSection), data)
 	if err != nil {
 		return err
 	}
 	return txn.Commit()
+}
+
+func (k *badgerKV) Save(ctx context.Context, section string, key string) (io.WriteCloser, error) {
+	if k.db.IsClosed() {
+		return nil, fmt.Errorf("database is closed")
+	}
+
+	if section == "" {
+		return nil, fmt.Errorf("section is required")
+	}
+
+	if key == "" {
+		return nil, fmt.Errorf("key is required")
+	}
+
+	return &badgerWriteCloser{
+		db:             k.db,
+		keyWithSection: section + "/" + key,
+		buf:            &bytes.Buffer{},
+		closed:         false,
+	}, nil
 }
 
 func (k *badgerKV) Delete(ctx context.Context, section string, key string) error {
