@@ -1,0 +1,142 @@
+---
+name: Detect Plugin Extension Changes
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+  workflow_dispatch:
+
+env:
+  # Space-separated list of keywords referring to plugin extensions
+  PLUGIN_EXTENSION_KEYWORDS: "usePluginLinks usePluginComponent usePluginComponents usePluginFunctions PluginExtensionPoints"
+
+jobs:
+  detect-plugin-extension-changes:
+    name: Detect Plugin Extension Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check for plugin extension changes
+        id: check-changes
+        run: |
+          # Get the diff between base and head
+          git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} > changed_files.txt
+          
+          # Check if any files contain the plugin extension keywords
+          plugin_extension_changes=false
+          keywords="$PLUGIN_EXTENSION_KEYWORDS"
+          
+          echo "Checking for plugin extension changes..."
+          
+          # Check each changed file for the keywords and collect them
+          changed_files_with_keywords=""
+          while IFS= read -r file; do
+            # Validate file path to prevent traversal attacks
+            if [[ "$file" =~ ^[a-zA-Z0-9._/-]+$ ]] && [[ -f "$file" ]]; then
+              for keyword in $keywords; do
+                if git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- "$file" | grep -q -F "$keyword"; then
+                  echo "Found $keyword in $file"
+                  plugin_extension_changes=true
+                  # Add file to list if not already present
+                  if [[ "$changed_files_with_keywords" != *"$file"* ]]; then
+                    if [[ -n "$changed_files_with_keywords" ]]; then
+                      changed_files_with_keywords="$changed_files_with_keywords, $file"
+                    else
+                      changed_files_with_keywords="$file"
+                    fi
+                  fi
+                  break
+                fi
+              done
+            fi
+          done < changed_files.txt
+          
+          echo "plugin_extension_changes=$plugin_extension_changes" >> $GITHUB_OUTPUT
+          
+          # Format changed files for Slack display
+          if [[ -n "$changed_files_with_keywords" ]]; then
+            formatted_changed_files=$(echo "$changed_files_with_keywords" | sed 's/, /`, `/g' | sed 's/^/`/' | sed 's/$/`/')
+            echo "formatted_changed_files=$formatted_changed_files" >> $GITHUB_OUTPUT
+          else
+            echo "formatted_changed_files=" >> $GITHUB_OUTPUT
+          fi
+          
+          # Create a summary of changes
+          if [[ "$plugin_extension_changes" == "true" ]]; then
+            echo "### Plugin Extension Changes Detected 🔧" > extension_changes_summary.md
+            echo "" >> extension_changes_summary.md
+            echo "The following plugin extension-related changes were detected:" >> extension_changes_summary.md
+            echo "" >> extension_changes_summary.md
+            
+            while IFS= read -r file; do
+              if [[ -f "$file" ]]; then
+                for keyword in $keywords; do
+                  if git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- "$file" | grep -q "$keyword"; then
+                    echo "- **$keyword** in \`$file\`" >> extension_changes_summary.md
+                  fi
+                done
+              fi
+            done < changed_files.txt
+            
+            echo "" >> extension_changes_summary.md
+            echo "Please review these changes carefully as they affect plugin extension points." >> extension_changes_summary.md
+          fi
+
+      - name: Send Slack Message via Payload
+        id: slack
+        if: steps.check-changes.outputs.plugin_extension_changes == 'true'
+        uses: grafana/shared-workflows/actions/send-slack-message@7b628e7352c2dea057c565cc4fcd5564d5f396c0 #v1.0.0
+        with:
+          channel-id: "C031SLFH6G0"
+          payload: |
+            {
+              "channel": "C031SLFH6G0",
+              "text": "Plugin Extension changes in core Grafana *PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} :information_source:",
+              "icon_emoji": ":grot:",
+              "username": "Plugin Extension Bot",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Plugin Extensions* Possible changes or new extension points in core Grafana."
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR:* <${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }}>\n\nAuthor: ${{ github.event.pull_request.user.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Job:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Job>"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Files with possible changes: ${{ steps.check-changes.outputs.formatted_changed_files }}"
+                  }
+                }
+              ]
+            } 
