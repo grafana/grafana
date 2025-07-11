@@ -116,20 +116,20 @@ func TestBadgerKV_UnderlyingStorage(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify KV interface returns correct values for each section
-		obj1, err := kv.Get(ctx, section1, key)
+		reader1, err := kv.Get(ctx, section1, key)
 		require.NoError(t, err)
-		val1, err := io.ReadAll(obj1.Value)
+		val1, err := io.ReadAll(reader1)
 		require.NoError(t, err)
 		require.Equal(t, value1, string(val1))
-		err = obj1.Value.Close()
+		err = reader1.Close()
 		require.NoError(t, err)
 
-		obj2, err := kv.Get(ctx, section2, key)
+		reader2, err := kv.Get(ctx, section2, key)
 		require.NoError(t, err)
-		val2, err := io.ReadAll(obj2.Value)
+		val2, err := io.ReadAll(reader2)
 		require.NoError(t, err)
 		require.Equal(t, value2, string(val2))
-		err = obj2.Value.Close()
+		err = reader2.Close()
 		require.NoError(t, err)
 	})
 
