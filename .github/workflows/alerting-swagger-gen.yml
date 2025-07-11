@@ -22,7 +22,7 @@ jobs:
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
       - name: Open Pull Request
-        uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update alerting swagger spec"
