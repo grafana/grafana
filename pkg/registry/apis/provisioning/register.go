@@ -1181,10 +1181,6 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		}
 	}
 
-	if !b.availableRepositoryTypes[r.Spec.Type] {
-		return nil, fmt.Errorf("repository type %s is not available", r.Spec.Type)
-	}
-
 	switch r.Spec.Type {
 	case provisioning.BitbucketRepositoryType:
 		return nil, errors.New("repository type bitbucket is not available")
