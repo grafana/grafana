@@ -5,11 +5,12 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
+import { useDispatch } from 'app/types/store';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
-import { setAllSelection, useActionSelectionState } from '../../state';
+import { useActionSelectionState } from '../../state/hooks';
+import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';

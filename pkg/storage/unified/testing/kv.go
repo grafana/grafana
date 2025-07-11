@@ -43,10 +43,6 @@ func GenerateRandomKVPrefix() string {
 
 // RunKVTest runs the KV test suite
 func RunKVTest(t *testing.T, newKV NewKVFunc, opts *KVTestOptions) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	if opts == nil {
 		opts = &KVTestOptions{}
 	}
@@ -89,17 +85,16 @@ func runTestKVGet(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 
 		// Now get it
-		obj, err := kv.Get(ctx, section, "existing-key")
+		reader, err := kv.Get(ctx, section, "existing-key")
 		require.NoError(t, err)
-		assert.Equal(t, "existing-key", obj.Key)
 
 		// Read the value
-		value, err := io.ReadAll(obj.Value)
+		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		assert.Equal(t, testValue, string(value))
 
 		// Close the value reader
-		err = obj.Value.Close()
+		err = reader.Close()
 		require.NoError(t, err)
 	})
 
@@ -126,14 +121,13 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 
 		// Verify it was saved
-		obj, err := kv.Get(ctx, section, "new-key")
+		reader, err := kv.Get(ctx, section, "new-key")
 		require.NoError(t, err)
-		assert.Equal(t, "new-key", obj.Key)
 
-		value, err := io.ReadAll(obj.Value)
+		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		assert.Equal(t, testValue, string(value))
-		err = obj.Value.Close()
+		err = reader.Close()
 		require.NoError(t, err)
 	})
 
@@ -148,13 +142,13 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 
 		// Verify it was updated
-		obj, err := kv.Get(ctx, section, "overwrite-key")
+		reader, err := kv.Get(ctx, section, "overwrite-key")
 		require.NoError(t, err)
 
-		value, err := io.ReadAll(obj.Value)
+		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		assert.Equal(t, newValue, string(value))
-		err = obj.Value.Close()
+		err = reader.Close()
 		require.NoError(t, err)
 	})
 
@@ -170,13 +164,30 @@ func runTestKVSave(t *testing.T, kv resource.KV, nsPrefix string) {
 		require.NoError(t, err)
 
 		// Verify binary data
-		obj, err := kv.Get(ctx, section, "binary-key")
+		reader, err := kv.Get(ctx, section, "binary-key")
 		require.NoError(t, err)
 
-		value, err := io.ReadAll(obj.Value)
+		value, err := io.ReadAll(reader)
 		require.NoError(t, err)
 		assert.Equal(t, binaryData, value)
-		err = obj.Value.Close()
+		err = reader.Close()
+		require.NoError(t, err)
+	})
+
+	t.Run("save key with no data", func(t *testing.T) {
+		// Save a key with empty data
+		err := kv.Save(ctx, section, "empty-key", strings.NewReader(""))
+		require.NoError(t, err)
+
+		// Verify it was saved with empty data
+		reader, err := kv.Get(ctx, section, "empty-key")
+		require.NoError(t, err)
+
+		value, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		assert.Equal(t, "", string(value))
+		assert.Len(t, value, 0)
+		err = reader.Close()
 		require.NoError(t, err)
 	})
 }
@@ -250,6 +261,19 @@ func runTestKVKeys(t *testing.T, kv resource.KV, nsPrefix string) {
 		assert.Len(t, errors, 1)
 		assert.Contains(t, errors[0].Error(), "section is required")
 		assert.Empty(t, keys)
+	})
+
+	t.Run("list keys returns 0 keys", func(t *testing.T) {
+		// Use a different section with no keys
+		emptySection := nsPrefix + "-empty-keys"
+
+		var keys []string
+		for k, err := range kv.Keys(ctx, emptySection, resource.ListOptions{}) {
+			require.NoError(t, err)
+			keys = append(keys, k)
+		}
+		assert.Empty(t, keys)
+		assert.Len(t, keys, 0)
 	})
 }
 
@@ -389,14 +413,14 @@ func runTestKVConcurrent(t *testing.T, kv resource.KV, nsPrefix string) {
 					}
 
 					// Get immediately
-					obj, err := kv.Get(ctx, section, key)
+					reader, err := kv.Get(ctx, section, key)
 					if err != nil {
 						return
 					}
 
-					readValue, err := io.ReadAll(obj.Value)
+					readValue, err := io.ReadAll(reader)
 					require.NoError(t, err)
-					err = obj.Value.Close()
+					err = reader.Close()
 					require.NoError(t, err)
 					assert.Equal(t, value, string(readValue))
 				}

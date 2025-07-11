@@ -495,13 +495,16 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   return fieldNames.sort(comparer);
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<OrganizeFieldsTransformerOptions> = {
-  id: DataTransformerID.organize,
-  editor: OrganizeFieldsTransformerEditor,
-  transformation: standardTransformers.organizeFieldsTransformer,
-  name: standardTransformers.organizeFieldsTransformer.name,
-  description:
-    "Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.",
-  categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.organize).helperDocs,
-};
+export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryItem<OrganizeFieldsTransformerOptions> =
+  () => ({
+    id: DataTransformerID.organize,
+    editor: OrganizeFieldsTransformerEditor,
+    transformation: standardTransformers.organizeFieldsTransformer,
+    name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
+    description: t(
+      'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
+      'Re-order, hide, or rename fields.'
+    ),
+    categories: new Set([TransformerCategory.ReorderAndRename]),
+    help: getTransformationContent(DataTransformerID.organize).helperDocs,
+  });

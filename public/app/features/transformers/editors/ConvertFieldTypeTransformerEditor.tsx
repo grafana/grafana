@@ -13,10 +13,10 @@ import {
   getTimeZones,
 } from '@grafana/data';
 import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
-import { findField } from 'app/features/dimensions';
+import { findField } from 'app/features/dimensions/utils';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';
@@ -51,7 +51,7 @@ export const ConvertFieldTypeTransformerEditor = ({
 
   const onSelectField = useCallback(
     (idx: number) => (value: string | undefined) => {
-      const conversions = options.conversions;
+      const conversions = [...options.conversions];
       conversions[idx] = { ...conversions[idx], targetField: value ?? '', dateFormat: undefined };
       onChange({
         ...options,
@@ -259,18 +259,25 @@ export const ConvertFieldTypeTransformerEditor = ({
           'Add a convert field type transformer'
         )}
       >
-        {'Convert field type'}
+        <Trans i18nKey="transformers.convert-field-type-transformer-editor.convert-field-type">
+          Convert field type
+        </Trans>
       </Button>
     </>
   );
 };
 
-export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<ConvertFieldTypeTransformerOptions> = {
-  id: DataTransformerID.convertFieldType,
-  editor: ConvertFieldTypeTransformerEditor,
-  transformation: standardTransformers.convertFieldTypeTransformer,
-  name: standardTransformers.convertFieldTypeTransformer.name,
-  description: standardTransformers.convertFieldTypeTransformer.description,
-  categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
-};
+export const getConvertFieldTypeTransformRegistryItem: () => TransformerRegistryItem<ConvertFieldTypeTransformerOptions> =
+  () => ({
+    id: DataTransformerID.convertFieldType,
+    editor: ConvertFieldTypeTransformerEditor,
+    transformation: standardTransformers.convertFieldTypeTransformer,
+    name: t('transformers.convert-field-type-transformer-editor.name.convert-field-type', 'Convert field type'),
+    description: t(
+      'transformers.convert-field-type-transformer-editor.description.convert-to-specified-field-type',
+      'Convert a field to a specified field type.'
+    ),
+    categories: new Set([TransformerCategory.Reformat]),
+    help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
+    tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
+  });

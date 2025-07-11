@@ -3,8 +3,10 @@ package testutils
 import (
 	"context"
 	"testing"
-	"time"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -12,11 +14,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -29,35 +31,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type setupConfig struct {
-	workerCfg     worker.Config
-	keeperService contracts.KeeperService
+type SetupConfig struct {
+	KeeperService contracts.KeeperService
+	AllowList     map[string]struct{}
 }
 
-func defaultSetupCfg() setupConfig {
-	return setupConfig{
-		workerCfg: worker.Config{
-			BatchSize:                    10,
-			ReceiveTimeout:               1 * time.Second,
-			PollingInterval:              time.Millisecond,
-			MaxMessageProcessingAttempts: 5,
-		},
+func defaultSetupCfg() SetupConfig {
+	return SetupConfig{}
+}
+
+func WithKeeperService(keeperService contracts.KeeperService) func(*SetupConfig) {
+	return func(setupCfg *SetupConfig) {
+		setupCfg.KeeperService = keeperService
 	}
 }
 
-func WithWorkerConfig(cfg worker.Config) func(*setupConfig) {
-	return func(setupCfg *setupConfig) {
-		setupCfg.workerCfg = cfg
+func WithMutateCfg(f func(*SetupConfig)) func(*SetupConfig) {
+	return func(cfg *SetupConfig) {
+		f(cfg)
 	}
 }
 
-func WithKeeperService(keeperService contracts.KeeperService) func(*setupConfig) {
-	return func(setupCfg *setupConfig) {
-		setupCfg.keeperService = keeperService
-	}
-}
-
-func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
+func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	setupCfg := defaultSetupCfg()
 	for _, opt := range opts {
 		opt(&setupCfg)
@@ -67,8 +62,6 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
 	database := database.ProvideDatabase(testDB, tracer)
-
-	outboxQueue := metadata.ProvideOutboxQueue(database, tracer, nil)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
@@ -80,7 +73,10 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 
 	// Initialize access client + access control
 	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
-	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+	accessClient := accesscontrol.NewLegacyAccessClient(accessControl, accesscontrol.ResourceAuthorizerOptions{
+		Resource: "securevalues",
+		Attr:     "uid",
+	})
 
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
@@ -111,34 +107,33 @@ func Setup(t *testing.T, opts ...func(*setupConfig)) Sut {
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 
-	if setupCfg.keeperService != nil {
-		keeperService = setupCfg.keeperService
+	if setupCfg.KeeperService != nil {
+		keeperService = setupCfg.KeeperService
 	}
 
-	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, outboxQueue, encryptionManager)
+	secureValueService := service.ProvideSecureValueService(tracer, accessClient, database, secureValueMetadataStorage, keeperMetadataStorage, keeperService)
 
-	worker, err := worker.NewWorker(
-		setupCfg.workerCfg,
-		tracer,
-		database,
-		outboxQueue,
-		secureValueMetadataStorage,
-		keeperMetadataStorage,
-		keeperService,
-		encryptionManager,
-		features,
-		nil, // metrics
-	)
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, setupCfg.AllowList)
+
+	decryptStorage, err := metadata.ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
-	return Sut{Worker: worker, SecureValueService: secureValueService, SecureValueMetadataStorage: secureValueMetadataStorage, OutboxQueue: outboxQueue, Database: database}
+	decryptService := decrypt.ProvideDecryptService(decryptStorage)
+
+	return Sut{
+		SecureValueService:         secureValueService,
+		SecureValueMetadataStorage: secureValueMetadataStorage,
+		Database:                   database,
+		DecryptStorage:             decryptStorage,
+		DecryptService:             decryptService,
+	}
 }
 
 type Sut struct {
-	Worker                     *worker.Worker
 	SecureValueService         *service.SecureValueService
 	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
-	OutboxQueue                contracts.OutboxQueue
+	DecryptStorage             contracts.DecryptStorage
+	DecryptService             service.DecryptService
 	Database                   *database.Database
 }
 
@@ -162,17 +157,16 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 			Spec: secretv0alpha1.SecureValueSpec{
 				Description: "desc1",
 				Value:       secretv0alpha1.NewExposedSecureValue("v1"),
+				Decrypters:  []string{"decrypter1"},
 			},
-			Status: secretv0alpha1.SecureValueStatus{
-				Phase: secretv0alpha1.SecureValuePhasePending,
-			},
+			Status: secretv0alpha1.SecureValueStatus{},
 		},
 	}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
 
-	createdSv, err := s.SecureValueService.Create(ctx, cfg.Sv, "actor")
+	createdSv, err := s.SecureValueService.Create(ctx, cfg.Sv, "actor-uid")
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +174,7 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 }
 
 func (s *Sut) UpdateSv(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor")
+	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor-uid")
 	return newSv, err
 }
 
@@ -199,4 +193,32 @@ func newKeeperServiceWrapper(keeper contracts.Keeper) *keeperServiceWrapper {
 
 func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
 	return wrapper.keeper, nil
+}
+
+func CreateUserAuthContext(ctx context.Context, namespace string, permissions map[string][]string) context.Context {
+	orgID := int64(1)
+	requester := &identity.StaticRequester{
+		Namespace: namespace,
+		Type:      types.TypeUser,
+		UserID:    1,
+		OrgID:     orgID,
+		Permissions: map[int64]map[string][]string{
+			orgID: permissions,
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
+}
+
+func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, permissions []string) context.Context {
+	requester := &identity.StaticRequester{
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				Permissions:     permissions,
+				ServiceIdentity: serviceIdentity,
+			},
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
 }

@@ -206,15 +206,15 @@ func (d *metadataStore) Get(ctx context.Context, key MetaDataKey) (MetaData, err
 		return MetaData{}, fmt.Errorf("invalid metadata key: %w", err)
 	}
 
-	obj, err := d.kv.Get(ctx, metaSection, key.String())
+	reader, err := d.kv.Get(ctx, metaSection, key.String())
 	if err != nil {
 		return MetaData{}, err
 	}
 	defer func() {
-		_ = obj.Value.Close()
+		_ = reader.Close()
 	}()
 	var meta MetaData
-	err = json.NewDecoder(obj.Value).Decode(&meta)
+	err = json.NewDecoder(reader).Decode(&meta)
 	return meta, err
 }
 

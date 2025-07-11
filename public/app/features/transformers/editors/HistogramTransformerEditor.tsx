@@ -136,12 +136,15 @@ export const HistogramTransformerEditor = ({
   );
 };
 
-export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTransformerInputs> = {
+export const getHistogramTransformRegistryItem: () => TransformerRegistryItem<HistogramTransformerInputs> = () => ({
   id: DataTransformerID.histogram,
   editor: HistogramTransformerEditor,
   transformation: standardTransformers.histogramTransformer,
-  name: standardTransformers.histogramTransformer.name,
-  description: standardTransformers.histogramTransformer.description,
+  name: t('transformers.histogram-transformer-editor.name.histogram', 'Histogram'),
+  description: t(
+    'transformers.histogram-transformer-editor.description.calculate-histogram-from-input-data',
+    'Calculate a histogram from input data.'
+  ),
   categories: new Set([TransformerCategory.CreateNewVisualization]),
   help: getTransformationContent(DataTransformerID.histogram).helperDocs,
-};
+});

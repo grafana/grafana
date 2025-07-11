@@ -2,7 +2,7 @@ import { Dashboard } from '@grafana/schema';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 export interface SaveDashboardData {
   clone: Dashboard; // cloned copy

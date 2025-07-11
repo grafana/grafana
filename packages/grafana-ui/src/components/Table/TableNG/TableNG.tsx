@@ -1,11 +1,12 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { Key, ReactNode, useLayoutEffect, useMemo, useState } from 'react';
+import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
   DataGrid,
+  DataGridHandle,
   DataGridProps,
   RenderCellProps,
   RenderRowProps,
@@ -22,8 +23,10 @@ import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { MenuItem } from '../../Menu/MenuItem';
 import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
+import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { CellColors, TableCellDisplayMode } from '../types';
+import { DataLinksActionsTooltipState } from '../utils';
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
@@ -37,6 +40,7 @@ import {
   useHeaderHeight,
   usePaginatedRows,
   useRowHeight,
+  useScrollbarWidth,
   useSortedRows,
   useTypographyCtx,
 } from './hooks';
@@ -56,6 +60,8 @@ import {
   getCellOptions,
   shouldTextWrap,
   isCellInspectEnabled,
+  getCellLinks,
+  withDataLinksActionsTooltip,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -68,25 +74,30 @@ export function TableNG(props: TableNGProps) {
     enableSharedCrosshair = false,
     enableVirtualization,
     footerOptions,
-    getActions,
+    getActions = () => [],
     height,
     initialSortBy,
     noHeader,
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
-    replaceVariables,
     showTypeIcons,
     structureRev,
+    transparent,
     width,
   } = props;
 
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, {
     enablePagination,
-    noHeader,
+    transparent,
   });
   const panelContext = usePanelContext();
+
+  const getCellActions = useCallback(
+    (field: Field, rowIdx: number) => getActions(data, field, rowIdx),
+    [getActions, data]
+  );
 
   const hasHeader = !noHeader;
   const hasFooter = Boolean(footerOptions?.show && footerOptions.reducer?.length);
@@ -142,9 +153,11 @@ export function TableNG(props: TableNGProps) {
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const gridRef = useRef<DataGridHandle>(null);
+  const scrollbarWidth = useScrollbarWidth(gridRef, height, sortedRows);
   const availableWidth = useMemo(
-    () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
-    [width, hasNestedFrames]
+    () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
+    [width, hasNestedFrames, scrollbarWidth]
   );
   const typographyCtx = useTypographyCtx();
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
@@ -236,33 +249,23 @@ export function TableNG(props: TableNGProps) {
         },
         sortColumns,
         rowHeight,
-        headerRowClass: styles.headerRow,
-        headerRowHeight: headerHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
-    [
-      enableVirtualization,
-      resizeHandler,
-      sortColumns,
-      headerHeight,
-      styles.headerRow,
-      rowHeight,
-      hasFooter,
-      setSortColumns,
-      onSortByChange,
-    ]
+    [enableVirtualization, resizeHandler, sortColumns, rowHeight, hasFooter, setSortColumns, onSortByChange]
   );
 
   interface Schema {
     columns: TableColumn[];
     cellRootRenderers: Record<string, CellRootRenderer>;
+    colsWithTooltip: Record<string, boolean>;
   }
 
-  const { columns, cellRootRenderers } = useMemo(() => {
+  const { columns, cellRootRenderers, colsWithTooltip } = useMemo(() => {
     const fromFields = (f: Field[], widths: number[]) => {
       const result: Schema = {
         columns: [],
         cellRootRenderers: {},
+        colsWithTooltip: {},
       };
 
       let lastRowIdx = -1;
@@ -280,7 +283,6 @@ export function TableNG(props: TableNGProps) {
         const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
         const showActions = cellInspect || showFilters;
         const width = widths[i];
-        const frame = data;
 
         // helps us avoid string cx and emotion per-cell
         const cellActionClassName = showActions
@@ -294,6 +296,9 @@ export function TableNG(props: TableNGProps) {
         const cellType = cellOptions.type;
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
+        const withTooltip = withDataLinksActionsTooltip(field, cellType);
+
+        result.colsWithTooltip[displayName] = withTooltip;
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
@@ -317,7 +322,7 @@ export function TableNG(props: TableNGProps) {
             colors = {};
           }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, colors);
+          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors);
 
           return (
             <Cell
@@ -335,14 +340,11 @@ export function TableNG(props: TableNGProps) {
         const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
           const rowIdx = props.row.__index;
           const value = props.row[props.column.key];
-
-          // TODO: defer until click?
-          const actions = getActions?.(frame, field, props.row.__index, replaceVariables);
+          const frame = data;
 
           return (
             <>
               {renderFieldCell({
-                actions,
                 cellOptions,
                 frame,
                 field,
@@ -354,6 +356,7 @@ export function TableNG(props: TableNGProps) {
                 width,
                 cellInspect,
                 showFilters,
+                getActions: getCellActions,
               })}
               {showActions && (
                 <TableCellActions
@@ -427,6 +430,7 @@ export function TableNG(props: TableNGProps) {
       return result;
     }
 
+    const hasNestedHeaders = firstNestedData.meta?.custom?.noHeader !== true;
     const renderRow = renderRowFactory(firstNestedData.fields, panelContext, expandedRows, enableSharedCrosshair);
     const { columns: nestedColumns, cellRootRenderers: nestedCellRootRenderers } = fromFields(
       firstNestedData.fields,
@@ -476,11 +480,20 @@ export function TableNG(props: TableNGProps) {
         }
 
         const expandedRecords = applySort(frameToRecords(nestedData), nestedData.fields, sortColumns);
+        if (!expandedRecords.length) {
+          return (
+            <div className={styles.noDataNested}>
+              <Trans i18nKey="grafana-ui.table.nested-table.no-data">No data</Trans>
+            </div>
+          );
+        }
 
         return (
           <DataGrid<TableRow, TableSummaryRow>
             {...commonDataGridProps}
             className={cx(styles.grid, styles.gridNested)}
+            headerRowClass={cx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
+            headerRowHeight={hasNestedHeaders ? defaultHeaderHeight : 0}
             columns={nestedColumns}
             rows={expandedRecords}
             renderers={{ renderRow, renderCell: renderCellRoot }}
@@ -499,17 +512,16 @@ export function TableNG(props: TableNGProps) {
     crossFilterOrder,
     crossFilterRows,
     data,
+    defaultHeaderHeight,
     defaultRowHeight,
     enableSharedCrosshair,
     expandedRows,
     filter,
     footerCalcs,
-    getActions,
     hasNestedFrames,
     isCountRowsSet,
     onCellFilterAdded,
     panelContext,
-    replaceVariables,
     rowHeight,
     rows,
     setFilter,
@@ -519,6 +531,7 @@ export function TableNG(props: TableNGProps) {
     theme,
     visibleFields,
     widths,
+    getCellActions,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
@@ -534,13 +547,36 @@ export function TableNG(props: TableNGProps) {
     return cellRootRenderers[props.column.key](key, props);
   };
 
+  const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
+
   return (
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
+        ref={gridRef}
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
+        headerRowClass={cx(styles.headerRow, { [styles.displayNone]: noHeader })}
+        headerRowHeight={headerHeight}
+        onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
+          // Note: could be column.field; JS says yes, but TS says no!
+          const field = columns[column.idx].field;
+
+          if (colsWithTooltip[getDisplayName(field)]) {
+            const rowIdx = row.__index;
+            setTooltipState({
+              coords: {
+                clientX,
+                clientY,
+              },
+              links: getCellLinks(field, rowIdx),
+              actions: getCellActions(field, rowIdx),
+            });
+
+            preventGridDefault();
+          }
+        }}
         onCellKeyDown={
           hasNestedFrames
             ? (_, event) => {
@@ -575,6 +611,15 @@ export function TableNG(props: TableNGProps) {
             </div>
           )}
         </div>
+      )}
+
+      {tooltipState && (
+        <DataLinksActionsTooltip
+          links={tooltipState.links ?? []}
+          actions={tooltipState.actions}
+          coords={tooltipState.coords}
+          onTooltipClose={() => setTooltipState(undefined)}
+        />
       )}
 
       {isContextMenuOpen && (
@@ -655,17 +700,20 @@ const renderRowFactory =
 
 const getGridStyles = (
   theme: GrafanaTheme2,
-  { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
+  { enablePagination, transparent }: { enablePagination?: boolean; transparent?: boolean }
 ) => ({
   grid: css({
-    '--rdg-background-color': theme.colors.background.primary,
-    '--rdg-header-background-color': theme.colors.background.primary,
-    '--rdg-border-color': theme.isDark ? '#282b30' : '#ebebec',
+    '--rdg-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
+    '--rdg-header-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
+    '--rdg-border-color': theme.colors.border.weak,
     '--rdg-color': theme.colors.text.primary,
 
     // note: this cannot have any transparency since default cells that
     // overlay/overflow on hover inherit this background and need to occlude cells below
-    '--rdg-row-hover-background-color': theme.isDark ? '#212428' : '#f4f5f5',
+    '--rdg-row-background-color': transparent ? theme.colors.background.canvas : theme.colors.background.primary,
+    '--rdg-row-hover-background-color': transparent
+      ? theme.colors.background.primary
+      : theme.colors.background.secondary,
 
     // TODO: magic 32px number is unfortunate. it would be better to have the content
     // flow using flexbox rather than hard-coding this size via a calc
@@ -685,14 +733,23 @@ const getGridStyles = (
   }),
   gridNested: css({
     height: '100%',
-    width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - 1}px)`,
+    width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
     overflow: 'visible',
-    marginLeft: COLUMN.EXPANDER_WIDTH - 1,
+    marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
+    marginBlock: TABLE.CELL_PADDING,
   }),
   cellNested: css({
     '&[aria-selected=true]': {
       outline: 'none',
     },
+  }),
+  noDataNested: css({
+    height: TABLE.NESTED_NO_DATA_HEIGHT,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.h4.fontSize,
   }),
   cellActions: css({
     display: 'none',
@@ -701,7 +758,7 @@ const getGridStyles = (
     margin: 'auto',
     height: '100%',
     color: theme.colors.text.primary,
-    background: theme.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.7)',
+    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
     padding: theme.spacing.x0_5,
     paddingInlineStart: theme.spacing.x1,
   }),
@@ -714,11 +771,13 @@ const getGridStyles = (
   headerRow: css({
     paddingBlockStart: 0,
     fontWeight: 'normal',
-    ...(noHeader ? { display: 'none' } : {}),
     '& .rdg-cell': {
       height: '100%',
       alignItems: 'flex-end',
     },
+  }),
+  displayNone: css({
+    display: 'none',
   }),
   paginationContainer: css({
     alignItems: 'center',
@@ -770,31 +829,36 @@ const getCellStyles = (
   rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
+  hasTooltip: boolean,
   colors: CellColors
-) => ({
-  cell: css({
-    textOverflow: 'initial',
-    background: colors.bgColor ?? 'inherit',
-    alignContent: 'center',
-    justifyContent: getTextAlign(field),
-    paddingInline: TABLE.CELL_PADDING,
-    height: '100%',
-    minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
-    ...(shouldWrap && { whiteSpace: 'pre-line' }),
-    '&:last-child': {
-      borderInlineEnd: 'none',
-    },
-    '&:hover': {
-      background: colors.bgHoverColor,
-      '.table-cell-actions': {
-        display: 'flex',
+) => {
+  return {
+    cell: css({
+      textOverflow: 'initial',
+      background: colors.bgColor ?? 'inherit',
+      alignContent: 'center',
+      justifyContent: getTextAlign(field),
+      paddingInline: TABLE.CELL_PADDING,
+      height: '100%',
+      minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
+      ...(shouldWrap && { whiteSpace: 'pre-line' }),
+      ...(hasTooltip && { cursor: 'pointer' }),
+      '&:last-child': {
+        borderInlineEnd: 'none',
       },
-      ...(shouldOverflow && {
-        zIndex: theme.zIndex.tooltip - 2,
-        whiteSpace: 'pre-line',
-        height: 'fit-content',
-        minWidth: 'fit-content',
-      }),
-    },
-  }),
-});
+      '&:hover': {
+        background: colors.bgHoverColor,
+        '.table-cell-actions': {
+          display: 'flex',
+        },
+        ...(shouldOverflow && {
+          zIndex: theme.zIndex.tooltip - 2,
+          whiteSpace: 'pre-line',
+          height: 'fit-content',
+          minWidth: 'fit-content',
+          paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
+        }),
+      },
+    }),
+  };
+};
