@@ -7,15 +7,10 @@ import { useSelector } from 'app/types/store';
 import { findItem } from '../../state/utils';
 import { DashboardTreeSelection } from '../../types';
 
-interface SelectionProvisioningStatus {
-  hasProvisioned: boolean;
-  hasNonProvisioned: boolean;
-}
-
 export function useSelectionProvisioningStatus(
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>,
   isParentProvisioned: boolean
-): SelectionProvisioningStatus {
+) {
   const browseState = useSelector((state) => state.browseDashboards);
   const isProvisionedInstance = useIsProvisionedInstance();
 
