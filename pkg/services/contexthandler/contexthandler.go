@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
+
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
@@ -147,7 +148,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		if id != nil {
 			ns = id.Namespace
 		}
-		evalCtx := openfeature.NewEvaluationContext(ns, map[string]interface{}{
+		evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{
 			"namespace": ns,
 		})
 		ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
