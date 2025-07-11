@@ -1017,4 +1017,9 @@ export interface FeatureToggles {
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
+  /**
+  * Set this to true to use the new plugin loading functionality
+  * @default false
+  */
+  newPluginLoading?: boolean;
 }

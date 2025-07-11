@@ -918,4 +918,8 @@ const (
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
+
+	// FlagNewPluginLoading
+	// Set this to true to use the new plugin loading functionality
+	FlagNewPluginLoading = "newPluginLoading"
 )

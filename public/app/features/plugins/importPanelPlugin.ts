@@ -1,9 +1,13 @@
-import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
+import { PanelPlugin, PanelPluginMeta, PluginLoadingStrategy, throwIfAngular } from '@grafana/data';
 import config from 'app/core/config';
 
+import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
+
+import { importPluginModule } from './importer/importPluginModule';
 import { pluginImporter } from './importer/pluginImporter';
 
 const promiseCache: Record<string, Promise<PanelPlugin>> = {};
+const panelPluginCache: Record<string, PanelPlugin> = {};
 
 export function importPanelPlugin(id: string): Promise<PanelPlugin> {
   const loaded = promiseCache[id];
@@ -47,9 +51,45 @@ export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelP
 }
 
 export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
-  return pluginImporter.getPanelPlugin(id);
+  if (config.featureToggles.newPluginLoading) {
+    return pluginImporter.getPanelPlugin(id);
+  }
+
+  return panelPluginCache[id];
 }
 
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
-  return pluginImporter.importPanelPlugin(meta);
+  if (config.featureToggles.newPluginLoading) {
+    return pluginImporter.importPanelPlugin(meta);
+  }
+
+  throwIfAngular(meta);
+
+  const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
+  return importPluginModule({
+    path: meta.module,
+    version: meta.info?.version,
+    loadingStrategy: fallbackLoadingStrategy,
+    pluginId: meta.id,
+    moduleHash: meta.moduleHash,
+    translations: meta.translations,
+  })
+    .then((pluginExports) => {
+      if (pluginExports.plugin) {
+        return pluginExports.plugin;
+      }
+
+      throwIfAngular(pluginExports);
+      throw new Error('missing export: plugin');
+    })
+    .then((plugin: PanelPlugin) => {
+      plugin.meta = meta;
+      panelPluginCache[meta.id] = plugin;
+      return plugin;
+    })
+    .catch((err) => {
+      // TODO, maybe a different error plugin
+      console.warn('Error loading panel plugin: ' + meta.id, err);
+      return getPanelPluginLoadError(meta, err);
+    });
 }

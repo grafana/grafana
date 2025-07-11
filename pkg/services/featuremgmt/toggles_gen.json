@@ -2158,6 +2158,22 @@
     },
     {
       "metadata": {
+        "name": "newPluginLoading",
+        "resourceVersion": "1752218614580",
+        "creationTimestamp": "2025-07-11T07:23:34Z"
+      },
+      "spec": {
+        "description": "Set this to true to use the new plugin loading functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newShareReportDrawer",
         "resourceVersion": "1750821734038",
         "creationTimestamp": "2025-02-17T19:05:46Z",
@@ -2306,6 +2322,23 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginLoadingRefactor",
+        "resourceVersion": "1752218524617",
+        "creationTimestamp": "2025-07-11T07:22:04Z",
+        "deletionTimestamp": "2025-07-11T07:23:34Z"
+      },
+      "spec": {
+        "description": "Set this to true to use the new plugin loading functionality",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {

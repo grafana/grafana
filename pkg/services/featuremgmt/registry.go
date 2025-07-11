@@ -1744,6 +1744,16 @@ var (
 			FrontendOnly:      true,
 			Expression:        "false",
 		},
+		{
+			Name:              "newPluginLoading",
+			Description:       "Set this to true to use the new plugin loading functionality",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
+			Expression:        "false",
+		},
 	}
 )
 

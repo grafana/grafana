@@ -1,7 +1,25 @@
-import { AppPlugin, DataSourcePluginMeta, PluginLoadingStrategy, PluginMeta } from '@grafana/data';
+import {
+  AppPlugin,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourcePlugin,
+  DataSourcePluginMeta,
+  PluginLoadingStrategy,
+  PluginMeta,
+  throwIfAngular,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
+import {
+  addedComponentsRegistry,
+  addedFunctionsRegistry,
+  addedLinksRegistry,
+  exposedComponentsRegistry,
+} from './extensions/registry/setup';
+import { importPluginModule } from './importer/importPluginModule';
 import { pluginImporter } from './importer/pluginImporter';
 import { getPluginFromCache } from './loader/cache';
 // SystemJS has to be imported before the sharedDependenciesMap
@@ -57,9 +75,92 @@ systemJSPrototype.resolve = decorateSystemJSResolve.bind(systemJSPrototype, syst
 systemJSPrototype.onload = decorateSystemJsOnload;
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return pluginImporter.importDatasourcePlugin(meta);
+  if (config.featureToggles.newPluginLoading) {
+    return pluginImporter.importDatasourcePlugin(meta);
+  }
+
+  throwIfAngular(meta);
+
+  const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
+  return importPluginModule({
+    path: meta.module,
+    version: meta.info?.version,
+    loadingStrategy: fallbackLoadingStrategy,
+    pluginId: meta.id,
+    moduleHash: meta.moduleHash,
+    translations: meta.translations,
+  }).then((pluginExports) => {
+    if (pluginExports.plugin) {
+      const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
+      dsPlugin.meta = meta;
+      return dsPlugin;
+    }
+    if (pluginExports.Datasource) {
+      const dsPlugin = new DataSourcePlugin<
+        DataSourceApi<DataQuery, DataSourceJsonData>,
+        DataQuery,
+        DataSourceJsonData
+      >(pluginExports.Datasource);
+      dsPlugin.setComponentsFromLegacyExports(pluginExports);
+      dsPlugin.meta = meta;
+      return dsPlugin;
+    }
+
+    throw new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export');
+  });
 }
 
-export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
-  return pluginImporter.importAppPlugin(meta);
+// Cache for import promises to prevent duplicate imports
+const importPromises: Record<string, Promise<AppPlugin>> = {};
+
+export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
+  if (config.featureToggles.newPluginLoading) {
+    return pluginImporter.importAppPlugin(meta);
+  }
+
+  const pluginId = meta.id;
+
+  // We are caching the import promises to prevent duplicate imports
+  if (importPromises[pluginId] === undefined) {
+    importPromises[pluginId] = doImportAppPlugin(meta);
+  }
+
+  return importPromises[pluginId];
+}
+
+async function doImportAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
+  throwIfAngular(meta);
+
+  const pluginExports = await importPluginModule({
+    path: meta.module,
+    version: meta.info?.version,
+    pluginId: meta.id,
+    loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
+    moduleHash: meta.moduleHash,
+    translations: meta.translations,
+  });
+
+  const { plugin = new AppPlugin() } = pluginExports;
+  plugin.init(meta);
+  plugin.meta = meta;
+  plugin.setComponentsFromLegacyExports(pluginExports);
+
+  exposedComponentsRegistry.register({
+    pluginId: meta.id,
+    configs: plugin.exposedComponentConfigs || [],
+  });
+  addedComponentsRegistry.register({
+    pluginId: meta.id,
+    configs: plugin.addedComponentConfigs || [],
+  });
+  addedLinksRegistry.register({
+    pluginId: meta.id,
+    configs: plugin.addedLinkConfigs || [],
+  });
+  addedFunctionsRegistry.register({
+    pluginId: meta.id,
+    configs: plugin.addedFunctionConfigs || [],
+  });
+
+  return plugin;
 }
