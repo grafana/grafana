@@ -295,7 +295,7 @@ func (b *APIBuilder) namespaceFromEvalCtx(body []byte) string {
 	}
 
 	if evalCtx.Context.Namespace == "" {
-		b.logger.Debug("namespace missing from evaluation context", "namescape", evalCtx.Context.Namespace)
+		b.logger.Debug("namespace missing from evaluation context", "namespace", evalCtx.Context.Namespace)
 		return ""
 	}
 
