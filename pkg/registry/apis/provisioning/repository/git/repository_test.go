@@ -1230,10 +1230,6 @@ func TestGitRepository_ListRefs(t *testing.T) {
 					Name: "feature",
 					Hash: "1234567890abcdef1234567890abcdef12345678",
 				},
-				{
-					Name: "refs/tags/v1.0.0",
-					Hash: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
-				},
 			},
 		},
 		{

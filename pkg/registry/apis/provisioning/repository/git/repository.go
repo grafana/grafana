@@ -481,15 +481,15 @@ func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, e
 	if err != nil {
 		return nil, fmt.Errorf("list refs: %w", err)
 	}
-
 	refItems := make([]provisioning.RefItem, 0, len(refs))
 	for _, ref := range refs {
-		name := ref.Name
-		if strings.HasPrefix(ref.Name, "refs/heads/") {
-			name = strings.TrimPrefix(ref.Name, "refs/heads/")
+		// Only branches
+		if !strings.HasPrefix(ref.Name, "refs/heads/") {
+			continue
 		}
+
 		refItems = append(refItems, provisioning.RefItem{
-			Name: name,
+			Name: strings.TrimPrefix(ref.Name, "refs/heads/"),
 			Hash: ref.Hash.String(),
 		})
 	}
