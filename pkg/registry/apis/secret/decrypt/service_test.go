@@ -5,12 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecryptService(t *testing.T) {
@@ -23,7 +22,7 @@ func TestDecryptService(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		mockStorage := &MockDecryptStorage{}
-		mockStorage.On("Decrypt", mock.Anything, mock.Anything, mock.Anything).Return(common.RawSecureValue(""), mockErr)
+		mockStorage.On("Decrypt", mock.Anything, mock.Anything, mock.Anything).Return(secretv0alpha1.ExposedSecureValue(""), mockErr)
 		decryptedValuesResp := map[string]service.DecryptResult{
 			"secure-value-1": service.NewDecryptResultErr(mockErr),
 		}
@@ -43,8 +42,8 @@ func TestDecryptService(t *testing.T) {
 
 		mockStorage := &MockDecryptStorage{}
 		// Set up the mock to return a different value for each name in the test
-		exposedSecureValue1 := common.NewSecretValue("value1")
-		exposedSecureValue2 := common.NewSecretValue("value2")
+		exposedSecureValue1 := secretv0alpha1.NewExposedSecureValue("value1")
+		exposedSecureValue2 := secretv0alpha1.NewExposedSecureValue("value2")
 		mockStorage.On("Decrypt", mock.Anything, xkube.Namespace("default"), "secure-value-1").
 			Return(exposedSecureValue1, nil)
 		mockStorage.On("Decrypt", mock.Anything, xkube.Namespace("default"), "secure-value-2").
@@ -70,11 +69,11 @@ func TestDecryptService(t *testing.T) {
 
 		mockErr := errors.New("mock error")
 		mockStorage := &MockDecryptStorage{}
-		exposedSecureValue := common.NewSecretValue("value")
+		exposedSecureValue := secretv0alpha1.NewExposedSecureValue("value")
 		mockStorage.On("Decrypt", mock.Anything, xkube.Namespace("default"), "secure-value-1").
 			Return(exposedSecureValue, nil)
 		mockStorage.On("Decrypt", mock.Anything, xkube.Namespace("default"), "secure-value-2").
-			Return(common.RawSecureValue(""), mockErr)
+			Return(secretv0alpha1.ExposedSecureValue(""), mockErr)
 
 		decryptedValuesResp := map[string]service.DecryptResult{
 			"secure-value-1": service.NewDecryptResultValue(&exposedSecureValue),
@@ -96,7 +95,7 @@ type MockDecryptStorage struct {
 	mock.Mock
 }
 
-func (m *MockDecryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (common.RawSecureValue, error) {
+func (m *MockDecryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv0alpha1.ExposedSecureValue, error) {
 	args := m.Called(ctx, namespace, name)
-	return args.Get(0).(common.RawSecureValue), args.Error(1)
+	return args.Get(0).(secretv0alpha1.ExposedSecureValue), args.Error(1)
 }

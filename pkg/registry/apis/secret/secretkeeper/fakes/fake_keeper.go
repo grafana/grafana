@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
@@ -37,7 +36,7 @@ func (s *FakeKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig,
 	return contracts.ExternalID(uid), nil
 }
 
-func (s *FakeKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) (common.RawSecureValue, error) {
+func (s *FakeKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) (secretv0alpha1.ExposedSecureValue, error) {
 	ns, ok := s.values[namespace]
 	if !ok {
 		return "", ErrSecretNotFound
@@ -47,7 +46,7 @@ func (s *FakeKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig
 		return "", ErrSecretNotFound
 	}
 
-	return common.NewSecretValue(exposedVal), nil
+	return secretv0alpha1.NewExposedSecureValue(exposedVal), nil
 }
 
 func (s *FakeKeeper) Delete(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace string, externalID contracts.ExternalID) error {

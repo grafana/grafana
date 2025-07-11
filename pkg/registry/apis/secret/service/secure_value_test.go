@@ -3,12 +3,11 @@ package service_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCrud(t *testing.T) {
@@ -24,7 +23,7 @@ func TestCrud(t *testing.T) {
 		// Create the same secure value twice
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
-		input.Spec.Value = common.NewSecretValue("v2")
+		input.Spec.Value = v0alpha1.NewExposedSecureValue("v2")
 
 		sv2, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(input))
 		require.NoError(t, err)
