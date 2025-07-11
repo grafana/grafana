@@ -88,6 +88,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   pill: css({
     display: 'inline-block',
     padding: theme.spacing(0.25, 0.75),
+    marginInlineEnd: theme.spacing(0.5),
+    marginBlock: theme.spacing(0.5),
     borderRadius: theme.shape.radius.default,
     fontSize: theme.typography.bodySmall.fontSize,
     lineHeight: theme.typography.bodySmall.lineHeight,
