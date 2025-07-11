@@ -123,7 +123,6 @@ const pluginsCache: Map<string, unknown> = new Map();
 
 const getPluginFromCache = <P extends PanelPlugin | GenericDataSourcePlugin | AppPlugin>(id: string): P | undefined => {
   const cached = pluginsCache.get(id);
-  // TODO: investigate if we can get this from the SystemJS registry instead?
   if (cached) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     return cached as P;
@@ -141,6 +140,12 @@ const importPlugin = <M extends PluginMeta, P extends GrafanaPlugin<M>>(
     return getPromiseFromCache(meta);
   }
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const cached = pluginsCache.get(meta.id) as P;
+  if (cached) {
+    return Promise.resolve(cached);
+  }
+
   const args = preImportStrategy(meta);
   const module = importPluginModule(args);
   const plugin = postImportStrategy(meta, module);
@@ -153,5 +158,5 @@ export const pluginImporter: PluginImporter = {
   importPanel: (meta: PanelPluginMeta) => importPlugin(meta, panelPluginPostImport),
   importDataSource: (meta: DataSourcePluginMeta) => importPlugin(meta, datasourcePluginPostImport),
   importApp: (meta: AppPluginMeta) => importPlugin(meta, appPluginPostImport),
-  getPanelPlugin: (id: string) => getPluginFromCache<PanelPlugin>(id),
+  getPanelPlugin: (id: string) => getPluginFromCache<PanelPlugin>(id), // we need this sync because how the panel plugins are loaded in PanelRenderer
 };
