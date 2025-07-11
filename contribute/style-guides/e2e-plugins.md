@@ -6,9 +6,9 @@ When end-to-end testing Grafana plugins, a best practice is to use the [`@grafan
 
 ## Add end-to-end tests for a core plugin
 
-You can add Playwright end-to-end tests for plugins to the [`e2e/plugin-e2e`](https://github.com/grafana/grafana/tree/main/e2e/plugin-e2e) directory.
+You can add Playwright end-to-end tests for plugins to the [`e2e-playwright/plugin-e2e`](https://github.com/grafana/grafana/tree/main/e2e-playwright/plugin-e2e) directory.
 
-1. Add a new directory that has the name as your plugin [`here`](https://github.com/grafana/grafana/tree/main/e2e/plugin-e2e). This is the directory where your plugin tests will be kept.
+1. Add a new directory that has the name as your plugin [`here`](https://github.com/grafana/grafana/tree/main/e2e-playwright/plugin-e2e). This is the directory where your plugin tests will be kept.
 
 1. Playwright uses [projects](https://playwright.dev/docs/test-projects) to logically group tests together. All tests in a project share the same configuration.
    In the [Playwright config file](https://github.com/grafana/grafana/blob/main/playwright.config.ts), add a new project item. Make sure the `name` and the `testDir` subdirectory match the name of the directory that contains your plugin tests.

@@ -91,7 +91,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	hostSrc := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
 		Include: []string{
 			"./devenv",
-			"./e2e/test-plugins", // Directory is included so provisioning works, but they're not actually build
+			"./e2e-playwright/test-plugins", // Directory is included so provisioning works, but they're not actually build
 			"./scripts/grafana-server/custom.ini",
 			"./scripts/grafana-server/start-server",
 			"./scripts/grafana-server/kill-server",
