@@ -11,6 +11,9 @@ on:
   pull_request:
     branches:
       - 'main'
+    paths:
+      - 'packages/**'
+      - 'public/**'
   workflow_dispatch:
 
 env:
@@ -35,8 +38,8 @@ jobs:
       - name: Check for plugin extension changes
         id: check-changes
         run: |
-          # Get the diff between base and head
-          git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} > changed_files.txt
+          # Get the diff between base and head, only for packages/ and public/ directories
+          git diff --name-only ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- packages/ public/ > changed_files.txt
           
           # Check if any files contain the plugin extension keywords
           plugin_extension_changes=false
@@ -47,8 +50,8 @@ jobs:
           # Check each changed file for the keywords and collect them
           changed_files_with_keywords=""
           while IFS= read -r file; do
-            # Validate file path to prevent traversal attacks
-            if [[ "$file" =~ ^[a-zA-Z0-9._/-]+$ ]] && [[ -f "$file" ]]; then
+            # Only process files in packages/ or public/ directories
+            if [[ "$file" =~ ^(packages/|public/) ]] && [[ "$file" =~ ^[a-zA-Z0-9._/-]+$ ]] && [[ -f "$file" ]]; then
               for keyword in $keywords; do
                 if git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- "$file" | grep -q -F "$keyword"; then
                   echo "Found $keyword in $file"
@@ -85,7 +88,7 @@ jobs:
             echo "" >> extension_changes_summary.md
             
             while IFS= read -r file; do
-              if [[ -f "$file" ]]; then
+              if [[ "$file" =~ ^(packages/|public/) ]] && [[ -f "$file" ]]; then
                 for keyword in $keywords; do
                   if git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }} -- "$file" | grep -q "$keyword"; then
                     echo "- **$keyword** in \`$file\`" >> extension_changes_summary.md
