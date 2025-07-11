@@ -336,7 +336,7 @@ func (b *APIBuilder) validateNamespace(r *http.Request) bool {
 
 	evalCtxNamespace := b.namespaceFromEvalCtx(body)
 	// "default" namespace case can only occur in on-prem grafana
-	if (namespace == "default" && len(evalCtxNamespace) == 0) || (evalCtxNamespace == namespace) {
+	if (namespace == "default" && evalCtxNamespace == "") || (evalCtxNamespace == namespace) {
 		return true
 	}
 
