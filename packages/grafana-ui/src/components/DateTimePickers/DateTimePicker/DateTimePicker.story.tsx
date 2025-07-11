@@ -15,7 +15,7 @@ const minimumDate = new Date();
 minimumDate.setDate(minimumDate.getDate() - 7);
 
 const meta: Meta<typeof DateTimePicker> = {
-  title: 'Pickers and Editors/TimePickers/DateTimePicker',
+  title: 'Date time pickers/DateTimePicker',
   component: DateTimePicker,
   argTypes: {
     date: {
