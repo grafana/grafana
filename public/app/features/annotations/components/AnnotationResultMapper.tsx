@@ -13,7 +13,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { Select, Tooltip, Icon } from '@grafana/ui';
 
-import { annotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
+import { getAnnotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';
 
 // const valueOptions: Array<SelectableValue<AnnotationEventFieldSource>> = [
@@ -204,7 +204,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
           </tr>
         </thead>
         <tbody>
-          {annotationEventNames.map((row) => {
+          {getAnnotationEventNames().map((row) => {
             return this.renderRow(row, mappings[row.key] || {}, first);
           })}
         </tbody>
