@@ -48,11 +48,9 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
     wont_fix_resolution = "Test Won't Fix Resolution"
     reopen_duration     = "1m"
     dedup_key_field     = "10000"
-    fields = {
-      test-field = "test-value"
-    }
-    user     = "user"
-    password = "password"
+    fields              = "{\"test-field\":\"test-value\"}"
+    user                = "user"
+    password            = "password"
   }
 
   kafka {
