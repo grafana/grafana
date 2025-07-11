@@ -127,6 +127,10 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		err := rsp.Into(settings)
 		require.NoError(t, err)
 		require.Len(t, settings.Items, len(inputFiles))
+		require.ElementsMatch(t, []provisioning.RepositoryType{
+			provisioning.LocalRepositoryType,
+			provisioning.GitHubRepositoryType,
+		}, settings.AvailableRepositoryTypes)
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
