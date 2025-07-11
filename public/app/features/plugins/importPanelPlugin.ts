@@ -60,7 +60,7 @@ export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
 
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
   if (config.featureToggles.newPluginLoading) {
-    return pluginImporter.importPanelPlugin(meta);
+    return pluginImporter.importPanel(meta);
   }
 
   throwIfAngular(meta);

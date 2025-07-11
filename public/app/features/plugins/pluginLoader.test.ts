@@ -9,9 +9,9 @@ jest.mock('app/core/core', () => {
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
 
 // Loaded after the `unmock` above
-import { addedComponentsRegistry, addedLinksRegistry, exposedComponentsRegistry } from '../extensions/registry/setup';
-import { SystemJS } from '../loader/systemjs';
-import { importAppPlugin } from '../pluginLoader';
+import { addedComponentsRegistry, addedLinksRegistry, exposedComponentsRegistry } from './extensions/registry/setup';
+import { SystemJS } from './loader/systemjs';
+import { importAppPlugin } from './pluginLoader';
 
 jest.mock('../extensions/registry/setup');
 

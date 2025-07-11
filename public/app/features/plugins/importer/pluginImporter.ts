@@ -150,8 +150,8 @@ const importPlugin = <M extends PluginMeta, P extends GrafanaPlugin<M>>(
 };
 
 export const pluginImporter: PluginImporter = {
-  importPanelPlugin: (meta: PanelPluginMeta) => importPlugin(meta, panelPluginPostImport),
-  importDatasourcePlugin: (meta: DataSourcePluginMeta) => importPlugin(meta, datasourcePluginPostImport),
-  importAppPlugin: (meta: AppPluginMeta) => importPlugin(meta, appPluginPostImport),
+  importPanel: (meta: PanelPluginMeta) => importPlugin(meta, panelPluginPostImport),
+  importDataSource: (meta: DataSourcePluginMeta) => importPlugin(meta, datasourcePluginPostImport),
+  importApp: (meta: AppPluginMeta) => importPlugin(meta, appPluginPostImport),
   getPanelPlugin: (id: string) => getPluginFromCache<PanelPlugin>(id),
 };

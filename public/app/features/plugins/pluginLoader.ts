@@ -76,7 +76,7 @@ systemJSPrototype.onload = decorateSystemJsOnload;
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
   if (config.featureToggles.newPluginLoading) {
-    return pluginImporter.importDatasourcePlugin(meta);
+    return pluginImporter.importDataSource(meta);
   }
 
   throwIfAngular(meta);
@@ -115,7 +115,7 @@ const importPromises: Record<string, Promise<AppPlugin>> = {};
 
 export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   if (config.featureToggles.newPluginLoading) {
-    return pluginImporter.importAppPlugin(meta);
+    return pluginImporter.importApp(meta);
   }
 
   const pluginId = meta.id;

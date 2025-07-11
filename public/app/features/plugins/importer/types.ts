@@ -16,19 +16,19 @@ export interface PluginImporter {
    * @param meta - The plugin meta
    * @returns a Promise<PanelPlugin>
    */
-  importPanelPlugin: (meta: PanelPluginMeta) => Promise<PanelPlugin>;
+  importPanel: (meta: PanelPluginMeta) => Promise<PanelPlugin>;
   /**
    * Imports a datasource plugin from module.js
    * @param meta - The plugin meta
    * @returns a Promise<GenericDataSourcePlugin>
    */
-  importDatasourcePlugin: (meta: DataSourcePluginMeta) => Promise<GenericDataSourcePlugin>;
+  importDataSource: (meta: DataSourcePluginMeta) => Promise<GenericDataSourcePlugin>;
   /**
    * Imports an app plugin from module.js
    * @param meta - The plugin meta
    * @returns a Promise<AppPlugin>
    */
-  importAppPlugin: (meta: AppPluginMeta) => Promise<AppPlugin>;
+  importApp: (meta: AppPluginMeta) => Promise<AppPlugin>;
   /**
    * Retrieves a panel plugin from the cache, if it doesn't exist in the cache it returns undefined
    * @param id - The plugin id
