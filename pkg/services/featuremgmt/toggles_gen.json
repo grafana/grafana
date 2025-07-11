@@ -74,17 +74,16 @@
     {
       "metadata": {
         "name": "alertingAIAnalyzeCentralStateHistory",
-        "resourceVersion": "1752154754368",
+        "resourceVersion": "1752215431801",
         "creationTimestamp": "2025-07-07T14:40:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-07-10 13:39:14.368826 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-07-11 06:30:31.801024 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable AI-analyze central state history.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -93,17 +92,16 @@
     {
       "metadata": {
         "name": "alertingAIGenAlertRules",
-        "resourceVersion": "1752154754368",
+        "resourceVersion": "1752215431801",
         "creationTimestamp": "2025-07-07T14:40:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-07-10 13:39:14.368826 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-07-11 06:30:31.801024 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable AI-generated alert rules.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -112,17 +110,16 @@
     {
       "metadata": {
         "name": "alertingAIGenTemplates",
-        "resourceVersion": "1752154754368",
+        "resourceVersion": "1752215431801",
         "creationTimestamp": "2025-07-07T14:40:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-07-10 13:39:14.368826 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-07-11 06:30:31.801024 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable AI-generated alerting templates.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
@@ -131,17 +128,16 @@
     {
       "metadata": {
         "name": "alertingAIImproveAlertRules",
-        "resourceVersion": "1752154754368",
+        "resourceVersion": "1752215431801",
         "creationTimestamp": "2025-07-07T14:40:14Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-07-10 13:39:14.368826 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-07-11 06:30:31.801024 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable AI-improve alert rules labels and annotations.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
-        "frontend": true,
         "hideFromAdminPage": true,
         "hideFromDocs": true,
         "expression": "false"
