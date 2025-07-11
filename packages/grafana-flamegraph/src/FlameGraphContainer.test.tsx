@@ -19,9 +19,13 @@ jest.mock('react-use', () => ({
 
 describe('FlameGraphContainer', () => {
   // Needed for AutoSizer to work in test
-  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { value: 500 });
-  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { value: 500 });
-  Object.defineProperty(HTMLElement.prototype, 'clientWidth', { value: 500 });
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: jest.fn(() => ({
+      width: 500,
+      height: 500,
+      left: 0,
+    })),
+  });
 
   const FlameGraphContainerWithProps = () => {
     const flameGraphData = createDataFrame(data);
