@@ -32,6 +32,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       height: '60px',
       position: 'absolute',
       width: '100%',
+      imageRendering: 'crisp-edges',
     }),
   };
 });
