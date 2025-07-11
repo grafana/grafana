@@ -51,7 +51,7 @@
     "@types/react-dom": "18.3.5",
     "@types/semver": "7.7.0",
     "@types/uuid": "10.0.0",
-    "glob": "11.0.1",
+    "glob": "11.0.3",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
     "typescript": "5.8.3",
