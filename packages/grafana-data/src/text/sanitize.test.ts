@@ -78,6 +78,27 @@ describe('validatePath', () => {
       expect(() => validatePath('/api/%/admin')).toThrow(PathValidationError);
       expect(() => validatePath('/api/%2/admin')).toThrow(PathValidationError);
     });
+
+    it('should block paths with tab characters', () => {
+      expect(() => validatePath('/api/\tadmin')).toThrow(PathValidationError);
+      expect(() => validatePath('/api/users\t/123')).toThrow(PathValidationError);
+    });
+
+    it('should block paths with newline characters', () => {
+      expect(() => validatePath('/api/\nadmin')).toThrow(PathValidationError);
+      expect(() => validatePath('/api/users\n/123')).toThrow(PathValidationError);
+    });
+
+    it('should block paths with carriage return characters', () => {
+      expect(() => validatePath('/api/\radmin')).toThrow(PathValidationError);
+      expect(() => validatePath('/api/users\r/123')).toThrow(PathValidationError);
+    });
+
+    it('should block URL encoded tab and newline characters', () => {
+      expect(() => validatePath('/api/%09admin')).toThrow(PathValidationError); // tab
+      expect(() => validatePath('/api/%0Aadmin')).toThrow(PathValidationError); // newline
+      expect(() => validatePath('/api/%0Dadmin')).toThrow(PathValidationError); // carriage return
+    });
   });
 
   describe('safe paths', () => {
