@@ -35,7 +35,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.ManagerStats":              schema_pkg_apis_provisioning_v0alpha1_ManagerStats(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.MigrateJobOptions":         schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.PullRequestJobOptions":     schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefItem":               	   schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefItem":                   schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RefList":                   schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":                schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
 		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryList":            schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
