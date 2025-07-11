@@ -43,7 +43,7 @@ module.exports = [
       'data/',
       'deployment_tools_config.json',
       'devenv',
-      'e2e/test-plugins',
+      'e2e-playwright/test-plugins',
       'e2e/tmp',
       'packages/grafana-ui/src/components/Icon/iconBundle.ts',
       'pkg',

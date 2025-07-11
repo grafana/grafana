@@ -22,7 +22,7 @@ func GrafanaService(ctx context.Context, d *dagger.Client, opts GrafanaServiceOp
 		WithExec([]string{"mkdir", "-p", "/src/grafana"}).
 		WithExec([]string{"tar", "--strip-components=1", "-xzf", "/src/grafana.tar.gz", "-C", "/src/grafana"}).
 		WithDirectory("/src/grafana/devenv", opts.HostSrc.Directory("./devenv")).
-		WithDirectory("/src/grafana/e2e/test-plugins", opts.HostSrc.Directory("./e2e/test-plugins")).
+		WithDirectory("/src/grafana/e2e-playwright/test-plugins", opts.HostSrc.Directory("./e2e-playwright/test-plugins")).
 		WithDirectory("/src/grafana/scripts", opts.HostSrc.Directory("./scripts")).
 		WithWorkdir("/src/grafana").
 		WithEnvVariable("GF_APP_MODE", "development").
