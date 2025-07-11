@@ -1,13 +1,18 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, classicColors, colorManipulator, Field, getColorByStringHash } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  classicColors,
+  colorManipulator,
+  Field,
+  getColorByStringHash,
+  FALLBACK_COLOR,
+} from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { TableCellRendererProps } from '../types';
-
-const DEFAULT_PILL_BG_COLOR = '#FF780A';
 
 interface Pill {
   value: string;
@@ -16,9 +21,9 @@ interface Pill {
   color: string;
 }
 
-function createPills(pillValues: string[], field: Field): Pill[] {
+function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): Pill[] {
   return pillValues.map((pill, index) => {
-    const bgColor = getPillColor(pill, field);
+    const bgColor = getPillColor(pill, field, theme);
     const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
     return {
       value: pill,
@@ -31,11 +36,12 @@ function createPills(pillValues: string[], field: Field): Pill[] {
 
 export function PillCell({ value, field }: TableCellRendererProps) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(String(value));
-    return createPills(pillValues, field);
-  }, [value, field]);
+    return createPills(pillValues, field, theme);
+  }, [value, field, theme]);
 
   return pills.map((pill) => (
     <span
@@ -44,6 +50,7 @@ export function PillCell({ value, field }: TableCellRendererProps) {
       style={{
         backgroundColor: pill.bgColor,
         color: pill.color,
+        border: pill.bgColor === TRANSPARENT ? `1px solid ${pill.color}` : undefined,
       }}
     >
       {pill.value}
@@ -52,6 +59,7 @@ export function PillCell({ value, field }: TableCellRendererProps) {
 }
 
 const SPLIT_RE = /\s*,\s*/;
+const TRANSPARENT = 'rgba(0,0,0,0)';
 
 export function inferPills(value: string): string[] {
   if (value === '') {
@@ -69,15 +77,15 @@ export function inferPills(value: string): string[] {
   return value.trim().split(SPLIT_RE);
 }
 
-function getPillColor(value: string, field: Field): string {
+function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string {
   const cfg = field.config;
 
   if (cfg.mappings?.length ?? 0 > 0) {
-    return field.display!(value).color ?? DEFAULT_PILL_BG_COLOR;
+    return field.display!(value).color ?? FALLBACK_COLOR;
   }
 
   if (cfg.color?.mode === FieldColorModeId.Fixed) {
-    return cfg.color?.fixedColor ?? DEFAULT_PILL_BG_COLOR;
+    return theme.visualization.getColorByName(cfg.color?.fixedColor ?? FALLBACK_COLOR);
   }
 
   // TODO: instead of classicColors we need to pull colors from theme, same way as FieldColorModeId.PaletteClassicByName (see fieldColor.ts)
