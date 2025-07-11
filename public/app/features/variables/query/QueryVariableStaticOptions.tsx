@@ -75,7 +75,7 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
           <VariableSelectField
             name="Static options sort"
             description={t(
-              'variables.query-variable-sort-select.description-values-variable',
+              'variables.query-variable-static-options-sort-select.description-values-variable',
               'How to sort static options with query results'
             )}
             value={value}
