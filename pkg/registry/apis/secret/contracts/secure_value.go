@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -30,9 +30,9 @@ type ReadOpts struct {
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
 type SecureValueMetadataStorage interface {
-	Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error)
-	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv0alpha1.SecureValue, error)
-	List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error)
+	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1beta1.SecureValue, error)
+	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.SecureValue, error)
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error

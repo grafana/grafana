@@ -718,7 +718,7 @@ github.com/grafana/grafana/apps/dashboard v0.0.0-20250616145019-8d27f12428cb/go.
 github.com/grafana/grafana/apps/investigation v0.0.0-20250121113133-e747350fee2d/go.mod h1:HQprw3MmiYj5OUV9CZnkwA1FKDZBmYACuAB3oDvUOmI=
 github.com/grafana/grafana/apps/playlist v0.0.0-20250121113133-e747350fee2d/go.mod h1:DjJe5osrW/BKrzN9hAAOSElNWutj1bcriExa7iDP7kA=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20250121113133-e747350fee2d/go.mod h1:1sq0guad+G4SUTlBgx7SXfhnzy7D86K/LcVOtiQCiMA=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250710134100-1f3dc0533caf/go.mod h1:eAlOam2uWhrsEZlOoAr7XZ9hbBP7SyYGYn31/aQAPs8=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250711114246-c9b2126c4ad5/go.mod h1:eAlOam2uWhrsEZlOoAr7XZ9hbBP7SyYGYn31/aQAPs8=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250121113133-e747350fee2d/go.mod h1:tfLnBpPYgwrBMRz4EXqPCZJyCjEG4Ev37FSlXnocJ2c=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250121113133-e747350fee2d/go.mod h1:CXpwZ3Mkw6xVlGKc0SqUxqXCP3Uv182q6qAQnLaLxRg=
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250514132646-acbc7b54ed9e/go.mod h1:xrKQcxQxz+IUF90ybtfENFeEXtlj9nAsX/3Fw0KEIeQ=
@@ -1424,7 +1424,6 @@ k8s.io/gengo/v2 v2.0.0-20250207200755-1244d31929d7 h1:2OX19X59HxDprNCVrWi6jb7LW1
 k8s.io/gengo/v2 v2.0.0-20250207200755-1244d31929d7/go.mod h1:EJykeLsmFC60UQbYJezXkEsG2FLrt0GPNkU5iK5GWxU=
 k8s.io/klog v1.0.0 h1:Pt+yjF5aB1xDSVbau4VsWe+dQNzA0qv1LlXdC2dF6Q8=
 k8s.io/klog v1.0.0/go.mod h1:4Bi6QPql/J/LkTDqv7R/cd3hPo4k2DG6Ptcz060Ez5I=
-k8s.io/kms v0.33.2/go.mod h1:C1I8mjFFBNzfUZXYt9FZVJ8MJl7ynFbGgZFbBzkBJ3E=
 lukechampine.com/uint128 v1.2.0 h1:mBi/5l91vocEN8otkC5bDLhi2KdCticRiwbdB0O+rjI=
 modernc.org/cc/v3 v3.36.3 h1:uISP3F66UlixxWEcKuIWERa4TwrZENHSL8tWxZz8bHg=
 modernc.org/ccgo/v3 v3.16.9 h1:AXquSwg7GuMk11pIdw7fmO1Y/ybgazVkMhsZWCV0mHM=

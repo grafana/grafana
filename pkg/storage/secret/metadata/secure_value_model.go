@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
@@ -45,7 +45,7 @@ func (*secureValueDB) TableName() string {
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).
-func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
+func (sv *secureValueDB) toKubernetes() (*secretv1beta1.SecureValue, error) {
 	annotations := make(map[string]string, 0)
 	if sv.Annotations != "" {
 		if err := json.Unmarshal([]byte(sv.Annotations), &annotations); err != nil {
@@ -68,12 +68,12 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 		}
 	}
 
-	resource := &secretv0alpha1.SecureValue{
-		Spec: secretv0alpha1.SecureValueSpec{
+	resource := &secretv1beta1.SecureValue{
+		Spec: secretv1beta1.SecureValueSpec{
 			Description: sv.Description,
 			Decrypters:  decrypters,
 		},
-		Status: secretv0alpha1.SecureValueStatus{
+		Status: secretv1beta1.SecureValueStatus{
 			ExternalID: sv.ExternalID,
 			Version:    sv.Version,
 		},
@@ -111,7 +111,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 }
 
 // toCreateRow maps a Kubernetes resource into a DB row for new resources being created/inserted.
-func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID string) (*secureValueDB, error) {
+func toCreateRow(sv *secretv1beta1.SecureValue, actorUID string) (*secureValueDB, error) {
 	row, err := toRow(sv, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert SecureValue to secureValueDB: %w", err)
@@ -129,7 +129,7 @@ func toCreateRow(sv *secretv0alpha1.SecureValue, actorUID string) (*secureValueD
 }
 
 // toRow maps a Kubernetes resource into a DB row.
-func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, error) {
+func toRow(sv *secretv1beta1.SecureValue, externalID string) (*secureValueDB, error) {
 	var annotations string
 	if len(sv.Annotations) > 0 {
 		cleanedAnnotations := xkube.CleanAnnotations(sv.Annotations)

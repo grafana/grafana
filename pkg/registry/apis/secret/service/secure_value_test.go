@@ -3,11 +3,12 @@ package service_test
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 )
 
 func TestCrud(t *testing.T) {
@@ -23,7 +24,7 @@ func TestCrud(t *testing.T) {
 		// Create the same secure value twice
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
-		input.Spec.Value = v0alpha1.NewExposedSecureValue("v2")
+		input.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("v2"))
 
 		sv2, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(input))
 		require.NoError(t, err)
@@ -55,6 +56,7 @@ func TestCrud(t *testing.T) {
 		// Update the secure value
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
+		input.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("v3"))
 		sv2, err := sut.UpdateSv(t.Context(), input)
 		require.NoError(t, err)
 
