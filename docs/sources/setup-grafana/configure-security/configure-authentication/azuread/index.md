@@ -395,7 +395,7 @@ auto_login = true
 ### Team Sync
 
 {{< admonition type="note" >}}
-Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
 With Team Sync you can map your Entra ID groups to teams in Grafana so that your users will automatically be added to
