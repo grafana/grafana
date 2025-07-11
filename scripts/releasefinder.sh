@@ -73,13 +73,13 @@ declare -a release_branches=()
 declare -a direct_tags=()
 declare -a included_tags=()
 
-# Use git branch --contains for much better performance
+# Use git branch --contains
 echo "Checking release branches..."
 for branch in $(git branch -r --contains "$COMMIT_HASH" 2>/dev/null | grep -E 'origin/release-[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sed 's/^\s*origin\///'); do
     release_branches+=("$branch")
 done
 
-# Use git tag --contains for much better performance
+# Use git tag --contains
 echo "Checking tags..."
 for tag in $(git tag --contains "$COMMIT_HASH" 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sort -V); do
     # If this is the first tag containing the commit, it's the initial release tag
