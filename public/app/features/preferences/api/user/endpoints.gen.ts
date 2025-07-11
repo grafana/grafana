@@ -44,10 +44,8 @@ export type PreferencesSpec = {
   homeDashboardUID?: string;
   /** Selected language (beta) */
   language?: string;
-  /** Selected locale (beta) */
-  locale?: string;
-  navbar?: PreferencesNavbarPreference;
-  queryHistory?: PreferencesQueryHistoryPreference;
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
   /** Selected locale (beta) */
   regionalFormat?: string;
   /** light, dark, empty is default */

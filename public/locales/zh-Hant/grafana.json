@@ -504,6 +504,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "編輯 YAML",
@@ -1499,15 +1502,12 @@
     "group-details": {
       "ds-features-error": "載入資料來源詳細資料時發生錯誤",
       "edit": "編輯",
-      "evaluations-to-fire": "待觸發的評估週期",
       "export": "匯出",
       "folder": "資料夾",
       "group-loading-error": "載入群組時發生錯誤",
       "interval": "間隔",
       "namespace": "命名空間",
-      "pending-period": "待處理期間",
-      "recording": "錄製",
-      "rule-name": "規則名稱"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "載入資料來源詳細資料時發生錯誤",
@@ -2228,6 +2228,9 @@
         "label-export-all": "匯出全部"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "由於以下原因，無法載入查詢編輯器：{{errorMessage}}"
     },
@@ -2637,6 +2640,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "找不到您想要的資料來源嗎？某些資料來源不支援警報。按一下該圖示了解更多資訊。"
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "新增 Alertmanager",
       "builtin-alertmanager": "內建的 Alertmanager",
@@ -2871,6 +2879,11 @@
     },
     "timestamp": {
       "time-ago": "（{{time}} 前）"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3519,11 +3532,11 @@
       "button-create": "建立",
       "button-creating": "正在建立…",
       "cancel": "取消",
-      "error-invalid-folder-name": "無效的資料夾名稱",
       "error-required": "資料夾名稱為必填",
       "folder-name-input-placeholder-enter-folder-name": "輸入資料夾名稱",
       "label-folder-name": "資料夾名稱",
       "text-pull-request-created": "已建立拉取請求，其中包含對此資料夾的變更：",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "已建立拉取請求",
       "title-this-repository-is-read-only": "此存放庫為唯讀"
     },
@@ -5635,6 +5648,20 @@
     "library-viz-panel-info": {
       "last-edited": "<person />在 {{timeAgo}}前",
       "usage-count_other": "用於 {{count}} 個儀表板"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "所選資料夾中已存在名稱相同的儀表板。仍要儲存此儀表板嗎？",
@@ -7963,6 +7990,9 @@
       "filter-popup-match-case": "區分大小寫",
       "inspect-drawer-title": "檢查值",
       "inspect-menu-label": "檢查值",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "沒有數值",
       "pagination-summary": "{{itemsRangeStart}} - 第 {{displayedEnd}} 列，共 {{numRows}} 列"
     },
@@ -8683,6 +8713,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8695,6 +8726,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8797,6 +8829,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9055,6 +9092,8 @@
     "resource-details": {
       "dismiss-button": "確定",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "儀表板已由 Grafana 在雲端執行個體中佈建和管理。我們建議您將來使用已設定的儀表板。若您仍然希望將儀表板複製至雲端執行個體，請變更儀表板 JSON 中的儀表板 ID，儲存新的快照並重新上傳。",
         "datasource-already-managed": "資料來源已由 Grafana 在雲端執行個體中佈建和管理。如果這是不同的資源，請設定另一個 UID 並再試一次。",
         "datasource-invalid-url": "有一個資料來源的網址無效。請提供有效的網址，然後再試一次。",
@@ -10281,10 +10320,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12473,6 +12510,7 @@
         "transform": "轉變"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "統計資料",
       "label-time-field": "時間欄位",

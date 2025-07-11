@@ -7,7 +7,8 @@ import { DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
-import { ExploreItemState, createAsyncThunk } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+import { createAsyncThunk } from 'app/types/store';
 
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 

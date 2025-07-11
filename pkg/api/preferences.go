@@ -74,7 +74,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
 	userID, err := identity.UserIdentifier(c.GetID())
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to update user preferences", err)
+		return response.Error(http.StatusUnauthorized, "Not a valid identity", err)
 	}
 
 	return prefapi.GetPreferencesFor(c.Req.Context(), hs.DashboardService, hs.preferenceService, hs.Features, c.GetOrgID(), userID, 0)

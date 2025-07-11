@@ -1,7 +1,6 @@
 import { isResourceList } from 'app/features/apiserver/guards';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-
-import { DashboardDataDTO } from '../../../types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { SearchHit } from './unified';
 import { resourceToSearchResult } from './utils';
