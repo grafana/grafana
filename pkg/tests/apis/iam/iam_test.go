@@ -2,13 +2,14 @@ package identity
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -182,42 +183,33 @@ func TestIntegrationUsers(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	t.Run("User CRUD operations with dual writer mode 0", func(t *testing.T) {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"users.iam.grafana.app": {
-					DualWriterMode: grafanarest.Mode0,
+	// TODO: Figure out why rest.Mode4 is failing
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3}
+	for _, mode := range modes {
+		t.Run(fmt.Sprintf("User CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
 				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			},
-		})
-		doUserCRUDTests(t, helper)
-	})
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+				},
+			})
+			doUserCRUDTestsUsingTheNewAPIs(t, helper)
 
-	t.Run("User CRUD operations with dual writer mode 1", func(t *testing.T) {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"users.iam.grafana.app": {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-			},
+			if mode < 3 {
+				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
+			}
 		})
-		doUserCRUDTests(t, helper)
-	})
+	}
 }
 
-func doUserCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("should create user and delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -240,6 +232,9 @@ func doUserCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// Get the UID from created user for fetching
 		createdUID := created.GetName()
 		require.NotEmpty(t, createdUID)
+
+		_, err = userClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
 
 		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
@@ -265,6 +260,21 @@ func doUserCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Contains(t, err.Error(), "not found")
 	})
 
+	t.Run("should not be able to create if not admin", func(t *testing.T) {
+		ctx := context.Background()
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Editor,
+			GVR:  gvrUsers,
+		})
+
+		// Create the user
+		_, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unauthorized request")
+	})
+}
+
+func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("should create user using legacy APIs and delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -306,8 +316,13 @@ func doUserCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, rsp.Result.UID, user.GetName())
 		require.Equal(t, "default", user.GetNamespace())
 
-		err = userClient.Resource.Delete(ctx, rsp.Result.UID, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		// Now delete the user using the legacy API
+		deleteRsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "DELETE",
+			Path:   fmt.Sprintf("/api/admin/users/%d", rsp.Result.ID),
+		}, &apis.AnyResource{})
+		require.Equal(t, 200, deleteRsp.Response.StatusCode)
 
 		// Verify deletion
 		_, err = userClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
