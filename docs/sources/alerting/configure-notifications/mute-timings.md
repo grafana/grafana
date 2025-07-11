@@ -40,7 +40,7 @@ refs:
 
 # Configure mute timings and active intervals
 
-Mute timing and active time intervals let you determine how your alert notifications are handled during designated periods of time. After you create a time interval, you can use use apply it as either a mute or active time interval for your notifications policies.
+Mute timing and active time intervals let you determine how your alert notifications are handled during designated periods of time. After you create a time interval, you can apply it as either a mute or active time interval for your notifications policies.
 
 A mute timing is a recurring interval that stops notifications for one or multiple notification policies during a specified period. It suppresses notifications but does not interrupt alert evaluation.
 
@@ -56,9 +56,9 @@ Mute timings and active time intervals are assigned to a [specific Alertmanager]
 
 [Mute and active timings](ref:shared-mute-timings) and [silences](ref:shared-silences) are distinct methods to suppress notifications. They do not prevent alert rules from being evaluated or stop alert instances from appearing in the user interface; they only prevent notifications from being created.
 
-The following table highlights the key differences between mute and active timings, and silences.
+The following table highlights the key differences between mute timings and silences.
 
-|            | Mute and active timing                                      | Silence                                                          |
+|            | Mute timing                                      | Silence                                                          |
 | ---------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
 | **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
 | **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
@@ -74,11 +74,11 @@ The following table highlights the key differences between mute and active timin
 1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute or active timing.
 1. Save your changes.
 
-## Add notification timing to a notification policy
+## Assign a time interval to a notification policy
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification policies** and make sure you are on the **Notification Policies** tab.
-1. Find the notification policy you would like to add the notification timing to and click **...** -> **Edit**.
+1. Find the notification policy you would like to add the time intervals to and click **...** -> **Edit**.
 1. From either the **Mute timings** or **Active timings** dropdowns, choose the notification timings you would like to add to the policy.
 1. Save your changes.
 
