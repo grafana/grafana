@@ -1,4 +1,4 @@
-package expr
+package mtdsclient
 
 import (
 	"context"
@@ -18,6 +18,7 @@ func (m *nullBuilder) BuildClient(pluginId string, uid string) (clientapi.QueryD
 	return nil, errors.New("mt ds client not available, please use single tenant plugin client")
 }
 
+// we use this noop for st flows
 func NewNullMTDatasourceClientBuilder() MTDatasourceClientBuilder {
 	return &nullBuilder{}
 }
@@ -41,12 +42,13 @@ func (b *MtDatasourceClientBuilderWithClientSupplier) BuildClient(pluginId strin
 	)
 }
 
+// TODO: I think we might be able to refactor this to just use the client supplier directly
 func NewMtDatasourceClientBuilderWithClientSupplier(
 	clientSupplier clientapi.DataSourceClientSupplier,
 	ctx context.Context,
 	headers map[string]string,
 	instanceConfig clientapi.InstanceConfigurationSettings,
-) *MtDatasourceClientBuilderWithClientSupplier {
+) MTDatasourceClientBuilder {
 	return &MtDatasourceClientBuilderWithClientSupplier{
 		clientSupplier: clientSupplier,
 		ctx:            ctx,

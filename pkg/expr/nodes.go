@@ -397,7 +397,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	resp := &backend.QueryDataResponse{}
 	mtDSClient, err := s.mtDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
 
-	if mtDSClient == nil { // use single tenant client
+	if err != nil { // use single tenant client
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
 		if err != nil {
 			return mathexp.Results{}, err

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
@@ -208,12 +209,20 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		}
 
 		headers := ExtractKnownHeaders(httpreq.Header)
+
 		instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
 		if err != nil {
 			b.log.Error("failed to get instance configuration settings", "err", err)
 			responder.Error(err)
 			return
 		}
+
+		mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
+			b.clientSupplier,
+			ctx,
+			headers,
+			instanceConfig,
+		)
 
 		exprService := expr.ProvideService(
 			&setting.Cfg{
@@ -227,15 +236,10 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			instanceConfig.FeatureToggles,
 			nil,
 			b.tracer,
-			expr.NewMtDatasourceClientBuilderWithClientSupplier(
-				b.clientSupplier,
-				ctx,
-				headers,
-				instanceConfig,
-			),
+			mtDsClientBuilder,
 		)
 
-		qdr, err := sse_query.QueryData(ctx, b.log, cache, exprService, mReq)
+		qdr, err := sse_query.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
 
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)

@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"golang.org/x/sync/errgroup"
 
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/mtdsclient"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -47,6 +50,7 @@ func ProvideService(
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
+	mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder,
 ) *ServiceImpl {
 	g := &ServiceImpl{
 		cfg:                        cfg,
@@ -57,6 +61,7 @@ func ProvideService(
 		pCtxProvider:               pCtxProvider,
 		log:                        log.New("query_data"),
 		concurrentQueryLimit:       cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
+		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -80,7 +85,8 @@ type ServiceImpl struct {
 	pCtxProvider               *plugincontext.Provider
 	log                        log.Logger
 	concurrentQueryLimit       int
-	mtDatasourceClientBuilder  *expr.mtDatasourceClientBuilder // TODO
+	mtDatasourceClientBuilder  mtdsclient.MTDatasourceClientBuilder
+	headers                    map[string]string
 }
 
 // Run ServiceImpl.
@@ -215,12 +221,14 @@ func Handle(ctx context.Context, log log.Logger, dscache datasources.CacheServic
 	return s.handleExpressions(ctx, nil, req)
 }
 
-func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder, headers map[string]string) (*backend.QueryDataResponse, error) {
 	s := &ServiceImpl{
 		log:                        log,
 		dataSourceCache:            dscache,
 		expressionService:          exprService,
 		dataSourceRequestValidator: validations.ProvideValidator(),
+		mtDatasourceClientBuilder:  mtDatasourceClientBuilder,
+		headers:                    headers,
 	}
 	return s.QueryData(ctx, nil, false, reqDTO)
 }
@@ -282,22 +290,39 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 			return nil, fmt.Errorf("all queries must have the same datasource - found %s and %s", ds.UID, pq.datasource.UID)
 		}
 	}
-	// TODO s.mtDatasourceClientBuilder
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
-	if err != nil {
-		return nil, err
-	}
+
 	req := &backend.QueryDataRequest{
-		PluginContext: pCtx,
-		Headers:       map[string]string{},
-		Queries:       []backend.DataQuery{},
+		Headers: s.headers,
+		Queries: []backend.DataQuery{},
 	}
 
 	for _, q := range queries {
 		req.Queries = append(req.Queries, q.query)
 	}
 
-	return s.pluginClient.QueryData(ctx, req)
+	mtDsClient, err := s.mtDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
+	if err != nil { // single tenant flow
+		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
+		if err != nil {
+			return nil, err
+		}
+		req.PluginContext = pCtx
+		return s.pluginClient.QueryData(ctx, req)
+
+	} else { // multi tenant flow
+		// transform request from backend.QueryDataRequest to k8s request
+		k8sReq := &data.QueryDataRequest{}
+		for _, q := range req.Queries {
+			var dataQuery data.DataQuery
+			err = json.Unmarshal(q.JSON, &dataQuery)
+			if err != nil {
+				return nil, err
+			}
+
+			k8sReq.Queries = append(k8sReq.Queries, dataQuery)
+		}
+		return mtDsClient.QueryData(ctx, *k8sReq)
+	}
 }
 
 func Parse(ctx context.Context, log log.Logger, dscache datasources.CacheService, reqDTO dtos.MetricRequest) (req *parsedRequest, hasExpression bool, err error) {
