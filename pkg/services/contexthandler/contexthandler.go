@@ -149,7 +149,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		}
 		evalCtx := openfeature.NewEvaluationContext(ns, map[string]interface{}{
 			"namespace": ns,
-			"stackId":   ns,
 		})
 		ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 
