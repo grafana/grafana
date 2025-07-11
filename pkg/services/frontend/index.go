@@ -58,11 +58,8 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProv
 		return nil, fmt.Errorf("missing index template")
 	}
 
-	logger := logging.DefaultLogger.With("logger", "index-provider")
-	logger.Info("NewIndexProvider!!!", "CSPEnabled", cfg.CSPEnabled)
-
 	return &IndexProvider{
-		log:   logger,
+		log:   logging.DefaultLogger.With("logger", "index-provider"),
 		index: t,
 		data: IndexViewData{
 			AppTitle:     "Grafana",

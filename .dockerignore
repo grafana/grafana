@@ -3,7 +3,6 @@
 .git
 .gitignore
 .vscode
-bin
 data*
 dist
 docker
@@ -12,6 +11,7 @@ docs
 dump.rdb
 node_modules
 public/build
+!public/build/assets-manifest.json
 public/app/plugins/*/*/dist
 **/node_modules
 /tmp

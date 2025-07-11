@@ -22,7 +22,7 @@ export const TestStuffPage = () => {
       <Text variant="h5">Application notifications (toasts) testing</Text>
       <Stack>
         <Button onClick={() => notifyApp.success('Success toast', 'some more text goes here')} variant="primary">
-          Success
+          Success!
         </Button>
         <Button
           onClick={() => notifyApp.warning('Warning toast', 'some more text goes here', 'bogus-trace-99999')}
