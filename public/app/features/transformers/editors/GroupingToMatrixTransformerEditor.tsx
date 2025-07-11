@@ -15,6 +15,8 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/groupingToMatrix.svg';
+import lightImage from '../images/light/groupingToMatrix.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({
@@ -160,4 +162,6 @@ export const getGroupingToMatrixTransformRegistryItem: () => TransformerRegistry
     ),
     categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
     help: getTransformationContent(DataTransformerID.groupingToMatrix).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   });

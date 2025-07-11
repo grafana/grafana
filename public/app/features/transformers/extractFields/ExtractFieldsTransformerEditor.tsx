@@ -14,6 +14,8 @@ import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, Com
 import { FieldNamePicker } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/extractFields.svg';
+import lightImage from '../images/light/extractFields.svg';
 
 import { JSONPathEditor } from './components/JSONPathEditor';
 import { extractFieldsTransformer } from './extractFields';
@@ -191,4 +193,6 @@ export const getExtractFieldsTransformRegistryItem: () => TransformerRegistryIte
   ),
   categories: new Set([TransformerCategory.Reformat]),
   help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
+  imageDark: darkImage,
+  imageLight: lightImage,
 });

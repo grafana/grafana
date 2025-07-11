@@ -11,8 +11,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Badge, Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
-import config from 'app/core/config';
+import { Badge, Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2, useTheme2 } from '@grafana/ui';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { getCategoriesLabels } from 'app/features/transformers/utils';
 
@@ -172,6 +171,7 @@ interface TransformationsGridProps {
 }
 
 function TransformationsGrid({ showIllustrations, transformations, onClick, data }: TransformationsGridProps) {
+  const theme = useTheme2();
   const styles = useStyles2(getTransformationGridStyles);
 
   return (
@@ -200,6 +200,8 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
           cardClasses = cx(styles.newCard, styles.cardDisabled);
         }
 
+        const imageUrl = theme.isDark ? transform.imageDark : transform.imageLight;
+
         return (
           <Card
             className={cardClasses}
@@ -226,7 +228,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick, data
               <span>{standardTransformersRegistry.getIfExists(transform.id)?.description}</span>
               {showIllustrations && (
                 <span>
-                  <img className={styles.image} src={getImagePath(transform.id, !isApplicable)} alt={transform.name} />
+                  <img className={styles.image} src={imageUrl} alt={transform.name} />
                 </span>
               )}
               {!isApplicable && applicabilityDescription !== null && (
@@ -308,8 +310,3 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
     }),
   };
 }
-
-const getImagePath = (id: string, disabled: boolean) => {
-  const folder = config.theme2.isDark ? 'dark' : 'light';
-  return `public/build/img/transformations/${folder}/${id}.svg`;
-};

@@ -13,6 +13,8 @@ import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill, Stack } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/labelsToFields.svg';
+import lightImage from '../images/light/labelsToFields.svg';
 
 export const LabelsAsFieldsTransformerEditor = ({
   input,
@@ -150,4 +152,6 @@ export const getLabelsToFieldsTransformerRegistryItem: () => TransformerRegistry
   ),
   categories: new Set([TransformerCategory.Reformat]),
   help: getTransformationContent(DataTransformerID.labelsToFields).helperDocs,
+  imageDark: darkImage,
+  imageLight: lightImage,
 });
