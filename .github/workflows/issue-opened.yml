@@ -119,7 +119,7 @@ jobs:
           SLACK_WEBHOOK_URL:  ${{ env.AUTOTRIAGER_SLACK_WEBHOOK_URL }}
   auto-label-internal-issues:
     needs: [main]
-    runs-on: ubuntu-lates
+    runs-on: ubuntu-latest
     permissions:
       issues: write
     steps:
