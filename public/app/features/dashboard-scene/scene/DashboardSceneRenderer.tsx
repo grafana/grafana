@@ -79,6 +79,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
+  const isViewing = window.parent.location.pathname.split('/').pop() === 'view';
+
+  console.log({ isViewing });
+
+  console.log({ isEditing });
+
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
