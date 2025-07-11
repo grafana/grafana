@@ -3532,11 +3532,11 @@
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
-      "error-invalid-folder-name": "Nama folder tidak valid",
       "error-required": "Nama folder wajib diisi",
       "folder-name-input-placeholder-enter-folder-name": "Masukkan nama folder",
       "label-folder-name": "Nama folder",
       "text-pull-request-created": "Permintaan pull telah dibuat dengan perubahan pada folder ini:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Permintaan pull dibuat",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
@@ -12510,6 +12510,7 @@
         "transform": "Ubah"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Bidang waktu",

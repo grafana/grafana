@@ -3532,11 +3532,11 @@
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
-      "error-invalid-folder-name": "文件夹名称无效",
       "error-required": "文件夹名称为必填项",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
       "label-folder-name": "文件夹名称",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "拉取请求已创建",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
@@ -12510,6 +12510,7 @@
         "transform": "转换"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "统计",
       "label-time-field": "时间字段",

@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func TestExposedSecureValue(t *testing.T) {
+func TestSecureValues(t *testing.T) {
 	expected := "[REDACTED]"
 
 	rawValue := "a-password"

@@ -3550,11 +3550,11 @@
       "button-create": "Aanmaken",
       "button-creating": "Aanmaken...",
       "cancel": "Annuleren",
-      "error-invalid-folder-name": "Ongeldige mapnaam",
       "error-required": "Mapnaam is vereist",
       "folder-name-input-placeholder-enter-folder-name": "Mapnaam invoeren",
       "label-folder-name": "Mapnaam",
       "text-pull-request-created": "Er is een pull request gemaakt met wijzigingen in deze map:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Pull request is aangemaakt",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
     },
@@ -12549,6 +12549,7 @@
         "transform": "Transformeren"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Tijdveld",

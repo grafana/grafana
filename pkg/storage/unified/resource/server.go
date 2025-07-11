@@ -449,6 +449,18 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 	if len(secure) > 0 {
+		// Make sure the secure values are safe to save (just in case)
+		for _, v := range secure {
+			if !v.Create.IsZero() {
+				return nil, NewBadRequestError("unable to create values in unified storage")
+			}
+			if v.Remove {
+				return nil, NewBadRequestError("unable to save remove command")
+			}
+			if v.Name == "" {
+				return nil, NewBadRequestError("secure value requires name")
+			}
+		}
 		if s.secure == nil {
 			return nil, AsErrorResult(fmt.Errorf("secure value store not configured"))
 		}

@@ -149,10 +149,11 @@ type GrafanaMetaAccessor interface {
 	// SetSourceProperties sets the source properties of the resource.
 	SetSourceProperties(SourceProperties)
 
-	// SetSourceProperties sets the source properties of the resource.
+	// GetSecureValues reads the "secure" property on a resource
 	GetSecureValues() (common.InlineSecureValues, error)
 
 	// SetSourceProperties sets the source properties of the resource.
+	// For write commands, this may include inline secrets; read will only have references
 	SetSecureValues(common.InlineSecureValues) error
 }
 
