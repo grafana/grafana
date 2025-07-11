@@ -874,7 +874,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
     },
     authPrompt: {
-      label: t('auth-config.fields.auth-prompt-label', 'Auth prompt'),
+      label: t('auth-config.fields.auth-prompt-label', 'Login prompt'),
       type: 'select',
       description: t(
         'auth-config.fields.auth-prompt-description',
@@ -884,7 +884,6 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       options: [
         { value: '', label: '' },
         { value: 'login', label: t('auth-config.fields.auth-prompt-login', 'Login') },
-        { value: 'none', label: t('auth-config.fields.auth-prompt-none', 'None') },
         { value: 'consent', label: t('auth-config.fields.auth-prompt-consent', 'Consent') },
         { value: 'select_account', label: t('auth-config.fields.auth-prompt-select-account', 'Select account') },
       ],

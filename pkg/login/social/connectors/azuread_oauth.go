@@ -302,6 +302,7 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 		validateClientAuthentication,
 		validateFederatedCredentialAudience,
 		validateAllowedGroups,
+		validateAuthPrompt,
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
@@ -313,6 +314,15 @@ func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester)
 		if err != nil {
 			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
 		}
+	}
+	return nil
+}
+
+func validateAuthPrompt(info *social.OAuthInfo, requester identity.Requester) error {
+	authPrompt := info.Extra[authPromptKey]
+
+	if authPrompt != "" && authPrompt != "login" && authPrompt != "consent" && authPrompt != "select_account" {
+		return ssosettings.ErrInvalidOAuthConfig("Invalid value for Auth prompt. Valid values are: login, consent, select_account.")
 	}
 	return nil
 }

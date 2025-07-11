@@ -1290,6 +1290,22 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if auth prompt is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_authentication":      "client_secret_post",
+					"client_id":                  "client-id",
+					"client_secret":              "client_secret",
+					"allowed_groups":             "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
+					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+					"auth_prompt":                "invalid",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
 	}
 
 	for _, tc := range testCases {
