@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-backend-dev-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-backend-api
+  labels:
+    app: grafana-backend-api
+spec:
+  selector:
+    matchLabels:
+      app: grafana-backend-api
+  template:
+    metadata:
+      labels:
+        app: grafana-backend-api
+    spec:
+      containers:
+        - name: grafana-backend-api
+          image: grafana-backend-api
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: grafana-data
+              mountPath: /grafana/data
+      volumes:
+        - name: grafana-data
+          persistentVolumeClaim:
+            claimName: grafana-backend-dev-data

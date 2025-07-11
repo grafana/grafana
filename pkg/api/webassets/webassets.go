@@ -51,21 +51,25 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	entryPointAssetsCacheMu.Lock()
 	defer entryPointAssetsCacheMu.Unlock()
 
-	cdn, _ := cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
-
-	var assetManifest *dtos.EntryPointAssets
 	var err error
+	var result *dtos.EntryPointAssets
 
+	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
 	if cdn != "" {
-		assetManifest, err = readWebAssetsFromCDN(ctx, cdn)
-		if err != nil {
-			assetManifest.SetContentDeliveryURL(cdn)
-		}
-	} else {
-		assetManifest, err = readWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
+		result, err = readWebAssetsFromCDN(ctx, cdn)
 	}
 
-	entryPointAssetsCache = assetManifest
+	if result == nil {
+		result, err = readWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
+		if err == nil {
+			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
+			if cdn != "" {
+				result.SetContentDeliveryURL(cdn)
+			}
+		}
+	}
+
+	entryPointAssetsCache = result
 	return entryPointAssetsCache, err
 }
 

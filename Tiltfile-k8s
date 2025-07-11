@@ -1,0 +1,40 @@
+load('ext://restart_process', 'docker_build_with_restart')
+
+local_resource(
+  'grafana-backend-compile',
+  'make GO_BUILD_DEV=1 build-backend',
+  deps=[
+    './pkg',
+    './apps',
+    './kinds',
+    './kindsv2',
+    './local',
+    './scripts',
+    './conf',
+    './go.sum',
+    './go.mod',
+  ],
+)
+
+docker_build_with_restart(
+  'grafana-backend-api',
+  '.',
+  dockerfile='tilt-backend-base.dockerfile',
+  entrypoint=['bin/grafana', 'server'],
+  only=[
+    './bin',
+    './conf',
+    './public/emails',
+    './public/views',
+    './public/dashboards',
+    './public/app/plugins',
+    './fake-assets-manifest.json'
+  ],
+  live_update=[
+    sync('./bin', '/grafana/bin'),
+  ],
+)
+
+k8s_yaml('kubernetes.yaml')
+k8s_resource('grafana-backend-api', port_forwards=3000,
+             resource_deps=['grafana-backend-compile'])
