@@ -234,9 +234,11 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			mtDsClientBuilder,
 		)
 
+		// todo this will have nothing to do with sse anymore move it somewhere more logical
 		qdr, err := sse_query.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
 
-		// TODO fix this
+		// TODO fix this-- this breaks sql expressions somehow :( we only need this to determine if it's not an expression... maybe these are things that can be (or are already) passed to query data
+		// and we move this single alert query logic there
 		parsedReqAgain, parsingErr := b.parser.parseRequest(ctx, raw)
 		if parsingErr != nil {
 			var refError ErrorWithRefID
