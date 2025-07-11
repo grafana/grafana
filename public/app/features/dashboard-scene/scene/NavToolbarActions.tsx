@@ -79,7 +79,9 @@ export function ToolbarActions({ dashboard }: Props) {
     return null;
   }
 
-  if (!isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable) {
+  const isViewing = window.parent.location.pathname.split('/').pop() === 'view';
+
+  if (!isViewing && !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable) {
     dashboard.onEnterEditMode();
   }
 
