@@ -180,12 +180,15 @@ export const extractFieldsTransformerEditor = ({
   );
 };
 
-export const extractFieldsTransformRegistryItem: TransformerRegistryItem<ExtractFieldsOptions> = {
+export const getExtractFieldsTransformRegistryItem: () => TransformerRegistryItem<ExtractFieldsOptions> = () => ({
   id: DataTransformerID.extractFields,
   editor: extractFieldsTransformerEditor,
   transformation: extractFieldsTransformer,
-  name: extractFieldsTransformer.name,
-  description: `Parse fields from content (JSON, labels, etc).`,
+  name: t('transformers.extract-fields-transformer-editor.name.extract-fields', 'Extract fields'),
+  description: t(
+    'transformers.extract-fields-transformer-editor.description.parse-fields-from-content',
+    'Parse fields from content (JSON, labels, etc).'
+  ),
   categories: new Set([TransformerCategory.Reformat]),
   help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
-};
+});

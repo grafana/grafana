@@ -253,12 +253,16 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<FilterFieldsByNameTransformerOptions> = {
-  id: DataTransformerID.filterFieldsByName,
-  editor: FilterByNameTransformerEditor,
-  transformation: standardTransformers.filterFieldsByNameTransformer,
-  name: standardTransformers.filterFieldsByNameTransformer.name,
-  description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
-  categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
-};
+export const getFilterFieldsByNameTransformRegistryItem: () => TransformerRegistryItem<FilterFieldsByNameTransformerOptions> =
+  () => ({
+    id: DataTransformerID.filterFieldsByName,
+    editor: FilterByNameTransformerEditor,
+    transformation: standardTransformers.filterFieldsByNameTransformer,
+    name: t('transformers.filter-by-name-transformer-editor.name.filter-fields-by-name', 'Filter fields by name'),
+    description: t(
+      'transformers.filter-by-name-transformer-editor.description.remove-part-query-results-regex-pattern',
+      'Remove parts of the query results using a regex pattern.'
+    ),
+    categories: new Set([TransformerCategory.Filter]),
+    help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
+  });

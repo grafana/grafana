@@ -1,12 +1,14 @@
 import { toDataFrame, FieldType } from '@grafana/data';
 
-import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
+import { getPartitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
 const ctx = {
   interpolate: (v: string) => v,
 };
 
 describe('Partition by values transformer', () => {
+  const partitionByValuesTransformer = getPartitionByValuesTransformer();
+
   it('should partition by one field', () => {
     const source = [
       toDataFrame({

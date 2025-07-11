@@ -123,11 +123,6 @@ export const GroupToNestedTableTransformerEditor = ({
   );
 };
 
-const options = [
-  { label: 'Group by', value: GroupByOperationID.groupBy },
-  { label: 'Calculate', value: GroupByOperationID.aggregate },
-];
-
 export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -140,6 +135,17 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     },
     [config, onConfigChange]
   );
+
+  const options = [
+    {
+      label: t('transformers.group-by-field-configuration.options.label.group-by', 'Group by'),
+      value: GroupByOperationID.groupBy,
+    },
+    {
+      label: t('transformers.group-by-field-configuration.options.label.calculate', 'Calculate'),
+      value: GroupByOperationID.aggregate,
+    },
+  ];
 
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
@@ -187,16 +193,23 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const groupToNestedTableTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
-  id: DataTransformerID.groupToNestedTable,
-  editor: GroupToNestedTableTransformerEditor,
-  transformation: standardTransformers.groupToNestedTable,
-  name: standardTransformers.groupToNestedTable.name,
-  description: standardTransformers.groupToNestedTable.description,
-  categories: new Set([
-    TransformerCategory.Combine,
-    TransformerCategory.CalculateNewFields,
-    TransformerCategory.Reformat,
-  ]),
-  state: PluginState.beta,
-};
+export const getGroupToNestedTableTransformRegistryItem: () => TransformerRegistryItem<GroupByTransformerOptions> =
+  () => ({
+    id: DataTransformerID.groupToNestedTable,
+    editor: GroupToNestedTableTransformerEditor,
+    transformation: standardTransformers.groupToNestedTable,
+    name: t(
+      'transformers.group-to-nested-table-transformer-editor.name.group-to-nested-tables',
+      'Group to nested tables'
+    ),
+    description: t(
+      'transformers.group-to-nested-table-transformer-editor.description.group-by-field-value',
+      'Group data by a field value and create nested tables with the grouped data.'
+    ),
+    categories: new Set([
+      TransformerCategory.Combine,
+      TransformerCategory.CalculateNewFields,
+      TransformerCategory.Reformat,
+    ]),
+    state: PluginState.beta,
+  });

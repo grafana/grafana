@@ -17,7 +17,7 @@ import { InlineFieldRow, InlineField, StatsPicker, Select, InlineLabel } from '@
 import { getTransformationContent } from '../docs/getTransformationContent';
 
 import {
-  timeSeriesTableTransformer,
+  getTimeSeriesTableTransformer,
   TimeSeriesTableTransformerOptions,
   getRefData,
 } from './timeSeriesTableTransformer';
@@ -123,12 +123,16 @@ export function TimeSeriesTableTransformEditor({
   return <>{configRows}</>;
 }
 
-export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeSeriesTableTransformerOptions> = {
-  id: timeSeriesTableTransformer.id,
-  editor: TimeSeriesTableTransformEditor,
-  transformation: timeSeriesTableTransformer,
-  name: timeSeriesTableTransformer.name,
-  description: timeSeriesTableTransformer.description,
-  state: PluginState.beta,
-  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
-};
+export const getTimeSeriesTableTransformRegistryItem: () => TransformerRegistryItem<TimeSeriesTableTransformerOptions> =
+  () => {
+    const timeSeriesTableTransformer = getTimeSeriesTableTransformer();
+    return {
+      id: timeSeriesTableTransformer.id,
+      editor: TimeSeriesTableTransformEditor,
+      transformation: timeSeriesTableTransformer,
+      name: timeSeriesTableTransformer.name,
+      description: timeSeriesTableTransformer.description,
+      state: PluginState.beta,
+      help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
+    };
+  };

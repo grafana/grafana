@@ -19,7 +19,7 @@ import { MultiValueVariable, sceneGraph, SceneGridRow, VizPanel } from '@grafana
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
+import { getReduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
@@ -46,7 +46,7 @@ import {
   trimDashboardForSnapshot,
 } from './transformSceneToSaveModel';
 
-standardTransformersRegistry.setInit(() => [reduceTransformRegistryItem]);
+standardTransformersRegistry.setInit(() => [getReduceTransformRegistryItem()]);
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,

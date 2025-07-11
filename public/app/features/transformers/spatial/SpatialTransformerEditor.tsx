@@ -20,7 +20,7 @@ import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
-import { isLineBuilderOption, spatialTransformer } from './spatialTransformer';
+import { isLineBuilderOption, getSpatialTransformer } from './spatialTransformer';
 
 // Nothing defined in state
 const supplier = (
@@ -173,13 +173,16 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransformOptions> = {
-  id: DataTransformerID.spatial,
-  editor: SetGeometryTransformerEditor,
-  transformation: spatialTransformer,
-  name: spatialTransformer.name,
-  description: spatialTransformer.description,
-  state: PluginState.alpha,
-  categories: new Set([TransformerCategory.PerformSpatialOperations]),
-  help: getTransformationContent(DataTransformerID.spatial).helperDocs,
+export const getSpatialTransformRegistryItem: () => TransformerRegistryItem<SpatialTransformOptions> = () => {
+  const spatialTransformer = getSpatialTransformer();
+  return {
+    id: DataTransformerID.spatial,
+    editor: SetGeometryTransformerEditor,
+    transformation: spatialTransformer,
+    name: spatialTransformer.name,
+    description: spatialTransformer.description,
+    state: PluginState.alpha,
+    categories: new Set([TransformerCategory.PerformSpatialOperations]),
+    help: getTransformationContent(DataTransformerID.spatial).helperDocs,
+  };
 };

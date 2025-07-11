@@ -148,16 +148,19 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
   );
 };
 
-export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterByValueTransformerOptions> = {
-  id: DataTransformerID.filterByValue,
-  editor: FilterByValueTransformerEditor,
-  transformation: standardTransformers.filterByValueTransformer,
-  name: standardTransformers.filterByValueTransformer.name,
-  description:
-    'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
-  categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.filterByValue).helperDocs,
-};
+export const getFilterByValueTransformRegistryItem: () => TransformerRegistryItem<FilterByValueTransformerOptions> =
+  () => ({
+    id: DataTransformerID.filterByValue,
+    editor: FilterByValueTransformerEditor,
+    transformation: standardTransformers.filterByValueTransformer,
+    name: t('transformers.filter-by-value-transformer-editor.name.filter-data-by-values', 'Filter data by values'),
+    description: t(
+      'transformers.filter-by-value-transformer-editor.description.remove-rows-query-results-user-defined-filters',
+      'Remove rows from the query results using user-defined filters.'
+    ),
+    categories: new Set([TransformerCategory.Filter]),
+    help: getTransformationContent(DataTransformerID.filterByValue).helperDocs,
+  });
 
 const useFieldsInfo = (data: DataFrame[]): DataFrameFieldsInfo => {
   return useMemo(() => {

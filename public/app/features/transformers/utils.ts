@@ -62,15 +62,21 @@ export function getDistinctLabels(input: DataFrame[]): Set<string> {
   return distinct;
 }
 
-export const categoriesLabels: { [K in TransformerCategory]: string } = {
-  combine: 'Combine',
-  calculateNewFields: 'Calculate new fields',
-  createNewVisualization: 'Create new visualization',
-  filter: 'Filter',
-  performSpatialOperations: 'Perform spatial operations',
-  reformat: 'Reformat',
-  reorderAndRename: 'Reorder and rename',
-};
+export const getCategoriesLabels: () => { [K in TransformerCategory]: string } = () => ({
+  combine: t('transformers.utils.get-categories-labels.combine', 'Combine'),
+  calculateNewFields: t('transformers.utils.get-categories-labels.calculate-new-fields', 'Calculate new fields'),
+  createNewVisualization: t(
+    'transformers.utils.get-categories-labels.create-new-visualization',
+    'Create new visualization'
+  ),
+  filter: t('transformers.utils.get-categories-labels.filter', 'Filter'),
+  performSpatialOperations: t(
+    'transformers.utils.get-categories-labels.perform-spatial-operations',
+    'Perform spatial operations'
+  ),
+  reformat: t('transformers.utils.get-categories-labels.reformat', 'Reformat'),
+  reorderAndRename: t('transformers.utils.get-categories-labels.reorder-and-rename', 'Reorder and rename'),
+});
 
 export const numberOrVariableValidator = (value: string | number) => {
   if (typeof value === 'number') {
