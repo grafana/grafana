@@ -15,6 +15,8 @@ import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/joinByField.svg';
+import lightImage from '../images/light/joinByField.svg';
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
   const names = useFieldDisplayNames(input);
@@ -117,4 +119,6 @@ export const getJoinByFieldTransformerRegistryItem: () => TransformerRegistryIte
   ),
   categories: new Set([TransformerCategory.Combine]),
   help: getTransformationContent(DataTransformerID.joinByField).helperDocs,
+  imageDark: darkImage,
+  imageLight: lightImage,
 });
