@@ -131,7 +131,7 @@ func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string
 
 	v = &queryV0.DataSourceConnection{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              queryV0.DataSourceConnectionName(gv.Group, ds.Name),
+			Name:              queryV0.DataSourceConnectionName(gv.Group, ds.UID),
 			Namespace:         ns,
 			CreationTimestamp: metav1.NewTime(ds.Created),
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
