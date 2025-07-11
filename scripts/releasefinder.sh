@@ -46,8 +46,7 @@ fi
 echo "Fetching latest remote information..."
 git fetch --all --tags --prune 2>/dev/null
 
-echo "Finding release branches containing the commit..."
-echo "Finding tags associated with the commit..."
+echo "Finding release branches and tags containing the commit..."
 echo
 
 echo "Results for commit: $COMMIT_HASH"
@@ -74,29 +73,20 @@ declare -a release_branches=()
 declare -a direct_tags=()
 declare -a included_tags=()
 
-# First check all release branches (including security releases)
-for branch in $(git branch -r | grep -E 'origin/release-[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sed 's/origin\///'); do
-    # Check if the commit is in this branch's history
-    if git merge-base --is-ancestor "$COMMIT_HASH" "origin/$branch" 2>/dev/null; then
-        release_branches+=("$branch")
-    fi
+# Use git branch --contains for much better performance
+echo "Checking release branches..."
+for branch in $(git branch -r --contains "$COMMIT_HASH" 2>/dev/null | grep -E 'origin/release-[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sed 's/^\s*origin\///'); do
+    release_branches+=("$branch")
 done
 
-# Then check all version tags (including security releases)
-for tag in $(git tag | sort -V); do
-    # Skip non-version tags
-    if ! [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$ ]]; then
-        continue
-    fi
-    
-    # Check if the commit is in this tag
-    if git merge-base --is-ancestor "$COMMIT_HASH" "$tag" 2>/dev/null; then
-        # If this is the first tag containing the commit, it's the initial release tag
-        if [ ${#direct_tags[@]} -eq 0 ]; then
-            direct_tags+=("$tag")
-        else
-            included_tags+=("$tag")
-        fi
+# Use git tag --contains for much better performance
+echo "Checking tags..."
+for tag in $(git tag --contains "$COMMIT_HASH" 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sort -V); do
+    # If this is the first tag containing the commit, it's the initial release tag
+    if [ ${#direct_tags[@]} -eq 0 ]; then
+        direct_tags+=("$tag")
+    else
+        included_tags+=("$tag")
     fi
 done
 
