@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -140,6 +141,17 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		if h.cfg.IDResponseHeaderEnabled && reqContext.SignedInUser != nil {
 			reqContext.Resp.Before(h.addIDHeaderEndOfRequestFunc(reqContext.SignedInUser))
 		}
+
+		// Set open feature evaluation context with namespace
+		ns := "default"
+		if id != nil {
+			ns = id.Namespace
+		}
+		evalCtx := openfeature.NewEvaluationContext(ns, map[string]interface{}{
+			"namespace": ns,
+			"stackId":   ns,
+		})
+		ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
