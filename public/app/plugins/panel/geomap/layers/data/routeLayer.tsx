@@ -307,7 +307,30 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             style.dims = getStyleDimension(frame, style, theme);
           }
 
-          source.updateLineString(frame);
+          source.clear(true);
+          const info = getGeometryField(frame, location);
+          if (!info.field) {
+            source.changed();
+            break;
+          }
+          const coords: number[][] = [];
+          for (const v of info.field.values) {
+            if (v instanceof Point) {
+              coords.push(v.getCoordinates());
+            }
+          }
+          if (coords.length >= 2) {
+            const geometry = new LineString(coords);
+            source['addFeatureInternal'](
+              new Feature({
+                frame,
+                rowIndex: 0,
+                geometry,
+              })
+            );
+          }
+          source.changed();
+
           break; // Only the first frame for now!
         }
       },
