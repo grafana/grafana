@@ -128,14 +128,14 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 			return authorizer.DecisionAllow, "", nil
 		})
 
+	reg := client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService)
 	builder, err := NewQueryAPIBuilder(
 		features,
 		&CommonDataSourceClientSupplier{
 			Client: client.NewQueryClientForPluginClient(pluginClient, pCtxProvider, accessControl),
 		},
-		ar,
-		client.NewDataSourceRegistryFromStore(pluginStore, dataSourcesService),
-		&connectionsProvider{dsService: dataSourcesService}, legacy, registerer, tracer,
+		ar, reg,
+		&connectionsProvider{dsService: dataSourcesService, registry: reg}, legacy, registerer, tracer,
 	)
 	apiregistration.RegisterAPI(builder)
 	return builder, err

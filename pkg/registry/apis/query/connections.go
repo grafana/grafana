@@ -79,6 +79,7 @@ func (s *connectionAccess) List(ctx context.Context, options *internalversion.Li
 
 type connectionsProvider struct {
 	dsService datasources.DataSourceService
+	registry  queryV0.DataSourceApiServerRegistry
 }
 
 func (q *connectionsProvider) GetConnection(ctx context.Context, namespace string, name string) (*queryV0.DataSourceConnection, error) {
@@ -95,8 +96,7 @@ func (q *connectionsProvider) GetConnection(ctx context.Context, namespace strin
 	}
 
 	// TODO... access control?
-
-	return asConnection(ds, namespace)
+	return q.asConnection(ds, namespace)
 }
 
 func (q *connectionsProvider) ListConnections(ctx context.Context, namespace string) (*queryV0.DataSourceConnectionList, error) {
@@ -116,28 +116,41 @@ func (q *connectionsProvider) ListConnections(ctx context.Context, namespace str
 		Items: []queryV0.DataSourceConnection{},
 	}
 	for _, ds := range dss {
-		// TODO, access control!
-		v, _ := asConnection(ds, namespace)
+		// TODO, access control?!
+		v, _ := q.asConnection(ds, namespace)
 		result.Items = append(result.Items, *v)
 	}
 	return result, nil
 }
 
-func asConnection(ds *datasources.DataSource, ns string) (*queryV0.DataSourceConnection, error) {
-	v := &queryV0.DataSourceConnection{
+func (q *connectionsProvider) asConnection(ds *datasources.DataSource, ns string) (v *queryV0.DataSourceConnection, err error) {
+	gv, err := q.registry.GetDatasourceGroupVersion(ds.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	v = &queryV0.DataSourceConnection{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              ds.UID,
+			Name:              queryV0.DataSourceConnectionName(gv.Group, ds.Name),
 			Namespace:         ns,
 			CreationTimestamp: metav1.NewTime(ds.Created),
 			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
 			Generation:        int64(ds.Version),
 		},
 		Title: ds.Name,
+		Datasource: queryV0.DataSourceConnectionRef{
+			Group:    gv.Group,
+			Version:  gv.Version,
+			Name:     ds.UID,
+			PluginID: ds.Type,
+		},
 	}
 	v.UID = gapiutil.CalculateClusterWideUID(v) // indicates if the value changed on the server
-	meta, err := utils.MetaAccessor(v)
-	if err != nil {
-		meta.SetUpdatedTimestamp(&ds.Updated)
+	if !ds.Updated.IsZero() {
+		meta, err := utils.MetaAccessor(v)
+		if err != nil {
+			meta.SetUpdatedTimestamp(&ds.Updated)
+		}
 	}
 	return v, err
 }

@@ -18,6 +18,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":  schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnection":     schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionList": schema_pkg_apis_query_v0alpha1_DataSourceConnectionList(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef":  schema_pkg_apis_query_v0alpha1_DataSourceConnectionRef(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataRequest":         schema_pkg_apis_query_v0alpha1_QueryDataRequest(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":        schema_pkg_apis_query_v0alpha1_QueryDataResponse(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition":      schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref),
@@ -152,7 +153,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref common.ReferenceCal
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Connection to a datasource instance",
+				Description: "Connection to a datasource instance The connection name must be 'ds:{group}:{name}'",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -177,25 +178,25 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnection(ref common.ReferenceCal
 					},
 					"title": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The display name",
+							Description: "The configured display name",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"description": {
+					"datasource": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optional description for the data source (does not exist yet)",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "Reference to the kubernets datasource",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef"),
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"title", "datasource"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnectionRef", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -245,6 +246,48 @@ func schema_pkg_apis_query_v0alpha1_DataSourceConnectionList(ref common.Referenc
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceConnection", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_DataSourceConnectionRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"pluginId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The plugin ID -- NOTE, this has a 1:1 mapping with apiGroup and should likely be removed",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"group", "version", "name", "pluginId"},
+			},
+		},
 	}
 }
 
