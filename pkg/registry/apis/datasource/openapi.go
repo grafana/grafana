@@ -67,7 +67,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 	if custom.SecureValues != nil {
 		example := common.InlineSecureValues{}
-		ref := spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.secret.v0alpha1.InlineSecureValue")
+		ref := spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.InlineSecureValue")
 		secure := &spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Properties:           make(map[string]spec.Schema),
