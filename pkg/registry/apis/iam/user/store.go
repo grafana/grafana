@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -200,7 +199,7 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	}
 
 	createCmd := legacy.CreateUserCommand{
-		UID:           "", // Always generate a new UID, don't use metadata.name
+		UID:           userObj.Name,
 		Login:         userObj.Spec.Login,
 		Email:         userObj.Spec.Email,
 		Name:          userObj.Spec.Name,
@@ -209,9 +208,6 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		EmailVerified: userObj.Spec.EmailVerified,
 		IsProvisioned: userObj.Spec.Provisioned,
 	}
-
-	// Always generate a new UID instead of using metadata.name
-	createCmd.UID = util.GenerateShortUID()
 
 	result, err := s.store.CreateUser(ctx, ns, createCmd)
 	if err != nil {

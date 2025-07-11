@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"text/template"
 	"time"
 
@@ -357,12 +356,6 @@ type createUserQuery struct {
 }
 
 func (r createUserQuery) Validate() error {
-	if r.Command.Login == "" && r.Command.Email == "" {
-		return fmt.Errorf("user must have either login or email")
-	}
-	if r.Command.OrgID == 0 {
-		return fmt.Errorf("org ID is required")
-	}
 	return nil
 }
 
@@ -370,6 +363,10 @@ type createOrgUserQuery struct {
 	sqltemplate.SQLTemplate
 	OrgUserTable string
 	Command      *CreateOrgUserCommand
+}
+
+func (r createOrgUserQuery) Validate() error {
+	return nil
 }
 
 func newCreateOrgUser(sql *legacysql.LegacyDatabaseHelper, cmd *CreateOrgUserCommand) createOrgUserQuery {
@@ -380,40 +377,9 @@ func newCreateOrgUser(sql *legacysql.LegacyDatabaseHelper, cmd *CreateOrgUserCom
 	}
 }
 
-func (r createOrgUserQuery) Validate() error {
-	if r.Command.OrgID == 0 {
-		return fmt.Errorf("org ID is required")
-	}
-	if r.Command.UserID == 0 {
-		return fmt.Errorf("user ID is required")
-	}
-	if r.Command.Role == "" {
-		return fmt.Errorf("role is required")
-	}
-	return nil
-}
-
 // CreateUser implements LegacyIdentityStore.
 func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo, cmd CreateUserCommand) (*CreateUserResult, error) {
 	cmd.OrgID = ns.OrgID
-	if cmd.OrgID == 0 {
-		return nil, fmt.Errorf("expected non zero org id")
-	}
-
-	if cmd.UID == "" {
-		cmd.UID = util.GenerateShortUID()
-	}
-
-	// Normalize login and email
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
-
-	if cmd.Login == "" {
-		cmd.Login = cmd.Email
-	}
-	if cmd.Email == "" {
-		cmd.Email = cmd.Login
-	}
 
 	salt, err := util.GetRandomString(10)
 	if err != nil {
@@ -440,9 +406,6 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	}
 
 	req := newCreateUser(sql, &cmd)
-	if err := req.Validate(); err != nil {
-		return nil, err
-	}
 
 	var createdUser user.User
 	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
@@ -464,10 +427,6 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 			Updated: cmd.Updated,
 		}
 		orgUserReq := newCreateOrgUser(sql, orgUserCmd)
-
-		if err := orgUserReq.Validate(); err != nil {
-			return fmt.Errorf("invalid org user command: %w", err)
-		}
 
 		orgUserQuery, err := sqltemplate.Execute(sqlCreateOrgUserTemplate, orgUserReq)
 		if err != nil {
