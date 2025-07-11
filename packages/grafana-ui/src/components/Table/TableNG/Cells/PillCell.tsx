@@ -84,7 +84,7 @@ function getPillColor(value: string, field: Field): string {
   return getColorByStringHash(classicColors, value);
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   pill: css({
     display: 'inline-block',
     padding: theme.spacing(0.25, 0.75),
