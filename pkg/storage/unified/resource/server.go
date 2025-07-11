@@ -20,8 +20,8 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -205,6 +205,9 @@ type ResourceServerOptions struct {
 	// Link RBAC
 	AccessClient claims.AccessClient
 
+	// Manage secure values
+	SecureValues secrets.InlineSecureValueSupport
+
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
 
@@ -291,6 +294,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		blob:             blobstore,
 		diagnostics:      opts.Diagnostics,
 		access:           opts.AccessClient,
+		secure:           opts.SecureValues,
 		writeHooks:       opts.WriteHooks,
 		lifecycle:        opts.Lifecycle,
 		now:              opts.Now,
@@ -327,6 +331,7 @@ type server struct {
 	log            *slog.Logger
 	backend        StorageBackend
 	blob           BlobSupport
+	secure         secrets.InlineSecureValueSupport
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient
@@ -444,8 +449,25 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 		return nil, AsErrorResult(err)
 	}
 	if len(secure) > 0 {
-		// See: https://github.com/grafana/grafana/pull/107803
-		return nil, NewBadRequestError("Saving secure values is not yet supported")
+		// Make sure the secure values are safe to save (just in case)
+		for _, v := range secure {
+			if !v.Create.IsZero() {
+				return nil, NewBadRequestError("unable to create values in unified storage")
+			}
+			if v.Remove {
+				return nil, NewBadRequestError("unable to save remove command")
+			}
+			if v.Name == "" {
+				return nil, NewBadRequestError("secure value requires name")
+			}
+		}
+		if s.secure == nil {
+			return nil, AsErrorResult(fmt.Errorf("secure value store not configured"))
+		}
+		ok, err := s.secure.CanReference(ctx, utils.ToObjectReference(obj), secure)
+		if err != nil || !ok {
+			return nil, NewBadRequestError("not able to reference secure values")
+		}
 	}
 
 	event := &WriteEvent{
