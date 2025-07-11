@@ -19,8 +19,10 @@ func TestEncryptedValueQueries(t *testing.T) {
 					Data: &createEncryptedValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Row: &EncryptedValue{
+							UID:           "uid",
 							Namespace:     "ns",
-							UID:           "abc123",
+							Name:          "n1",
+							Version:       1,
 							EncryptedData: []byte("secret"),
 							Created:       1234,
 							Updated:       5678,
@@ -34,7 +36,8 @@ func TestEncryptedValueQueries(t *testing.T) {
 					Data: &readEncryptedValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "ns",
-						UID:         "abc123",
+						Name:        "n1",
+						Version:     1,
 					},
 				},
 			},
@@ -44,7 +47,8 @@ func TestEncryptedValueQueries(t *testing.T) {
 					Data: &updateEncryptedValue{
 						SQLTemplate:   mocks.NewTestingSQLTemplate(),
 						Namespace:     "ns",
-						UID:           "abc123",
+						Name:          "n1",
+						Version:       1,
 						EncryptedData: []byte("secret"),
 						Updated:       5679,
 					},
@@ -56,7 +60,8 @@ func TestEncryptedValueQueries(t *testing.T) {
 					Data: &deleteEncryptedValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "ns",
-						UID:         "abc123",
+						Name:        "n1",
+						Version:     1,
 					},
 				},
 			},

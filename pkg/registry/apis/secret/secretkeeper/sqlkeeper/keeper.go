@@ -57,7 +57,9 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv0alpha1.KeeperConfig, 
 
 	s.metrics.StoreDuration.WithLabelValues(string(cfg.Type())).Observe(time.Since(start).Seconds())
 
-	return contracts.ExternalID(0), nil
+	// An external id is not required to interact with the sql keeper.
+	// An empty string is returned just to comply with the Keeper interface.
+	return contracts.ExternalID(""), nil
 }
 
 func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv0alpha1.KeeperConfig, namespace, name string, version int64) (secretv0alpha1.ExposedSecureValue, error) {

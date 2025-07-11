@@ -100,10 +100,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	// Initialize encrypted value storage with a fake db
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
+	encryptedValueStorage, err := encryptionstorage.ProvideEncryptedValueStorage(database, tracer, features)
 	require.NoError(t, err)
 
-	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encValueStore, nil)
+	sqlKeeper := sqlkeeper.NewSQLKeeper(tracer, encryptionManager, encryptedValueStorage, nil)
 
 	var keeperService contracts.KeeperService = newKeeperServiceWrapper(sqlKeeper)
 
@@ -123,9 +123,11 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	return Sut{
 		SecureValueService:         secureValueService,
 		SecureValueMetadataStorage: secureValueMetadataStorage,
-		Database:                   database,
 		DecryptStorage:             decryptStorage,
 		DecryptService:             decryptService,
+		EncryptedValueStorage:      encryptedValueStorage,
+		SQLKeeper:                  sqlKeeper,
+		Database:                   database,
 	}
 }
 
@@ -134,6 +136,8 @@ type Sut struct {
 	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
 	DecryptStorage             contracts.DecryptStorage
 	DecryptService             service.DecryptService
+	EncryptedValueStorage      contracts.EncryptedValueStorage
+	SQLKeeper                  *sqlkeeper.SQLKeeper
 	Database                   *database.Database
 }
 
