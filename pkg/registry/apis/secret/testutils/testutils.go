@@ -4,10 +4,14 @@ import (
 	"context"
 	"testing"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -70,7 +74,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	// Initialize access client + access control
 	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
-	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+	accessClient := accesscontrol.NewLegacyAccessClient(accessControl, accesscontrol.ResourceAuthorizerOptions{
+		Resource: "securevalues",
+		Attr:     "uid",
+	})
 
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
@@ -112,57 +119,67 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptStorage, err := metadata.ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
-	return Sut{SecureValueService: secureValueService, SecureValueMetadataStorage: secureValueMetadataStorage, Database: database, DecryptStorage: decryptStorage}
+	decryptService := decrypt.ProvideDecryptService(decryptStorage)
+
+	return Sut{
+		SecureValueService:         secureValueService,
+		SecureValueMetadataStorage: secureValueMetadataStorage,
+		Database:                   database,
+		DecryptStorage:             decryptStorage,
+		DecryptService:             decryptService,
+	}
 }
 
 type Sut struct {
 	SecureValueService         *service.SecureValueService
 	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
 	DecryptStorage             contracts.DecryptStorage
+	DecryptService             service.DecryptService
 	Database                   *database.Database
 }
 
 type CreateSvConfig struct {
-	Sv *secretv0alpha1.SecureValue
+	Sv *secretv1beta1.SecureValue
 }
 
-func CreateSvWithSv(sv *secretv0alpha1.SecureValue) func(*CreateSvConfig) {
+func CreateSvWithSv(sv *secretv1beta1.SecureValue) func(*CreateSvConfig) {
 	return func(cfg *CreateSvConfig) {
 		cfg.Sv = sv
 	}
 }
 
-func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*secretv0alpha1.SecureValue, error) {
+func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*secretv1beta1.SecureValue, error) {
 	cfg := CreateSvConfig{
-		Sv: &secretv0alpha1.SecureValue{
+		Sv: &secretv1beta1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sv1",
 				Namespace: "ns1",
 			},
-			Spec: secretv0alpha1.SecureValueSpec{
+			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
-				Value:       secretv0alpha1.NewExposedSecureValue("v1"),
+				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("v1")),
+				Decrypters:  []string{"decrypter1"},
 			},
-			Status: secretv0alpha1.SecureValueStatus{},
+			Status: secretv1beta1.SecureValueStatus{},
 		},
 	}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
 
-	createdSv, err := s.SecureValueService.Create(ctx, cfg.Sv, "actor")
+	createdSv, err := s.SecureValueService.Create(ctx, cfg.Sv, "actor-uid")
 	if err != nil {
 		return nil, err
 	}
 	return createdSv, nil
 }
 
-func (s *Sut) UpdateSv(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor")
+func (s *Sut) UpdateSv(ctx context.Context, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
+	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor-uid")
 	return newSv, err
 }
 
-func (s *Sut) DeleteSv(ctx context.Context, namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (s *Sut) DeleteSv(ctx context.Context, namespace, name string) (*secretv1beta1.SecureValue, error) {
 	sv, err := s.SecureValueService.Delete(ctx, xkube.Namespace(namespace), name)
 	return sv, err
 }
@@ -175,6 +192,34 @@ func newKeeperServiceWrapper(keeper contracts.Keeper) *keeperServiceWrapper {
 	return &keeperServiceWrapper{keeper: keeper}
 }
 
-func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
 	return wrapper.keeper, nil
+}
+
+func CreateUserAuthContext(ctx context.Context, namespace string, permissions map[string][]string) context.Context {
+	orgID := int64(1)
+	requester := &identity.StaticRequester{
+		Namespace: namespace,
+		Type:      types.TypeUser,
+		UserID:    1,
+		OrgID:     orgID,
+		Permissions: map[int64]map[string][]string{
+			orgID: permissions,
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
+}
+
+func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, permissions []string) context.Context {
+	requester := &identity.StaticRequester{
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				Permissions:     permissions,
+				ServiceIdentity: serviceIdentity,
+			},
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
 }

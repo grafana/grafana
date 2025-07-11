@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Editar YAML",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Erro ao carregar detalhes da fonte de dados",
       "edit": "Editar",
-      "evaluations-to-fire": "Ciclos de avaliação para acionar",
       "export": "Exportar",
       "folder": "Pasta",
       "group-loading-error": "Erro ao carregar o grupo",
       "interval": "Intervalo",
       "namespace": "Nomenclatura",
-      "pending-period": "Período pendente",
-      "recording": "Registrando",
-      "rule-name": "Nome da regra"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Erro ao carregar detalhes da fonte de dados",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Exportar tudo"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Não foi possível carregar o editor de consultas devido a: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Não está encontrando a fonte de dados que você procura? Algumas fontes de dados não são compatíveis com alertas. Clique no ícone para mais informações."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Adicionar novo Alertmanager",
       "builtin-alertmanager": "Alertmanager integrado",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "(há {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3537,11 +3550,11 @@
       "button-create": "Criar",
       "button-creating": "Criando…",
       "cancel": "Cancelar",
-      "error-invalid-folder-name": "Nome da pasta inválido",
       "error-required": "O nome da pasta é obrigatório",
       "folder-name-input-placeholder-enter-folder-name": "Digitar o nome da pasta",
       "label-folder-name": "Nome da pasta",
       "text-pull-request-created": "Uma solicitação de extração foi criada com alterações nesta pasta:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Solicitação de extração criada",
       "title-this-repository-is-read-only": "Este repositório é somente leitura"
     },
@@ -5655,6 +5668,20 @@
       "last-edited": "{{timeAgo}} por<person />",
       "usage-count_one": "Usado em {{count}} painéis",
       "usage-count_other": "Usado em {{count}} painéis"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Já existe um painel com o mesmo nome na pasta selecionada. Deseja salvar este painel mesmo assim?",
@@ -7984,6 +8011,9 @@
       "filter-popup-match-case": "Diferenciar maiúsculas/minúsculas",
       "inspect-drawer-title": "Inspecionar valor",
       "inspect-menu-label": "Inspecionar valor",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Sem valores",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas"
     },
@@ -8712,6 +8742,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8724,6 +8755,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8826,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9084,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "O painel de controle já está provisionado e é gerenciado pela Grafana na instância na nuvem. Recomendamos que você passe a usar o painel de controle provisionado. Se você ainda quiser copiar o painel de controle para a instância na nuvem, altere o ID do painel de controle no JSON do painel de controle, salve uma nova captura e envie novamente.",
         "datasource-already-managed": "A fonte de dados já está provisionada e é gerenciada pela Grafana na instância na nuvem. Caso se trate de outro recurso, defina outro UID e tente novamente.",
         "datasource-invalid-url": "Há uma fonte de dados com uma URL inválida. Forneça uma URL válida e tente novamente.",
@@ -10313,10 +10352,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12512,6 +12549,7 @@
         "transform": "Transformar"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Estatística",
       "label-time-field": "Campo de hora",

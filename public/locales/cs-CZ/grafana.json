@@ -516,6 +516,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Upravit YAML",
@@ -1517,15 +1520,12 @@
     "group-details": {
       "ds-features-error": "Chyba při načítání podrobností o zdroji dat",
       "edit": "Upravit",
-      "evaluations-to-fire": "Cykly hodnocení ke spuštění",
       "export": "Exportovat",
       "folder": "Složka",
       "group-loading-error": "Chyba při načítání skupiny",
       "interval": "Interval",
       "namespace": "Jmenný prostor",
-      "pending-period": "Období čekání",
-      "recording": "Probíhá záznam",
-      "rule-name": "Jméno pravidla"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Chyba při načítání podrobností o zdroji dat",
@@ -2255,6 +2255,9 @@
         "label-export-all": "Exportovat vše"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Nelze načíst editor dotazů, důvod: {{errorMessage}}"
     },
@@ -2676,6 +2679,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Nenašli jste požadovaný zdroj dat? Některé zdroje dat nepodporují upozorňování. Další informace zobrazíte kliknutím na ikonu."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Přidat nového správce výstrah",
       "builtin-alertmanager": "Vestavěný správce výstrah",
@@ -2910,6 +2918,11 @@
     },
     "timestamp": {
       "time-ago": "(před {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3573,11 +3586,11 @@
       "button-create": "Vytvořit",
       "button-creating": "Vytváření…",
       "cancel": "Zrušit",
-      "error-invalid-folder-name": "Neplatný název složky",
       "error-required": "Název složky je povinný",
       "folder-name-input-placeholder-enter-folder-name": "Zadejte název složky",
       "label-folder-name": "Název složky",
       "text-pull-request-created": "Byl vytvořen pull request se změnami v této složce:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Pull request byl vytvořen",
       "title-this-repository-is-read-only": "Toto úložiště je jen pro čtení"
     },
@@ -5695,6 +5708,20 @@
       "usage-count_few": "Použito na {{count}} nástěnkách",
       "usage-count_many": "Použito na {{count}} nástěnkách",
       "usage-count_other": "Použito na {{count}} nástěnkách"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Ve vybrané složce už existuje nástěnka se stejným názvem. Chcete přesto tuto nástěnku uložit?",
@@ -8026,6 +8053,9 @@
       "filter-popup-match-case": "Rozlišovat malá a velká písmena",
       "inspect-drawer-title": "Zkontrolovat hodnotu",
       "inspect-menu-label": "Zkontrolovat hodnotu",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Žádné hodnoty",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků"
     },
@@ -8770,6 +8800,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8782,6 +8813,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8884,6 +8916,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9142,6 +9179,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Nástěnku už zajišťuje a spravuje Grafana v cloudové instanci. Doporučujeme používat zajištěnou nástěnku. Pokud si přesto přejete zkopírovat nástěnku do cloudové instance, změňte ID nástěnky v JSON nástěnky, uložte nový snímek a nahrajte ji znovu.",
         "datasource-already-managed": "Zdroj dat už zajišťuje a spravuje Grafana v cloudové instanci. Pokud se jedná o jiný zdroj, nastavte jiné UID a zkuste to znovu.",
         "datasource-invalid-url": "Existuje zdroj dat s neplatnou adresou URL. Zadejte platnou adresu URL a zkuste to znovu.",
@@ -10377,10 +10416,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12590,6 +12627,7 @@
         "transform": "Transformovat"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Statistika",
       "label-time-field": "Pole času",

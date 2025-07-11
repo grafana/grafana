@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Modifier le fichier YAML",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Erreur lors du chargement des détails de la source de données",
       "edit": "Modifier",
-      "evaluations-to-fire": "Cycles d’évaluation à déclencher",
       "export": "Exporter",
       "folder": "Dossier",
       "group-loading-error": "Erreur lors du chargement du groupe",
       "interval": "Intervalle",
       "namespace": "Namespace",
-      "pending-period": "Période en attente",
-      "recording": "Enregistrement",
-      "rule-name": "Nom de la règle"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Erreur lors du chargement des détails de la source de données",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Tout exporter"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Impossible de charger l’éditeur de requête en raison de : {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Vous ne trouvez pas la source de données que vous voulez ? Certaines sources de données ne sont pas prises en charge pour les alertes. Cliquez sur l’icône pour en savoir plus."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Ajouter un nouvel Alertmanager",
       "builtin-alertmanager": "Alertmanager intégré",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "(il y a {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3537,11 +3550,11 @@
       "button-create": "Créer",
       "button-creating": "Création...",
       "cancel": "Annuler",
-      "error-invalid-folder-name": "Nom de dossier non valide",
       "error-required": "Un nom de dossier est obligatoire",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
       "label-folder-name": "Nom du dossier",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Demande de fusion créée",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
     },
@@ -5655,6 +5668,20 @@
       "last-edited": "{{timeAgo}} par <person />",
       "usage-count_one": "Utilisé sur {{count}} tableaux de bord",
       "usage-count_other": "Utilisé sur {{count}} tableaux de bord"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Un tableau de bord du même nom existe déjà dans le dossier sélectionné. Voulez-vous toujours enregistrer ce tableau de bord ?",
@@ -7984,6 +8011,9 @@
       "filter-popup-match-case": "Respecter la casse",
       "inspect-drawer-title": "Inspecter la valeur",
       "inspect-menu-label": "Inspecter la valeur",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Aucune valeur",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes"
     },
@@ -8712,6 +8742,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8724,6 +8755,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8826,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9084,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Le tableau de bord est déjà mis en service et géré par Grafana dans l'instance cloud. Nous vous recommandons d'utiliser le tableau de bord mis en service à l'avenir. Si vous souhaitez toujours copier le tableau de bord dans l'instance cloud, modifiez l'ID du tableau de bord dans le JSON du tableau de bord, puis enregistrez un nouvel instantané et téléchargez à nouveau.",
         "datasource-already-managed": "La source de données est déjà mise en service et gérée par Grafana dans l'instance cloud. S'il s'agit d'une ressource différente, définissez un autre UID et réessayez.",
         "datasource-invalid-url": "Il y a une source de données dont l'URL n'est pas valide. Fournissez une URL valide et réessayez.",
@@ -10313,10 +10352,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12512,6 +12549,7 @@
         "transform": "Transformer"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Champ horaire",

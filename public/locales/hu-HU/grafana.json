@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "YAML szerkesztése",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Hiba történt az adatforrás adatainak betöltésekor",
       "edit": "Szerkesztés",
-      "evaluations-to-fire": "Aktiválandó értékelési ciklusok",
       "export": "Exportálás",
       "folder": "Mappa",
       "group-loading-error": "Hiba a csoport betöltésekor",
       "interval": "Intervallum",
       "namespace": "Névtér",
-      "pending-period": "Függőben lévő időszak",
-      "recording": "Felvételkészítés",
-      "rule-name": "Szabálynév"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Hiba történt az adatforrás adatainak betöltésekor",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Összes exportálása"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Nem sikerült betölteni a lekérdezésszerkesztőt a következők miatt: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Nem találja a kívánt adatforrást? Egyes adatforrások nem támogatottak a riasztáshoz. További információért kattintson az ikonra."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Új riasztáskezelő hozzáadása",
       "builtin-alertmanager": "Beépített riasztáskezelő",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "(ennyi ideje: {{time}})"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3537,11 +3550,11 @@
       "button-create": "Létrehozás",
       "button-creating": "Létrehozás…",
       "cancel": "Mégse",
-      "error-invalid-folder-name": "Érvénytelen mappanév",
       "error-required": "A mappa nevének megadása kötelező",
       "folder-name-input-placeholder-enter-folder-name": "Mappanév megadása",
       "label-folder-name": "Mappa neve",
       "text-pull-request-created": "A lekérési kérelem ennek a mappának a módosításával lett létrehozva:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Lekérési kérelem létrehozva",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
     },
@@ -5655,6 +5668,20 @@
       "last-edited": "{{timeAgo}}, <person />",
       "usage-count_one": "{{count}} irányítópulton használatos",
       "usage-count_other": "{{count}} irányítópulton használatos"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Egy irányítópult már létezik ugyanazzal a névvel a kijelölt mappában. Biztosan menti ezt az irányítópultot?",
@@ -7984,6 +8011,9 @@
       "filter-popup-match-case": "Nagybetűérzékeny",
       "inspect-drawer-title": "Érték ellenőrzése",
       "inspect-menu-label": "Érték ellenőrzése",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor"
     },
@@ -8712,6 +8742,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8724,6 +8755,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8826,6 +8858,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9084,6 +9121,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Az irányítópultot a Grafana már kiépítette és felügyeli a felhőpéldányban. Javasoljuk, hogy a továbbiakban használja a kiépített irányítópultot. Ha továbbra is át szeretné másolni az irányítópultot a felhőpéldányba, akkor módosítsa az irányítópult azonosítóját az irányítópult JSON-fájljában, mentse az új pillanatképet, és töltse fel újra.",
         "datasource-already-managed": "Az adatforrást a Grafana már kiépítette és felügyeli a felhőpéldányban. Ha ez egy másik erőforrás, állítson be egy másik UID-t, és próbálkozzon újra.",
         "datasource-invalid-url": "Egy adatforrás érvénytelen URL-címmel rendelkezik. Adjon meg egy érvényes URL-címet, és próbálkozzon újra.",
@@ -10313,10 +10352,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12512,6 +12549,7 @@
         "transform": "Átalakítás"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Statisztika",
       "label-time-field": "Időmező",

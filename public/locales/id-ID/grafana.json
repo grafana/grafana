@@ -504,6 +504,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edit YAML",
@@ -1499,15 +1502,12 @@
     "group-details": {
       "ds-features-error": "Kesalahan saat memuat sumber data",
       "edit": "Edit",
-      "evaluations-to-fire": "Siklus evaluasi yang akan dinyalakan",
       "export": "Ekspor",
       "folder": "Folder",
       "group-loading-error": "Kesalahan saat memuat grup",
       "interval": "Interval",
       "namespace": "Ruang nama",
-      "pending-period": "Periode tertunda",
-      "recording": "Pencatatan",
-      "rule-name": "Nama aturan"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Kesalahan saat memuat sumber data",
@@ -2228,6 +2228,9 @@
         "label-export-all": "Ekspor semua"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Tidak dapat memuat editor kueri karena: {{errorMessage}}"
     },
@@ -2637,6 +2640,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Tidak menemukan sumber data yang Anda inginkan? Beberapa sumber data tidak didukung untuk peringatan. Klik ikon untuk informasi selengkapnya."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Tambah Alertmanager baru",
       "builtin-alertmanager": "Alertmanager bawaan",
@@ -2871,6 +2879,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} lalu)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3519,11 +3532,11 @@
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
-      "error-invalid-folder-name": "Nama folder tidak valid",
       "error-required": "Nama folder wajib diisi",
       "folder-name-input-placeholder-enter-folder-name": "Masukkan nama folder",
       "label-folder-name": "Nama folder",
       "text-pull-request-created": "Permintaan pull telah dibuat dengan perubahan pada folder ini:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Permintaan pull dibuat",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
@@ -5635,6 +5648,20 @@
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} oleh<person />",
       "usage-count_other": "Digunakan pada {{count}} dasbor"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada. Ingin tetap menyimpan dasbor ini?",
@@ -7963,6 +7990,9 @@
       "filter-popup-match-case": "Cocok huruf besar kecil",
       "inspect-drawer-title": "Periksa nilai",
       "inspect-menu-label": "Periksa nilai",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Tidak ada nilai",
       "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris"
     },
@@ -8683,6 +8713,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8695,6 +8726,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8797,6 +8829,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9055,6 +9092,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Dasbor sudah disediakan dan dikelola oleh Grafana di instans cloud. Sebaiknya gunakan dasbor yang disediakan ke depannya. Jika Anda masih ingin menyalin dasbor ke instans cloud, ubah ID dasbor di JSON dasbor, simpan snapshot baru, lalu unggah lagi.",
         "datasource-already-managed": "Dasbor sudah disediakan dan dikelola oleh Grafana di instans cloud. Jika ini adalah sumber daya yang berbeda, atur UID lain dan coba lagi.",
         "datasource-invalid-url": "Ada sumber data yang memiliki URL tidak valid. Berikan URL yang valid dan coba lagi.",
@@ -10281,10 +10320,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12473,6 +12510,7 @@
         "transform": "Ubah"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Bidang waktu",
