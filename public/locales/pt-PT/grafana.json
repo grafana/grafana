@@ -3550,11 +3550,11 @@
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
-      "error-invalid-folder-name": "Nome da pasta inválido",
       "error-required": "O nome da pasta é obrigatório",
       "folder-name-input-placeholder-enter-folder-name": "Introduza o nome da pasta",
       "label-folder-name": "Nome da pasta",
       "text-pull-request-created": "Foi criado um pedido de extração com alterações a esta pasta:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Pedido de extração criado",
       "title-this-repository-is-read-only": "Este repositório é apenas de leitura"
     },
@@ -12549,6 +12549,7 @@
         "transform": "Transformar"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Estatística",
       "label-time-field": "Campo de hora",

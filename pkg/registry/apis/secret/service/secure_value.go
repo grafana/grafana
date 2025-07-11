@@ -194,6 +194,7 @@ func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespa
 	))
 	defer span.End()
 
+	// TODO: does this need to be for update?
 	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: true})
 	if err != nil {
 		return nil, fmt.Errorf("fetching secure value: %+w", err)
