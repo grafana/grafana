@@ -3550,11 +3550,11 @@
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
-      "error-invalid-folder-name": "Ungültiger Ordnername",
       "error-required": "Ordnername erforderlich",
       "folder-name-input-placeholder-enter-folder-name": "Ordnernamen eingeben",
       "label-folder-name": "Ordnername",
       "text-pull-request-created": "Ein Pull-Request wurde erstellt, mit Änderungen an diesem Ordner:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Pull-Request erstellt",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
@@ -12549,6 +12549,7 @@
         "transform": "Transformieren"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Stat.",
       "label-time-field": "Zeitfeld",
