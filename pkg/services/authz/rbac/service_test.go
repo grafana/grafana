@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/team"
 )
 
 func TestService_checkPermission(t *testing.T) {
@@ -336,7 +337,7 @@ func TestService_getUserTeams(t *testing.T) {
 			ns := types.NamespaceInfo{Value: "stacks-12", OrgID: 1, StackID: 12}
 
 			userIdentifiers := &store.UserIdentifiers{UID: "test-uid"}
-			identityStore := &fakeIdentityStore{teams: tc.teams, err: tc.expectedError, disableNsCheck: true}
+			identityStore := &fakeIdentityStore{userTeams: tc.teams, err: tc.expectedError, disableNsCheck: true}
 			s.identityStore = identityStore
 
 			if tc.cacheHit {
@@ -483,7 +484,7 @@ func TestService_getUserPermissions(t *testing.T) {
 			}
 			s.store = store
 			s.permissionStore = store
-			s.identityStore = &fakeIdentityStore{teams: []int64{1, 2}, disableNsCheck: true}
+			s.identityStore = &fakeIdentityStore{userTeams: []int64{1, 2}, disableNsCheck: true}
 
 			perms, err := s.getIdentityPermissions(ctx, ns, types.TypeUser, userID.UID, action)
 			require.NoError(t, err)
@@ -1528,6 +1529,7 @@ func setupService() *Service {
 		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, shortCacheTTL),
 		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, longCacheTTL),
 		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, shortCacheTTL),
+		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, shortCacheTTL),
 		settings:        Settings{AnonOrgRole: "Viewer"},
 		store:           fStore,
 		permissionStore: fStore,
@@ -1599,7 +1601,8 @@ func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceIn
 
 type fakeIdentityStore struct {
 	legacy.LegacyIdentityStore
-	teams          []int64
+	userTeams      []int64
+	teams          []team.Team
 	disableNsCheck bool
 	err            bool
 	calls          int
@@ -1613,12 +1616,23 @@ func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace types.N
 	if f.err {
 		return nil, fmt.Errorf("identity store error")
 	}
-	items := make([]legacy.UserTeam, 0, len(f.teams))
-	for _, teamID := range f.teams {
+	items := make([]legacy.UserTeam, 0, len(f.userTeams))
+	for _, teamID := range f.userTeams {
 		items = append(items, legacy.UserTeam{ID: teamID})
 	}
 	return &legacy.ListUserTeamsResult{
 		Items:    items,
 		Continue: 0,
 	}, nil
+}
+
+func (f *fakeIdentityStore) ListTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListTeamQuery) (*legacy.ListTeamResult, error) {
+	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
+		return nil, fmt.Errorf("namespace mismatch")
+	}
+	f.calls++
+	if f.err {
+		return nil, fmt.Errorf("identity store error")
+	}
+	return &legacy.ListTeamResult{Teams: f.teams}, nil
 }
