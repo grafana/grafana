@@ -73,7 +73,7 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
 
         {areStaticOptionsEnabled && (
           <VariableSelectField
-            name="Static options sort"
+            name={t('dashboard-scene.query-variable-editor-form.label-static-options-sort', 'Static options sort')}
             description={t(
               'variables.query-variable-static-options-sort-select.description-values-variable',
               'How to sort static options with query results'
