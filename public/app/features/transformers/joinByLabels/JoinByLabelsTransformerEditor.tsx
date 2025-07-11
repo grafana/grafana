@@ -14,7 +14,7 @@ import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicke
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels } from '../utils';
 
-import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
+import { getJoinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
 
 export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> {}
 
@@ -108,7 +108,7 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
 
       <InlineFieldRow>
         <InlineField
-          error="required"
+          error={t('transformers.join-by-labels-transformer-editor.error-required', 'Required')}
           invalid={!Boolean(options.value?.length)}
           label={t('transformers.join-by-labels-transformer-editor.label-value', 'Value')}
           labelWidth={labelWidth}
@@ -178,13 +178,16 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
   );
 }
 
-export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLabelsTransformOptions> = {
-  id: joinByLabelsTransformer.id,
-  editor: JoinByLabelsTransformerEditor,
-  transformation: joinByLabelsTransformer,
-  name: joinByLabelsTransformer.name,
-  description: joinByLabelsTransformer.description,
-  state: PluginState.beta,
-  categories: new Set([TransformerCategory.Combine]),
-  help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
+export const getJoinByLabelsTransformRegistryItem: () => TransformerRegistryItem<JoinByLabelsTransformOptions> = () => {
+  const joinByLabelsTransformer = getJoinByLabelsTransformer();
+  return {
+    id: joinByLabelsTransformer.id,
+    editor: JoinByLabelsTransformerEditor,
+    transformation: joinByLabelsTransformer,
+    name: joinByLabelsTransformer.name,
+    description: joinByLabelsTransformer.description,
+    state: PluginState.beta,
+    categories: new Set([TransformerCategory.Combine]),
+    help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
+  };
 };
