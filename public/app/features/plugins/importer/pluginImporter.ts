@@ -227,35 +227,9 @@ const importPlugin = <M extends PluginMeta, P extends GrafanaPlugin<M>>(
   return getPromiseFromCache(meta);
 };
 
-const importer: PluginImporter = {
-  /**
-   * Import a panel plugin from module.js
-   * @param meta - The plugin meta
-   * @returns The plugin
-   */
+export const pluginImporter: PluginImporter = {
   importPanelPlugin: (meta: PanelPluginMeta) => importPlugin(meta, panelPluginPostImport),
-  /**
-   * Import a datasource plugin from module.js
-   * @param meta - The plugin meta
-   * @returns The plugin
-   */
   importDatasourcePlugin: (meta: DataSourcePluginMeta) => importPlugin(meta, datasourcePluginPostImport),
-  /**
-   * Import an app plugin from module.js
-   * @param meta - The plugin meta
-   * @returns The plugin
-   */
   importAppPlugin: (meta: AppPluginMeta) => importPlugin(meta, appPluginPostImport),
-  /**
-   * Get a panel plugin from the cache
-   * @param id - The plugin id
-   * @returns The plugin
-   */
   getPanelPlugin: (id: string) => getPluginFromCache<PanelPlugin>(id),
 };
-
-/**
- * Get the plugin importer
- * @returns The plugin importer
- */
-export const pluginImporter = (): PluginImporter => importer;

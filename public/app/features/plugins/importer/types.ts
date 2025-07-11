@@ -11,9 +11,29 @@ import {
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 
 export interface PluginImporter {
+  /**
+   * Imports a panel plugin from module.js
+   * @param meta - The plugin meta
+   * @returns a Promise<PanelPlugin>
+   */
   importPanelPlugin: (meta: PanelPluginMeta) => Promise<PanelPlugin>;
+  /**
+   * Imports a datasource plugin from module.js
+   * @param meta - The plugin meta
+   * @returns a Promise<GenericDataSourcePlugin>
+   */
   importDatasourcePlugin: (meta: DataSourcePluginMeta) => Promise<GenericDataSourcePlugin>;
+  /**
+   * Imports an app plugin from module.js
+   * @param meta - The plugin meta
+   * @returns a Promise<AppPlugin>
+   */
   importAppPlugin: (meta: AppPluginMeta) => Promise<AppPlugin>;
+  /**
+   * Retrieves a panel plugin from the cache, if it doesn't exist in the cache it returns undefined
+   * @param id - The plugin id
+   * @returns a PanelPlugin or undefined
+   */
   getPanelPlugin: (id: string) => PanelPlugin | undefined;
 }
 

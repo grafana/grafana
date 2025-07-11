@@ -47,9 +47,9 @@ export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelP
 }
 
 export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
-  return pluginImporter().getPanelPlugin(id);
+  return pluginImporter.getPanelPlugin(id);
 }
 
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
-  return pluginImporter().importPanelPlugin(meta);
+  return pluginImporter.importPanelPlugin(meta);
 }

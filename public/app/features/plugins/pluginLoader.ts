@@ -57,9 +57,9 @@ systemJSPrototype.resolve = decorateSystemJSResolve.bind(systemJSPrototype, syst
 systemJSPrototype.onload = decorateSystemJsOnload;
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return pluginImporter().importDatasourcePlugin(meta);
+  return pluginImporter.importDatasourcePlugin(meta);
 }
 
-export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
-  return pluginImporter().importAppPlugin(meta);
+export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
+  return pluginImporter.importAppPlugin(meta);
 }
