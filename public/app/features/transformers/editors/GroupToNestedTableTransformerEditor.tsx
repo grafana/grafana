@@ -22,6 +22,8 @@ import {
 import { t } from '@grafana/i18n';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
 
+import darkImage from '../images/dark/groupToNestedTable.svg';
+import lightImage from '../images/light/groupToNestedTable.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -212,4 +214,6 @@ export const getGroupToNestedTableTransformRegistryItem: () => TransformerRegist
       TransformerCategory.Reformat,
     ]),
     state: PluginState.beta,
+    imageDark: darkImage,
+    imageLight: lightImage,
   });
