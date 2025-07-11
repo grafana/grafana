@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, getAllByTestId, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormEvent } from 'react';
 import * as React from 'react';
@@ -146,11 +146,8 @@ describe('QueryVariableEditorForm', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
-    const staticOptionsRow = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow
-    );
-    const staticOptionsOrderDropdown = getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsOrderDropdown
+    const staticOptionsToggle = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
     );
 
     expect(dataSourcePicker).toBeInTheDocument();
@@ -169,8 +166,7 @@ describe('QueryVariableEditorForm', () => {
     expect(includeAllSwitch).toBeChecked();
     expect(allValueInput).toBeInTheDocument();
     expect(allValueInput).toHaveValue('custom all value');
-    expect(staticOptionsRow).toBeInTheDocument();
-    expect(staticOptionsOrderDropdown).toBeInTheDocument();
+    expect(staticOptionsToggle).toBeInTheDocument();
   });
 
   it('should call onDataSourceChange when changing the datasource', async () => {
@@ -311,6 +307,14 @@ describe('QueryVariableEditorForm', () => {
     const {
       renderer: { getByTestId },
     } = await setup();
+
+    // First enable static options
+    const staticOptionsToggle = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
+    );
+    await userEvent.click(staticOptionsToggle);
+
+    // Then access the dropdown
     const staticOptionsOrderDropdown = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsOrderDropdown
     );
@@ -326,6 +330,12 @@ describe('QueryVariableEditorForm', () => {
     const {
       renderer: { getByTestId, getAllByTestId },
     } = await setup();
+
+    // First enable static options
+    const staticOptionsToggle = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
+    );
+    await userEvent.click(staticOptionsToggle);
 
     const addButton = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsAddButton
@@ -409,5 +419,52 @@ describe('QueryVariableEditorForm', () => {
 
     expect(mockOnStaticOptionsChange).toHaveBeenCalled();
     expect(mockOnStaticOptionsChange.mock.lastCall[0]).toEqual([{ value: 'new-value', label: 'Test Label' }]);
+  });
+
+  it('should remove static options and hide UI elements when static options switch is unchecked', async () => {
+    const {
+      renderer: { getByTestId, queryByTestId, getAllByTestId },
+    } = await setup({
+      ...defaultProps,
+      staticOptions: [
+        { value: 'option1', label: 'Option 1' },
+        { value: 'option2', label: 'Option 2' },
+      ],
+    });
+
+    // Static options should be visible initially
+    expect(
+      getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle)
+    ).toBeChecked();
+    expect(
+      getByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsOrderDropdown
+      )
+    ).toBeInTheDocument();
+
+    // Option rows should be visible
+    expect(
+      getAllByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow)
+    ).toHaveLength(2);
+
+    // Uncheck the static options switch
+    const staticOptionsToggle = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
+    );
+    await userEvent.click(staticOptionsToggle);
+
+    // Should call onStaticOptionsChange to remove static options
+    expect(mockOnStaticOptionsChange).toHaveBeenCalledTimes(1);
+    expect(mockOnStaticOptionsChange).toHaveBeenCalledWith(undefined);
+
+    // Static options UI elements should be hidden
+    expect(
+      queryByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsOrderDropdown
+      )
+    ).not.toBeInTheDocument();
+    expect(
+      queryByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow)
+    ).not.toBeInTheDocument();
   });
 });
