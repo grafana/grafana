@@ -263,6 +263,10 @@ const (
 	// Route the folder and dashboard service requests to k8s
 	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
 
+	// FlagKubernetesShortURLs
+	// Routes short url requests from /api to the /apis endpoint
+	FlagKubernetesShortURLs = "kubernetesShortURLs"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
