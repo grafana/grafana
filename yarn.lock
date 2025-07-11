@@ -8583,9 +8583,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app":
+"@test-plugins/extensions-test-app@workspace:e2e-playwright/test-plugins/grafana-extensionstest-app":
   version: 0.0.0-use.local
-  resolution: "@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app"
+  resolution: "@test-plugins/extensions-test-app@workspace:e2e-playwright/test-plugins/grafana-extensionstest-app"
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
@@ -8615,9 +8615,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@test-plugins/grafana-e2etest-datasource@workspace:e2e/test-plugins/grafana-test-datasource":
+"@test-plugins/grafana-e2etest-datasource@workspace:e2e-playwright/test-plugins/grafana-test-datasource":
   version: 0.0.0-use.local
-  resolution: "@test-plugins/grafana-e2etest-datasource@workspace:e2e/test-plugins/grafana-test-datasource"
+  resolution: "@test-plugins/grafana-e2etest-datasource@workspace:e2e-playwright/test-plugins/grafana-test-datasource"
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
