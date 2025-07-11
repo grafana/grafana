@@ -224,8 +224,6 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return createdFromUnified, nil
 	}
 
-	// --- Logic for modes where legacy is the primary read source ---
-
 	// create in legacy first, and then unistore. if unistore fails, but legacy succeeds,
 	// will try to cleanup the object in legacy.
 	createdFromLegacy, err := d.legacy.Create(ctx, in, createValidation, options)
@@ -293,8 +291,6 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 		return objFromUnified, asyncUnified, nil
 	}
 
-	// --- Logic for modes where legacy is the primary read source ---
-
 	// delete from legacy first, and then unistore. Will return a failure if either fails,
 	// unless its a 404.
 	//
@@ -302,8 +298,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
-	if err != nil {
-		// In legacy-read mode, an error from the primary store is always returned.
+	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, false, err
 	}
 
@@ -357,8 +352,6 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		// Success, return the authoritative object from the unified store.
 		return objFromUnified, createdUnified, nil
 	}
-
-	// --- Logic for modes where legacy is the primary read source ---
 
 	// Update in legacy first, then sync to unified.
 	objFromLegacy, createdLegacy, err := d.legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
