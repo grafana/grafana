@@ -157,6 +157,10 @@
         "aria-label-prom-type-type": "",
         "aria-label-prometheus-type": "",
         "aria-label-select-http-method": "",
+        "editor-options": {
+          "label-builder": "",
+          "label-code": ""
+        },
         "label-cache-level": "",
         "label-custom-query-parameters": "",
         "label-default-editor": "",
@@ -195,6 +199,16 @@
         "tooltip-use-series-endpoint": ""
       }
     },
+    "prom-query-legend-editor": {
+      "get-legend-mode-options": {
+        "description-auto": "",
+        "description-custom": "",
+        "description-verbose": "",
+        "label-auto": "",
+        "label-custom": "",
+        "label-verbose": ""
+      }
+    },
     "querybuilder": {
       "additional-settings": {
         "content-filter-metric-names-regex-search-using": "",
@@ -203,6 +217,13 @@
       "feedback-link": {
         "give-feedback": "Feedback geven",
         "title-give-feedback": ""
+      },
+      "get-collapsed-info": {
+        "exemplars": "",
+        "format": "",
+        "legend": "",
+        "step": "",
+        "type": ""
       },
       "handle-function": {
         "text": {
@@ -218,6 +239,10 @@
         "label-filters": "",
         "label-label-filters": "",
         "tooltip-label-filters": ""
+      },
+      "label-param-editor": {
+        "loadingMessage-loading-labels": "",
+        "noOptionsMessage-no-labels-found": ""
       },
       "metric-combobox": {
         "async-select": {
@@ -274,6 +299,11 @@
       "prom-query-builder-options": {
         "aria-label-lower-limit-parameter": "",
         "aria-label-select-resolution": "",
+        "format-options": {
+          "label-heatmap": "",
+          "label-table": "",
+          "label-time-series": ""
+        },
         "label-exemplars": "",
         "label-format": "Formaat",
         "label-min-step": "",
@@ -288,6 +318,8 @@
         "tooltip-autocomplete-suggestions-limited": ""
       },
       "prom-query-editor-selector": {
+        "body-syntax-error": "",
+        "confirmText-continue": "",
         "kick-start-your-query": "Start je query",
         "label-explain": "",
         "run-queries": "",
@@ -303,6 +335,12 @@
       },
       "query-editor-hints": {
         "hint-details": ""
+      },
+      "query-editor-mode-toggle": {
+        "editor-modes": {
+          "label-builder": "",
+          "label-code": ""
+        }
       },
       "query-pattern": {
         "apply-query": "",

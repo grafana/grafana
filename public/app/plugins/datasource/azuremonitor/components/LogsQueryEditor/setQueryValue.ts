@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 
-import { AzureMonitorQuery, ResultFormat } from '../../types';
+import { AzureMonitorQuery, ResultFormat } from '../../types/query';
 
 export function setKustoQuery(query: AzureMonitorQuery, kustoQuery: string): AzureMonitorQuery {
   return {

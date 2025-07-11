@@ -105,10 +105,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         .addBooleanSwitch({
           path: 'wrapHeaderText',
           name: t('table.name-wrap-header-text', 'Wrap header text'),
-          description: t(
-            'table.description-wrap-header-text',
-            'Enables text wrapping for the field name in the table header'
-          ),
+          description: t('table.description-wrap-header-text', 'Enables text wrapping for column headers'),
           category,
           defaultValue: defaultTableFieldOptions.wrapHeaderText,
         })

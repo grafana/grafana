@@ -25,13 +25,13 @@ import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
   RenderEvent,
 } from 'app/types/events';
+import { QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TimeOverrideResult } from '../utils/panel';

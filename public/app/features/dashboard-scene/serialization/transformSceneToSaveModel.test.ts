@@ -21,7 +21,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { DashboardDataDTO } from 'app/types';
+import { DashboardDataDTO } from 'app/types/dashboard';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
