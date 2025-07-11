@@ -3586,11 +3586,11 @@
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
-      "error-invalid-folder-name": "Nieprawidłowa nazwa folderu",
       "error-required": "Wymagana jest nazwa folderu",
       "folder-name-input-placeholder-enter-folder-name": "Podaj nazwę folderu",
       "label-folder-name": "Nazwa folderu",
       "text-pull-request-created": "Utworzono żądanie pull ze zmianami w tym folderze:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Utworzono żądanie pull",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
@@ -12627,6 +12627,7 @@
         "transform": "Przekształć"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Statystyka",
       "label-time-field": "Pole czasu",

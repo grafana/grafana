@@ -55,7 +55,6 @@ export class LogLineVirtualization {
   getGridSize = () => this.gridSize;
   getPaddingBottom = () => this.paddingBottom;
 
-  // 2/3 of the viewport height
   getTruncationLineCount = () => Math.round(window.innerHeight / this.getLineHeight() / 1.5);
 
   getTruncationLength = (container: HTMLDivElement | null) => {
