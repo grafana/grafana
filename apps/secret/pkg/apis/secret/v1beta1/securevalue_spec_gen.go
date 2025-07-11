@@ -2,9 +2,11 @@
 
 package v1beta1
 
+import common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+
 // ExposedSecureValue contains the raw decrypted secure value.
 // +k8s:openapi-gen=true
-type SecureValueExposedSecureValue string
+type ()
 
 // +k8s:openapi-gen=true
 type SecureValueSpec struct {
@@ -18,7 +20,7 @@ type SecureValueSpec struct {
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=24576
 	// +optional
-	Value *SecureValueExposedSecureValue `json:"value,omitempty"`
+	Value *common.RawSecureValue `json:"value,omitempty"`
 	// When using a third-party keeper, the `ref` is used to reference a value inside the remote storage.
 	// This should not contain sensitive information.
 	// +k8s:validation:minLength=1

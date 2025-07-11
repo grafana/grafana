@@ -18,8 +18,8 @@ update-app-sdk: ## Update the Grafana App SDK dependency in go.mod
 	go get github.com/grafana/grafana-app-sdk@$(APP_SDK_VERSION)
 	go mod tidy
 
-.PHONY: generate
-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
+.PHONY: generate-app-sdk
+generate-app-sdk: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 	@$(APP_SDK_BIN) generate \
 		--source=./kinds/ \
 		--gogenpath=./pkg/apis \
@@ -27,3 +27,10 @@ generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generation
 		--defencoding=none \
 		--noschemasinmanifest \
 		--postprocess
+
+.PHONY: override-secure-value-type
+override-secure-value-type: ## Override the SecureValueExposedSecureValue type with the common.RawSecureValue type
+	go run scripts/override_secure_value_type.go SecureValueExposedSecureValue ./pkg/apis/secret/v1beta1
+
+.PHONY: generate
+generate: generate-app-sdk override-secure-value-type
