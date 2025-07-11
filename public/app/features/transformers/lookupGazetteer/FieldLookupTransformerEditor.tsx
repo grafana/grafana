@@ -16,6 +16,8 @@ import { FieldNamePicker } from '@grafana/ui/internal';
 import { GazetteerPathEditor, GazetteerPathEditorConfigSettings } from 'app/features/geo/editor/GazetteerPathEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/fieldLookup.svg';
+import lightImage from '../images/light/fieldLookup.svg';
 
 import { FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
 
@@ -87,13 +89,21 @@ export const FieldLookupTransformerEditor = ({ input, options, onChange }: Trans
   );
 };
 
-export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLookupOptions> = {
+export const getFieldLookupTransformRegistryItem: () => TransformerRegistryItem<FieldLookupOptions> = () => ({
   id: DataTransformerID.fieldLookup,
   editor: FieldLookupTransformerEditor,
   transformation: fieldLookupTransformer,
-  name: fieldLookupTransformer.name,
-  description: `Use a field value to lookup additional fields from an external source. This currently supports spatial data, but will eventually support more formats.`,
+  name: t(
+    'transformers.field-lookup-transformer-editor.name.lookup-fields-from-resource',
+    'Lookup fields from resource'
+  ),
+  description: t(
+    'transformers.field-lookup-transformer-editor.description.lookup-additional-fields-external-source',
+    'Use a field value to lookup countries, states, or airports.'
+  ),
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.PerformSpatialOperations]),
   help: getTransformationContent(DataTransformerID.fieldLookup).helperDocs,
-};
+  imageDark: darkImage,
+  imageLight: lightImage,
+});

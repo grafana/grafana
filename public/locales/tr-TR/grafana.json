@@ -3550,11 +3550,11 @@
       "button-create": "Oluştur",
       "button-creating": "Oluşturuluyor...",
       "cancel": "İptal",
-      "error-invalid-folder-name": "Geçersiz klasör adı",
       "error-required": "Klasör adı gereklidir",
       "folder-name-input-placeholder-enter-folder-name": "Klasör adını girin",
       "label-folder-name": "Klasör adı",
       "text-pull-request-created": "Bu klasörde yapılan değişikliklerle bir çekme isteği oluşturuldu:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Çekme isteği oluşturuldu",
       "title-this-repository-is-read-only": "Bu depo salt okunur"
     },
@@ -12549,6 +12549,7 @@
         "transform": "Dönüştür"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "İstatistik",
       "label-time-field": "Zaman alanı",
