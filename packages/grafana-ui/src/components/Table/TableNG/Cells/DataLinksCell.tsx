@@ -4,11 +4,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksCellProps } from '../types';
-import { getCellLinks } from '../utils';
+import { getCellLinks, shouldTextWrap } from '../utils';
 
 export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
-  const styles = useStyles2(getStyles);
-
+  const textWrap = shouldTextWrap(field);
+  const styles = useStyles2(getStyles, textWrap);
   const links = getCellLinks(field, rowIdx!);
 
   return (
@@ -35,19 +35,28 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
   container: css({
-    display: 'flex',
-    flexWrap: 'nowrap',
-    gap: theme.spacing(0.5),
-  }),
-  linkCell: css({
+    display: 'inline',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    whiteSpace: textWrap ? 'pre-line' : 'nowrap',
+  }),
+  linkCell: css({
     flexShrink: 0,
     userSelect: 'text',
-    whiteSpace: 'nowrap',
     fontWeight: theme.typography.fontWeightMedium,
+    '&::after': {
+      display: 'inline-block',
+      color: theme.colors.text.primary,
+      content: '","',
+      textDecoration: 'none',
+      paddingInlineEnd: theme.spacing(0.5),
+    },
+    '&:last-child::after': {
+      content: 'none',
+      paddingInlineEnd: 0,
+    },
   }),
   linkCellActive: css({
     cursor: 'pointer',
