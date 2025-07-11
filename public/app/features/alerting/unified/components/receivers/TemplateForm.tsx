@@ -29,6 +29,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { trackAITemplateFeedback } from '../../AI/analytics/tracking';
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
@@ -107,6 +108,11 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
+  // AI feedback state
+  const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState(false);
+  const [aiFeedbackGiven, setAiFeedbackGiven] = useState(false);
+  const [templateGenerationStartTime, setTemplateGenerationStartTime] = useState<number | null>(null);
+
   const { isProvisioned } = useNotificationTemplateMetadata(originalTemplate);
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
@@ -167,6 +173,22 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   const handleTemplateGenerated = (template: string) => {
     setValue('content', template);
+    setAiGeneratedTemplate(true);
+    setAiFeedbackGiven(false);
+    setTemplateGenerationStartTime(Date.now());
+  };
+
+  const handleAiFeedback = (helpful: boolean, comment?: string) => {
+    const timeToFeedback = templateGenerationStartTime ? Date.now() - templateGenerationStartTime : undefined;
+
+    // Track template feedback
+    trackAITemplateFeedback({
+      helpful,
+      comment,
+      ...(timeToFeedback && { timeToFeedback }),
+    });
+
+    setAiFeedbackGiven(true);
   };
 
   return (
@@ -352,6 +374,14 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}
+                      aiFeedback={
+                        aiGeneratedTemplate
+                          ? {
+                            onFeedback: handleAiFeedback,
+                            feedbackGiven: aiFeedbackGiven,
+                          }
+                          : undefined
+                      }
                     />
                   </div>
                 )}

@@ -34,6 +34,10 @@ export const trackAITemplateCancelled = () => {
   reportInteraction('grafana_alerting_ai_template_cancelled');
 };
 
+export const trackAITemplateFeedback = (props: { helpful: boolean; comment?: string; timeToFeedback?: number }) => {
+  reportInteraction('grafana_alerting_ai_template_feedback', props);
+};
+
 // AI Improve Labels Tracking
 export const trackAIImproveLabelsButtonClick = () => {
   reportInteraction('grafana_alerting_ai_improve_labels_button_click');
@@ -75,4 +79,8 @@ export const trackAITriageButtonClick = () => {
 
 export const trackAITriageGeneration = (props: { success: boolean; logRecordsCount?: number; error?: string }) => {
   reportInteraction('grafana_alerting_ai_triage_generation', props);
+};
+
+export const trackAITriageFeedback = (props: { helpful: boolean; comment?: string; timeToFeedback?: number }) => {
+  reportInteraction('grafana_alerting_ai_triage_feedback', props);
 };
