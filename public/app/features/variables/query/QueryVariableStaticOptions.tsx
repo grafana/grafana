@@ -36,41 +36,42 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
       <VariableLegend>
         <Trans i18nKey="dashboard-scene.query-variable-editor-form.static-options-legend">Static options</Trans>
       </VariableLegend>
-      <Field
-        label={t('dashboard-scene.query-variable-editor-form.label-use-static-options"', 'Use static options')}
-        description={t(
-          'variables.query-variable-static-options.description',
-          'Add custom options in addition to query results'
-        )}
-      >
-        <>
-          <Stack direction="column" gap={2}>
-            <Switch
-              data-testid={
-                selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
-              }
-              value={areStaticOptionsEnabled}
-              onChange={(e) => {
-                if (e.currentTarget.checked) {
-                  setAreStaticOptionsEnabled(true);
-                } else {
-                  setAreStaticOptionsEnabled(false);
-                  if (!!staticOptions?.length) {
-                    onStaticOptionsChange(undefined);
-                  }
+      <Stack direction="column" gap={2}>
+        <Field
+          noMargin
+          label={t('dashboard-scene.query-variable-editor-form.label-use-static-options"', 'Use static options')}
+          description={t(
+            'variables.query-variable-static-options.description',
+            'Add custom options in addition to query results'
+          )}
+        >
+          <>
+            <Stack direction="column" gap={2}>
+              <Switch
+                data-testid={
+                  selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
                 }
-              }}
-            />
+                value={areStaticOptionsEnabled}
+                onChange={(e) => {
+                  if (e.currentTarget.checked) {
+                    setAreStaticOptionsEnabled(true);
+                  } else {
+                    setAreStaticOptionsEnabled(false);
+                    if (!!staticOptions?.length) {
+                      onStaticOptionsChange(undefined);
+                    }
+                  }
+                }}
+              />
 
-            {areStaticOptionsEnabled && (
-              <VariableOptionsInput width={60} options={staticOptions ?? []} onChange={onStaticOptionsChange} />
-            )}
-          </Stack>
-        </>
-      </Field>
+              {areStaticOptionsEnabled && (
+                <VariableOptionsInput width={60} options={staticOptions ?? []} onChange={onStaticOptionsChange} />
+              )}
+            </Stack>
+          </>
+        </Field>
 
-      {areStaticOptionsEnabled && (
-        <>
+        {areStaticOptionsEnabled && (
           <VariableSelectField
             name="Static options sort"
             description={t(
@@ -85,8 +86,8 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
             }
             width={25}
           />
-        </>
-      )}
+        )}
+      </Stack>
     </>
   );
 }
