@@ -12,18 +12,18 @@ import * as ui from '@grafana/schema';
 
 export const pluginVersion = "12.4.0-pre";
 
-export enum StateTimelineLegendValues {
+export enum StateTimelineLegendReducers {
+  Count = 'count',
   Duration = 'duration',
-  Occurrences = 'occurrences',
   Percentage = 'percentage',
 }
 
 export interface StateTimelineLegendOptions extends ui.VizLegendOptions {
-  values: Array<StateTimelineLegendValues>;
+  reducers: Array<StateTimelineLegendReducers>;
 }
 
 export const defaultStateTimelineLegendOptions: Partial<StateTimelineLegendOptions> = {
-  values: [],
+  reducers: [],
 };
 
 export interface Options extends ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {

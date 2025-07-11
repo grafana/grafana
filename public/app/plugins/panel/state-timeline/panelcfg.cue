@@ -24,11 +24,11 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				StateTimelineLegendValues: "duration" | "percentage" | "occurrences" @cuetsy(kind="enum")
+				StateTimelineLegendReducers: "duration" | "percentage" | "count" @cuetsy(kind="enum")				
 				
 				StateTimelineLegendOptions: {
 					ui.VizLegendOptions
-					values: [...StateTimelineLegendValues]
+					reducers: [...StateTimelineLegendReducers]
 				} @cuetsy(kind="interface")
 				
 				Options: {

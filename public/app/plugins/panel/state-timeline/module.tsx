@@ -16,7 +16,7 @@ import { NullEditorSettings } from '../timeseries/config';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { defaultFieldConfig, defaultOptions, FieldConfig, Options, StateTimelineLegendValues } from './panelcfg.gen';
+import { defaultFieldConfig, defaultOptions, FieldConfig, Options, StateTimelineLegendReducers } from './panelcfg.gen';
 import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
@@ -158,18 +158,33 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
     commonOptionsBuilder.addLegendOptions(builder, false);
 
     builder.addMultiSelect({
-      path: 'legend.values',
-      name: 'Legend values',
-      description: 'Select values to show in the legend',
-      category: ['Legend'],
+      path: 'legend.reducers',
+      name: t('state-timeline.name-series-reducers', 'Series reducers'),
+      description: t(
+        'state-timeline.description-series-reducers',
+        'Display calculations for each series in the tooltip in table mode.'
+      ),
+      category: [t('state-timeline.category-legend', 'Legend')],
       settings: {
         options: [
-          { value: StateTimelineLegendValues.Duration, label: 'Duration' },
-          { value: StateTimelineLegendValues.Percentage, label: 'Percentage' },
-          { value: StateTimelineLegendValues.Occurrences, label: 'Occurrences' },
+          {
+            value: StateTimelineLegendReducers.Duration,
+            label: t('state-timeline.label-series-reducers.duration', 'Duration'),
+            description: 'Total time spent in this state',
+          },
+          {
+            value: StateTimelineLegendReducers.Percentage,
+            label: t('state-timeline.label-series-reducers.percentage', 'Percentage'),
+            description: 'Percentage of time spent in this state relative to the entire time range',
+          },
+          {
+            value: StateTimelineLegendReducers.Count,
+            label: t('state-timeline.label-series-reducers.count', 'Count'),
+            description: 'Number of times this state occurred',
+          },
         ],
       },
-      showIf: (c) => c.legend.showLegend !== false,
+      showIf: (c) => c.legend.showLegend !== false && c.legend.displayMode === 'table',
     });
 
     commonOptionsBuilder.addTooltipOptions(builder);
