@@ -3,7 +3,6 @@ package encryption
 import "github.com/grafana/grafana/pkg/storage/secret/migrator"
 
 type EncryptedValue struct {
-	UID           string
 	Namespace     string
 	Name          string
 	Version       int64

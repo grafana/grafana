@@ -1,5 +1,4 @@
 INSERT INTO `secret_encrypted_value` (
-  `uid`,
   `namespace`,
   `name`,
   `version`,
@@ -7,7 +6,6 @@ INSERT INTO `secret_encrypted_value` (
   `created`,
   `updated`
 ) VALUES (
-  'uid',
   'ns',
   'n1',
   1,

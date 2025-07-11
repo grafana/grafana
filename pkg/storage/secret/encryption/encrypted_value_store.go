@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -64,10 +63,6 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string
 	createdTime := time.Now().Unix()
 
 	encryptedValue := &EncryptedValue{
-		// The uid is not used but it still needs to be inserted into the db
-		// because there's no way to alter a column in sqlite so the column
-		// can't be made nullable.
-		UID:           uuid.New().String(),
 		Namespace:     namespace,
 		Name:          name,
 		Version:       version,

@@ -19,7 +19,6 @@ func TestEncryptedValueQueries(t *testing.T) {
 					Data: &createEncryptedValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Row: &EncryptedValue{
-							UID:           "uid",
 							Namespace:     "ns",
 							Name:          "n1",
 							Version:       1,

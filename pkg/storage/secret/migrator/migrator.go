@@ -122,12 +122,15 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 		Name: TableNameEncryptedValue,
 		Columns: []*migrator.Column{
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},     // Fixed size of a UUID.
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},
+			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "encrypted_data", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false},
 		},
-		Indices: []*migrator.Index{}, // TODO: add indexes based on the queries we make.
+		Indices: []*migrator.Index{
+			{Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex},
+		},
 	}
 	tables = append(tables, encryptedValueTable)
 
@@ -139,18 +142,4 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
-
-	mg.AddMigration("add column name to secret_encrypted_value", migrator.NewAddColumnMigration(encryptedValueTable, &migrator.Column{
-		Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false,
-	}))
-	mg.AddMigration("add column version to secret_encrypted_value", migrator.NewAddColumnMigration(encryptedValueTable, &migrator.Column{
-		Name: "version", Type: migrator.DB_BigInt, Nullable: false,
-	}))
-	mg.AddMigration("add {namespace, name, version} unique index to secret_encrypted_value", migrator.NewAddIndexMigration(encryptedValueTable, &migrator.Index{
-		Cols: []string{"namespace", "name", "version"}, Type: migrator.UniqueIndex,
-	}))
-	// The uid column is not used anymore. Keeping it for backwards compatibility.
-	mg.AddMigration("drop primary key index from secret_encrypted_value", migrator.NewDropIndexMigration(encryptedValueTable, &migrator.Index{
-		Cols: []string{"uid"},
-	}))
 }
