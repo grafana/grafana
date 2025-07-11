@@ -683,18 +683,10 @@ export const getAppPluginsToAwait = () => {
 export const getAppPluginsToPreload = () => {
   // The DashboardPanelMenu extension point is using the `getPluginExtensions()` API in scenes at the moment, which means that it cannot yet benefit from dynamic plugin loading.
   const dashboardPanelMenuPluginIds = getExtensionPointPluginDependencies(PluginExtensionPoints.DashboardPanelMenu);
-  const dataSourceConfigErrorStatusPluginIds = getExtensionPointPluginDependencies(
-    PluginExtensionPoints.DataSourceConfigErrorStatus
-  );
   const awaitedPluginIds = getAppPluginsToAwait().map((app) => app.id);
   const isNotAwaited = (app: AppPluginConfig) => !awaitedPluginIds.includes(app.id);
 
   return Object.values(config.apps).filter((app) => {
-    return (
-      isNotAwaited(app) &&
-      (app.preload ||
-        dashboardPanelMenuPluginIds.includes(app.id) ||
-        dataSourceConfigErrorStatusPluginIds.includes(app.id))
-    );
+    return isNotAwaited(app) && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
   });
 };
