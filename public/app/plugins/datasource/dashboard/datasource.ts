@@ -14,6 +14,7 @@ import {
   Field,
   FieldType,
   AdHocVariableFilter,
+  MetricFindValue,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -252,5 +253,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({ message: '', status: '' });
+  }
+
+  getTagKeys(): Promise<MetricFindValue[]> {
+    // Stub implementation to indicate AdHoc filter support
+    // Full implementation will be added in future PRs
+    return Promise.resolve([]);
   }
 }
