@@ -492,6 +492,9 @@ export const versionedPages = {
             queryOptionsStaticOptionsRow: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options row',
             },
+            queryOptionsStaticOptionsToggle: {
+              [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options toggle',
+            },
             queryOptionsStaticOptionsLabelInput: {
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Query Static Options Label input',
             },
