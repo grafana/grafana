@@ -137,7 +137,7 @@ func TestStateMachine(t *testing.T) {
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
 				ns := namespaceGen.Draw(t, "ns")
-				name := namespaceGen.Draw(t, "name")
+				name := nameGen.Draw(t, "name")
 				version := versionGen.Draw(t, "version")
 				plaintext := rapid.String().Draw(t, "plaintext")
 
@@ -150,7 +150,7 @@ func TestStateMachine(t *testing.T) {
 			},
 			"update": func(t *rapid.T) {
 				ns := namespaceGen.Draw(t, "ns")
-				name := namespaceGen.Draw(t, "name")
+				name := nameGen.Draw(t, "name")
 				version := versionGen.Draw(t, "version")
 				plaintext := rapid.String().Draw(t, "plaintext")
 
@@ -163,7 +163,7 @@ func TestStateMachine(t *testing.T) {
 			},
 			"get": func(t *rapid.T) {
 				ns := namespaceGen.Draw(t, "ns")
-				name := namespaceGen.Draw(t, "name")
+				name := nameGen.Draw(t, "name")
 				version := versionGen.Draw(t, "version")
 
 				modelValue, modelErr := m.get(ns, name, version)
@@ -180,7 +180,7 @@ func TestStateMachine(t *testing.T) {
 			},
 			"delete": func(t *rapid.T) {
 				ns := namespaceGen.Draw(t, "ns")
-				name := namespaceGen.Draw(t, "name")
+				name := nameGen.Draw(t, "name")
 				version := versionGen.Draw(t, "version")
 
 				modelErr := m.delete(ns, name, version)
@@ -242,7 +242,7 @@ func (m *model) create(namespace, name string, version int64, encryptedData []by
 		Namespace:     namespace,
 		Name:          name,
 		Version:       version,
-		EncryptedData: []byte(encryptedData),
+		EncryptedData: encryptedData,
 		Created:       1,
 		Updated:       1,
 	}, nil
