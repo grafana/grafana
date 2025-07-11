@@ -91,6 +91,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
       return null;
     }
 
+    console.log({ isDraggable });
+
     if (plugin && plugin.angularPanelCtrl) {
       return (
         <PanelChromeAngular
