@@ -39,7 +39,7 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
       <Stack direction="column" gap={2}>
         <Field
           noMargin
-          label={t('dashboard-scene.query-variable-editor-form.label-use-static-options"', 'Use static options')}
+          label={t('dashboard-scene.query-variable-editor-form.label-use-static-options', 'Use static options')}
           description={t(
             'variables.query-variable-static-options.description',
             'Add custom options in addition to query results'
