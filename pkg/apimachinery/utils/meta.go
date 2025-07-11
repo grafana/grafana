@@ -12,6 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // LabelKeyGetHistory is used to select object history for an given resource
@@ -146,6 +148,13 @@ type GrafanaMetaAccessor interface {
 
 	// SetSourceProperties sets the source properties of the resource.
 	SetSourceProperties(SourceProperties)
+
+	// GetSecureValues reads the "secure" property on a resource
+	GetSecureValues() (common.InlineSecureValues, error)
+
+	// SetSourceProperties sets the source properties of the resource.
+	// For write commands, this may include inline secrets; read will only have references
+	SetSecureValues(common.InlineSecureValues) error
 }
 
 var _ GrafanaMetaAccessor = (*grafanaMetaAccessor)(nil)
@@ -820,4 +829,98 @@ func (m *grafanaMetaAccessor) SetSourceProperties(v SourceProperties) {
 	}
 
 	m.obj.SetAnnotations(annot)
+}
+
+// GetSecureValues implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error reading spec")
+		}
+	}()
+
+	var property any // may be map or struct
+
+	f := m.r.FieldByName("Secure")
+	if f.IsValid() {
+		property = f.Interface()
+	} else {
+		// Unstructured
+		u, ok := m.raw.(*unstructured.Unstructured)
+		if ok {
+			property = u.Object["secure"]
+		}
+	}
+
+	// Not found (and no error)
+	if property == nil {
+		return nil, nil
+	}
+
+	// Try directly casting the property
+	vals, ok := property.(common.InlineSecureValues)
+	if ok {
+		return vals, nil
+	}
+
+	// Generic map
+	u, ok := property.(map[string]any)
+	if ok {
+		vals = make(common.InlineSecureValues, len(u))
+		for k, v := range u {
+			sv, ok := v.(map[string]any)
+			if !ok {
+				return nil, fmt.Errorf("unsupported nested secure value: %t", v)
+			}
+			inline := common.InlineSecureValue{}
+			inline.Name, _, _ = unstructured.NestedString(sv, "name")
+			inline.Remove, _, _ = unstructured.NestedBool(sv, "remove")
+			create, _, _ := unstructured.NestedString(sv, "create")
+			if create != "" {
+				inline.Create = common.NewSecretValue(create)
+			}
+			vals[k] = inline
+		}
+		return vals, nil
+	}
+
+	fmt.Printf("TODO PROPERTY: (%t) %+v\n", property, property)
+
+	return nil, fmt.Errorf("support: %t", property)
+}
+
+// SetSecureValues implements GrafanaMetaAccessor.
+func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting spec")
+		}
+	}()
+
+	f := m.r.FieldByName("Secure")
+	if f.IsValid() && f.CanSet() {
+		f.Set(reflect.ValueOf(vals))
+		return
+	}
+
+	// Unstructured object
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["secure"] = vals
+		return
+	}
+
+	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
+}
+
+func ToObjectReference(obj GrafanaMetaAccessor) common.ObjectReference {
+	gvk := obj.GetGroupVersionKind()
+	return common.ObjectReference{
+		APIGroup:   gvk.Group,
+		APIVersion: gvk.Version,
+		Kind:       gvk.Kind,
+		Namespace:  obj.GetNamespace(),
+		Name:       obj.GetName(),
+		UID:        obj.GetUID(),
+	}
 }

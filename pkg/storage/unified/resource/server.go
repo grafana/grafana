@@ -404,6 +404,8 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
+//
+//nolint:gocyclo
 func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, value, oldValue []byte) (*WriteEvent, *resourcepb.ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
@@ -434,6 +436,16 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 
 	if obj.GetAnnotation(utils.AnnoKeyGrantPermissions) != "" {
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
+	}
+
+	// Verify that this resource can reference secure values
+	secure, err := obj.GetSecureValues()
+	if err != nil {
+		return nil, AsErrorResult(err)
+	}
+	if len(secure) > 0 {
+		// See: https://github.com/grafana/grafana/pull/107803
+		return nil, NewBadRequestError("Saving secure values is not yet supported")
 	}
 
 	event := &WriteEvent{
