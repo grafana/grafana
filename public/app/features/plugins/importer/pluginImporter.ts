@@ -158,5 +158,5 @@ export const pluginImporter: PluginImporter = {
   importPanel: (meta: PanelPluginMeta) => importPlugin(meta, panelPluginPostImport),
   importDataSource: (meta: DataSourcePluginMeta) => importPlugin(meta, datasourcePluginPostImport),
   importApp: (meta: AppPluginMeta) => importPlugin(meta, appPluginPostImport),
-  getPanelPlugin: (id: string) => getPluginFromCache<PanelPlugin>(id), // we need this sync because how the panel plugins are loaded in PanelRenderer
+  getPanel: (id: string) => getPluginFromCache<PanelPlugin>(id), // we need this sync because how the panel plugins are loaded in PanelRenderer
 };

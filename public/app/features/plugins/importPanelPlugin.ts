@@ -52,7 +52,7 @@ export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelP
 
 export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
   if (config.featureToggles.newPluginLoading) {
-    return pluginImporter.getPanelPlugin(id);
+    return pluginImporter.getPanel(id);
   }
 
   return panelPluginCache[id];

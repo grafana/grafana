@@ -33,7 +33,7 @@ export interface PluginImporter {
    * @param id - The plugin id
    * @returns a PanelPlugin or undefined
    */
-  getPanelPlugin: (id: string) => PanelPlugin | undefined;
+  getPanel: (id: string) => PanelPlugin | undefined;
 }
 
 export interface PluginImportInfo {
