@@ -24,6 +24,8 @@ killercoda:
 
 In this tutorial, we walk you through the process of setting up your first alert in just a few minutes. You'll witness your alert in action with real-time data, as well as sending alert notifications.
 
+{{< youtube id="YVhKNbQNNss" >}}
+
 In this tutorial you will:
 
 - Create a contact point.
