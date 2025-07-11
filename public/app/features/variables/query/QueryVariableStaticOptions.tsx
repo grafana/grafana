@@ -1,11 +1,9 @@
-import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { QueryVariable } from '@grafana/scenes';
-import { Field, Switch, useStyles2 } from '@grafana/ui';
+import { Field, Stack, Switch } from '@grafana/ui';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableOptionsInput } from 'app/features/dashboard-scene/settings/variables/components/VariableOptionsInput';
 import { VariableSelectField } from 'app/features/dashboard-scene/settings/variables/components/VariableSelectField';
@@ -27,8 +25,6 @@ const SORT_OPTIONS = [
 ];
 
 export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProps) {
-  const styles = useStyles2(getStyles);
-
   const { staticOptions, onStaticOptionsChange, staticOptionsOrder, onStaticOptionsOrderChange } = props;
 
   const value = SORT_OPTIONS.find((o) => o.value === staticOptionsOrder) ?? SORT_OPTIONS[0];
@@ -48,28 +44,28 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
         )}
       >
         <>
-          <Switch
-            data-testid={
-              selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
-            }
-            value={areStaticOptionsEnabled}
-            onChange={(e) => {
-              if (e.currentTarget.checked) {
-                setAreStaticOptionsEnabled(true);
-              } else {
-                setAreStaticOptionsEnabled(false);
-                if (!!staticOptions?.length) {
-                  onStaticOptionsChange(undefined);
-                }
+          <Stack direction="column" gap={2}>
+            <Switch
+              data-testid={
+                selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
               }
-            }}
-          />
+              value={areStaticOptionsEnabled}
+              onChange={(e) => {
+                if (e.currentTarget.checked) {
+                  setAreStaticOptionsEnabled(true);
+                } else {
+                  setAreStaticOptionsEnabled(false);
+                  if (!!staticOptions?.length) {
+                    onStaticOptionsChange(undefined);
+                  }
+                }
+              }}
+            />
 
-          {areStaticOptionsEnabled && (
-            <div className={styles.optionsInputContainer}>
+            {areStaticOptionsEnabled && (
               <VariableOptionsInput width={60} options={staticOptions ?? []} onChange={onStaticOptionsChange} />
-            </div>
-          )}
+            )}
+          </Stack>
         </>
       </Field>
 
@@ -94,9 +90,3 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
     </>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  optionsInputContainer: css({
-    marginTop: theme.spacing(2),
-  }),
-});
