@@ -32,7 +32,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
-  const provisioningStatus = useSelectionProvisioningStatus(selectedItems, folderDTO?.managedBy === ManagerKind.Repo);
+  const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(selectedItems, folderDTO?.managedBy === ManagerKind.Repo);
 
   // Folders can only be moved if nested folders is enabled
   const moveIsInvalid = useMemo(
