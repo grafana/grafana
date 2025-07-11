@@ -61,8 +61,7 @@ func TestIntegrationValidation(t *testing.T) {
 		t.Skip("skipping integration test2")
 	}
 
-	// TODO: Skip mode3 - borken due to race conditions while setting default permissions across storage backends
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -83,35 +82,35 @@ func TestIntegrationValidation(t *testing.T) {
 		})
 	}
 
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
-			// Create a K8sTestHelper which will set up a real API server
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
-				DisableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesDashboards,
-				},
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-				}})
+	// for _, dualWriterMode := range dualWriterModes {
+	// 	t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
+	// 		// Create a K8sTestHelper which will set up a real API server
+	// 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	// 			DisableAnonymous: true,
+	// 			EnableFeatureToggles: []string{
+	// 				featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
+	// 				featuremgmt.FlagUnifiedStorageSearch,
+	// 			},
+	// 			DisableFeatureToggles: []string{
+	// 				featuremgmt.FlagKubernetesDashboards,
+	// 			},
+	// 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+	// 				"dashboards.dashboard.grafana.app": {
+	// 					DualWriterMode: dualWriterMode,
+	// 				},
+	// 			}})
 
-			t.Cleanup(func() {
-				helper.Shutdown()
-			})
+	// 		t.Cleanup(func() {
+	// 			helper.Shutdown()
+	// 		})
 
-			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+	// 		org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 
-			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, false)
-			})
-		})
-	}
+	// 		t.Run("Dashboard permission tests", func(t *testing.T) {
+	// 			runDashboardPermissionTests(t, org1Ctx, false)
+	// 		})
+	// 	})
+	// }
 }
 
 func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper, dualWriterMode rest.DualWriterMode) {

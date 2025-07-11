@@ -187,6 +187,45 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		return nil, fmt.Errorf("name or generatename have to be set")
 	}
 
+	// If unified is the primary read source, create there first.
+	if d.readUnified {
+		// 1. Create in the unified store, making it the source of truth.
+		createdFromUnified, err := d.unified.Create(ctx, in, createValidation, options)
+		if err != nil {
+			log.Error("unable to create object in primary (unified) storage", "err", err)
+			return nil, err // Fail fast if the primary write fails.
+		}
+
+		// 2. Sync the result to the legacy store. The legacy store's Create method
+		// must respect the UID and other metadata from the object already created
+		// in the primary (unified) store.
+		createdCopy := createdFromUnified.DeepCopyObject()
+		accCreated, err := meta.Accessor(createdCopy)
+		if err != nil {
+			return nil, err
+		}
+		accCreated.SetResourceVersion("")
+		accCreated.SetUID("")
+		_, err = d.legacy.Create(ctx, createdCopy, createValidation, &metav1.CreateOptions{})
+		if err != nil {
+			log.Error("failed to write object to secondary (legacy) storage after unified create", "err", err)
+			// Attempt to roll back the creation from the unified store to maintain consistency.
+			accUnified, _ := meta.Accessor(createdFromUnified)
+			name := accUnified.GetName()
+			_, _, deleteErr := d.unified.Delete(ctx, name, nil, &metav1.DeleteOptions{})
+			if deleteErr != nil {
+				log.Error("CRITICAL: failed to roll back unified create after legacy write failed", "unified_err", deleteErr, "legacy_err", err)
+			}
+			// Return the error that caused the failure.
+			return nil, err
+		}
+
+		// Success, return the authoritative object from the unified store.
+		return createdFromUnified, nil
+	}
+
+	// --- Logic for modes where legacy is the primary read source ---
+
 	// create in legacy first, and then unistore. if unistore fails, but legacy succeeds,
 	// will try to cleanup the object in legacy.
 	createdFromLegacy, err := d.legacy.Create(ctx, in, createValidation, options)
@@ -203,20 +242,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	accCreated.SetResourceVersion("")
 	accCreated.SetUID("")
 
-	// If unified storage is the primary storage, let's just create it in the foreground and return it.
-	if d.readUnified {
-		storageObj, errObjectSt := d.unified.Create(ctx, createdCopy, createValidation, options)
-		if errObjectSt != nil {
-			log.Error("unable to create object in unified storage", "err", errObjectSt)
-			// If we cannot create in unified storage, attempt to clean up legacy.
-			_, _, err = d.legacy.Delete(ctx, accCreated.GetName(), nil, &metav1.DeleteOptions{})
-			if err != nil {
-				log.Error("unable to cleanup object in legacy storage", "err", err)
-			}
-			return nil, errObjectSt
-		}
-		return storageObj, nil
-	} else if d.errorIsOK {
+	if d.errorIsOK {
 		// If we don't use unified as the primary store and errors are okay, let's create it in the background.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
@@ -242,8 +268,33 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 	return createdFromLegacy, nil
 }
-
 func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	log := logging.FromContext(ctx).With("method", "Delete")
+
+	// If unified is the primary read source, delete there first.
+	if d.readUnified {
+		// 1. Delete from the unified store, making it the source of truth.
+		objFromUnified, asyncUnified, err := d.unified.Delete(ctx, name, deleteValidation, options)
+		if err != nil {
+			// If the primary (unified) delete fails, we fail fast.
+			// The caller will handle IsNotFound errors if necessary.
+			return nil, false, err
+		}
+
+		// 2. Sync the delete to the legacy store.
+		_, _, err = d.legacy.Delete(ctx, name, deleteValidation, options)
+		if err != nil && !apierrors.IsNotFound(err) {
+			// If the secondary (legacy) delete fails, we log a critical error but do not fail the operation.
+			// The primary store remains the source of truth, and the object is gone from the user's perspective.
+			log.Error("CRITICAL: failed to delete object from secondary (legacy) storage after unified delete", "err", err)
+		}
+
+		// Success, return the authoritative result from the unified store.
+		return objFromUnified, asyncUnified, nil
+	}
+
+	// --- Logic for modes where legacy is the primary read source ---
+
 	// delete from legacy first, and then unistore. Will return a failure if either fails,
 	// unless its a 404.
 	//
@@ -251,31 +302,27 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
-	if err != nil && (!d.readUnified || !d.errorIsOK && !apierrors.IsNotFound(err)) {
+	if err != nil {
+		// In legacy-read mode, an error from the primary store is always returned.
 		return nil, false, err
 	}
-	// If unified storage is our primary store, just delete it and return
-	if d.readUnified {
-		objFromStorage, asyncStorage, err := d.unified.Delete(ctx, name, deleteValidation, options)
-		if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
-			return nil, false, err
-		}
-		return objFromStorage, asyncStorage, nil
-	} else if d.errorIsOK {
+
+	if d.errorIsOK {
 		// If errors are okay and unified is not primary, we can just run it as background operation.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
 			_, _, err := d.unified.Delete(ctxBg, name, deleteValidation, options)
-			if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
-				log := logging.FromContext(ctxBg).With("method", "Delete")
+			if err != nil && !apierrors.IsNotFound(err) {
 				log.Error("failed background DELETE in unified storage", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
-	}
-	// Otherwise we just run it in the foreground and return an error if any might happen.
-	_, _, err = d.unified.Delete(ctx, name, deleteValidation, options)
-	if err != nil && !apierrors.IsNotFound(err) && !d.errorIsOK {
-		return nil, false, err
+	} else {
+		// Otherwise we just run it in the foreground and return an error if any might happen.
+		_, _, err = d.unified.Delete(ctx, name, deleteValidation, options)
+		if err != nil && !apierrors.IsNotFound(err) {
+			// We don't roll back the legacy delete, but we return the error to the user.
+			return nil, false, err
+		}
 	}
 	return objFromLegacy, asyncLegacy, nil
 }
@@ -284,46 +331,63 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	log := logging.FromContext(ctx).With("method", "Update")
 
-	// update in legacy first, and then unistore. Will return a failure if either fails.
-	//
-	// we want to update in legacy first, otherwise if the update from unistore was successful,
-	// but legacy failed, the user would get a failure, but see the update did apply to the source
-	// of truth, and be less likely to retry to save (and get the stores in sync again)
-
-	legacyInfo := objInfo
-	legacyForceCreate := forceAllowCreate
-	unifiedInfo := objInfo
-	unifiedForceCreate := forceAllowCreate
+	// If unified is the primary read source, update there first.
 	if d.readUnified {
-		legacyInfo = &wrappedUpdateInfo{objInfo}
-		legacyForceCreate = true
-	} else {
-		unifiedInfo = &wrappedUpdateInfo{objInfo}
-		unifiedForceCreate = true
+		// 1. Update in the unified store, making it the source of truth.
+		objFromUnified, createdUnified, err := d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+		if err != nil {
+			log.Error("could not update in primary (unified) storage", "err", err)
+			return nil, false, err
+		}
+
+		// 2. Sync the result to the legacy store.
+		// We use a wrapped UpdateInfo to ensure we don't carry over UID/ResourceVersion,
+		// and we force create to handle cases where the object exists in unified but not legacy.
+		legacyInfo := &wrappedUpdateInfo{
+			objInfo: rest.DefaultUpdatedObjectInfo(objFromUnified),
+		}
+		_, _, err = d.legacy.Update(ctx, name, legacyInfo, createValidation, updateValidation, true, options)
+		if err != nil {
+			// If the secondary (legacy) write fails, we log a critical error but do not roll back.
+			// Rolling back an update is a complex operation. The primary store remains the source of truth,
+			// and a subsequent update can bring the stores back in sync.
+			log.Error("CRITICAL: failed to write object to secondary (legacy) storage after unified update", "err", err)
+		}
+
+		// Success, return the authoritative object from the unified store.
+		return objFromUnified, createdUnified, nil
 	}
 
-	objFromLegacy, createdLegacy, err := d.legacy.Update(ctx, name, legacyInfo, createValidation, updateValidation, legacyForceCreate, options)
+	// --- Logic for modes where legacy is the primary read source ---
+
+	// Update in legacy first, then sync to unified.
+	objFromLegacy, createdLegacy, err := d.legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
-		log.With("object", objFromLegacy).Error("could not update in legacy storage", "err", err)
+		log.Error("could not update in legacy storage", "err", err)
 		return nil, false, err
 	}
 
-	if d.readUnified {
-		return d.unified.Update(ctx, name, unifiedInfo, createValidation, updateValidation, unifiedForceCreate, options)
-	} else if d.errorIsOK {
+	// Prepare the object from the legacy update to be synced to unified.
+	unifiedInfo := &wrappedUpdateInfo{
+		objInfo: rest.DefaultUpdatedObjectInfo(objFromLegacy),
+	}
+	if d.errorIsOK {
 		// If unified is not primary, but errors are okay, we can just run in the background.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()
-			if _, _, err := d.unified.Update(ctxBg, name, unifiedInfo, createValidation, updateValidation, unifiedForceCreate, options); err != nil {
+			if _, _, err := d.unified.Update(ctxBg, name, unifiedInfo, createValidation, updateValidation, true, options); err != nil {
 				log.Error("failed background UPDATE to unified storage", "err", err)
 			}
 		}(context.WithTimeout(context.WithoutCancel(ctx), backgroundReqTimeout))
-		return objFromLegacy, createdLegacy, nil
+	} else {
+		// If we want to check unified errors, run it in the foreground.
+		if _, _, err := d.unified.Update(ctx, name, unifiedInfo, createValidation, updateValidation, true, options); err != nil {
+			// Unlike the create path, we don't roll back the legacy update as that would require
+			// storing the previous state. We return the error to the user.
+			return nil, false, err
+		}
 	}
-	// If we want to check unified errors just run it in foreground.
-	if _, _, err := d.unified.Update(ctx, name, unifiedInfo, createValidation, updateValidation, unifiedForceCreate, options); err != nil {
-		return nil, false, err
-	}
+
 	return objFromLegacy, createdLegacy, nil
 }
 
