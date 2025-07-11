@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'packages/grafana-ui/**'
+      - 'e2e-playwright/storybook/**'
       - '!docs/**'
       - '!*.md'
   push:
@@ -11,6 +12,7 @@ on:
       - main
     paths:
       - 'packages/grafana-ui/**'
+      - 'e2e-playwright/storybook/**'
       - '!docs/**'
       - '!*.md'
 

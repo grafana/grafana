@@ -8,7 +8,7 @@ test.describe(
   },
   () => {
     test('Loads the button story correctly', async ({ page }) => {
-      await page.goto('?path=/story/buttons-button--basic');
+      await page.goto('?path=/story/inputs-button--basic');
       const iframe = page.locator('#storybook-preview-iframe');
       await expect(iframe).toBeVisible();
       const iframeBody = iframe.contentFrame();
