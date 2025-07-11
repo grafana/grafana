@@ -40,7 +40,8 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, n
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store",
 		trace.WithAttributes(
 			attribute.String("namespace", namespace),
-			attribute.String("name", name)),
+			attribute.String("name", name),
+			attribute.Int64("version", version)),
 	)
 	defer span.End()
 
