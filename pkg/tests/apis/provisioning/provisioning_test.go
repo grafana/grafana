@@ -7,13 +7,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
-	gh "github.com/google/go-github/v70/github"
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -178,7 +175,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	}, time.Second*10, time.Millisecond*10, "Expected to be able to start a sync job")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		//helper.TriggerJobProcessing(t)
+		// helper.TriggerJobProcessing(t)
 		result, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{},
 			"jobs", string(jobObj.GetUID()))
 
@@ -216,50 +213,25 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatchHandler(ghmock.GetUser, ghAlwaysWrite(t, &gh.User{Name: gh.Ptr("github-user")})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, ghAlwaysWrite(t, []*gh.Hook{})),
-		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, ghAlwaysWrite(t, &gh.Hook{ID: gh.Ptr(int64(123))})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposByOwnerByRepo, ghAlwaysWrite(t, &gh.Repository{ID: gh.Ptr(int64(234))})),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposBranchesByOwnerByRepoByBranch,
-			ghAlwaysWrite(t, &gh.Branch{
-				Name:   gh.Ptr("main"),
-				Commit: &gh.RepositoryCommit{SHA: gh.Ptr("deadbeef")},
-			}),
-		),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
-			ghHandleTree(t, map[string][]*gh.TreeEntry{
-				"deadbeef": {
-					treeEntryDir("grafana", "subtree"),
-				},
-				"subtree": {
-					treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
-					treeEntryDir("subdir", "subtree2"),
-					treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
-				},
-			})),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposContentsByOwnerByRepoByPath,
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				pathRegex := regexp.MustCompile(`/repos/[^/]+/[^/]+/contents/(.*)`)
-				matches := pathRegex.FindStringSubmatch(r.URL.Path)
-				require.NotNil(t, matches, "no match for contents?")
-				path := matches[1]
+	// FIXME: instead of using an existing GitHub repository, we should create a new one for the tests and a branch
+	// This was the previous structure
+	// ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha,
+	// 	ghHandleTree(t, map[string][]*gh.TreeEntry{
+	// 		"deadbeef": {
+	// 			treeEntryDir("grafana", "subtree"),
+	// 		},
+	// 		"subtree": {
+	// 			treeEntry("dashboard.json", helper.LoadFile("testdata/all-panels.json")),
+	// 			treeEntryDir("subdir", "subtree2"),
+	// 			treeEntry("subdir/dashboard2.yaml", helper.LoadFile("testdata/text-options.json")),
+	// 		},
+	// 	})),
 
-				var err error
-				switch path {
-				case "grafana/dashboard.json":
-					_, err = w.Write(ghmock.MustMarshal(repoContent(path, helper.LoadFile("testdata/all-panels.json"))))
-				case "grafana/subdir/dashboard2.yaml":
-					_, err = w.Write(ghmock.MustMarshal(repoContent(path, helper.LoadFile("testdata/text-options.json"))))
-				default:
-					t.Fatalf("got unexpected path: %s", path)
-				}
-				require.NoError(t, err)
-			}),
-		),
-	)
+	// FIXME: uncomment these to implement webhook integration tests.
+	// helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
+	// 	ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, ghAlwaysWrite(t, []*gh.Hook{})),
+	// 	ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, ghAlwaysWrite(t, &gh.Hook{ID: gh.Ptr(int64(123))})),
+	// )
 
 	const repo = "github-create-test"
 	_, err := helper.Repositories.Resource.Create(ctx,
@@ -284,8 +256,10 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	for _, v := range found.Items {
 		names = append(names, v.GetName())
 	}
-	assert.Contains(t, names, "n1jR8vnnz", "should contain dashboard.json's contents")
-	assert.Contains(t, names, "WZ7AhQiVz", "should contain dashboard2.yaml's contents")
+	require.Len(t, names, 3, "should have three dashboards")
+	assert.Contains(t, names, "adg5vbj", "should contain dashboard.json's contents")
+	assert.Contains(t, names, "admfz74", "should contain dashboard2.yaml's contents")
+	assert.Contains(t, names, "adn5mxb", "should contain dashboard2.yaml's contents")
 
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
