@@ -423,6 +423,7 @@ func (c contactPointsExtension) UpdateStructDescriptor(structDescriptor *jsonite
 		bind := structDescriptor.GetField("Fields")
 		codec := &mapToJSONStringCodec{}
 		bind.Decoder = codec
+		bind.Encoder = codec
 	}
 }
 
@@ -525,4 +526,29 @@ func (d *mapToJSONStringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterato
 	// Allocate a new string and set the pointer.
 	newStr := str
 	*(**string)(ptr) = &newStr
+}
+
+// IsEmpty is used by Encoder to determine if the field is empty.
+func (d *mapToJSONStringCodec) IsEmpty(ptr unsafe.Pointer) bool {
+	strPtr := *(**string)(ptr)
+	return strPtr == nil || *strPtr == ""
+}
+
+// This method is not used in production code, but is required by a test that ensure marshalling and unmarshalling does not change the value.
+func (d *mapToJSONStringCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	strPtr := *(**string)(ptr)
+	if strPtr == nil {
+		stream.WriteNil()
+		return
+	}
+
+	// Validate the string contains valid JSON
+	var raw any
+	if err := json.Unmarshal([]byte(*strPtr), &raw); err != nil {
+		stream.Error = fmt.Errorf("invalid JSON in *string field: %w", err)
+		return
+	}
+
+	// Write the parsed value as native JSON (object, array, etc.)
+	stream.WriteVal(raw)
 }
