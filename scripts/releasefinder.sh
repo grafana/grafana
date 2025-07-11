@@ -75,7 +75,7 @@ declare -a included_tags=()
 
 # Use git branch --contains
 echo "Checking release branches..."
-for branch in $(git branch -r --contains "$COMMIT_HASH" 2>/dev/null | grep -E 'origin/release-[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sed 's/^\s*origin\///'); do
+for branch in $(git branch -r --contains "$COMMIT_HASH" 2>/dev/null | grep -E 'origin/release-[0-9]+\.[0-9]+\.[0-9]+(\+security-[0-9]{2})?$' | sed 's/.*origin\///'); do
     release_branches+=("$branch")
 done
 
