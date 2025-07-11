@@ -1,0 +1,152 @@
+name: Build and Package Grafana Enterprise / Pro
+description: Creates Grafana artifacts using Dagger & `pkg/build/daggerbuild`
+inputs:
+  artifacts:
+    description: |
+      Comma-delimited list of artifacts to build and package.
+      Artifacts follow a specific format of `{package-type}:{grafana-edition}:{architecture}`.
+      Not every combination of `package-type`, `grafana-edition`, and `architecture` are supported.
+      Examples:
+        * `grafana:linux/amd64:targz`, `grafana:linux/amd64:deb`
+        * `enterprise:linux/arm64:rpm, enterprise:linux/amd64:docker`
+        * `pro:docker:llinux/amd64`
+    required: true
+    type: string
+  grafana-path:
+    description: Path to a clone of the 'grafana' repo
+    default: grafana
+    type: string
+  grafana-enterprise-path:
+    description: Path to a clone of the 'grafana-enterprise' repo
+    default: grafana-enterprise
+    type: string
+  github-token:
+    type: string
+    required: true
+  version:
+    type: string
+    description: The version to embed in the grafana binary, example `v1.2.3`. If not provided, then the value in Grafana's package.json will be used
+    required: true
+  build-id:
+    type: string
+    description: an identifier number which can be traced back to the workflow run.
+    default: ${{github.run_id}}
+    required: false
+  patches-repo:
+    type: string
+    description: Repository to load for patches repo. If empty, patches won't be applied. Must be an HTTPS git URL.
+    required: false
+    default: ""
+  patches-ref:
+    type: string
+    description: git ref in the patches repo to check out.
+    required: false
+    default: main
+  patches-path:
+    type: string
+    description: Path in the repository where `.patch` files can be found.
+    required: false
+    default: main
+  checksum:
+    type: boolean
+    description: If true, then checksums will be produced for each file (with a '.sha256' extension)
+    required: false
+    default: false
+  verify:
+    type: boolean
+    description: If true, then the e2e smoke tests will run to verify the produced artifacts (--verify)
+    required: false
+    default: false
+  output:
+    type: string
+    description: Filename to redirect stdout to. Contains list of packages that were produced
+    default: packages.txt
+    required: false
+  docker-tag-format:
+    type: string
+    default: "{{ .version }}-{{ .arch }}"
+    description: Go template of Docker image tag
+    required: false
+  docker-tag-format-ubuntu:
+    type: string
+    default: "{{ .version }}-ubuntu-{{ .arch }}"
+    description: Go template of Docker image tag
+    required: false
+  docker-org:
+    type: string
+    description: Docker org of produced images
+    default: grafana
+    required: false
+  docker-registry:
+    type: string
+    description: Docker registry of produced images
+    default: docker.io
+    required: false
+  ubuntu-base:
+    type: string
+    default: 'ubuntu:22.04'
+    required: false
+  alpine-base:
+    type: string
+    default: 'alpine:3.22'
+    required: false
+outputs:
+  dist-dir:
+    description: Directory where artifacts are placed
+    value: ${{ steps.output.outputs.dist_dir }}
+  file:
+    description: Path to file containing list of artifacts produced
+    value: ${{ steps.output.outputs.file }}
+  grafana-commit:
+    description: Commit hash of the HEAD of the grafana repository used to build grafana.
+    value: ${{ steps.output.outputs.grafana_commit }}
+  enterprise-commit:
+    description: Commit hash of the HEAD of the grafana-enterprise repository used to build grafana.
+    value: ${{ steps.output.outputs.enterprise_commit }}
+  version:
+    description: The `grafana` version that was embedded in the binary
+    value: ${{ steps.output.outputs.version }}
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: | # zizmor: ignore[github-env]
+        echo "GRAFANA_PATH=${{ github.workspace }}/${GRAFANA_DIR}" >> "$GITHUB_ENV"
+        echo "ENTERPRISE_PATH=${{ github.workspace }}/${ENTERPRISE_DIR}" >> "$GITHUB_ENV"
+      env:
+        GB_PATH: ${{ inputs.path }}
+        GRAFANA_DIR: ${{ inputs.grafana-path }}
+        ENTERPRISE_DIR: ${{ inputs.enterprise-path }}
+    - name: Build Grafana Enterprise packages
+      uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
+      env:
+        VERSION: ${{ inputs.version }}
+        ARTIFACTS: ${{ inputs.artifacts }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PATCHES_REPO: ${{ inputs.patches-repo }}
+        PATCHES_REF: ${{ inputs.patches-ref }}
+        PATCHES_PATH: ${{ inputs.patches-path }}
+        BUILD_ID: ${{ inputs.build-id }}
+        OUTFILE: ${{ inputs.output }}
+        DOCKER_ORG: ${{ inputs.docker-org }}
+        DOCKER_REGISTRY: ${{ inputs.docker-registry }}
+        TAG_FORMAT: ${{ inputs.docker-tag-format }}
+        UBUNTU_TAG_FORMAT: ${{ inputs.docker-tag-format-ubuntu }}
+        CHECKSUM: ${{ inputs.checksum }}
+        VERIFY: ${{ inputs.verify }}
+        ALPINE_BASE: ${{ inputs.alpine-base }}
+        UBUNTU_BASE: ${{ inputs.ubuntu-base }}
+      with:
+        verb: run
+        dagger-flags: --verbose=0
+        args: go run -C ${GRAFANA_PATH} ./pkg/build/cmd artifacts --artifacts ${ARTIFACTS} --grafana-dir=${GRAFANA_PATH} --alpine-base=${ALPINE_BASE} --ubuntu-base=${UBUNTU_BASE} --enterprise-dir=${ENTERPRISE_PATH} --version=${VERSION} --patches-repo=${PATCHES_REPO} --patches-ref=${PATCHES_REF} --patches-path=${PATCHES_PATH} --build-id=${BUILD_ID} --tag-format="${TAG_FORMAT}" --ubuntu-tag-format="${UBUNTU_TAG_FORMAT}" --org=${DOCKER_ORG} --registry=${DOCKER_REGISTRY} --checksum=${CHECKSUM} --verify=${VERIFY} > $OUTFILE
+    - id: output
+      shell: bash
+      env:
+        OUTFILE: ${{ inputs.output }}
+      run: |
+        echo "dist_dir=dist" | tee -a $GITHUB_OUTPUT
+        echo "file=${OUTFILE}" | tee -a $GITHUB_OUTPUT
+        echo "grafana_commit=$(git -C ${GRAFANA_PATH} rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
+        echo "enterprise_commit=$(git -C ${ENTERPRISE_PATH} rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
+        echo "version=$(cat ${GRAFANA_BUILD_PATH}/dist/VERSION)" | tee -a $GITHUB_OUTPUT

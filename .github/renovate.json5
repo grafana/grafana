@@ -2,6 +2,15 @@
   extends: ["config:recommended"],
   enabledManagers: ["npm"],
   ignoreDeps: [
+    // ignoring these until we can upgrade to react 19
+    // see epic here: https://github.com/grafana/grafana/issues/98813
+    '@types/react',
+    '@types/react-dom',
+    'eslint-plugin-react-hooks',
+    'react',
+    'react-dom',
+    'react-refresh',
+
     "@types/history", // this can be removed entirely when we upgrade history since v5 exposes types directly
     "history", // we should bump this together with react-router-dom (see https://github.com/grafana/grafana/issues/76744)
     "react-router", // we should bump this together with history and react-router-dom

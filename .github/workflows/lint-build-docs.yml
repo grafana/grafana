@@ -16,10 +16,16 @@ on:
       - 'packages/**/*.md'
       - 'latest.json'
 
+permissions: {}
+
 jobs:
   docs:
     name: Build & Verify Docs
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.11.0'
+          node-version-file: '.nvmrc'
           cache: 'yarn'
 
       - name: Install dependencies
@@ -45,18 +51,18 @@ jobs:
         run: |
           # Create and start a container from the docs-base image in detached mode
           docker run -d --name docs-builder grafana/docs-base:latest tail -f /dev/null
-          
+
           # Create the directory structure inside the container
           docker exec docs-builder mkdir -p /hugo/content/docs/grafana/latest
-          
+
           # Create the _index.md file
           docker exec docs-builder /bin/sh -c "echo -e '---\nredirectURL: /docs/grafana/latest/\ntype: redirect\nversioned: true\n---\n' > /hugo/content/docs/grafana/_index.md"
-          
+
           # Copy the docs sources from the host to the container
           docker cp docs/sources/. docs-builder:/hugo/content/docs/grafana/latest/
-          
+
           # Run the make prod command inside the container
           docker exec -w /hugo docs-builder make prod || echo "Build completed with warnings"
-          
+
           # Clean up the container
           docker rm -f docs-builder

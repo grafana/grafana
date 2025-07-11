@@ -2,7 +2,7 @@ name: "verify-kinds"
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, release-* ]
     paths:
       - '**/*.cue'
 

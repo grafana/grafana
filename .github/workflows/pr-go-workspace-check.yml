@@ -3,7 +3,7 @@ name: "Go Workspace Check"
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches: [main, release-*]
     paths:
       - .github/workflows/pr-go-workspace-check.yml
       - go.mod
