@@ -1,11 +1,12 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
   DataGrid,
+  DataGridHandle,
   DataGridProps,
   RenderCellProps,
   RenderRowProps,
@@ -39,6 +40,7 @@ import {
   useHeaderHeight,
   usePaginatedRows,
   useRowHeight,
+  useScrollbarWidth,
   useSortedRows,
   useTypographyCtx,
 } from './hooks';
@@ -151,9 +153,11 @@ export function TableNG(props: TableNGProps) {
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const gridRef = useRef<DataGridHandle>(null);
+  const scrollbarWidth = useScrollbarWidth(gridRef, height, sortedRows);
   const availableWidth = useMemo(
-    () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
-    [width, hasNestedFrames]
+    () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
+    [width, hasNestedFrames, scrollbarWidth]
   );
   const typographyCtx = useTypographyCtx();
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
@@ -549,6 +553,7 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
+        ref={gridRef}
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
