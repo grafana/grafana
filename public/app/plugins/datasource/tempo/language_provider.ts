@@ -9,6 +9,7 @@ import {
   getTagsByScope,
   getUnscopedTags,
 } from './SearchTraceQLEditor/utils';
+import { DEFAULT_TIME_RANGE_FOR_TAGS } from './configuration/TagsTimeRangeSettings';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import { TempoDatasource } from './datasource';
 import { enumIntrinsics, intrinsicsV1 } from './traceql/traceql';
@@ -37,9 +38,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return res?.data;
   };
 
-  start = async (range?: TimeRange, includeTimeRangeForTags?: boolean) => {
+  start = async (range?: TimeRange, timeRangeForTags?: number) => {
     if (!this.startTask) {
-      this.startTask = this.fetchTags(includeTimeRangeForTags, range).then(() => {
+      this.startTask = this.fetchTags(timeRangeForTags, range).then(() => {
         return [];
       });
     }
@@ -51,17 +52,17 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return this.datasource.instanceSettings.jsonData?.tagLimit || TAGS_LIMIT;
   };
 
-  async fetchTags(includeTimeRangeForTags?: boolean, range?: TimeRange) {
+  async fetchTags(timeRangeForTags?: number, range?: TimeRange) {
     let v1Resp, v2Resp;
 
     try {
       const params: { limit: number; start?: number; end?: number } = {
         limit: this.getTagsLimit(),
       };
-      if (includeTimeRangeForTags && range) {
-        // Get tags from first 15 minutes of the selected range (15 * 60 seconds)
-        params.start = range.from.unix();
-        params.end = range.from.unix() + 900;
+      if (timeRangeForTags && range && timeRangeForTags !== DEFAULT_TIME_RANGE_FOR_TAGS) {
+        const { start, end } = this.getTimeRangeForTags(timeRangeForTags, range);
+        params.start = start;
+        params.end = end;
       }
       v2Resp = await this.request(`/api/v2/search/tags`, params);
     } catch (error) {
@@ -157,7 +158,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   async getOptionsV2(
     tag: string,
     query?: string,
-    includeTimeRangeForTags?: boolean,
+    timeRangeForTags?: number,
     range?: TimeRange
   ): Promise<Array<SelectableValue<string>>> {
     const encodedTag = this.encodeTag(tag);
@@ -169,10 +170,10 @@ export default class TempoLanguageProvider extends LanguageProvider {
       params.q = getTemplateSrv().replace(query, {}, VariableFormatID.Pipe);
     }
 
-    if (includeTimeRangeForTags && range) {
-      // Get values from first 15 minutes of the selected range (15 * 60 seconds)
-      params.start = range.from.unix();
-      params.end = range.from.unix() + 900;
+    if (timeRangeForTags && range && timeRangeForTags !== DEFAULT_TIME_RANGE_FOR_TAGS) {
+      const { start, end } = this.getTimeRangeForTags(timeRangeForTags, range);
+      params.start = start;
+      params.end = end;
     }
 
     const response = await this.request(`/api/v2/search/tag/${encodedTag}/values`, params);
@@ -190,6 +191,16 @@ export default class TempoLanguageProvider extends LanguageProvider {
     }
     return options;
   }
+
+  getTimeRangeForTags = (timeRangeForTags: number, range: TimeRange) => {
+    // Get tags from the last timeRangeForTags seconds, but don't go before the start of the range
+    // If timeRangeForTags is 1 hour and your query range is 24 hours, it will fetch tags from the last 1 hour of that 24-hour period
+    // If timeRangeForTags is larger than the total range duration, it will use the entire available range
+    const start = Math.max(range.from.unix(), range.to.unix() - timeRangeForTags);
+    const end = range.to.unix();
+    console.log('timeRangeForTags', timeRangeForTags, range.to.unix() - range.from.unix(), range.to.unix(), range.from.unix());
+    return { start, end };
+  };
 
   /**
    * Encode (serialize) a given tag for use in a URL.

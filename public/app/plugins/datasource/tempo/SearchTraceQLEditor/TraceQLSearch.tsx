@@ -83,7 +83,7 @@ const TraceQLSearch = ({
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        await datasource.languageProvider.start(range, datasource.includeTimeRangeForTags);
+        await datasource.languageProvider.start(range, datasource.timeRangeForTags);
         setIsTagsLoading(false);
         setAlertText(undefined);
       } catch (error) {
@@ -93,7 +93,7 @@ const TraceQLSearch = ({
       }
     };
     fetchTags();
-  }, [datasource, setAlertText, range, datasource.includeTimeRangeForTags]);
+  }, [datasource, setAlertText, range, datasource.timeRangeForTags]);
 
   useEffect(() => {
     // Initialize state with configured static filters that already have a value from the config
@@ -165,7 +165,7 @@ const TraceQLSearch = ({
                     query={generateQueryWithoutFilter(findFilter(f.id))}
                     addVariablesToOptions={addVariablesToOptions}
                     range={range}
-                    includeTimeRangeForTags={datasource.includeTimeRangeForTags}
+                    timeRangeForTags={datasource.timeRangeForTags}
                   />
                 </InlineSearchField>
               )
@@ -191,7 +191,7 @@ const TraceQLSearch = ({
               allowCustomValue={false}
               addVariablesToOptions={addVariablesToOptions}
               range={range}
-              includeTimeRangeForTags={datasource.includeTimeRangeForTags}
+              timeRangeForTags={datasource.timeRangeForTags}
             />
           </InlineSearchField>
           <InlineSearchField
@@ -254,7 +254,7 @@ const TraceQLSearch = ({
               requireTagAndValue={true}
               addVariablesToOptions={addVariablesToOptions}
               range={range}
-              includeTimeRangeForTags={datasource.includeTimeRangeForTags}
+              timeRangeForTags={datasource.timeRangeForTags}
             />
           </InlineSearchField>
           <AggregateByAlert

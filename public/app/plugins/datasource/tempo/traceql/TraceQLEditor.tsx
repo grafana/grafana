@@ -6,6 +6,7 @@ import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
+import { DEFAULT_TIME_RANGE_FOR_TAGS } from '../configuration/TagsTimeRangeSettings';
 import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
@@ -30,7 +31,7 @@ export function TraceQLEditor(props: Props) {
   const setupAutocompleteFn = useAutocomplete(
     props.datasource,
     setAlertText,
-    props.datasource.includeTimeRangeForTags ?? false,
+    props.datasource.timeRangeForTags ?? DEFAULT_TIME_RANGE_FOR_TAGS,
     props.range
   );
   const theme = useTheme2();
@@ -198,13 +199,13 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
  * Hook that returns function that will set up monaco autocomplete for the label selector
  * @param datasource the Tempo datasource instance
  * @param setAlertText setter for alert's text
- * @param includeTimeRangeForTags enable time range in tags and tag values queries
+ * @param timeRangeForTags time range for tags and tag values queries
  * @param range time range
  */
 function useAutocomplete(
   datasource: TempoDatasource,
   setAlertText: (text?: string) => void,
-  includeTimeRangeForTags: boolean,
+  timeRangeForTags: number,
   range?: TimeRange
 ) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
@@ -215,7 +216,7 @@ function useAutocomplete(
     new CompletionProvider({
       languageProvider: datasource.languageProvider,
       setAlertText,
-      includeTimeRangeForTags,
+      timeRangeForTags,
       range,
     })
   );
@@ -223,7 +224,7 @@ function useAutocomplete(
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        await datasource.languageProvider.start(range, includeTimeRangeForTags);
+        await datasource.languageProvider.start(range, timeRangeForTags);
         setAlertText(undefined);
       } catch (error) {
         if (error instanceof Error) {
@@ -232,7 +233,7 @@ function useAutocomplete(
       }
     };
     fetchTags();
-  }, [datasource, setAlertText, range, includeTimeRangeForTags]);
+  }, [datasource, setAlertText, range, timeRangeForTags]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {

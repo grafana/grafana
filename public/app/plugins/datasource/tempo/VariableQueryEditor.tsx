@@ -40,10 +40,10 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource, range }:
 
   useEffect(() => {
     if (type === TempoVariableQueryType.LabelValues) {
-      const includeTimeRangeForTags = datasource.includeTimeRangeForTags;
+      const timeRangeForTags = datasource.timeRangeForTags;
       setIsLoading(true);
       datasource
-        .labelNamesQuery(includeTimeRangeForTags, range)
+        .labelNamesQuery(timeRangeForTags, range)
         .then((labelNames: Array<{ text: string }>) => {
           setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
           setIsLoading(false);

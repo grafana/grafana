@@ -42,7 +42,7 @@ interface Props {
   requireTagAndValue?: boolean;
   addVariablesToOptions?: boolean;
   range?: TimeRange;
-  includeTimeRangeForTags?: boolean;
+  timeRangeForTags?: number;
 }
 const TagsInput = ({
   updateFilter,
@@ -57,7 +57,7 @@ const TagsInput = ({
   generateQueryWithoutFilter,
   addVariablesToOptions,
   range,
-  includeTimeRangeForTags,
+  timeRangeForTags,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const handleOnAdd = useCallback(
@@ -96,7 +96,7 @@ const TagsInput = ({
             query={generateQueryWithoutFilter(f)}
             addVariablesToOptions={addVariablesToOptions}
             range={range}
-            includeTimeRangeForTags={includeTimeRangeForTags}
+            timeRangeForTags={timeRangeForTags}
           />
           {(validInput(f) || filters.length > 1) && (
             <AccessoryButton

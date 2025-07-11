@@ -25,7 +25,7 @@ type CompletionItem = MinimalCompletionItem & {
 interface Props {
   languageProvider: TempoLanguageProvider;
   setAlertText: (text?: string) => void;
-  includeTimeRangeForTags?: boolean;
+  timeRangeForTags?: number;
   range?: TimeRange;
 }
 
@@ -40,14 +40,14 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   languageProvider: TempoLanguageProvider;
   registerInteractionCommandId: string | null;
   setAlertText: (text?: string) => void;
-  includeTimeRangeForTags?: boolean;
+  timeRangeForTags?: number;
   range?: TimeRange;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
     this.setAlertText = props.setAlertText;
     this.registerInteractionCommandId = null;
-    this.includeTimeRangeForTags = props.includeTimeRangeForTags;
+    this.timeRangeForTags = props.timeRangeForTags;
     this.range = props.range;
   }
 
@@ -400,7 +400,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   private async getTagValues(
     tagName: string,
     query: string,
-    includeTimeRangeForTags?: boolean,
+    timeRangeForTags?: number,
     range?: TimeRange
   ): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
@@ -409,7 +409,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     if (this.cachedValues.hasOwnProperty(cacheKey)) {
       tagValues = this.cachedValues[cacheKey];
     } else {
-      tagValues = await this.languageProvider.getOptionsV2(tagName, query, includeTimeRangeForTags, range);
+      tagValues = await this.languageProvider.getOptionsV2(tagName, query, timeRangeForTags, range);
       this.cachedValues[cacheKey] = tagValues;
     }
     return tagValues;
@@ -475,7 +475,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           tagValues = await this.getTagValues(
             situation.tagName,
             situation.query,
-            this.includeTimeRangeForTags,
+            this.timeRangeForTags,
             this.range
           );
           setAlertText(undefined);

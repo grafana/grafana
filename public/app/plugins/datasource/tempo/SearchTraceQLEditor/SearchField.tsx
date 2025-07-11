@@ -31,7 +31,7 @@ interface Props {
   allowCustomValue?: boolean;
   addVariablesToOptions?: boolean;
   range?: TimeRange;
-  includeTimeRangeForTags?: boolean;
+  timeRangeForTags?: number;
 }
 const SearchField = ({
   filter,
@@ -48,7 +48,7 @@ const SearchField = ({
   isMulti = true,
   allowCustomValue = true,
   range,
-  includeTimeRangeForTags,
+  timeRangeForTags,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [alertText, setAlertText] = useState<string>();
@@ -62,7 +62,7 @@ const SearchField = ({
   const updateOptions = async () => {
     try {
       const result = filter.tag
-        ? await datasource.languageProvider.getOptionsV2(scopedTag, query, includeTimeRangeForTags, range)
+        ? await datasource.languageProvider.getOptionsV2(scopedTag, query, timeRangeForTags, range)
         : [];
       setAlertText(undefined);
       setError(null);
