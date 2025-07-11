@@ -229,6 +229,10 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs/${queryArg.uid}` }),
         providesTags: ['Repository'],
       }),
+      getRepositoryRefs: build.query<GetRepositoryRefsApiResponse, GetRepositoryRefsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/refs` }),
+        providesTags: ['Repository'],
+      }),
       getRepositoryRenderWithPath: build.query<
         GetRepositoryRenderWithPathApiResponse,
         GetRepositoryRenderWithPathApiArg
@@ -589,6 +593,18 @@ export type GetRepositoryJobsWithPathApiArg = {
   name: string;
   /** Original Job UID */
   uid: string;
+};
+export type GetRepositoryRefsApiResponse = /** status 200 OK */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: any;
+};
+export type GetRepositoryRefsApiArg = {
+  /** name of the RefList */
+  name: string;
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
@@ -1222,6 +1238,7 @@ export const {
   useGetRepositoryJobsQuery,
   useCreateRepositoryJobsMutation,
   useGetRepositoryJobsWithPathQuery,
+  useGetRepositoryRefsQuery,
   useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,

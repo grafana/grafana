@@ -1190,6 +1190,97 @@ func TestGitRepository_Delete(t *testing.T) {
 	}
 }
 
+func TestGitRepository_ListRefs(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupMock func(*mocks.FakeClient)
+		gitConfig RepositoryConfig
+		wantError bool
+		wantRefs  []provisioning.RefItem
+		errorType error
+	}{
+		{
+			name: "success - list refs",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{
+						Name: "refs/heads/main",
+						Hash: hash.MustFromHex("abcdef1234567890abcdef1234567890abcdef12"),
+					},
+					{
+						Name: "refs/heads/feature",
+						Hash: hash.MustFromHex("1234567890abcdef1234567890abcdef12345678"),
+					},
+					{
+						Name: "refs/tags/v1.0.0",
+						Hash: hash.MustFromHex("deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
+					},
+				}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantError: false,
+			wantRefs: []provisioning.RefItem{
+				{
+					Name: "main",
+					Hash: "abcdef1234567890abcdef1234567890abcdef12",
+				},
+				{
+					Name: "feature",
+					Hash: "1234567890abcdef1234567890abcdef12345678",
+				},
+			},
+		},
+		{
+			name: "failure - list refs error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, errors.New("list refs failed"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantError: true,
+			errorType: errors.New("list refs failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			tt.setupMock(mockClient)
+
+			gitRepo := &gitRepository{
+				client:    mockClient,
+				gitConfig: tt.gitConfig,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			refs, err := gitRepo.ListRefs(context.Background())
+
+			if tt.wantError {
+				require.Error(t, err)
+				if tt.errorType != nil {
+					require.Contains(t, err.Error(), tt.errorType.Error())
+				}
+				require.Nil(t, refs)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, refs)
+				require.Equal(t, len(tt.wantRefs), len(refs))
+				for i, wantRef := range tt.wantRefs {
+					require.Equal(t, wantRef.Name, refs[i].Name)
+					require.Equal(t, wantRef.Hash, refs[i].Hash)
+				}
+			}
+		})
+	}
+}
+
 func TestGitRepository_LatestRef(t *testing.T) {
 	tests := []struct {
 		name      string
