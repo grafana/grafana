@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -70,7 +73,10 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	// Initialize access client + access control
 	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
-	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+	accessClient := accesscontrol.NewLegacyAccessClient(accessControl, accesscontrol.ResourceAuthorizerOptions{
+		Resource: "securevalues",
+		Attr:     "uid",
+	})
 
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
@@ -112,13 +118,22 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	decryptStorage, err := metadata.ProvideDecryptStorage(features, tracer, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, nil)
 	require.NoError(t, err)
 
-	return Sut{SecureValueService: secureValueService, SecureValueMetadataStorage: secureValueMetadataStorage, Database: database, DecryptStorage: decryptStorage}
+	decryptService := decrypt.ProvideDecryptService(decryptStorage)
+
+	return Sut{
+		SecureValueService:         secureValueService,
+		SecureValueMetadataStorage: secureValueMetadataStorage,
+		Database:                   database,
+		DecryptStorage:             decryptStorage,
+		DecryptService:             decryptService,
+	}
 }
 
 type Sut struct {
 	SecureValueService         *service.SecureValueService
 	SecureValueMetadataStorage contracts.SecureValueMetadataStorage
 	DecryptStorage             contracts.DecryptStorage
+	DecryptService             service.DecryptService
 	Database                   *database.Database
 }
 
@@ -142,6 +157,7 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 			Spec: secretv0alpha1.SecureValueSpec{
 				Description: "desc1",
 				Value:       secretv0alpha1.NewExposedSecureValue("v1"),
+				Decrypters:  []string{"decrypter1"},
 			},
 			Status: secretv0alpha1.SecureValueStatus{},
 		},
@@ -150,7 +166,7 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 		opt(&cfg)
 	}
 
-	createdSv, err := s.SecureValueService.Create(ctx, cfg.Sv, "actor")
+	createdSv, err := s.SecureValueService.Create(ctx, cfg.Sv, "actor-uid")
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +174,7 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 }
 
 func (s *Sut) UpdateSv(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor")
+	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor-uid")
 	return newSv, err
 }
 
@@ -177,4 +193,32 @@ func newKeeperServiceWrapper(keeper contracts.Keeper) *keeperServiceWrapper {
 
 func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
 	return wrapper.keeper, nil
+}
+
+func CreateUserAuthContext(ctx context.Context, namespace string, permissions map[string][]string) context.Context {
+	orgID := int64(1)
+	requester := &identity.StaticRequester{
+		Namespace: namespace,
+		Type:      types.TypeUser,
+		UserID:    1,
+		OrgID:     orgID,
+		Permissions: map[int64]map[string][]string{
+			orgID: permissions,
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
+}
+
+func CreateServiceAuthContext(ctx context.Context, serviceIdentity string, permissions []string) context.Context {
+	requester := &identity.StaticRequester{
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				Permissions:     permissions,
+				ServiceIdentity: serviceIdentity,
+			},
+		},
+	}
+
+	return types.WithAuthInfo(ctx, requester)
 }
