@@ -1542,6 +1542,7 @@
         "name": "jaegerBackendMigration",
         "resourceVersion": "1751465665226",
         "creationTimestamp": "2024-11-15T14:40:20Z",
+        "deletionTimestamp": "2025-07-07T14:12:35Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-07-02 14:14:25.226989 +0000 UTC"
         }
@@ -2048,7 +2049,8 @@
       "metadata": {
         "name": "nanoGit",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-17T17:07:30Z"
+        "creationTimestamp": "2025-06-17T17:07:30Z",
+        "deletionTimestamp": "2025-07-09T11:53:17Z"
       },
       "spec": {
         "description": "Use experimental git library for provisioning",
