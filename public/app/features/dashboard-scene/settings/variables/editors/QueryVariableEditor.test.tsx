@@ -123,11 +123,8 @@ describe('QueryVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
     );
 
-    const staticOptionsRow = renderer.getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsRow
-    );
-    const staticOptionsOrderDropdown = renderer.getByTestId(
-      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsOrderDropdown
+    const staticOptionsToggle = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
     );
 
     expect(dataSourcePicker).toBeInTheDocument();
@@ -148,8 +145,7 @@ describe('QueryVariableEditor', () => {
     expect(includeAllSwitch).toBeChecked();
     expect(allValueInput).toBeInTheDocument();
     expect(allValueInput).toHaveValue('custom all value');
-    expect(staticOptionsRow).toBeInTheDocument();
-    expect(staticOptionsOrderDropdown).toBeInTheDocument();
+    expect(staticOptionsToggle).toBeInTheDocument();
   });
 
   it('should update the variable with default query for the selected DS', async () => {
@@ -380,6 +376,12 @@ describe('QueryVariableEditor', () => {
 
     // Initially no static options
     expect(variable.state.staticOptions).toBeUndefined();
+
+    // First enable static options
+    const staticOptionsToggle = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
+    );
+    await userEvent.click(staticOptionsToggle);
 
     // Add first static option
     const addButton = getByTestId(
