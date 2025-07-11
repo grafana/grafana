@@ -148,8 +148,8 @@ func TestNamespaceMatching(t *testing.T) {
 			if tt.expectError {
 				require.Error(t, checkErr, "Check should return error")
 				require.Error(t, compileErr, "Compile should return error")
-				assert.ErrorIs(t, checkErr, authlib.ErrNamespaceMissmatch, "Check should return namespace mismatch error")
-				assert.ErrorIs(t, compileErr, authlib.ErrNamespaceMissmatch, "Compile should return namespace mismatch error")
+				assert.ErrorIs(t, checkErr, authlib.ErrNamespaceMismatch, "Check should return namespace mismatch error")
+				assert.ErrorIs(t, compileErr, authlib.ErrNamespaceMismatch, "Compile should return namespace mismatch error")
 			} else {
 				assert.NoError(t, checkErr, "Check should not return error when namespaces match")
 				assert.NoError(t, compileErr, "Compile should not return error when namespaces match")
