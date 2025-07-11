@@ -3143,6 +3143,16 @@
       "info-box-content-2": "Checkout the <2>Annotations documentation</2> for more information.",
       "title": "There are no custom annotation queries added yet"
     },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "When this field is defined, the annotation will be treated as a range",
+        "results-split-on-comma": "The results will be split on comma (,)"
+      },
+      "placeholder": {
+        "text-or-the-first-field": "{{defaultField}}, or the first text field",
+        "time-or-the-first-field": "{{defaultField}}, or the first time field"
+      }
+    },
     "standard-annotation-query-editor": {
       "events-found": "{{numEvents}} events (from {{numFields}} fields)",
       "no-events-found": "No events found",
@@ -4676,6 +4686,18 @@
         "transform-data": "Transform data"
       }
     },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Do not send annotation data to the following panels",
+        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
+        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
+      },
+      "label": {
+        "all-panels": "All panels",
+        "all-panels-except": "All panels except",
+        "selected-panels": "Selected panels"
+      }
+    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5581,6 +5603,40 @@
         "row-height-options": "Row height options"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly",
+        "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
+        "group": "Add keys to group by on the fly",
+        "hidden-constant-variable": "A hidden constant variable, useful for metric prefixes in dashboards you want to share",
+        "users-enter-arbitrary-strings-textbox": "Users can enter any arbitrary strings in a textbox",
+        "values-are-static-and-defined-manually": "Values are static and defined manually",
+        "values-fetched-source-query": "Values are fetched from a data source query",
+        "values-timespans": "Values are timespans, ex 1m, 1h, 1d"
+      },
+      "name": {
+        "ad-hoc-filters": "Ad hoc filters",
+        "constant": "Constant",
+        "custom": "Custom",
+        "data-source": "Data source",
+        "group-by": "Group by",
+        "interval": "Interval",
+        "query": "Query",
+        "textbox": "Textbox"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Do not send annotation data to the following panels",
+        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
+        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
+      },
+      "label": {
+        "all-panels": "All panels",
+        "all-panels-except": "All panels except",
+        "selected-panels": "Selected panels"
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5814,7 +5870,8 @@
       "label-folder": "Folder",
       "render-footer": {
         "title-failed-to-save-dashboard": "Failed to save dashboard"
-      }
+      },
+      "required": "Required"
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -8022,6 +8079,7 @@
     },
     "tags-input": {
       "add": "Add",
+      "placeholder-new-tag": "New tag (enter key to add)",
       "remove": "Remove tag: {{name}}"
     },
     "time-sync-button": {
@@ -8968,6 +9026,12 @@
       "text": {
         "import-dashboard": "Import dashboard"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "Name is required",
+      "message-reserved-name": "This is a reserved name and cannot be used for a folder.",
+      "message-same-name": "A dashboard or a folder with the same name already exists",
+      "message-same-name-general": "A folder or dashboard in the general folder with the same name already exists"
     }
   },
   "metric-select": {
