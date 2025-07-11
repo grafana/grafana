@@ -52,12 +52,7 @@ export function useSaveDashboard(isCopy = false) {
     ) => {
       {
         let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
-
-        console.log({ saveModel });
-
         saveModel = applyChrononVariablesToTargets(saveModel);
-
-        console.log({ change: saveModel });
 
         if (options.saveAsCopy) {
           saveModel = scene.getSaveAsModel({

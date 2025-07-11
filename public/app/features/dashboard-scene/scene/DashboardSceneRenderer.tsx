@@ -79,17 +79,13 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
-  const isViewing = window.parent.location.pathname.split('/').pop() === 'view';
-  console.log({ isViewing });
-  console.log(editPanel);
-
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <DashboardEditPaneSplitter
           dashboard={model}
-          isEditing={!isViewing}
+          isEditing={isEditing}
           controls={controls && <controls.Component model={controls} />}
           body={renderBody()}
         />
