@@ -324,7 +324,16 @@ export function TableNG(props: TableNGProps) {
             colors = {};
           }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors, maxWrappedLines);
+          const cellStyle = getCellStyles(
+            theme,
+            field,
+            _rowHeight,
+            shouldWrap,
+            shouldOverflow,
+            withTooltip,
+            colors,
+            maxWrappedLines
+          );
 
           return (
             <Cell
@@ -833,7 +842,7 @@ const getCellStyles = (
   shouldOverflow: boolean,
   hasTooltip: boolean,
   colors: CellColors,
-  maxWrappedLines?: number,
+  maxWrappedLines?: number
 ) => {
   return {
     cell: css({
