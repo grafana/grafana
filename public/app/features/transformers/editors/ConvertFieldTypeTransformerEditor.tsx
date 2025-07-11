@@ -19,6 +19,8 @@ import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
 import { findField } from 'app/features/dimensions/utils';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/convertFieldType.svg';
+import lightImage from '../images/light/convertFieldType.svg';
 import { getTimezoneOptions } from '../utils';
 
 import { EnumMappingEditor } from './EnumMappingEditor';
@@ -280,4 +282,6 @@ export const getConvertFieldTypeTransformRegistryItem: () => TransformerRegistry
     categories: new Set([TransformerCategory.Reformat]),
     help: getTransformationContent(DataTransformerID.convertFieldType).helperDocs,
     tags: new Set([t('transformers.convert-field-type-transformer-editor.tags.format-field', 'Format field')]),
+    imageDark: darkImage,
+    imageLight: lightImage,
   });
