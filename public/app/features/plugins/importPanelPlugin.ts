@@ -1,4 +1,4 @@
-import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
+import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import config from 'app/core/config';
 
 import { pluginImporter } from './importer/pluginImporter';
@@ -35,11 +35,11 @@ export function getPanelPluginMeta(id: string): PanelPluginMeta {
     // Check alias values before failing
     for (const p of Object.values(config.panels)) {
       if (p.aliasIDs?.includes(id)) {
-        return { ...p, type: PluginType.panel };
+        return p;
       }
     }
   }
-  return { ...v, type: PluginType.panel };
+  return v;
 }
 
 export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelPlugin> {
