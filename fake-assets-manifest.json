@@ -15,12 +15,6 @@
       "assets": {
         "css": ["public/build/grafana.light.css"]
       }
-    },
-    "swagger": {
-      "assets": {
-        "js": ["public/build/swagger.js"],
-        "css": ["public/build/grafana.swagger.css"]
-      }
     }
   }
 }
