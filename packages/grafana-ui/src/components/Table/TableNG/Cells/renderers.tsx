@@ -109,7 +109,7 @@ export function getCellRenderer(field: Field, cellOptions: TableCellOptions): Ta
   if (cellType === TableCellDisplayMode.Auto) {
     return getAutoRendererResult(field);
   }
-  return CELL_RENDERERS[cellType];
+  return CELL_RENDERERS[cellType] ?? AUTO_RENDERER;
 }
 
 /** @internal */

@@ -37,39 +37,6 @@ jest.mock('@grafana/runtime', () => {
         ...original.config.featureToggles,
         dashboardNewLayouts: false, // Default value
       },
-
-      bootData: {
-        ...original.config.bootData,
-        settings: {
-          ...original.config.bootData.settings,
-          datasources: {
-            'gdev-testdata': {
-              id: 7,
-              uid: 'abc',
-              type: 'grafana-testdata-datasource',
-              name: 'gdev-testdata',
-              meta: {
-                id: 'grafana-testdata-datasource',
-                type: 'datasource',
-                name: 'TestData',
-                aliasIDs: ['testdata'],
-              },
-            },
-            '-- Grafana --': {
-              id: -1,
-              uid: 'grafana',
-              type: 'datasource',
-              name: '-- Grafana --',
-              meta: {
-                id: 'grafana',
-                type: 'datasource',
-                name: '-- Grafana --',
-              },
-            },
-          },
-          defaultDatasource: 'gdev-testdata',
-        },
-      },
     },
   };
 });
@@ -1621,11 +1588,9 @@ const v2ProvisionedDashboardResource = {
             kind: 'AnnotationQuery',
             spec: {
               builtIn: true,
-              query: {
-                kind: 'DataQuery',
-                group: 'grafana',
-                spec: {},
-                version: 'v0',
+              datasource: {
+                type: 'grafana',
+                uid: '-- Grafana --',
               },
               enable: true,
               hide: true,
@@ -1648,14 +1613,13 @@ const v2ProvisionedDashboardResource = {
                     {
                       kind: 'PanelQuery',
                       spec: {
+                        datasource: {
+                          type: 'grafana-testdata-datasource',
+                          uid: 'PD8C576611E62080A',
+                        },
                         hidden: false,
                         query: {
-                          kind: 'DataQuery',
-                          group: 'grafana-testdata-datasource',
-                          version: 'v0',
-                          datasource: {
-                            name: 'PD8C576611E62080A',
-                          },
+                          kind: 'grafana-testdata-datasource',
                           spec: {
                             scenarioId: 'random_walk',
                             seriesCount: 2,

@@ -516,6 +516,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Редактировать YAML",
@@ -1517,15 +1520,12 @@
     "group-details": {
       "ds-features-error": "Ошибка при загрузке сведений об источнике данных",
       "edit": "Редактировать",
-      "evaluations-to-fire": "Циклы оценки для отправки оповещений",
       "export": "Экспорт",
       "folder": "Папка",
       "group-loading-error": "Ошибка при загрузке группы",
       "interval": "Интервал",
       "namespace": "Пространство имен",
-      "pending-period": "Период ожидания",
-      "recording": "Запись",
-      "rule-name": "Имя правила"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Ошибка при загрузке сведений об источнике данных",
@@ -2255,6 +2255,9 @@
         "label-export-all": "Экспортировать всё"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Не удалось загрузить редактор запросов. Причина: {{errorMessage}}"
     },
@@ -2676,6 +2679,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Не удается найти нужный источник данных? Некоторые источники данных не поддерживаются для функции оповещения. Нажмите значок для получения подробной информации."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Добавить новый обработчик оповещений Alertmanager",
       "builtin-alertmanager": "Встроенный обработчик оповещений Alertmanager",
@@ -2910,6 +2918,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} назад)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3573,11 +3586,11 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
-      "error-invalid-folder-name": "Недопустимое имя папки",
       "error-required": "Требуется имя папки",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
       "label-folder-name": "Имя папки",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Создан запрос на включение изменений",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
@@ -5695,6 +5708,20 @@
       "usage-count_few": "Используется на {{count}} дашбордах",
       "usage-count_many": "Используется на {{count}} дашбордах",
       "usage-count_other": "Используется на {{count}} дашбордах"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Дашборд с таким названием уже существует в выбранной папке. Все равно сохранить дашборд?",
@@ -8026,6 +8053,9 @@
       "filter-popup-match-case": "С учетом регистра",
       "inspect-drawer-title": "Проверить значение",
       "inspect-menu-label": "Проверить значение",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}"
     },
@@ -8770,6 +8800,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8782,6 +8813,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8884,6 +8916,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9142,6 +9179,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Дашборд уже подготовлен в облачном экземпляре и управляется Grafana. Рекомендуем в будущем использовать подготовленный дашборд. Если вы всё же хотите скопировать дашборд в облачный экземпляр, измените его идентификатор в JSON-файле, сохраните новый снимок и загрузите его снова.",
         "datasource-already-managed": "Источник данных уже подготовлен в облачном экземпляре и управляется Grafana. Если это другой ресурс, установите другой UID и повторите попытку.",
         "datasource-invalid-url": "Существует источник данных с недопустимым URL-адресом. Укажите действительный URL-адрес и повторите попытку.",
@@ -10377,10 +10416,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12590,6 +12627,7 @@
         "transform": "Преобразовать"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "Статистика",
       "label-time-field": "Поле времени",

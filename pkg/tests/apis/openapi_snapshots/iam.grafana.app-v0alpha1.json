@@ -3527,11 +3527,16 @@
         "type": "object",
         "required": [
           "title",
+          "description",
           "version",
           "group",
           "permissions"
         ],
         "properties": {
+          "description": {
+            "type": "string",
+            "default": ""
+          },
           "group": {
             "type": "string",
             "default": ""
@@ -3840,11 +3845,16 @@
         "type": "object",
         "required": [
           "title",
+          "description",
           "version",
           "group",
           "permissions"
         ],
         "properties": {
+          "description": {
+            "type": "string",
+            "default": ""
+          },
           "group": {
             "type": "string",
             "default": ""
@@ -4327,11 +4337,16 @@
         "type": "object",
         "required": [
           "title",
+          "description",
           "version",
           "group",
           "permissions"
         ],
         "properties": {
+          "description": {
+            "type": "string",
+            "default": ""
+          },
           "group": {
             "type": "string",
             "default": ""
