@@ -6,8 +6,8 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"go.opentelemetry.io/otel/attribute"
@@ -41,7 +41,7 @@ func ProvideSecureValueService(
 	}
 }
 
-func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Create", trace.WithAttributes(
 		attribute.String("name", sv.GetName()),
 		attribute.String("namespace", sv.GetNamespace()),
@@ -51,7 +51,7 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv0alpha1.Secu
 	return s.createNewVersion(ctx, sv, actorUID)
 }
 
-func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, bool, error) {
+func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Update", trace.WithAttributes(
 		attribute.String("name", newSecureValue.GetName()),
 		attribute.String("namespace", newSecureValue.GetNamespace()),
@@ -59,7 +59,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 	))
 	defer span.End()
 
-	if newSecureValue.Spec.Value == "" {
+	if newSecureValue.Spec.Value == nil {
 		decrypted, err := s.secureValueMetadataStorage.ReadForDecrypt(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name)
 		if err != nil {
 			return nil, false, fmt.Errorf("reading secure value secret: %+w", err)
@@ -82,7 +82,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 			return nil, false, fmt.Errorf("reading secret value from keeper: %w", err)
 		}
 
-		newSecureValue.Spec.Value = secret
+		newSecureValue.Spec.Value = &secret
 	}
 
 	const updateIsSync = true
@@ -90,12 +90,12 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 	return createdSv, updateIsSync, err
 }
 
-func (s *SecureValueService) createNewVersion(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+func (s *SecureValueService) createNewVersion(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
 	createdSv, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
 	if err != nil {
 		return nil, fmt.Errorf("creating secure value: %w", err)
 	}
-	createdSv.Status = secretv0alpha1.SecureValueStatus{
+	createdSv.Status = secretv1beta1.SecureValueStatus{
 		Version: createdSv.Status.Version,
 	}
 
@@ -135,7 +135,7 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, sv *secretv0a
 	return createdSv, nil
 }
 
-func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Read", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
@@ -145,7 +145,7 @@ func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace
 	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: false})
 }
 
-func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (*secretv0alpha1.SecureValueList, error) {
+func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.List", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 	))
@@ -157,8 +157,8 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 	}
 
 	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
-		Group:     secretv0alpha1.GROUP,
-		Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
+		Group:     secretv1beta1.APIGroup,
+		Resource:  secretv1beta1.SecureValuesResourceInfo.GetName(),
 		Namespace: namespace.String(),
 		Verb:      utils.VerbGet, // Why not VerbList?
 	})
@@ -171,7 +171,7 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		return nil, fmt.Errorf("fetching secure values from storage: %+w", err)
 	}
 
-	out := make([]secretv0alpha1.SecureValue, 0)
+	out := make([]secretv1beta1.SecureValue, 0)
 
 	for _, metadata := range secureValuesMetadata {
 		// Check whether the user has permission to access this specific SecureValue in the namespace.
@@ -182,12 +182,12 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		out = append(out, metadata)
 	}
 
-	return &secretv0alpha1.SecureValueList{
+	return &secretv1beta1.SecureValueList{
 		Items: out,
 	}, nil
 }
 
-func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Delete", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
