@@ -16,6 +16,13 @@ user: {
 
 	versions: {
 		"v0alpha1": {
+			validation: {
+				operations: [
+					"CREATE",
+					"UPDATE",
+				]
+			}
+
 			schema: {
 				spec: v0alpha1.UserSpec
 			}
