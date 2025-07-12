@@ -13,6 +13,7 @@ import { InsertNullsEditor } from '../timeseries/InsertNullsEditor';
 import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
 import { NullEditorSettings } from '../timeseries/config';
 
+import { StateSelector } from './StateSelector';
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
 import { defaultFieldConfig, defaultOptions, FieldConfig, Options } from './panelcfg.gen';
@@ -152,6 +153,15 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           step: 1,
           integer: true,
         },
+      })
+      .addCustomEditor({
+        id: 'selectedStates',
+        path: 'selectedStates',
+        name: t('state-timeline.name-selected-states', 'Filter'),
+        description: t('state-timeline.description-selected-states', 'States to display. Leave empty to show all.'),
+        category,
+        editor: StateSelector,
+        defaultValue: defaultOptions.selectedStates,
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
