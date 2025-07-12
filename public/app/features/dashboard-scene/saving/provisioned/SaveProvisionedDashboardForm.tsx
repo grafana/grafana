@@ -120,6 +120,8 @@ export function SaveProvisionedDashboardForm({
       ref = loadedFromRef;
     }
 
+    const message = comment || `Save dashboard: ${dashboard.state.title}`;
+
     const body = dashboard.getSaveResource({
       isNew,
       title,
@@ -130,7 +132,7 @@ export function SaveProvisionedDashboardForm({
       ref,
       name: repo,
       path,
-      message: comment,
+      message,
       body,
     });
   };
