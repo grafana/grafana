@@ -29,6 +29,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -164,6 +165,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     setValue('content', newValue);
   };
 
+  const handleTemplateGenerated = (template: string) => {
+    setValue('content', template);
+  };
+
   return (
     <>
       <FormProvider {...formApi}>
@@ -274,6 +279,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                       <Trans i18nKey="alerting.templates.editor.add-example">Add example</Trans>
                                     </Button>
                                   </Dropdown>
+                                )}
+                                {/* GenAI button – only available for Grafana Alertmanager and enterprise */}
+                                {isGrafanaAlertManager && AITemplateButtonComponent && (
+                                  <AITemplateButtonComponent
+                                    onTemplateGenerated={handleTemplateGenerated}
+                                    disabled={isProvisioned}
+                                  />
                                 )}
                                 <Button
                                   icon="question-circle"

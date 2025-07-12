@@ -6,7 +6,7 @@ import { llm } from '@grafana/llm';
 import { createMonitoringLogger } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { isLLMPluginEnabled, DEFAULT_LLM_MODEL } from './utils';
+import { DEFAULT_LLM_MODEL, isLLMPluginEnabled } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
@@ -80,10 +80,7 @@ export function useLLMStream({ model, temperature, onResponse }: Options = defau
     }
   }, [messages]);
 
-  const { error: enabledError, value: enabled } = useAsync(
-    async () => await isLLMPluginEnabled(),
-    [isLLMPluginEnabled]
-  );
+  const { error: enabledError, value: enabled } = useAsync(() => isLLMPluginEnabled());
 
   const { error: asyncError, value } = useAsync(async () => {
     if (!enabled || !messages.length) {

@@ -25,6 +25,7 @@ import {
 
 import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEventsReached } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
+import { AITriageButtonComponent } from '../../../enterprise-components/AI/AIGenTriageButton/addAITriageButton';
 import { usePagination } from '../../../hooks/usePagination';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
@@ -93,7 +94,7 @@ export const HistoryEventsList = ({
   }
 
   return (
-    <>
+    <Stack direction="column" gap={0.5}>
       {maximumEventsReached && (
         <Alert
           severity="warning"
@@ -107,7 +108,7 @@ export const HistoryEventsList = ({
       )}
       <LoadingIndicator visible={isLoading} />
       <HistoryLogEvents logRecords={historyRecords} addFilter={addFilter} timeRange={timeRange} />
-    </>
+    </Stack>
   );
 };
 
@@ -124,9 +125,18 @@ interface HistoryLogEventsProps {
 }
 function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEventsProps) {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(logRecords, 1, PAGE_SIZE);
+  const styles = useStyles2(getStyles);
+
   return (
     <Stack direction="column" gap={0}>
-      <ListHeader />
+      <div className={styles.headerContainer}>
+        <ListHeader />
+        {AITriageButtonComponent && (
+          <div className={styles.triageButtonContainer}>
+            <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
+          </div>
+        )}
+      </div>
       <ul>
         {pageItems.map((record) => {
           return (
@@ -483,7 +493,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     headerWrapper: css({
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      // Remove border since it's now on headerContainer
     }),
     mainHeader: css({
       display: 'flex',
@@ -493,6 +503,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginLeft: '30px',
       padding: `${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0`,
       gap: theme.spacing(0.5),
+    }),
+    headerContainer: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    }),
+    triageButtonContainer: css({
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+    }),
+    triageButton: css({
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 };
