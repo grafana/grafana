@@ -1,10 +1,31 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { dateTimeParse, systemDateFormats, TimeRange } from '@grafana/data';
+import { dateTimeParse, FeatureToggles, systemDateFormats, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import * as commonFormatModule from '../commonFormat';
+
 import { TimeRangeContent } from './TimeRangeContent';
+
+// If this flag is deleted, this mock also should be, and the additional tests for when
+// the flag was disabled.
+type LocaleFormatPreferenceType = FeatureToggles['localeFormatPreference'];
+jest.mock('../commonFormat', () => {
+  const format = 'YYYY-MM-DD HH:mm:ss' as const;
+  const moduleObject = {
+    __esModule: true,
+    commonFormat: format as undefined | 'YYYY-MM-DD HH:mm:ss',
+    mockSetCommonFormat,
+  };
+  function mockSetCommonFormat(enabled: LocaleFormatPreferenceType = true) {
+    moduleObject.commonFormat = enabled ? format : undefined;
+  }
+  return moduleObject;
+});
+// @ts-expect-error mockSetCommonFormat doesn't exist on the export type of commonFormat,
+// but it's added above in the mock.
+const mockSetCommonFormat: (enabled: LocaleFormatPreferenceType) => void = commonFormatModule.mockSetCommonFormat;
 
 const mockClipboard = {
   writeText: jest.fn(),
@@ -24,6 +45,10 @@ const customRawTimeRange = {
   from: '2023-06-17 00:00:00',
   to: '2023-06-19 23:59:00',
 };
+
+beforeEach(() => {
+  mockSetCommonFormat(true);
+});
 
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
   return {
@@ -100,7 +125,7 @@ describe('TimeRangeForm', () => {
       systemDateFormats.fullDate = originalFullDate;
     });
 
-    it('should parse UTC iso strings and render in current timezone', () => {
+    it('should parse UTC iso strings and render them in the common format and current timezone', () => {
       const { getByLabelText } = setup(
         {
           from: defaultTimeRange.from,
@@ -113,8 +138,32 @@ describe('TimeRangeForm', () => {
         'America/New_York'
       );
 
-      expect(getByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
-      expect(getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+      expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
+      expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+    });
+
+    // Remove this test once localeFormatPreference is permanently on
+    describe('when the localeFormatPreference feature toggle is off', () => {
+      beforeEach(() => {
+        mockSetCommonFormat(false);
+      });
+
+      it('should parse UTC ISO strings and render them in the system format', () => {
+        const { getByLabelText } = setup(
+          {
+            from: defaultTimeRange.from,
+            to: defaultTimeRange.to,
+            raw: {
+              from: defaultTimeRange.from.toISOString(),
+              to: defaultTimeRange.to.toISOString(),
+            },
+          },
+          'America/New_York'
+        );
+
+        expect(getByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
+        expect(getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+      });
     });
   });
 
