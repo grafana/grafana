@@ -198,9 +198,8 @@ describe('Plugin Extension Validators', () => {
 
   describe('isExtensionPointIdValid()', () => {
     test.each([
-      // We (for now allow core Grafana extension points to run without a version)
-      ['grafana/extension-point', ''],
-      ['grafana/extension-point', 'grafana'],
+      [PluginExtensionPoints.DashboardPanelMenu, ''],
+      [PluginExtensionPoints.DashboardPanelMenu, 'grafana'],
       ['myorg-extensions-app/extension-point', 'myorg-extensions-app'],
       ['myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
       ['plugins/myorg-extensions-app/extension-point/v1', 'myorg-extensions-app'],
@@ -217,6 +216,8 @@ describe('Plugin Extension Validators', () => {
         isExtensionPointIdValid({
           extensionPointId,
           pluginId,
+          isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
+          log: createLogMock(),
         })
       ).toBe(true);
     });
@@ -232,11 +233,18 @@ describe('Plugin Extension Validators', () => {
         'extension-point/v1',
         'myorgs-extensions-app',
       ],
+      [
+        // Not exposed to plugins
+        'grafana/not-exposed-extension-point/v1',
+        'grafana',
+      ],
     ])('should return FALSE if the extension point id is invalid ("%s", "%s")', (extensionPointId, pluginId) => {
       expect(
         isExtensionPointIdValid({
           extensionPointId,
           pluginId,
+          isInsidePlugin: pluginId !== 'grafana' && pluginId !== '',
+          log: createLogMock(),
         })
       ).toBe(false);
     });
