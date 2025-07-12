@@ -11,31 +11,22 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 
-	v1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	v0alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1"
 )
 
+var ()
+
 var appManifestData = app.ManifestData{
-	AppName: "secret",
-	Group:   "secret.grafana.app",
+	AppName: "preferences",
+	Group:   "preferences.grafana.app",
 	Kinds: []app.ManifestKind{
 		{
-			Kind:       "SecureValue",
+			Kind:       "Preferences",
 			Scope:      "Namespaced",
 			Conversion: false,
 			Versions: []app.ManifestKindVersion{
 				{
-					Name: "v1beta1",
-				},
-			},
-		},
-
-		{
-			Kind:       "Keeper",
-			Scope:      "Namespaced",
-			Conversion: false,
-			Versions: []app.ManifestKindVersion{
-				{
-					Name: "v1beta1",
+					Name: "v0alpha1",
 				},
 			},
 		},
@@ -47,12 +38,11 @@ func LocalManifest() app.Manifest {
 }
 
 func RemoteManifest() app.Manifest {
-	return app.NewAPIServerManifest("secret")
+	return app.NewAPIServerManifest("preferences")
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"SecureValue/v1beta1": v1beta1.SecureValueKind(),
-	"Keeper/v1beta1":      v1beta1.KeeperKind(),
+	"Preferences/v0alpha1": v0alpha1.PreferencesKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

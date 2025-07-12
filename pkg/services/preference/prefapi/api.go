@@ -5,9 +5,9 @@ import (
 	"context"
 	"net/http"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -82,7 +82,7 @@ func GetPreferencesFor(ctx context.Context,
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
 
-	dto := preferences.Spec{}
+	dto := preferences.PreferencesSpec{}
 	if preference.WeekStart != nil && *preference.WeekStart != "" {
 		dto.WeekStart = preference.WeekStart
 	}
@@ -108,14 +108,14 @@ func GetPreferencesFor(ctx context.Context,
 		}
 
 		if preference.JSONData.Navbar.BookmarkUrls != nil {
-			dto.Navbar = &preferences.NavbarPreference{
+			dto.Navbar = &preferences.PreferencesNavbarPreference{
 				BookmarkUrls: []string{},
 			}
 			dto.Navbar.BookmarkUrls = preference.JSONData.Navbar.BookmarkUrls
 		}
 
 		if preference.JSONData.QueryHistory.HomeTab != "" {
-			dto.QueryHistory = &preferences.QueryHistoryPreference{
+			dto.QueryHistory = &preferences.PreferencesQueryHistoryPreference{
 				HomeTab: &preference.JSONData.QueryHistory.HomeTab,
 			}
 		}
