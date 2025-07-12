@@ -26,7 +26,7 @@ type testConfig struct {
 	signedURL string
 }
 
-func mockSDK(ctx context.Context, t *testing.T, content []byte, bucket string, signed bool) testConfig {
+func mockSDK(ctx context.Context, t *testing.T, content []byte, bucket string, signed bool, uniform bool) testConfig {
 	t.Helper()
 
 	var cfg testConfig
@@ -37,7 +37,7 @@ func mockSDK(ctx context.Context, t *testing.T, content []byte, bucket string, s
 	})
 
 	wm := mock_gcsifaces.NewMockStorageWriter(ctrl)
-	if !signed {
+	if !signed && !uniform {
 		wm.
 			EXPECT().
 			SetACL(gomock.Eq("publicRead")).
@@ -120,9 +120,9 @@ func TestUploadToGCS_DefaultCredentials(t *testing.T) {
 
 	t.Run("Without signed URL", func(t *testing.T) {
 		ctx := context.Background()
-		mockSDK(ctx, t, content, bucket, false)
+		mockSDK(ctx, t, content, bucket, false, false)
 
-		uploader, err := NewUploader("", bucket, "", false, dfltExpiration)
+		uploader, err := NewUploader("", bucket, "", false, false, dfltExpiration)
 		require.NoError(t, err)
 
 		path, err := uploader.Upload(ctx, fpath)
@@ -133,9 +133,9 @@ func TestUploadToGCS_DefaultCredentials(t *testing.T) {
 
 	t.Run("With signed URL", func(t *testing.T) {
 		ctx := context.Background()
-		cfg := mockSDK(ctx, t, content, bucket, true)
+		cfg := mockSDK(ctx, t, content, bucket, true, false)
 
-		uploader, err := NewUploader("", bucket, "", true, dfltExpiration)
+		uploader, err := NewUploader("", bucket, "", true, false, dfltExpiration)
 		require.NoError(t, err)
 
 		path, err := uploader.Upload(ctx, fpath)
