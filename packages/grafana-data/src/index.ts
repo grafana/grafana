@@ -137,6 +137,8 @@ export {
   fieldColorModeRegistry,
   type FieldColorMode,
   getFieldSeriesColor,
+  /** @internal */
+  getColorByStringHash,
 } from './field/fieldColor';
 export { FieldConfigOptionsRegistry } from './field/FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './field/thresholds';
