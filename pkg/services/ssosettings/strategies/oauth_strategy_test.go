@@ -128,6 +128,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	force_use_graph_api = true
 	allowed_organizations = org1, org2
 	workload_identity_token_file = azuread_token_file
+	auth_prompt = select_account
 
 	[auth.github]
 	team_ids = first, second
@@ -163,6 +164,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 		require.Equal(t, true, result["force_use_graph_api"])
 		require.Equal(t, "org1, org2", result["allowed_organizations"])
 		require.Equal(t, "azuread_token_file", result["workload_identity_token_file"])
+		require.Equal(t, "select_account", result["auth_prompt"])
 	})
 
 	t.Run(social.GitHubProviderName, func(t *testing.T) {
