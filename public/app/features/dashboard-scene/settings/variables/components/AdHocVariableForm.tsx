@@ -61,7 +61,14 @@ export function AdHocVariableForm({
           htmlFor="data-source-picker"
           tooltip={infoText}
         >
-          <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
+          <DataSourcePicker
+            current={datasource}
+            onChange={onDataSourceChange}
+            width={30}
+            variables={true}
+            dashboard={true}
+            noDefault
+          />
         </EditorField>
       </Box>
 
