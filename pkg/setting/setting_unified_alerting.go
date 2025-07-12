@@ -64,6 +64,7 @@ const (
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval          = SchedulerBaseInterval * 6 // == 60 seconds
 	stateHistoryDefaultEnabled             = true
+	notificationHistoryDefaultEnabled      = false
 	lokiDefaultMaxQueryLength              = 721 * time.Hour // 30d1h, matches the default value in Loki
 	defaultRecordingRequestTimeout         = 10 * time.Second
 	lokiDefaultMaxQuerySize                = 65536 // 64kb
@@ -122,6 +123,7 @@ type UnifiedAlertingSettings struct {
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	SkipClustering                bool
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	NotificationHistory           UnifiedAlertingNotificationHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	RecordingRules                RecordingRuleSettings
 	PrometheusConversion          UnifiedAlertingPrometheusConversionSettings
@@ -200,6 +202,21 @@ type UnifiedAlertingStateHistorySettings struct {
 	MultiPrimary                  string
 	MultiSecondaries              []string
 	ExternalLabels                map[string]string
+}
+
+type UnifiedAlertingNotificationHistorySettings struct {
+	Enabled       bool
+	LokiRemoteURL string
+	LokiReadURL   string
+	LokiWriteURL  string
+	LokiTenantID  string
+	// LokiBasicAuthUsername and LokiBasicAuthPassword are used for basic auth
+	// if one of them is set.
+	LokiBasicAuthPassword string
+	LokiBasicAuthUsername string
+	LokiMaxQueryLength    time.Duration
+	LokiMaxQuerySize      int
+	ExternalLabels        map[string]string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -471,6 +488,22 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		ExternalLabels:                stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
+
+	notificationHistory := iniFile.Section("unified_alerting.notification_history")
+	notificationHistoryLabels := iniFile.Section("unified_alerting.notification_history.external_labels")
+	uaCfgNotificationHistory := UnifiedAlertingNotificationHistorySettings{
+		Enabled:               notificationHistory.Key("enabled").MustBool(notificationHistoryDefaultEnabled),
+		LokiRemoteURL:         notificationHistory.Key("loki_remote_url").MustString(""),
+		LokiReadURL:           notificationHistory.Key("loki_remote_read_url").MustString(""),
+		LokiWriteURL:          notificationHistory.Key("loki_remote_write_url").MustString(""),
+		LokiTenantID:          notificationHistory.Key("loki_tenant_id").MustString(""),
+		LokiBasicAuthUsername: notificationHistory.Key("loki_basic_auth_username").MustString(""),
+		LokiBasicAuthPassword: notificationHistory.Key("loki_basic_auth_password").MustString(""),
+		LokiMaxQueryLength:    notificationHistory.Key("loki_max_query_length").MustDuration(lokiDefaultMaxQueryLength),
+		LokiMaxQuerySize:      notificationHistory.Key("loki_max_query_size").MustInt(lokiDefaultMaxQuerySize),
+		ExternalLabels:        notificationHistoryLabels.KeysHash(),
+	}
+	uaCfg.NotificationHistory = uaCfgNotificationHistory
 
 	prometheusConversion := iniFile.Section("unified_alerting.prometheus_conversion")
 	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{

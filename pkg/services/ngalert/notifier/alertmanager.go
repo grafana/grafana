@@ -11,6 +11,7 @@ import (
 	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
@@ -87,7 +88,7 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 
 func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
-	m *metrics.Alertmanager, featureToggles featuremgmt.FeatureToggles, crypto Crypto,
+	m *metrics.Alertmanager, featureToggles featuremgmt.FeatureToggles, crypto Crypto, notificationHistorian nfstatus.NotificationHistorian,
 ) (*alertmanager, error) {
 	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
@@ -129,15 +130,16 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 			MaxSilences:         cfg.UnifiedAlerting.AlertmanagerMaxSilencesCount,
 			MaxSilenceSizeBytes: cfg.UnifiedAlerting.AlertmanagerMaxSilenceSizeBytes,
 		},
-		EmailSender:   &emailSender{ns},
-		ImageProvider: newImageProvider(store, l.New("component", "image-provider")),
-		Decrypter:     decryptFn,
-		Version:       setting.BuildVersion,
-		TenantKey:     "orgID",
-		TenantID:      orgID,
-		Peer:          peer,
-		Logger:        l,
-		Metrics:       alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l),
+		EmailSender:           &emailSender{ns},
+		ImageProvider:         newImageProvider(store, l.New("component", "image-provider")),
+		Decrypter:             decryptFn,
+		Version:               setting.BuildVersion,
+		TenantKey:             "orgID",
+		TenantID:              orgID,
+		Peer:                  peer,
+		Logger:                l,
+		Metrics:               alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer, l),
+		NotificationHistorian: notificationHistorian,
 	}
 
 	gam, err := alertingNotify.NewGrafanaAlertmanager(opts)
