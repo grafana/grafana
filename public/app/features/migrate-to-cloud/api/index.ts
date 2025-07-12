@@ -84,16 +84,27 @@ export const cloudMigrationAPI = generatedAPI
     },
   });
 
-function suppressErrorsOnQuery<QueryArg, BaseQuery extends BaseQueryFn, TagTypes extends string, ResultType>(
-  endpoint: EndpointDefinition<QueryArg, BaseQuery, TagTypes, ResultType>
-) {
+function suppressErrorsOnQuery<
+  QueryArg,
+  BaseQuery extends BaseQueryFn,
+  TagTypes extends string,
+  ResultType,
+  ReducerPath extends string,
+  PageParam,
+>(endpoint: EndpointDefinition<QueryArg, BaseQuery, TagTypes, ResultType, ReducerPath, PageParam>) {
   if (!endpoint.query) {
     return;
   }
 
+  // internal type from rtk-query that isn't exported
+  type InfiniteQueryCombinedArg<QueryArg, PageParam> = {
+    queryArg: QueryArg;
+    pageParam: PageParam;
+  };
+
   const originalQuery = endpoint.query;
-  endpoint.query = (...args) => {
-    const baseQuery = originalQuery(...args);
+  endpoint.query = (arg: QueryArg & InfiniteQueryCombinedArg<QueryArg, PageParam>) => {
+    const baseQuery = originalQuery(arg);
     baseQuery.showErrorAlert = false;
     return baseQuery;
   };
