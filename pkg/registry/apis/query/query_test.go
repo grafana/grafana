@@ -173,3 +173,111 @@ func (m mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthReq
 func (m mockClient) GetInstanceConfigurationSettings(_ context.Context) (clientapi.InstanceConfigurationSettings, error) {
 	return clientapi.InstanceConfigurationSettings{}, nil
 }
+
+func TestMergeHeaders(t *testing.T) {
+	tests := []struct {
+		name     string
+		h1       http.Header
+		h2       http.Header
+		expected http.Header
+	}{
+		{
+			name: "into empty",
+			h1:   http.Header{},
+			h2: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+			expected: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+		},
+		{
+			name: "from empty",
+			h1: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+			h2: http.Header{},
+			expected: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+		},
+		{
+			name: "from nil",
+			h1: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+			h2: nil,
+			expected: http.Header{
+				"A": {"1", "2"},
+				"B": {"3"},
+			},
+		},
+		{
+			name: "no merging",
+			h1: http.Header{
+				"A": {"1", "2"},
+			},
+			h2: http.Header{
+				"B": {"3", "4"},
+			},
+			expected: http.Header{
+				"A": {"1", "2"},
+				"B": {"3", "4"},
+			},
+		},
+		{
+			name: "with merging",
+			h1: http.Header{
+				"A": {"1", "2"},
+			},
+			h2: http.Header{
+				"A": {"3", "4"},
+			},
+			expected: http.Header{
+				"A": {"1", "2", "3", "4"},
+			},
+		},
+		{
+			name: "with duplicates",
+			h1: http.Header{
+				"A": {"1", "2"},
+			},
+			h2: http.Header{
+				"A": {"2", "3"},
+			},
+			expected: http.Header{
+				"A": {"1", "2", "3"},
+			},
+		},
+		{
+			name: "with all",
+			h1: http.Header{
+				"A": {"1", "2", "3"},
+				"B": {"4"},
+			},
+			h2: http.Header{
+				"A": {"3", "4"},
+				"B": {"5"},
+				"C": {"6"},
+			},
+			expected: http.Header{
+				"A": {"1", "2", "3", "4"},
+				"B": {"4", "5"},
+				"C": {"6"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h1 := tt.h1.Clone() // don't mutate the test-data
+			mergeHeaders(h1, tt.h2, log.New("test.logger"))
+			require.Equal(t, tt.expected, h1)
+		})
+	}
+}
