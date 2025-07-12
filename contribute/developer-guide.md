@@ -434,3 +434,17 @@ If you are trying to run the server from VS code and get this error, run `go ins
 - Learn how to [create a pull request](/contribute/create-pull-request.md).
 - Read about the [architecture](architecture).
 - Read through the [backend documentation](/contribute/backend/README.md).
+
+### Got a failing test in a pr that is unrelated to your changes?
+
+If a test is failing unrelated to your changes, it's possible you found a flakey test. We have a make command that makes it easy to find the right code owner to reach out to for help. Here is an example to find the right code owner for a particular test file: 
+```
+make get-codeowner FILE="pkg/expr/graph_test.go"
+```
+
+Alternatively if you're only getting an error in a ci environment you might consider changing the ci temporarily to log out the code owner for a failing test:
+```
+make test-go-with-code-owners TEST_ARGS="./pkg/expr"
+```
+
+A note the above make command only works for backend go tests at the moment, but could be expanded on in the future.
