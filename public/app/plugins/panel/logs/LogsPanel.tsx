@@ -114,6 +114,12 @@ interface LogsPanelProps extends PanelProps<Options> {
    * When the feature toggle newLogsPanel is enabled, you can pass extra options to the LogLineMenu component.
    * These options are an array of items with { label, onClick } or { divider: true } for dividers.
    * logLineMenuCustomItems?: LogLineMenuCustomItem[];
+   *
+   * Use the default, bigger, font size, or a smaller one. Defaults to "default".
+   * fontSize?: 'default' | 'small'
+   *
+   * Set the mode used by the Log Details panel. Displayed as a sidebar, or inline below the log line. Defaults to "inline".
+   * detailsMode?: 'inline' | 'sidebar'
    */
 }
 interface LogsPermalinkUrlState {
@@ -153,6 +159,7 @@ export const LogsPanel = ({
     onNewLogsReceived,
     fontSize,
     syntaxHighlighting,
+    detailsMode,
     ...options
   },
   id,
@@ -535,6 +542,7 @@ export const LogsPanel = ({
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               containerElement={scrollElement}
               dedupStrategy={dedupStrategy}
+              detailsMode={detailsMode}
               displayedFields={displayedFields}
               enableLogDetails={enableLogDetails}
               fontSize={fontSize}
@@ -565,6 +573,7 @@ export const LogsPanel = ({
               onOpenContext={onOpenContext}
               onPermalinkClick={showPermaLink() ? onPermalinkClick : undefined}
               permalinkedLogId={getLogsPanelState()?.logs?.id ?? undefined}
+              setDisplayedFields={setDisplayedFields}
               showControls={Boolean(showControls)}
               showTime={showTime}
               sortOrder={sortOrder}

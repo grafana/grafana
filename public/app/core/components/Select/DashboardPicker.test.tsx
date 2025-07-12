@@ -10,7 +10,7 @@ import {
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardSearchItemType } from 'app/features/search/types';
-import { DashboardDTO } from 'app/types';
+import { DashboardDTO } from 'app/types/dashboard';
 
 import { DashboardPicker } from './DashboardPicker';
 
