@@ -18,6 +18,7 @@ export interface GenAIHistoryProps {
   onApplySuggestion: (suggestion: string) => void;
   updateHistory: (historyEntry: string) => void;
   eventTrackingSrc: EventTrackingSrc;
+  timeout?: number;
 }
 
 const temperature = 0.5;
@@ -28,6 +29,7 @@ export const GenAIHistory = ({
   messages,
   onApplySuggestion,
   updateHistory,
+  timeout,
 }: GenAIHistoryProps) => {
   const styles = useStyles2(getStyles);
 
@@ -45,6 +47,7 @@ export const GenAIHistory = ({
     model: DEFAULT_LLM_MODEL,
     temperature,
     onResponse,
+    timeout,
   });
 
   const reportInteraction = (item: AutoGenerateItem, otherMetadata?: object) =>
