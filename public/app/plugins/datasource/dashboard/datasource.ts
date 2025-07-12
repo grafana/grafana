@@ -16,7 +16,7 @@ import {
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
-  findOriginalVizPanelByKey,
+  findVizPanelByKey,
   getVizPanelKeyForPanelId,
 } from 'app/features/dashboard-scene/utils/utils';
 
@@ -55,7 +55,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
-    let sourcePanel = this.findSourcePanel(scene, panelId);
+    let sourcePanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
 
     if (!sourcePanel) {
       return of({ data: [], error: { message: 'Could not find source panel' } });
@@ -120,11 +120,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
       return [...series, ...annotations];
     }
-  }
-
-  private findSourcePanel(scene: SceneObject, panelId: number) {
-    // We're trying to find the original panel, not a cloned one, since `panelId` alone cannot resolve clones
-    return findOriginalVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
   }
 
   private emitFirstLoadedDataIfMixedDS(
