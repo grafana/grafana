@@ -12,6 +12,11 @@ import {
   DataFrame,
   LoadingState,
   Field,
+  FieldType,
+  MetricFindValue,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  AdHocVariableFilter,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -71,6 +76,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
+    // Extract AdHoc filters from the request
+    const adhocFilters = options.filters || [];
+
     return defer(() => {
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
         sourceDataProvider?.setContainerWidth(500);
@@ -82,7 +90,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         debounceTime(50),
         map((result) => {
           return {
-            data: this.getDataFramesForQueryTopic(result.data, query),
+            data: this.getDataFramesForQueryTopic(result.data, query, adhocFilters),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
@@ -95,7 +103,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     });
   }
 
-  private getDataFramesForQueryTopic(data: PanelData, query: DashboardQuery): DataFrame[] {
+  private getDataFramesForQueryTopic(
+    data: PanelData,
+    query: DashboardQuery,
+    filters: AdHocVariableFilter[]
+  ): DataFrame[] {
     const annotations = data.annotations ?? [];
     if (query.topic === DataTopic.Annotations) {
       return annotations.map((frame) => ({
@@ -111,6 +123,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           ...s,
           fields: s.fields.map((field: Field) => ({
             ...field,
+            config: {
+              ...field.config,
+              // Enable AdHoc filtering for string fields (similar to Loki/Prometheus pattern)
+              filterable: field.type === FieldType.string,
+            },
             state: {
               ...field.state,
             },
@@ -118,8 +135,78 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       });
 
-      return [...series, ...annotations];
+      // Apply AdHoc filters to series data (copied and simplified from filterByValue.ts)
+      const filteredSeries =
+        filters.length > 0 ? series.map((frame) => this.applyAdHocFilters(frame, filters)) : series;
+
+      return [...filteredSeries, ...annotations];
     }
+  }
+
+  /**
+   * Apply AdHoc filters to a DataFrame
+   * Simplified version of the filterByValue transformer logic for string fields only
+   */
+  private applyAdHocFilters(frame: DataFrame, filters: AdHocVariableFilter[]): DataFrame {
+    if (filters.length === 0 || frame.length === 0) {
+      return frame;
+    }
+
+    const matchingRows = new Set<number>();
+
+    // Check each row to see if it matches all filters (AND logic)
+    for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+      const rowMatches = filters.every((filter) => {
+        // Find the field for this filter
+        const field = frame.fields.find((f) => f.name === filter.key);
+
+        // Skip if field doesn't exist or isn't a string field
+        if (!field || field.type !== FieldType.string) {
+          return true; // Ignore filters for non-string fields
+        }
+
+        const fieldValue = field.values[rowIndex];
+        const filterValue = filter.value;
+
+        // Apply the filter based on operator
+        switch (filter.operator) {
+          case '=':
+            return fieldValue === filterValue;
+          case '!=':
+            return fieldValue !== filterValue;
+          default:
+            // Unknown operator, skip this filter
+            return true;
+        }
+      });
+
+      if (rowMatches) {
+        matchingRows.add(rowIndex);
+      }
+    }
+
+    // Reconstruct the DataFrame with only matching rows
+    const fields: Field[] = frame.fields.map((field) => {
+      const newValues = [];
+
+      for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+        if (matchingRows.has(rowIndex)) {
+          newValues.push(field.values[rowIndex]);
+        }
+      }
+
+      return {
+        ...field,
+        values: newValues,
+        state: {}, // Clean the state as it's being recalculated
+      };
+    });
+
+    return {
+      ...frame,
+      fields: fields,
+      length: matchingRows.size,
+    };
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
@@ -168,5 +255,88 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({ message: '', status: '' });
+  }
+
+  /**
+   * Get tag keys for adhoc filters
+   * Returns commonly available field names that can be used as filter keys
+   */
+  async getTagKeys(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+    // For now, return a basic set of commonly available field names
+    // Later, this could be enhanced to dynamically discover fields from dashboard panels
+    const commonFields = [
+      'Time',
+      'Value',
+      'host',
+      'instance',
+      'job',
+      'service',
+      'container',
+      'pod',
+      'namespace',
+      'environment',
+      'region',
+      'zone',
+      'cluster',
+      'node',
+      'application',
+      'version',
+      'status',
+      'method',
+      'path',
+      'code',
+      'level',
+      'logger',
+      'component',
+      'source',
+      'target',
+      'type',
+      'name',
+      'label',
+      'tag',
+      'category',
+      'group',
+      'team',
+      'owner',
+    ];
+
+    // Filter out keys that are already being used in existing filters
+    const usedKeys = new Set(options?.filters?.map((f) => f.key) || []);
+    const availableKeys = commonFields.filter((key) => !usedKeys.has(key));
+
+    return availableKeys.map((key) => ({ text: key }));
+  }
+
+  /**
+   * Get tag values for adhoc filters
+   * Returns possible values for a given filter key
+   */
+  async getTagValues(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]> {
+    const { key } = options;
+
+    // For now, return some common placeholder values based on the key
+    // Later, this could be enhanced to dynamically discover values from dashboard panels
+    const commonValues: Record<string, string[]> = {
+      environment: ['production', 'staging', 'development', 'test'],
+      status: ['success', 'error', 'warning', 'info'],
+      level: ['error', 'warn', 'info', 'debug'],
+      method: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+      code: ['200', '201', '400', '401', '403', '404', '500', '502', '503'],
+      region: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'],
+      zone: ['us-east-1a', 'us-east-1b', 'us-west-2a', 'us-west-2b'],
+      namespace: ['default', 'kube-system', 'monitoring', 'logging'],
+      container: ['app', 'sidecar', 'init', 'proxy'],
+      service: ['api', 'frontend', 'backend', 'database', 'cache'],
+      application: ['web-app', 'api-server', 'worker', 'scheduler'],
+      version: ['v1.0.0', 'v1.1.0', 'v2.0.0', 'latest'],
+      type: ['request', 'response', 'system', 'application'],
+      category: ['business', 'system', 'security', 'performance'],
+      team: ['backend', 'frontend', 'devops', 'data'],
+      owner: ['team-a', 'team-b', 'team-c', 'platform'],
+    };
+
+    const values = commonValues[key.toLowerCase()] || ['value1', 'value2', 'value3'];
+
+    return values.map((value) => ({ text: value }));
   }
 }
