@@ -2,10 +2,11 @@
 aliases:
   - ../data-sources/mysql/
   - ../features/datasources/mysql/
-description: introduction to the MySQL data source in Grafana
+description: Introduction to the MySQL data source in Grafana
 keywords:
   - grafana
   - mysql
+  - data source
   - guide
 labels:
   products:
