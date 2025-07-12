@@ -81,6 +81,65 @@ describe('PillCell', () => {
     });
   });
 
+  describe('pill wrapping', () => {
+    it('should not wrap pills by default', () => {
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" />);
+
+      const pillsContainer = screen.getByText('pill1').parentElement;
+      expect(pillsContainer).toBeInTheDocument();
+    });
+
+    it('should wrap pills when wrapText is true', () => {
+      const wrapOptions: TablePillCellOptions = {
+        type: TableCellDisplayMode.Pill,
+        wrapText: true,
+      };
+
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" cellOptions={wrapOptions} />);
+
+      const pillsContainer = screen.getByText('pill1').parentElement;
+      expect(pillsContainer).toBeInTheDocument();
+    });
+
+    it('should not wrap pills when wrapText is false', () => {
+      const noWrapOptions: TablePillCellOptions = {
+        type: TableCellDisplayMode.Pill,
+        wrapText: false,
+      };
+
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" cellOptions={noWrapOptions} />);
+
+      const pillsContainer = screen.getByText('pill1').parentElement;
+      expect(pillsContainer).toBeInTheDocument();
+    });
+
+    it('should render pills correctly when wrapText is true', () => {
+      const wrapOptions: TablePillCellOptions = {
+        type: TableCellDisplayMode.Pill,
+        wrapText: true,
+      };
+
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" cellOptions={wrapOptions} />);
+
+      expect(screen.getByText('pill1')).toBeInTheDocument();
+      expect(screen.getByText('pill2')).toBeInTheDocument();
+      expect(screen.getByText('pill3')).toBeInTheDocument();
+    });
+
+    it('should render pills correctly when wrapText is false', () => {
+      const noWrapOptions: TablePillCellOptions = {
+        type: TableCellDisplayMode.Pill,
+        wrapText: false,
+      };
+
+      render(<PillCell {...defaultProps} value="pill1,pill2,pill3" cellOptions={noWrapOptions} />);
+
+      expect(screen.getByText('pill1')).toBeInTheDocument();
+      expect(screen.getByText('pill2')).toBeInTheDocument();
+      expect(screen.getByText('pill3')).toBeInTheDocument();
+    });
+  });
+
   describe('color mapping', () => {
     // These tests primarily ensure the color logic executes without throwing.
     // For true color verification, visual regression tests would be needed.

@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { TablePillCellOptions } from '@grafana/schema';
-import { Field, ColorPicker, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Field, ColorPicker, RadioButtonGroup, Stack, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -12,6 +12,7 @@ const colorModeOptions: Array<{ value: 'auto' | 'fixed' | 'mapped'; label: strin
 
 export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TablePillCellOptions>) => {
   const colorMode = cellOptions.colorMode || 'auto';
+  const wrapText = cellOptions.wrapText ?? false;
 
   const onColorModeChange = (mode: 'auto' | 'fixed' | 'mapped') => {
     const updatedOptions = { ...cellOptions, colorMode: mode };
@@ -20,6 +21,11 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
 
   const onColorChange = (color: string) => {
     const updatedOptions = { ...cellOptions, color };
+    onChange(updatedOptions);
+  };
+
+  const onWrapTextChange = (event: React.FormEvent<HTMLInputElement>) => {
+    const updatedOptions = { ...cellOptions, wrapText: event.currentTarget.checked };
     onChange(updatedOptions);
   };
 
@@ -61,6 +67,17 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
           <div>&nbsp;</div>
         </Field>
       )}
+
+      <Field
+        label={t('table.pill-cell-options-editor.label-wrap-text', 'Wrap text')}
+        description={t(
+          'table.pill-cell-options-editor.description-wrap-text',
+          'Allow pills to wrap to new lines when they exceed the cell width. When disabled, pills will be truncated.'
+        )}
+        noMargin
+      >
+        <Switch value={wrapText} onChange={onWrapTextChange} />
+      </Field>
     </Stack>
   );
 };

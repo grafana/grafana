@@ -42,9 +42,11 @@ export function PillCell({ value, field, justifyContent, cellOptions }: TableCel
     return <div className={styles.cell}>-</div>;
   }
 
+  const shouldWrap = isPillCellOptions(cellOptions) ? (cellOptions.wrapText ?? false) : false;
+
   return (
-    <div className={styles.cell}>
-      <div className={styles.pillsContainer}>
+    <div className={shouldWrap ? styles.cellWrapped : styles.cell}>
+      <div className={shouldWrap ? styles.pillsContainerWrapped : styles.pillsContainer}>
         {pills.map((pill) => (
           <span
             key={pill.key}
@@ -165,7 +167,21 @@ const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent
     height: '100%',
     padding: theme.spacing(0.5),
   }),
+  cellWrapped: css({
+    display: 'flex',
+    justifyContent: justifyContent || 'flex-start',
+    alignItems: 'flex-start',
+    minHeight: '100%',
+    padding: theme.spacing(0.5),
+  }),
   pillsContainer: css({
+    display: 'flex',
+    flexWrap: 'nowrap',
+    gap: theme.spacing(0.5),
+    maxWidth: '100%',
+    overflow: 'hidden',
+  }),
+  pillsContainerWrapped: css({
     display: 'flex',
     flexWrap: 'wrap',
     gap: theme.spacing(0.5),
