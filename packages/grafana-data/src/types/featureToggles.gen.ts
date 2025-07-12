@@ -1008,4 +1008,9 @@ export interface FeatureToggles {
   * @default false
   */
   foldersAppPlatformAPI?: boolean;
+  /**
+  * Enables the drop and paste handlers on dashboards
+  * @default false
+  */
+  dashboardDropAndPaste?: boolean;
 }

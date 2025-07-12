@@ -7,6 +7,7 @@ import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useStyles2 } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
+import { DropAndPasteWrapper } from 'app/features/dropandpaste/DropAndPasteWrapper';
 
 import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -32,9 +33,11 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     return (
       <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
         <div className={styles.canvasWrappperOld}>
-          <NavToolbarActions dashboard={dashboard} />
-          <div className={styles.controlsWrapperSticky}>{controls}</div>
-          <div className={styles.body}>{body}</div>
+          <DropAndPasteWrapper dashboard={dashboard}>
+            <NavToolbarActions dashboard={dashboard} />
+            <div className={styles.controlsWrapperSticky}>{controls}</div>
+            <div className={styles.body}>{body}</div>
+          </DropAndPasteWrapper>
         </div>
       </NativeScrollbar>
     );
@@ -96,17 +99,19 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             editPane.clearSelection();
           }}
         >
-          <NavToolbarActions dashboard={dashboard} />
-          <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
-          <div className={styles.bodyWrapper}>
-            <div
-              className={cx(styles.body, isEditing && styles.bodyEditing)}
-              data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
-              ref={onBodyRef}
-            >
-              {body}
+          <DropAndPasteWrapper dashboard={dashboard}>
+            <NavToolbarActions dashboard={dashboard} />
+            <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
+            <div className={styles.bodyWrapper}>
+              <div
+                className={cx(styles.body, isEditing && styles.bodyEditing)}
+                data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+                ref={onBodyRef}
+              >
+                {body}
+              </div>
             </div>
-          </div>
+          </DropAndPasteWrapper>
         </div>
         {isEditing && (
           <>
