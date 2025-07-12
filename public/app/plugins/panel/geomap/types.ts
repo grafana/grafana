@@ -1,5 +1,5 @@
-import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
+import OpenLayersMap from 'ol/Map';
 import { Units } from 'ol/control/ScaleLine';
 import BaseLayer from 'ol/layer/Base';
 import { Subject } from 'rxjs';
