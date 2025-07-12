@@ -9,7 +9,7 @@ import {
   UPlotChart,
   VizLayout,
   measureText,
-  // usePanelContext,
+  usePanelContext,
   useTheme2,
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
@@ -30,6 +30,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   // const { dataLinkPostProcessor } = usePanelContext();
 
   const theme = useTheme2();
+  const { onAddAdHocFilter } = usePanelContext();
 
   const {
     barWidth,
@@ -173,6 +174,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     maxHeight={options.tooltip.maxHeight}
                     replaceVariables={replaceVariables}
                     dataLinks={dataLinks}
+                    onAddAdHocFilter={onAddAdHocFilter}
                     hideZeros={options.tooltip.hideZeros}
                   />
                 );
