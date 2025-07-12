@@ -25,6 +25,7 @@ import { QuerySettings } from './QuerySettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { StreamingSection } from './StreamingSection';
 import { TagLimitSection } from './TagLimitSettings';
+import { TagsTimeRangeSettings } from './TagsTimeRangeSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
 export type ConfigEditorProps = DataSourcePluginOptionsEditorProps;
@@ -116,6 +117,19 @@ const ConfigEditor = ({ options, onOptionsChange }: ConfigEditorProps) => {
             }
           >
             <QuerySettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
+
+          <ConfigSubSection
+            title="Tags time range"
+            description={
+              <ConfigDescriptionLink
+                description="Modify how tags and tag values queries are run."
+                suffix="tempo/configure-tempo-data-source/#tags-time-range"
+                feature="the tags time range"
+              />
+            }
+          >
+            <TagsTimeRangeSettings options={options} onOptionsChange={onOptionsChange} />
           </ConfigSubSection>
 
           <SpanBarSection options={options} onOptionsChange={onOptionsChange} />

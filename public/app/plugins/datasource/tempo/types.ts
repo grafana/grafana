@@ -26,6 +26,7 @@ export interface TempoJsonData extends DataSourceJsonData {
   streamingEnabled?: {
     search?: boolean;
   };
+  includeTimeRangeForTags?: boolean;
 }
 
 export interface TempoQuery extends TempoBase {
