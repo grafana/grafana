@@ -135,7 +135,7 @@ const renderDataSource = <TQuery extends DataQuery>(
   props: Props<TQuery>,
   styles: ReturnType<typeof getStyles>
 ): ReactNode => {
-  const { alerting, dataSource, onChangeDataSource } = props;
+  const { alerting, dataSource, onChangeDataSource, query } = props;
 
   if (!onChangeDataSource) {
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
