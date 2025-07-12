@@ -984,6 +984,10 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
+  * Enables image sharing functionality for dashboards
+  */
+  sharingDashboardImage?: boolean;
+  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
