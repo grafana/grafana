@@ -30,7 +30,7 @@ func ProvideRBACSync(acService accesscontrol.Service, tracer tracing.Tracer, per
 		log:          log.New("permissions.sync"),
 		permRegistry: permRegistry,
 		tracer:       tracer,
-		mapper:       rbac.NewMapperRegistry(),
+		mapper:       rbac.NewMapperRegistry(nil),
 	}
 }
 

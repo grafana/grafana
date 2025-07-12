@@ -93,7 +93,7 @@ func NewService(
 		logger:          logger,
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
-		mapper:          NewMapperRegistry(),
+		mapper:          NewMapperRegistry(NewTeamResolver(identityStore)),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
 		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, settings.CacheTTL),
 		permDenialCache: newCacheWrap[bool](cache, logger, tracer, settings.CacheTTL),
@@ -591,7 +591,7 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return false, status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	if req.Name != "" && scopeMap[t.Scope(req.Name)] {
+	if req.Name != "" && scopeMap[t.Scope(ctx, req.Namespace, req.Name)] {
 		return true, nil
 	}
 
