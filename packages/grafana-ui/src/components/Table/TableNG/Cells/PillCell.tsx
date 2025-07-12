@@ -50,7 +50,7 @@ export function PillCell({ value, field }: TableCellRendererProps) {
       style={{
         backgroundColor: pill.bgColor,
         color: pill.color,
-        border: pill.bgColor === TRANSPARENT ? `1px solid ${pill.color}` : undefined,
+        border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
       }}
     >
       {pill.value}
