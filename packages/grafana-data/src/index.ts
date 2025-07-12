@@ -492,6 +492,8 @@ export type {
   ExploreLogsPanelState,
   SplitOpenOptions,
   SplitOpen,
+  TraceSearchProps,
+  TraceSearchTag,
 } from './types/explore';
 export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
 export type { FlotDataPoint } from './types/flot';
