@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -177,8 +178,9 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStatsService usagestats.Service,
-	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
-	secretsSvc grafanasecrets.Service,
+	legacySecretsSvc grafanasecrets.Service,
+	secretsSvc *service.SecureValueService,
+	decryptSvc service.DecryptService,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
@@ -195,7 +197,7 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc), access,
+		secrets.NewSecretsService(legacySecretsSvc, secretsSvc, decryptSvc), access,
 		tracer,
 		extraBuilders,
 	)
@@ -488,7 +490,7 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 	var err error
 	if repo.Spec.GitHub != nil &&
 		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, repo.Namespace, repo.Name+"-github-token", repo.Spec.GitHub.Token)
 		if err != nil {
 			return err
 		}
@@ -503,7 +505,7 @@ func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Rep
 	var err error
 	if repo.Spec.Git != nil &&
 		repo.Spec.Git.Token != "" {
-		repo.Spec.Git.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.Git.Token))
+		repo.Spec.Git.EncryptedToken, err = b.secrets.Encrypt(ctx, repo.Namespace, repo.Name+"-git-token", repo.Spec.Git.Token)
 		if err != nil {
 			return err
 		}
@@ -1216,7 +1218,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		// Decrypt token if needed
 		token := r.Spec.Git.Token
 		if token == "" {
-			decrypted, err := b.secrets.Decrypt(ctx, r.Spec.Git.EncryptedToken)
+			decrypted, err := b.secrets.Decrypt(ctx, r.GetNamespace(), r.Spec.Git.EncryptedToken)
 			if err != nil {
 				return nil, fmt.Errorf("decrypt git token: %w", err)
 			}
@@ -1242,7 +1244,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
 		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := b.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
+			decrypted, err := b.secrets.Decrypt(ctx, r.GetNamespace(), ghCfg.EncryptedToken)
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)
 			}

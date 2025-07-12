@@ -63,7 +63,7 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	secret, err := r.secrets.Decrypt(ctx, r.config.Status.Webhook.EncryptedSecret)
+	secret, err := r.secrets.Decrypt(ctx, r.config.Namespace, r.config.Status.Webhook.EncryptedSecret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt secret: %w", err)
 	}
