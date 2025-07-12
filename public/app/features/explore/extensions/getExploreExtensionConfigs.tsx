@@ -24,6 +24,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         icon: 'apps',
         category: 'Dashboards',
         configure: () => {
+          // moving this and the ui to runtime
           const canAddPanelToDashboard =
             contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
             contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
