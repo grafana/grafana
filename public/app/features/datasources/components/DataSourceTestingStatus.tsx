@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { HTMLAttributes } from 'react';
 
-import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { TestingStatus, config } from '@grafana/runtime';
+import { TestingStatus, config, usePluginLinks } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
@@ -147,6 +147,18 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
     });
   };
   const styles = useStyles2(getTestingStatusStyles);
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.DataSourceConfigErrorStatus,
+    context: {
+      dataSource: {
+        type: dataSource.type,
+        uid: dataSource.uid,
+        name: dataSource.name,
+      },
+      testingStatus,
+    },
+    limitPerPlugin: 3,
+  });
 
   if (message) {
     return (
@@ -169,6 +181,17 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
               ) : null}
             </>
           )}
+          {severity === 'error' && links.length > 0 && (
+            <div className={styles.linksContainer}>
+              {links.map((link) => {
+                return (
+                  <a key={link.id} href={link.path} onClick={link.onClick} className={styles.pluginLink}>
+                    {link.title}
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </Alert>
       </div>
     );
@@ -183,5 +206,23 @@ const getTestingStatusStyles = (theme: GrafanaTheme2) => ({
   }),
   moreLink: css({
     marginBlock: theme.spacing(1),
+  }),
+  linksContainer: css({
+    float: 'right',
+    marginTop: theme.spacing(1),
+  }),
+  pluginLink: css({
+    color: theme.colors.text.link,
+    textDecoration: 'none',
+    marginLeft: theme.spacing(2),
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    '&:hover': {
+      color: theme.colors.text.primary,
+      textDecoration: 'underline',
+    },
+    '&:first-child': {
+      marginLeft: 0,
+    },
   }),
 });
