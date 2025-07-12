@@ -47,9 +47,13 @@ export function ScopesInput({
             // If we are still loading the scope data just show the id
             scopes[s.scopeId]?.spec.title || s.scopeId
         )
-        .join(', '),
+        .join(' + '),
     [appliedScopes, scopes]
   );
+
+  const scopesGroup = useMemo(() => {
+    return getScopesPath(appliedScopes, nodes)?.[-1];
+  }, [appliedScopes, nodes]);
 
   const input = useMemo(
     () => (
@@ -61,6 +65,7 @@ export function ScopesInput({
         value={scopesTitles}
         aria-label={t('scopes.selector.input.placeholder', 'Select scopes...')}
         data-testid="scopes-selector-input"
+        prefix={scopesGroup ? <span>{scopesGroup}:</span> : undefined}
         suffix={
           appliedScopes.length > 0 && !disabled ? (
             <IconButton
@@ -80,7 +85,7 @@ export function ScopesInput({
         }}
       />
     ),
-    [disabled, loading, onInputClick, onRemoveAllClick, appliedScopes, scopesTitles]
+    [disabled, loading, onInputClick, onRemoveAllClick, appliedScopes, scopesTitles, scopesGroup]
   );
 
   return (
@@ -89,6 +94,21 @@ export function ScopesInput({
     </Tooltip>
   );
 }
+
+const getScopesPath = (appliedScopes: SelectedScope[], nodes: NodesMap) => {
+  let nicePath: string[] | undefined;
+
+  if (appliedScopes.length > 0 && appliedScopes[0].scopeNodeId) {
+    let path = getPathOfNode(appliedScopes[0].scopeNodeId, nodes);
+    // Get reed of empty root section and the actual scope node
+    path = path.slice(1, -1);
+
+    // We may not have all the nodes in path loaded
+    nicePath = path.map((p) => nodes[p]?.spec.title).filter((p) => p);
+  }
+
+  return nicePath;
+};
 
 export interface ScopesTooltipProps {
   nodes: NodesMap;
@@ -99,16 +119,7 @@ export interface ScopesTooltipProps {
 function ScopesTooltip({ nodes, scopes, appliedScopes }: ScopesTooltipProps) {
   const styles = useStyles2(getStyles);
 
-  let nicePath: string[] | undefined;
-
-  if (appliedScopes[0].scopeNodeId) {
-    let path = getPathOfNode(appliedScopes[0].scopeNodeId, nodes);
-    // Get reed of empty root section and the actual scope node
-    path = path.slice(1, -1);
-
-    // We may not have all the nodes in path loaded
-    nicePath = path.map((p) => nodes[p]?.spec.title).filter((p) => p);
-  }
+  const nicePath = getScopesPath(appliedScopes, nodes);
 
   const scopeNames = appliedScopes.map((s) => {
     if (s.scopeNodeId) {
