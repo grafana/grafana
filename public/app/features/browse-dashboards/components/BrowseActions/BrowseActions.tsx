@@ -1,29 +1,37 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Stack, Tooltip } from '@grafana/ui';
+import { Button, Drawer, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { ShowModalReactEvent } from 'app/types/events';
+import { FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
 import { useActionSelectionState } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { DashboardTreeSelection } from '../../types';
+import { BulkDeleteProvisionedResource } from '../BulkDeleteProvisionedResource';
 
 import { DeleteModal } from './DeleteModal';
 import { MoveModal } from './MoveModal';
 
-export interface Props {}
+export interface Props {
+  folderDTO?: FolderDTO;
+}
 
-export function BrowseActions() {
+export function BrowseActions({ folderDTO }: Props) {
+  const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
+
   const dispatch = useDispatch();
   const selectedItems = useActionSelectionState();
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
+  const isProvisionedInstance = useIsProvisionedInstance();
 
   // Folders can only be moved if nested folders is enabled
   const moveIsInvalid = useMemo(
@@ -67,15 +75,21 @@ export function BrowseActions() {
   };
 
   const showDeleteModal = () => {
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: DeleteModal,
-        props: {
-          selectedItems,
-          onConfirm: onDelete,
-        },
-      })
-    );
+    // Note: this logic will be soon update with this PR: https://github.com/grafana/grafana/pull/107919
+    if (isProvisionedInstance || folderDTO?.managedBy === 'repo') {
+      setShowBulkDeleteProvisionedResource(true);
+    } else {
+      // if all selected items are non-provisioned
+      appEvents.publish(
+        new ShowModalReactEvent({
+          component: DeleteModal,
+          props: {
+            selectedItems,
+            onConfirm: onDelete,
+          },
+        })
+      );
+    }
   };
 
   const moveButton = (
@@ -85,19 +99,37 @@ export function BrowseActions() {
   );
 
   return (
-    <Stack gap={1} data-testid="manage-actions">
-      {moveIsInvalid ? (
-        <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
-          {moveButton}
-        </Tooltip>
-      ) : (
-        moveButton
-      )}
+    <>
+      <Stack gap={1} data-testid="manage-actions">
+        {moveIsInvalid ? (
+          <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
+            {moveButton}
+          </Tooltip>
+        ) : (
+          moveButton
+        )}
 
-      <Button onClick={showDeleteModal} variant="destructive">
-        <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
-      </Button>
-    </Stack>
+        <Button onClick={showDeleteModal} variant="destructive">
+          <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
+        </Button>
+      </Stack>
+      {showBulkDeleteProvisionedResource && (
+        <Drawer
+          title={t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
+          onClose={() => setShowBulkDeleteProvisionedResource(false)}
+          size="md"
+        >
+          <BulkDeleteProvisionedResource
+            selectedItems={selectedItems}
+            folderUid={folderDTO?.uid || ''}
+            onDismiss={() => {
+              setShowBulkDeleteProvisionedResource(false);
+              onActionComplete();
+            }}
+          />
+        </Drawer>
+      )}
+    </>
   );
 }
 

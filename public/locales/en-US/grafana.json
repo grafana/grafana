@@ -3456,8 +3456,15 @@
   "bouncing-loader": {
     "label": "Loading"
   },
+  "browse-dashboard": {
+    "bulk-delete-resources-form": {
+      "api-error": "",
+      "api-success": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
+      "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",
       "cancel-button": "Cancel",
       "cannot-move-folders": "Folders cannot be moved",
       "confirmation-text": "Delete",
@@ -3487,6 +3494,12 @@
     },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
+    },
+    "bulk-delete-resources-form": {
+      "button-cancel": "Cancel",
+      "button-delete": "Delete",
+      "button-deleting": "Deleting...",
+      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
