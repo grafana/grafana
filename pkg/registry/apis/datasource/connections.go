@@ -3,11 +3,12 @@ package datasource
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 var (
@@ -51,9 +52,9 @@ func (s *connectionAccess) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.datasources.Get(ctx, name)
+	return s.datasources.GetConnection(ctx, name)
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.datasources.List(ctx)
+	return s.datasources.ListConnections(ctx)
 }

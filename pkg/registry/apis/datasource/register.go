@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
@@ -36,6 +37,7 @@ var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo utils.ResourceInfo
+	datasourceResourceInfo utils.ResourceInfo
 
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same pluginid!
@@ -114,13 +116,14 @@ func NewDataSourceAPIBuilder(
 	accessControl accesscontrol.AccessControl,
 	loadQueryTypes bool,
 ) (*DataSourceAPIBuilder, error) {
-	ri, err := resourceFromPluginID(plugin.ID)
+	group, err := plugins.GetDatasourceGroupNameFromPluginID(plugin.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	builder := &DataSourceAPIBuilder{
-		connectionResourceInfo: ri,
+		connectionResourceInfo: datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, plugin.ID+"-connection"),
+		datasourceResourceInfo: datasource.GenericDataSourceResourceInfo.WithGroupAndShortName(group, plugin.ID),
 		pluginJSON:             plugin,
 		client:                 client,
 		datasources:            datasources,
@@ -130,7 +133,7 @@ func NewDataSourceAPIBuilder(
 	}
 	if loadQueryTypes {
 		// In the future, this will somehow come from the plugin
-		builder.queryTypes, err = getHardcodedQueryTypes(ri.GroupResource().Group)
+		builder.queryTypes, err = getHardcodedQueryTypes(group)
 	}
 	return builder, err
 }
@@ -164,8 +167,11 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&datasource.DataSourceConnection{},
 		&datasource.DataSourceConnectionList{},
+		&datasource.GenericDataSource{},
+		&datasource.GenericDataSourceList{},
 		&datasource.HealthCheckResult{},
 		&unstructured.Unstructured{},
+
 		// Query handler
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
@@ -199,17 +205,25 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
 }
 
-func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
-	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
-	if err != nil {
-		return utils.ResourceInfo{}, err
-	}
-	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
-}
-
-func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
+func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
+	// Register the raw datasource connection
+	ds := b.datasourceResourceInfo
+	legacyStore := &legacyStorage{
+		datasources:  b.datasources,
+		resourceInfo: &ds,
+	}
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	storage[ds.StoragePath()], err = opts.DualWriteBuilder(ds.GroupResource(), legacyStore, unified)
+	if err != nil {
+		return err
+	}
+
+	// Register the "connection" view for a datasource (no access to raw settings)
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
 		datasources:    b.datasources,
@@ -228,7 +242,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register hardcoded query schemas
-	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
+	err = queryschema.RegisterQueryTypes(b.queryTypes, storage)
 	if err != nil {
 		return err
 	}
