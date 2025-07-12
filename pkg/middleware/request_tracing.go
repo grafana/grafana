@@ -71,14 +71,21 @@ func RouteOperationName(req *http.Request) (string, bool) {
 	return "", false
 }
 
-func RequestTracing(tracer tracing.Tracer) web.Middleware {
+func SkipTracingPaths(req *http.Request) bool {
+	return strings.HasPrefix(req.URL.Path, "/public/") ||
+		req.URL.Path == "/robots.txt" ||
+		req.URL.Path == "/favicon.ico" ||
+		req.URL.Path == "/api/health"
+}
+
+func TraceAllPaths(req *http.Request) bool {
+	return true
+}
+
+func RequestTracing(tracer tracing.Tracer, shouldTrace func(*http.Request) bool) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			// skip tracing for a few endpoints
-			if strings.HasPrefix(req.URL.Path, "/public/") ||
-				req.URL.Path == "/robots.txt" ||
-				req.URL.Path == "/favicon.ico" ||
-				req.URL.Path == "/api/health" {
+			if !shouldTrace(req) {
 				next.ServeHTTP(w, req)
 				return
 			}
