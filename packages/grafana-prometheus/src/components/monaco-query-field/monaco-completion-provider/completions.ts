@@ -88,8 +88,12 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
 }
 
 // we order items like: history, functions, metrics
-async function getAllMetricNamesCompletions(dataProvider: DataProvider, timeRange: TimeRange): Promise<Completion[]> {
-  let metricNames = await dataProvider.queryMetricNames(timeRange);
+async function getAllMetricNamesCompletions(
+  word: string | undefined,
+  dataProvider: DataProvider,
+  timeRange: TimeRange
+): Promise<Completion[]> {
+  let metricNames = await dataProvider.queryMetricNames(timeRange, word);
 
   if (
     config.featureToggles.prometheusCodeModeMetricNamesSearch &&
@@ -126,10 +130,11 @@ async function getAllMetricNamesCompletions(dataProvider: DataProvider, timeRang
 }
 
 async function getAllFunctionsAndMetricNamesCompletions(
+  word: string | undefined,
   dataProvider: DataProvider,
   timeRange: TimeRange
 ): Promise<Completion[]> {
-  const metricNames = await getAllMetricNamesCompletions(dataProvider, timeRange);
+  const metricNames = await getAllMetricNamesCompletions(word, dataProvider, timeRange);
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
 
@@ -266,17 +271,18 @@ function formatLabelValueForCompletion(value: string, betweenQuotes: boolean): s
 export async function getCompletions(
   situation: Situation,
   dataProvider: DataProvider,
-  timeRange: TimeRange
+  timeRange: TimeRange,
+  word?: string
 ): Promise<Completion[]> {
   switch (situation.type) {
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider, timeRange);
+      return getAllFunctionsAndMetricNamesCompletions(word, dataProvider, timeRange);
     case 'AT_ROOT':
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider, timeRange);
+      return getAllFunctionsAndMetricNamesCompletions(word, dataProvider, timeRange);
     case 'EMPTY': {
-      const metricNames = await getAllMetricNamesCompletions(dataProvider, timeRange);
+      const metricNames = await getAllMetricNamesCompletions(word, dataProvider, timeRange);
       const historyCompletions = getAllHistoryCompletions(dataProvider);
       return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);
     }

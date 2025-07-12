@@ -123,7 +123,11 @@ export class DataProvider {
     };
   }
 
-  public queryMetricNames = async (timeRange: TimeRange) => {
-    return await this.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, undefined, DEFAULT_SUGGESTIONS_LIMIT);
+  public queryMetricNames = async (timeRange: TimeRange, word: string | undefined) => {
+    let match: string | undefined;
+    if (word) {
+      match = `{__name__=~".*${word}.*"}`;
+    }
+    return await this.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match, DEFAULT_SUGGESTIONS_LIMIT);
   };
 }
