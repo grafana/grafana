@@ -10,11 +10,12 @@ import { NotifierDTO } from 'app/types/alerting';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
-import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
+import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi, onCallApiFromRegistrar } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { option } from '../../../../utils/notifier-types';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE, ReceiverTypes } from './onCall';
+import { FilterAlertReceiveChannelRead } from '@grafana/hackathon-13-registrar-private/rtk-query';
 
 export enum OnCallIntegrationType {
   NewIntegration = 'new_oncall_integration',
@@ -81,17 +82,16 @@ export function useOnCallIntegration() {
   const { isOnCallEnabled, integrationStatus, isAlertingV2IntegrationEnabled, isOnCallStatusLoading, onCallError } =
     useOnCallPluginStatus();
 
-  const { useCreateIntegrationMutation, useGrafanaOnCallIntegrationsQuery, useLazyValidateIntegrationNameQuery } =
-    onCallApi;
+  const { useCreateIntegrationMutation, useLazyValidateIntegrationNameQuery } = onCallApi;
 
   const [validateIntegrationNameQuery, { isFetching: isValidating }] = useLazyValidateIntegrationNameQuery();
   const [createIntegrationMutation] = useCreateIntegrationMutation();
 
   const {
-    data: grafanaOnCallIntegrations = [],
+    data: grafanaOnCallIntegrations,
     isLoading: isLoadingOnCallIntegrations,
     isError: isIntegrationsQueryError,
-  } = useGrafanaOnCallIntegrationsQuery(undefined, { skip: !isAlertingV2IntegrationEnabled });
+  } = onCallApiFromRegistrar.useAlertReceiveChannelsListQuery({}, { skip: !isAlertingV2IntegrationEnabled });
 
   const onCallFormValidators = useMemo(() => {
     return {
@@ -121,7 +121,7 @@ export function useOnCallIntegration() {
           return true;
         }
 
-        return grafanaOnCallIntegrations.map((i) => i.integration_url).includes(value)
+        return grafanaOnCallIntegrations?.results.map((i) => i.integration_url).includes(value)
           ? true
           : t('alerting.irm-integration.integration-required', 'Selection of existing IRM integration is required');
       },
@@ -240,10 +240,10 @@ export function useOnCallIntegration() {
               element: 'select',
               required: true,
               showWhen: { field: 'integration_type', is: OnCallIntegrationType.ExistingIntegration },
-              selectOptions: grafanaOnCallIntegrations.map((i) => ({
-                label: i.display_name,
-                description: i.integration_url,
-                value: i.integration_url,
+              selectOptions: grafanaOnCallIntegrations?.results.map((i) => ({
+                label: (i as FilterAlertReceiveChannelRead).display_name ?? '',
+                description: i.integration_url ?? undefined,
+                value: i.integration_url ?? undefined,
               })),
             }
           )

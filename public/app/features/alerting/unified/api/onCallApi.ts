@@ -1,4 +1,9 @@
 import { FetchError, isFetchError } from '@grafana/runtime';
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import {
+  grafanaOncallPrivateApiEndpoints,
+  AlertReceiveChannelPolymorphic,
+} from '@grafana/hackathon-13-registrar-private/rtk-query';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
 import { getIrmIfPresentOrOnCallPluginId } from '../utils/config';
@@ -22,11 +27,7 @@ type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | string;
 
 type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
 
-export interface OnCallIntegrationDTO {
-  value: string;
-  display_name: string;
-  integration_url: string;
-}
+export type OnCallIntegrationDTO = AlertReceiveChannelPolymorphic;
 
 export interface CreateIntegrationDTO {
   integration: typeof GRAFANA_ONCALL_INTEGRATION_TYPE; // The only one supported right now
@@ -38,9 +39,23 @@ export interface OnCallConfigChecks {
   is_integration_chatops_connected: boolean;
 }
 
-export function getProxyApiUrl(path: string) {
+export function getProxyApiUrl(path = '') {
   return `/api/plugins/${getIrmIfPresentOrOnCallPluginId()}/resources${path}`;
 }
+
+export const registrarOnCallBaseApi = createApi({
+  reducerPath: 'onCallBaseApi',
+  baseQuery: fetchBaseQuery({
+    baseUrl: getProxyApiUrl(),
+  }),
+  endpoints: () => ({}),
+});
+
+export const onCallApiFromRegistrar = registrarOnCallBaseApi.injectEndpoints({
+  endpoints: (build) => ({
+    ...grafanaOncallPrivateApiEndpoints(build),
+  }),
+});
 
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({

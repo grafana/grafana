@@ -1,19 +1,7 @@
-import { onCallApi } from 'app/features/alerting/unified/api/onCallApi';
+import { FilterAlertReceiveChannelRead } from '@grafana/hackathon-13-registrar-private/rtk-query';
+import { onCallApi, onCallApiFromRegistrar } from 'app/features/alerting/unified/api/onCallApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
-
-export function useGetOnCallIntegrations() {
-  const { installed: onCallPluginInstalled } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
-
-  const { data: onCallIntegrations } = onCallApi.endpoints.grafanaOnCallIntegrations.useQuery(undefined, {
-    skip: !onCallPluginInstalled,
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    refetchOnMountOrArgChange: true,
-  });
-
-  return onCallIntegrations ?? [];
-}
 
 function useGetOnCallConfigurationChecks() {
   const { data: onCallConfigChecks, isLoading } = onCallApi.endpoints.onCallConfigChecks.useQuery(undefined, {
@@ -29,11 +17,23 @@ function useGetOnCallConfigurationChecks() {
 }
 
 export function useOnCallOptions() {
-  const onCallIntegrations = useGetOnCallIntegrations();
-  return onCallIntegrations.map((integration) => ({
-    label: integration.display_name,
-    value: integration.value,
-  }));
+  const { installed: onCallPluginInstalled } = usePluginBridge(getIrmIfPresentOrOnCallPluginId());
+  const onCallIntegrations = onCallApiFromRegistrar.useAlertReceiveChannelsListQuery(
+    {},
+    {
+      skip: !onCallPluginInstalled,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    }
+  );
+  return onCallIntegrations.data?.results.map((integration) => {
+    const integrationRead = integration as FilterAlertReceiveChannelRead;
+    return {
+      label: integrationRead.display_name,
+      value: integrationRead.value,
+    };
+  });
 }
 
 export function useOnCallChatOpsConnections() {

@@ -19,8 +19,10 @@ import { provisioningAPIv0alpha1 } from '../api/clients/provisioning/v0alpha1';
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
+import { registrarOnCallBaseApi } from '../features/alerting/unified/api/onCallApi';
 
 import { setStore } from './store';
+import { registrarAlertingNotificationsApi } from 'app/features/alerting/unified/api/receiversApi';
 
 export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called
@@ -53,6 +55,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         provisioningAPIv0alpha1.middleware,
         folderAPIv1beta1.middleware,
         advisorAPIv0alpha1.middleware,
+        registrarOnCallBaseApi.middleware,
+        registrarAlertingNotificationsApi.middleware,
         // PLOP_INJECT_MIDDLEWARE
         // Used by the API client generator
         ...extraMiddleware
