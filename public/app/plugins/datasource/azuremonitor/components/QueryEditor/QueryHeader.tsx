@@ -64,7 +64,10 @@ export const QueryHeader = ({
         ...query,
         azureLogAnalytics: {
           ...query.azureLogAnalytics,
-          mode: LogsEditorMode.Builder,
+          mode:
+            config.featureToggles.azureMonitorLogsBuilderEditor && query.azureLogAnalytics.query !== undefined
+              ? LogsEditorMode.Builder
+              : LogsEditorMode.Raw,
           dashboardTime: true,
         },
       };
