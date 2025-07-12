@@ -8,7 +8,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -29,6 +29,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { useIsLLMPluginEnabled } from '../../hooks/llmUtils';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -42,6 +43,7 @@ import {
   useValidateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
 
+import { GenAITemplateButton } from './AIGen/templates/GenAITemplateButton';
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
 import { GlobalTemplateDataExamples } from './TemplateDataExamples';
@@ -164,6 +166,15 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     setValue('content', newValue);
   };
 
+  const handleTemplateGenerated = (template: string) => {
+    setValue('content', template);
+  };
+
+  const { value: canRenderGenAITemplateButton } = useIsLLMPluginEnabled();
+
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAITemplateButton = canRenderGenAITemplateButton && config.featureToggles.alertingAIGenTemplates;
+
   return (
     <>
       <FormProvider {...formApi}>
@@ -275,6 +286,13 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                     </Button>
                                   </Dropdown>
                                 )}
+                                {/* GenAI button – only available for Grafana Alertmanager */}
+                                {isGrafanaAlertManager && canShowGenAITemplateButton && (
+                                  <GenAITemplateButton
+                                    onTemplateGenerated={handleTemplateGenerated}
+                                    disabled={isProvisioned}
+                                  />
+                                )}
                                 <Button
                                   icon="question-circle"
                                   size="sm"
@@ -348,6 +366,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
           </FieldSet>
         </form>
       </FormProvider>
+
       {cheatsheetOpened && (
         <Drawer
           title={t('alerting.template-form.title-templating-cheat-sheet', 'Templating cheat sheet')}

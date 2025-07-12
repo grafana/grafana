@@ -5,8 +5,10 @@ import { config } from '@grafana/runtime';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { GenAIAlertRuleButton } from '../components/rules/AIGen/GenAIAlertRuleButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
+import { useIsLLMPluginEnabled } from '../hooks/llmUtils';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { isAdmin } from '../utils/misc';
@@ -40,6 +42,10 @@ export function RuleListActions() {
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
   const canImportRulesToGMA = isAdmin() && config.featureToggles.alertingMigrationUI;
+  const { value: canRenderGenAIAlertRuleButton } = useIsLLMPluginEnabled();
+
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAIAlertRuleButton = canRenderGenAIAlertRuleButton && config.featureToggles.alertingAIGenAlertRules;
 
   const moreActionsMenu = useMemo(
     () => (
@@ -86,6 +92,7 @@ export function RuleListActions() {
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
+      {canCreateGrafanaRules && canShowGenAIAlertRuleButton && <GenAIAlertRuleButton />}
       <Dropdown overlay={moreActionsMenu}>
         <Button variant="secondary">
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />

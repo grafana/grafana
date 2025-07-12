@@ -1298,6 +1298,26 @@
         "required": "Required."
       }
     },
+    "generate-ai-rule": {
+      "button": "Generate with AI",
+      "modal": {
+        "error": "{error}",
+        "generate": "Generate Rule",
+        "generating": "Generating...",
+        "preview-configured": "configured",
+        "preview-contact-point": "Contact Point:",
+        "preview-description": "Description:",
+        "preview-evaluation-period": "Evaluation Period:",
+        "preview-name": "Name:",
+        "preview-queries": "Queries:",
+        "preview-title": "Generated Alert Rule Preview",
+        "prompt-description": "Describe what you want to monitor and when you want to be alerted. For example: \"Alert when CPU usage is above 80% for more than 5 minutes\". You can also ask about available contact points or data sources.",
+        "prompt-label": "Describe the alert rule you want to create",
+        "prompt-placeholder": "Alert when disk usage is above 90% for more than 5 minutes and send to Slack contact point...",
+        "title": "Generate Alert Rule with AI",
+        "use-rule": "Use This Rule"
+      }
+    },
     "generate-alert-data-modal": {
       "add-alert-data": "Add alert data",
       "add-alert-data-to-payload": "Add alert data to payload",
@@ -1644,6 +1664,36 @@
         "target-datasource-required": "Please select a target data source"
       },
       "yaml-error": "Failed to parse YAML file: {{error}}"
+    },
+    "improve-ai-annotations": {
+      "button": "Improve annotations with AI",
+      "modal": {
+        "apply-improvements": "Apply Annotation Improvements",
+        "error": "{error}",
+        "generate": "Improve Annotations",
+        "generating": "Generating...",
+        "preview-annotations": "Improved Annotations:",
+        "preview-title": "AI Annotations Improvements Preview",
+        "prompt-description": "Describe what you want to improve about the alert rule annotations. For example: \"Make the summary more descriptive\", \"Add troubleshooting steps to the description\", or \"Add runbook links\".",
+        "prompt-label": "How would you like to improve the annotations?",
+        "prompt-placeholder": "Make the summary more descriptive and add troubleshooting steps to the description...",
+        "title": "Improve Alert Rule Annotations with AI"
+      }
+    },
+    "improve-ai-labels": {
+      "button": "Improve labels with AI",
+      "modal": {
+        "apply-improvements": "Apply Label Improvements",
+        "error": "{error}",
+        "generate": "Improve Labels",
+        "generating": "Generating...",
+        "preview-labels": "Improved Labels:",
+        "preview-title": "AI Labels Improvements Preview",
+        "prompt-description": "Describe what you want to improve about the alert rule labels. For example: \"Add severity and team labels\", \"Add environment labels for better categorization\", or \"Create dynamic severity based on query values\".",
+        "prompt-label": "How would you like to improve the labels?",
+        "prompt-placeholder": "Add severity labels based on thresholds, team ownership, and environment categorization...",
+        "title": "Improve Alert Rule Labels with AI"
+      }
     },
     "insights": {
       "monitor-status-of-system": "Monitor the status of your system",
@@ -2781,6 +2831,17 @@
     },
     "template-form": {
       "aria-label-template-form": "Template form",
+      "genai": {
+        "modal": {
+          "error": "{error}",
+          "generate": "Generate Template",
+          "generating": "Generating...",
+          "prompt-description": "Describe the format and content you want for your notification. For example: \"A Slack message showing alert name, status, and a summary with emoji indicators\" or \"An email with a table of all firing alerts including their labels and start times\".",
+          "prompt-label": "Describe how you want your notification to look",
+          "prompt-placeholder": "A Slack message that shows \"🔥 ALERT: [AlertName] is firing\" with a summary and link to view details...",
+          "title": "Generate Template with AI"
+        }
+      },
       "label-examples-documentation": "Examples documentation",
       "label-template-group": "Template group",
       "label-template-group-name": "Template group name",
@@ -2823,6 +2884,7 @@
       "editor": {
         "add-example": "Add example",
         "auto-complete": "For auto-completion of common templating code, type the following keywords in the content editor:",
+        "generate-with-ai": "Generate with AI",
         "goto-docs": "Notification templates documentation"
       },
       "help": {
@@ -2903,6 +2965,22 @@
         "body": "The target folder is not empty, some rules may be overwritten or removed. Are you sure you want to import these alert rules to Grafana-managed rules?",
         "summary": "The following alert rules will be imported:",
         "title-warning": "Warning"
+      }
+    },
+    "triage-ai": {
+      "button": "Analyze with AI",
+      "modal": {
+        "analysis-title": "Alert Triage Analysis",
+        "analyze": "Analyze",
+        "analyzing": "🤖 Analyzing {{logRecordsLength}} alert events...",
+        "custom-question": {
+          "help": "Leave empty for general triage analysis, or ask a specific question about the alert events.",
+          "label": "Ask a specific question (optional)",
+          "placeholder": "e.g., \"What's causing the database alerts ? \" or \"Are these alerts related to the recent deployment ? \""
+        },
+        "description": "AI analysis of current alert events to help understand patterns, prioritize response, and identify potential issues.",
+        "error": "{error}",
+        "title": "Alert Triage Analysis"
       }
     },
     "type-selector-button": {
