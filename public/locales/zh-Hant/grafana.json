@@ -3130,6 +3130,16 @@
       "info-box-content-2": "查看<2>註釋文件</2>，了解更多資訊。",
       "title": "尚未新增自訂注釋查詢"
     },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "",
+        "results-split-on-comma": ""
+      },
+      "placeholder": {
+        "text-or-the-first-field": "",
+        "time-or-the-first-field": ""
+      }
+    },
     "standard-annotation-query-editor": {
       "events-found": "{{numEvents}} 個事件（來自 {{numFields}} 個欄位）",
       "no-events-found": "找不到事件",
@@ -4658,6 +4668,18 @@
         "transform-data": "轉換資料"
       }
     },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5218,7 +5240,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "搜尋轉換",
       "show-images": "顯示圖片",
-      "title-add-another-transformation": "新增另一個轉換"
+      "title-add-another-transformation": "新增另一個轉換",
+      "view-all": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": ""
@@ -5562,6 +5585,40 @@
         "row-height-options": "資料列高度選項"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "",
+        "dynamically-switch-source-multiple-panels": "",
+        "group": "",
+        "hidden-constant-variable": "",
+        "users-enter-arbitrary-strings-textbox": "",
+        "values-are-static-and-defined-manually": "",
+        "values-fetched-source-query": "",
+        "values-timespans": ""
+      },
+      "name": {
+        "ad-hoc-filters": "",
+        "constant": "",
+        "custom": "",
+        "data-source": "",
+        "group-by": "",
+        "interval": "",
+        "query": "",
+        "textbox": ""
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5794,7 +5851,8 @@
       "label-folder": "資料夾",
       "render-footer": {
         "title-failed-to-save-dashboard": "無法儲存儀表板"
-      }
+      },
+      "required": ""
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -8001,6 +8059,7 @@
     },
     "tags-input": {
       "add": "新增",
+      "placeholder-new-tag": "",
       "remove": "移除標籤：{{name}}"
     },
     "time-sync-button": {
@@ -8939,6 +8998,12 @@
       "text": {
         "import-dashboard": "匯入儀表板"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "",
+      "message-reserved-name": "",
+      "message-same-name": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -12127,6 +12192,18 @@
       "placeholder-fields-or-number": "欄位或數字"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "",
+          "reduce-row": "",
+          "row-index": "",
+          "unary-operation": ""
+        }
+      },
+      "label": {
+        "cumulative-functions": "",
+        "window-functions": ""
+      },
       "label-alias": "別名",
       "label-mode": "模式",
       "label-replace-all-fields": "取代所有欄位"
@@ -12141,6 +12218,13 @@
     "concatenate-transformer-editor": {
       "label-label": "標籤",
       "label-name": "名稱",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "",
+          "ignore-the-frame-name": "",
+          "label-frame": ""
+        }
+      },
       "placeholder-frame": "畫面"
     },
     "config-from-query-transformer-editor": {
@@ -12152,6 +12236,9 @@
       "aria-label-add-a-convert-field-type-transformer": "新增轉換欄位類型轉換器",
       "aria-label-remove-convert-field-type-transformer": "移除轉換欄位類型轉換器",
       "convert-field-type": "",
+      "description": {
+        "convert-to-specified-field-type": ""
+      },
       "label": {
         "browser": "瀏覽器",
         "utc": "UTC"
@@ -12162,7 +12249,13 @@
       "label-input-format": "輸入格式",
       "label-join-with": "合併方式",
       "label-set-timezone": "設定時區",
+      "name": {
+        "convert-field-type": ""
+      },
       "placeholder-type": "類型",
+      "tags": {
+        "format-field": ""
+      },
       "tooltip-explicit-separator-joining-array-values": "合併陣列值時使用明確的分隔符",
       "tooltip-input-format": "指定輸入欄位的格式，以便 Grafana 可以正確解析日期字串。",
       "tooltip-specify-the-output-format": "指定輸出格式。",
@@ -12184,6 +12277,19 @@
       "desc": "",
       "off": "關閉"
     },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": ""
+        },
+        "name": {
+          "concatenate-fields": ""
+        },
+        "tags": {
+          "combine": ""
+        }
+      }
+    },
     "enum-mapping-editor": {
       "add-enum-value": "新增列舉值",
       "generate-enum-values-from-data": "從資料產生列舉值"
@@ -12194,6 +12300,9 @@
       "remove-enum-row-tooltip-delete": "刪除"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": ""
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": ""
@@ -12204,6 +12313,9 @@
       "label-keep-time": "保持時間",
       "label-replace-all-fields": "取代所有欄位",
       "label-source": "來源",
+      "name": {
+        "extract-fields": ""
+      },
       "placeholder-auto": "自動",
       "placeholder-select-delimiter": "選擇分隔符…",
       "tooltip-regexp": "範例：{{regexExample}}"
@@ -12212,6 +12324,9 @@
       "aria-label-threshold-color": "閾值顏色"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": ""
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": ""
@@ -12221,7 +12336,10 @@
         }
       },
       "label-field": "欄位",
-      "label-lookup": "查找"
+      "label-lookup": "查找",
+      "name": {
+        "lookup-fields-from-resource": ""
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "附加設定",
@@ -12230,11 +12348,25 @@
       "use-as": "使用為"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": ""
+      },
       "label-from-variable": "從變數",
       "label-identifier": "標識符",
       "label-use-variable": "使用變數",
       "label-variable": "變數",
+      "name": {
+        "filter-fields-by-name": ""
+      },
       "placeholder-regular-expression-pattern": "規則運算式模式"
+    },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": ""
+      },
+      "name": {
+        "filter-data-by-query": ""
+      }
     },
     "filter-by-value-filter-editor": {
       "label-field": "欄位",
@@ -12245,6 +12377,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "新增條件",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": ""
+      },
       "filter-match": {
         "label": {
           "match-all": "",
@@ -12258,7 +12393,10 @@
         }
       },
       "label-conditions": "條件",
-      "label-filter-type": "篩選器類型"
+      "label-filter-type": "篩選器類型",
+      "name": {
+        "filter-data-by-values": ""
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12273,12 +12411,84 @@
       "label-format": "格式",
       "label-substring-range": "子字串範圍"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": ""
+      },
+      "name": {
+        "format-string": ""
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "格式",
       "label-set-timezone": "設定時區",
       "label-time-field": "時間欄位",
       "tooltip-format": "指定為 <2>Moment.js 格式字串</2>的欄位輸出格式。",
       "tooltip-timezone-manually": "手動設定日期的時區"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": ""
+      },
+      "name": {
+        "format-time": ""
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": ""
+      },
+      "name": {
+        "add-field-from-calculation": ""
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": ""
+      },
+      "name": {
+        "config-from-query-results": ""
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": ""
+      },
+      "name": {
+        "create-heatmap": ""
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": ""
+      },
+      "name": {
+        "join-by-labels": ""
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": ""
+      },
+      "name": {
+        "partition-by-values": ""
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": ""
+      },
+      "name": {
+        "rows-to-fields": ""
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": ""
+      },
+      "name": {
+        "spatial-operations": ""
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12307,22 +12517,46 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "",
+          "group-by": ""
+        }
+      },
       "placeholder-ignored": "已略過",
       "placeholder-select-stats": "選擇統計資料"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": ""
+      },
+      "name": {
+        "group-by": ""
+      },
       "title-calc-alert": "如未將任何欄位分組，則計算將無效"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": ""
+      },
       "description-show-field-names": "若啟用，巢狀表格將顯示欄位名稱作為表格標題",
       "label-show-field-names-in-nested-tables": "在巢狀表格中顯示欄位名稱",
+      "name": {
+        "group-to-nested-tables": ""
+      },
       "title-calc-alert": "如未將任何欄位分組，則計算將無效。"
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": ""
+      },
       "label-cell-value": "儲存格數值",
       "label-column": "欄位",
       "label-empty-value": "空白數值",
       "label-row": "列",
+      "name": {
+        "grouping-to-matrix": ""
+      },
       "special-value-options": {
         "description": {
           "boolean-false-value": "布林假值",
@@ -12341,6 +12575,12 @@
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": ""
+      },
+      "name": {
+        "histogram": ""
+      },
       "placeholder-auto": "自動",
       "placeholder-default": "預設值：30",
       "placeholder-none": "無"
@@ -12349,7 +12589,16 @@
       "label-as-percentile": "作為百分位數",
       "tooltip-transform-index-percentile": "將列索引轉換為百分位數。"
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": ""
+      },
+      "name": {
+        "join-by-field": ""
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "",
       "info": {
         "input-contain-labels": "輸入內容不包含任何標籤",
         "no-input-or-labels-found": "找不到輸入內容（或標籤）",
@@ -12371,10 +12620,30 @@
       "label-labels": "標籤",
       "label-mode": "模式",
       "label-value-field-name": "值欄位名稱",
+      "modes": {
+        "label": {
+          "columns": "",
+          "rows": ""
+        }
+      },
       "placeholder-optional-select-label": "（選填）選取標籤",
       "tooltip-replace-value-field-label": "使用標籤取代數值欄位名稱"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": ""
+      },
+      "name": {
+        "labels-to-fields": ""
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": ""
+      },
+      "name": {
+        "limit": ""
+      },
       "placeholder-value-or-variable": "值或變數"
     },
     "long-info": {
@@ -12385,7 +12654,13 @@
       "string-values-separate": "字串值以單獨欄位而非標籤表示"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "套用到單個框架時，合併不起作用。"
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "merge-effect-applied-single-frame": "套用到單個框架時，合併不起作用。",
+      "name": {
+        "merge": ""
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "所有值都是數值",
@@ -12395,10 +12670,16 @@
       "time-in-ascending-order": "時間遞增排序"
     },
     "organize-fields-transformer-editor": {
+      "description": {
+        "reorder-hide-or-rename-fields": ""
+      },
       "field-order": "",
       "field-order-auto": "自動",
       "field-order-manual": "",
-      "first-frame-warning": "組織欄位僅適用於單個框架。請考慮先套用加入轉換或篩選輸入。"
+      "first-frame-warning": "組織欄位僅適用於單個框架。請考慮先套用加入轉換或篩選輸入。",
+      "name": {
+        "organize-fields": ""
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "設定所選欄位名稱的顯示方式。因為框架名稱通常更適合表格資料"
@@ -12423,9 +12704,41 @@
       "partition-values-works-single-frame": "按值分割僅適用於單個框架。",
       "tooltip-keeps-partition-fields-frames": "在框架中保留分割欄位"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": ""
+      },
+      "name": {
+        "prepare-time-series": ""
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "格式",
-      "label-info": "資訊"
+      "label-info": "資訊",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": ""
+        },
+        "label": {
+          "long-time-series": ""
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": ""
+        },
+        "label": {
+          "multiframe-time-series": ""
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": ""
+        },
+        "label": {
+          "wide-time-series": ""
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "和",
@@ -12437,6 +12750,9 @@
       "label-operation": "操作"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": ""
+      },
       "label-calculations": "計算",
       "label-include-time": "包含時間",
       "label-labels-to-fields": "欄位標籤",
@@ -12451,11 +12767,22 @@
           "series-to-rows": "將序列轉為列"
         }
       },
+      "name": {
+        "reduce": ""
+      },
       "placeholder-choose-stat": "選擇統計資料"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "值或變數",
       "variable-regex-documentation": "將多值變數格式化為正則表達式字串"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": ""
+      },
+      "name": {
+        "regression-analysis": ""
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12478,6 +12805,14 @@
       "regression": "",
       "tooltip-number-of-xy-points-to-predict": "要預測的 X、Y 點數"
     },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": ""
+      },
+      "name": {
+        "rename-fields-by-regex": ""
+      }
+    },
     "rename-by-regex-transformer-editor": {
       "label-match": "符合",
       "label-replace": "取代",
@@ -12486,11 +12821,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "欄位",
-      "label-mode": "模式"
+      "label-mode": "模式",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "",
+          "join-on-a-field": "",
+          "keep-all-rows": ""
+        },
+        "label": {
+          "inner": "",
+          "outer-tabular": "",
+          "outer-time-series": ""
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "name": {
+        "series-to-rows": ""
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": ""
+      },
       "label-field": "欄位",
       "label-reverse": "反向",
+      "name": {
+        "sort-by": ""
+      },
       "placeholder-select-field": "選擇欄位"
     },
     "supplier": {
@@ -12510,7 +12871,17 @@
         "transform": "轉變"
       }
     },
-    "tag": "",
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": ""
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": ""
+      },
+      "name": {
+        "time-series-to-table": ""
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "統計資料",
       "label-time-field": "時間欄位",
@@ -12524,9 +12895,33 @@
       "placeholder-value": "數值",
       "tooltip-name-for-value-fields": "值欄位的名稱"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": ""
+      },
+      "name": {
+        "transpose": ""
+      },
+      "tags": {
+        "pivot": "",
+        "transform": "",
+        "translate": ""
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "操作",
       "placeholder-field": "欄位"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "",
+        "combine": "",
+        "create-new-visualization": "",
+        "filter": "",
+        "perform-spatial-operations": "",
+        "reformat": "",
+        "reorder-and-rename": ""
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "任何類型的多個數值欄位",
