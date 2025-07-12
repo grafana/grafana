@@ -101,6 +101,8 @@ describe('sceneVariablesSetToVariables', () => {
       allowCustomValue: true,
       allValue: 'test-all',
       isMulti: true,
+      staticOptions: [{ label: 'test', value: 'test' }],
+      staticOptionsOrder: 'after',
     });
 
     const set = new SceneVariableSet({
@@ -136,6 +138,13 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "staticOptions": [
+        {
+          "text": "test",
+          "value": "test",
+        },
+      ],
+      "staticOptionsOrder": "after",
       "type": "query",
     }
     `);
@@ -155,6 +164,8 @@ describe('sceneVariablesSetToVariables', () => {
       allValue: 'test-all',
       allowCustomValue: false,
       isMulti: true,
+      staticOptions: [{ label: 'test', value: 'test' }],
+      staticOptionsOrder: 'after',
     });
     const set = new SceneVariableSet({
       variables: [variable],
@@ -189,6 +200,13 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "query",
       "refresh": 1,
       "regex": "",
+      "staticOptions": [
+        {
+          "text": "test",
+          "value": "test",
+        },
+      ],
+      "staticOptionsOrder": "after",
       "type": "query",
     }
     `);
@@ -221,7 +239,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result[0].options).toEqual([]);
   });
 
-  it('should handle Query variable when sceneVariablesSetToVariables shoudl keep options', () => {
+  it('should handle Query variable when sceneVariablesSetToVariables should keep options', () => {
     const variable = new QueryVariable({
       name: 'test',
       label: 'test-label',
@@ -846,6 +864,8 @@ describe('sceneVariablesSetToVariables', () => {
         includeAll: true,
         allValue: 'test-all',
         isMulti: true,
+        staticOptions: [{ label: 'test', value: 'test' }],
+        staticOptionsOrder: 'after',
       });
 
       const set = new SceneVariableSet({
@@ -891,6 +911,13 @@ describe('sceneVariablesSetToVariables', () => {
         "regex": "",
         "skipUrlSync": false,
         "sort": "disabled",
+        "staticOptions": [
+          {
+            "text": "test",
+            "value": "test",
+          },
+        ],
+        "staticOptionsOrder": "after",
       },
     }
     `);
