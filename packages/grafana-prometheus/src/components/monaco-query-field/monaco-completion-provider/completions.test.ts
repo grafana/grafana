@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { SUGGESTIONS_LIMIT } from '../../../constants';
+import { DEFAULT_SUGGESTIONS_LIMIT } from '../../../constants';
 import { FUNCTIONS } from '../../../promql';
 import { getMockTimeRange } from '../../../test/mocks/datasource';
 
@@ -11,9 +11,6 @@ import type { Situation } from './situation';
 const history: string[] = ['previous_metric_name_1', 'previous_metric_name_2', 'previous_metric_name_3'];
 const dataProviderSettings = {
   languageProvider: {
-    datasource: {
-      metricNamesAutocompleteSuggestionLimit: SUGGESTIONS_LIMIT,
-    },
     queryLabelKeys: jest.fn(),
     queryLabelValues: jest.fn(),
     retrieveLabelKeys: jest.fn(),
@@ -23,9 +20,9 @@ const dataProviderSettings = {
 } as unknown as DataProviderParams;
 let dataProvider = new DataProvider(dataProviderSettings);
 const metrics = {
-  beyondLimit: Array.from(Array(SUGGESTIONS_LIMIT + 1), (_, i) => `metric_name_${i}`),
+  beyondLimit: Array.from(Array(DEFAULT_SUGGESTIONS_LIMIT + 1), (_, i) => `metric_name_${i}`),
   get atLimit() {
-    return this.beyondLimit.slice(0, SUGGESTIONS_LIMIT - 1);
+    return this.beyondLimit.slice(0, DEFAULT_SUGGESTIONS_LIMIT - 1);
   },
 };
 
@@ -171,7 +168,7 @@ type MetricNameSituation = Extract<Situation['type'], 'AT_ROOT' | 'EMPTY' | 'IN_
 const metricNameCompletionSituations = ['AT_ROOT', 'IN_FUNCTION', 'EMPTY'] as MetricNameSituation[];
 
 function getSuggestionCountForSituation(situationType: MetricNameSituation, metricsCount: number): number {
-  const limitedMetricNamesCount = metricsCount < SUGGESTIONS_LIMIT ? metricsCount : SUGGESTIONS_LIMIT;
+  const limitedMetricNamesCount = metricsCount < DEFAULT_SUGGESTIONS_LIMIT ? metricsCount : DEFAULT_SUGGESTIONS_LIMIT;
   let suggestionsCount = limitedMetricNamesCount + FUNCTIONS.length;
 
   if (situationType === 'EMPTY') {

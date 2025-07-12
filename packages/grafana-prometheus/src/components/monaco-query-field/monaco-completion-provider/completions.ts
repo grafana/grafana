@@ -5,6 +5,7 @@ import { languages } from 'monaco-editor';
 import { TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { DEFAULT_SUGGESTIONS_LIMIT } from '../../../constants';
 import { escapeLabelValueInExactSelector, prometheusRegularEscape } from '../../../escaping';
 import { FUNCTIONS } from '../../../promql';
 import { isValidLegacyName } from '../../../utf8_support';
@@ -48,6 +49,30 @@ interface MetricFilterOptions {
   limit: number;
 }
 
+const DURATION_COMPLETIONS: Completion[] = [
+  '$__interval',
+  '$__range',
+  '$__rate_interval',
+  '1m',
+  '5m',
+  '10m',
+  '30m',
+  '1h',
+  '1d',
+].map((text) => ({
+  type: 'DURATION',
+  label: text,
+  insertText: text,
+}));
+
+const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
+  type: 'FUNCTION',
+  label: f.label,
+  insertText: f.insertText ?? f.label,
+  detail: f.detail,
+  documentation: f.documentation,
+}));
+
 export function filterMetricNames({ metricNames, inputText, limit }: MetricFilterOptions): string[] {
   if (!inputText?.trim()) {
     return metricNames.slice(0, limit);
@@ -63,8 +88,8 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
 }
 
 // we order items like: history, functions, metrics
-function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] {
-  let metricNames = dataProvider.getAllMetricNames();
+async function getAllMetricNamesCompletions(dataProvider: DataProvider, timeRange: TimeRange): Promise<Completion[]> {
+  let metricNames = await dataProvider.queryMetricNames(timeRange);
 
   if (
     config.featureToggles.prometheusCodeModeMetricNamesSearch &&
@@ -100,35 +125,13 @@ function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] 
   }));
 }
 
-const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
-  type: 'FUNCTION',
-  label: f.label,
-  insertText: f.insertText ?? '', // i don't know what to do when this is nullish. it should not be.
-  detail: f.detail,
-  documentation: f.documentation,
-}));
-
-async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  const metricNames = getAllMetricNamesCompletions(dataProvider);
-
+async function getAllFunctionsAndMetricNamesCompletions(
+  dataProvider: DataProvider,
+  timeRange: TimeRange
+): Promise<Completion[]> {
+  const metricNames = await getAllMetricNamesCompletions(dataProvider, timeRange);
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
-
-const DURATION_COMPLETIONS: Completion[] = [
-  '$__interval',
-  '$__range',
-  '$__rate_interval',
-  '1m',
-  '5m',
-  '10m',
-  '30m',
-  '1h',
-  '1d',
-].map((text) => ({
-  type: 'DURATION',
-  label: text,
-  insertText: text,
-}));
 
 function getAllHistoryCompletions(dataProvider: DataProvider): Completion[] {
   // function getAllHistoryCompletions(queryHistory: PromHistoryItem[]): Completion[] {
@@ -165,10 +168,10 @@ async function getLabelNames(
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
-    return Promise.resolve(dataProvider.getAllLabelNames());
+    return Promise.resolve(dataProvider.queryLabelKeys(timeRange, undefined, DEFAULT_SUGGESTIONS_LIMIT));
   } else {
     const selector = makeSelector(metric, otherLabels);
-    const labelNames = await dataProvider.getSeriesLabels(timeRange, selector);
+    const labelNames = await dataProvider.queryLabelKeys(timeRange, selector, DEFAULT_SUGGESTIONS_LIMIT);
 
     // Exclude __name__ from output
     otherLabels.push({ name: '__name__', value: '', op: '!=' });
@@ -232,10 +235,10 @@ async function getLabelValues(
 ): Promise<string[]> {
   if (metric === undefined && otherLabels.length === 0) {
     // if there is no filtering, we have to use a special endpoint
-    return dataProvider.getLabelValues(timeRange, labelName);
+    return dataProvider.queryLabelValues(timeRange, labelName, undefined, DEFAULT_SUGGESTIONS_LIMIT);
   } else {
     const selector = makeSelector(metric, otherLabels);
-    return await dataProvider.getSeriesValues(timeRange, labelName, selector);
+    return await dataProvider.queryLabelValues(timeRange, labelName, selector, DEFAULT_SUGGESTIONS_LIMIT);
   }
 }
 
@@ -260,7 +263,7 @@ function formatLabelValueForCompletion(value: string, betweenQuotes: boolean): s
   return betweenQuotes ? text : `"${text}"`;
 }
 
-export function getCompletions(
+export async function getCompletions(
   situation: Situation,
   dataProvider: DataProvider,
   timeRange: TimeRange
@@ -269,12 +272,11 @@ export function getCompletions(
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
     case 'IN_FUNCTION':
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
-    case 'AT_ROOT': {
-      return getAllFunctionsAndMetricNamesCompletions(dataProvider);
-    }
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider, timeRange);
+    case 'AT_ROOT':
+      return getAllFunctionsAndMetricNamesCompletions(dataProvider, timeRange);
     case 'EMPTY': {
-      const metricNames = getAllMetricNamesCompletions(dataProvider);
+      const metricNames = await getAllMetricNamesCompletions(dataProvider, timeRange);
       const historyCompletions = getAllHistoryCompletions(dataProvider);
       return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);
     }

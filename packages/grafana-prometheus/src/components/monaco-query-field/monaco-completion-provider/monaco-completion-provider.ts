@@ -86,6 +86,7 @@ export function getCompletionProvider(
 
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
+    console.log({ word, situation });
     const completionsPromise =
       situation != null ? getCompletions(situation, dataProvider, timeRange) : Promise.resolve([]);
 
