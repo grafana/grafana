@@ -223,7 +223,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         defaultValue: defaultOptions.barWidth,
         settings: {
           min: 0,
-          max: 1,
+          max: 2,
           step: 0.01,
         },
       })
