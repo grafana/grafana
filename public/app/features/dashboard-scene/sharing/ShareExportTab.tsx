@@ -124,12 +124,23 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
         exportMode: ExportMode.V2Resource,
       });
 
+      // For automatic V2 path, also process library panels when sharing externally
+      let finalSpec = exportable;
+      if (isSharingExternally && isDashboardV2Spec(exportable)) {
+        const specCopy = JSON.parse(JSON.stringify(exportable));
+        const result = await makeExportableV2(specCopy, isSharingExternally);
+        if ('error' in result) {
+          throw new Error(`Export failed: ${result.error}`);
+        }
+        finalSpec = result;
+      }
+
       return {
         json: {
           apiVersion: scene.serializer.apiVersion ?? '',
           kind: 'Dashboard',
           metadata,
-          spec: exportable,
+          spec: finalSpec,
           status: {},
         },
         initialSaveModelVersion,
@@ -203,7 +214,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     if (exportMode === ExportMode.V2Resource) {
       const spec = transformSceneToSaveModelSchemaV2(scene);
       const specCopy = JSON.parse(JSON.stringify(spec));
-      const statelessSpec = await makeExportableV2(specCopy);
+      const statelessSpec = await makeExportableV2(specCopy, isSharingExternally);
       const exportableV2 = isSharingExternally ? statelessSpec : spec;
 
       return {
