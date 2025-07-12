@@ -95,10 +95,10 @@ func (s ExternalID) String() string {
 
 // Keeper is the interface for secret keepers.
 type Keeper interface {
-	Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, exposedValueOrRef string) (ExternalID, error)
-	Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID ExternalID, exposedValueOrRef string) error
-	Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID ExternalID) (secretv1beta1.ExposedSecureValue, error)
-	Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID ExternalID) error
+	Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) (ExternalID, error)
+	Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) error
+	Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error)
+	Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) error
 }
 
 // Service is the interface for secret keeper services.
