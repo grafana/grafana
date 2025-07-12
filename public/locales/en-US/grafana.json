@@ -11807,7 +11807,9 @@
   "table": {
     "auto-cell-options-editor": {
       "description-wrap-text": "If selected text will be wrapped to the width of text in the configured column",
-      "label-wrap-text": "Wrap text"
+      "label-wrap-text": "Wrap text",
+      "max-wrapped-lines": "Wrap text line limit",
+      "max-wrapped-lines-placeholder": "none"
     },
     "bar-gauge-cell-options-editor": {
       "label-gauge-display-mode": "Gauge display mode",
@@ -11829,7 +11831,6 @@
       },
       "label-apply-to-entire-row": "Apply to entire row",
       "label-background-display-mode": "Background display mode",
-      "label-wrap-text": "Wrap text",
       "wrap-text": "Wrap text"
     },
     "column-alignment-options": {

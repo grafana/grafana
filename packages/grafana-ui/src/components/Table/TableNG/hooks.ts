@@ -18,6 +18,7 @@ import {
   GetMaxWrapCellOptions,
   getMaxWrapCell,
   getCellLinks,
+  shouldTextWrap,
 } from './utils';
 
 // Helper function to get displayed value
@@ -440,7 +441,6 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: number;
-  headerHeight: number;
   expandedRows: Record<string, boolean>;
   typographyCtx: TypographyCtx;
 }
@@ -450,7 +450,6 @@ export function useRowHeight({
   fields,
   hasNestedFrames,
   defaultHeight,
-  headerHeight,
   expandedRows,
   typographyCtx: { calcRowHeight, avgCharWidth },
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {
@@ -463,7 +462,7 @@ export function useRowHeight({
         }
 
         const cellOptions = getCellOptions(field);
-        const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
+        const wrapText = shouldTextWrap(field);
         const type = cellOptions.type;
         const result = !!wrapText && type !== TableCellDisplayMode.Image;
         if (result === true) {
