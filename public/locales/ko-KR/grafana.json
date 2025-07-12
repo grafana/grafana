@@ -504,6 +504,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "YAML 편집",
@@ -1499,15 +1502,12 @@
     "group-details": {
       "ds-features-error": "데이터 소스 세부 정보 로딩 중 오류 발생",
       "edit": "편집",
-      "evaluations-to-fire": "경고 발생 평가 주기",
       "export": "내보내기",
       "folder": "폴더",
       "group-loading-error": "그룹 로딩 중 오류 발생",
       "interval": "간격",
       "namespace": "네임스페이스",
-      "pending-period": "보류 기간",
-      "recording": "기록",
-      "rule-name": "규칙 이름"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "데이터 소스 세부 정보 로딩 중 오류 발생",
@@ -2228,6 +2228,9 @@
         "label-export-all": "모두 내보내기"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "{{errorMessage}}(으)로 인해 쿼리 편집기를 로딩할 수 없습니다"
     },
@@ -2637,6 +2640,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "원하는 데이터 소스를 찾을 수 없나요? 일부 데이터 소스는 경고용으로 지원되지 않습니다. 자세한 내용을 보려면 아이콘을 클릭하세요."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "새로운 Alertmanager 추가",
       "builtin-alertmanager": "내장 Alertmanager",
@@ -2871,6 +2879,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} 전)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3519,11 +3532,11 @@
       "button-create": "생성",
       "button-creating": "생성 중...",
       "cancel": "취소",
-      "error-invalid-folder-name": "유효하지 않은 폴더 이름",
       "error-required": "폴더 이름은 필수 입력 항목입니다",
       "folder-name-input-placeholder-enter-folder-name": "폴더 이름 입력",
       "label-folder-name": "폴더 이름",
       "text-pull-request-created": "이 폴더에 대한 변경 사항을 포함하는 풀 요청이 생성되었습니다.",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "풀 요청 생성됨",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다."
     },
@@ -5635,6 +5648,20 @@
     "library-viz-panel-info": {
       "last-edited": "<person /> 님({{timeAgo}}에)",
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "선택한 폴더에 동일한 이름의 대시보드가 이미 존재합니다. 그래도 이 대시보드를 저장하시겠어요?",
@@ -7963,6 +7990,9 @@
       "filter-popup-match-case": "대소문자 일치",
       "inspect-drawer-title": "값 검사",
       "inspect-menu-label": "값 검사",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}"
     },
@@ -8683,6 +8713,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8695,6 +8726,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8797,6 +8829,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -9055,6 +9092,8 @@
     "resource-details": {
       "dismiss-button": "확인",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "대시보드가 이미 클라우드 인스턴스에서 Grafana에 의해 프로비저닝 및 관리되고 있습니다. 앞으로 프로비저닝된 대시보드를 사용하는 것이 좋습니다. 대시보드를 클라우드 인스턴스에 복사하려는 경우, 대시보드 JSON에서 대시보드 ID를 변경하고 새 스냅샷을 저장한 다음 다시 업로드하세요.",
         "datasource-already-managed": "데이터 소스가 이미 클라우드 인스턴스에서 Grafana에 의해 프로비저닝 및 관리되고 있습니다. 다른 리소스인 경우 다른 UID를 설정하고 다시 시도하세요.",
         "datasource-invalid-url": "잘못된 URL을 가진 데이터 소스가 있습니다. 유효한 URL을 입력하고 다시 시도해 주세요.",
@@ -10281,10 +10320,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12473,6 +12510,7 @@
         "transform": "변환"
       }
     },
+    "tag": "",
     "time-series-table-transform-editor": {
       "label-stat": "통계",
       "label-time-field": "시간 필드",

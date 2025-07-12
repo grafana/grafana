@@ -37,6 +37,7 @@ import (
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
@@ -45,9 +46,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/nanogit"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
@@ -75,8 +76,9 @@ var (
 type APIBuilder struct {
 	features featuremgmt.FeatureToggles
 
+	tracer              tracing.Tracer
 	getter              rest.Getter
-	localFileResolver   *repository.LocalFolderResolver
+	localFileResolver   *local.LocalFolderResolver
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -105,7 +107,7 @@ type APIBuilder struct {
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
-	local *repository.LocalFolderResolver,
+	local *local.LocalFolderResolver,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
@@ -115,6 +117,7 @@ func NewAPIBuilder(
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	access authlib.AccessChecker,
+	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
@@ -122,6 +125,7 @@ func NewAPIBuilder(
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
+		tracer:              tracer,
 		localFileResolver:   local,
 		features:            features,
 		ghFactory:           ghFactory,
@@ -162,20 +166,14 @@ func RegisterAPIService(
 	usageStatsService usagestats.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
+	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
 	}
 
-	logger := logging.DefaultLogger.With("logger", "provisioning startup")
-	if features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
-		logger.Info("Using nanogit for repositories")
-	} else {
-		logger.Debug("Using go-git and Github API for repositories")
-	}
-
-	folderResolver := &repository.LocalFolderResolver{
+	folderResolver := &local.LocalFolderResolver{
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}
@@ -185,6 +183,7 @@ func RegisterAPIService(
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		secrets.NewSingleTenant(secretsSvc), access,
+		tracer,
 		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
@@ -206,6 +205,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// * Reading and modifying a repository's configuration requires administrator privileges.
 			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
 			// * Reading a repository's files requires viewer privileges.
+			// * Reading a repository's refs requires viewer privileges.
 			// * Editing a repository's files requires editor privileges.
 			// * Syncing a repository requires editor privileges.
 			// * Exporting a repository requires administrator privileges.
@@ -237,6 +237,12 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
+				case "refs":
+					// This is strictly a read operation. It is handy on the frontend for viewers.
+					if id.GetOrgRole().Includes(identity.RoleViewer) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "viewer role is required", nil
 				case "files":
 					// Access to files is controlled by the AccessClient
 					return authorizer.DecisionAllow, "", nil
@@ -357,6 +363,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		getter: b,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -606,11 +613,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			b.repositoryLister = repoInformer.Lister()
 
+			stageIfPossible := repository.WrapWithStageAndPushIfPossible
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
 				export.ExportAll,
-				repository.WrapWithCloneAndPushIfPossible,
+				stageIfPossible,
 			)
 
 			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
@@ -636,7 +644,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				legacyResources,
 				storageSwapper,
 				syncWorker,
-				repository.WrapWithCloneAndPushIfPossible,
+				stageIfPossible,
 			)
 
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
@@ -768,6 +776,22 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	if sub != nil {
 		sub.Get.Description = "Get the history of a path"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
+	}
+
+	// Show refs endpoint documentation
+	sub = oas.Paths.Paths[repoprefix+"/refs"]
+	if sub != nil {
+		sub.Get.Description = "Get the repository references"
+		sub.Get.Summary = "Repository refs listing"
+		sub.Get.Parameters = []*spec3.Parameter{}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs[defsBase+"RefList"].Schema
+		mt["*/*"].Schema = &s
 	}
 
 	// Show a special list command
@@ -1170,52 +1194,63 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		return repository.NewLocal(r, b.localFileResolver), nil
+		return local.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
-		return nanogit.NewGitRepository(ctx, b.secrets, r, nanogit.RepositoryConfig{
+		// Decrypt token if needed
+		token := r.Spec.Git.Token
+		if token == "" {
+			decrypted, err := b.secrets.Decrypt(ctx, r.Spec.Git.EncryptedToken)
+			if err != nil {
+				return nil, fmt.Errorf("decrypt git token: %w", err)
+			}
+			token = string(decrypted)
+		}
+
+		return git.NewGitRepository(ctx, r, git.RepositoryConfig{
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
 			Path:           r.Spec.Git.Path,
-			Token:          r.Spec.Git.Token,
+			Token:          token,
 			EncryptedToken: r.Spec.Git.EncryptedToken,
 		})
 	case provisioning.GitHubRepositoryType:
-		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
-		}
-
-		apiRepo, err := repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
-		if err != nil {
-			return nil, fmt.Errorf("create github API repository: %w", err)
-		}
-
 		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
-		if !b.features.IsEnabledGlobally(featuremgmt.FlagNanoGit) {
-			logger.Debug("Instantiating Github repository with go-git and Github API")
-			return apiRepo, nil
-		}
-
-		logger.Info("Instantiating Github repository with nanogit")
+		logger.Info("Instantiating Github repository")
 
 		ghCfg := r.Spec.GitHub
 		if ghCfg == nil {
 			return nil, fmt.Errorf("github configuration is required for nano git")
 		}
 
-		gitCfg := nanogit.RepositoryConfig{
+		// Decrypt GitHub token if needed
+		ghToken := ghCfg.Token
+		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
+			decrypted, err := b.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
+			if err != nil {
+				return nil, fmt.Errorf("decrypt github token: %w", err)
+			}
+			ghToken = string(decrypted)
+		}
+
+		gitCfg := git.RepositoryConfig{
 			URL:            ghCfg.URL,
 			Branch:         ghCfg.Branch,
 			Path:           ghCfg.Path,
-			Token:          ghCfg.Token,
+			Token:          ghToken,
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		nanogitRepo, err := nanogit.NewGitRepository(ctx, b.secrets, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
 		if err != nil {
-			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
+			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		return nanogit.NewGithubRepository(apiRepo, nanogitRepo), nil
+		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken)
+		if err != nil {
+			return nil, fmt.Errorf("error creating github repository: %w", err)
+		}
+
+		return ghRepo, nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}
