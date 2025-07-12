@@ -5,7 +5,8 @@ import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { StoreState } from 'app/types/store';
 
 import { selectTotal } from '../invites/state/selectors';
 

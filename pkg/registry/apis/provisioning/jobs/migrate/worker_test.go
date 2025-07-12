@@ -12,6 +12,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/local"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
@@ -88,7 +89,7 @@ func TestMigrationWorker_WithHistory(t *testing.T) {
 		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
 		progressRecorder.On("Strict").Return()
 
-		repo := repository.NewLocal(&provisioning.Repository{}, nil)
+		repo := local.NewLocal(&provisioning.Repository{}, nil)
 		err := worker.Process(context.Background(), repo, job, progressRecorder)
 		require.EqualError(t, err, "history is only supported for github repositories")
 	})

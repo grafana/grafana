@@ -8,7 +8,8 @@ INSERT INTO `secret_secure_value` (
   `created_by`,
   `updated`,
   `updated_by`,
-  `status_phase`,
+  `active`,
+  `version`,
   `description`,
   `external_id`
 ) VALUES (
@@ -21,7 +22,8 @@ INSERT INTO `secret_secure_value` (
   'user:ryan',
   5678,
   'user:cameron',
-  'creating',
+  FALSE,
+  1,
   'description',
   'extId'
 );

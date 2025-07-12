@@ -14,6 +14,9 @@ type RepositoryViewList struct {
 	// The UI should force the onboarding workflow when this is true
 	LegacyStorage bool `json:"legacyStorage,omitempty"`
 
+	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
+	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
+
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
 }

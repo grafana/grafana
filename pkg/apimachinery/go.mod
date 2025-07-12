@@ -4,12 +4,14 @@ go 1.24.4
 
 require (
 	github.com/go-jose/go-jose/v3 v3.0.4 // @grafana/identity-access-team
-	github.com/grafana/authlib v0.0.0-20250618124654-54543efcfeed // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/stretchr/testify v1.10.0
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.33.2
 	k8s.io/apiserver v0.33.2
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
+	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 )
 
 require (
@@ -48,9 +50,7 @@ require (
 	google.golang.org/grpc v1.73.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect

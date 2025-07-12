@@ -2,6 +2,7 @@ import ansicolor from 'ansicolor';
 
 import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
+import { LOG_LINE_DETAILS_HEIGHT, LogLineDetailsMode } from './LogLineDetails';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 
@@ -54,7 +55,6 @@ export class LogLineVirtualization {
   getGridSize = () => this.gridSize;
   getPaddingBottom = () => this.paddingBottom;
 
-  // 2/3 of the viewport height
   getTruncationLineCount = () => Math.round(window.innerHeight / this.getLineHeight() / 1.5);
 
   getTruncationLength = (container: HTMLDivElement | null) => {
@@ -232,8 +232,10 @@ export class LogLineVirtualization {
 }
 
 export interface DisplayOptions {
+  detailsMode: LogLineDetailsMode;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
+  showDetails: LogListModel[];
   showDuplicates: boolean;
   showTime: boolean;
   wrap: boolean;
@@ -244,20 +246,25 @@ export function getLogLineSize(
   logs: LogListModel[],
   container: HTMLDivElement | null,
   displayedFields: string[],
-  { hasLogsWithErrors, hasSampledLogs, showDuplicates, showTime, wrap }: DisplayOptions,
+  { detailsMode, hasLogsWithErrors, hasSampledLogs, showDuplicates, showDetails, showTime, wrap }: DisplayOptions,
   index: number
 ) {
   if (!container) {
     return 0;
   }
+  const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
+  const detailsHeight =
+    detailsMode === 'inline' && logs[index] && showDetails.findIndex((log) => log.uid === logs[index].uid) >= 0
+      ? window.innerHeight * (LOG_LINE_DETAILS_HEIGHT / 100) + gap / 2
+      : 0;
   // !logs[index] means the line is not yet loaded by infinite scrolling
   if (!wrap || !logs[index]) {
-    return virtualization.getLineHeight() + virtualization.getPaddingBottom();
+    return virtualization.getLineHeight() + virtualization.getPaddingBottom() + detailsHeight;
   }
   // If a long line is collapsed, we show the line count + an extra line for the expand/collapse control
   logs[index].updateCollapsedState(displayedFields, container);
   if (logs[index].collapsed) {
-    return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight();
+    return (virtualization.getTruncationLineCount() + 1) * virtualization.getLineHeight() + detailsHeight;
   }
 
   const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
@@ -266,7 +273,6 @@ export function getLogLineSize(
   }
 
   let textToMeasure = '';
-  const gap = virtualization.getGridSize() * FIELD_GAP_MULTIPLIER;
   const iconsGap = virtualization.getGridSize() * 0.5;
   let optionsWidth = 0;
   if (showDuplicates) {
@@ -296,7 +302,9 @@ export function getLogLineSize(
 
   const { height } = virtualization.measureTextHeight(textToMeasure, getLogContainerWidth(container), optionsWidth);
   // When the log is collapsed, add an extra line for the expand/collapse control
-  return logs[index].collapsed === false ? height + virtualization.getLineHeight() : height;
+  return logs[index].collapsed === false
+    ? height + virtualization.getLineHeight() + detailsHeight
+    : height + detailsHeight;
 }
 
 export interface LogFieldDimension {
@@ -313,14 +321,28 @@ export function hasUnderOrOverflow(
   if (collapsed !== undefined && calculatedHeight) {
     calculatedHeight -= virtualization.getLineHeight();
   }
+  const inlineDetails = element.parentElement
+    ? Array.from(element.parentElement.children).filter((element) =>
+        element.classList.contains('log-line-inline-details')
+      )
+    : undefined;
+  const detailsHeight = inlineDetails?.length ? inlineDetails[0].clientHeight : 0;
+
+  // Line overflows container
+  let measuredHeight = element.scrollHeight + detailsHeight;
   const height = calculatedHeight ?? element.clientHeight;
-  if (element.scrollHeight > height) {
-    return collapsed !== undefined ? element.scrollHeight + virtualization.getLineHeight() : element.scrollHeight;
+  if (measuredHeight > height) {
+    return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
   }
+
+  // Line is smaller than container
   const child = element.children[1];
-  if (child instanceof HTMLDivElement && child.clientHeight < height) {
-    return collapsed !== undefined ? child.clientHeight + virtualization.getLineHeight() : child.clientHeight;
+  measuredHeight = child.clientHeight + detailsHeight;
+  if (child instanceof HTMLDivElement && measuredHeight < height) {
+    return collapsed !== undefined ? measuredHeight + virtualization.getLineHeight() : measuredHeight;
   }
+
+  // No overflow or undermeasurement
   return null;
 }
 

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { PluginDashboard } from 'app/types';
+import { PluginDashboard } from 'app/types/plugins';
 
 import DashboardsTable, { Props } from './DashboardsTable';
 

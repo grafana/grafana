@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
+import { TeamsState, Team, TeamState, TeamMember, TeamGroup } from 'app/types/teams';
 
 export const initialTeamsState: TeamsState = {
   teams: [],

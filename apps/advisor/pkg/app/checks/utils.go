@@ -106,3 +106,25 @@ func SetStatusAnnotation(ctx context.Context, client resource.Client, obj resour
 		}},
 	}, resource.PatchOptions{}, obj)
 }
+
+func SetAnnotations(ctx context.Context, client resource.Client, obj resource.Object, annotations map[string]string) error {
+	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+		Operations: []resource.PatchOperation{{
+			Operation: resource.PatchOpAdd,
+			Path:      "/metadata/annotations",
+			Value:     annotations,
+		}},
+	}, resource.PatchOptions{}, obj)
+}
+
+func SetStatus(ctx context.Context, client resource.Client, obj resource.Object, status any) error {
+	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+		Operations: []resource.PatchOperation{{
+			Operation: resource.PatchOpAdd,
+			Path:      "/status",
+			Value:     status,
+		}},
+	}, resource.PatchOptions{
+		Subresource: "status",
+	}, obj)
+}

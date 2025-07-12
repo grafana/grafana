@@ -3,7 +3,6 @@ package migrate
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -16,12 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-func TestWrapWithCloneFn(t *testing.T) {
+func TestWrapWithStageFn(t *testing.T) {
 	t.Run("should return error when repository is not a ReaderWriter", func(t *testing.T) {
 		// Setup
 		ctx := context.Background()
 		// Create the wrapper function that matches WrapWithCloneFn signature
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			// pass a reader to function call
 			repo := repository.NewMockReader(t)
 			return fn(repo, true)
@@ -56,7 +55,7 @@ func TestWrapWithCloneFn_Error(t *testing.T) {
 		expectedErr := errors.New("clone failed")
 
 		// Create the wrapper function that returns an error
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			return expectedErr
 		}
 
@@ -98,7 +97,7 @@ func TestLegacyMigrator_MigrateFails(t *testing.T) {
 		mockWorker := jobs.NewMockWorker(t)
 
 		// Create a wrapper function that calls the provided function
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			return fn(rw, true)
 		}
 
@@ -147,7 +146,7 @@ func TestLegacyMigrator_ResetUnifiedStorageFails(t *testing.T) {
 		mockWorker := jobs.NewMockWorker(t)
 
 		// Create a wrapper function that calls the provided function
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			return fn(rw, true)
 		}
 
@@ -202,7 +201,7 @@ func TestLegacyMigrator_SyncFails(t *testing.T) {
 		}), mock.Anything).Return(expectedErr)
 
 		// Create a wrapper function that calls the provided function
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			return fn(rw, true)
 		}
 
@@ -257,7 +256,7 @@ func TestLegacyMigrator_SyncFails(t *testing.T) {
 		}), mock.Anything).Return(syncErr)
 
 		// Create a wrapper function that calls the provided function
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			return fn(rw, true)
 		}
 
@@ -310,7 +309,7 @@ func TestLegacyMigrator_Success(t *testing.T) {
 		}), mock.Anything).Return(nil)
 
 		// Create a wrapper function that calls the provided function
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			return fn(rw, true)
 		}
 
@@ -352,19 +351,7 @@ func TestLegacyMigrator_BeforeFnExecution(t *testing.T) {
 		mockStorageSwapper := NewMockStorageSwapper(t)
 		mockWorker := jobs.NewMockWorker(t)
 		// Create a wrapper function that calls the provided function
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
-			if clone.BeforeFn != nil {
-				if err := clone.BeforeFn(); err != nil {
-					return err
-				}
-			}
-
-			if push.BeforeFn != nil {
-				if err := push.BeforeFn(); err != nil {
-					return err
-				}
-			}
-
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			return errors.New("abort test here")
 		}
 
@@ -376,8 +363,7 @@ func TestLegacyMigrator_BeforeFnExecution(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, "clone repository").Return()
-		progress.On("SetMessage", mock.Anything, "push changes").Return()
+		// No progress messages expected in current staging implementation
 
 		// Execute
 		repo := repository.NewMockRepository(t)
@@ -399,19 +385,7 @@ func TestLegacyMigrator_ProgressScanner(t *testing.T) {
 		mockWorker := jobs.NewMockWorker(t)
 
 		// Create a wrapper function that calls the provided function
-		wrapFn := func(ctx context.Context, rw repository.Repository, clone repository.CloneOptions, push repository.PushOptions, fn func(repository.Repository, bool) error) error {
-			if clone.Progress != nil {
-				if _, err := clone.Progress.Write([]byte("clone repository\n")); err != nil {
-					return fmt.Errorf("failed to write to clone progress in tests: %w", err)
-				}
-			}
-
-			if push.Progress != nil {
-				if _, err := push.Progress.Write([]byte("push changes\n")); err != nil {
-					return fmt.Errorf("failed to write to push progress in tests: %w", err)
-				}
-			}
-
+		wrapFn := func(ctx context.Context, rw repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 			return errors.New("abort test here")
 		}
 
@@ -423,8 +397,7 @@ func TestLegacyMigrator_ProgressScanner(t *testing.T) {
 		)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, "clone repository").Return()
-		progress.On("SetMessage", mock.Anything, "push changes").Return()
+		// No progress messages expected in current staging implementation
 
 		repo := repository.NewMockRepository(t)
 		repo.On("Config").Return(&provisioning.Repository{
@@ -437,10 +410,7 @@ func TestLegacyMigrator_ProgressScanner(t *testing.T) {
 		require.EqualError(t, err, "migrate from SQL: abort test here")
 
 		require.Eventually(t, func() bool {
-			if len(progress.Calls) != 2 {
-				return false
-			}
-
+			// No progress message calls expected in current staging implementation
 			return progress.AssertExpectations(t)
 		}, time.Second, 10*time.Millisecond)
 	})

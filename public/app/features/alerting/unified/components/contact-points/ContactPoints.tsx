@@ -17,7 +17,7 @@ import {
 import { contextSrv } from 'app/core/core';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';

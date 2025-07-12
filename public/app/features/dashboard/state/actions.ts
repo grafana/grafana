@@ -7,7 +7,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { removeAllPanels } from 'app/features/panel/state/reducers';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
-import { ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types/store';
 
 import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 import { cancelVariables } from '../../variables/state/actions';

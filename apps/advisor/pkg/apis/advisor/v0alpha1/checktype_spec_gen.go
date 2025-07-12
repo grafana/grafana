@@ -23,5 +23,7 @@ type CheckTypeSpec struct {
 
 // NewCheckTypeSpec creates a new CheckTypeSpec object.
 func NewCheckTypeSpec() *CheckTypeSpec {
-	return &CheckTypeSpec{}
+	return &CheckTypeSpec{
+		Steps: []CheckTypeStep{},
+	}
 }

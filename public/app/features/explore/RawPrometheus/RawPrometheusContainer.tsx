@@ -8,8 +8,8 @@ import { TimeZone } from '@grafana/schema';
 import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
-import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
-import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
+import { ExploreItemState, TABLE_RESULTS_STYLE, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
+import { StoreState } from 'app/types/store';
 
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';

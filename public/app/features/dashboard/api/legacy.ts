@@ -6,7 +6,7 @@ import appEvents from 'app/core/app_events';
 import { Resource, ResourceList } from 'app/features/apiserver/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { SaveDashboardResponseDTO, DashboardDTO } from 'app/types';
+import { SaveDashboardResponseDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 

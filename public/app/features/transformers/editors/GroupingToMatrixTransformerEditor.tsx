@@ -15,6 +15,8 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/groupingToMatrix.svg';
+import lightImage from '../images/light/groupingToMatrix.svg';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({
@@ -148,12 +150,18 @@ export const GroupingToMatrixTransformerEditor = ({
   );
 };
 
-export const groupingToMatrixTransformRegistryItem: TransformerRegistryItem<GroupingToMatrixTransformerOptions> = {
-  id: DataTransformerID.groupingToMatrix,
-  editor: GroupingToMatrixTransformerEditor,
-  transformation: standardTransformers.groupingToMatrixTransformer,
-  name: standardTransformers.groupingToMatrixTransformer.name,
-  description: 'Takes a three fields combination and produces a Matrix.',
-  categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.groupingToMatrix).helperDocs,
-};
+export const getGroupingToMatrixTransformRegistryItem: () => TransformerRegistryItem<GroupingToMatrixTransformerOptions> =
+  () => ({
+    id: DataTransformerID.groupingToMatrix,
+    editor: GroupingToMatrixTransformerEditor,
+    transformation: standardTransformers.groupingToMatrixTransformer,
+    name: t('transformers.grouping-to-matrix-transformer-editor.name.grouping-to-matrix', 'Grouping to matrix'),
+    description: t(
+      'transformers.grouping-to-matrix-transformer-editor.description.summarize-and-reorganize-data',
+      'Summarize and reorganize data based on three fields.'
+    ),
+    categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
+    help: getTransformationContent(DataTransformerID.groupingToMatrix).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

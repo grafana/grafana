@@ -6,8 +6,8 @@ import { getAppEvents } from '@grafana/runtime';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { FolderDTO } from 'app/types/folders';
 
-import { FolderDTO } from '../../../types';
 import { ProvisionedFolderFormDataResult, useProvisionedFolderFormData } from '../hooks/useProvisionedFolderFormData';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';

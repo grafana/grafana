@@ -95,8 +95,9 @@ type UpdateUserCommand struct {
 	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
 	// If OrgID is included update current org for user
-	OrgID      *int64      `json:"-"`
-	HelpFlags1 *HelpFlags1 `json:"-"`
+	OrgID         *int64      `json:"-"`
+	HelpFlags1    *HelpFlags1 `json:"-"`
+	IsProvisioned *bool       `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {

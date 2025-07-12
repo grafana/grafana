@@ -5,10 +5,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -208,5 +210,51 @@ func TestContextHandler(t *testing.T) {
 			require.Empty(t, res.Header.Get("X-Grafana-Identity-Id"))
 			require.NoError(t, res.Body.Close())
 		})
+	})
+
+	t.Run("openfeature evaluation context defaults", func(t *testing.T) {
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			&authntest.FakeService{ExpectedErr: errors.New("some error")},
+			featuremgmt.WithFeatures(),
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			evalCtx := openfeature.TransactionContext(c.Req.Context())
+			require.NotNil(t, evalCtx)
+			require.Equal(t, "default", evalCtx.Attribute("namespace"))
+		})
+
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("openfeature evaluation context with user namespace", func(t *testing.T) {
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			&authntest.FakeService{
+				ExpectedIdentity: &authn.Identity{
+					ID:        "1",
+					Type:      claims.TypeUser,
+					Namespace: "org-3",
+				},
+			},
+			featuremgmt.WithFeatures(),
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			evalCtx := openfeature.TransactionContext(c.Req.Context())
+			require.NotNil(t, evalCtx)
+			require.Equal(t, "org-3", evalCtx.Attribute("namespace"))
+		})
+
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
 	})
 }

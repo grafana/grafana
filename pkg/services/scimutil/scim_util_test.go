@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // MockK8sHandler is a mock implementation of client.K8sHandler for testing
@@ -573,7 +572,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 			expectedSpec: SCIMConfigSpec{
 				EnableUserSync:           true,
 				EnableGroupSync:          true,
-				AllowNonProvisionedUsers: util.Pointer(false),
+				AllowNonProvisionedUsers: false,
 			},
 		},
 		{
@@ -582,7 +581,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 			expectedSpec: SCIMConfigSpec{
 				EnableUserSync:           false,
 				EnableGroupSync:          false,
-				AllowNonProvisionedUsers: util.Pointer(false),
+				AllowNonProvisionedUsers: false,
 			},
 		},
 		{
@@ -591,7 +590,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 			expectedSpec: SCIMConfigSpec{
 				EnableUserSync:           true,
 				EnableGroupSync:          false,
-				AllowNonProvisionedUsers: util.Pointer(false),
+				AllowNonProvisionedUsers: false,
 			},
 		},
 		{
@@ -600,7 +599,7 @@ func TestSCIMUtil_unstructuredToSCIMConfig(t *testing.T) {
 			expectedSpec: SCIMConfigSpec{
 				EnableUserSync:           false,
 				EnableGroupSync:          false,
-				AllowNonProvisionedUsers: util.Pointer(true),
+				AllowNonProvisionedUsers: true,
 			},
 		},
 		{

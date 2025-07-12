@@ -8,13 +8,15 @@ import {
   getFrameDisplayName,
 } from '@grafana/data';
 
-import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
+import { getPrepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 const ctx = {
   interpolate: (v: string) => v,
 };
 
 describe('Prepare time series transformer', () => {
+  const prepareTimeSeriesTransformer = getPrepareTimeSeriesTransformer();
+
   it('should transform wide to multi', () => {
     const source = [
       toDataFrame({

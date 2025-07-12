@@ -13,6 +13,8 @@ import { t } from '@grafana/i18n';
 import { InlineField, Input } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/renameByRegex.svg';
+import lightImage from '../images/light/renameByRegex.svg';
 
 interface RenameByRegexTransformerEditorProps extends TransformerUIProps<RenameByRegexTransformerOptions> {}
 
@@ -120,12 +122,18 @@ export class RenameByRegexTransformerEditor extends React.PureComponent<
   }
 }
 
-export const renameByRegexTransformRegistryItem: TransformerRegistryItem<RenameByRegexTransformerOptions> = {
-  id: DataTransformerID.renameByRegex,
-  editor: RenameByRegexTransformerEditor,
-  transformation: standardTransformers.renameByRegexTransformer,
-  name: standardTransformers.renameByRegexTransformer.name,
-  description: 'Renames part of the query result by using regular expression with placeholders.',
-  categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.renameByRegex).helperDocs,
-};
+export const getRenameByRegexTransformRegistryItem: () => TransformerRegistryItem<RenameByRegexTransformerOptions> =
+  () => ({
+    id: DataTransformerID.renameByRegex,
+    editor: RenameByRegexTransformerEditor,
+    transformation: standardTransformers.renameByRegexTransformer,
+    name: t('transformers.rename-by-regex-transformer.name.rename-fields-by-regex', 'Rename fields by regex'),
+    description: t(
+      'transformers.rename-by-regex-transformer.description.rename-parts-using-regex',
+      'Rename parts of the query results using a regular expression and replacement pattern.'
+    ),
+    categories: new Set([TransformerCategory.ReorderAndRename]),
+    help: getTransformationContent(DataTransformerID.renameByRegex).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

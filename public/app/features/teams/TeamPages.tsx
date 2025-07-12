@@ -9,7 +9,8 @@ import { UpgradeBox } from 'app/core/components/Upgrade/UpgradeBox';
 import config from 'app/core/config';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, StoreState, useDispatch, useSelector } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import TeamGroupSync, { TeamSyncUpgradeContent } from './TeamGroupSync';
 import TeamPermissions from './TeamPermissions';

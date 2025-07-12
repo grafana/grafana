@@ -10,7 +10,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { contextSrv } from '../../core/services/context_srv';

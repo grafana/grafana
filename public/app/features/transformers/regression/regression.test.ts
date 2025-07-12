@@ -8,9 +8,11 @@ import {
   toDataFrameDTO,
 } from '@grafana/data';
 
-import { ModelType, RegressionTransformer, RegressionTransformerOptions } from './regression';
+import { ModelType, getRegressionTransformer, RegressionTransformerOptions } from './regression';
 
 describe('Regression transformation', () => {
+  const RegressionTransformer = getRegressionTransformer();
+
   it('it should predict a linear regression to exactly fit the data when the data is f(x) = x', () => {
     const source = [
       toDataFrame({

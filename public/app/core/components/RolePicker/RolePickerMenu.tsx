@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
+import { OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { OrgRole, Role } from 'app/types';
+import { Role } from 'app/types/accessControl';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';

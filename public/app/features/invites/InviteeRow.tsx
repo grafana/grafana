@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { t } from '@grafana/i18n';
 import { Button, ClipboardButton } from '@grafana/ui';
-import { Invitee } from 'app/types';
+import { Invitee } from 'app/types/user';
 
 import { revokeInvite } from './state/actions';
 

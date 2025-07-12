@@ -43,7 +43,6 @@ mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
-nanoGit,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
@@ -165,7 +164,6 @@ prometheusSpecialCharsInLabelValues,experimental,@grafana/oss-big-tent,false,fal
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 enableSCIM,preview,@grafana/identity-access-team,false,false,false
 crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
-jaegerBackendMigration,GA,@grafana/oss-big-tent,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,GA,@grafana/alerting-squad,false,false,true

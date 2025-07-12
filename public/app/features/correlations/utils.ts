@@ -9,7 +9,7 @@ import {
   getBackendSrv,
   getDataSourceSrv,
 } from '@grafana/runtime';
-import { ExploreItemState } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 import { parseLogsFrame } from '../logs/logsFrame';

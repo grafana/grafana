@@ -3,7 +3,7 @@ package secretkeeper
 import (
 	"go.opentelemetry.io/otel/trace"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/prometheus/client_golang/prometheus"
@@ -30,6 +30,6 @@ func ProvideService(
 
 // Ignore the config, but we could use it to get the keeper type and then return the correct keeper.
 // Instantiation only happens on ProvideService ONCE.
-func (k *OSSKeeperService) KeeperForConfig(secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+func (k *OSSKeeperService) KeeperForConfig(secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
 	return k.systemKeeper, nil
 }

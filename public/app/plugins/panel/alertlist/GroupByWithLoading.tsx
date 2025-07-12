@@ -10,7 +10,7 @@ import {
   isAsyncRequestMapSlicePending,
   isAsyncRequestMapSliceSettled,
 } from 'app/features/alerting/unified/utils/redux';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 import { AlertingRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 

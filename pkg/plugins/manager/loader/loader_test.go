@@ -85,8 +85,8 @@ func TestLoader_Load(t *testing.T) {
 							Description: "Data source for Amazon AWS monitoring service",
 							Keywords:    []string{"aws", "amazon"},
 							Logos: plugins.Logos{
-								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Small: "public/plugins/cloudwatch/img/amazon-web-services.png",
+								Large: "public/plugins/cloudwatch/img/amazon-web-services.png",
 							},
 							Links: []plugins.InfoLink{
 								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
@@ -123,7 +123,7 @@ func TestLoader_Load(t *testing.T) {
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
 					Module:    "core:plugin/cloudwatch",
-					BaseURL:   "public/app/plugins/datasource/cloudwatch",
+					BaseURL:   "public/plugins/cloudwatch",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureStatusInternal,
 					Class:     plugins.ClassCore,

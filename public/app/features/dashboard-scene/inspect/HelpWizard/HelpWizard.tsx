@@ -24,7 +24,7 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 

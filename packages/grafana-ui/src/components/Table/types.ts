@@ -57,7 +57,7 @@ export interface TableCellProps extends CellProps<any> {
   onCellFilterAdded?: TableFilterActionCallback;
   innerWidth: number;
   frame: DataFrame;
-  actions?: ActionModel[];
+  actions?: ActionModel[]; // unused in NG
   setInspectCell?: TableInspectCellCallback;
 }
 

@@ -7,8 +7,9 @@ import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, StoreState } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
+import { StoreState } from 'app/types/store';
 
 import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';

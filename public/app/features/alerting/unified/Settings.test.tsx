@@ -7,6 +7,7 @@ import DataSourcesResponse from './components/settings/mocks/api/datasources.jso
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
+import { addSettingsSection, clearSettingsExtensions } from './settings/extensions';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -35,12 +36,23 @@ const ui = {
 
   versionsTab: byRole('tab', { name: /versions/i }),
   provisionedBadge: byText(/^Provisioned$/),
+
+  // New selectors for extension tabs
+  alertmanagerTab: byRole('tab', { name: 'Alert managers' }),
+  enrichmentTab: byRole('tab', { name: 'Enrichment' }),
+  notificationsTab: byRole('tab', { name: 'Notifications' }),
+  customTab: (name: string) => byRole('tab', { name }),
 };
 
 describe('Alerting settings', () => {
   beforeEach(() => {
     grantUserRole('ServerAdmin');
     setupGrafanaManagedServer(server);
+    clearSettingsExtensions();
+  });
+
+  afterEach(() => {
+    clearSettingsExtensions();
   });
 
   it('should render the page with Built-in only enabled, others disabled', async () => {
@@ -130,5 +142,119 @@ describe('Alerting settings', () => {
 
     expect(enableButton).not.toBeInTheDocument();
     expect(disableButton).not.toBeInTheDocument();
+  });
+
+  it('should display additional tabs when settings extensions are registered', async () => {
+    // Register extensions before rendering
+    addSettingsSection({
+      id: 'enrichment',
+      text: 'Enrichment',
+      url: '/alerting/admin/enrichment',
+      icon: 'star',
+    });
+
+    addSettingsSection({
+      id: 'notifications',
+      text: 'Notifications',
+      url: '/alerting/admin/notifications',
+      icon: 'bell',
+    });
+
+    render(<SettingsPage />, {
+      historyOptions: {
+        initialEntries: ['/alerting/admin/alertmanager'],
+      },
+    });
+
+    // Wait for the page to load
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+    // Check that the extension tabs are visible
+    expect(ui.enrichmentTab.get()).toBeInTheDocument();
+    expect(ui.notificationsTab.get()).toBeInTheDocument();
+  });
+
+  it('should correctly show active state for extension tabs based on route', async () => {
+    // Register an extension
+    addSettingsSection({
+      id: 'enrichment',
+      text: 'Enrichment',
+      url: '/alerting/admin/enrichment',
+      icon: 'star',
+    });
+
+    // Render with the extension route as active
+    render(<SettingsPage />, {
+      historyOptions: {
+        initialEntries: ['/alerting/admin/enrichment'],
+      },
+    });
+
+    // Wait for the page to load
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+    // Check that the extension tab is visible and active
+    const enrichmentTab = ui.enrichmentTab.get();
+    expect(enrichmentTab).toBeInTheDocument();
+    expect(enrichmentTab).toHaveAttribute('aria-selected', 'true');
+
+    // Check that the default alertmanager tab is not active
+    const alertmanagerTab = ui.alertmanagerTab.get();
+    expect(alertmanagerTab).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('should handle multiple extensions correctly', async () => {
+    // Register multiple extensions
+    addSettingsSection({
+      id: 'enrichment',
+      text: 'Enrichment',
+      url: '/alerting/admin/enrichment',
+      icon: 'star',
+    });
+
+    addSettingsSection({
+      id: 'notifications',
+      text: 'Notifications',
+      url: '/alerting/admin/notifications',
+      icon: 'bell',
+    });
+
+    addSettingsSection({
+      id: 'custom-settings',
+      text: 'Custom Settings',
+      url: '/alerting/admin/custom',
+      icon: 'cog',
+    });
+
+    render(<SettingsPage />, {
+      historyOptions: {
+        initialEntries: ['/alerting/admin/alertmanager'],
+      },
+    });
+
+    // Wait for the page to load
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+    // Check that all tabs are visible
+    expect(ui.alertmanagerTab.get()).toBeInTheDocument();
+    expect(ui.enrichmentTab.get()).toBeInTheDocument();
+    expect(ui.notificationsTab.get()).toBeInTheDocument();
+    expect(ui.customTab('Custom Settings').get()).toBeInTheDocument();
+  });
+
+  it('should not show extension tabs when no extensions are registered', async () => {
+    render(<SettingsPage />, {
+      historyOptions: {
+        initialEntries: ['/alerting/admin/alertmanager'],
+      },
+    });
+
+    // Wait for the page to load
+    await waitFor(() => expect(ui.builtInAlertmanagerSection.get()).toBeInTheDocument());
+
+    // Check that only the default alertmanager tab is visible
+    expect(ui.alertmanagerTab.get()).toBeInTheDocument();
+    expect(ui.enrichmentTab.query()).not.toBeInTheDocument();
+    expect(ui.notificationsTab.query()).not.toBeInTheDocument();
   });
 });

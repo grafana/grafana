@@ -9,7 +9,7 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types/store';
 import { RuleIdentifier, RuleNamespace, StateHistoryItem } from 'app/types/unified-alerting';
 import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 

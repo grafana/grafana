@@ -17,8 +17,9 @@ import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { KioskMode, StoreState } from 'app/types';
+import { KioskMode } from 'app/types/dashboard';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+import { StoreState } from 'app/types/store';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';

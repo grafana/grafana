@@ -10,7 +10,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShareEmbed } from './ShareEmbed';
 import { ShareExport } from './ShareExport';

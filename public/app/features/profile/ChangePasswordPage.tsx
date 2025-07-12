@@ -2,7 +2,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useMount } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { changePassword, loadUser } from './state/actions';

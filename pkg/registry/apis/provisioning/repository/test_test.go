@@ -431,7 +431,7 @@ func TestFromFieldError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := fromFieldError(tt.fieldError)
+			result := FromFieldError(tt.fieldError)
 
 			require.NotNil(t, result)
 			require.Equal(t, tt.expectedCode, result.Code)

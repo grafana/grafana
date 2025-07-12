@@ -36,6 +36,8 @@ import {
 
 import { createFieldsOrdererAuto } from '../../../../../packages/grafana-data/src/transformations/transformers/order';
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/organize.svg';
+import lightImage from '../images/light/organize.svg';
 import { getAllFieldNamesFromDataFrames, getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
@@ -495,13 +497,18 @@ const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string
   return fieldNames.sort(comparer);
 };
 
-export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<OrganizeFieldsTransformerOptions> = {
-  id: DataTransformerID.organize,
-  editor: OrganizeFieldsTransformerEditor,
-  transformation: standardTransformers.organizeFieldsTransformer,
-  name: standardTransformers.organizeFieldsTransformer.name,
-  description:
-    "Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.",
-  categories: new Set([TransformerCategory.ReorderAndRename]),
-  help: getTransformationContent(DataTransformerID.organize).helperDocs,
-};
+export const getOrganizeFieldsTransformRegistryItem: () => TransformerRegistryItem<OrganizeFieldsTransformerOptions> =
+  () => ({
+    id: DataTransformerID.organize,
+    editor: OrganizeFieldsTransformerEditor,
+    transformation: standardTransformers.organizeFieldsTransformer,
+    name: t('transformers.organize-fields-transformer-editor.name.organize-fields', 'Organize fields by name'),
+    description: t(
+      'transformers.organize-fields-transformer-editor.description.reorder-hide-or-rename-fields',
+      'Re-order, hide, or rename fields.'
+    ),
+    categories: new Set([TransformerCategory.ReorderAndRename]),
+    help: getTransformationContent(DataTransformerID.organize).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });

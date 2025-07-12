@@ -15,6 +15,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -321,7 +322,9 @@ func initModuleServerForTest(
 	opts Options,
 	apiOpts api.ServerOptions,
 ) testModuleServer {
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, nil)
+	tracer := tracing.InitializeTracerForTest()
+
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearch), cfg, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,

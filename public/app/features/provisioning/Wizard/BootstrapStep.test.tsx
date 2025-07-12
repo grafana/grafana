@@ -187,6 +187,7 @@ describe('BootstrapStep', () => {
         settingsData: {
           legacyStorage: true,
           items: [],
+          availableRepositoryTypes: [],
         },
       });
 
@@ -239,6 +240,7 @@ describe('BootstrapStep', () => {
         settingsData: {
           legacyStorage: true,
           items: [],
+          availableRepositoryTypes: [],
         },
       });
 

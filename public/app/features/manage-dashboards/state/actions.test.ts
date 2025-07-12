@@ -7,7 +7,6 @@ import {
   defaultSpec as defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultQueryVariableSpec,
-  defaultDataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
@@ -837,9 +836,7 @@ describe('processV2Datasources', () => {
                     refId: 'A',
                     hidden: false,
                     query: {
-                      kind: 'DataQuery',
-                      version: defaultDataQueryKind().version,
-                      group: 'prometheus',
+                      kind: 'prometheus',
                       spec: {
                         expr: 'access_evaluation_duration_count',
                         range: true,
@@ -865,9 +862,7 @@ describe('processV2Datasources', () => {
             ...defaultQueryVariableSpec(),
             name: 'var1',
             query: {
-              kind: 'DataQuery',
-              version: defaultDataQueryKind().version,
-              group: 'loki',
+              kind: 'loki',
               spec: {
                 expr: 'access_evaluation_duration_count',
                 range: true,
@@ -885,9 +880,7 @@ describe('processV2Datasources', () => {
             hide: false,
             iconColor: 'red',
             query: {
-              kind: 'DataQuery',
-              version: defaultDataQueryKind().version,
-              group: 'loki',
+              kind: 'loki',
               spec: {
                 expr: 'access_evaluation_duration_count',
                 range: true,
@@ -989,17 +982,13 @@ describe('processV2DatasourceInput', () => {
         ...defaultQueryVariableSpec(),
         name: 'var2WithGrafanaDs',
         query: {
-          kind: 'DataQuery' as const,
-          version: defaultDataQueryKind().version,
-          group: 'grafana',
+          kind: 'grafana',
           spec: {
-            expr: 'access_evaluation_duration_count',
-            range: true,
+            panelId: 2,
           },
         },
       },
     };
-
     const result = await processV2DatasourceInput(queryVariable.spec, {});
     expect(result).toEqual({});
   });
@@ -1012,9 +1001,7 @@ describe('processV2DatasourceInput', () => {
         refId: 'A',
         hidden: false,
         query: {
-          kind: 'DataQuery' as const,
-          version: defaultDataQueryKind().version,
-          group: 'datasource',
+          kind: 'datasource',
           spec: {
             panelId: 2,
           },

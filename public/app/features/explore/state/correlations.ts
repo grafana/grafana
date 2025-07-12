@@ -7,7 +7,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { CreateCorrelationParams } from 'app/features/correlations/types';
 import { getCorrelationsBySourceUIDs, createCorrelation, generateDefaultLabel } from 'app/features/correlations/utils';
 import { store } from 'app/store/store';
-import { ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types/store';
 
 import { saveCorrelationsAction } from './explorePane';
 import { splitClose } from './main';

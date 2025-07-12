@@ -10,7 +10,7 @@ import {
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
 import { jsonDiff } from '../settings/version-history/utils';

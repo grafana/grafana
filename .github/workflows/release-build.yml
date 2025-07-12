@@ -186,5 +186,5 @@ jobs:
       bucket: grafana-prerelease
       pattern: artifacts-*
       run-id: ${{ github.run_id }}
-      bucket-path: ${{ needs.setup.outputs.version }}
+      bucket-path: ${{ needs.setup.outputs.version }}_${{ github.run_id }}
       environment: prod

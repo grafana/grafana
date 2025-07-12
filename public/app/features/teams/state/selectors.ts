@@ -1,4 +1,4 @@
-import { Team, TeamState } from 'app/types';
+import { Team, TeamState } from 'app/types/teams';
 
 export const getTeamGroups = (state: TeamState) => state.groups;
 

@@ -110,11 +110,12 @@ func TestMetadataStore_Save(t *testing.T) {
 	})
 	require.NoError(t, err)
 	// Verify in the kv store that the metadata is saved
-	retrievedObj, err := store.kv.Get(ctx, metaSection, key.String())
+	reader, err := store.kv.Get(ctx, metaSection, key.String())
 	require.NoError(t, err)
-	assert.Equal(t, key.String(), retrievedObj.Key)
 	var retrivedMeta MetaData
-	actualData, err := io.ReadAll(retrievedObj.Value)
+	actualData, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	err = reader.Close()
 	require.NoError(t, err)
 	err = json.Unmarshal(actualData, &retrivedMeta)
 	require.NoError(t, err)

@@ -6,10 +6,10 @@ import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Badge } from '@grafana/ui';
 import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
+import { NotifierDTO } from 'app/types/alerting';
 
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
-import { NotifierDTO } from '../../../../../../../types';
 import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { option } from '../../../../utils/notifier-types';

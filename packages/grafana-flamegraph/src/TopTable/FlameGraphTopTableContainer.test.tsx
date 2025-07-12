@@ -31,8 +31,12 @@ describe('FlameGraphTopTableContainer', () => {
 
   it('should render correctly', async () => {
     // Needed for AutoSizer to work in test
-    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 500 });
-    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 500 });
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: jest.fn(() => ({
+        width: 500,
+        height: 500,
+      })),
+    });
 
     setup();
     const rows = screen.getAllByRole('row');
@@ -56,8 +60,13 @@ describe('FlameGraphTopTableContainer', () => {
 
   it('should render search and sandwich buttons', async () => {
     // Needed for AutoSizer to work in test
-    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 500 });
-    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 500 });
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: jest.fn(() => ({
+        width: 500,
+        height: 500,
+        left: 0,
+      })),
+    });
 
     const { mocks } = setup();
 

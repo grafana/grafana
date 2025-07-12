@@ -3,7 +3,7 @@ import config from 'app/core/config';
 
 import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
 
-import { importPluginModule } from './plugin_loader';
+import { importPluginModule } from './pluginLoader';
 
 const promiseCache: Record<string, Promise<PanelPlugin>> = {};
 const panelPluginCache: Record<string, PanelPlugin> = {};

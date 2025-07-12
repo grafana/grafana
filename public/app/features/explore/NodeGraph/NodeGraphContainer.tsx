@@ -8,11 +8,11 @@ import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
 import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
+import { StoreState } from 'app/types/store';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
 import { LayoutAlgorithm } from '../../../plugins/panel/nodeGraph/panelcfg.gen';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
-import { StoreState } from '../../../types';
 import { useLinks } from '../utils/links';
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -63,6 +63,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	}
 	rv := k.snowflake.Generate().Int64()
 
+	obj := event.Object
 	// Write data.
 	var action DataAction
 	switch event.Type {
@@ -87,8 +88,13 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		action = DataActionUpdated
 	case resourcepb.WatchEvent_DELETED:
 		action = DataActionDeleted
+		obj = event.ObjectOld
 	default:
 		return 0, fmt.Errorf("invalid event type: %d", event.Type)
+	}
+
+	if obj == nil {
+		return 0, fmt.Errorf("object is nil")
 	}
 
 	// Build the search document
@@ -119,7 +125,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			Name:            event.Key.Name,
 			ResourceVersion: rv,
 			Action:          action,
-			Folder:          event.Object.GetFolder(),
+			Folder:          obj.GetFolder(),
 		},
 		Value: MetaData{
 			IndexableDocument: *doc,
@@ -137,7 +143,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		Name:            event.Key.Name,
 		ResourceVersion: rv,
 		Action:          action,
-		Folder:          event.Object.GetFolder(),
+		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
 	})
 	if err != nil {

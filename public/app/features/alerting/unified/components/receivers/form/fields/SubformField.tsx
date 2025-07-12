@@ -3,7 +3,7 @@ import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types/alerting';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 

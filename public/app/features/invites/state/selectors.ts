@@ -1,6 +1,6 @@
 import { EntityState, createSelector } from '@reduxjs/toolkit';
 
-import { Invitee } from 'app/types';
+import { Invitee } from 'app/types/user';
 
 import { selectors } from './reducers';
 
