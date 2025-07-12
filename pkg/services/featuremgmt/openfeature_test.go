@@ -54,7 +54,12 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 				URL:          u,
 				TargetingKey: "grafana",
 			},
-			failSigning: true,
+			expectExchangeRequest: &authlib.TokenExchangeRequest{
+				Namespace: "*",
+				Audiences: []string{"features.grafana.app"},
+			},
+			expectedProvider: setting.GOFFProviderType,
+			failSigning:      true,
 		},
 		{
 			name: "invalid provider",
@@ -97,10 +102,10 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 			require.NoError(t, err)
 
 			if tc.expectedProvider == setting.GOFFProviderType {
-				goffProvider, ok := p.provider.(*gofeatureflag.Provider)
+				_, ok := p.provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
 
-				testGoFFProvider(t, goffProvider, tc.failSigning)
+				testGoFFProvider(t, p, tc.failSigning)
 			} else {
 				_, ok := p.provider.(*inMemoryBulkProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
@@ -109,12 +114,20 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 	}
 }
 
-func testGoFFProvider(t *testing.T, provider *gofeatureflag.Provider, failSigning bool) {
-	client, err := createClient(provider)
-	assert.NoError(t, err)
-
+func testGoFFProvider(t *testing.T, service *OpenFeatureService, failSigning bool) {
 	// this tests with a fake identity with * namespace access, but in any case, it proves what the requester
 	// is scoped to is what is used to sign the token with
 	ctx, _ := identity.WithServiceIdentity(context.Background(), 1)
-	_ = client.Boolean(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
+
+	// Test that the flag evaluation can be attempted (though it will fail due to non-existent service)
+	// The important thing is that the authentication middleware is properly integrated
+	_, err := service.Client.BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
+
+	// Error related to the token exchange should be returned if signing fails
+	// otherwise, it should return a connection refused error since the goff URL is not set
+	if failSigning {
+		assert.ErrorContains(t, err, "failed to exchange token: error signing token", "should return an error when signing fails")
+	} else {
+		assert.ErrorContains(t, err, "connect: connection refused", "should return an error when goff url is not set")
+	}
 }
