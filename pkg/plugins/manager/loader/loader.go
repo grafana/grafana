@@ -131,6 +131,9 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 			l.recordError(ctx, validatedPlugin, err)
 			continue
 		}
+		if initializedPlugin.ID == "tempo" && !l.cfg.Features.TempoAlertingEnabled {
+			initializedPlugin.Alerting = false
+		}
 		initializedPlugins = append(initializedPlugins, initializedPlugin)
 	}
 	l.log.Debug("Initialized", "class", src.PluginClass(ctx), "duration", time.Since(st))
