@@ -616,6 +616,14 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 			return nil, fmt.Errorf("error updating snapshot status: %w", err)
 		}
 
+		// Hack
+		if s.cfg.CloudMigration.StoreSnapshotInDB && localStatus == cloudmigration.SnapshotStatusFinished {
+			s.log.Debug("syncSnapshotStatusFromGMSUntilDone: deleting snapshot data from db")
+			if err := s.store.DeleteSnapshotBlob(ctx, snapshot.UID, snapshot.SessionUID); err != nil {
+				s.log.Error("error deleting snapshot data from db", "err", err)
+			}
+		}
+
 		// Refresh the snapshot after the update
 		snapshot, err = s.store.GetSnapshotByUID(ctx, orgID, sessionUid, snapshotUid, query.SnapshotResultQueryParams)
 		if err != nil {
