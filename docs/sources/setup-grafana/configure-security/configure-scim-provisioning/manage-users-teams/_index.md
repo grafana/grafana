@@ -114,7 +114,7 @@ For users who don't yet exist in Grafana:
 
 ### Role management
 
-SCIM handles user synchronization but not role assignments. Role management is handled through [Role Sync](../../configure-authentication/saml#configure-role-sync), and any role changes take effect during user authentication.
+SCIM handles user synchronization but not role assignments. Role management is handled through [Role Sync](../../configure-authentication/saml/configure-saml-team-role-mapping/#configure-role-sync-for-saml), and any role changes take effect during user authentication.
 
 ## Team provisioning with SCIM
 
