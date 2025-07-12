@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -37,8 +38,9 @@ type WebhookExtraBuilder struct {
 func ProvideWebhooks(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
-	secretsSvc grafanasecrets.Service,
+	legacySecretsSvc grafanasecrets.Service,
+	secretsSvc *service.SecureValueService,
+	decryptSvc service.DecryptService,
 	ghFactory *github.Factory,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
@@ -71,7 +73,7 @@ func ProvideWebhooks(
 				render,
 				webhook,
 				urlProvider,
-				secrets.NewSingleTenant(secretsSvc),
+				secrets.NewSecretsService(legacySecretsSvc, secretsSvc, decryptSvc),
 				ghFactory,
 				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
@@ -133,7 +135,7 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) error {
 	// Encrypt webhook secret if present
 	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
-		encryptedSecret, err := e.secrets.Encrypt(ctx, []byte(r.Status.Webhook.Secret))
+		encryptedSecret, err := e.secrets.Encrypt(ctx, r.GetNamespace(), r.GetName()+"-webhook-secret", r.Status.Webhook.Secret)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
 		}
@@ -190,7 +192,7 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
 		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := e.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
+			decrypted, err := e.secrets.Decrypt(ctx, r.GetNamespace(), ghCfg.EncryptedToken)
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)
 			}

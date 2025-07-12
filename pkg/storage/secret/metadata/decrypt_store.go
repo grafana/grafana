@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -79,7 +80,9 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 			span.SetStatus(codes.Error, "Decrypt failed")
 			span.RecordError(decryptErr)
 
-			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_error", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity, "error", decryptErr)
+			if !errors.Is(decryptErr, contracts.ErrDecryptNotFound) {
+				logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_error", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity, "error", decryptErr)
+			}
 		}
 		success := decryptErr == nil
 		s.metrics.DecryptDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
