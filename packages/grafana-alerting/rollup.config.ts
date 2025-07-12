@@ -16,4 +16,9 @@ export default [
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-alerting')],
   },
+  {
+    input: 'src/testing.ts',
+    plugins,
+    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-alerting')],
+  },
 ];
