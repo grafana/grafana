@@ -754,7 +754,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 	return dto
 }
 
-// swagger:route GET /datasources/uid/{uid}/health datasources checkDatasourceHealthWithUID
+// swagger:route GET /datasources/uid/{uid}/health datasources health checkDatasourceHealthWithUID
 //
 // Sends a health check request to the plugin datasource identified by the UID.
 //
@@ -780,7 +780,7 @@ func (hs *HTTPServer) CheckDatasourceHealthWithUID(c *contextmodel.ReqContext) r
 	return hs.checkDatasourceHealth(c, ds)
 }
 
-// swagger:route GET /datasources/{id}/health datasources checkDatasourceHealthByID
+// swagger:route GET /datasources/{id}/health datasources health checkDatasourceHealthByID
 //
 // Sends a health check request to the plugin datasource identified by the ID.
 //
