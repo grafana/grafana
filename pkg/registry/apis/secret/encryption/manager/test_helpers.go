@@ -37,7 +37,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 
 	usageStats := &usagestats.UsageStatsMock{T: tb}
 
-	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
+	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats)
 	require.NoError(tb, err)
 
 	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)

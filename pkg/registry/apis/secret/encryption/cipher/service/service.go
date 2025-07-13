@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/provider"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -27,7 +26,6 @@ type Service struct {
 	tracer trace.Tracer
 	log    log.Logger
 
-	cfg          *setting.Cfg
 	usageMetrics usagestats.Service
 
 	cipher    cipher.Encrypter
@@ -38,7 +36,6 @@ type Service struct {
 func ProvideAESGSMCipherService(
 	tracer trace.Tracer,
 	usageMetrics usagestats.Service,
-	cfg *setting.Cfg,
 ) (cipher.Cipher, error) {
 	s := &Service{
 		tracer: tracer,
@@ -51,7 +48,6 @@ func ProvideAESGSMCipherService(
 		algorithm: provider.AesGcm,
 
 		usageMetrics: usageMetrics,
-		cfg:          cfg,
 	}
 
 	s.registerUsageMetrics()

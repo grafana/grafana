@@ -6,32 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func newGcmService(t *testing.T) cipher.Cipher {
 	t.Helper()
 
 	usageStats := &usagestats.UsageStatsMock{}
-	raw, err := ini.Load([]byte(`
-		[secrets_manager.encryption.secret_key.v1]
-		secret_key = SW2YcwTIb9zpOOhoPsMm
-	`))
-	require.NoError(t, err)
-
-	settings := &setting.Cfg{
-		SecretsManagement: setting.SecretsManagerSettings{
-			EncryptionProvider:     "secret_key.v1",
-			ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
-		},
-		Raw: raw,
-	}
-
-	svc, err := ProvideAESGSMCipherService(noop.NewTracerProvider().Tracer("test"), usageStats, settings)
+	svc, err := ProvideAESGSMCipherService(noop.NewTracerProvider().Tracer("test"), usageStats)
 	require.NoError(t, err, "failed to set up encryption service")
 	return svc
 }
