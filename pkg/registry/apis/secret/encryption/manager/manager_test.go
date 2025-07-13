@@ -69,8 +69,8 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 		reports, err := svc.usageStats.GetUsageReport(context.Background())
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.current_provider.secretKey.count"])
-		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.providers.secretKey.count"])
+		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.current_provider.secret_key.count"])
+		assert.Equal(t, 1, reports.Metrics["stats.secrets_manager.encryption.providers.secret_key.count"])
 	})
 }
 
@@ -163,7 +163,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		svc := setupTestService(t)
-		assert.Equal(t, encryption.ProviderID("secretKey.v1"), svc.currentProviderID)
+		assert.Equal(t, encryption.ProviderID("secret_key.v1"), svc.currentProviderID)
 	})
 
 	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
@@ -435,8 +435,8 @@ func TestIntegration_SecretsService(t *testing.T) {
 func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
-			EncryptionProvider:     "secret_key.v1",
-			ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
+			EncryptionProvider:     "fakeProvider.v1",
+			ConfiguredKMSProviders: map[string]map[string]string{"fakeProvider.v1": {}},
 		},
 	}
 
@@ -459,6 +459,6 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	require.NoError(t, err)
 
 	encMgr := svc.(*EncryptionManager)
-	require.Len(t, encMgr.kmsProviders, 2)
+	require.Len(t, encMgr.kmsProviders, 1)
 	require.Contains(t, encMgr.kmsProviders, encryption.ProviderID("fakeProvider.v1"))
 }
