@@ -1,6 +1,4 @@
-# point Tilt at the existing docker-compose configuration.
-docker_compose("./tilt-docker-compose.yaml")
-
+docker_compose("./docker-compose.yaml")
 
 local_resource(
   'frontend-build',
@@ -10,19 +8,20 @@ local_resource(
     'package.json',
   ],
   readiness_probe=probe(
-    initial_delay_secs=1,
+    initial_delay_secs=5, # wait for the assets-manifest.json to first be deleted
     period_secs=1,
-    failure_threshold=10,
-    exec=exec_action(["bash", "-c", "cat public/build/assets-manifest.json | grep -n -A 11 entrypoints"])
+    exec=exec_action(["bash", "-c", "cat public/build/assets-manifest.json | grep entrypoints"])
   ),
   allow_parallel=True
 )
 
 dc_resource("backend", resource_deps=["frontend-build"])
 dc_resource("frontend-service", resource_deps=["frontend-build"])
-dc_resource("reverse-proxy", resource_deps=["backend", "frontend-service"])
+dc_resource("proxy", resource_deps=["backend", "frontend-service"])
 
-backend_build_context = [
+docker_build('grafana-backend', '../..',
+  dockerfile='backend.dockerfile',
+  only=[
     "./Makefile",
     "./devenv/frontend-service/build-grafana.sh",
 
@@ -40,7 +39,6 @@ backend_build_context = [
     "./public/api-merged.json",
     "./package.json",
 
-    # files that are live updated
     "./conf/defaults.ini",
     "./conf/ldap.toml",
     "./conf/ldap_multiple.toml",
@@ -48,20 +46,9 @@ backend_build_context = [
     "./public/views",
     "./public/dashboards",
     "./public/build/assets-manifest.json",
-  ]
-
-docker_build('grafana-backend', '../..',
-  dockerfile='tilt-backend-base.dockerfile',
-  only=backend_build_context,
+  ],
   live_update = [
     sync('./public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
     restart_container()
-  ]
-)
-
-docker_build('fs-reverse-proxy', '.',
-  dockerfile='fs-reverse-proxy.dockerfile',
-  only=[
-    './nginx.conf',
   ]
 )

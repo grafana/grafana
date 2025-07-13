@@ -1,14 +1,12 @@
 name: grafana-fs-dev
 
 services:
-  reverse-proxy:
-    image: fs-reverse-proxy
-    build:
-      context: .
-      dockerfile: nginx.dockerfile
+  proxy:
+    image: nginx:alpine
     volumes:
-      - ../../public/build:/usr/share/nginx/html/public/build
-      - ../../public/fonts:/usr/share/nginx/html/public/fonts
+      - ../../public/build:/cdn/public/build
+      - ../../public/fonts:/cdn/public/fonts
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
       - '3000:80' # Gateway
       - '3010:81' # CDN
@@ -17,7 +15,7 @@ services:
     image: grafana-backend
     build:
       context: .
-      dockerfile: tilt-backend-base.dockerfile
+      dockerfile: backend.dockerfile
     entrypoint: ['bin/grafana', 'server']
     volumes:
       - backend-data:/grafana/data
@@ -31,8 +29,7 @@ services:
   frontend-service:
     image: grafana-backend
     build:
-      context: .
-      dockerfile: tilt-backend-base.dockerfile
+      dockerfile: backend.dockerfile
     entrypoint: ['bin/grafana', 'server', 'target']
     ports:
       - '3012:3000'
