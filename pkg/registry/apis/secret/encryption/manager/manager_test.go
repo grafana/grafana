@@ -238,6 +238,110 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 	})
 }
 
+func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
+	ctx := context.Background()
+	namespace := "test-namespace"
+
+	// Generate random keys for testing
+	oldKey := util.GenerateShortUID() + util.GenerateShortUID() // 32 chars
+	newKey := util.GenerateShortUID() + util.GenerateShortUID() // 32 chars
+
+	t.Run("should encrypt with v1, upgrade to v2, encrypt with v2, and decrypt both", func(t *testing.T) {
+		// Step 1: Set up v1 configuration
+		cfgV1 := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				EncryptionProvider:     "secret_key.v1",
+				ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": oldKey}},
+			},
+		}
+
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+		tracer := noop.NewTracerProvider().Tracer("test")
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		require.NoError(t, err)
+
+		usageStats := &usagestats.UsageStatsMock{T: t}
+		enc, err := service.ProvideAESGSMCipherService(tracer, usageStats)
+		require.NoError(t, err)
+
+		ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfgV1, enc)
+		require.NoError(t, err)
+
+		svcV1, err := ProvideEncryptionManager(
+			tracer,
+			encryptionStore,
+			cfgV1,
+			usageStats,
+			enc,
+			ossProviders,
+		)
+		require.NoError(t, err)
+
+		// Step 2: Encrypt something with v1
+		plaintext := []byte("secret data from v1")
+		encryptedV1, err := svcV1.Encrypt(ctx, namespace, plaintext)
+		require.NoError(t, err)
+
+		// Verify v1 can decrypt its own data
+		decryptedV1, err := svcV1.Decrypt(ctx, namespace, encryptedV1)
+		require.NoError(t, err)
+		assert.Equal(t, plaintext, decryptedV1)
+
+		// Verify current provider is v1
+		encMgrV1 := svcV1.(*EncryptionManager)
+		assert.Equal(t, encryption.ProviderID("secret_key.v1"), encMgrV1.currentProviderID)
+
+		// Step 3: Create new configuration with v2 as current provider
+		cfgV2 := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				EncryptionProvider: "secret_key.v2",
+				ConfiguredKMSProviders: map[string]map[string]string{
+					"secret_key.v1": {"secret_key": oldKey},
+					"secret_key.v2": {"secret_key": newKey},
+				},
+			},
+		}
+
+		// Reinitialize service with v2 configuration (reuse same store)
+		ossProvidersV2, err := osskmsproviders.ProvideOSSKMSProviders(cfgV2, enc)
+		require.NoError(t, err)
+
+		svcV2, err := ProvideEncryptionManager(
+			tracer,
+			encryptionStore,
+			cfgV2,
+			usageStats,
+			enc,
+			ossProvidersV2,
+		)
+		require.NoError(t, err)
+
+		// Step 4: Ensure we can encrypt and decrypt with the new key (v2)
+		newPlaintext := []byte("secret data from v2")
+		encryptedV2, err := svcV2.Encrypt(ctx, namespace, newPlaintext)
+		require.NoError(t, err)
+
+		decryptedV2, err := svcV2.Decrypt(ctx, namespace, encryptedV2)
+		require.NoError(t, err)
+		assert.Equal(t, newPlaintext, decryptedV2)
+
+		// Verify current provider is v2
+		encMgrV2 := svcV2.(*EncryptionManager)
+		assert.Equal(t, encryption.ProviderID("secret_key.v2"), encMgrV2.currentProviderID)
+
+		// Step 5: Ensure we can decrypt the old value encrypted with v1
+		decryptedOldWithV2, err := svcV2.Decrypt(ctx, namespace, encryptedV1)
+		require.NoError(t, err)
+		assert.Equal(t, plaintext, decryptedOldWithV2)
+
+		// Verify both providers are available
+		assert.Contains(t, encMgrV2.kmsProviders, encryption.ProviderID("secret_key.v1"))
+		assert.Contains(t, encMgrV2.kmsProviders, encryption.ProviderID("secret_key.v2"))
+		assert.Equal(t, 2, len(encMgrV2.kmsProviders))
+	})
+}
+
 type fakeProvider struct {
 	encryptCalled bool
 	decryptCalled bool
