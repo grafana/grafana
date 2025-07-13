@@ -354,6 +354,10 @@ export function TableNG(props: TableNGProps) {
           default:
         }
 
+        // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
+        const canBeColorized =
+          cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
+
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
           const rowIdx = props.row.__index;
@@ -376,22 +380,18 @@ export function TableNG(props: TableNGProps) {
 
           let style: CSSProperties | undefined;
 
-          if (
-            cellType === TableCellDisplayMode.ColorBackground ||
-            cellType === TableCellDisplayMode.ColorText ||
-            cellType === TableCellDisplayMode.Auto
-          ) {
-            if (rowCellStyle.color != null || rowCellStyle.background != null) {
-              style = rowCellStyle;
-            } else {
-              const value = props.row[props.column.key];
-              const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-              let { textColor, bgColor } = getCellColors(theme, cellOptions, displayValue);
-              style = {
-                color: textColor,
-                background: bgColor,
-              };
-            }
+          if (rowCellStyle.color != null || rowCellStyle.background != null) {
+            style = rowCellStyle;
+          }
+          // apply background for cell types which can have a background and have proper
+          else if (canBeColorized) {
+            const value = props.row[props.column.key];
+            const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
+            let { textColor, bgColor } = getCellColors(theme, cellOptions, displayValue);
+            style = {
+              color: textColor,
+              background: bgColor,
+            };
           }
 
           return <Cell key={key} {...props} className={clsx(props.className, cellClass)} style={style} />; // TODO: remove expensive concat
