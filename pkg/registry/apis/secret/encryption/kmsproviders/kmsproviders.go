@@ -17,6 +17,8 @@ const (
 	SecretKeyKey = "secret_key"
 )
 
+// ProvideOSSKMSProviders provides ProviderMap expected by the encryption manager in the OSS wire configuration.
+// It looks for all configured 'secret_key' sections and creates a separate provider for each, each with its own secret key, allowing users to upgrade their secret key without breaking existing secrets.
 func ProvideOSSKMSProviders(cfg *setting.Cfg, cipher cipher.Cipher) (encryption.ProviderMap, error) {
 	providerMap := make(encryption.ProviderMap)
 

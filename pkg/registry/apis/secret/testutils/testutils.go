@@ -83,8 +83,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
-			EncryptionProvider:     "secret_key.v1",
-			ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
+			CurrentEncryptionProvider: "secret_key.v1",
+			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 		},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
