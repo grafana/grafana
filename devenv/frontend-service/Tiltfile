@@ -1,0 +1,68 @@
+# point Tilt at the existing docker-compose configuration.
+docker_compose("./tilt-docker-compose.yaml")
+
+
+local_resource(
+  'frontend-build',
+  cmd='rm -rf public/build/assets-manifest.json',
+  serve_cmd='yarn start:noLint',
+  deps=[
+    'package.json',
+  ],
+  readiness_probe=probe(
+    initial_delay_secs=10,
+    period_secs=1,
+    failure_threshold=10,
+    exec=exec_action(["bash", "-c", "cat public/build/assets-manifest.json | grep -n -A 11 entrypoints"])
+  ),
+  allow_parallel=True
+)
+
+dc_resource("backend", resource_deps=["frontend-build"])
+dc_resource("frontend-service", resource_deps=["frontend-build"])
+dc_resource("gateway", resource_deps=["backend", "frontend-service"])
+
+backend_build_context = [
+    "./Makefile",
+    "./build-grafana.sh",
+
+    "./apps",
+    "./pkg",
+
+    "./go.sum",
+    "./go.mod",
+    "./go.work",
+    "./go.work.sum",
+
+    "./kinds",
+    "./kindsv2",
+    "./public/api-merged.json",
+    "./package.json",
+
+    # files that are live updated
+    "./conf/defaults.ini",
+    "./conf/ldap.toml",
+    "./conf/ldap_multiple.toml",
+    "./public/emails",
+    "./public/views",
+    "./public/dashboards",
+    "./public/app/plugins",
+    "./public/build/assets-manifest.json",
+  ]
+
+docker_build('grafana-backend', '.',
+  dockerfile='tilt-backend-base.dockerfile',
+  only=backend_build_context,
+  live_update = [
+    sync('./public/app/plugins', '/grafana/public/app/plugins'),
+    sync('./public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    restart_container()
+  ]
+)
+
+docker_build('grafana-frontend-cdn', '.',
+  dockerfile='tilt-frontend-cdn.dockerfile',
+  only=[
+    './nginx.conf',
+  ]
+)
