@@ -10,7 +10,7 @@ local_resource(
     'package.json',
   ],
   readiness_probe=probe(
-    initial_delay_secs=10,
+    initial_delay_secs=1,
     period_secs=1,
     failure_threshold=10,
     exec=exec_action(["bash", "-c", "cat public/build/assets-manifest.json | grep -n -A 11 entrypoints"])
@@ -24,10 +24,11 @@ dc_resource("reverse-proxy", resource_deps=["backend", "frontend-service"])
 
 backend_build_context = [
     "./Makefile",
-    "./build-grafana.sh",
+    "./devenv/frontend-service/build-grafana.sh",
 
     "./apps",
     "./pkg",
+    "./scripts",
 
     "./go.sum",
     "./go.mod",
@@ -46,15 +47,13 @@ backend_build_context = [
     "./public/emails",
     "./public/views",
     "./public/dashboards",
-    "./public/app/plugins",
     "./public/build/assets-manifest.json",
   ]
 
-docker_build('grafana-backend', '.',
+docker_build('grafana-backend', '../..',
   dockerfile='tilt-backend-base.dockerfile',
   only=backend_build_context,
   live_update = [
-    sync('./public/app/plugins', '/grafana/public/app/plugins'),
     sync('./public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
     restart_container()
   ]

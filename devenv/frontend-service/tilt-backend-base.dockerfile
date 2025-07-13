@@ -14,10 +14,12 @@ WORKDIR /build-grafana
 RUN go env GOCACHE
 RUN go env GOPATH
 
-COPY Makefile build-grafana.sh ./
+COPY Makefile devenv/frontend-service/build-grafana.sh ./
+
+RUN ls -lah
 
 # Copy go mod files first
-# $: ls -1 {pkg,scripts,apps}**/go.{mod,sum} | sed 's#\(.*\)/go\.\(mod\|sum\)#COPY \1/go.* \1#' | sort -u
+# $: ls -1 {pkg,scripts,apps}**/go.{mod,sum} | sed 's#\(.*\)/go\.\(mod\|sum\)#COPY \1/go.* \1/#' | sort -u
 COPY apps/advisor/go.* apps/advisor/
 COPY apps/alerting/notifications/go.* apps/alerting/notifications/
 COPY apps/dashboard/go.* apps/dashboard/
@@ -25,6 +27,7 @@ COPY apps/folder/go.* apps/folder/
 COPY apps/iam/go.* apps/iam/
 COPY apps/investigations/go.* apps/investigations/
 COPY apps/playlist/go.* apps/playlist/
+COPY apps/secret/go.* apps/secret/
 COPY pkg/aggregator/go.* pkg/aggregator/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
 COPY pkg/apis/secret/go.* pkg/apis/secret/
@@ -35,7 +38,13 @@ COPY pkg/codegen/go.* pkg/codegen/
 COPY pkg/plugins/codegen/go.* pkg/plugins/codegen/
 COPY pkg/promlib/go.* pkg/promlib/
 COPY pkg/semconv/go.* pkg/semconv/
+COPY scripts/go-workspace/go.* scripts/go-workspace/
+COPY scripts/modowners/go.* scripts/modowners/
+
 COPY go.* ./
+
+
+RUN ls -lah
 
 # Install dependencies
 RUN --mount=type=cache,target=/go/pkg/mod \
@@ -76,7 +85,6 @@ COPY conf/defaults.ini conf/ldap.toml conf/ldap_multiple.toml conf/
 COPY public/emails public/emails
 COPY public/views public/views
 COPY public/dashboards public/dashboards
-COPY public/app/plugins public/app/plugins
 
 # Copy the Go binary from the go-dev-builder stage
 COPY --from=go-dev-builder /build-grafana/bin/grafana /grafana/bin/grafana

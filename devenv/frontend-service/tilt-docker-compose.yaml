@@ -7,8 +7,8 @@ services:
       context: .
       dockerfile: nginx.dockerfile
     volumes:
-      - ./public/build:/usr/share/nginx/html/public/build
-      - ./public/fonts:/usr/share/nginx/html/public/fonts
+      - ../../public/build:/usr/share/nginx/html/public/build
+      - ../../public/fonts:/usr/share/nginx/html/public/fonts
     ports:
       - '3000:80' # Gateway
       - '3010:81' # CDN
@@ -21,10 +21,10 @@ services:
     entrypoint: ['bin/grafana', 'server']
     volumes:
       - backend-data:/grafana/data
+      - ../../public/app/plugins:/grafana/public/app/plugins
     environment:
       GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
       GF_SERVER_CDN_URL: http://host.docker.internal:3010
-      GF_PLUGINS_CDN_BASE_URL: 'https://plugins-cdn.grafana.net'
     ports:
       - '3011:3000'
 
