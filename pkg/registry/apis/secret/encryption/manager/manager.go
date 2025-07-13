@@ -20,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -33,16 +31,17 @@ const (
 type EncryptionManager struct {
 	tracer     trace.Tracer
 	store      contracts.DataKeyStorage
-	enc        cipher.Cipher
 	cfg        *setting.Cfg
 	usageStats usagestats.Service
 
 	mtx sync.Mutex
 
-	pOnce     sync.Once
-	providers encryption.ProviderMap
-
+	pOnce             sync.Once
 	currentProviderID encryption.ProviderID
+	// The cipher is used to encrypt and decrypt payloads with a data key.
+	enc cipher.Cipher
+	// The kmsProviders are used to encrypt and decrypt the data keys.
+	kmsProviders encryption.ProviderMap
 
 	log log.Logger
 }
@@ -53,13 +52,12 @@ func ProvideEncryptionManager(
 	store contracts.DataKeyStorage,
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
-	thirdPartyKMS encryption.ProviderMap,
+	enc cipher.Cipher,
+	kmsProviders encryption.ProviderMap,
 ) (contracts.EncryptionManager, error) {
 	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
-
-	enc, err := service.NewEncryptionService(tracer, usageStats, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create encryption service: %w", err)
+	if _, ok := kmsProviders[currentProviderID]; !ok {
+		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
 
 	s := &EncryptionManager{
@@ -70,43 +68,12 @@ func ProvideEncryptionManager(
 		enc:               enc,
 		currentProviderID: currentProviderID,
 		log:               log.New("encryption"),
-	}
-
-	if err := s.InitProviders(thirdPartyKMS); err != nil {
-		return nil, err
-	}
-
-	if _, ok := s.providers[currentProviderID]; !ok {
-		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
+		kmsProviders:      kmsProviders,
 	}
 
 	s.registerUsageMetrics()
 
 	return s, nil
-}
-
-func (s *EncryptionManager) InitProviders(extraProviders encryption.ProviderMap) (err error) {
-	done := false
-	s.pOnce.Do(func() {
-		providers := kmsproviders.GetOSSKMSProviders(s.cfg, s.enc)
-
-		for id, p := range extraProviders {
-			if _, exists := s.providers[id]; exists {
-				err = fmt.Errorf("provider %s already registered", id)
-				return
-			}
-			providers[id] = p
-		}
-
-		s.providers = providers
-		done = true
-	})
-
-	if !done && err == nil {
-		err = fmt.Errorf("providers were already initialized, no action taken")
-	}
-
-	return
 }
 
 func (s *EncryptionManager) registerUsageMetrics() {
@@ -121,8 +88,8 @@ func (s *EncryptionManager) registerUsageMetrics() {
 		usageMetrics[fmt.Sprintf("stats.%s.encryption.current_provider.%s.count", encryption.UsageInsightsPrefix, kind)] = 1
 
 		// Count by kind
-		countByKind := make(map[string]int, len(s.providers))
-		for id := range s.providers {
+		countByKind := make(map[string]int, len(s.kmsProviders))
+		for id := range s.kmsProviders {
 			kind, err := id.Kind()
 			if err != nil {
 				return nil, fmt.Errorf("encryptionManager.registerUsageMetrics: %w", err)
@@ -235,7 +202,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	}
 
 	// 2.1 Find the encryption provider.
-	provider, exists := s.providers[dataKey.Provider]
+	provider, exists := s.kmsProviders[dataKey.Provider]
 	if !exists {
 		return "", nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
@@ -264,7 +231,7 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 	}
 
 	// 2.1 Find the encryption provider.
-	provider, exists := s.providers[s.currentProviderID]
+	provider, exists := s.kmsProviders[s.currentProviderID]
 	if !exists {
 		return "", nil, fmt.Errorf("could not find encryption provider '%s'", s.currentProviderID)
 	}
@@ -384,7 +351,7 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 	}
 
 	// 2.1. Find the encryption provider.
-	provider, exists := s.providers[dataKey.Provider]
+	provider, exists := s.kmsProviders[dataKey.Provider]
 	if !exists {
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
@@ -399,5 +366,5 @@ func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id strin
 }
 
 func (s *EncryptionManager) GetProviders() encryption.ProviderMap {
-	return s.providers
+	return s.kmsProviders
 }
