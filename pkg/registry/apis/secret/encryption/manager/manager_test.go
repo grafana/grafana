@@ -177,8 +177,8 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		cfg := &setting.Cfg{
 			Raw: raw,
 			SecretsManagement: setting.SecretsManagerSettings{
-				EncryptionProvider:     "secret_key.v1",
-				ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
+				CurrentEncryptionProvider: "secret_key.v1",
+				ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
 			},
 		}
 
@@ -250,8 +250,8 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		// Step 1: Set up v1 configuration
 		cfgV1 := &setting.Cfg{
 			SecretsManagement: setting.SecretsManagerSettings{
-				EncryptionProvider:     "secret_key.v1",
-				ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": oldKey}},
+				CurrentEncryptionProvider: "secret_key.v1",
+				ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": oldKey}},
 			},
 		}
 
@@ -295,7 +295,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		// Step 3: Create new configuration with v2 as current provider
 		cfgV2 := &setting.Cfg{
 			SecretsManagement: setting.SecretsManagerSettings{
-				EncryptionProvider: "secret_key.v2",
+				CurrentEncryptionProvider: "secret_key.v2",
 				ConfiguredKMSProviders: map[string]map[string]string{
 					"secret_key.v1": {"secret_key": oldKey},
 					"secret_key.v2": {"secret_key": newKey},
@@ -484,8 +484,8 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 			cfg := &setting.Cfg{
 				SecretsManagement: setting.SecretsManagerSettings{
-					EncryptionProvider:     "secret_key.v1",
-					ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
+					CurrentEncryptionProvider: "secret_key.v1",
+					ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
 				},
 			}
 			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
@@ -539,8 +539,8 @@ func TestIntegration_SecretsService(t *testing.T) {
 func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
-			EncryptionProvider:     "fakeProvider.v1",
-			ConfiguredKMSProviders: map[string]map[string]string{"fakeProvider.v1": {}},
+			CurrentEncryptionProvider: "fakeProvider.v1",
+			ConfiguredKMSProviders:    map[string]map[string]string{"fakeProvider.v1": {}},
 		},
 	}
 

@@ -20,9 +20,7 @@ const (
 	encryptionAlgorithmDelimiter = '*'
 )
 
-// Service must not be used for cipher.
-// Use secrets.Service implementing envelope encryption instead.
-type Service struct {
+type cipherService struct {
 	tracer trace.Tracer
 	log    log.Logger
 
@@ -33,11 +31,13 @@ type Service struct {
 	algorithm string
 }
 
+// ProvideAESGSMCipherService provides an AES-GCM cipher for encryption and decryption.
+// It should not be used to encrypt payloads directly, as it is intended to encrypt data keys for envelope encryption.
 func ProvideAESGSMCipherService(
 	tracer trace.Tracer,
 	usageMetrics usagestats.Service,
 ) (cipher.Cipher, error) {
-	s := &Service{
+	s := &cipherService{
 		tracer: tracer,
 		log:    log.New("encryption"),
 
@@ -55,7 +55,7 @@ func ProvideAESGSMCipherService(
 	return s, nil
 }
 
-func (s *Service) registerUsageMetrics() {
+func (s *cipherService) registerUsageMetrics() {
 	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
 		return map[string]any{
 			fmt.Sprintf("stats.%s.encryption.cipher.%s.count", encryption.UsageInsightsPrefix, s.algorithm): 1,
@@ -63,7 +63,7 @@ func (s *Service) registerUsageMetrics() {
 	})
 }
 
-func (s *Service) Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error) {
+func (s *cipherService) Decrypt(ctx context.Context, payload []byte, secret string) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "CipherService.Decrypt")
 	defer span.End()
 
@@ -91,7 +91,7 @@ func (s *Service) Decrypt(ctx context.Context, payload []byte, secret string) ([
 	return decrypted, err
 }
 
-func (s *Service) deriveEncryptionAlgorithm(payload []byte) (string, []byte, error) {
+func (s *cipherService) deriveEncryptionAlgorithm(payload []byte) (string, []byte, error) {
 	if len(payload) == 0 {
 		return "", nil, fmt.Errorf("unable to derive encryption algorithm")
 	}
@@ -112,7 +112,7 @@ func (s *Service) deriveEncryptionAlgorithm(payload []byte) (string, []byte, err
 	return string(algorithm), payload, nil
 }
 
-func (s *Service) Encrypt(ctx context.Context, payload []byte, secret string) ([]byte, error) {
+func (s *cipherService) Encrypt(ctx context.Context, payload []byte, secret string) ([]byte, error) {
 	ctx, span := s.tracer.Start(ctx, "CipherService.Encrypt")
 	defer span.End()
 

@@ -16,7 +16,7 @@ encryption_provider = aws_kms
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, "aws_kms", cfg.SecretsManagement.EncryptionProvider)
+		assert.Equal(t, "aws_kms", cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Empty(t, cfg.SecretsManagement.ConfiguredKMSProviders)
 	})
 
@@ -32,7 +32,7 @@ key_id = arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-12345678
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, "aws_kms.v1", cfg.SecretsManagement.EncryptionProvider)
+		assert.Equal(t, "aws_kms.v1", cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Len(t, cfg.SecretsManagement.ConfiguredKMSProviders, 1)
 
 		awsProvider := cfg.SecretsManagement.ConfiguredKMSProviders["aws_kms.v1"]
@@ -60,7 +60,7 @@ key = my-secret-key
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, "aws_kms.v1", cfg.SecretsManagement.EncryptionProvider)
+		assert.Equal(t, "aws_kms.v1", cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Len(t, cfg.SecretsManagement.ConfiguredKMSProviders, 3)
 
 		// Check AWS KMS provider
@@ -87,7 +87,7 @@ key = my-secret-key
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, MisconfiguredProvider, cfg.SecretsManagement.EncryptionProvider)
+		assert.Equal(t, MisconfiguredProvider, cfg.SecretsManagement.CurrentEncryptionProvider)
 	})
 
 	t.Run("should handle empty sections gracefully", func(t *testing.T) {
@@ -101,7 +101,7 @@ encryption_provider = empty_provider
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, "empty_provider", cfg.SecretsManagement.EncryptionProvider)
+		assert.Equal(t, "empty_provider", cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Len(t, cfg.SecretsManagement.ConfiguredKMSProviders, 1)
 
 		emptyProvider := cfg.SecretsManagement.ConfiguredKMSProviders["empty_provider"]
@@ -126,7 +126,7 @@ some_setting = some_value
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, "aws_kms.v1", cfg.SecretsManagement.EncryptionProvider)
+		assert.Equal(t, "aws_kms.v1", cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Len(t, cfg.SecretsManagement.ConfiguredKMSProviders, 1)
 
 		validProvider := cfg.SecretsManagement.ConfiguredKMSProviders["valid_provider"]
@@ -148,7 +148,7 @@ vault_url = https://test.vault.azure.net/
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, "aws_kms.v1", cfg.SecretsManagement.EncryptionProvider)
+		assert.Equal(t, "aws_kms.v1", cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Len(t, cfg.SecretsManagement.ConfiguredKMSProviders, 2)
 
 		awsProvider := cfg.SecretsManagement.ConfiguredKMSProviders["aws_kms.v1"]
@@ -167,7 +167,7 @@ domain = example.com
 		cfg, err := NewCfgFromBytes([]byte(iniContent))
 		require.NoError(t, err)
 
-		assert.Equal(t, MisconfiguredProvider, cfg.SecretsManagement.EncryptionProvider)
+		assert.Equal(t, MisconfiguredProvider, cfg.SecretsManagement.CurrentEncryptionProvider)
 		assert.Empty(t, cfg.SecretsManagement.ConfiguredKMSProviders)
 	})
 }
