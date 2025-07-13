@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -168,13 +169,15 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
 	require.NoError(t, err)
 
+	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+
 	encMgr, err := encryptionmanager.ProvideEncryptionManager(
 		tracer,
 		dataKeyStore,
 		cfg,
 		usageStats,
 		enc,
-		nil,
+		ossProviders,
 	)
 	require.NoError(t, err)
 

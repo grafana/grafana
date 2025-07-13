@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -60,7 +61,8 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error)
 	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
 	require.NoError(t, err)
 
-	encryptionManager, err := manager.ProvideEncryptionManager(tracer, dataKeyStore, cfg, usageStats, enc, nil)
+	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+	encryptionManager, err := manager.ProvideEncryptionManager(tracer, dataKeyStore, cfg, usageStats, enc, ossProviders)
 	require.NoError(t, err)
 
 	// Initialize the keeper service
