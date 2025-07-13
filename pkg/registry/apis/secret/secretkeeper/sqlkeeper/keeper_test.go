@@ -166,7 +166,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
-	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
+	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats)
 	require.NoError(t, err)
 
 	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
