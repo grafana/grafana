@@ -35,15 +35,11 @@ type Service struct {
 	algorithm string
 }
 
-func NewEncryptionService(
+func ProvideAESGSMCipherService(
 	tracer trace.Tracer,
 	usageMetrics usagestats.Service,
 	cfg *setting.Cfg,
-) (*Service, error) {
-	if cfg.SecretsManagement.SecretKey == "" {
-		return nil, fmt.Errorf("`[secrets_manager]secret_key` is not set")
-	}
-
+) (cipher.Cipher, error) {
 	s := &Service{
 		tracer: tracer,
 		log:    log.New("encryption"),

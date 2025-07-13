@@ -7,7 +7,8 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,8 +28,8 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          defaultKey,
-			EncryptionProvider: "secretKey.v1",
+			EncryptionProvider:     "secret_key.v1",
+			ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 		},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
@@ -36,12 +37,19 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 
 	usageStats := &usagestats.UsageStatsMock{T: tb}
 
+	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
+	require.NoError(tb, err)
+
+	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+	require.NoError(tb, err)
+
 	encMgr, err := ProvideEncryptionManager(
 		tracer,
 		store,
 		cfg,
 		usageStats,
-		encryption.ProvideThirdPartyProviderMap(),
+		enc,
+		ossProviders,
 	)
 	require.NoError(tb, err)
 
