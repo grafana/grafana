@@ -170,6 +170,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	require.NoError(t, err)
 
 	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+	require.NoError(t, err)
 
 	encMgr, err := encryptionmanager.ProvideEncryptionManager(
 		tracer,
