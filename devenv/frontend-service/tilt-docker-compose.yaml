@@ -1,16 +1,17 @@
 name: grafana-fs-dev
 
 services:
-  cdn:
-    image: grafana-frontend-cdn
+  reverse-proxy:
+    image: fs-reverse-proxy
     build:
       context: .
-      dockerfile: tilt-frontend-cdn.dockerfile
+      dockerfile: nginx.dockerfile
     volumes:
       - ./public/build:/usr/share/nginx/html/public/build
       - ./public/fonts:/usr/share/nginx/html/public/fonts
     ports:
-      - '3010:80'
+      - '3000:80' # Gateway
+      - '3010:81' # CDN
 
   backend:
     image: grafana-backend
@@ -41,33 +42,5 @@ services:
       GF_SECURITY_CONTENT_SECURITY_POLICY: false
       GF_SERVER_CDN_URL: http://host.docker.internal:3010
 
-  gateway:
-    image: nginx:alpine
-    ports:
-      - '3001:80'
-    volumes:
-      - ./nginx-gateway.conf:/etc/nginx/conf.d/default.conf
-
-  # traefik:
-  #   image: traefik:v2.10
-  #   command:
-  #     - '--api.insecure=true'
-  #     - '--providers.docker=true'
-  #     - '--providers.docker.exposedbydefault=false'
-  #     - '--entrypoints.web.address=:80'
-  #   ports:
-  #     - '3000:80'
-  #     - '3080:8080'
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #   labels:
-  #     - 'traefik.enable=true'
-  #     - 'traefik.http.routers.block-public.rule=Host(`localhost`) && (Path(`/public`) || PathPrefix(`/public/`) || PathPrefix(`/core:plugin`))'
-  #     - 'traefik.http.routers.block-public.entrypoints=web'
-  #     - 'traefik.http.routers.block-public.priority=100'
-  #     - 'traefik.http.routers.block-public.service=noop@internal'
-
 volumes:
   backend-data:
-  backend-cache-go-mod:
-  backend-cache-go-build:

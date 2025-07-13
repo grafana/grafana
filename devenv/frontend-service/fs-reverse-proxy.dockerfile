@@ -5,10 +5,7 @@ FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html
 RUN mkdir -p /usr/share/nginx/html/public
 
-# Copy the built assets
-# COPY --from=builder /app/public /usr/share/nginx/html/public
-
-# Use a simple nginx config that handles wildcard routes
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
+EXPOSE 81
