@@ -20,7 +20,7 @@ local_resource(
 
 dc_resource("backend", resource_deps=["frontend-build"])
 dc_resource("frontend-service", resource_deps=["frontend-build"])
-dc_resource("gateway", resource_deps=["backend", "frontend-service"])
+dc_resource("reverse-proxy", resource_deps=["backend", "frontend-service"])
 
 backend_build_context = [
     "./Makefile",
@@ -60,8 +60,8 @@ docker_build('grafana-backend', '.',
   ]
 )
 
-docker_build('grafana-frontend-cdn', '.',
-  dockerfile='tilt-frontend-cdn.dockerfile',
+docker_build('fs-reverse-proxy', '.',
+  dockerfile='fs-reverse-proxy.dockerfile',
   only=[
     './nginx.conf',
   ]
