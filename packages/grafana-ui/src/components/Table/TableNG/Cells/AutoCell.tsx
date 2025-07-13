@@ -1,26 +1,20 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
 import { renderSingleLink } from '../../DataLinksActionsTooltip';
 import { TableCellOptions, TableCellDisplayMode } from '../../types';
 import { useSingleLink } from '../hooks';
 import { AutoCellProps } from '../types';
 
-export default function AutoCell({ value, field, justifyContent, rowIdx, cellOptions }: AutoCellProps) {
-  const styles = useStyles2(getStyles, justifyContent);
+export default function AutoCell({ value, field, rowIdx, cellOptions }: AutoCellProps) {
+  // const styles = useStyles2(getStyles, justifyContent);
 
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
   const link = useSingleLink(field, rowIdx);
 
-  return (
-    <div className={styles.cell}>
-      {link == null ? formattedValue : renderSingleLink(link, formattedValue, getLinkStyle(styles, cellOptions))}
-    </div>
-  );
+  return link == null ? formattedValue : renderSingleLink(link, formattedValue, getLinkStyle(styles, cellOptions));
 }
 
 const getLinkStyle = (styles: ReturnType<typeof getStyles>, cellOptions: TableCellOptions) => {
@@ -31,14 +25,14 @@ const getLinkStyle = (styles: ReturnType<typeof getStyles>, cellOptions: TableCe
   return styles.cellLinkForColoredCell;
 };
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
-  cell: css({
-    display: 'flex',
-    justifyContent: justifyContent,
-    a: {
-      color: 'inherit',
-    },
-  }),
+export const getStyles = (theme: GrafanaTheme2) => ({
+  // cell: css({
+  //   display: 'flex',
+  //   justifyContent: justifyContent,
+  //   a: {
+  //     color: 'inherit',
+  //   },
+  // }),
   cellLinkForColoredCell: css({
     cursor: 'pointer',
     overflow: 'hidden',

@@ -1,7 +1,8 @@
 import 'react-data-grid/lib/styles.css';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import { Property } from 'csstype';
-import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
@@ -37,6 +38,7 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { CellColors, TableCellDisplayMode } from '../types';
 import { DataLinksActionsTooltipState } from '../utils';
 
+import { getStyles as getStylesAuto } from './Cells/AutoCell';
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellActions } from './Cells/TableCellActions';
@@ -279,6 +281,11 @@ export function TableNG(props: TableNGProps) {
 
       let lastRowIdx = -1;
       let _rowHeight = 0;
+      // shared when whole row will be styled by a single cell's color
+      let rowCellStyle: Partial<CSSProperties> = {
+        color: undefined,
+        background: undefined,
+      };
 
       f.forEach((field, i) => {
         const cellOptions = getCellOptions(field);
@@ -314,7 +321,7 @@ export function TableNG(props: TableNGProps) {
 
         // helps us avoid string cx and emotion per-cell
         const cellActionClassName = showActions
-          ? cx(
+          ? clsx(
               'table-cell-actions',
               styles.cellActions,
               justifyContent === 'flex-end' ? styles.cellActionsEnd : styles.cellActionsStart
@@ -327,38 +334,67 @@ export function TableNG(props: TableNGProps) {
 
         result.colsWithTooltip[displayName] = withTooltip;
 
+        // get static cell class based on col props
+
+        let cellClass = '';
+
+        switch (cellType) {
+          case TableCellDisplayMode.Auto:
+          case TableCellDisplayMode.ColorBackground:
+          case TableCellDisplayMode.ColorText:
+            cellClass = getCellStyles(
+              theme,
+              justifyContent,
+              shouldWrap,
+              shouldOverflow,
+              cellType === TableCellDisplayMode.Auto,
+              withTooltip
+            ).cell;
+            break;
+          default:
+        }
+
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
           const rowIdx = props.row.__index;
-          const value = props.row[props.column.key];
 
           // meh, this should be cached by the renderRow() call?
           if (rowIdx !== lastRowIdx) {
             _rowHeight = typeof rowHeight === 'function' ? rowHeight(props.row) : rowHeight;
             lastRowIdx = rowIdx;
+
+            rowCellStyle.color = undefined;
+            rowCellStyle.background = undefined;
+
+            // generate shared styles for whole row
+            if (applyToRowBgFn != null) {
+              let { textColor, bgColor } = applyToRowBgFn(rowIdx);
+              rowCellStyle.color = textColor;
+              rowCellStyle.background = bgColor;
+            }
           }
 
-          let colors: CellColors;
+          let style: CSSProperties | undefined;
 
-          if (applyToRowBgFn != null) {
-            colors = applyToRowBgFn(props.rowIdx);
-          } else if (cellType !== TableCellDisplayMode.Auto) {
-            const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
-            colors = getCellColors(theme, cellOptions, displayValue);
-          } else {
-            colors = {};
+          if (
+            cellType === TableCellDisplayMode.ColorBackground ||
+            cellType === TableCellDisplayMode.ColorText ||
+            cellType === TableCellDisplayMode.Auto
+          ) {
+            if (rowCellStyle.color != null || rowCellStyle.background != null) {
+              style = rowCellStyle;
+            } else {
+              const value = props.row[props.column.key];
+              const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
+              let { textColor, bgColor } = getCellColors(theme, cellOptions, displayValue);
+              style = {
+                color: textColor,
+                background: bgColor,
+              };
+            }
           }
 
-          const cellStyle = getCellStyles(theme, field, _rowHeight, shouldWrap, shouldOverflow, withTooltip, colors);
-
-          return (
-            <Cell
-              key={key}
-              {...props}
-              className={cx(props.className, cellStyle.cell)}
-              style={{ color: colors.textColor ?? 'inherit' }}
-            />
-          );
+          return <Cell key={key} {...props} className={clsx(props.className, cellClass)} style={style} />; // TODO: remove expensive concat
         };
 
         result.cellRootRenderers[displayName] = renderCellRoot;
@@ -518,8 +554,8 @@ export function TableNG(props: TableNGProps) {
         return (
           <DataGrid<TableRow, TableSummaryRow>
             {...commonDataGridProps}
-            className={cx(styles.grid, styles.gridNested)}
-            headerRowClass={cx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
+            className={clsx(styles.grid, styles.gridNested)}
+            headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: !hasNestedHeaders })}
             headerRowHeight={hasNestedHeaders ? defaultHeaderHeight : 0}
             columns={nestedColumns}
             rows={expandedRecords}
@@ -584,7 +620,7 @@ export function TableNG(props: TableNGProps) {
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
-        headerRowClass={cx(styles.headerRow, { [styles.displayNone]: noHeader })}
+        headerRowClass={clsx(styles.headerRow, { [styles.displayNone]: noHeader })}
         headerRowHeight={headerHeight}
         onCellClick={({ column, row }, { clientX, clientY, preventGridDefault }) => {
           // Note: could be column.field; JS says yes, but TS says no!
@@ -852,29 +888,33 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
-  field: Field,
-  rowHeight: number,
+  justifyContent: Property.JustifyContent,
+  // field: Field,
+  // rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  hasTooltip: boolean,
-  colors: CellColors
+  inheritLinkColor: boolean,
+  hasTooltip: boolean
+  // colors: CellColors
 ) => {
   return {
     cell: css({
-      textOverflow: 'initial',
-      background: colors.bgColor ?? 'inherit',
-      alignContent: 'center',
-      justifyContent: getTextAlign(field),
+      display: 'flex',
+      // textOverflow: 'initial',
+      // background: colors.bgColor ?? 'inherit',
+      backgroundClip: 'padding-box !important', // only do this for bg color cells?
+      alignItems: 'center',
+      justifyContent,
       paddingInline: TABLE.CELL_PADDING,
-      height: '100%',
-      minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
+      minHeight: '100%',
       ...(shouldWrap && { whiteSpace: 'pre-line' }),
       ...(hasTooltip && { cursor: 'pointer' }),
       '&:last-child': {
         borderInlineEnd: 'none',
       },
+      // should omit if no cell actions, and no shouldOverflow
       '&:hover': {
-        background: colors.bgHoverColor,
+        // background: colors.bgHoverColor,
         '.table-cell-actions': {
           display: 'flex',
         },
@@ -883,8 +923,13 @@ const getCellStyles = (
           whiteSpace: 'pre-line',
           height: 'fit-content',
           minWidth: 'fit-content',
-          paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
+          // paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
         }),
+      },
+    }),
+    ...(inheritLinkColor && {
+      a: {
+        color: 'inherit',
       },
     }),
   };
