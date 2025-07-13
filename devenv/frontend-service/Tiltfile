@@ -1,23 +1,31 @@
 docker_compose("./docker-compose.yaml")
 
 local_resource(
+  'yarn install',
+  cmd='yarn install',
+  deps=[
+    'yarn.lock',
+  ],
+  labels=["frontend"]
+)
+
+local_resource(
   'frontend-build',
   cmd='rm -rf public/build/assets-manifest.json',
   serve_cmd='yarn start:noLint',
-  deps=[
-    'package.json',
-  ],
+  resource_deps=['yarn install'],
   readiness_probe=probe(
     initial_delay_secs=5, # wait for the assets-manifest.json to first be deleted
     period_secs=1,
     exec=exec_action(["bash", "-c", "cat public/build/assets-manifest.json | grep entrypoints"])
   ),
-  allow_parallel=True
+  allow_parallel=True,
+  labels=["frontend"]
 )
 
-dc_resource("backend", resource_deps=["frontend-build"])
-dc_resource("frontend-service", resource_deps=["frontend-build"])
-dc_resource("proxy", resource_deps=["backend", "frontend-service"])
+dc_resource("backend", resource_deps=["frontend-build"], labels=["backend"])
+dc_resource("frontend-service", resource_deps=["frontend-build"], labels=["backend"])
+dc_resource("proxy", resource_deps=["backend", "frontend-service"], labels=["ingress"])
 
 docker_build('grafana-backend', '../..',
   dockerfile='backend.dockerfile',
