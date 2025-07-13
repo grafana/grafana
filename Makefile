@@ -279,12 +279,16 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 run-air: ## [Experimental] Build and run backend, and watch for changes. See .air.toml for configuration. Check https://github.com/air-verse/air for installation instructions.
 	air -c .air.toml
 
+.PHONY: frontend-service-check
+frontend-service-check:
+	./devenv/frontend-service/local-init.sh
+
 .PHONY: frontend-service-up
-frontend-service-up:
+frontend-service-up: frontend-service-check
 	tilt up -f devenv/frontend-service/Tiltfile
 
 .PHONY: frontend-service-down
-frontend-service-down:
+frontend-service-down: frontend-service-check
 	tilt down -f devenv/frontend-service/Tiltfile
 
 ##@ Testing
