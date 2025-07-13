@@ -239,6 +239,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250711114246-c9b2126c4ad5 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/build v0.0.0-20250713124238-e33a4b147bf1 // @grafana/grafana-developer-enablement-squad
 
 	// This needs to be here for other projects that import grafana/grafana
 	// For local development grafana/grafana will always use the local files
@@ -246,8 +247,6 @@ require (
 	github.com/grafana/grafana/pkg/promlib v0.0.8 // @grafana/oss-big-tent
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 )
-
-require github.com/grafana/grafana/pkg/build v0.0.0-20250713124238-e33a4b147bf1
 
 require (
 	cel.dev/expr v0.23.1 // indirect
