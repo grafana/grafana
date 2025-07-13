@@ -126,8 +126,6 @@ export class GrafanaApp {
   async init() {
     try {
       await preInitTasks();
-      // Let iframe container know grafana has started loading
-      window.parent.postMessage('GrafanaAppInit', '*');
       const regionalFormat = config.featureToggles.localeFormatPreference
         ? config.regionalFormat
         : config.bootData.user.language;
