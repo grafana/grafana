@@ -36,12 +36,12 @@ type EncryptionManager struct {
 
 	mtx sync.Mutex
 
-	pOnce             sync.Once
-	currentProviderID encryption.ProviderID
 	// The cipher is used to encrypt and decrypt payloads with a data key.
 	cipher cipher.Cipher
 	// The kmsProviders are used to encrypt and decrypt the data keys.
 	kmsProviders encryption.ProviderMap
+	// The KMS provider to use for all data key encrypt operations.
+	currentProviderID encryption.ProviderID
 
 	log log.Logger
 }
@@ -55,7 +55,7 @@ func ProvideEncryptionManager(
 	enc cipher.Cipher,
 	kmsProviders encryption.ProviderMap,
 ) (contracts.EncryptionManager, error) {
-	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.EncryptionProvider)
+	currentProviderID := encryption.ProviderID(cfg.SecretsManagement.CurrentEncryptionProvider)
 	if _, ok := kmsProviders[currentProviderID]; !ok {
 		return nil, fmt.Errorf("missing configuration for current encryption provider %s", currentProviderID)
 	}
