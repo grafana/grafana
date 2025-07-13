@@ -1,4 +1,4 @@
-package defaultprovider
+package secretkeyprovider
 
 import (
 	"context"
@@ -7,22 +7,22 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 )
 
-type grafanaProvider struct {
+type SecretKeyProvider struct {
 	sk         string
 	encryption cipher.Cipher
 }
 
 func New(sk string, encryption cipher.Cipher) encryption.Provider {
-	return grafanaProvider{
+	return SecretKeyProvider{
 		sk:         sk,
 		encryption: encryption,
 	}
 }
 
-func (p grafanaProvider) Encrypt(ctx context.Context, blob []byte) ([]byte, error) {
+func (p SecretKeyProvider) Encrypt(ctx context.Context, blob []byte) ([]byte, error) {
 	return p.encryption.Encrypt(ctx, blob, p.sk)
 }
 
-func (p grafanaProvider) Decrypt(ctx context.Context, blob []byte) ([]byte, error) {
+func (p SecretKeyProvider) Decrypt(ctx context.Context, blob []byte) ([]byte, error) {
 	return p.encryption.Decrypt(ctx, blob, p.sk)
 }

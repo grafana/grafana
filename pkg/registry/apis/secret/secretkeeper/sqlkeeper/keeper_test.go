@@ -11,6 +11,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -35,8 +36,8 @@ func Test_SQLKeeperSetup(t *testing.T) {
 
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          "sdDkslslld",
-			EncryptionProvider: "secretKey.v1",
+			EncryptionProvider:     "secret_key.v1",
+			ConfiguredKMSProviders: map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
 		},
 	}
 
@@ -164,11 +165,15 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
+	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
+	require.NoError(t, err)
+
 	encMgr, err := encryptionmanager.ProvideEncryptionManager(
 		tracer,
 		dataKeyStore,
 		cfg,
 		usageStats,
+		enc,
 		nil,
 	)
 	require.NoError(t, err)
