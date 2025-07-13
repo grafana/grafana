@@ -189,7 +189,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		require.NoError(t, err)
 
 		usageStats := &usagestats.UsageStatsMock{T: t}
-		enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
+		enc, err := service.ProvideAESGSMCipherService(tracer, usageStats)
 		require.NoError(t, err)
 
 		ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
@@ -389,7 +389,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
 
-			enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
+			enc, err := service.ProvideAESGSMCipherService(tracer, usageStats)
 			require.NoError(t, err)
 
 			ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
@@ -443,7 +443,7 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("test")
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
-	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats, cfg)
+	enc, err := service.ProvideAESGSMCipherService(tracer, usageStats)
 	require.NoError(t, err)
 
 	svc, err := ProvideEncryptionManager(

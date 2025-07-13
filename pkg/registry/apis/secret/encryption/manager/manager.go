@@ -39,7 +39,7 @@ type EncryptionManager struct {
 	pOnce             sync.Once
 	currentProviderID encryption.ProviderID
 	// The cipher is used to encrypt and decrypt payloads with a data key.
-	enc cipher.Cipher
+	cipher cipher.Cipher
 	// The kmsProviders are used to encrypt and decrypt the data keys.
 	kmsProviders encryption.ProviderMap
 
@@ -65,7 +65,7 @@ func ProvideEncryptionManager(
 		store:             store,
 		cfg:               cfg,
 		usageStats:        usageStats,
-		enc:               enc,
+		cipher:            enc,
 		currentProviderID: currentProviderID,
 		log:               log.New("encryption"),
 		kmsProviders:      kmsProviders,
@@ -139,7 +139,7 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace string, paylo
 	}
 
 	var encrypted []byte
-	encrypted, err = s.enc.Encrypt(ctx, payload, string(dataKey))
+	encrypted, err = s.cipher.Encrypt(ctx, payload, string(dataKey))
 	if err != nil {
 		s.log.Error("Failed to encrypt secret", "error", err)
 		return nil, err
@@ -318,7 +318,7 @@ func (s *EncryptionManager) Decrypt(ctx context.Context, namespace string, paylo
 	}
 
 	var decrypted []byte
-	decrypted, err = s.enc.Decrypt(ctx, payload, string(dataKey))
+	decrypted, err = s.cipher.Decrypt(ctx, payload, string(dataKey))
 
 	return decrypted, err
 }

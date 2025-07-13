@@ -92,7 +92,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
-	enc, err := cipher.ProvideAESGSMCipherService(tracer, usageStats, cfg)
+	enc, err := cipher.ProvideAESGSMCipherService(tracer, usageStats)
 	require.NoError(t, err)
 
 	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
