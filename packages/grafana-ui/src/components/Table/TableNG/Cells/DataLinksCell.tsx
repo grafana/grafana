@@ -43,7 +43,7 @@ const getStyles = (theme: GrafanaTheme2, textWrap?: boolean) => ({
     fontWeight: theme.typography.fontWeightMedium,
     whiteSpace: 'nowrap',
     ...(!textWrap && {
-      paddingInline: theme.spacing(0.5),
+      paddingInline: theme.spacing(1),
       borderRight: `2px solid ${theme.colors.border.medium}`,
       '&:last-child': {
         borderRight: 'none',
