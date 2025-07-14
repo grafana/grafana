@@ -33,8 +33,7 @@ func ProvideKeeperMetadataStorage(
 	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 ) (contracts.KeeperMetadataStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &keeperMetadataStorage{}, nil
 	}
 

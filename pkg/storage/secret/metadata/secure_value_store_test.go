@@ -42,7 +42,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("test")
 	db := database.ProvideDatabase(testDB, tracer)
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the secure value storage
 	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(db, tracer, features, nil)

@@ -333,7 +333,7 @@ func initStorage(t *testing.T) contracts.KeeperMetadataStorage {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
 	db := database.ProvideDatabase(testDB, tracer)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the keeper storage
 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(db, tracer, features, nil)
