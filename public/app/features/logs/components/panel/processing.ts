@@ -1,7 +1,8 @@
 import ansicolor from 'ansicolor';
+import { parse, stringify } from 'lossless-json';
 import Prism, { Grammar } from 'prismjs';
 
-import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { DataFrame, dateTimeFormat, Labels, LogLevel, LogRowModel, LogsSortOrder, textUtil } from '@grafana/data';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
@@ -97,8 +98,23 @@ export class LogListModel implements LogRowModel {
     this.raw = raw;
   }
 
+  clone() {
+    const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+    // Unless this function is required outside of <LogLineDetailsLog />, we create a wrapped clone, so new lines are not stripped.
+    clone._wrapLogMessage = true;
+    clone._body = undefined;
+    clone._highlightedBody = undefined;
+    return clone;
+  }
+
   get body(): string {
     if (this._body === undefined) {
+      try {
+        const parsed = stringify(parse(this.raw), undefined, 2);
+        if (parsed) {
+          this.raw = parsed;
+        }
+      } catch (error) {}
       this._body = this.collapsed
         ? this.raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : this.raw;
@@ -124,7 +140,11 @@ export class LogListModel implements LogRowModel {
     if (this._highlightedBody === undefined) {
       this._grammar = this._grammar ?? generateLogGrammar(this);
       const extraGrammar = generateTextMatchGrammar(this.searchWords, this._currentSearch);
-      this._highlightedBody = Prism.highlight(this.body, { ...extraGrammar, ...this._grammar }, 'lokiql');
+      this._highlightedBody = Prism.highlight(
+        textUtil.sanitize(this.body),
+        { ...extraGrammar, ...this._grammar },
+        'lokiql'
+      );
     }
     return this._highlightedBody;
   }
@@ -154,16 +174,27 @@ export class LogListModel implements LogRowModel {
   }
 
   updateCollapsedState(displayedFields: string[], container: HTMLDivElement | null) {
-    const lineLength =
+    const line =
       displayedFields.length > 0
-        ? displayedFields.map((field) => this.getDisplayedFieldValue(field, true)).join('').length
-        : this.entry.length;
-    const collapsed =
-      lineLength >= (this._virtualization?.getTruncationLength(container) ?? TRUNCATION_DEFAULT_LENGTH)
+        ? displayedFields.map((field) => this.getDisplayedFieldValue(field, true)).join('')
+        : this.body;
+
+    // Length truncation
+    let collapsed =
+      line.length >= (this._virtualization?.getTruncationLength(container) ?? TRUNCATION_DEFAULT_LENGTH)
         ? true
         : undefined;
+
+    // Newlines truncation
+    if (!collapsed && this._virtualization) {
+      const truncationLimit = this._virtualization.getTruncationLineCount();
+      collapsed = countNewLines(line, truncationLimit) >= truncationLimit ? true : collapsed;
+    }
+
     if (this.collapsed === undefined || collapsed === undefined) {
       this.collapsed = collapsed;
+      this._body = undefined;
+      this._highlightedBody = undefined;
     }
     return this.collapsed;
   }
@@ -225,4 +256,24 @@ function logLevelToDisplayLevel(level = '') {
     default:
       return level;
   }
+}
+
+function countNewLines(log: string, limit = Infinity) {
+  let count = 0;
+  for (let i = 0; i < log.length; ++i) {
+    // No need to iterate further
+    if (count > Infinity) {
+      return count;
+    }
+    if (log[i] === '\n') {
+      count += 1;
+    } else if (log[i] === '\r') {
+      count += 1;
+      // skip LF in CRLF
+      if (log[i] === '\n') {
+        i += 1;
+      }
+    }
+  }
+  return count;
 }

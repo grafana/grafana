@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -14,15 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/utils/ptr"
 )
 
 func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts.KeeperMetadataStorage, name, namespace string) string {
 	t.Helper()
 
-	testKeeper := &secretv0alpha1.Keeper{
-		Spec: secretv0alpha1.KeeperSpec{
+	testKeeper := &secretv1beta1.Keeper{
+		Spec: secretv1beta1.KeeperSpec{
 			Description: "test keeper description",
-			AWS:         &secretv0alpha1.AWSKeeperConfig{},
+			Aws:         &secretv1beta1.KeeperAWSConfig{},
 		},
 	}
 	testKeeper.Name = name
@@ -56,10 +57,10 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		keeperName := createTestKeeper(t, ctx, keeperStorage, "test-keeper", "default")
 
 		// Create a test secure value
-		testSecureValue := &secretv0alpha1.SecureValue{
-			Spec: secretv0alpha1.SecureValueSpec{
+		testSecureValue := &secretv1beta1.SecureValue{
+			Spec: secretv1beta1.SecureValueSpec{
 				Description: "test description",
-				Value:       "test-value",
+				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value")),
 				Keeper:      &keeperName,
 			},
 		}
@@ -110,10 +111,10 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		keeperName := createTestKeeper(t, ctx, keeperStorage, "test-keeper-2", "default")
 
 		// Create a test secure value
-		testSecureValue := &secretv0alpha1.SecureValue{
-			Spec: secretv0alpha1.SecureValueSpec{
+		testSecureValue := &secretv1beta1.SecureValue{
+			Spec: secretv1beta1.SecureValueSpec{
 				Description: "test description 2",
-				Value:       "test-value-2",
+				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value-2")),
 				Keeper:      &keeperName,
 			},
 		}

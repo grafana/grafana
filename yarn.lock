@@ -2555,7 +2555,7 @@ __metadata:
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
@@ -2665,7 +2665,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
@@ -2706,7 +2706,7 @@ __metadata:
     logfmt: "npm:^1.3.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-window: "npm:1.8.11"
     rxjs: "npm:7.8.2"
     stream-browserify: "npm:3.0.0"
@@ -2749,7 +2749,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
@@ -2891,7 +2891,7 @@ __metadata:
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
@@ -2946,7 +2946,7 @@ __metadata:
     prismjs: "npm:1.30.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
@@ -2986,7 +2986,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
     ts-node: "npm:10.9.2"
@@ -3231,7 +3231,7 @@ __metadata:
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:22.15.0"
     "@types/react": "npm:18.3.18"
-    "@types/react-virtualized-auto-sizer": "npm:1.0.4"
+    "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/tinycolor2": "npm:1.4.6"
     babel-jest: "npm:29.7.0"
     d3: "npm:^7.8.5"
@@ -3241,7 +3241,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
     react-use: "npm:17.6.0"
-    react-virtualized-auto-sizer: "npm:1.0.25"
+    react-virtualized-auto-sizer: "npm:1.0.26"
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.0"
     rollup-plugin-node-externals: "npm:^8.0.0"
@@ -3356,7 +3356,7 @@ __metadata:
     "@types/systemjs": "npm:6.15.3"
     jest: "npm:^29.6.4"
     react: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
     rxjs: "npm:7.8.2"
     ts-jest: "npm:29.2.5"
@@ -3549,7 +3549,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.27.0":
+"@grafana/scenes-react@npm:^6.27.1":
   version: 6.27.2
   resolution: "@grafana/scenes-react@npm:6.27.2"
   dependencies:
@@ -3569,7 +3569,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.27.2, @grafana/scenes@npm:^6.27.0":
+"@grafana/scenes@npm:6.27.2, @grafana/scenes@npm:^6.27.1":
   version: 6.27.2
   resolution: "@grafana/scenes@npm:6.27.2"
   dependencies:
@@ -3634,7 +3634,7 @@ __metadata:
     "@types/node": "npm:22.15.0"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    "@types/react-virtualized-auto-sizer": "npm:1.0.4"
+    "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/systemjs": "npm:6.15.3"
     "@types/uuid": "npm:10.0.0"
     i18next-parser: "npm:9.3.0"
@@ -3643,9 +3643,9 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-use: "npm:17.6.0"
-    react-virtualized-auto-sizer: "npm:1.0.25"
+    react-virtualized-auto-sizer: "npm:1.0.26"
     rxjs: "npm:7.8.2"
     sql-formatter-plus: "npm:^1.3.6"
     ts-jest: "npm:29.2.5"
@@ -3664,7 +3664,7 @@ __metadata:
   dependencies:
     "@grafana/tsconfig": "npm:^2.0.0"
     "@types/node": "npm:22.15.0"
-    msw: "npm:2.10.3"
+    msw: "npm:2.10.4"
     typescript: "npm:5.8.3"
   languageName: unknown
   linkType: soft
@@ -3792,7 +3792,7 @@ __metadata:
     react-loading-skeleton: "npm:3.5.0"
     react-router-dom: "npm:5.3.4"
     react-router-dom-v5-compat: "npm:^6.26.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-select-event: "npm:^5.1.0"
     react-table: "npm:7.8.0"
     react-transition-group: "npm:4.4.5"
@@ -4759,9 +4759,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lerna/create@npm:8.2.1":
-  version: 8.2.1
-  resolution: "@lerna/create@npm:8.2.1"
+"@lerna/create@npm:8.2.3":
+  version: 8.2.3
+  resolution: "@lerna/create@npm:8.2.3"
   dependencies:
     "@npmcli/arborist": "npm:7.5.4"
     "@npmcli/package-json": "npm:5.2.0"
@@ -4786,7 +4786,6 @@ __metadata:
     get-stream: "npm:6.0.0"
     git-url-parse: "npm:14.0.0"
     glob-parent: "npm:6.0.2"
-    globby: "npm:11.1.0"
     graceful-fs: "npm:4.2.11"
     has-unicode: "npm:2.0.1"
     ini: "npm:^1.3.8"
@@ -4821,9 +4820,10 @@ __metadata:
     slash: "npm:^3.0.0"
     ssri: "npm:^10.0.6"
     string-width: "npm:^4.2.3"
-    strong-log-transformer: "npm:2.1.0"
     tar: "npm:6.2.1"
     temp-dir: "npm:1.0.0"
+    through: "npm:2.3.8"
+    tinyglobby: "npm:0.2.12"
     upath: "npm:2.0.1"
     uuid: "npm:^10.0.0"
     validate-npm-package-license: "npm:^3.0.4"
@@ -4833,7 +4833,7 @@ __metadata:
     write-pkg: "npm:4.0.0"
     yargs: "npm:17.7.2"
     yargs-parser: "npm:21.1.1"
-  checksum: 10/802db88edad8967afcbf499f68491139965209137ec92f402ac838452079f143701d6f9abd9832b3506a7e1c56e01ea9c09ffd6f8782b1d9202413756fcfd708
+  checksum: 10/1264bf324de2c83377dbc0b49c6731b9e27401c552c34601846b012c46aee496c9a3bcdeba87e59cfaf8b54d3c82f7f3ece62ff4c77ca7b3a85acfc021b7cbb2
   languageName: node
   linkType: hard
 
@@ -8583,9 +8583,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app":
+"@test-plugins/extensions-test-app@workspace:e2e-playwright/test-plugins/grafana-extensionstest-app":
   version: 0.0.0-use.local
-  resolution: "@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app"
+  resolution: "@test-plugins/extensions-test-app@workspace:e2e-playwright/test-plugins/grafana-extensionstest-app"
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
@@ -8615,9 +8615,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@test-plugins/grafana-e2etest-datasource@workspace:e2e/test-plugins/grafana-test-datasource":
+"@test-plugins/grafana-e2etest-datasource@workspace:e2e-playwright/test-plugins/grafana-test-datasource":
   version: 0.0.0-use.local
-  resolution: "@test-plugins/grafana-e2etest-datasource@workspace:e2e/test-plugins/grafana-test-datasource"
+  resolution: "@test-plugins/grafana-e2etest-datasource@workspace:e2e-playwright/test-plugins/grafana-test-datasource"
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
@@ -9952,12 +9952,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-virtualized-auto-sizer@npm:1.0.4":
-  version: 1.0.4
-  resolution: "@types/react-virtualized-auto-sizer@npm:1.0.4"
+"@types/react-virtualized-auto-sizer@npm:1.0.8":
+  version: 1.0.8
+  resolution: "@types/react-virtualized-auto-sizer@npm:1.0.8"
   dependencies:
-    "@types/react": "npm:*"
-  checksum: 10/e0d41ac6cf0f48dfef45c0cd70146578f42ad83dad90911aa0dfe72b0e1ea62ca9ff56d4f43f322ec6dae2e7cb4d025aefe0e85241f7782c249aeface1050512
+    react-virtualized-auto-sizer: "npm:*"
+  checksum: 10/faddd1ee92e87e0b621a5be4eb510b010437375b6c85cf72d764f52506c59fad93d79c159aad251677e4e2fb548ad4a7e76c59f5a701a517bcf5552a9929c4af
   languageName: node
   linkType: hard
 
@@ -15349,7 +15349,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"duplexer@npm:^0.1.1, duplexer@npm:^0.1.2":
+"duplexer@npm:^0.1.2":
   version: 0.1.2
   resolution: "duplexer@npm:0.1.2"
   checksum: 10/62ba61a830c56801db28ff6305c7d289b6dc9f859054e8c982abd8ee0b0a14d2e9a8e7d086ffee12e868d43e2bbe8a964be55ddbd8c8957714c87373c7a4f9b0
@@ -16918,6 +16918,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fdir@npm:^6.4.3":
+  version: 6.4.6
+  resolution: "fdir@npm:6.4.6"
+  peerDependencies:
+    picomatch: ^3 || ^4
+  peerDependenciesMeta:
+    picomatch:
+      optional: true
+  checksum: 10/c186ba387e7b75ccf874a098d9bc5fe0af0e9c52fc56f8eac8e80aa4edb65532684bf2bf769894ff90f53bf221d6136692052d31f07a9952807acae6cbe7ee50
+  languageName: node
+  linkType: hard
+
 "fflate@npm:^0.8.2":
   version: 0.8.2
   resolution: "fflate@npm:0.8.2"
@@ -18031,7 +18043,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globby@npm:11.1.0, globby@npm:^11.0.0, globby@npm:^11.1.0":
+"globby@npm:^11.0.0, globby@npm:^11.1.0":
   version: 11.1.0
   resolution: "globby@npm:11.1.0"
   dependencies:
@@ -18147,8 +18159,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.27.0"
-    "@grafana/scenes-react": "npm:^6.27.0"
+    "@grafana/scenes": "npm:^6.27.1"
+    "@grafana/scenes-react": "npm:^6.27.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18231,7 +18243,7 @@ __metadata:
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
     "@types/react-transition-group": "npm:4.4.12"
-    "@types/react-virtualized-auto-sizer": "npm:1.0.4"
+    "@types/react-virtualized-auto-sizer": "npm:1.0.8"
     "@types/react-window": "npm:1.8.8"
     "@types/react-window-infinite-loader": "npm:^1"
     "@types/redux-mock-store": "npm:1.5.0"
@@ -18339,10 +18351,11 @@ __metadata:
     json-source-map: "npm:0.6.1"
     jsurl: "npm:^0.1.5"
     kbar: "npm:0.1.0-beta.45"
-    lerna: "npm:8.2.1"
+    lerna: "npm:8.2.3"
     leven: "npm:^4.0.0"
     lodash: "npm:4.17.21"
     logfmt: "npm:^1.3.2"
+    lossless-json: "npm:^4.1.1"
     lru-cache: "npm:11.1.0"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
@@ -18356,7 +18369,7 @@ __metadata:
     moment-timezone: "npm:0.5.47"
     monaco-editor: "npm:0.34.1"
     moveable: "npm:0.53.0"
-    msw: "npm:2.10.3"
+    msw: "npm:2.10.4"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.9"
     node-forge: "npm:^1.3.1"
@@ -18369,7 +18382,7 @@ __metadata:
     pdf-parse: "npm:^1.1.1"
     plop: "npm:^4.0.1"
     pluralize: "npm:^8.0.0"
-    postcss: "npm:8.5.1"
+    postcss: "npm:8.5.6"
     postcss-loader: "npm:8.1.1"
     postcss-reporter: "npm:7.1.0"
     postcss-scss: "npm:4.0.9"
@@ -18398,14 +18411,14 @@ __metadata:
     react-router: "npm:5.3.4"
     react-router-dom: "npm:5.3.4"
     react-router-dom-v5-compat: "npm:^6.26.1"
-    react-select: "npm:5.10.1"
+    react-select: "npm:5.10.2"
     react-select-event: "npm:5.5.1"
     react-split-pane: "npm:0.1.92"
     react-table: "npm:7.8.0"
     react-transition-group: "npm:4.4.5"
     react-use: "npm:17.6.0"
     react-virtual: "npm:2.10.4"
-    react-virtualized-auto-sizer: "npm:1.0.25"
+    react-virtualized-auto-sizer: "npm:1.0.26"
     react-window: "npm:1.8.11"
     react-window-infinite-loader: "npm:1.0.10"
     react-zoom-pan-pinch: "npm:^3.3.0"
@@ -21592,11 +21605,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lerna@npm:8.2.1":
-  version: 8.2.1
-  resolution: "lerna@npm:8.2.1"
+"lerna@npm:8.2.3":
+  version: 8.2.3
+  resolution: "lerna@npm:8.2.3"
   dependencies:
-    "@lerna/create": "npm:8.2.1"
+    "@lerna/create": "npm:8.2.3"
     "@npmcli/arborist": "npm:7.5.4"
     "@npmcli/package-json": "npm:5.2.0"
     "@npmcli/run-script": "npm:8.1.0"
@@ -21623,7 +21636,6 @@ __metadata:
     get-stream: "npm:6.0.0"
     git-url-parse: "npm:14.0.0"
     glob-parent: "npm:6.0.2"
-    globby: "npm:11.1.0"
     graceful-fs: "npm:4.2.11"
     has-unicode: "npm:2.0.1"
     import-local: "npm:3.1.0"
@@ -21663,9 +21675,10 @@ __metadata:
     slash: "npm:3.0.0"
     ssri: "npm:^10.0.6"
     string-width: "npm:^4.2.3"
-    strong-log-transformer: "npm:2.1.0"
     tar: "npm:6.2.1"
     temp-dir: "npm:1.0.0"
+    through: "npm:2.3.8"
+    tinyglobby: "npm:0.2.12"
     typescript: "npm:>=3 < 6"
     upath: "npm:2.0.1"
     uuid: "npm:^10.0.0"
@@ -21678,7 +21691,7 @@ __metadata:
     yargs-parser: "npm:21.1.1"
   bin:
     lerna: dist/cli.js
-  checksum: 10/ebf9fd1af102a8b7e89dcf05e32f92dfa2ce13e77c9788a86eb4828e6a5269e7bf85edf1bcdb4e4ea383f42d872880ad61fc26d304276715b3757fb54cd60d94
+  checksum: 10/3ef9e5c6e2ee20cad0c750817cf628dffa0056f9b87ee4956f641833ac3b06a8fdf50d4cd6ba63a818427c7e6c1482568c9e184f0535fd23239ed55e5eae57a7
   languageName: node
   linkType: hard
 
@@ -22145,6 +22158,13 @@ __metadata:
   bin:
     loose-envify: cli.js
   checksum: 10/6517e24e0cad87ec9888f500c5b5947032cdfe6ef65e1c1936a0c48a524b81e65542c9c3edc91c97d5bddc806ee2a985dbc79be89215d613b1de5db6d1cfe6f4
+  languageName: node
+  linkType: hard
+
+"lossless-json@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "lossless-json@npm:4.1.1"
+  checksum: 10/1e22e9e4ad8ebf169567a8c24553403bfd7abc33c141f4918f1b9626417f80477b849e6175a315a224e0c68072759c69a0e332a925de80269a7f9720af3a7fbd
   languageName: node
   linkType: hard
 
@@ -22628,9 +22648,9 @@ __metadata:
   linkType: hard
 
 "micro-memoize@npm:^4.1.2":
-  version: 4.1.2
-  resolution: "micro-memoize@npm:4.1.2"
-  checksum: 10/027e90c3147c97c07224440ea50ede27eb7d888149e4925820397b466d16efc525f5ec3981e4cadec3258a8d36dfd5e7e7c8e660879fbe2e47106785be9bc570
+  version: 4.1.3
+  resolution: "micro-memoize@npm:4.1.3"
+  checksum: 10/4e9c7767911cc76ae9c9779584ec87844437af9446b295a01774640a732c2c7f91944794027f44625031f7330ab7f9147740d0a9fb612680d1d2d858dad43402
   languageName: node
   linkType: hard
 
@@ -23183,9 +23203,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:2.10.3, msw@npm:^2.10.2":
-  version: 2.10.3
-  resolution: "msw@npm:2.10.3"
+"msw@npm:2.10.4, msw@npm:^2.10.2":
+  version: 2.10.4
+  resolution: "msw@npm:2.10.4"
   dependencies:
     "@bundled-es-modules/cookie": "npm:^2.0.1"
     "@bundled-es-modules/statuses": "npm:^1.0.1"
@@ -23212,7 +23232,7 @@ __metadata:
       optional: true
   bin:
     msw: cli/index.js
-  checksum: 10/ac51d6232d3b0a9b711195a2c3f22035683f9082ee83d915e33f35dbf3a91c4381dab70f9de5358113adaad8ecbe1c58a584377f4ba988e2903fa9770a294b42
+  checksum: 10/e2f25dda1aba66c7444c29c41d3157cb15c0332055ab7ebfb74ef4b506e7b90098cf37c577768edb5b2b2dbf0d6ed6a7a3ca8ee6da3d72df5a25823d82f33316
   languageName: node
   linkType: hard
 
@@ -23308,7 +23328,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.11, nanoid@npm:^3.3.8":
+"nanoid@npm:^3.3.11":
   version: 3.3.11
   resolution: "nanoid@npm:3.3.11"
   bin:
@@ -25759,18 +25779,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.5.1":
-  version: 8.5.1
-  resolution: "postcss@npm:8.5.1"
-  dependencies:
-    nanoid: "npm:^3.3.8"
-    picocolors: "npm:^1.1.1"
-    source-map-js: "npm:^1.2.1"
-  checksum: 10/1fbd28753143f7f03e4604813639918182b15343c7ad0f4e72f3875fc2cc0b8494c887f55dc05008fad5fbf1e1e908ce2edbbce364a91f84dcefb71edf7cd31d
-  languageName: node
-  linkType: hard
-
-"postcss@npm:^8.4.33, postcss@npm:^8.4.40, postcss@npm:^8.5.1":
+"postcss@npm:8.5.6, postcss@npm:^8.4.33, postcss@npm:^8.4.40, postcss@npm:^8.5.1":
   version: 8.5.6
   resolution: "postcss@npm:8.5.6"
   dependencies:
@@ -27143,9 +27152,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:5.10.1":
-  version: 5.10.1
-  resolution: "react-select@npm:5.10.1"
+"react-select@npm:5.10.2":
+  version: 5.10.2
+  resolution: "react-select@npm:5.10.2"
   dependencies:
     "@babel/runtime": "npm:^7.12.0"
     "@emotion/cache": "npm:^11.4.0"
@@ -27159,7 +27168,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/c0c4d798e9b1f654b56c26bffb149ab811d24ca0950c1e8c3675438065628561eb132c6a5982cea893a288a0e9af6f9d9db290f4e53da71570dada0c1147f146
+  checksum: 10/9c7f488a9774f566f60e882343dc26276eed866669304805638378b3bafb87fb1f6189d1aacde5eba4f637a7ff022f8e24caec541d12c254bafc2eb9658e14d2
   languageName: node
   linkType: hard
 
@@ -27332,6 +27341,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-virtualized-auto-sizer@npm:*, react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.6":
+  version: 1.0.26
+  resolution: "react-virtualized-auto-sizer@npm:1.0.26"
+  peerDependencies:
+    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10/8f8127369fb3ae1a49987a1e7d2d136f379b71d1b031a4c169389274946eca0248e3fb9130aa8a7ebe82f4ca8aaab58c37252398f8f6220a6eafaa78b8464b6b
+  languageName: node
+  linkType: hard
+
 "react-virtualized-auto-sizer@npm:1.0.24":
   version: 1.0.24
   resolution: "react-virtualized-auto-sizer@npm:1.0.24"
@@ -27339,16 +27358,6 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
   checksum: 10/02101a340bdbe3e40c49dbc52e524eb7ca18832690e91f045a25675600d7adc0a63e800a4ace6a014132adcdcce0e12a8137971de408427a5a3112d7c87c9f3e
-  languageName: node
-  linkType: hard
-
-"react-virtualized-auto-sizer@npm:1.0.25, react-virtualized-auto-sizer@npm:^1.0.6":
-  version: 1.0.25
-  resolution: "react-virtualized-auto-sizer@npm:1.0.25"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10/43678a904019f0413a3c649b5b64ea51263283120c991b285077b5075cf2ea564571f6d48b3a396b588d500d45820d1c98989cb7091e2a009e73e4faa7da9d20
   languageName: node
   linkType: hard
 
@@ -30018,19 +30027,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strong-log-transformer@npm:2.1.0":
-  version: 2.1.0
-  resolution: "strong-log-transformer@npm:2.1.0"
-  dependencies:
-    duplexer: "npm:^0.1.1"
-    minimist: "npm:^1.2.0"
-    through: "npm:^2.3.4"
-  bin:
-    sl-log-transformer: bin/sl-log-transformer.js
-  checksum: 10/2fd14eb0a68893fdadefd89f964df404e3d637729c48aca015eb12d1c47455dee28b2522ad7150de23f7a57cce503656585e7644c9cd8532023ea572f8cc5a80
-  languageName: node
-  linkType: hard
-
 "strtok3@npm:^6.2.4":
   version: 6.3.0
   resolution: "strtok3@npm:6.3.0"
@@ -30574,7 +30570,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"through@npm:2, through@npm:2.3.x, through@npm:>=2.2.7 <3, through@npm:^2.3.4, through@npm:^2.3.6, through@npm:^2.3.8":
+"through@npm:2, through@npm:2.3.8, through@npm:2.3.x, through@npm:>=2.2.7 <3, through@npm:^2.3.6, through@npm:^2.3.8":
   version: 2.3.8
   resolution: "through@npm:2.3.8"
   checksum: 10/5da78346f70139a7d213b65a0106f3c398d6bc5301f9248b5275f420abc2c4b1e77c2abc72d218dedc28c41efb2e7c312cb76a7730d04f9c2d37d247da3f4198
@@ -30627,6 +30623,16 @@ __metadata:
   version: 1.6.0
   resolution: "tinycolor2@npm:1.6.0"
   checksum: 10/066c3acf4f82b81c58a0d3ab85f49407efe95ba87afc3c7a16b1d77625193dfbe10dd46c26d0a263c1137361dd5a6a68bff2fb71def5fb9b9aec940fb030bcd4
+  languageName: node
+  linkType: hard
+
+"tinyglobby@npm:0.2.12":
+  version: 0.2.12
+  resolution: "tinyglobby@npm:0.2.12"
+  dependencies:
+    fdir: "npm:^6.4.3"
+    picomatch: "npm:^4.0.2"
+  checksum: 10/4ad28701fa9118b32ef0e27f409e0a6c5741e8b02286d50425c1f6f71e6d6c6ded9dd5bbbbb714784b08623c4ec4d150151f1d3d996cfabe0495f908ab4f7002
   languageName: node
   linkType: hard
 

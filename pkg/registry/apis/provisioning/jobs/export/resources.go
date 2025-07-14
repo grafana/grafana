@@ -67,7 +67,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 			}
 		}
 
-		if err := exportResource(ctx, options, client, shim, repositoryResources, progress); err != nil {
+		if err := exportResource(ctx, kind.Resource, options, client, shim, repositoryResources, progress); err != nil {
 			return fmt.Errorf("export %s: %w", kind.Resource, err)
 		}
 	}
@@ -76,6 +76,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 }
 
 func exportResource(ctx context.Context,
+	resource string,
 	options provisioning.ExportJobOptions,
 	client dynamic.ResourceInterface,
 	shim conversionShim,
@@ -88,7 +89,7 @@ func exportResource(ctx context.Context,
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
 			Name:     item.GetName(),
-			Resource: gvk.Kind,
+			Resource: resource,
 			Group:    gvk.Group,
 			Action:   repository.FileActionCreated,
 		}
