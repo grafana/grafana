@@ -135,11 +135,19 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) error {
 	// Encrypt webhook secret if present
 	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
-		encryptedSecret, err := e.secrets.Encrypt(ctx, r.GetNamespace(), r.GetName()+"-webhook-secret", r.Status.Webhook.Secret)
+		name := r.Status.Webhook.SecretName
+		if name == "" {
+			name = r.GetName() + "-webhook-secret"
+		}
+
+		// TODO: update
+		_, err := e.secrets.Encrypt(ctx, r.GetNamespace(), name, r.Status.Webhook.Secret)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
 		}
-		r.Status.Webhook.EncryptedSecret = encryptedSecret
+
+		r.Status.Webhook.SecretName = name
+		r.Status.Webhook.EncryptedSecret = nil
 		r.Status.Webhook.Secret = ""
 	}
 
