@@ -109,7 +109,13 @@ export function getCellRenderer(field: Field, cellOptions: TableCellOptions): Ta
   if (cellType === TableCellDisplayMode.Auto) {
     return getAutoRendererResult(field);
   }
-  return CELL_RENDERERS[cellType];
+
+  // TODO: add support boolean, enum, (maybe int). but for now just string fields
+  if (cellType === TableCellDisplayMode.Pill && field.type !== FieldType.string) {
+    return AUTO_RENDERER;
+  }
+
+  return CELL_RENDERERS[cellType] ?? AUTO_RENDERER;
 }
 
 /** @internal */
