@@ -14,9 +14,10 @@ WORKDIR /build-grafana
 RUN go env GOCACHE
 RUN go env GOPATH
 
-COPY Makefile devenv/frontend-service/build-grafana.sh ./
+# All files COPY'd here must be included in the `only` list in Tiltfile
+# otherwise the image will not build with Tilt.
 
-RUN ls -lah
+COPY Makefile devenv/frontend-service/build-grafana.sh ./
 
 # Copy go mod files first
 # $: ls -1 {pkg,scripts,apps}**/go.{mod,sum} | sed 's#\(.*\)/go\.\(mod\|sum\)#COPY \1/go.* \1/#' | sort -u
@@ -42,9 +43,6 @@ COPY scripts/go-workspace/go.* scripts/go-workspace/
 COPY scripts/modowners/go.* scripts/modowners/
 
 COPY go.* ./
-
-
-RUN ls -lah
 
 # Install dependencies
 RUN --mount=type=cache,target=/go/pkg/mod \

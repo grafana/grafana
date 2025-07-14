@@ -1,5 +1,4 @@
-docker_compose("./docker-compose.yaml")
-
+# --- Frontend processes
 local_resource(
   'yarn install',
   cmd='yarn install',
@@ -10,7 +9,7 @@ local_resource(
 )
 
 local_resource(
-  'frontend-build',
+  'yarn start',
   cmd='rm -rf public/build/assets-manifest.json',
   serve_cmd='yarn start:noLint',
   resource_deps=['yarn install'],
@@ -23,12 +22,19 @@ local_resource(
   labels=["frontend"]
 )
 
-dc_resource("backend", resource_deps=["frontend-build"], labels=["backend"])
-dc_resource("frontend-service", resource_deps=["frontend-build"], labels=["backend"])
+# --- Docker Compose
+docker_compose("./docker-compose.yaml")
+
+# First argument is the name of the service from the docker-compose file.
+dc_resource("backend", resource_deps=["yarn start"], labels=["backend"])
+dc_resource("frontend-service", resource_deps=["yarn start"], labels=["backend"])
 dc_resource("proxy", resource_deps=["backend", "frontend-service"], labels=["ingress"])
 
 docker_build('grafana-backend', '../..',
   dockerfile='backend.dockerfile',
+
+  # Only these paths will be in the docker context, and will trigger a rebuild.
+  # This must include all the files that are COPY'd in backend.dockerfile
   only=[
     "./Makefile",
     "./devenv/frontend-service/build-grafana.sh",
