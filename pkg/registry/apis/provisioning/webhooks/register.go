@@ -194,7 +194,7 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
-		if ghToken == "" {
+		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
 			decrypted, err := e.secrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)

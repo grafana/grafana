@@ -1229,7 +1229,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	case provisioning.GitRepositoryType:
 		// Decrypt token if needed
 		token := r.Spec.Git.Token
-		if token == "" {
+		if token == "" && len(r.Spec.Git.EncryptedToken) > 0 {
 			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(r.Spec.Git.EncryptedToken))
 			if err != nil {
 				return nil, fmt.Errorf("decrypt git token: %w", err)
@@ -1255,7 +1255,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
-		if ghToken == "" {
+		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
 			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)
