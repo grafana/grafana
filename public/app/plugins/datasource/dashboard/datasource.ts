@@ -290,15 +290,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
    * Handle unsupported field types
    */
   private compareUnsupportedValues = (fieldValue: any, filter: AdHocVariableFilter): boolean => {
-    // Use the same logic as handleNonStringFieldFilter for consistency
-    switch (filter.operator) {
-      case '=':
-        return false; // Field type not supported, so can't match
-      case '!=':
-        return true; // Field type not supported, so it's "not equal"
-      default:
-        return true; // Unknown operator, skip this filter
-    }
+    // unknown field type, skip this filter
+    return true;
   };
 
   /**
