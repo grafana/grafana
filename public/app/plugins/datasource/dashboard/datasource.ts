@@ -208,7 +208,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   /**
    * Evaluate a filter against a field value - unified method that dispatches based on field type
    */
-  private evaluateFilter(fieldValue: any, filter: AdHocVariableFilter, fieldType: FieldType): boolean {
+  private evaluateFilter(fieldValue: unknown, filter: AdHocVariableFilter, fieldType: FieldType): boolean {
     // Handle null/undefined values consistently across all types
     if (fieldValue == null) {
       return filter.operator === '!=' && filter.value !== '';
@@ -239,7 +239,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   /**
    * Compare string field values
    */
-  private compareStringValues = (fieldValue: any, filter: AdHocVariableFilter): boolean => {
+  private compareStringValues = (fieldValue: unknown, filter: AdHocVariableFilter): boolean => {
     const filterValue = filter.value;
 
     switch (filter.operator) {
@@ -256,7 +256,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   /**
    * Compare numeric field values (integers and floats)
    */
-  private compareNumericValues = (fieldValue: any, filter: AdHocVariableFilter): boolean => {
+  private compareNumericValues = (fieldValue: unknown, filter: AdHocVariableFilter): boolean => {
     // Parse filter value as a number
     const filterValue = parseFloat(filter.value);
 
@@ -266,7 +266,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     }
 
     // Ensure field value is a number
-    const numericFieldValue = typeof fieldValue === 'number' ? fieldValue : parseFloat(fieldValue);
+    const numericFieldValue = typeof fieldValue === 'number' ? fieldValue : parseFloat(String(fieldValue));
 
     // If field value is not a valid number, reject all rows
     if (isNaN(numericFieldValue)) {
@@ -292,7 +292,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   /**
    * Handle unsupported field types
    */
-  private compareUnsupportedValues = (_fieldValue: any, _filter: AdHocVariableFilter): boolean => {
+  private compareUnsupportedValues = (_fieldValue: unknown, _filter: AdHocVariableFilter): boolean => {
     // unknown field type, reject all rows
     return false;
   };
