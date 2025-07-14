@@ -3,8 +3,6 @@ package query
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -14,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/mtdsclient"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -176,113 +173,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		// format queries for metric request
-		var jsonQueries []*simplejson.Json
-		for _, query := range raw.Queries {
-			jsonBytes, err := json.Marshal(query)
-			if err != nil {
-				if err != nil {
-					b.log.Error("error marshalling", err)
-				}
-			}
-
-			sjQuery, _ := simplejson.NewJson(jsonBytes)
-			if err != nil {
-				b.log.Error("error unmarshalling", err)
-			}
-
-			jsonQueries = append(jsonQueries, sjQuery)
-		}
-		mReq := dtos.MetricRequest{
-			From:    raw.From,
-			To:      raw.To,
-			Queries: jsonQueries,
-		}
-
-		cache := &MyCacheService{
-			legacy: b.parser.legacy,
-		}
-
-		headers := ExtractKnownHeaders(httpreq.Header)
-
-		instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
-		if err != nil {
-			b.log.Error("failed to get instance configuration settings", "err", err)
-			responder.Error(err)
-			return
-		}
-
-		mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
-			b.clientSupplier,
-			ctx,
-			headers,
-			instanceConfig,
-		)
-
-		exprService := expr.ProvideService(
-			&setting.Cfg{
-				ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
-				SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
-				SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
-				SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
-			},
-			nil,
-			nil,
-			instanceConfig.FeatureToggles,
-			nil,
-			b.tracer,
-			mtDsClientBuilder,
-		)
-
-		// todo this will have nothing to do with sse anymore move it somewhere more logical
-		qdr, err := sse_query.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
-
-		// TODO fix this-- this breaks sql expressions somehow :( we only need this to determine if it's not an expression... maybe these are things that can be (or are already) passed to query data
-		// and we move this single alert query logic there
-		parsedReqAgain, parsingErr := b.parser.parseRequest(ctx, raw)
-		if parsingErr != nil {
-			var refError ErrorWithRefID
-			statusCode := http.StatusBadRequest
-			message := err
-			refID := "A"
-
-			if errors.Is(err, datasources.ErrDataSourceNotFound) {
-				statusCode = http.StatusNotFound
-				message = errors.New("datasource not found")
-			}
-
-			if errors.As(err, &refError) {
-				refID = refError.refId
-			}
-
-			qdr := &query.QueryDataResponse{
-				QueryDataResponse: backend.QueryDataResponse{
-					Responses: backend.Responses{
-						refID: {
-							Error:  message,
-							Status: backend.Status(statusCode),
-						},
-					},
-				},
-			}
-
-			b.log.Error("Error parsing query", "refId", refID, "message", message)
-
-			responder.Object(statusCode, qdr)
-			return
-		}
-
-		for i := range parsedReqAgain.Requests {
-			parsedReqAgain.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
-		}
-
-		if err == nil && isSingleAlertQuery(parsedReqAgain) {
-			b.log.Debug("handling alert query with single query")
-			qdr, err = b.convertQueryFromAlerting(ctx, parsedReqAgain.Requests[0], qdr)
-			if err != nil {
-				b.log.Debug("convertQueryFromAlerting failed", "err", err)
-			}
-		}
+		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder)
 
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
@@ -305,34 +196,72 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 	}), nil
 }
 
-func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req datasourceRequest,
-	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
-	if len(req.Request.Queries) == 0 {
-		return nil, errors.New("no queries to convert")
+func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuilder, httpreq *http.Request, responder responderWrapper) (qdr *backend.QueryDataResponse, err error) {
+	var jsonQueries []*simplejson.Json
+	for _, query := range raw.Queries {
+		jsonBytes, err := json.Marshal(query)
+		if err != nil {
+			if err != nil {
+				b.log.Error("error marshalling", err)
+			}
+		}
+
+		sjQuery, _ := simplejson.NewJson(jsonBytes)
+		if err != nil {
+			b.log.Error("error unmarshalling", err)
+		}
+
+		jsonQueries = append(jsonQueries, sjQuery)
 	}
-	if qdr == nil {
-		b.log.Debug("unexpected response of nil from datasource", "datasource.type", req.PluginId, "datasource.uid", req.UID)
-		return nil, errors.New("unexpected response of nil from datasource")
+	mReq := dtos.MetricRequest{
+		From:    raw.From,
+		To:      raw.To,
+		Queries: jsonQueries,
 	}
-	refID := req.Request.Queries[0].RefID
-	if _, exist := qdr.Responses[refID]; !exist {
-		return nil, fmt.Errorf("refID '%s' does not exist", refID)
+
+	cache := &MyCacheService{
+		legacy: b.parser.legacy,
 	}
-	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, false)
+
+	headers := ExtractKnownHeaders(httpreq.Header)
+
+	instanceConfig, err := b.clientSupplier.GetInstanceConfigurationSettings(ctx)
 	if err != nil {
-		b.log.Error("issue converting query from alerting", "err", err)
-		results.Error = err
+		b.log.Error("failed to get instance configuration settings", "err", err)
+		responder.Error(err)
+		return
 	}
-	qdr = &backend.QueryDataResponse{
-		Responses: map[string]backend.DataResponse{
-			refID: {
-				Frames: results.Values.AsDataFrames(refID),
-				Error:  results.Error,
-			},
+
+	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithClientSupplier(
+		b.clientSupplier,
+		ctx,
+		headers,
+		instanceConfig,
+	)
+
+	exprService := expr.ProvideService(
+		&setting.Cfg{
+			ExpressionsEnabled:           instanceConfig.ExpressionsEnabled,
+			SQLExpressionCellLimit:       instanceConfig.SQLExpressionCellLimit,
+			SQLExpressionOutputCellLimit: instanceConfig.SQLExpressionOutputCellLimit,
+			SQLExpressionTimeout:         instanceConfig.SQLExpressionTimeout,
 		},
+		nil,
+		nil,
+		instanceConfig.FeatureToggles,
+		nil,
+		b.tracer,
+		mtDsClientBuilder,
+	)
+
+	// todo this will have nothing to do with sse anymore move it somewhere more logical
+	qdr, err = sse_query.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
+
+	if err != nil {
+		return qdr, err
 	}
-	return qdr, err
+
+	return qdr, nil
 }
 
 type responderWrapper struct {
@@ -363,17 +292,4 @@ func (r responderWrapper) Error(err error) {
 	}
 
 	r.wrapped.Error(err)
-}
-
-// Checks if the request only contains a single query and is from Alerting
-func isSingleAlertQuery(req parsedRequestInfo) bool {
-	if len(req.Requests) != 1 {
-		return false
-	}
-	headers := req.Requests[0].Headers
-	_, exist := headers[models.FromAlertHeaderName]
-	if exist && len(req.Requests[0].Request.Queries) == 1 {
-		return true
-	}
-	return false
 }

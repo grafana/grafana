@@ -12,12 +12,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	frameData "github.com/grafana/grafana-plugin-sdk-go/data"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -83,27 +85,63 @@ func TestQueryRestConnectHandler(t *testing.T) {
 	}, *b.clientSupplier.(mockClient).lastCalledWithHeaders)
 }
 
-func TestInstantQueryFromAlerting(t *testing.T) {
+func TestHandleQuery(t *testing.T) {
 	builder := &QueryAPIBuilder{
+		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
+			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
 		converter: &expr.ResultConverter{
 			Features: featuremgmt.WithFeatures(),
 			Tracer:   tracing.InitializeTracerForTest(),
 		},
+		clientSupplier: mockClient{
+			lastCalledWithHeaders: &map[string]string{},
+		},
+		tracer: tracing.InitializeTracerForTest(),
+		log:    log.New("test"),
 	}
+	raw := []byte(`{
+			"queries": [
+				{
+					"refId": "C",
+					"datasource": {
+					"type": "__expr__",
+					"uid": "__expr__"
+					},
+					"type": "sql",
+					"expression": "SELECT * FROM A"
+				},
+				{
+				"refId": "B",
+				"hide": true,
+					"datasource": {
+					"type": "testdata",
+					"uid": "local-test"
+					}
+				},
+				{
+				"refId": "A",
+				"hide": true,
+					"datasource": {
+					"type": "testdata",
+					"uid": "local-test"
+					}
+				}
+			],
+			"from": "now-1h",
+			"to": "now"}`)
 
+	req := httptest.NewRequest(http.MethodGet, "/some-path", bytes.NewReader(raw))
+	req.Header.Set("Content-Type", "application/json")
 	dq := data.DataQuery{}
 	dq.RefID = "A"
 
-	dr := datasourceRequest{
-		Headers: map[string]string{
-			models.FromAlertHeaderName: "true",
+	responder := newResponderWrapper(nil,
+		func(statusCode *int, obj runtime.Object) {
 		},
-		Request: &data.QueryDataRequest{
-			Queries: []data.DataQuery{
-				dq,
-			},
-		},
-	}
+
+		func(err error) {
+
+		})
 
 	fakeFrame := frameData.NewFrame(
 		"A",
@@ -111,30 +149,13 @@ func TestInstantQueryFromAlerting(t *testing.T) {
 		frameData.NewField("Value", nil, []int64{42}),
 	)
 	fakeFrame.Meta = &frameData.FrameMeta{TypeVersion: frameData.FrameTypeVersion{0, 1}, Type: "numeric-multi"}
-
-	inputQDR := &backend.QueryDataResponse{
-		Responses: map[string]backend.DataResponse{
-			"A": {
-				Frames: frameData.Frames{
-					fakeFrame,
-				},
-			},
-		},
-	}
-
-	request := parsedRequestInfo{
-		Requests: []datasourceRequest{
-			dr,
-		},
-	}
-
-	result, err := builder.convertQueryFromAlerting(context.Background(), dr, inputQDR)
+	r := &query.QueryDataRequest{}
+	err := web.Bind(req, r)
 	require.NoError(t, err)
 
-	require.True(t, isSingleAlertQuery(request), "Expected a valid alert query with a single query to return true")
-	require.NotNil(t, result)
-	require.Equal(t, 1, len(result.Responses["A"].Frames[0].Fields), "Expected a single field not Time and Value")
-	require.Equal(t, "Value", result.Responses["A"].Frames[0].Fields[0].Name, "Expected the single field to be Value")
+	qdr, err := handleQuery(context.Background(), *r, *builder, req, *responder)
+	require.NoError(t, err)
+	require.Equal(t, qdr, nil)
 }
 
 type mockResponder struct {
@@ -154,8 +175,9 @@ type mockClient struct {
 
 func (m mockClient) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
 	*m.lastCalledWithHeaders = headers
+	//	mtdsclient.
 
-	return nil, fmt.Errorf("mock error")
+	return nil, nil
 }
 
 func (m mockClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -170,6 +192,9 @@ func (m mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthReq
 	return nil, nil
 }
 
-func (m mockClient) GetInstanceConfigurationSettings(_ context.Context) (clientapi.InstanceConfigurationSettings, error) {
-	return clientapi.InstanceConfigurationSettings{}, nil
+func (m mockClient) GetInstanceConfigurationSettings(ctx context.Context) (clientapi.InstanceConfigurationSettings, error) {
+	return clientapi.InstanceConfigurationSettings{
+		ExpressionsEnabled: true,
+		FeatureToggles:     featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
+	}, nil
 }
