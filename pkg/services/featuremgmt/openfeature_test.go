@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestProvideOpenFeatureManager(t *testing.T) {
+func TestCreateProvider(t *testing.T) {
 	u, err := url.Parse("http://localhost:1031")
 	require.NoError(t, err)
 
@@ -44,17 +44,14 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.OpenFeature = tc.cfg
-
-			p, err := ProvideOpenFeatureService(cfg)
+			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil)
 			require.NoError(t, err)
 
 			if tc.expectedProvider == setting.GOFFProviderType {
-				_, ok := p.provider.(*gofeatureflag.Provider)
+				_, ok := provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
 			} else {
-				_, ok := p.provider.(*inMemoryBulkProvider)
+				_, ok := provider.(*inMemoryBulkProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
 			}
 		})

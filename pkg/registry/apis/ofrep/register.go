@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -59,10 +60,20 @@ func NewAPIBuilder(providerType string, url *url.URL, insecure bool, caFile stri
 	}
 }
 
-func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg, staticEvaluator featuremgmt.StaticFlagEvaluator) *APIBuilder {
+func RegisterAPIService(apiregistration builder.APIRegistrar, cfg *setting.Cfg) (*APIBuilder, error) {
+	var staticEvaluator featuremgmt.StaticFlagEvaluator //  No static evaluator needed for non-static provider
+	var err error
+
+	if cfg.OpenFeature.ProviderType == setting.StaticProviderType {
+		staticEvaluator, err = featuremgmt.CreateStaticEvaluator(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create static evaluator: %w", err)
+		}
+	}
+
 	b := NewAPIBuilder(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, true, "", staticEvaluator)
 	apiregistration.RegisterAPI(b)
-	return b
+	return b, nil
 }
 
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
