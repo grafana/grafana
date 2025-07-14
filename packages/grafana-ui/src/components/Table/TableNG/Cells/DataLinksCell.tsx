@@ -47,13 +47,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&::after': {
       display: 'inline-block',
       color: theme.colors.text.primary,
-      content: '","',
+      content: '"\\002c\\00A0"', // comma + nbsp
       textDecoration: 'none',
-      paddingInlineEnd: theme.spacing(0.5),
     },
     '&:last-child::after': {
       content: 'none',
-      paddingInlineEnd: 0,
     },
   }),
   linkCellActive: css({
