@@ -14,9 +14,18 @@ import {
   SortColumn,
 } from 'react-data-grid';
 
-import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
+import {
+  DataHoverClearEvent,
+  DataHoverEvent,
+  FALLBACK_COLOR,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  GrafanaTheme2,
+  ReducerID,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { TableCellHeight } from '@grafana/schema';
+import { FieldColorModeId, TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -273,11 +282,30 @@ export function TableNG(props: TableNGProps) {
       let _rowHeight = 0;
 
       f.forEach((field, i) => {
+        const cellOptions = getCellOptions(field);
+        const cellType = cellOptions.type;
+
+        // make sure we use mappings exclusively if they exist, ignore default thresholds mode
+        // we hack this by using the single color mode calculator
+        if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
+          field = {
+            ...field,
+            config: {
+              ...field.config,
+              color: {
+                ...field.config.color,
+                mode: FieldColorModeId.Fixed,
+                fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
+              },
+            },
+          };
+          field.display = getDisplayProcessor({ field, theme });
+        }
+
         const justifyContent = getJustifyContent(field);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
-        const cellOptions = getCellOptions(field);
         const renderFieldCell = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
@@ -294,7 +322,6 @@ export function TableNG(props: TableNGProps) {
             )
           : undefined;
 
-        const cellType = cellOptions.type;
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
         const maxWrappedLines = shouldWrap ? getMaxWrappedLines(field) : undefined;

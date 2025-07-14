@@ -140,7 +140,9 @@ export function shouldTextOverflow(field: Field): boolean {
   const eligibleCellType =
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
-    (field.type === FieldType.string && cellOptions.type !== TableCellDisplayMode.Image) ||
+    (field.type === FieldType.string &&
+      cellOptions.type !== TableCellDisplayMode.Image &&
+      cellOptions.type !== TableCellDisplayMode.Pill) ||
     // regardless of the underlying cell type, data links cells have text overflow.
     cellOptions.type === TableCellDisplayMode.DataLinks;
 

@@ -9,6 +9,8 @@ import { SeriesToRowsTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/seriesToRows.svg';
+import lightImage from '../images/light/seriesToRows.svg';
 
 export const SeriesToRowsTransformerEditor = ({
   input,
@@ -30,4 +32,6 @@ export const getSeriesToRowsTransformerRegistryItem: () => TransformerRegistryIt
     ),
     categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
     help: getTransformationContent(DataTransformerID.seriesToRows).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
   });

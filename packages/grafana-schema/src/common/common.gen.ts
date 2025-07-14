@@ -980,8 +980,6 @@ export enum ComparisonOperation {
 }
 
 export interface TablePillCellOptions {
-  color?: string;
-  colorMode?: ('auto' | 'fixed' | 'mapped');
   type: TableCellDisplayMode.Pill;
 }
 

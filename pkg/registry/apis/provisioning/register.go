@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -37,6 +38,7 @@ import (
 	client "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
@@ -75,6 +77,7 @@ var (
 type APIBuilder struct {
 	features featuremgmt.FeatureToggles
 
+	tracer              tracing.Tracer
 	getter              rest.Getter
 	localFileResolver   *local.LocalFolderResolver
 	parsers             resources.ParserFactory
@@ -98,7 +101,8 @@ type APIBuilder struct {
 	access           authlib.AccessChecker
 	statusPatcher    *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
-	extras []Extra
+	extras                   []Extra
+	availableRepositoryTypes map[provisioning.RepositoryType]bool
 }
 
 // NewAPIBuilder creates an API builder.
@@ -115,6 +119,7 @@ func NewAPIBuilder(
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	access authlib.AccessChecker,
+	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 ) *APIBuilder {
 	clients := resources.NewClientFactory(configProvider)
@@ -122,6 +127,7 @@ func NewAPIBuilder(
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
 	b := &APIBuilder{
+		tracer:              tracer,
 		localFileResolver:   local,
 		features:            features,
 		ghFactory:           ghFactory,
@@ -136,10 +142,21 @@ func NewAPIBuilder(
 		secrets:             secrets,
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
+		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
+			provisioning.LocalRepositoryType:  true,
+			provisioning.GitHubRepositoryType: true,
+		},
 	}
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
+	}
+
+	// Add the available repository types from the extras
+	for _, extra := range b.extras {
+		for _, t := range extra.RepositoryTypes() {
+			b.availableRepositoryTypes[t] = true
+		}
 	}
 
 	return b
@@ -162,6 +179,7 @@ func RegisterAPIService(
 	usageStatsService usagestats.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
+	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -178,6 +196,7 @@ func RegisterAPIService(
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		secrets.NewSingleTenant(secretsSvc), access,
+		tracer,
 		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
@@ -199,6 +218,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// * Reading and modifying a repository's configuration requires administrator privileges.
 			// * Reading a repository's limited configuration (/stats & /settings) requires viewer privileges.
 			// * Reading a repository's files requires viewer privileges.
+			// * Reading a repository's refs requires viewer privileges.
 			// * Editing a repository's files requires editor privileges.
 			// * Syncing a repository requires editor privileges.
 			// * Exporting a repository requires administrator privileges.
@@ -230,6 +250,12 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
+				case "refs":
+					// This is strictly a read operation. It is handy on the frontend for viewers.
+					if id.GetOrgRole().Includes(identity.RoleViewer) {
+						return authorizer.DecisionAllow, "", nil
+					}
+					return authorizer.DecisionDeny, "viewer role is required", nil
 				case "files":
 					// Access to files is controlled by the AccessClient
 					return authorizer.DecisionAllow, "", nil
@@ -350,6 +376,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		getter: b,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.access)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
 		lister: b.resourceLister,
@@ -764,6 +791,22 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 	}
 
+	// Show refs endpoint documentation
+	sub = oas.Paths.Paths[repoprefix+"/refs"]
+	if sub != nil {
+		sub.Get.Description = "Get the repository references"
+		sub.Get.Summary = "Repository refs listing"
+		sub.Get.Parameters = []*spec3.Parameter{}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs[defsBase+"RefList"].Schema
+		mt["*/*"].Schema = &s
+	}
+
 	// Show a special list command
 	sub = oas.Paths.Paths[repoprefix+"/files"]
 	if sub != nil {
@@ -1163,6 +1206,10 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	}
 
 	switch r.Spec.Type {
+	case provisioning.BitbucketRepositoryType:
+		return nil, errors.New("repository type bitbucket is not available")
+	case provisioning.GitLabRepositoryType:
+		return nil, errors.New("repository type gitlab is not available")
 	case provisioning.LocalRepositoryType:
 		return local.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
