@@ -1139,6 +1139,39 @@ describe('TableNG utils', () => {
       expect(result).toEqual({ idx: 0, numLines: 2.7, text: 'Field with a very long name' });
     });
 
+    it('should use the datalink titles when calculating the height of a datalink cell', () => {
+      const fields: Field[] = [
+        {
+          name: 'Field with links',
+          type: FieldType.string,
+          config: {
+            custom: {
+              cellOptions: {
+                type: TableCellDisplayMode.DataLinks,
+              },
+            },
+          },
+          values: ['short', 'a bit longer text'],
+          // @ts-ignore: this mock works fine for this test.
+          getLinks: jest.fn(() => [
+            { title: 'Link One', href: 'http://example.com/1', target: '_blank', origin: {} },
+            { title: 'Another Link', href: 'http://example.com/2', target: '_blank', origin: {} },
+            { title: 'The longest link title of all', href: 'http://example.com/3', target: '_blank', origin: {} },
+          ]),
+        },
+      ];
+      // Simulate a narrow column width that would cause wrapping
+      const colWidths = [100]; // 100px width
+      const avgCharWidth = 5; // Assume average character width is 5px
+      const result = getMaxWrapCell(fields, 0, { colWidths, avgCharWidth, wrappedColIdxs: [true] });
+
+      expect(result).toEqual({
+        idx: 0,
+        numLines: 2.65,
+        text: 'Link One, Another Link, The longest link title of all',
+      });
+    });
+
     it.todo('should ignore columns which are not wrapped');
 
     it.todo('should only apply wrapping on idiomatic break characters (space, -, etc)');

@@ -100,7 +100,6 @@ export function getMaxWrapCell(
   for (let i = 0; i < colWidths.length; i++) {
     if (wrappedColIdxs[i]) {
       const field = fields[i];
-      console.log(field);
       // special case: for the header, provide `-1` as the row index.
       let cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
       if (getCellOptions(field).type === TableCellDisplayMode.DataLinks) {
@@ -109,7 +108,6 @@ export function getMaxWrapCell(
         if (links) {
           cellTextRaw = links.map((l) => l.title).join(', ');
         }
-        console.log(cellTextRaw);
       }
 
       if (cellTextRaw != null) {

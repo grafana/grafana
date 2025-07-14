@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { createDataFrame, createTheme, Field, FieldType } from '@grafana/data';
+import { createDataFrame, createTheme, Field, FieldType, LinkModel } from '@grafana/data';
 
 import { TableCellOptions, TableCellDisplayMode, TableCustomCellOptions } from '../../types';
 
@@ -60,6 +60,15 @@ describe('TableNG Cells renderers', () => {
         config: {},
         state: {},
         display: jest.fn(() => ({ text: 'black', color: 'white', numeric: 0 })),
+        // @ts-ignore: this mock works fine for this test.
+        getLinks: jest.fn(() => [
+          {
+            title: 'example',
+            href: 'http://example.com',
+            target: '_blank',
+            origin: {},
+          },
+        ]),
       };
     }
 
