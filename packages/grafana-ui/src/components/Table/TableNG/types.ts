@@ -257,6 +257,11 @@ export interface ActionCellProps {
   getActions: GetActionsFunctionLocal;
 }
 
+export interface PillCellProps {
+  field: Field;
+  rowIdx: number;
+}
+
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
 

@@ -12,7 +12,7 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
-import { TableCellRendererProps, TableCellValue } from '../types';
+import { PillCellProps, TableCellValue } from '../types';
 
 interface Pill {
   value: string;
@@ -34,14 +34,19 @@ function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): 
   });
 }
 
-export function PillCell({ value, field }: TableCellRendererProps) {
+export function PillCell({ rowIdx, field }: PillCellProps) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+  const value = field.values[rowIdx];
 
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(value);
-    return createPills(pillValues, field, theme);
+    return pillValues.length > 0 ? createPills(pillValues, field, theme) : [];
   }, [value, field, theme]);
+
+  if (pills.length === 0) {
+    return null;
+  }
 
   return (
     <div className={styles.wrapper}>
