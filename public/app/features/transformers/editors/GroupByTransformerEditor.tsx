@@ -132,6 +132,9 @@ const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldP
             onChange={(stats) => {
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
+            filterOptions={(option) =>
+              config?.operation === GroupByOperationID.groupBy ? option.id === ReducerID.count : true
+            }
           />
         )}
       </Stack>

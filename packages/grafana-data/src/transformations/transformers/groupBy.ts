@@ -10,7 +10,7 @@ import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
 import { findMaxFields } from './utils';
 
-const MINIMUM_FIELDS_REQUIRED = 2;
+const MINIMUM_FIELDS_REQUIRED = 1;
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',
