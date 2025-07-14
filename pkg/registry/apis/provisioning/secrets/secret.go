@@ -31,6 +31,7 @@ type Service interface {
 
 var _ Service = (*secretsService)(nil)
 
+//go:generate mockery --name DecryptService --structname MockDecryptService --srcpkg=github.com/grafana/grafana/pkg/registry/apis/secret/service --filename decrypt_service_mock.go --with-expecter
 type secretsService struct {
 	secretsSvc SecureValueService
 	decryptSvc grafanasecrets.DecryptService
