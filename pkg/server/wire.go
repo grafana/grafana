@@ -433,7 +433,7 @@ var wireBasicSet = wire.NewSet(
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
 	encryptionManager.ProvideEncryptionManager,
-	cipher.ProvideAESGSMCipherService,
+	cipher.ProvideAESGCMCipherService,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

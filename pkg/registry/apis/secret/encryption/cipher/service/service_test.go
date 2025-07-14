@@ -15,7 +15,7 @@ func newGcmService(t *testing.T) cipher.Cipher {
 	t.Helper()
 
 	usageStats := &usagestats.UsageStatsMock{}
-	svc, err := ProvideAESGSMCipherService(noop.NewTracerProvider().Tracer("test"), usageStats)
+	svc, err := ProvideAESGCMCipherService(noop.NewTracerProvider().Tracer("test"), usageStats)
 	require.NoError(t, err, "failed to set up encryption service")
 	return svc
 }

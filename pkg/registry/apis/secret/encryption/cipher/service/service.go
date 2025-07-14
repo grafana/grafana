@@ -31,9 +31,9 @@ type cipherService struct {
 	algorithm string
 }
 
-// ProvideAESGSMCipherService provides an AES-GCM cipher for encryption and decryption.
+// ProvideAESGCMCipherService provides an AES-GCM cipher for encryption and decryption.
 // It should not be used to encrypt payloads directly, as it is intended to encrypt data keys for envelope encryption.
-func ProvideAESGSMCipherService(
+func ProvideAESGCMCipherService(
 	tracer trace.Tracer,
 	usageMetrics usagestats.Service,
 ) (cipher.Cipher, error) {
