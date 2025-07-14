@@ -877,7 +877,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: t('auth-config.fields.domain-hint-label', 'Domain hint'),
       description: t(
         'auth-config.fields.domain-hint-description',
-        'Parameter to indicate the Azure AD tenant and streamline the login process.'
+        'Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.'
       ),
       type: 'text',
     },

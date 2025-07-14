@@ -3228,6 +3228,8 @@
       "define-allowed-teams-ids-label": "Define allowed teams IDs",
       "display-name-description": "Will be displayed on the login page as \"Sign in with ...\". Helpful if you use more than one identity providers or SSO protocols.",
       "display-name-label": "Display name",
+      "domain-hint-description": "Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.",
+      "domain-hint-label": "Domain hint",
       "email-attribute-name-description": "Name of the key to use for user email lookup within the attributes map of OAuth2 ID token.",
       "email-attribute-name-label": "Email attribute name",
       "email-attribute-path-description": "JMESPath expression to use for user email lookup from the user information.",
