@@ -166,14 +166,14 @@ func TestMode3_List(t *testing.T) {
 	tests :=
 		[]testCase{
 			{
-				name: "should return an error when listing an object in the UnifiedStorage is failing",
+				name: "should return an error when listing an object in the storage is failing",
 				setupStorageFn: func(m *mock.Mock, options *metainternalversion.ListOptions) {
 					m.On("List", mock.Anything, options).Return(nil, errors.New("error"))
 				},
 				wantErr: true,
 			},
 			{
-				name: "should succeed when listing objects in the UnifiedStorage is successful",
+				name: "should succeed when listing objects in the storage is successful",
 				setupStorageFn: func(m *mock.Mock, options *metainternalversion.ListOptions) {
 					m.On("List", mock.Anything, options).Return(exampleList, nil)
 				},
@@ -227,7 +227,7 @@ func TestMode3_Delete(t *testing.T) {
 				},
 			},
 			{
-				name: "should succeed when deleting an object in the LegacyStorage is not found, but found in the UnifiedStorage",
+				name: "should succeed when deleting an object in the LegacyStorage is not found, but found in the storage",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, input))
 				},
@@ -236,7 +236,7 @@ func TestMode3_Delete(t *testing.T) {
 				},
 			},
 			{
-				name: "should succeed when deleting an object in the UnifiedStorage is not found in the LegacyStorage",
+				name: "should succeed when deleting an object in the storage is not found in the LegacyStorage",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, input))
 				},
@@ -245,7 +245,7 @@ func TestMode3_Delete(t *testing.T) {
 				},
 			},
 			{
-				name: "should return an error when deleting an object in the LegacyStorage and UnifiedStorage is failing",
+				name: "should return an error when deleting an object in the LegacyStorage and storage is failing",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
 				},
@@ -257,10 +257,10 @@ func TestMode3_Delete(t *testing.T) {
 			{
 				name: "should return an error when deleting an object in the LegacyStorage fails",
 				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, apierrors.NewInternalError(errors.New("error")))
+					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Panic("i should not be called")
 				},
 				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Panic("i should not be called")
+					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, false, apierrors.NewInternalError(errors.New("error")))
 				},
 				wantErr: true,
 			},
@@ -318,18 +318,18 @@ func TestMode3_DeleteCollection(t *testing.T) {
 				},
 			},
 			{
-				name: "should return an error when deleting a collection in the storage fails and LegacyStorage is successful",
+				name: "should return an error when deleting a collection in the legacyStorage fails and storage is successful",
 				setupLegacyFn: func(m *mock.Mock) {
-					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, nil)
+					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 				},
 				setupStorageFn: func(m *mock.Mock) {
-					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
+					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, nil)
 				},
 				wantErr: true,
 			},
 			{
-				name: "should return an error when deleting a collection in the LegacyStorage fails",
-				setupLegacyFn: func(m *mock.Mock) {
+				name: "should return an error when deleting a collection in the storage fails",
+				setupStorageFn: func(m *mock.Mock) {
 					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error"))
 				},
 				wantErr: true,
@@ -388,14 +388,17 @@ func TestMode3_Update(t *testing.T) {
 				expectedObj: exampleObj,
 			},
 			{
-				name: "should return an error when updating an object in the LegacyStorage fails",
+				name: "should return an error when deleting a collection in the legacyStorage fails and storage is successful",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error")).Once()
+				},
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
 				},
 				wantErr: true,
 			},
 			{
-				name: "should return an error when updating an object in the UnifiedStorage fails",
+				name: "should return an error when updating an object in the storage fails",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil).Once()
 				},

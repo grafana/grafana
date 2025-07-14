@@ -208,7 +208,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 		accCreated.SetUID("")
 		_, err = d.legacy.Create(ctx, createdCopy, createValidation, &metav1.CreateOptions{})
 		if err != nil {
-			log.Error("failed to write object to secondary (legacy) storage after unified create", "err", err)
+			log.Error("failed to write object to legacy storage after unified create", "err", err)
 			// Attempt to roll back the creation from the unified store to maintain consistency.
 			accUnified, _ := meta.Accessor(createdFromUnified)
 			name := accUnified.GetName()
@@ -283,9 +283,10 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 		// 2. Sync the delete to the legacy store.
 		_, _, err = d.legacy.Delete(ctx, name, deleteValidation, options)
 		if err != nil && !apierrors.IsNotFound(err) {
-			// If the secondary (legacy) delete fails, we log a critical error but do not fail the operation.
+			// If the legacy delete fails, we log a critical error but do not fail the operation.
 			// The primary store remains the source of truth, and the object is gone from the user's perspective.
-			log.Error("CRITICAL: failed to delete object from secondary (legacy) storage after unified delete", "err", err)
+			log.Error("CRITICAL: failed to delete object from legacy storage after unified delete", "err", err)
+			return nil, false, fmt.Errorf("failed to delete object from legacy storage after unified delete: %w", err)
 		}
 
 		// Success, return the authoritative result from the unified store.
@@ -344,10 +345,11 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		}
 		_, _, err = d.legacy.Update(ctx, name, legacyInfo, createValidation, updateValidation, true, options)
 		if err != nil {
-			// If the secondary (legacy) write fails, we log a critical error but do not roll back.
+			// If the legacy write fails, we log a critical error but do not roll back.
 			// Rolling back an update is a complex operation. The primary store remains the source of truth,
 			// and a subsequent update can bring the stores back in sync.
-			log.Error("CRITICAL: failed to write object to secondary (legacy) storage after unified update", "err", err)
+			log.Error("CRITICAL: failed to write object to legacy storage after unified update", "err", err)
+			return nil, false, fmt.Errorf("failed to write object to legacy storage after unified update: %w", err)
 		}
 
 		// Success, return the authoritative object from the unified store.
@@ -401,9 +403,10 @@ func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest
 		// 2. Sync the delete to the legacy store.
 		_, err = d.legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 		if err != nil && !apierrors.IsNotFound(err) {
-			// If the secondary (legacy) delete fails, we log a critical error but do not fail the operation.
+			// If the legacy delete fails, we log a critical error but do not fail the operation.
 			// The primary store remains the source of truth, and the objects are gone from the user's perspective.
-			log.Error("CRITICAL: failed to delete collection from secondary (legacy) storage after unified delete", "err", err)
+			log.Error("CRITICAL: failed to delete collection from legacy storage after unified delete", "err", err)
+			return nil, fmt.Errorf("failed to delete collection from legacy storage after unified delete: %w", err)
 		}
 
 		// Success, return the authoritative result from the unified store.
