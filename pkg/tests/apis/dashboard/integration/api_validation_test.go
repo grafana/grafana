@@ -166,7 +166,7 @@ func TestIntegrationDashboardAPIAuthorization(t *testing.T) {
 			})
 
 			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx)
+				runDashboardPermissionTests(t, org1Ctx, true)
 			})
 
 			t.Run("Cross-organization tests", func(t *testing.T) {
@@ -211,33 +211,34 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 			})
 
 			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+			org2Ctx := createTestContext(t, helper, helper.OrgB, dualWriterMode)
 
 			t.Run("Dashboard LIST API test", func(t *testing.T) {
 				runDashboardListTests(t, org1Ctx)
 			})
-		})
 
-		t.Run("Authorization tests for all identity types", func(t *testing.T) {
-			runAuthorizationTests(t, org1Ctx)
-		})
+			t.Run("Authorization tests for all identity types", func(t *testing.T) {
+				runAuthorizationTests(t, org1Ctx)
+			})
 
-		t.Run("Dashboard permission tests", func(t *testing.T) {
-			runDashboardPermissionTests(t, org1Ctx, true)
-		})
+			t.Run("Dashboard permission tests", func(t *testing.T) {
+				runDashboardPermissionTests(t, org1Ctx, true)
+			})
 
-		t.Run("Dashboard LIST API test", func(t *testing.T) {
-			t.Skip("Skip LIST")
-			runDashboardListTest(t, org1Ctx)
+			t.Run("Dashboard LIST API test", func(t *testing.T) {
+				t.Skip("Skip LIST")
+				runDashboardListTests(t, org1Ctx)
+			})
+
+			t.Run("Dashboard HTTP API test", func(t *testing.T) {
+				runDashboardHttpTest(t, org1Ctx, org2Ctx)
+			})
+
+			t.Run("Cross-organization tests", func(t *testing.T) {
+				runCrossOrgTests(t, org1Ctx, org2Ctx)
+			})
 		})
 	}
-
-	t.Run("Dashboard HTTP API test", func(t *testing.T) {
-		runDashboardHttpTest(t, org1Ctx, org2Ctx)
-	})
-
-	t.Run("Cross-organization tests", func(t *testing.T) {
-		runCrossOrgTests(t, org1Ctx, org2Ctx)
-	})
 }
 
 // Auth identity types (user or token) with resource client
