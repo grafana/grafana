@@ -950,4 +950,8 @@ const (
 	// FlagUnifiedStorageSearchDualReaderEnabled
 	// Enable dual reader for unified storage search
 	FlagUnifiedStorageSearchDualReaderEnabled = "unifiedStorageSearchDualReaderEnabled"
+
+	// FlagDashboardDsAdHocFiltering
+	// Enables adhoc filtering support for the dashboard datasource
+	FlagDashboardDsAdHocFiltering = "dashboardDsAdHocFiltering"
 )

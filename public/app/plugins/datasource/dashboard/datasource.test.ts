@@ -8,6 +8,8 @@ import {
   LoadingState,
   standardTransformersRegistry,
   FieldType,
+  DataFrame,
+  AdHocVariableFilter,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -136,7 +138,18 @@ describe('DashboardDatasource', () => {
   describe('AdHoc Filtering', () => {
     const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
 
-    function createTestFrame(fields: any[]) {
+    // Type-safe interface for accessing private methods in tests
+    interface DashboardDatasourceWithPrivateMethods {
+      applyAdHocFilters: (frame: DataFrame, filters: AdHocVariableFilter[]) => DataFrame;
+    }
+
+    interface TestField {
+      name: string;
+      type: FieldType;
+      values: unknown[];
+    }
+
+    function createTestFrame(fields: TestField[]) {
       return {
         name: 'TestData',
         fields: fields.map((field) => ({
@@ -157,7 +170,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'name', operator: '=', value: 'John' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'name', operator: '=', value: 'John' },
+      ]);
 
       expect(result.fields[0].values).toEqual(['John']);
       expect(result.fields[1].values).toEqual([25]);
@@ -170,7 +185,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'name', operator: '!=', value: 'John' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'name', operator: '!=', value: 'John' },
+      ]);
 
       expect(result.fields[0].values).toEqual(['Jane', 'Bob']);
       expect(result.fields[1].values).toEqual([30, 35]);
@@ -183,7 +200,7 @@ describe('DashboardDatasource', () => {
         { name: 'status', type: FieldType.string, values: ['active', 'active', 'inactive'] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
         { key: 'name', operator: '!=', value: 'John' },
         { key: 'status', operator: '=', value: 'active' },
       ]);
@@ -199,7 +216,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'name', operator: '!=', value: 'John' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'name', operator: '!=', value: 'John' },
+      ]);
 
       expect(result.fields[0].values).toEqual([null, 'Bob']);
       expect(result.fields[1].values).toEqual([30, 35]);
@@ -212,7 +231,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'age', operator: '=', value: '30' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'age', operator: '=', value: '30' },
+      ]);
 
       expect(result.fields[0].values).toEqual(['Jane']);
       expect(result.fields[1].values).toEqual([30]);
@@ -225,7 +246,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'age', operator: '!=', value: '30' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'age', operator: '!=', value: '30' },
+      ]);
 
       expect(result.fields[0].values).toEqual(['John', 'Bob']);
       expect(result.fields[1].values).toEqual([25, 35]);
@@ -238,7 +261,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, null, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'age', operator: '!=', value: '25' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'age', operator: '!=', value: '25' },
+      ]);
 
       expect(result.fields[0].values).toEqual(['Jane', 'Bob']);
       expect(result.fields[1].values).toEqual([null, 35]);
@@ -251,7 +276,7 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 25, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
         { key: 'name', operator: '!=', value: 'Bob' },
         { key: 'age', operator: '=', value: '25' },
       ]);
@@ -272,7 +297,9 @@ describe('DashboardDatasource', () => {
         { name: 'score', type: FieldType.number, values: [95.5, 87.25, 95.5, 92.0] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'score', operator: '=', value: '95.5' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'score', operator: '=', value: '95.5' },
+      ]);
 
       expect(result.fields[0].values).toEqual(['Alice', 'Charlie']);
       expect(result.fields[1].values).toEqual([95.5, 95.5]);
@@ -285,7 +312,9 @@ describe('DashboardDatasource', () => {
         { name: 'temperature', type: FieldType.number, values: [98.6, 99.1, 98.6] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'temperature', operator: '!=', value: '98.6' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'temperature', operator: '!=', value: '98.6' },
+      ]);
 
       expect(result.fields[0].values).toEqual(['Bob']);
       expect(result.fields[1].values).toEqual([99.1]);
@@ -299,7 +328,9 @@ describe('DashboardDatasource', () => {
       ]);
 
       // Note: 0.1 + 0.2 !== 0.3 in JavaScript due to floating point precision
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'value', operator: '=', value: '0.3' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'value', operator: '=', value: '0.3' },
+      ]);
 
       // Should only match the exact 0.3, not the computed 0.1 + 0.2
       expect(result.fields[0].values).toEqual(['Test2']);
@@ -313,7 +344,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'name', operator: '=', value: 'John' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'name', operator: '=', value: 'John' },
+      ]);
 
       expect(result.fields[0].values).toEqual([]);
       expect(result.fields[1].values).toEqual([]);
@@ -334,7 +367,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'missing_field', operator: '=', value: 'test' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'missing_field', operator: '=', value: 'test' },
+      ]);
 
       // Should return empty result since field doesn't exist
       expect(result.fields[0].values).toEqual([]);
@@ -348,7 +383,9 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'missing_field', operator: '!=', value: 'test' }]);
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
+        { key: 'missing_field', operator: '!=', value: 'test' },
+      ]);
 
       // Should return all rows since field doesn't exist (all rows are "not equal")
       expect(result.fields[0].values).toEqual(['John', 'Jane', 'Bob']);
@@ -363,7 +400,7 @@ describe('DashboardDatasource', () => {
         { name: 'age', type: FieldType.number, values: [25, 30, 35, 40] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [
+      const result = (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, [
         { key: 'status', operator: '=', value: 'active' },
         { key: 'name', operator: '!=', value: 'Admin' },
         { key: 'missing_field', operator: '!=', value: 'ignored' }, // Should be ignored
