@@ -21,6 +21,7 @@ import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
 import { useGetDisplayMappingQuery } from '../../iam/v0alpha1';
 
 import { generatedAPI } from './endpoints.gen';
+import { rootFolder, sharedWithMeFolder } from './virtualFolders';
 
 export const folderAPIv1beta1 = generatedAPI.enhanceEndpoints({
   endpoints: {
@@ -59,9 +60,13 @@ function getFolderUrl(uid: string, title: string): string {
  */
 export function useGetFolderQueryFacade(uid?: string) {
   if (config.featureToggles.foldersAppPlatformAPI) {
-    const result = useGetFolderQuery(uid ? { name: uid } : skipToken);
-    const resultParents = useGetFolderParentsQuery(uid ? { name: uid } : skipToken);
-    const resultAccess = useGetFolderAccessQuery(uid ? { name: uid } : skipToken);
+    const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
+    const params = isVirtualFolder || !uid ? skipToken : { name: uid };
+
+    let result = useGetFolderQuery(params);
+
+    const resultParents = useGetFolderParentsQuery(params);
+    const resultAccess = useGetFolderAccessQuery(params);
 
     const keys: string[] = result.data
       ? [
@@ -70,12 +75,29 @@ export function useGetFolderQueryFacade(uid?: string) {
         ].filter((v) => v !== undefined)
       : [];
 
-    const resultUserDisplay = useGetDisplayMappingQuery(keys.length ? { key: keys } : skipToken);
+    const needsUserData = !isVirtualFolder && Boolean(keys.length);
+    const resultUserDisplay = useGetDisplayMappingQuery(needsUserData ? { key: keys } : skipToken);
+
+    if (isVirtualFolder) {
+      return {
+        ...result,
+        fulfilledTimeStamp: Date.now(),
+        isUninitialized: false,
+        error: undefined,
+        isError: false,
+        isSuccess: true,
+        isLoading: false,
+        isFetching: false,
+        data: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
+        currentData: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
+      };
+    }
 
     let newData: FolderDTO | undefined = undefined;
-    if (result.data && resultParents.data && resultAccess.data && resultUserDisplay.data) {
+    if (result.data && resultParents.data && resultAccess.data && (needsUserData ? resultUserDisplay.data : true)) {
       const updatedBy = result.data.metadata.annotations?.[AnnoKeyUpdatedBy];
       const createdBy = result.data.metadata.annotations?.[AnnoKeyCreatedBy];
+
       newData = {
         canAdmin: resultAccess.data.canAdmin,
         canDelete: resultAccess.data.canDelete,
@@ -84,7 +106,8 @@ export function useGetFolderQueryFacade(uid?: string) {
         accessControl: resultAccess.data.accessControl,
         created: result.data.metadata.creationTimestamp || '0001-01-01T00:00:00Z',
         createdBy:
-          (createdBy && resultUserDisplay.data.display[resultUserDisplay.data.keys.indexOf(createdBy)]?.displayName) ||
+          (createdBy &&
+            resultUserDisplay.data?.display[resultUserDisplay.data?.keys.indexOf(createdBy)]?.displayName) ||
           'Anonymous',
         // Does not seem like this is set to true in the legacy API
         hasAcl: false,
@@ -96,7 +119,8 @@ export function useGetFolderQueryFacade(uid?: string) {
         uid: result.data.metadata.name!,
         updated: result.data.metadata.annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
         updatedBy:
-          (updatedBy && resultUserDisplay.data.display[resultUserDisplay.data.keys.indexOf(updatedBy)]?.displayName) ||
+          (updatedBy &&
+            resultUserDisplay.data?.display[resultUserDisplay.data?.keys.indexOf(updatedBy)]?.displayName) ||
           'Anonymous',
         // Seems like this annotation is not populated
         // url: result.data.metadata.annotations?.[AnnoKeyFolderUrl] || '',
@@ -119,6 +143,7 @@ export function useGetFolderQueryFacade(uid?: string) {
       }
     }
 
+    console.log(newData);
     return {
       ...result,
       isLoading:
