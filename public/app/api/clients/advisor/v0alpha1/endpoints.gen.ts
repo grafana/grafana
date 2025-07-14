@@ -390,12 +390,14 @@ export type CheckReportFailure = {
   itemID: string;
   /** Links to actions that can be taken to resolve the failure */
   links: CheckErrorLink[];
+  /** More information about the failure, not meant to be displayed to the user. Used for LLM suggestions. */
+  moreInfo?: string;
   /** Severity of the failure */
   severity: string;
   /** Step ID that the failure is associated with */
   stepID: string;
 };
-export type CheckV0Alpha1StatusReport = {
+export type CheckReport = {
   /** Number of elements analyzed */
   count: number;
   /** List of failures */
@@ -410,7 +412,7 @@ export type CheckStatus = {
   operatorStates?: {
     [key: string]: CheckstatusOperatorState;
   };
-  report: CheckV0Alpha1StatusReport;
+  report: CheckReport;
 };
 export type Check = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -418,6 +420,7 @@ export type Check = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
+  /** Spec is the spec of the Check */
   spec: CheckSpec;
   status: CheckStatus;
 };
@@ -522,6 +525,7 @@ export type CheckType = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ObjectMeta;
+  /** Spec is the spec of the CheckType */
   spec: CheckTypeSpec;
   status: CheckTypeStatus;
 };

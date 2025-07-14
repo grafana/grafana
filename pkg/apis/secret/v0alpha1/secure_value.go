@@ -11,41 +11,18 @@ type SecureValue struct {
 	// Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	// This is the actual secure value schema.
 	Spec SecureValueSpec `json:"spec"`
 
 	// Read-only observed status of the `SecureValue`.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-	Status SecureValueStatus `json:"status,omitempty"`
+	Status SecureValueStatus `json:"status"`
 }
 
-// +enum
-type SecureValuePhase string
-
-const (
-	// When the `SecureValue` is created, it will start in `Pending` phase to create the underlying secret asynchronously.
-	SecureValuePhasePending SecureValuePhase = "Pending"
-
-	// If the creation of the secret is successful, it will move to the `Succeeded` phase.
-	SecureValuePhaseSucceeded SecureValuePhase = "Succeeded"
-
-	// If the creation of the secret fails, it will move to the `Failed` phase.
-	// Check the additional `status` fields for more information on what caused the failure.
-	// This state is unrecoverable.
-	SecureValuePhaseFailed SecureValuePhase = "Failed"
-)
-
 type SecureValueStatus struct {
-	// High-level summary of where the `SecureValue` is in its lifecycle.
-	// One of: `Pending`, `Succeeded` or `Failed`.
-	Phase SecureValuePhase `json:"phase"`
-
-	// A human readable message indicating details about why the `SecureValue` is in this phase.
-	// Only applicable if the `phase=Failed`.
-	// +optional
-	Message string `json:"message,omitempty"`
+	Version int64 `json:"version"`
 
 	// +optional
 	ExternalID string `json:"externalId,omitempty"`
@@ -59,7 +36,9 @@ type SecureValueSpec struct {
 
 	// The raw value is only valid for write. Read/List will always be empty.
 	// There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.
+	// Minimum and maximum lengths in bytes.
 	// +k8s:validation:minLength=1
+	// +k8s:validation:maxLength=24576
 	Value ExposedSecureValue `json:"value,omitempty"`
 
 	// When using a third-party keeper, the `ref` is used to reference a value inside the remote storage.
@@ -92,7 +71,7 @@ type SecureValueList struct {
 	// Standard list's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	// Slice containing all secure values. This will NOT output decrypted values.
 	Items []SecureValue `json:"items"`

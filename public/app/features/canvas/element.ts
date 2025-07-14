@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 import { BackgroundConfig, Constraint, LineConfig, Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
-import { DimensionContext } from '../dimensions';
+import { DimensionContext } from '../dimensions/context';
 
 import { StandardEditorConfig } from './types';
 

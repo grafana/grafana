@@ -41,7 +41,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       // When changing cell type see if there were previously stored
       // settings and merge those with the changed value
       if (settingCache[value.type] !== undefined && Object.keys(settingCache[value.type]).length > 1) {
-        value = merge(value, settingCache[value.type]);
+        value = merge({}, value, settingCache[value.type]);
       }
 
       onChange(value);
@@ -51,7 +51,7 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   // When options for a cell change we merge
   // any option changes with our options object
   const onCellOptionsChange = (options: TableCellOptions) => {
-    settingCache[value.type] = merge(value, options);
+    settingCache[value.type] = merge({}, value, options);
     setSettingCache(settingCache);
     onChange(settingCache[value.type]);
   };
