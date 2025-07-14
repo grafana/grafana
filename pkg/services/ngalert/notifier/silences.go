@@ -21,3 +21,7 @@ func (am *alertmanager) CreateSilence(_ context.Context, ps *alertingNotify.Post
 func (am *alertmanager) DeleteSilence(_ context.Context, silenceID string) error {
 	return am.Base.DeleteSilence(silenceID)
 }
+
+func (am *alertmanager) MergeSilences(b []byte) error {
+	return am.Base.MergeSilences(b)
+}
