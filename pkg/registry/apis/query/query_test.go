@@ -3,8 +3,11 @@ package query
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -21,76 +24,193 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func TestSinglePromQuery(t *testing.T) {
-	builder := &QueryAPIBuilder{
-		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
-			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
-		converter: &expr.ResultConverter{
-			Features: featuremgmt.WithFeatures(),
-			Tracer:   tracing.InitializeTracerForTest(),
+func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataResponse {
+	t.Helper()
+
+	testdataPath := filepath.Join("testdata", filename)
+	data, err := os.ReadFile(testdataPath)
+	require.NoError(t, err, "Failed to read testdata file: %s", filename)
+
+	var result *backend.QueryDataResponse
+	err = json.Unmarshal(data, &result)
+	require.NoError(t, err, "Failed to unmarshal testdata file: %s", filename)
+
+	return result
+}
+
+func TestQueryAPI(t *testing.T) {
+	testCases := []struct {
+		name               string
+		queryJSON          string
+		headers            map[string]string
+		expectedRefIDs     []string
+		expectedStatus     int
+		expectedFrameCount map[string]int
+		expectedFieldNames map[string][]string
+		testdataFile       string
+	}{
+		{
+			name: "single prometheus query",
+			queryJSON: `{
+				"queries": [
+					{
+						"datasource": {
+							"type": "prometheus",
+							"uid": "demo-prom"
+						},
+						"expr": "1 + 6",
+						"range": false,
+						"instant": true,
+						"refId": "A"
+					}
+				],
+				"from": "now-1h",
+				"to": "now"
+			}`,
+			expectedRefIDs:     []string{"A"},
+			expectedStatus:     http.StatusOK,
+			expectedFrameCount: map[string]int{"A": 1},
+			expectedFieldNames: map[string][]string{"A": {"Time", "Value"}},
+			testdataFile:       "single_prometheus_query.json",
 		},
-		clientSupplier: mockClientSupplier{},
-		tracer:         tracing.InitializeTracerForTest(),
-		log:            log.New("test"),
+		{
+			name: "prometheus query with sql expression",
+			queryJSON: `{
+  "queries": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "demo-prom"
+      },
+      "expr": "1 + 2",
+      "range": false,
+      "instant": true,
+      "refId": "A"
+    },
+    {
+      "datasource": {
+        "uid": "__expr__",
+        "type": "__expr__"
+      },
+      "type": "sql",
+      "expression": "Select __value__ + 10 from A;",
+      "refId": "B"
+    }
+  ],
+  "from": "now-1h",
+  "to": "now"
+}`,
+			expectedRefIDs:     []string{"A", "B"},
+			expectedStatus:     http.StatusOK,
+			expectedFrameCount: map[string]int{"A": 1, "B": 1},
+			expectedFieldNames: map[string][]string{"A": {"Time", "Value"}, "B": {"Time", "Value"}},
+			testdataFile:       "prometheus_with_sql_expression.json",
+		},
 	}
-	raw := []byte(`{
-    "queries": [
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "demo-prom"
-        },
-        "expr": "1 + 6",
-        "range": false,
-        "instant": true,
-        "refId": "A"
-      }
-    ],
-    "from": "now-1h",
-    "to": "now"
-  }`)
 
-	req := httptest.NewRequest(http.MethodPost, "/some-path", bytes.NewReader(raw))
-	req.Header.Set("Content-Type", "application/json")
-	ctx := context.Background()
-	mr := &mockResponder{}
-	qr := newQueryREST(builder)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			builder := &QueryAPIBuilder{
+				parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
+					&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
+				converter: &expr.ResultConverter{
+					Features: featuremgmt.WithFeatures(),
+					Tracer:   tracing.InitializeTracerForTest(),
+				},
+				clientSupplier: mockClientSupplier{},
+				tracer:         tracing.InitializeTracerForTest(),
+				log:            log.New("test"),
+			}
 
-	handler, err := qr.Connect(ctx, "name", nil, mr)
-	require.NoError(t, err)
-	rr := httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
+			req := httptest.NewRequest(http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
+			req.Header.Set("Content-Type", "application/json")
 
-	require.NoError(t, mr.err, "Should not have error in responder")
-	require.Equal(t, http.StatusOK, mr.statusCode, "Should return 200 status code")
-	require.NotNil(t, mr.response, "Should have a response object")
+			// Set optional headers
+			for key, value := range tc.headers {
+				req.Header.Set(key, value)
+			}
 
-	// Verify the response is the expected type
-	qdr, ok := mr.response.(*queryapi.QueryDataResponse)
-	require.True(t, ok, "Response should be QueryDataResponse type")
-	require.NotNil(t, qdr.QueryDataResponse.Responses, "Should have responses")
-	require.Contains(t, qdr.QueryDataResponse.Responses, "A", "Should contain response for refId A")
+			ctx := context.Background()
+			mr := &mockResponder{}
+			qr := newQueryREST(builder)
 
-	responseA := qdr.QueryDataResponse.Responses["A"]
-	require.Equal(t, backend.StatusOK, responseA.Status, "Query A should have OK status")
-	require.Len(t, responseA.Frames, 1, "Query A should have one frame")
+			handler, err := qr.Connect(ctx, "name", nil, mr)
+			require.NoError(t, err)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
 
-	// Verify the actual data returned includes the expected time and value
-	frame := responseA.Frames[0]
-	require.Equal(t, "test_frame", frame.Name, "Frame should have correct name")
-	require.Len(t, frame.Fields, 2, "Frame should have 2 fields")
-	require.Equal(t, "Time", frame.Fields[0].Name, "First field should be Time")
-	require.Equal(t, "Value", frame.Fields[1].Name, "Second field should be Value")
+			require.NoError(t, mr.err, "Should not have error in responder")
+			require.Equal(t, tc.expectedStatus, mr.statusCode, "Should return expected status code")
+			require.NotNil(t, mr.response, "Should have a response object")
 
-	// Check that time and value 7 are returned
-	timeField := frame.Fields[0]
-	valueField := frame.Fields[1]
-	require.Equal(t, 1, timeField.Len(), "Should have one time value")
-	require.Equal(t, 1, valueField.Len(), "Should have one value")
-	require.Equal(t, time.Unix(1234567890, 0), timeField.At(0), "Time should be 1234567890")
-	require.Equal(t, 7.0, valueField.At(0), "Value should be 7.0")
+			// Verify the response is the expected type
+			qdr, ok := mr.response.(*queryapi.QueryDataResponse)
+			require.True(t, ok, "Response should be QueryDataResponse type")
+			require.NotNil(t, qdr.QueryDataResponse.Responses, "Should have responses")
 
-	t.Log("Test completed successfully - time and value 7 verified")
+			// Load expected frames from testdata if provided
+			if tc.testdataFile != "" {
+				expectedResponse := loadTestdataFrames(t, tc.testdataFile)
+
+				// Verify all expected refIDs are present
+				for _, refID := range tc.expectedRefIDs {
+					require.Contains(t, qdr.QueryDataResponse.Responses, refID, "Should contain response for refId %s", refID)
+					require.Contains(t, expectedResponse.Responses, refID, "Expected response should contain refId %s", refID)
+
+					actualResponse := qdr.QueryDataResponse.Responses[refID]
+					expectedFrameResponse := expectedResponse.Responses[refID]
+
+					require.Equal(t, backend.StatusOK, actualResponse.Status, "Query %s should have OK status", refID)
+
+					// Verify frame count
+					expectedCount := tc.expectedFrameCount[refID]
+					require.Len(t, actualResponse.Frames, expectedCount, "Query %s should have %d frame(s)", refID, expectedCount)
+
+					// Verify frame structure matches testdata
+					require.Len(t, actualResponse.Frames, len(expectedFrameResponse.Frames), "Frame count should match testdata for refId %s", refID)
+
+					for i, actualFrame := range actualResponse.Frames {
+						expectedFrame := expectedFrameResponse.Frames[i]
+
+						// Compare field names and types
+						require.Len(t, actualFrame.Fields, len(expectedFrame.Fields), "Field count should match for frame %d of refId %s", i, refID)
+
+						for j, actualField := range actualFrame.Fields {
+							expectedField := expectedFrame.Fields[j]
+							require.Equal(t, expectedField.Name, actualField.Name, "Field %d name should match for frame %d of refId %s", j, i, refID)
+							require.Equal(t, expectedField.Type(), actualField.Type(), "Field %d type should match for frame %d of refId %s", j, i, refID)
+						}
+					}
+				}
+			} else {
+				// Fallback to original verification logic for tests without testdata
+				for _, refID := range tc.expectedRefIDs {
+					require.Contains(t, qdr.QueryDataResponse.Responses, refID, "Should contain response for refId %s", refID)
+
+					response := qdr.QueryDataResponse.Responses[refID]
+					require.Equal(t, backend.StatusOK, response.Status, "Query %s should have OK status", refID)
+
+					// Verify frame count
+					expectedCount := tc.expectedFrameCount[refID]
+					require.Len(t, response.Frames, expectedCount, "Query %s should have %d frame(s)", refID, expectedCount)
+
+					// Verify frame structure
+					for i, frame := range response.Frames {
+						require.Equal(t, "test_frame", frame.Name, "Frame %d should have correct name", i)
+
+						expectedFields := tc.expectedFieldNames[refID]
+						require.Len(t, frame.Fields, len(expectedFields), "Frame %d should have %d fields", i, len(expectedFields))
+
+						for j, expectedFieldName := range expectedFields {
+							require.Equal(t, expectedFieldName, frame.Fields[j].Name, "Field %d should be named %s", j, expectedFieldName)
+						}
+					}
+				}
+			}
+
+			t.Logf("Test case '%s' completed successfully", tc.name)
+		})
+	}
 }
 
 type mockResponder struct {
