@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
@@ -67,7 +67,7 @@ export interface InlineLogLineDetailsProps {
   logs: LogListModel[];
 }
 
-export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
+export const InlineLogLineDetails = memo(({ logs }: InlineLogLineDetailsProps) => {
   const { showDetails } = useLogListContext();
   const styles = useStyles2(getStyles, 'inline');
 
@@ -84,7 +84,8 @@ export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
       </div>
     </div>
   );
-};
+});
+InlineLogLineDetails.displayName = 'InlineLogLineDetails';
 
 export const LOG_LINE_DETAILS_HEIGHT = 35;
 

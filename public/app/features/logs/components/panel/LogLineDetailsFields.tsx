@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import * as React from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -25,7 +24,7 @@ interface LogLineDetailsFieldsProps {
   search?: string;
 }
 
-export const LogLineDetailsFields = ({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
+export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
   if (!fields.length) {
     return null;
   }
@@ -53,7 +52,8 @@ export const LogLineDetailsFields = ({ disableActions, fields, log, logs, search
       ))}
     </div>
   );
-};
+});
+LogLineDetailsFields.displayName = 'LogLineDetailsFields';
 
 interface LinkModelWithIcon extends LinkModel<Field> {
   icon?: IconName;

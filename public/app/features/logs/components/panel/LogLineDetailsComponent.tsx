@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -22,7 +22,7 @@ interface LogLineDetailsComponentProps {
   logs: LogListModel[];
 }
 
-export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentProps) => {
+export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsComponentProps) => {
   const { displayedFields, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
@@ -175,7 +175,8 @@ export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentPr
       </div>
     </>
   );
-};
+});
+LogLineDetailsComponent.displayName = 'LogLineDetailsComponent';
 
 function groupOptionName(group: string) {
   return `${camelCase(group)}Open`;
