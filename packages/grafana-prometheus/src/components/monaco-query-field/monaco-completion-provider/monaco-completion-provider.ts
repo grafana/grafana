@@ -168,7 +168,6 @@ export function getCompletionProvider(
     return { suggestions: [], incomplete: false };
   };
 
-  // Extract completion logic into a separate function
   const executeCompletionLogic = async (
     model: monacoTypes.editor.ITextModel,
     position: monacoTypes.Position,
@@ -179,11 +178,11 @@ export function getCompletionProvider(
   ): Promise<monacoTypes.languages.CompletionList> => {
     // documentation says `position` will be "adjusted" in `getOffsetAt`
     // i don't know what that means, to be sure i clone it
-
     const positionClone = {
       column: position.column,
       lineNumber: position.lineNumber,
     };
+
     dataProvider.monacoSettings.setInputInRange(model.getValueInRange(range));
 
     // Check to see if the browser supports window.getSelection()
@@ -200,28 +199,28 @@ export function getCompletionProvider(
     const completionsPromise =
       situation != null ? getCompletions(situation, dataProvider, timeRange, wordText) : Promise.resolve([]);
 
-    const items = await completionsPromise;
-    // monaco by-default alphabetically orders the items.
-    // to stop it, we use a number-as-string sortkey,
-    // so that monaco keeps the order we use
-    const maxIndexDigits = items.length.toString().length;
-    const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
-      kind: getMonacoCompletionItemKind(item.type, monaco),
-      label: item.label,
-      insertText: item.insertText,
-      insertTextRules: item.insertTextRules,
-      detail: item.detail,
-      documentation: item.documentation,
-      sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
-      range,
-      command: item.triggerOnInsert
-        ? {
-            id: 'editor.action.triggerSuggest',
-            title: '',
-          }
-        : undefined,
-    }));
-    return { suggestions, incomplete: dataProvider.monacoSettings.suggestionsIncomplete };
+    return await completionsPromise.then((items) => {
+      // monaco by-default alphabetically orders the items.
+      // to stop it, we use a number-as-string sortkey,
+      // so that monaco keeps the order we use
+      const maxIndexDigits = items.length.toString().length;
+      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => ({
+        range,
+        label: item.label,
+        detail: item.detail,
+        insertText: item.insertText,
+        documentation: item.documentation,
+        insertTextRules: item.insertTextRules,
+        kind: getMonacoCompletionItemKind(item.type, monaco),
+        sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+        command: item.triggerOnInsert ? { id: 'editor.action.triggerSuggest', title: '' } : undefined,
+      }));
+
+      return {
+        suggestions,
+        incomplete: dataProvider.monacoSettings.suggestionsIncomplete,
+      };
+    });
   };
 
   return {
