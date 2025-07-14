@@ -67,7 +67,7 @@ func TestNewResourceDbProvider(t *testing.T) {
 		engine, err := newResourceDBProvider(nil, cfg, nil)
 		require.Error(t, err)
 		require.Nil(t, engine)
-		require.Contains(t, err.Error(), "unknown")
+		require.Contains(t, err.Error(), "no database type specified")
 	})
 
 	t.Run("Unknown database type", func(t *testing.T) {
