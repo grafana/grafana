@@ -245,8 +245,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       case '!=':
         return fieldValue !== filterValue;
       default:
-        // Unknown operator, skip this filter
-        return true;
+        // Unknown operator, reject all rows
+        return false;
     }
   };
 
@@ -257,17 +257,17 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     // Parse filter value as a number
     const filterValue = parseFloat(filter.value);
 
-    // If filter value is not a valid number, skip this filter
+    // If filter value is not a valid number, reject all rows
     if (isNaN(filterValue)) {
-      return true;
+      return false;
     }
 
     // Ensure field value is a number
     const numericFieldValue = typeof fieldValue === 'number' ? fieldValue : parseFloat(fieldValue);
 
-    // If field value is not a valid number, skip this filter
+    // If field value is not a valid number, reject all rows
     if (isNaN(numericFieldValue)) {
-      return true;
+      return false;
     }
 
     switch (filter.operator) {
@@ -281,8 +281,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       // case '<':
       //   return numericFieldValue < filterValue;
       default:
-        // Unknown operator, skip this filter
-        return true;
+        // Unknown operator, reject all rows
+        return false;
     }
   };
 
@@ -290,8 +290,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
    * Handle unsupported field types
    */
   private compareUnsupportedValues = (_fieldValue: any, _filter: AdHocVariableFilter): boolean => {
-    // unknown field type, skip this filter
-    return true;
+    // unknown field type, reject all rows
+    return false;
   };
 
   /**
