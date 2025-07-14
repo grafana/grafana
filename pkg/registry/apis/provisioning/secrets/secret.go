@@ -16,6 +16,13 @@ import (
 
 const svcName = "provisioning"
 
+//go:generate mockery --name SecureValueService --structname MockSecureValueService --inpackage --filename secure_value_mock.go --with-expecter
+type SecureValueService interface {
+	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
+	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+}
+
 //go:generate mockery --name Service --structname MockService --inpackage --filename secret_mock.go --with-expecter
 type Service interface {
 	Encrypt(ctx context.Context, namespace, name string, data string) (string, error)
@@ -25,11 +32,11 @@ type Service interface {
 var _ Service = (*secretsService)(nil)
 
 type secretsService struct {
-	secretsSvc *grafanasecrets.SecureValueService
+	secretsSvc SecureValueService
 	decryptSvc grafanasecrets.DecryptService
 }
 
-func NewSecretsService(secretsSvc *grafanasecrets.SecureValueService, decryptSvc grafanasecrets.DecryptService) Service {
+func NewSecretsService(secretsSvc SecureValueService, decryptSvc grafanasecrets.DecryptService) Service {
 	return &secretsService{
 		secretsSvc: secretsSvc,
 		decryptSvc: decryptSvc,
