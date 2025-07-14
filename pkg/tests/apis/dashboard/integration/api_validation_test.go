@@ -77,9 +77,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
 				}})
 
 			t.Cleanup(func() {
@@ -2384,8 +2381,8 @@ func runDashboardListTests(t *testing.T, ctx TestContext) {
 				viewerUserId, _ := identity.UserIdentifier(ctx.ViewerUser.Identity.GetID())
 				viewerServiceUserId := ctx.ViewerServiceAccount.Id
 				permissions := []ResourcePermissionSetting{
-					{Level: ResourcePermissionLevelView, UserID: &viewerUserId},
-					{Level: ResourcePermissionLevelView, UserID: &viewerServiceUserId},
+					{Level: ResourcePermissionLevelEdit, UserID: &viewerUserId},
+					{Level: ResourcePermissionLevelEdit, UserID: &viewerServiceUserId},
 				}
 				setResourceUserPermission(t, ctx, ctx.AdminUser, isDashboard, resourceUID, permissions)
 			},
@@ -2397,8 +2394,8 @@ func runDashboardListTests(t *testing.T, ctx TestContext) {
 				editorUserId, _ := identity.UserIdentifier(ctx.EditorUser.Identity.GetID())
 				editorServiceUserId := ctx.EditorServiceAccount.Id
 				permissions := []ResourcePermissionSetting{
-					{Level: ResourcePermissionLevelEdit, UserID: &editorUserId},
-					{Level: ResourcePermissionLevelEdit, UserID: &editorServiceUserId},
+					{Level: ResourcePermissionLevelView, UserID: &editorUserId},
+					{Level: ResourcePermissionLevelView, UserID: &editorServiceUserId},
 				}
 				setResourceUserPermission(t, ctx, ctx.AdminUser, isDashboard, resourceUID, permissions)
 			},
