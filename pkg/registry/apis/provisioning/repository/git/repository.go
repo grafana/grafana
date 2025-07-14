@@ -476,6 +476,27 @@ func (r *gitRepository) History(_ context.Context, _ string, _ string) ([]provis
 	}}
 }
 
+func (r *gitRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
+	refs, err := r.client.ListRefs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list refs: %w", err)
+	}
+	refItems := make([]provisioning.RefItem, 0, len(refs))
+	for _, ref := range refs {
+		// Only branches
+		if !strings.HasPrefix(ref.Name, "refs/heads/") {
+			continue
+		}
+
+		refItems = append(refItems, provisioning.RefItem{
+			Name: strings.TrimPrefix(ref.Name, "refs/heads/"),
+			Hash: ref.Hash.String(),
+		})
+	}
+
+	return refItems, nil
+}
+
 func (r *gitRepository) LatestRef(ctx context.Context) (string, error) {
 	ctx, _ = r.logger(ctx, "")
 	branchRef, err := r.client.GetRef(ctx, fmt.Sprintf("refs/heads/%s", r.gitConfig.Branch))

@@ -220,3 +220,9 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 
 	return nil, nil
 }
+
+func (e *WebhookExtra) RepositoryTypes() []provisioning.RepositoryType {
+	return []provisioning.RepositoryType{
+		provisioning.GitHubRepositoryType,
+	}
+}

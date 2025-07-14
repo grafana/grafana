@@ -218,7 +218,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
       }
     } else if (this.useSeriesName) {
       return (_: number, _percent: number, _threshold?: Threshold) => {
-        return colors[Math.abs(stringHash(field.state?.displayName ?? field.name)) % colors.length];
+        return getColorByStringHash(colors, field.state?.displayName ?? field.name);
       };
     } else {
       return (_: number, _percent: number, _threshold?: Threshold) => {
@@ -261,6 +261,10 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorSc
   const value = calcs[stat] ?? 0;
 
   return scale(value);
+}
+
+export function getColorByStringHash(colors: string[], string: string) {
+  return colors[Math.abs(stringHash(string)) % colors.length];
 }
 
 function getFixedColor(field: Field, theme: GrafanaTheme2) {
