@@ -13,9 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestNewSecretsService(t *testing.T) {
@@ -52,7 +50,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 					}),
 					xkube.Namespace("test-namespace"),
 					"test-secret",
-				).Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "test-secret"))
+				).Return(nil, contracts.ErrSecureValueNotFound)
 				
 				// Assert Create call with detailed validation
 				mockSecretsSvc.EXPECT().Create(
@@ -175,7 +173,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 					}),
 					xkube.Namespace("test-namespace"),
 					"test-secret",
-				).Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "test-secret"))
+				).Return(nil, contracts.ErrSecureValueNotFound)
 				
 				mockSecretsSvc.EXPECT().Create(
 					mock.MatchedBy(func(ctx context.Context) bool {
