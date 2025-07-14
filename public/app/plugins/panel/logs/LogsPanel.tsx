@@ -159,7 +159,7 @@ export const LogsPanel = ({
     onNewLogsReceived,
     fontSize,
     syntaxHighlighting,
-    detailsMode,
+    detailsModeProp,
     ...options
   },
   id,
@@ -517,6 +517,9 @@ export const LogsPanel = ({
 
   const onClickShowField = isOnClickShowField(options.onClickShowField) ? options.onClickShowField : showField;
   const onClickHideField = isOnClickHideField(options.onClickHideField) ? options.onClickHideField : hideField;
+
+  // In Dashboards, default to inline. Otherwise, let apps control or have automatic behavior.
+  const detailsMode = detailsModeProp ? detailsModeProp : app === CoreApp.Dashboard ? 'inline' : undefined;
 
   return (
     <>
