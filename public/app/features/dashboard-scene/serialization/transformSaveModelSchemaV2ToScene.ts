@@ -28,7 +28,6 @@ import {
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
   defaultCustomVariableKind,
-  defaultDataQueryKind,
   defaultDatasourceVariableKind,
   defaultGroupByVariableKind,
   defaultIntervalVariableKind,
@@ -63,7 +62,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
-import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
@@ -92,23 +90,32 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   const { spec: dashboard, metadata, apiVersion } = dto;
 
   // annotations might not come with the builtIn Grafana annotation, we need to add it
+
   const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
   if (grafanaBuiltAnnotation) {
     dashboard.annotations.unshift(grafanaBuiltAnnotation);
   }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
-    const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
-
-    const layerState = {
+    let annoQuerySpec = annotation.spec;
+    // some annotations will contain in the legacyOptions properties that need to be
+    // added to the root level annotation spec
+    if (annoQuerySpec?.legacyOptions) {
+      annoQuerySpec = {
+        ...annoQuerySpec,
+        ...annoQuerySpec.legacyOptions,
+      };
+    }
+    return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
-      query: annotationQuerySpec,
+      query: {
+        ...annoQuerySpec,
+        builtIn: annotation.spec.builtIn ? 1 : 0,
+      },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
-    };
-
-    return new DashboardAnnotationsDataLayer(layerState);
+    });
   });
 
   const isDashboardEditable = Boolean(dashboard.editable);
@@ -507,15 +514,7 @@ function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
   const grafanaBuiltAnnotation: AnnotationQueryKind = {
     kind: 'AnnotationQuery',
     spec: {
-      query: {
-        kind: 'DataQuery',
-        version: defaultDataQueryKind().version,
-        group: 'grafana',
-        datasource: {
-          name: '-- Grafana --',
-        },
-        spec: {},
-      },
+      datasource: { uid: '-- Grafana --', type: 'grafana' },
       name: 'Annotations & Alerts',
       iconColor: DEFAULT_ANNOTATION_COLOR,
       enable: true,
