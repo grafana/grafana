@@ -1,14 +1,18 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, isDataFrame, classicColors, colorManipulator, Field } from '@grafana/data';
-import { TablePillCellOptions } from '@grafana/schema';
+import {
+  GrafanaTheme2,
+  classicColors,
+  colorManipulator,
+  Field,
+  getColorByStringHash,
+  FALLBACK_COLOR,
+} from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { TableCellRendererProps } from '../types';
-
-const DEFAULT_PILL_BG_COLOR = '#FF780A';
 
 interface Pill {
   value: string;
@@ -17,9 +21,9 @@ interface Pill {
   color: string;
 }
 
-function createPills(pillValues: string[], cellOptions: TableCellRendererProps['cellOptions'], field: Field): Pill[] {
+function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): Pill[] {
   return pillValues.map((pill, index) => {
-    const bgColor = getPillColor(pill, cellOptions, field);
+    const bgColor = getPillColor(pill, field, theme);
     const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
     return {
       value: pill,
@@ -30,172 +34,73 @@ function createPills(pillValues: string[], cellOptions: TableCellRendererProps['
   });
 }
 
-export function PillCell({ value, field, justifyContent, cellOptions }: TableCellRendererProps) {
-  const styles = useStyles2(getStyles, justifyContent);
+export function PillCell({ value, field }: TableCellRendererProps) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const pills: Pill[] = useMemo(() => {
-    const pillValues = inferPills(value);
-    return createPills(pillValues, cellOptions, field);
-  }, [value, cellOptions, field]);
+    const pillValues = inferPills(String(value));
+    return createPills(pillValues, field, theme);
+  }, [value, field, theme]);
 
-  if (pills.length === 0) {
-    return <div className={styles.cell}>-</div>;
-  }
-
-  const shouldWrap = isPillCellOptions(cellOptions) ? (cellOptions.wrapText ?? false) : false;
-
-  return (
-    <div className={shouldWrap ? styles.cellWrapped : styles.cell}>
-      <div className={shouldWrap ? styles.pillsContainerWrapped : styles.pillsContainer}>
-        {pills.map((pill) => (
-          <span
-            key={pill.key}
-            className={styles.pill}
-            style={{
-              backgroundColor: pill.bgColor,
-              color: pill.color,
-            }}
-          >
-            {pill.value}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
+  return pills.map((pill) => (
+    <span
+      key={pill.key}
+      className={styles.pill}
+      style={{
+        backgroundColor: pill.bgColor,
+        color: pill.color,
+        border: pill.bgColor === TRANSPARENT ? `1px solid ${theme.colors.border.strong}` : undefined,
+      }}
+    >
+      {pill.value}
+    </span>
+  ));
 }
 
-export function inferPills(value: unknown): string[] {
-  if (!value) {
+const SPLIT_RE = /\s*,\s*/;
+const TRANSPARENT = 'rgba(0,0,0,0)';
+
+export function inferPills(value: string): string[] {
+  if (value === '') {
     return [];
   }
 
-  // Handle DataFrame - not supported for pills
-  if (isDataFrame(value)) {
-    return [];
-  }
-
-  // Handle different value types
-  const stringValue = String(value);
-
-  // Try to parse as JSON first
-  try {
-    const parsed = JSON.parse(stringValue);
-    if (Array.isArray(parsed)) {
-      // JSON array of strings
-      return parsed
-        .filter((item) => item != null && item !== '')
-        .map(String)
-        .map((text) => text.trim())
-        .filter((item) => item !== '');
+  if (value[0] === '[') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value.trim().split(SPLIT_RE);
     }
-  } catch {
-    // Not valid JSON, continue with other parsing
   }
 
-  // Handle CSV string
-  if (stringValue.includes(',')) {
-    return stringValue
-      .split(',')
-      .map((text) => text.trim())
-      .filter((item) => item !== '');
-  }
-
-  // Single value - strip quotes
-  return [stringValue.replace(/["'`]/g, '').trim()];
+  return value.trim().split(SPLIT_RE);
 }
 
-function isPillCellOptions(cellOptions: TableCellRendererProps['cellOptions']): cellOptions is TablePillCellOptions {
-  return cellOptions?.type === 'pill';
+function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string {
+  const cfg = field.config;
+
+  if (cfg.mappings?.length ?? 0 > 0) {
+    return field.display!(value).color ?? FALLBACK_COLOR;
+  }
+
+  if (cfg.color?.mode === FieldColorModeId.Fixed) {
+    return theme.visualization.getColorByName(cfg.color?.fixedColor ?? FALLBACK_COLOR);
+  }
+
+  // TODO: instead of classicColors we need to pull colors from theme, same way as FieldColorModeId.PaletteClassicByName (see fieldColor.ts)
+  return getColorByStringHash(classicColors, value);
 }
 
-function getPillColor(pill: string, cellOptions: TableCellRendererProps['cellOptions'], field: Field): string {
-  if (!isPillCellOptions(cellOptions)) {
-    return getDeterministicColor(pill);
-  }
-
-  const colorMode = cellOptions.colorMode || 'auto';
-
-  // Fixed color mode (highest priority)
-  if (colorMode === 'fixed' && cellOptions.color) {
-    return cellOptions.color;
-  }
-
-  // Mapped color mode - use field's value mappings
-  if (colorMode === 'mapped') {
-    // Check if field has value mappings
-    if (field.config.mappings && field.config.mappings.length > 0) {
-      // Use the field's display processor to get the mapped value
-      const displayValue = field.display!(pill);
-      if (displayValue.color) {
-        return displayValue.color;
-      }
-    }
-    // Fallback to default color for unmapped values
-    return cellOptions.color || DEFAULT_PILL_BG_COLOR;
-  }
-
-  // Auto mode - deterministic color assignment based on string hash
-  if (colorMode === 'auto') {
-    return getDeterministicColor(pill);
-  }
-
-  // Default color for unknown values or fallback
-  return DEFAULT_PILL_BG_COLOR;
-}
-
-function getDeterministicColor(text: string): string {
-  // Create a simple hash of the string to get consistent colors
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    const char = text.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-
-  // Use absolute value and modulo to get a consistent index
-  const colorValues = Object.values(classicColors);
-  const index = Math.abs(hash) % colorValues.length;
-
-  return colorValues[index];
-}
-
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
-  cell: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'flex-start',
-    alignItems: 'center',
-    height: '100%',
-    padding: theme.spacing(0.5),
-  }),
-  cellWrapped: css({
-    display: 'flex',
-    justifyContent: justifyContent || 'flex-start',
-    alignItems: 'flex-start',
-    minHeight: '100%',
-    padding: theme.spacing(0.5),
-  }),
-  pillsContainer: css({
-    display: 'flex',
-    flexWrap: 'nowrap',
-    gap: theme.spacing(0.5),
-    maxWidth: '100%',
-    overflow: 'hidden',
-  }),
-  pillsContainerWrapped: css({
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: theme.spacing(0.5),
-    maxWidth: '100%',
-  }),
+export const getStyles = (theme: GrafanaTheme2) => ({
   pill: css({
     display: 'inline-block',
     padding: theme.spacing(0.25, 0.75),
+    marginInlineEnd: theme.spacing(0.5),
+    marginBlock: theme.spacing(0.5),
     borderRadius: theme.shape.radius.default,
     fontSize: theme.typography.bodySmall.fontSize,
     lineHeight: theme.typography.bodySmall.lineHeight,
-    fontWeight: theme.typography.fontWeightMedium,
     whiteSpace: 'nowrap',
-    textAlign: 'center',
-    minWidth: 'fit-content',
   }),
 });

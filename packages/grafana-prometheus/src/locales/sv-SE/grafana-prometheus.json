@@ -225,6 +225,29 @@
         "step": "",
         "type": ""
       },
+      "get-placeholders": {
+        "browse": "",
+        "include-null-metadata": "",
+        "metadata-search-switch": "",
+        "set-use-backend": "",
+        "type": ""
+      },
+      "get-prom-types": {
+        "description-counter": "",
+        "description-gauge": "",
+        "description-histogram": "",
+        "description-native-histogram": "",
+        "description-no-type": "",
+        "description-summary": "",
+        "description-unknown": "",
+        "label-counter": "",
+        "label-gauge": "",
+        "label-histogram": "",
+        "label-native-histogram": "",
+        "label-no-type": "",
+        "label-summary": "",
+        "label-unknown": ""
+      },
       "handle-function": {
         "text": {
           "query-parsing-is-ambiguous": ""
@@ -368,6 +391,9 @@
       "results-table": {
         "content-descriptive-type": "",
         "description": "Beskrivning",
+        "message-expand-label-filters": "",
+        "message-expand-search": "",
+        "message-no-metrics-found": "",
         "name": "Namn",
         "select": "Välj",
         "type": "Typ"

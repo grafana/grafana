@@ -504,6 +504,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edit YAML",
@@ -1499,15 +1502,12 @@
     "group-details": {
       "ds-features-error": "Kesalahan saat memuat sumber data",
       "edit": "Edit",
-      "evaluations-to-fire": "Siklus evaluasi yang akan dinyalakan",
       "export": "Ekspor",
       "folder": "Folder",
       "group-loading-error": "Kesalahan saat memuat grup",
       "interval": "Interval",
       "namespace": "Ruang nama",
-      "pending-period": "Periode tertunda",
-      "recording": "Pencatatan",
-      "rule-name": "Nama aturan"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Kesalahan saat memuat sumber data",
@@ -2228,6 +2228,9 @@
         "label-export-all": "Ekspor semua"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Tidak dapat memuat editor kueri karena: {{errorMessage}}"
     },
@@ -2637,6 +2640,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Tidak menemukan sumber data yang Anda inginkan? Beberapa sumber data tidak didukung untuk peringatan. Klik ikon untuk informasi selengkapnya."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Tambah Alertmanager baru",
       "builtin-alertmanager": "Alertmanager bawaan",
@@ -2871,6 +2879,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} lalu)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3116,6 +3129,16 @@
       "info-box-content": "<0>Anotasi menyediakan cara untuk mengintegrasikan data kejadian ke dalam grafik Anda. Anotasi divisualisasikan sebagai garis vertikal dan ikon pada semua panel grafik. Saat mengarahkan kursor ke ikon anotasi, Anda bisa mendapatkan teks & tag kejadian untuk kejadian tersebut. Anda dapat menambahkan kejadian anotasi langsung dari grafana dengan menahan Ctrl atau CMD + klik pada grafik (atau seret wilayah). Ini akan disimpan dalam database anotasi Grafana.</0>",
       "info-box-content-2": "Lihat <2>Dokumentasi anotasi</2> untuk informasi selengkapnya.",
       "title": "Belum ada kueri anotasi kustom yang ditambahkan"
+    },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "",
+        "results-split-on-comma": ""
+      },
+      "placeholder": {
+        "text-or-the-first-field": "",
+        "time-or-the-first-field": ""
+      }
     },
     "standard-annotation-query-editor": {
       "events-found": "{{numEvents}} peristiwa (dari {{numFields}} bidang)",
@@ -3519,11 +3542,11 @@
       "button-create": "Buat",
       "button-creating": "Membuat...",
       "cancel": "Batalkan",
-      "error-invalid-folder-name": "Nama folder tidak valid",
       "error-required": "Nama folder wajib diisi",
       "folder-name-input-placeholder-enter-folder-name": "Masukkan nama folder",
       "label-folder-name": "Nama folder",
       "text-pull-request-created": "Permintaan pull telah dibuat dengan perubahan pada folder ini:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Permintaan pull dibuat",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
@@ -4645,6 +4668,18 @@
         "transform-data": "Ubah data"
       }
     },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5205,7 +5240,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Cari transformasi",
       "show-images": "Tampilkan gambar",
-      "title-add-another-transformation": "Tambah transformasi lain"
+      "title-add-another-transformation": "Tambah transformasi lain",
+      "view-all": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": ""
@@ -5549,6 +5585,40 @@
         "row-height-options": "Opsi tinggi baris"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "",
+        "dynamically-switch-source-multiple-panels": "",
+        "group": "",
+        "hidden-constant-variable": "",
+        "users-enter-arbitrary-strings-textbox": "",
+        "values-are-static-and-defined-manually": "",
+        "values-fetched-source-query": "",
+        "values-timespans": ""
+      },
+      "name": {
+        "ad-hoc-filters": "",
+        "constant": "",
+        "custom": "",
+        "data-source": "",
+        "group-by": "",
+        "interval": "",
+        "query": "",
+        "textbox": ""
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5635,6 +5705,20 @@
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} oleh<person />",
       "usage-count_other": "Digunakan pada {{count}} dasbor"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Dasbor dengan nama yang sama di folder yang dipilih sudah ada. Ingin tetap menyimpan dasbor ini?",
@@ -5767,7 +5851,8 @@
       "label-folder": "Folder",
       "render-footer": {
         "title-failed-to-save-dashboard": "Gagal menyimpan dasbor"
-      }
+      },
+      "required": ""
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -7963,6 +8048,9 @@
       "filter-popup-match-case": "Cocok huruf besar kecil",
       "inspect-drawer-title": "Periksa nilai",
       "inspect-menu-label": "Periksa nilai",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Tidak ada nilai",
       "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris"
     },
@@ -7971,6 +8059,7 @@
     },
     "tags-input": {
       "add": "Tambahkan",
+      "placeholder-new-tag": "",
       "remove": "Hapus tag: {{name}}"
     },
     "time-sync-button": {
@@ -8683,6 +8772,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8695,6 +8785,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8797,6 +8888,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -8902,6 +8998,12 @@
       "text": {
         "import-dashboard": "Impor dasbor"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "",
+      "message-reserved-name": "",
+      "message-same-name": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -9055,6 +9157,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Dasbor sudah disediakan dan dikelola oleh Grafana di instans cloud. Sebaiknya gunakan dasbor yang disediakan ke depannya. Jika Anda masih ingin menyalin dasbor ke instans cloud, ubah ID dasbor di JSON dasbor, simpan snapshot baru, lalu unggah lagi.",
         "datasource-already-managed": "Dasbor sudah disediakan dan dikelola oleh Grafana di instans cloud. Jika ini adalah sumber daya yang berbeda, atur UID lain dan coba lagi.",
         "datasource-invalid-url": "Ada sumber data yang memiliki URL tidak valid. Berikan URL yang valid dan coba lagi.",
@@ -10281,10 +10385,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -11730,14 +11832,6 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
-    "pill-cell-options-editor": {
-      "description-color-mode": "",
-      "description-fixed-color": "",
-      "description-value-mappings-info": "",
-      "label-color-mode": "",
-      "label-fixed-color": "",
-      "label-value-mappings-info": ""
-    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -12090,6 +12184,18 @@
       "placeholder-fields-or-number": "Bidang atau angka"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "",
+          "reduce-row": "",
+          "row-index": "",
+          "unary-operation": ""
+        }
+      },
+      "label": {
+        "cumulative-functions": "",
+        "window-functions": ""
+      },
       "label-alias": "Alias",
       "label-mode": "Mode",
       "label-replace-all-fields": "Ganti semua bidang"
@@ -12104,6 +12210,13 @@
     "concatenate-transformer-editor": {
       "label-label": "Label",
       "label-name": "Nama",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "",
+          "ignore-the-frame-name": "",
+          "label-frame": ""
+        }
+      },
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
@@ -12115,6 +12228,9 @@
       "aria-label-add-a-convert-field-type-transformer": "Tambahkan transformer jenis bidang konversi",
       "aria-label-remove-convert-field-type-transformer": "Hapus transformer jenis bidang konversi",
       "convert-field-type": "",
+      "description": {
+        "convert-to-specified-field-type": ""
+      },
       "label": {
         "browser": "Browser",
         "utc": "UTC"
@@ -12125,7 +12241,13 @@
       "label-input-format": "Format input",
       "label-join-with": "Gabung dengan",
       "label-set-timezone": "Atur zona waktu",
+      "name": {
+        "convert-field-type": ""
+      },
       "placeholder-type": "Jenis",
+      "tags": {
+        "format-field": ""
+      },
       "tooltip-explicit-separator-joining-array-values": "Gunakan pemisah eksplisit saat menggabungkan nilai array",
       "tooltip-input-format": "Tentukan format bidang input sehingga Grafana dapat memproses string tanggal dengan benar.",
       "tooltip-specify-the-output-format": "Tentukan format output.",
@@ -12147,6 +12269,19 @@
       "desc": "",
       "off": "Nonaktif"
     },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": ""
+        },
+        "name": {
+          "concatenate-fields": ""
+        },
+        "tags": {
+          "combine": ""
+        }
+      }
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Tambah nilai enum",
       "generate-enum-values-from-data": "Buat nilai enum dari data"
@@ -12157,6 +12292,9 @@
       "remove-enum-row-tooltip-delete": "Hapus"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": ""
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": ""
@@ -12167,6 +12305,9 @@
       "label-keep-time": "Pertahankan waktu",
       "label-replace-all-fields": "Ganti semua bidang",
       "label-source": "Sumber",
+      "name": {
+        "extract-fields": ""
+      },
       "placeholder-auto": "Auto",
       "placeholder-select-delimiter": "Pilih delimiter...",
       "tooltip-regexp": "Contoh: {{regexExample}}"
@@ -12175,6 +12316,9 @@
       "aria-label-threshold-color": "Warna ambang batas"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": ""
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": ""
@@ -12184,7 +12328,10 @@
         }
       },
       "label-field": "Bidang",
-      "label-lookup": "Cari"
+      "label-lookup": "Cari",
+      "name": {
+        "lookup-fields-from-resource": ""
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "Pengaturan tambahan",
@@ -12193,11 +12340,25 @@
       "use-as": "Gunakan sebagai"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": ""
+      },
       "label-from-variable": "Dari variabel",
       "label-identifier": "Pengidentifikasi",
       "label-use-variable": "Gunakan variabel",
       "label-variable": "Variabel",
+      "name": {
+        "filter-fields-by-name": ""
+      },
       "placeholder-regular-expression-pattern": "Struktur pola reguler"
+    },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": ""
+      },
+      "name": {
+        "filter-data-by-query": ""
+      }
     },
     "filter-by-value-filter-editor": {
       "label-field": "Bidang",
@@ -12208,6 +12369,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Tambah ketentuan",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": ""
+      },
       "filter-match": {
         "label": {
           "match-all": "",
@@ -12221,7 +12385,10 @@
         }
       },
       "label-conditions": "Syarat",
-      "label-filter-type": "Jenis filter"
+      "label-filter-type": "Jenis filter",
+      "name": {
+        "filter-data-by-values": ""
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12236,12 +12403,84 @@
       "label-format": "Format",
       "label-substring-range": "Rentang substring"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": ""
+      },
+      "name": {
+        "format-string": ""
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "Format",
       "label-set-timezone": "Atur zona waktu",
       "label-time-field": "Bidang waktu",
       "tooltip-format": "Format output untuk bidang yang ditentukan sebagai <2>string format Moment.js</2>.",
       "tooltip-timezone-manually": "Atur zona waktu tanggal secara manual"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": ""
+      },
+      "name": {
+        "format-time": ""
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": ""
+      },
+      "name": {
+        "add-field-from-calculation": ""
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": ""
+      },
+      "name": {
+        "config-from-query-results": ""
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": ""
+      },
+      "name": {
+        "create-heatmap": ""
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": ""
+      },
+      "name": {
+        "join-by-labels": ""
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": ""
+      },
+      "name": {
+        "partition-by-values": ""
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": ""
+      },
+      "name": {
+        "rows-to-fields": ""
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": ""
+      },
+      "name": {
+        "spatial-operations": ""
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12270,22 +12509,46 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "",
+          "group-by": ""
+        }
+      },
       "placeholder-ignored": "Diabaikan",
       "placeholder-select-stats": "Pilih statistik"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": ""
+      },
+      "name": {
+        "group-by": ""
+      },
       "title-calc-alert": "Perhitungan tidak akan berpengaruh jika tidak ada bidang yang dikelompokkan"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": ""
+      },
       "description-show-field-names": "Jika tabel nested diaktifkan, akan menampilkan nama bidang sebagai header tabel",
       "label-show-field-names-in-nested-tables": "Tampilkan nama bidang dalam tabel nested",
+      "name": {
+        "group-to-nested-tables": ""
+      },
       "title-calc-alert": "Perhitungan tidak akan berpengaruh jika tidak ada bidang yang dikelompokkan."
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": ""
+      },
       "label-cell-value": "Nilai cell",
       "label-column": "Kolom",
       "label-empty-value": "Nilai kosong",
       "label-row": "Baris",
+      "name": {
+        "grouping-to-matrix": ""
+      },
       "special-value-options": {
         "description": {
           "boolean-false-value": "Nilai Boolean salah",
@@ -12304,6 +12567,12 @@
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": ""
+      },
+      "name": {
+        "histogram": ""
+      },
       "placeholder-auto": "Auto",
       "placeholder-default": "Default: 30",
       "placeholder-none": "Tidak ada"
@@ -12312,7 +12581,16 @@
       "label-as-percentile": "Sebagai persentil",
       "tooltip-transform-index-percentile": "Ubah indeks baris menjadi persentil."
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": ""
+      },
+      "name": {
+        "join-by-field": ""
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "",
       "info": {
         "input-contain-labels": "Input tidak berisi label apa pun",
         "no-input-or-labels-found": "Tidak ada input (atau label) yang ditemukan",
@@ -12334,10 +12612,30 @@
       "label-labels": "Label",
       "label-mode": "Mode",
       "label-value-field-name": "Nama bidang nilai",
+      "modes": {
+        "label": {
+          "columns": "",
+          "rows": ""
+        }
+      },
       "placeholder-optional-select-label": "(Opsional) Pilih label",
       "tooltip-replace-value-field-label": "Ganti nama bidang nilai dengan label"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": ""
+      },
+      "name": {
+        "labels-to-fields": ""
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": ""
+      },
+      "name": {
+        "limit": ""
+      },
       "placeholder-value-or-variable": "Nilai atau variabel"
     },
     "long-info": {
@@ -12348,7 +12646,13 @@
       "string-values-separate": "String nilai direpresentasikan sebagai bidang terpisah dan bukan sebagai label"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "Penggabungan tidak berpengaruh ketika diterapkan pada single frame."
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "merge-effect-applied-single-frame": "Penggabungan tidak berpengaruh ketika diterapkan pada single frame.",
+      "name": {
+        "merge": ""
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "Semua nilai adalah numerik",
@@ -12358,10 +12662,16 @@
       "time-in-ascending-order": "Waktu dalam urutan naik"
     },
     "organize-fields-transformer-editor": {
+      "description": {
+        "reorder-hide-or-rename-fields": ""
+      },
       "field-order": "",
       "field-order-auto": "Auto",
       "field-order-manual": "",
-      "first-frame-warning": "Penataan bidang hanya berfungsi dengan satu frame. Pertimbangkan untuk menerapkan transformasi gabungan atau memfilter input terlebih dahulu."
+      "first-frame-warning": "Penataan bidang hanya berfungsi dengan satu frame. Pertimbangkan untuk menerapkan transformasi gabungan atau memfilter input terlebih dahulu.",
+      "name": {
+        "organize-fields": ""
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "Mengatur tampilan nama bidang yang dipilih. Karena nama frame biasanya lebih baik untuk data tabular"
@@ -12386,9 +12696,41 @@
       "partition-values-works-single-frame": "Partisi berdasarkan nilai hanya berfungsi dengan satu frame.",
       "tooltip-keeps-partition-fields-frames": "Menyimpan bidang partisi di frame"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": ""
+      },
+      "name": {
+        "prepare-time-series": ""
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "Format",
-      "label-info": "Info"
+      "label-info": "Info",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": ""
+        },
+        "label": {
+          "long-time-series": ""
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": ""
+        },
+        "label": {
+          "multiframe-time-series": ""
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": ""
+        },
+        "label": {
+          "wide-time-series": ""
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "dan",
@@ -12400,6 +12742,9 @@
       "label-operation": "Pengoperasian"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": ""
+      },
       "label-calculations": "Perhitungan",
       "label-include-time": "Sertakan waktu",
       "label-labels-to-fields": "Label ke bidang",
@@ -12414,11 +12759,22 @@
           "series-to-rows": "Format deret ke format baris"
         }
       },
+      "name": {
+        "reduce": ""
+      },
       "placeholder-choose-stat": "Pilih stat"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "Nilai atau variabel",
       "variable-regex-documentation": "Memformat variabel multi-nilai menjadi regex-string"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": ""
+      },
+      "name": {
+        "regression-analysis": ""
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12441,6 +12797,14 @@
       "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Jumlah poin X,Y untuk diprediksi"
     },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": ""
+      },
+      "name": {
+        "rename-fields-by-regex": ""
+      }
+    },
     "rename-by-regex-transformer-editor": {
       "label-match": "Cocok",
       "label-replace": "Ganti",
@@ -12449,11 +12813,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Bidang",
-      "label-mode": "Mode"
+      "label-mode": "Mode",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "",
+          "join-on-a-field": "",
+          "keep-all-rows": ""
+        },
+        "label": {
+          "inner": "",
+          "outer-tabular": "",
+          "outer-time-series": ""
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "name": {
+        "series-to-rows": ""
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": ""
+      },
       "label-field": "Bidang",
       "label-reverse": "Balik",
+      "name": {
+        "sort-by": ""
+      },
       "placeholder-select-field": "Pilih bidang"
     },
     "supplier": {
@@ -12473,6 +12863,17 @@
         "transform": "Ubah"
       }
     },
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": ""
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": ""
+      },
+      "name": {
+        "time-series-to-table": ""
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Bidang waktu",
@@ -12486,9 +12887,33 @@
       "placeholder-value": "Nilai",
       "tooltip-name-for-value-fields": "Nama untuk bidang nilai"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": ""
+      },
+      "name": {
+        "transpose": ""
+      },
+      "tags": {
+        "pivot": "",
+        "transform": "",
+        "translate": ""
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "Pengoperasian",
       "placeholder-field": "Bidang"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "",
+        "combine": "",
+        "create-new-visualization": "",
+        "filter": "",
+        "perform-spatial-operations": "",
+        "reformat": "",
+        "reorder-and-rename": ""
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "Beberapa bidang nilai dari jenis apa pun",

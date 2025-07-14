@@ -111,8 +111,5 @@ TableFieldOptions: {
 
 TablePillCellOptions: {
   type: TableCellDisplayMode & "pill"
-  color?: string
-  colorMode?: "auto" | "fixed" | "mapped"
   wrapText?: bool
 } @cuetsy(kind="interface")
-
