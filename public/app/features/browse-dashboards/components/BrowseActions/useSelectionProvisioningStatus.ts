@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -19,6 +19,7 @@ export function useSelectionProvisioningStatus(
   const isProvisionedInstance = useIsProvisionedInstance();
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
+  const provisioningEnabled = config.featureToggles.provisioning;
 
   const [status, setStatus] = useState({ hasProvisioned: false, hasNonProvisioned: false });
 
@@ -98,6 +99,11 @@ export function useSelectionProvisioningStatus(
         return;
       }
 
+      if (!provisioningEnabled) {
+        setStatus({ hasProvisioned: false, hasNonProvisioned: true });
+        return;
+      }
+
       const folders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
       const dashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
 
@@ -122,7 +128,15 @@ export function useSelectionProvisioningStatus(
     };
 
     checkProvisioningStatus();
-  }, [selectedItems, isProvisionedInstance, isParentProvisioned, isSearching, findItemInState, checkItemProvisioning]);
+  }, [
+    selectedItems,
+    isProvisionedInstance,
+    isParentProvisioned,
+    isSearching,
+    findItemInState,
+    checkItemProvisioning,
+    provisioningEnabled,
+  ]);
 
   return status;
 }
