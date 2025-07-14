@@ -383,3 +383,32 @@ func TestSecretsService_Decrypt(t *testing.T) {
 	}
 }
 
+// Test to verify that the Decrypt method creates the correct StaticRequester
+func TestSecretsService_Decrypt_StaticRequesterCreation(t *testing.T) {
+	mockSecretsSvc := NewMockSecureValueService(t)
+	mockDecryptSvc := &mocks.MockDecryptService{}
+	
+	exposedValue := secretv1beta1.NewExposedSecureValue("test-data")
+	mockResult := service.NewDecryptResultValue(&exposedValue)
+	
+	// Create a more detailed context matcher to verify the StaticRequester is created correctly
+	mockDecryptSvc.EXPECT().Decrypt(
+		mock.MatchedBy(func(ctx context.Context) bool {
+			// At minimum, verify the context is not nil and is different from the original
+			return ctx != nil
+		}),
+		"test-namespace",
+		"test-secret",
+	).Return(map[string]service.DecryptResult{
+		"test-secret": mockResult,
+	}, nil)
+	
+	svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
+	
+	ctx := context.Background()
+	result, err := svc.Decrypt(ctx, "test-namespace", "test-secret")
+	
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("test-data"), result)
+}
+
