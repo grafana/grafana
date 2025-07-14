@@ -208,19 +208,6 @@ func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	return splitResponse{er, http.Header{}}
 }
 
-// used in the query service
-func Handle(ctx context.Context, log log.Logger, dscache datasources.CacheService, req *parsedRequest, exprService *expr.Service) (*backend.QueryDataResponse, error) {
-	s := &ServiceImpl{
-		log:               log,
-		dataSourceCache:   dscache,
-		expressionService: exprService,
-		// dataSourceClient:  getDatasourceClient,
-		// pCtxProvider:      pCtxProvider, // todo??
-		//ExecutePipeline:   ExecutePipelineWithClient, <=== how does expecute pipeline work when we haven't defined it?
-	} // or however you initialize it
-	return s.handleExpressions(ctx, nil, req)
-}
-
 func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheService, exprService *expr.Service, reqDTO dtos.MetricRequest, mtDatasourceClientBuilder mtdsclient.MTDatasourceClientBuilder, headers map[string]string) (*backend.QueryDataResponse, error) {
 	s := &ServiceImpl{
 		log:                        log,
@@ -233,8 +220,7 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 	return s.QueryData(ctx, nil, false, reqDTO)
 }
 
-// QUESTION: is this comment accurate?
-// handleExpressions handles POST /api/ds/query when there is an expression.
+// handleExpressions handles queries when there is an expression.
 func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
 		Queries: []expr.Query{},
@@ -268,7 +254,6 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 		})
 	}
 
-	// inside query service but now calling a piece from single tenant grafana
 	qdr, err := s.expressionService.TransformData(ctx, time.Now(), &exprReq) // use time now because all queries have absolute time range
 	if err != nil {
 		return nil, fmt.Errorf("expression request error: %w", err)
@@ -301,6 +286,11 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 	}
 
 	mtDsClient, err := s.mtDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
+	//s.BuildClient
+	//s.QueryData
+	//s.client.QueryData()
+	//client := s.client(type, uid)
+	//client.QueryData
 	if err != nil { // single tenant flow
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 		if err != nil {
@@ -323,19 +313,6 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		}
 		return mtDsClient.QueryData(ctx, *k8sReq)
 	}
-}
-
-func Parse(ctx context.Context, log log.Logger, dscache datasources.CacheService, reqDTO dtos.MetricRequest) (req *parsedRequest, hasExpression bool, err error) {
-	s := &ServiceImpl{
-		log:             log,
-		dataSourceCache: dscache,
-	} // or however you initialize it
-	req, err = s.parseMetricRequest(ctx, nil, true, reqDTO)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return req, req.hasExpression, nil
 }
 
 // parseRequest parses a request into parsed queries grouped by datasource uid

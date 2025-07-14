@@ -50,7 +50,6 @@ type QueryAPIBuilder struct {
 	registry       query.DataSourceApiServerRegistry
 	converter      *expr.ResultConverter
 	queryTypes     *query.QueryTypeDefinitionList
-	// exprService    *expr.Service
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
@@ -60,7 +59,6 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	legacy service.LegacyDataSourceLookup,
 	registerer prometheus.Registerer,
 	tracer tracing.Tracer,
-	// exprService *expr.Service,
 ) (*QueryAPIBuilder, error) {
 	reader := expr.NewExpressionQueryReader(features)
 
@@ -94,7 +92,6 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 			Features: features,
 			Tracer:   tracer,
 		},
-		// exprService: exprService,
 	}, nil
 }
 

@@ -24,8 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/datasources/service"
-	sse_query "github.com/grafana/grafana/pkg/services/query"
+	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
+	service "github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -35,7 +35,7 @@ type queryREST struct {
 }
 
 type MyCacheService struct {
-	legacy service.LegacyDataSourceLookup
+	legacy ds_service.LegacyDataSourceLookup
 }
 
 func (mcs *MyCacheService) GetDatasource(ctx context.Context, datasourceID int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
@@ -254,8 +254,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		mtDsClientBuilder,
 	)
 
-	// todo this will have nothing to do with sse anymore move it somewhere more logical
-	qdr, err = sse_query.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
+	qdr, err = service.QueryData(ctx, b.log, cache, exprService, mReq, mtDsClientBuilder, headers)
 
 	if err != nil {
 		return qdr, err

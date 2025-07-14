@@ -43,38 +43,13 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": {},
       "cwd": "${workspaceFolder}",
-      "buildFlags": "-tags=enterprise",
       "args": [
         "apiserver",
-        "--secure-port=7501",
+        "--secure-port=8443",
         "--runtime-config=query.grafana.app/v0alpha1=true",
-        "--hg-key=foo",
-        "--skip-auth=true",
-        "--cloudconfig-url=https://localhost:6444",
-        "--query.datasource-api-server=prometheus=https://localhost:7447/apis/prometheus.datasource.grafana.app/v0alpha1",
-        "--query.hosted-grafana.domain=localhost",
-        "--enable-sql-expressions=true",
-        "--grafana.metrics.enable=true",
-        "--multitenantservice.insecure-skip-tls-verify=true",
-        "--query.datasource-api-server-rollout-percentage=prometheus=100"
-      ]
-    },
-    {
-      "name": "prom",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": "${workspaceFolder}/pkg/cmd/grafana/",
-      "env": {},
-      "cwd": "${workspaceFolder}",
-      "args": [
-        "apiserver",
-        "--secure-port=7447",
-        "--runtime-config=prometheus.datasource.grafana.app/v0alpha1=true",
-        "--skip-auth=true",
-        "--internal.insecure-skip-tls-verify=true",
-        "--cloudconfig-url=https://localhost:6444",
-        "--multitenantservice.insecure-skip-tls-verify=true"
+        "--grafana.authn.signing-keys-url=http://localhost:3000/api/signing-keys/keys",
+        "--hg-url=http://localhost:3000",
+        "--hg-key=$HGAPIKEY"
       ]
     },
     {
