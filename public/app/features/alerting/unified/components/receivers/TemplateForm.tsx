@@ -281,7 +281,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                   </Dropdown>
                                 )}
                                 {/* GenAI button – only available for Grafana Alertmanager and enterprise */}
-                                {isGrafanaAlertManager && AITemplateButtonComponent && (
+                                {isGrafanaAlertManager && (
                                   <AITemplateButtonComponent
                                     onTemplateGenerated={handleTemplateGenerated}
                                     disabled={isProvisioned}

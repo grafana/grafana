@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType, createElement } from 'react';
 
 // Define the props interface locally to avoid import issues
 export interface GenAITemplateButtonProps {
@@ -6,8 +6,16 @@ export interface GenAITemplateButtonProps {
   disabled?: boolean;
 }
 
-export let AITemplateButtonComponent: ComponentType<GenAITemplateButtonProps> | null = null;
+export let InternalAITemplateButtonComponent: ComponentType<GenAITemplateButtonProps> | null = null;
+
+// this is the component that is used by the consumer in the grafana repo
+export const AITemplateButtonComponent: ComponentType<GenAITemplateButtonProps> = (props) => {
+  if (!InternalAITemplateButtonComponent) {
+    return null;
+  }
+  return createElement(InternalAITemplateButtonComponent, props);
+};
 
 export function addAITemplateButton(component: ComponentType<GenAITemplateButtonProps> | null) {
-  AITemplateButtonComponent = component;
+  InternalAITemplateButtonComponent = component;
 }

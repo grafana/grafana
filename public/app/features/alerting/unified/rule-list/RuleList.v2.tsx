@@ -87,7 +87,7 @@ export function RuleListActions() {
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}
-      {canCreateGrafanaRules && AIAlertRuleButtonComponent && <AIAlertRuleButtonComponent />}
+      {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
       <Dropdown overlay={moreActionsMenu}>
         <Button variant="secondary">
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />

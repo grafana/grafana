@@ -139,9 +139,7 @@ const AnnotationsStep = () => {
       fullWidth
     >
       <Stack direction="column" gap={1}>
-        {isGrafanaManagedRuleByType(type) && AIImproveAnnotationsButtonComponent && (
-          <AIImproveAnnotationsButtonComponent />
-        )}
+        {isGrafanaManagedRuleByType(type) && <AIImproveAnnotationsButtonComponent />}
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
@@ -177,6 +175,7 @@ const AnnotationsStep = () => {
                       className={cx(styles.flexRowItemMargin, styles.field)}
                       invalid={!!errors.annotations?.[index]?.value?.message}
                       error={errors.annotations?.[index]?.value?.message}
+                      noMargin
                     >
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
@@ -186,15 +185,15 @@ const AnnotationsStep = () => {
                         placeholder={
                           isUrl
                             ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                              'https://'
+                            'https://'
                             : (annotationField.key &&
-                                t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
-                                  key: annotationField.key,
-                                })) ||
-                              t(
-                                'alerting.annotations-step.placeholder-value-input-default',
-                                'Enter custom annotation content...'
-                              )
+                              t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
+                                key: annotationField.key,
+                              })) ||
+                            t(
+                              'alerting.annotations-step.placeholder-value-input-default',
+                              'Enter custom annotation content...'
+                            )
                         }
                         defaultValue={annotationField.value}
                       />

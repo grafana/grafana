@@ -131,11 +131,10 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
     <Stack direction="column" gap={0}>
       <div className={styles.headerContainer}>
         <ListHeader />
-        {AITriageButtonComponent && (
-          <div className={styles.triageButtonContainer}>
-            <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
-          </div>
-        )}
+
+        <div className={styles.triageButtonContainer}>
+          <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
+        </div>
       </div>
       <ul>
         {pageItems.map((record) => {

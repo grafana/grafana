@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType, createElement } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
@@ -10,8 +10,15 @@ export interface GenAITriageButtonProps {
   timeRange: TimeRange;
 }
 
-export let AITriageButtonComponent: ComponentType<GenAITriageButtonProps> | null = null;
+export let InternalAITriageButtonComponent: ComponentType<GenAITriageButtonProps> | null = null;
+
+export const AITriageButtonComponent: ComponentType<GenAITriageButtonProps> = (props) => {
+  if (!InternalAITriageButtonComponent) {
+    return null;
+  }
+  return createElement(InternalAITriageButtonComponent, props);
+};
 
 export function addAITriageButton(component: ComponentType<GenAITriageButtonProps> | null) {
-  AITriageButtonComponent = component;
+  InternalAITriageButtonComponent = component;
 }
