@@ -506,7 +506,14 @@ export function useRowHeight({
       }
 
       // regular rows
-      const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
+      const {
+        text: maxLinesText,
+        idx: maxLinesIdx,
+        numLines: maxNumLines,
+      } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
+      if (!maxLinesText) {
+        return Math.ceil(maxNumLines) * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      }
       return calcRowHeight(maxLinesText, colWidths[maxLinesIdx], defaultHeight);
     };
   }, [

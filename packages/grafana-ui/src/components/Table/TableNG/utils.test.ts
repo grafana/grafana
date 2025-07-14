@@ -1145,6 +1145,11 @@ describe('TableNG utils', () => {
           name: 'Field with links',
           type: FieldType.string,
           config: {
+            links: [
+              { title: 'Link One', url: 'http://example.com/1' },
+              { title: 'Another Link', url: 'http://example.com/2' },
+              { title: 'The longest link title of all', url: 'http://example.com/3' },
+            ],
             custom: {
               cellOptions: {
                 type: TableCellDisplayMode.DataLinks,
@@ -1152,12 +1157,6 @@ describe('TableNG utils', () => {
             },
           },
           values: ['short', 'a bit longer text'],
-          // @ts-ignore: this mock works fine for this test.
-          getLinks: jest.fn(() => [
-            { title: 'Link One', href: 'http://example.com/1', target: '_blank', origin: {} },
-            { title: 'Another Link', href: 'http://example.com/2', target: '_blank', origin: {} },
-            { title: 'The longest link title of all', href: 'http://example.com/3', target: '_blank', origin: {} },
-          ]),
         },
       ];
       // Simulate a narrow column width that would cause wrapping
@@ -1167,8 +1166,8 @@ describe('TableNG utils', () => {
 
       expect(result).toEqual({
         idx: 0,
-        numLines: 2.65,
-        text: 'Link One, Another Link, The longest link title of all',
+        numLines: 3,
+        text: '',
       });
     });
 
