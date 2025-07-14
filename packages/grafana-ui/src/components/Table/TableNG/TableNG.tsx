@@ -185,7 +185,6 @@ export function TableNG(props: TableNGProps) {
     fields: visibleFields,
     hasNestedFrames,
     defaultHeight: defaultRowHeight,
-    headerHeight,
     expandedRows,
     typographyCtx,
   });

@@ -5,7 +5,7 @@ import { varPreLine } from 'uwrap';
 import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
-import { TableCellDisplayMode, TableColumnResizeActionCallback } from '../types';
+import { TableColumnResizeActionCallback } from '../types';
 
 import { TABLE } from './constants';
 import { FilterType, TableFooterCalc, TableRow, TableSortByFieldState, TableSummaryRow } from './types';
@@ -440,7 +440,6 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: number;
-  headerHeight: number;
   expandedRows: Record<string, boolean>;
   typographyCtx: TypographyCtx;
 }
@@ -450,7 +449,6 @@ export function useRowHeight({
   fields,
   hasNestedFrames,
   defaultHeight,
-  headerHeight,
   expandedRows,
   typographyCtx: { calcRowHeight, avgCharWidth },
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {
@@ -458,17 +456,12 @@ export function useRowHeight({
     let hasWrappedCols = false;
     return [
       fields.map((field) => {
-        if (field.type !== FieldType.string) {
+        const cellOptions = getCellOptions(field);
+        if (!('wrapText' in cellOptions)) {
           return false;
         }
-
-        const cellOptions = getCellOptions(field);
-        const wrapText = 'wrapText' in cellOptions && cellOptions.wrapText;
-        const type = cellOptions.type;
-        const result = !!wrapText && type !== TableCellDisplayMode.Image;
-        if (result === true) {
-          hasWrappedCols = true;
-        }
+        const result = Boolean(cellOptions.wrapText);
+        hasWrappedCols = hasWrappedCols || result;
         return result;
       }),
       hasWrappedCols,
