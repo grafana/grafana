@@ -3517,6 +3517,7 @@
     },
     "folder-actions-button": {
       "delete": "Delete",
+      "delete-folder-error": "Error deleting folder. Please try again later.",
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move"
