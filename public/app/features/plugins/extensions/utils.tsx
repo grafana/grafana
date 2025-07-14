@@ -329,7 +329,7 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
 
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
-          cache.set(value, getMutationObserverProxy(value, { log, source, pluginId }));
+          cache.set(value, getMutationObserverProxy(value, { log, source, pluginId, pluginVersion }));
         }
         return cache.get(value);
       }

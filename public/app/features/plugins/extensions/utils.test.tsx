@@ -399,14 +399,17 @@ describe('Plugin Extensions / Utils', () => {
       });
 
       it('should be possible to modify values in proxied object, but logs an error', () => {
-        const proxy = getMutationObserverProxy({ a: 'a' }, { pluginId: 'myorg-cool-datasource', source: 'datasource' });
+        const proxy = getMutationObserverProxy(
+          { a: 'a' },
+          { pluginId: 'myorg-cool-datasource', source: 'datasource', pluginVersion: '1.2.3' }
+        );
 
         expect(() => {
           proxy.a = 'b';
         }).not.toThrow();
 
         expect(log.error).toHaveBeenCalledWith(
-          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version unknown`,
+          `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version 1.2.3`,
           {
             stack: expect.any(String),
           }
@@ -548,7 +551,11 @@ describe('Plugin Extensions / Utils', () => {
       config.buildInfo.env = 'development';
 
       const obj = { a: 'a' };
-      const copy = writableProxy(obj, { source: 'datasource', pluginId: 'myorg-cool-datasource' });
+      const copy = writableProxy(obj, {
+        source: 'datasource',
+        pluginId: 'myorg-cool-datasource',
+        pluginVersion: '1.2.3',
+      });
 
       expect(copy).not.toBe(obj);
       expect(copy.a).toBe('a');
@@ -558,7 +565,7 @@ describe('Plugin Extensions / Utils', () => {
       }).not.toThrow();
 
       expect(log.error).toHaveBeenCalledWith(
-        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version unknown`,
+        `Attempted to mutate object property "a" from datasource with id myorg-cool-datasource and version 1.2.3`,
         {
           stack: expect.any(String),
         }
