@@ -46,13 +46,16 @@ const customRawTimeRange = {
   to: '2023-06-19 23:59:00',
 };
 
+const mockOnApply = jest.fn();
+
 beforeEach(() => {
   mockSetCommonFormat(true);
+  mockOnApply.mockClear();
 });
 
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
   return {
-    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={() => {}} timeZone={timeZone} />),
+    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={mockOnApply} timeZone={timeZone} />),
     getCalendarDayByLabelText: (label: string) => {
       const item = screen.getByLabelText(label);
       return item?.parentElement as HTMLButtonElement;
@@ -79,7 +82,6 @@ describe('TimeRangeForm', () => {
   });
 
   it('should display calendar when clicking the calendar icon', async () => {
-    const user = userEvent.setup();
     setup();
     const { TimePicker } = selectors.components;
     const openCalendarButton = screen.getAllByRole('button', { name: 'Open calendar' });
@@ -115,6 +117,29 @@ describe('TimeRangeForm', () => {
     expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
   });
 
+  describe('when common format are entered', () => {
+    it('parses those dates in the current timezone', async () => {
+      setup();
+
+      const fromInput = screen.getByLabelText('From');
+      const toInput = screen.getByLabelText('To');
+      await user.clear(fromInput);
+      await user.type(fromInput, '2021-05-10 20:00:00');
+      await user.clear(toInput);
+      await user.type(toInput, '2021-05-12 19:59:00');
+
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
+      expect(appliedOrUndefined).not.toBe(undefined);
+      const applied = appliedOrUndefined!; // previous line throws if undefined
+      expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
+      expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
+    });
+  });
+
+  // once localeFormatPreference is permanently on, the only tests that should remain
+  // in this block will be ones that ensures the system format is *not* used
   describe('Given custom system date format', () => {
     const originalFullDate = systemDateFormats.fullDate;
     beforeEach(() => {
@@ -142,9 +167,31 @@ describe('TimeRangeForm', () => {
       expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
     });
 
-    // Remove this test once localeFormatPreference is permanently on
+    describe('when common format dates are entered', () => {
+      it('parses those dates in the current timezone', async () => {
+        setup();
+
+        const fromInput = screen.getByLabelText('From');
+        const toInput = screen.getByLabelText('To');
+        await user.clear(fromInput);
+        await user.type(fromInput, '2021-05-10 20:00:00');
+        await user.clear(toInput);
+        await user.type(toInput, '2021-05-12 19:59:00');
+
+        await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+        const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
+        expect(appliedOrUndefined).not.toBe(undefined);
+        const applied = appliedOrUndefined!; // previous line throws if undefined
+        expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
+        expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
+      });
+    });
+
     describe('when the localeFormatPreference feature toggle is off', () => {
       beforeEach(() => {
+        // when localeFormatPreference is permanently on, the parent describe block ("Given custom systemdate format")
+        // needs to be cleared out as most of these tests will be redundant.
         mockSetCommonFormat(false);
       });
 
@@ -163,6 +210,48 @@ describe('TimeRangeForm', () => {
 
         expect(getByLabelText('From')).toHaveValue('16.06.2021 20:00:00');
         expect(getByLabelText('To')).toHaveValue('19.06.2021 19:59:00');
+      });
+
+      describe('when common format dates are entered', () => {
+        it('should show an error because of parsing failure', async () => {
+          setup();
+
+          const fromInput = screen.getByLabelText('From');
+          const toInput = screen.getByLabelText('To');
+          await user.clear(fromInput);
+          await user.type(fromInput, '2021-05-10 20:00:00');
+          await user.clear(toInput);
+          await user.type(toInput, '2021-05-12 19:59:00');
+
+          await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+          const error = screen.getAllByRole('alert');
+
+          expect(error).toHaveLength(2);
+          expect(error[0]).toBeVisible();
+          expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+        });
+      });
+
+      describe('when common format dates are entered', () => {
+        it('should show an error because of parsing failure', async () => {
+          setup();
+
+          const fromInput = screen.getByLabelText('From');
+          const toInput = screen.getByLabelText('To');
+          await user.clear(fromInput);
+          await user.type(fromInput, '10.05.2021 20:00:00');
+          await user.clear(toInput);
+          await user.type(toInput, '12.05.2021 19:59:00');
+
+          await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+          const appliedOrUndefined = mockOnApply.mock.lastCall?.at(0) as undefined | TimeRange;
+          expect(appliedOrUndefined).not.toBe(undefined);
+          const applied = appliedOrUndefined!; // previous line throws if undefined
+          expect(applied.from.toISOString()).toBe('2021-05-10T20:00:00.000Z');
+          expect(applied.to.toISOString()).toBe('2021-05-12T19:59:00.000Z');
+        });
       });
     });
   });
