@@ -9,6 +9,7 @@ import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
 import { trackCreateDashboardClicked } from '../tracking';
+import { sanitizeUrl } from '@grafana/data/internal';
 
 export type Props = {
   testingStatus?: TestingStatus;
@@ -185,7 +186,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
             <div className={styles.linksContainer}>
               {links.map((link) => {
                 return (
-                  <a key={link.id} href={link.path} onClick={link.onClick} className={styles.pluginLink}>
+                  <a key={link.id} href={link.path ? sanitizeUrl(link.path) : undefined} onClick={link.onClick} className={styles.pluginLink}>
                     {link.title}
                   </a>
                 );
@@ -208,7 +209,8 @@ const getTestingStatusStyles = (theme: GrafanaTheme2) => ({
     marginBlock: theme.spacing(1),
   }),
   linksContainer: css({
-    float: 'right',
+    display: 'flex',
+    justifyContent: 'flex-end',
     marginTop: theme.spacing(1),
   }),
   pluginLink: css({
