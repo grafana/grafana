@@ -105,12 +105,12 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} minmax(min-content, 20vw) 1fr`,
+    gridTemplateColumns: `${theme.spacing(11.5)} auto 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `minmax(min-content, 20vw) 1fr`,
+    gridTemplateColumns: `auto 1fr`,
   }),
 });
 
