@@ -196,6 +196,7 @@ export enum PluginExtensionPoints {
   TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
+  ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
 }
 
 export type PluginExtensionPanelContext = {

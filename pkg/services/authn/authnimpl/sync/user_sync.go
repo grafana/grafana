@@ -133,7 +133,6 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, currentIden
 	log := s.log.FromContext(ctx).New("auth_module", currentIdentity.AuthenticatedBy, "auth_id", currentIdentity.AuthID)
 
 	if !currentIdentity.ClientParams.SyncUser {
-		log.Debug("Skipping user provisioning validation, syncUser is disabled")
 		return nil
 	}
 

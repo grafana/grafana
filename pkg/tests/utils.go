@@ -5,10 +5,13 @@ import (
 	"crypto/tls"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-openapi/strfmt"
 	goapi "github.com/grafana/grafana-openapi-client-go/client"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -19,8 +22,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
+
+func SkipIntegrationTestInShortMode(t testing.TB) {
+	t.Helper()
+	if !strings.HasPrefix(t.Name(), "TestIntegration") {
+		t.Fatal("test is not an integration test")
+	}
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+}
 
 func CreateUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
 	t.Helper()
