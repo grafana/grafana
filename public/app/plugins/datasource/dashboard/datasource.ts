@@ -289,7 +289,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   /**
    * Handle unsupported field types
    */
-  private compareUnsupportedValues = (fieldValue: any, filter: AdHocVariableFilter): boolean => {
+  private compareUnsupportedValues = (_fieldValue: any, _filter: AdHocVariableFilter): boolean => {
     // unknown field type, skip this filter
     return true;
   };
