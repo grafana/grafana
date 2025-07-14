@@ -892,7 +892,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.WebhookStatus{
-						SecretName: "test-secret",
+						EncryptedSecret: []byte("test-secret"),
 					},
 				},
 			},
@@ -919,7 +919,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.WebhookStatus{
-						SecretName: "test-secret",
+						EncryptedSecret: []byte("test-secret"),
 					},
 				},
 			},
@@ -964,7 +964,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.WebhookStatus{
-						SecretName: "test-secret",
+						EncryptedSecret: []byte("test-secret"),
 					},
 				},
 			},

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -40,6 +41,7 @@ type githubWebhookRepository struct {
 	legacySecrets secrets.LegacyService
 	gh            pgh.Client
 	webhookURL    string
+	features      featuremgmt.FeatureToggles
 }
 
 func NewGithubWebhookRepository(
@@ -47,6 +49,7 @@ func NewGithubWebhookRepository(
 	webhookURL string,
 	secrets secrets.Service,
 	legacySecrets secrets.LegacyService,
+	features featuremgmt.FeatureToggles,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository: basic,
@@ -57,6 +60,7 @@ func NewGithubWebhookRepository(
 		webhookURL:       webhookURL,
 		secrets:          secrets,
 		legacySecrets:    legacySecrets,
+		features:         features,
 	}
 }
 
@@ -68,8 +72,8 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 
 	var secret []byte
 	var err error
-	if r.config.Status.Webhook.SecretName != "" {
-		secret, err = r.secrets.Decrypt(ctx, r.config.Namespace, r.config.Status.Webhook.SecretName)
+	if r.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+		secret, err = r.secrets.Decrypt(ctx, r.config.Namespace, string(r.config.Status.Webhook.EncryptedSecret))
 	} else {
 		secret, err = r.legacySecrets.Decrypt(ctx, r.config.Status.Webhook.EncryptedSecret)
 	}

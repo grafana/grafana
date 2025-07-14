@@ -139,18 +139,27 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) error {
 	// Encrypt webhook secret if present
 	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
-		name := r.Status.Webhook.SecretName
-		if name == "" {
-			name = r.GetName() + "-webhook-secret"
+		var encryptedSecret []byte
+		if e.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+			name := r.Status.Webhook.EncryptedSecret
+			if name == nil {
+				name = []byte(r.GetName() + "-webhook-secret")
+			}
+
+			secretName, err := e.secrets.Encrypt(ctx, r.GetNamespace(), string(name), r.Status.Webhook.Secret)
+			if err != nil {
+				return fmt.Errorf("failed to encrypt webhook secret: %w", err)
+			}
+			encryptedSecret = []byte(secretName)
+		} else {
+			var err error
+			encryptedSecret, err = e.legacySecrets.Encrypt(ctx, []byte(r.Status.Webhook.Secret))
+			if err != nil {
+				return fmt.Errorf("failed to encrypt webhook secret: %w", err)
+			}
 		}
 
-		_, err := e.secrets.Encrypt(ctx, r.GetNamespace(), name, r.Status.Webhook.Secret)
-		if err != nil {
-			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
-		}
-
-		r.Status.Webhook.SecretName = name
-		r.Status.Webhook.EncryptedSecret = nil
+		r.Status.Webhook.EncryptedSecret = encryptedSecret
 		r.Status.Webhook.Secret = ""
 	}
 
@@ -202,18 +211,20 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
-		if ghToken == "" && ghCfg.TokenSecretName != "" {
-			decrypted, err := e.secrets.Decrypt(ctx, r.GetNamespace(), ghCfg.TokenSecretName)
-			if err != nil {
-				return nil, fmt.Errorf("decrypt github token: %w", err)
+		if ghToken == "" {
+			if e.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+				decrypted, err := e.secrets.Decrypt(ctx, r.GetNamespace(), string(ghCfg.EncryptedToken))
+				if err != nil {
+					return nil, fmt.Errorf("decrypt github token: %w", err)
+				}
+				ghToken = string(decrypted)
+			} else {
+				decrypted, err := e.legacySecrets.Decrypt(ctx, ghCfg.EncryptedToken)
+				if err != nil {
+					return nil, fmt.Errorf("decrypt github token: %w", err)
+				}
+				ghToken = string(decrypted)
 			}
-			ghToken = string(decrypted)
-		} else if ghToken == "" && ghCfg.EncryptedToken != nil {
-			decrypted, err := e.legacySecrets.Decrypt(ctx, ghCfg.EncryptedToken)
-			if err != nil {
-				return nil, fmt.Errorf("decrypt github token: %w", err)
-			}
-			ghToken = string(decrypted)
 		}
 
 		gitCfg := git.RepositoryConfig{
@@ -234,7 +245,7 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}
 
-		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets, e.legacySecrets), nil
+		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets, e.legacySecrets, e.features), nil
 	}
 
 	return nil, nil

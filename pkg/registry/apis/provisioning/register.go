@@ -494,19 +494,29 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
 	if repo.Spec.GitHub != nil &&
 		repo.Spec.GitHub.Token != "" {
-		name := repo.Spec.GitHub.TokenSecretName
-		if name == "" {
-			name = repo.Name + "-github-token"
+		var encryptedToken []byte
+		if b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+			secretName := repo.Spec.GitHub.EncryptedToken
+			if secretName == nil {
+				secretName = []byte(repo.Name + "-github-token")
+			}
+
+			name, err := b.secrets.Encrypt(ctx, repo.GetNamespace(), string(secretName), repo.Spec.GitHub.Token)
+			if err != nil {
+				return err
+			}
+
+			encryptedToken = []byte(name)
+		} else {
+			var err error
+			encryptedToken, err = b.legacySecrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+			if err != nil {
+				return err
+			}
 		}
 
-		_, err := b.secrets.Encrypt(ctx, repo.Namespace, name, repo.Spec.GitHub.Token)
-		if err != nil {
-			return err
-		}
-
-		repo.Spec.GitHub.TokenSecretName = name
-		repo.Spec.GitHub.EncryptedToken = nil
 		repo.Spec.GitHub.Token = ""
+		repo.Spec.GitHub.EncryptedToken = encryptedToken
 	}
 
 	return nil
@@ -517,17 +527,27 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
 	if repo.Spec.Git != nil &&
 		repo.Spec.Git.Token != "" {
-		name := repo.Spec.Git.TokenSecretName
-		if name == "" {
-			name = repo.Name + "-git-token"
-		}
-		_, err := b.secrets.Encrypt(ctx, repo.Namespace, name, repo.Spec.Git.Token)
-		if err != nil {
-			return err
+		var encryptedToken []byte
+		if b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+			secretName := repo.Spec.Git.EncryptedToken
+			if secretName == nil {
+				secretName = []byte(repo.Name + "-git-token")
+			}
+
+			name, err := b.secrets.Encrypt(ctx, repo.GetNamespace(), string(secretName), repo.Spec.Git.Token)
+			if err != nil {
+				return err
+			}
+			encryptedToken = []byte(name)
+		} else {
+			var err error
+			encryptedToken, err = b.legacySecrets.Encrypt(ctx, []byte(repo.Spec.Git.Token))
+			if err != nil {
+				return err
+			}
 		}
 
-		repo.Spec.Git.TokenSecretName = name
-		repo.Spec.Git.EncryptedToken = nil
+		repo.Spec.Git.EncryptedToken = encryptedToken
 		repo.Spec.Git.Token = ""
 	}
 
@@ -1236,19 +1256,20 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	case provisioning.GitRepositoryType:
 		// Decrypt token if needed
 		token := r.Spec.Git.Token
-
-		if token == "" && len(r.Spec.Git.EncryptedToken) > 0 {
-			decrypted, err := b.secrets.Decrypt(ctx, r.GetNamespace(), r.Spec.Git.TokenSecretName)
-			if err != nil {
-				return nil, fmt.Errorf("decrypt git token: %w", err)
+		if token == "" {
+			if b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+				decrypted, err := b.secrets.Decrypt(ctx, r.GetNamespace(), string(r.Spec.Git.EncryptedToken))
+				if err != nil {
+					return nil, fmt.Errorf("decrypt git token: %w", err)
+				}
+				token = string(decrypted)
+			} else {
+				decrypted, err := b.legacySecrets.Decrypt(ctx, r.Spec.Git.EncryptedToken)
+				if err != nil {
+					return nil, fmt.Errorf("decrypt git token: %w", err)
+				}
+				token = string(decrypted)
 			}
-			token = string(decrypted)
-		} else if token == "" && len(r.Spec.Git.TokenSecretName) > 0 {
-			decrypted, err := b.legacySecrets.Decrypt(ctx, r.Spec.Git.EncryptedToken)
-			if err != nil {
-				return nil, fmt.Errorf("decrypt git token: %w", err)
-			}
-			token = string(decrypted)
 		}
 
 		return git.NewGitRepository(ctx, r, git.RepositoryConfig{
@@ -1269,18 +1290,20 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
-		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := b.secrets.Decrypt(ctx, r.GetNamespace(), ghCfg.TokenSecretName)
-			if err != nil {
-				return nil, fmt.Errorf("decrypt github token: %w", err)
+		if ghToken == "" {
+			if b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+				decrypted, err := b.secrets.Decrypt(ctx, r.GetNamespace(), string(ghCfg.EncryptedToken))
+				if err != nil {
+					return nil, fmt.Errorf("decrypt github token: %w", err)
+				}
+				ghToken = string(decrypted)
+			} else {
+				decrypted, err := b.legacySecrets.Decrypt(ctx, ghCfg.EncryptedToken)
+				if err != nil {
+					return nil, fmt.Errorf("decrypt github token: %w", err)
+				}
+				ghToken = string(decrypted)
 			}
-			ghToken = string(decrypted)
-		} else if ghToken == "" && len(ghCfg.TokenSecretName) > 0 {
-			decrypted, err := b.legacySecrets.Decrypt(ctx, ghCfg.EncryptedToken)
-			if err != nil {
-				return nil, fmt.Errorf("decrypt github token: %w", err)
-			}
-			ghToken = string(decrypted)
 		}
 
 		gitCfg := git.RepositoryConfig{
