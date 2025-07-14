@@ -1,3 +1,4 @@
+import { ExtensionInfo } from '@grafana/data';
 import { Dropdown, Menu } from '@grafana/ui';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -9,87 +10,75 @@ import {
 } from './ExtensionSidebarProvider';
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
-export function ExtensionToolbarItem() {
-  const { availableComponents, dockedComponentId, setDockedComponentId, isOpen, isEnabled } =
-    useExtensionSidebarContext();
+type ComponentWithPluginId = ExtensionInfo & { pluginId: string };
 
-  let dockedComponentTitle = '';
-  if (dockedComponentId) {
-    const dockedComponent = getComponentMetaFromComponentId(dockedComponentId);
-    if (dockedComponent) {
-      dockedComponentTitle = dockedComponent.componentTitle;
-    }
-  }
+export function ExtensionToolbarItem() {
+  const { availableComponents, dockedComponentId, setDockedComponentId, isEnabled } = useExtensionSidebarContext();
 
   if (!isEnabled || availableComponents.size === 0) {
     return null;
   }
 
-  // get a flat list of all components with their pluginId
-  const components = Array.from(availableComponents.entries()).flatMap(([pluginId, { addedComponents }]) =>
-    addedComponents.map((c) => ({ ...c, pluginId }))
-  );
+  const dockedMeta = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId) : null;
 
-  if (components.length === 0) {
-    return null;
-  }
+  const renderPluginButton = (pluginId: string, components: ComponentWithPluginId[]) => {
+    if (components.length === 1) {
+      const component = components[0];
+      const componentId = getComponentIdFromComponentMeta(pluginId, component);
+      const isActive = dockedComponentId === componentId;
 
-  if (components.length === 1) {
-    return (
-      <>
+      return (
         <ExtensionToolbarItemButton
-          isOpen={isOpen}
-          title={components[0].title}
-          onClick={() => {
-            if (isOpen) {
-              setDockedComponentId(undefined);
-            } else {
-              setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
-            }
-          }}
+          key={pluginId}
+          isOpen={isActive}
+          title={component.title}
+          onClick={() => setDockedComponentId(isActive ? undefined : componentId)}
+          pluginId={pluginId}
         />
-        <NavToolbarSeparator />
-      </>
-    );
-  }
+      );
+    }
 
-  const MenuItems = (
-    <Menu>
-      {components.map((c) => {
-        const id = getComponentIdFromComponentMeta(c.pluginId, c);
-        return (
-          <Menu.Item
-            key={id}
-            active={dockedComponentId === id}
-            label={c.title}
-            onClick={() => {
-              if (isOpen && dockedComponentId === id) {
-                setDockedComponentId(undefined);
-              } else {
-                setDockedComponentId(id);
-              }
-            }}
-          />
-        );
-      })}
-    </Menu>
-  );
+    const isPluginActive = dockedMeta?.pluginId === pluginId;
+    const MenuItems = (
+      <Menu>
+        {components.map((c) => {
+          const id = getComponentIdFromComponentMeta(pluginId, c);
+          return (
+            <Menu.Item
+              key={id}
+              active={dockedComponentId === id}
+              label={c.title}
+              onClick={() => setDockedComponentId(dockedComponentId === id ? undefined : id)}
+            />
+          );
+        })}
+      </Menu>
+    );
+
+    return isPluginActive ? (
+      <ExtensionToolbarItemButton
+        key={pluginId}
+        isOpen
+        title={dockedMeta?.componentTitle}
+        onClick={() => setDockedComponentId(undefined)}
+        pluginId={pluginId}
+      />
+    ) : (
+      <Dropdown key={pluginId} overlay={MenuItems} placement="bottom-end">
+        <ExtensionToolbarItemButton isOpen={false} pluginId={pluginId} />
+      </Dropdown>
+    );
+  };
+
   return (
     <>
-      {isOpen ? (
-        <ExtensionToolbarItemButton
-          isOpen
-          title={dockedComponentTitle}
-          onClick={() => {
-            if (isOpen) {
-              setDockedComponentId(undefined);
-            }
-          }}
-        />
-      ) : (
-        <Dropdown overlay={MenuItems} placement="bottom-end">
-          <ExtensionToolbarItemButton isOpen={false} />
-        </Dropdown>
+      {/* renders a single `ExtensionToolbarItemButton` for each plugin; if a plugin has multiple components, it renders them inside a `Dropdown` */}
+      {Array.from(availableComponents.entries()).map(
+        ([pluginId, { addedComponents }]: [string, { addedComponents: ExtensionInfo[] }]) =>
+          renderPluginButton(
+            pluginId,
+            addedComponents.map((c: ExtensionInfo) => ({ ...c, pluginId }))
+          )
       )}
       <NavToolbarSeparator />
     </>

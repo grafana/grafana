@@ -201,9 +201,9 @@ Variables in data links and actions let you send people to a detailed dashboard 
 
 To see a list of available variables, enter `$` in the data link or action **URL** field.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Azure Monitor, [CloudWatch](ref:cloudwatch), and [Google Cloud Monitoring](ref:google-cloud-monitoring) have pre-configured data links called _deep links_.
 

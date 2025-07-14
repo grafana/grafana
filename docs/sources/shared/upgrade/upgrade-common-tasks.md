@@ -90,9 +90,9 @@ To upgrade Grafana running in a Docker container, complete the following steps:
 
 1. Run a commands similar to the following commands.
 
-   {{% admonition type="note" %}}
+   {{< admonition type="note" >}}
    This is an example. The parameters you enter depend on how you configured your Grafana container.
-   {{% /admonition %}}
+   {{< /admonition >}}
 
    ```bash
    docker pull grafana/grafana

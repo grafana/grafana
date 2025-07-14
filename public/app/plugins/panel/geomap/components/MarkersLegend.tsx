@@ -17,7 +17,7 @@ import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
 import { config } from 'app/core/config';
-import { DimensionSupplier } from 'app/features/dimensions';
+import { DimensionSupplier } from 'app/features/dimensions/types';
 
 import { StyleConfigState } from '../style/types';
 import { MapLayerState } from '../types';

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 
 import { IconName } from '@grafana/data';
+import { SceneObject } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 /**
@@ -69,16 +70,17 @@ export interface EditableDashboardElement {
    * Used to change name from outline
    */
   onChangeName?(name: string): { errorMessage?: string } | void;
+
+  /**
+   * Container objects can have children
+   */
+  getOutlineChildren?(): SceneObject[];
 }
 
 export interface EditableDashboardElementInfo {
   instanceName: string;
   typeName: string;
   icon: IconName;
-  /**
-   * Mark it as a container of other editable elements
-   */
-  isContainer?: boolean;
   isHidden?: boolean;
 }
 

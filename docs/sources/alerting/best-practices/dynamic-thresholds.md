@@ -120,13 +120,13 @@ In this example:
 
 The _Math_ expression works as long as each series in `$A` can be matched with exactly one series in `$B`. They must align in a way that produces a one-to-one match between series in `$A` and `$B`.
 
-{{% admonition type="caution" %}}
+{{< admonition type="caution" >}}
 
 If a series in one query doesn’t match any series in the other, it’s excluded from the result and a warning message is displayed:
 
 _1 items **dropped from union(s)**: ["$A > $B": ($B: {service=payment-api})]_
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Labels in both series don’t need to be identical**. If labels are a subset of the other, they can join. For example:
 

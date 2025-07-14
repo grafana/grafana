@@ -20,7 +20,7 @@ import {
 } from '@grafana/ui';
 
 import { getDebounceTimeInMilliseconds } from '../../../caching';
-import { METRIC_LABEL } from '../../../components/metrics-browser/types';
+import { METRIC_LABEL } from '../../../constants';
 import { regexifyLabelValuesQueryString } from '../../parsingUtils';
 import { formatPrometheusLabelFilters } from '../MetricCombobox';
 
@@ -32,8 +32,8 @@ import {
   calculatePageList,
   calculateResultsPerPage,
   displayedMetrics,
-  placeholders,
-  promTypes,
+  getPlaceholders,
+  getPromTypes,
   setMetrics,
   tracking,
 } from './state/helpers';
@@ -55,6 +55,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
+  const placeholders = getPlaceholders();
+  const promTypes = getPromTypes();
 
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
@@ -88,7 +90,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
       value: t.value,
-      label: t.value,
+      label: t.label,
       description: t.description,
     };
   });

@@ -12,6 +12,7 @@ import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } fro
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
 import { LogListModel } from './processing';
+import { LogLineVirtualization } from './virtualization';
 
 interface ChildrenProps {
   itemCount: number;
@@ -33,6 +34,7 @@ interface Props {
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
   timeZone: string;
+  virtualization: LogLineVirtualization;
   wrapLogMessage: boolean;
 }
 
@@ -51,6 +53,7 @@ export const InfiniteScroll = ({
   sortOrder,
   timeRange,
   timeZone,
+  virtualization,
   wrapLogMessage,
 }: Props) => {
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
@@ -61,7 +64,7 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, virtualization);
 
   useEffect(() => {
     // Logs have not changed, ignore effect
@@ -151,11 +154,13 @@ export const InfiniteScroll = ({
           displayedFields={displayedFields}
           index={index}
           log={logs[index]}
+          logs={logs}
           onClick={onClick}
           showTime={showTime}
           style={style}
           styles={styles}
           variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
+          virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
           onOverflow={handleOverflow}
         />
@@ -171,6 +176,7 @@ export const InfiniteScroll = ({
       showTime,
       sortOrder,
       styles,
+      virtualization,
       wrapLogMessage,
     ]
   );

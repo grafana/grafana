@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
@@ -130,6 +131,10 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(b.gv)
 }
 
+func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return nil
+}
+
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	scheme := opts.Scheme
 	optsGetter := opts.OptsGetter
@@ -188,6 +193,11 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage[resourceInfo.StoragePath("counts")] = &subCountREST{searcher: b.searcher}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc, b.ac}
 
+	// Adds a path to return children of a given folder
+	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{
+		lister: storage[resourceInfo.StoragePath()].(rest.Lister),
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[folders.VERSION] = storage
 	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
 	return nil
@@ -227,7 +237,7 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		f.Spec.Title = strings.Trim(f.Spec.Title, "")
+		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
 	}
 	return nil
@@ -291,6 +301,14 @@ func (b *FolderAPIBuilder) validateOnCreate(ctx context.Context, id string, obj 
 		if id == invalidName {
 			return dashboards.ErrFolderInvalidUID
 		}
+	}
+
+	if !util.IsValidShortUID(id) {
+		return dashboards.ErrDashboardInvalidUid
+	}
+
+	if util.IsShortUIDTooLong(id) {
+		return dashboards.ErrDashboardUidTooLong
 	}
 
 	f, ok := obj.(*folders.Folder)

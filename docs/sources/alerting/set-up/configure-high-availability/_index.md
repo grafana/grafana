@@ -69,11 +69,11 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
 As an alternative to Memberlist, you can configure Redis to enable high availability. Redis standalone, Redis Cluster and Redis Sentinel modes are supported.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 Memberlist is the preferred option for high availability. Use Redis only in environments where direct communication between Grafana servers is not possible, such as when TCP or UDP ports are blocked.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 1. Make sure you have a Redis server that supports pub/sub. If you use a proxy in front of your Redis cluster, make sure the proxy supports pub/sub.
 1. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the `[unified_alerting]` section.
@@ -163,13 +163,13 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
 When running multiple Grafana instances, all alert rules are evaluated on every instance. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` do not show any alert status.
 
 The HA settings (`ha_peers`, etc.) apply only to communication between alertmanagers, synchronizing silences and attempting to avoid duplicate notifications, as described in the introduction.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can also confirm your high availability setup by monitoring Alertmanager metrics exposed by Grafana.
 

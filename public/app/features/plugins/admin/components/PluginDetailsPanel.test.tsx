@@ -75,6 +75,7 @@ const mockPlugin: CatalogPlugin = {
     documentationUrl: 'https://test-plugin.com/docs',
     licenseUrl: 'https://github.com/grafana/test-plugin/blob/main/LICENSE',
     sponsorshipUrl: 'https://github.com/sponsors/grafana',
+    repositoryUrl: 'https://github.com/grafana/test-plugin',
     grafanaDependency: '>=9.0.0',
     statusContext: 'stable',
   },

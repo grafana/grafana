@@ -68,7 +68,7 @@ const (
 	defaultRecordingRequestTimeout         = 10 * time.Second
 	lokiDefaultMaxQuerySize                = 65536 // 64kb
 	defaultHistorianPrometheusWriteTimeout = 10 * time.Second
-	defaultHistorianPrometheusMetricName   = "ALERTS"
+	defaultHistorianPrometheusMetricName   = "GRAFANA_ALERTS"
 )
 
 var (

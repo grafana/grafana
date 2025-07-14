@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, FolderDTO } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { FolderDTO } from 'app/types/folders';
 
 function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDTO) {
   return folderDTO ? contextSrv.hasPermissionInMetadata(action, folderDTO) : contextSrv.hasPermission(action);

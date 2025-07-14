@@ -142,7 +142,7 @@ func RegisterAPIService(
 		folderClient:                 folderClient,
 
 		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter),
+			Access:           legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, accessControl),
 			DashboardService: dashboardService,
 		},
 		reg: reg,
@@ -189,6 +189,10 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	return scheme.SetVersionPriority(b.GetGroupVersions()...)
+}
+
+func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{dashv0.DashboardKind().Plural()}
 }
 
 // Validate validates dashboard operations for the apiserver
@@ -515,9 +519,21 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 
 	// Expose read only library panels
 	if libraryPanels != nil {
-		storage[libraryPanels.StoragePath()] = &LibraryPanelStore{
-			Access:       b.legacy.Access,
-			ResourceInfo: *libraryPanels,
+		legacyLibraryStore := &LibraryPanelStore{
+			Access:        b.legacy.Access,
+			ResourceInfo:  *libraryPanels,
+			AccessControl: b.accessControl,
+		}
+
+		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		libraryGr := libraryPanels.GroupResource()
+		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStore)
+		if err != nil {
+			return err
 		}
 	}
 

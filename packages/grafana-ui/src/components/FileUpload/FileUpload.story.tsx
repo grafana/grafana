@@ -4,7 +4,7 @@ import { FileUpload } from './FileUpload';
 import mdx from './FileUpload.mdx';
 
 const meta: Meta<typeof FileUpload> = {
-  title: 'Forms/FileUpload',
+  title: 'Inputs/FileUpload',
   component: FileUpload,
   parameters: {
     docs: {

@@ -1,16 +1,14 @@
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
-import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
-import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
+import { renderSingleLink } from '../../DataLinksActionsTooltip';
+import { useSingleLink } from '../hooks';
 import { JSONCellProps } from '../types';
-import { getCellLinks } from '../utils';
 
-export const JSONCell = ({ value, justifyContent, field, rowIdx, actions }: JSONCellProps) => {
+export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps) => {
   const styles = useStyles2(getStyles, justifyContent);
 
   let displayValue = value;
@@ -33,34 +31,9 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx, actions }: JSON
     }
   }
 
-  const links = getCellLinks(field, rowIdx) || [];
+  const link = useSingleLink(field, rowIdx);
 
-  const [tooltipCoords, setTooltipCoords] = useState<DataLinksActionsTooltipCoords>();
-  const { shouldShowLink, hasMultipleLinksOrActions } = getDataLinksActionsTooltipUtils(links, actions);
-  const shouldShowTooltip = hasMultipleLinksOrActions && tooltipCoords !== undefined;
-
-  return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
-    <div
-      className={styles.jsonText}
-      onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
-      style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
-    >
-      {shouldShowLink ? (
-        renderSingleLink(links[0], displayValue)
-      ) : shouldShowTooltip ? (
-        <DataLinksActionsTooltip
-          links={links}
-          actions={actions}
-          value={displayValue}
-          coords={tooltipCoords}
-          onTooltipClose={() => setTooltipCoords(undefined)}
-        />
-      ) : (
-        displayValue
-      )}
-    </div>
-  );
+  return <div className={styles.jsonText}>{link == null ? displayValue : renderSingleLink(link, displayValue)}</div>;
 };
 
 const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({

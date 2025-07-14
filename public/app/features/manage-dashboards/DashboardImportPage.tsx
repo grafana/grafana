@@ -28,7 +28,7 @@ import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { dispatch } from 'app/store/store';
-import { StoreState } from 'app/types';
+import { StoreState } from 'app/types/store';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
 import { ImportDashboardOverviewV2 } from '../dashboard-scene/v2schema/ImportDashboardOverviewV2';

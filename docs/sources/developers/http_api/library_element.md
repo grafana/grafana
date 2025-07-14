@@ -251,7 +251,7 @@ Content-Type: application/json
 {
     "result": [
         {
-            "id": 148,
+            "id": 148, // Deprecated: will be removed in the future.
             "kind": 1,
             "elementId": 25,
             "connectionId": 527,
@@ -441,9 +441,9 @@ Status Codes:
 
 Deletes an existing library element as specified by the UID. This operation cannot be reverted.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 You cannot delete a library element that is connected. This operation cannot be reverted.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Example Request**:
 

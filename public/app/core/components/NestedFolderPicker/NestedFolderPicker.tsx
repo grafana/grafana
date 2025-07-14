@@ -15,13 +15,14 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevelString } from 'app/types';
+import { PermissionLevelString } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
-import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
+import { useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
+import { ROOT_FOLDER_ITEM } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */

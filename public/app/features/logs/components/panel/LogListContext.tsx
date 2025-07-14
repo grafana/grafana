@@ -26,6 +26,7 @@ import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
 
+import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
@@ -34,6 +35,7 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
   detailsDisplayed: (log: LogListModel) => boolean;
+  detailsMode: LogLineDetailsMode;
   detailsWidth: number;
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
@@ -43,6 +45,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   hasUnescapedContent?: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
+  setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
   setFontSize: (size: LogListFontSize) => void;
@@ -64,6 +67,7 @@ export const LogListContext = createContext<LogListContextData>({
   closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
   detailsDisplayed: () => false,
+  detailsMode: 'sidebar',
   detailsWidth: 0,
   displayedFields: [],
   downloadLogs: () => {},
@@ -72,6 +76,7 @@ export const LogListContext = createContext<LogListContextData>({
   fontSize: 'default',
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
+  setDetailsMode: () => {},
   setDetailsWidth: () => {},
   setFilterLevels: () => {},
   setFontSize: () => {},
@@ -132,6 +137,7 @@ export interface Props {
   children?: ReactNode;
   // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
+  detailsMode?: LogLineDetailsMode;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -162,6 +168,7 @@ export interface Props {
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
   prettifyJSON?: boolean;
+  setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showUniqueLabels?: boolean;
   showTime: boolean;
@@ -175,6 +182,7 @@ export const LogListContextProvider = ({
   children,
   containerElement,
   enableLogDetails,
+  detailsMode: detailsModeProp,
   dedupStrategy,
   displayedFields,
   filterLevels,
@@ -204,6 +212,7 @@ export const LogListContextProvider = ({
   pinLineButtonTooltipTitle,
   pinnedLogs,
   prettifyJSON,
+  setDisplayedFields,
   showControls,
   showTime,
   showUniqueLabels,
@@ -228,6 +237,7 @@ export const LogListContextProvider = ({
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -261,10 +271,13 @@ export const LogListContextProvider = ({
     if (filterLevels === undefined) {
       return;
     }
-    if (!shallowCompare(logListState.filterLevels, filterLevels)) {
-      setLogListState({ ...logListState, filterLevels });
-    }
-  }, [filterLevels, logListState]);
+    setLogListState((logListState) => {
+      if (!shallowCompare(logListState.filterLevels, filterLevels)) {
+        return { ...logListState, filterLevels };
+      }
+      return logListState;
+    });
+  }, [filterLevels]);
 
   useEffect(() => {
     setLogListState((logListState) => ({ ...logListState, fontSize }));
@@ -475,6 +488,7 @@ export const LogListContextProvider = ({
         closeDetails,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
+        detailsMode,
         detailsWidth,
         displayedFields,
         downloadLogs,
@@ -489,6 +503,7 @@ export const LogListContextProvider = ({
         getRowContextQuery,
         logSupportsContext,
         logLineMenuCustomItems,
+        logOptionsStorageKey,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
@@ -505,7 +520,9 @@ export const LogListContextProvider = ({
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
+        setDetailsMode,
         setDetailsWidth,
+        setDisplayedFields,
         setFilterLevels,
         setFontSize,
         setForceEscape,
@@ -556,7 +573,9 @@ function getDetailsWidth(
   const defaultWidth = containerElement.clientWidth * 0.4;
   const detailsWidth =
     currentWidth ||
-    (logOptionsStorageKey ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10) : defaultWidth);
+    (logOptionsStorageKey
+      ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`) ?? defaultWidth, 10)
+      : defaultWidth);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 

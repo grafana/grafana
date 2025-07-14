@@ -6,11 +6,11 @@ import {
   PROVISIONED_MIMIR_ALERTMANAGER_UID,
   mockDataSources,
   setupVanillaAlertmanagerServer,
-} from 'app/features/alerting/unified/components/settings/__mocks__/server';
+} from 'app/features/alerting/unified/components/settings/mocks/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import ContactPoints from './components/contact-points/ContactPoints';
 import EditContactPoint from './components/contact-points/EditContactPoint';

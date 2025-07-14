@@ -35,7 +35,7 @@ export class PanelDataTransformationsTab
   tabId = TabId.Transformations;
 
   getTabLabel() {
-    return 'Transformations';
+    return t('dashboard-scene.panel-data-transformations-tab.tab-label', 'Transformations');
   }
 
   public renderTab(props: PanelDataTabHeaderProps) {
@@ -135,8 +135,11 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
           'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
           'Delete all transformations?'
         )}
-        body="By deleting all transformations, you will go back to the main selection screen."
-        confirmText="Delete all"
+        body={t(
+          'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
+          'By deleting all transformations, you will go back to the main selection screen.'
+        )}
+        confirmText={t('dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all', 'Delete all')}
         onConfirm={() => {
           model.onChangeTransformations([]);
           setConfirmModalOpen(false);

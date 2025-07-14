@@ -7,21 +7,6 @@ import { HorizontalGroup, IconButton, RadioButtonGroup, Select } from '@grafana/
 
 type LineFill = 'solid' | 'dash' | 'dot';
 
-const lineFillOptions: Array<SelectableValue<LineFill>> = [
-  {
-    label: 'Solid',
-    value: 'solid',
-  },
-  {
-    label: 'Dash',
-    value: 'dash',
-  },
-  {
-    label: 'Dots',
-    value: 'dot',
-  },
-];
-
 const dashOptions: Array<SelectableValue<string>> = [
   '10, 10', // default
   '10, 15',
@@ -56,6 +41,20 @@ const dotOptions: Array<SelectableValue<string>> = [
 type Props = StandardEditorProps<LineStyle, unknown>;
 
 export const LineStyleEditor = ({ value, onChange }: Props) => {
+  const lineFillOptions: Array<SelectableValue<LineFill>> = [
+    {
+      label: t('timeseries.line-style-editor.line-fill-options.label-solid', 'Solid'),
+      value: 'solid',
+    },
+    {
+      label: t('timeseries.line-style-editor.line-fill-options.label-dash', 'Dash'),
+      value: 'dash',
+    },
+    {
+      label: t('timeseries.line-style-editor.line-fill-options.label-dots', 'Dots'),
+      value: 'dot',
+    },
+  ];
   const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {

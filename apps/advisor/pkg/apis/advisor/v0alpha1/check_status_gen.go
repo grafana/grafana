@@ -3,16 +3,18 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type CheckErrorLink struct {
-	// URL to a page with more information about the error
-	Url string `json:"url"`
-	// Human readable error message
-	Message string `json:"message"`
+type CheckReport struct {
+	// Number of elements analyzed
+	Count int64 `json:"count"`
+	// List of failures
+	Failures []CheckReportFailure `json:"failures"`
 }
 
-// NewCheckErrorLink creates a new CheckErrorLink object.
-func NewCheckErrorLink() *CheckErrorLink {
-	return &CheckErrorLink{}
+// NewCheckReport creates a new CheckReport object.
+func NewCheckReport() *CheckReport {
+	return &CheckReport{
+		Failures: []CheckReportFailure{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -27,11 +29,28 @@ type CheckReportFailure struct {
 	ItemID string `json:"itemID"`
 	// Links to actions that can be taken to resolve the failure
 	Links []CheckErrorLink `json:"links"`
+	// More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.
+	MoreInfo *string `json:"moreInfo,omitempty"`
 }
 
 // NewCheckReportFailure creates a new CheckReportFailure object.
 func NewCheckReportFailure() *CheckReportFailure {
-	return &CheckReportFailure{}
+	return &CheckReportFailure{
+		Links: []CheckErrorLink{},
+	}
+}
+
+// +k8s:openapi-gen=true
+type CheckErrorLink struct {
+	// URL to a page with more information about the error
+	Url string `json:"url"`
+	// Human readable error message
+	Message string `json:"message"`
+}
+
+// NewCheckErrorLink creates a new CheckErrorLink object.
+func NewCheckErrorLink() *CheckErrorLink {
+	return &CheckErrorLink{}
 }
 
 // +k8s:openapi-gen=true
@@ -54,7 +73,7 @@ func NewCheckstatusOperatorState() *CheckstatusOperatorState {
 
 // +k8s:openapi-gen=true
 type CheckStatus struct {
-	Report CheckV0alpha1StatusReport `json:"report"`
+	Report CheckReport `json:"report"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]CheckstatusOperatorState `json:"operatorStates,omitempty"`
@@ -65,7 +84,7 @@ type CheckStatus struct {
 // NewCheckStatus creates a new CheckStatus object.
 func NewCheckStatus() *CheckStatus {
 	return &CheckStatus{
-		Report: *NewCheckV0alpha1StatusReport(),
+		Report: *NewCheckReport(),
 	}
 }
 
@@ -85,16 +104,3 @@ const (
 	CheckStatusOperatorStateStateInProgress CheckStatusOperatorStateState = "in_progress"
 	CheckStatusOperatorStateStateFailed     CheckStatusOperatorStateState = "failed"
 )
-
-// +k8s:openapi-gen=true
-type CheckV0alpha1StatusReport struct {
-	// Number of elements analyzed
-	Count int64 `json:"count"`
-	// List of failures
-	Failures []CheckReportFailure `json:"failures"`
-}
-
-// NewCheckV0alpha1StatusReport creates a new CheckV0alpha1StatusReport object.
-func NewCheckV0alpha1StatusReport() *CheckV0alpha1StatusReport {
-	return &CheckV0alpha1StatusReport{}
-}
