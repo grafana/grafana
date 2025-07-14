@@ -116,6 +116,8 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   query: any;
   regex: string;
   refresh: VariableRefresh;
+  staticOptions?: VariableOption[];
+  staticOptionsOrder?: 'before' | 'after' | 'sorted';
 }
 
 export interface TextBoxVariableModel extends VariableWithOptions {
