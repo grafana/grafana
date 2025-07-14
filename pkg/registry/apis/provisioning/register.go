@@ -90,18 +90,17 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistory       jobs.History
-	tester           *RepositoryTester
-	resourceLister   resources.ResourceLister
-	repositoryLister listers.RepositoryLister
-	legacyMigrator   legacy.LegacyMigrator
-	storageStatus    dualwrite.Service
-	unified          resource.ResourceClient
-	secrets          secrets.Service
-	legacySecrets    secrets.LegacyService
-	client           client.ProvisioningV0alpha1Interface
-	access           authlib.AccessChecker
-	statusPatcher    *controller.RepositoryStatusPatcher
+	jobHistory        jobs.History
+	tester            *RepositoryTester
+	resourceLister    resources.ResourceLister
+	repositoryLister  listers.RepositoryLister
+	legacyMigrator    legacy.LegacyMigrator
+	storageStatus     dualwrite.Service
+	unified           resource.ResourceClient
+	repositorySecrets secrets.RepositorySecrets
+	client            client.ProvisioningV0alpha1Interface
+	access            authlib.AccessChecker
+	statusPatcher     *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
@@ -119,8 +118,7 @@ func NewAPIBuilder(
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
-	secrets secrets.Service,
-	legacySecrets secrets.LegacyService,
+	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -142,8 +140,7 @@ func NewAPIBuilder(
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
-		secrets:             secrets,
-		legacySecrets:       legacySecrets,
+		repositorySecrets:   repositorySecrets,
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
 		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
@@ -200,8 +197,7 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSecretsService(secretsSvc, decryptSvc),
-		secrets.NewSingleTenant(legacySecretsSvc),
+		secrets.NewRepositorySecrets(features, secrets.NewSecretsService(secretsSvc, decryptSvc), secrets.NewSingleTenant(legacySecretsSvc)),
 		access,
 		tracer,
 		extraBuilders,
@@ -494,29 +490,17 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
 	if repo.Spec.GitHub != nil &&
 		repo.Spec.GitHub.Token != "" {
-		var encryptedToken []byte
-		if b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
-			secretName := repo.Spec.GitHub.EncryptedToken
-			if secretName == nil {
-				secretName = []byte(repo.Name + "-github-token")
-			}
-
-			name, err := b.secrets.Encrypt(ctx, repo.GetNamespace(), string(secretName), repo.Spec.GitHub.Token)
-			if err != nil {
-				return err
-			}
-
-			encryptedToken = []byte(name)
-		} else {
-			var err error
-			encryptedToken, err = b.legacySecrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
-			if err != nil {
-				return err
-			}
+		secretName := repo.Spec.GitHub.EncryptedToken
+		if secretName == nil {
+			secretName = []byte(repo.Name + "-github-token")
 		}
 
+		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, string(secretName), repo.Spec.GitHub.Token)
+		if err != nil {
+			return err
+		}
 		repo.Spec.GitHub.Token = ""
-		repo.Spec.GitHub.EncryptedToken = encryptedToken
+		repo.Spec.GitHub.EncryptedToken = nameOrValue
 	}
 
 	return nil
@@ -527,27 +511,17 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
 	if repo.Spec.Git != nil &&
 		repo.Spec.Git.Token != "" {
-		var encryptedToken []byte
-		if b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
-			secretName := repo.Spec.Git.EncryptedToken
-			if secretName == nil {
-				secretName = []byte(repo.Name + "-git-token")
-			}
 
-			name, err := b.secrets.Encrypt(ctx, repo.GetNamespace(), string(secretName), repo.Spec.Git.Token)
-			if err != nil {
-				return err
-			}
-			encryptedToken = []byte(name)
-		} else {
-			var err error
-			encryptedToken, err = b.legacySecrets.Encrypt(ctx, []byte(repo.Spec.Git.Token))
-			if err != nil {
-				return err
-			}
+		secretName := repo.Spec.Git.EncryptedToken
+		if secretName == nil {
+			secretName = []byte(repo.Name + "-git-token")
+		}
+		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, string(secretName), repo.Spec.Git.Token)
+		if err != nil {
+			return err
 		}
 
-		repo.Spec.Git.EncryptedToken = encryptedToken
+		repo.Spec.Git.EncryptedToken = nameOrValue
 		repo.Spec.Git.Token = ""
 	}
 
@@ -742,7 +716,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.clients,
 				&repository.Tester{},
 				b.jobs,
-				b.secrets,
 				b.storageStatus,
 			)
 			if err != nil {
@@ -1257,19 +1230,11 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		// Decrypt token if needed
 		token := r.Spec.Git.Token
 		if token == "" {
-			if b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
-				decrypted, err := b.secrets.Decrypt(ctx, r.GetNamespace(), string(r.Spec.Git.EncryptedToken))
-				if err != nil {
-					return nil, fmt.Errorf("decrypt git token: %w", err)
-				}
-				token = string(decrypted)
-			} else {
-				decrypted, err := b.legacySecrets.Decrypt(ctx, r.Spec.Git.EncryptedToken)
-				if err != nil {
-					return nil, fmt.Errorf("decrypt git token: %w", err)
-				}
-				token = string(decrypted)
+			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(r.Spec.Git.EncryptedToken))
+			if err != nil {
+				return nil, fmt.Errorf("decrypt git token: %w", err)
 			}
+			token = string(decrypted)
 		}
 
 		return git.NewGitRepository(ctx, r, git.RepositoryConfig{
@@ -1291,19 +1256,11 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
 		if ghToken == "" {
-			if b.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
-				decrypted, err := b.secrets.Decrypt(ctx, r.GetNamespace(), string(ghCfg.EncryptedToken))
-				if err != nil {
-					return nil, fmt.Errorf("decrypt github token: %w", err)
-				}
-				ghToken = string(decrypted)
-			} else {
-				decrypted, err := b.legacySecrets.Decrypt(ctx, ghCfg.EncryptedToken)
-				if err != nil {
-					return nil, fmt.Errorf("decrypt github token: %w", err)
-				}
-				ghToken = string(decrypted)
+			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
+			if err != nil {
+				return nil, fmt.Errorf("decrypt github token: %w", err)
 			}
+			ghToken = string(decrypted)
 		}
 
 		gitCfg := git.RepositoryConfig{

@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -34,22 +33,18 @@ type GithubWebhookRepository interface {
 
 type githubWebhookRepository struct {
 	pgh.GithubRepository
-	config        *provisioning.Repository
-	owner         string
-	repo          string
-	secrets       secrets.Service
-	legacySecrets secrets.LegacyService
-	gh            pgh.Client
-	webhookURL    string
-	features      featuremgmt.FeatureToggles
+	config     *provisioning.Repository
+	owner      string
+	repo       string
+	secrets    secrets.RepositorySecrets
+	gh         pgh.Client
+	webhookURL string
 }
 
 func NewGithubWebhookRepository(
 	basic pgh.GithubRepository,
 	webhookURL string,
-	secrets secrets.Service,
-	legacySecrets secrets.LegacyService,
-	features featuremgmt.FeatureToggles,
+	secrets secrets.RepositorySecrets,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository: basic,
@@ -59,8 +54,6 @@ func NewGithubWebhookRepository(
 		gh:               basic.Client(),
 		webhookURL:       webhookURL,
 		secrets:          secrets,
-		legacySecrets:    legacySecrets,
-		features:         features,
 	}
 }
 
@@ -70,13 +63,7 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	var secret []byte
-	var err error
-	if r.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
-		secret, err = r.secrets.Decrypt(ctx, r.config.Namespace, string(r.config.Status.Webhook.EncryptedSecret))
-	} else {
-		secret, err = r.legacySecrets.Decrypt(ctx, r.config.Status.Webhook.EncryptedSecret)
-	}
+	secret, err := r.secrets.Decrypt(ctx, r.config, string(r.config.Status.Webhook.EncryptedSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt secret: %w", err)
 	}

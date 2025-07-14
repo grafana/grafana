@@ -116,7 +116,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		config        *provisioning.Repository
 		webhookSecret string
 		setupRequest  func() *http.Request
-		mockSetup     func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService)
+		mockSetup     func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets)
 		expected      *provisioning.WebhookResponse
 		expectedError error
 	}{
@@ -156,8 +156,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req, _ := http.NewRequest("POST", "/webhook", nil)
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return(nil, errors.New("decryption failed"))
 			},
 			expectedError: fmt.Errorf("failed to decrypt secret: decryption failed"),
@@ -183,8 +183,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expectedError: apierrors.NewUnauthorized("invalid signature"),
@@ -218,8 +218,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -264,8 +264,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -312,8 +312,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -358,8 +358,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expectedError: fmt.Errorf("missing repository in push event"),
@@ -398,8 +398,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expectedError: fmt.Errorf("repository mismatch"),
@@ -441,8 +441,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -497,8 +497,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -564,8 +564,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -628,8 +628,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -682,8 +682,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -733,8 +733,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expectedError: fmt.Errorf("missing repository in pull request event"),
@@ -782,8 +782,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expectedError: fmt.Errorf("missing GitHub config"),
@@ -833,8 +833,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expectedError: fmt.Errorf("repository mismatch"),
@@ -873,8 +873,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expectedError: fmt.Errorf("expected PR in event"),
@@ -900,8 +900,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req, _ := http.NewRequest("POST", "/webhook", nil)
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockSecrets.EXPECT().Decrypt(mock.Anything, "default", "test-secret").
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "test-secret").
 					Return(nil, errors.New("decryption failed"))
 			},
 			expectedError: fmt.Errorf("failed to decrypt secret: decryption failed"),
@@ -938,8 +938,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockSecrets.EXPECT().Decrypt(mock.Anything, "default", "test-secret").
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "test-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -988,8 +988,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockSecrets.EXPECT().Decrypt(mock.Anything, "default", "test-secret").
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "test-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -1032,8 +1032,8 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 				return req
 			},
-			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService, mockLegacySecrets *secrets.MockLegacyService) {
-				mockLegacySecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, mock.Anything, "encrypted-secret").
 					Return([]byte("webhook-secret"), nil)
 			},
 			expected: &provisioning.WebhookResponse{
@@ -1046,21 +1046,19 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock secrets service
-			mockSecrets := secrets.NewMockService(t)
-			mockLegacySecrets := secrets.NewMockLegacyService(t)
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
-				tt.mockSetup(t, mockSecrets, mockLegacySecrets)
+				tt.mockSetup(t, mockSecrets)
 			}
 
 			// Create a GitHub repository with the test config
 			repo := &githubWebhookRepository{
-				config:        tt.config,
-				owner:         "grafana",
-				repo:          "grafana",
-				secrets:       mockSecrets,
-				legacySecrets: mockLegacySecrets,
+				config:  tt.config,
+				owner:   "grafana",
+				repo:    "grafana",
+				secrets: mockSecrets,
 			}
 
 			// Call the Webhook method
@@ -1102,7 +1100,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 			// Verify all mock expectations were met
 			mockSecrets.AssertExpectations(t)
-			mockLegacySecrets.AssertExpectations(t)
 		})
 	}
 }
