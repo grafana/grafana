@@ -431,7 +431,11 @@
   ],
   "refresh": false,
   "schemaVersion": 16,
-  "tags": ["gdev", "panel-tests"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "table"
+  ],
   "templating": {
     "list": []
   },
