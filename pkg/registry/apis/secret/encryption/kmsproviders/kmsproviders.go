@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders/secretkeyprovider"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,7 +26,7 @@ func ProvideOSSKMSProviders(cfg *setting.Cfg, cipher cipher.Cipher) (encryption.
 		if strings.HasPrefix(providerName, OSSProviderType) {
 			secretKey := properties[SecretKeyKey]
 			if secretKey != "" {
-				providerMap[encryption.ProviderID(providerName)] = secretkeyprovider.New(secretKey, cipher)
+				providerMap[encryption.ProviderID(providerName)] = newSecretKeyProvider(secretKey, cipher)
 			} else {
 				return nil, fmt.Errorf("missing secret_key for provider %s", providerName)
 			}
