@@ -7,6 +7,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   standardTransformersRegistry,
+  FieldType,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -130,6 +131,163 @@ describe('DashboardDatasource', () => {
 
     // on further emissions the result should be the unmodified original dataframe
     expect(rsp!.data[0].fields[0].state).toEqual({});
+  });
+
+  describe('AdHoc Filtering', () => {
+    const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+    function createTestFrame(fields: any[]) {
+      return {
+        name: 'TestData',
+        fields: fields.map((field) => ({
+          name: field.name,
+          type: field.type,
+          values: field.values,
+          config: {},
+          state: {},
+        })),
+        length: fields[0]?.values.length || 0,
+        refId: 'A',
+      };
+    }
+
+    it('should apply equality filter correctly', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'name', operator: '=', value: 'John' }]);
+
+      expect(result.fields[0].values).toEqual(['John']);
+      expect(result.fields[1].values).toEqual([25]);
+      expect(result.length).toBe(1);
+    });
+
+    it('should apply not-equal filter correctly', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'name', operator: '!=', value: 'John' }]);
+
+      expect(result.fields[0].values).toEqual(['Jane', 'Bob']);
+      expect(result.fields[1].values).toEqual([30, 35]);
+      expect(result.length).toBe(2);
+    });
+
+    it('should apply multiple filters with AND logic', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+        { name: 'status', type: FieldType.string, values: ['active', 'active', 'inactive'] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [
+        { key: 'name', operator: '!=', value: 'John' },
+        { key: 'status', operator: '=', value: 'active' },
+      ]);
+
+      expect(result.fields[0].values).toEqual(['Jane']);
+      expect(result.fields[1].values).toEqual(['active']);
+      expect(result.length).toBe(1);
+    });
+
+    it('should handle null values correctly', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', null, 'Bob'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'name', operator: '!=', value: 'John' }]);
+
+      expect(result.fields[0].values).toEqual([null, 'Bob']);
+      expect(result.fields[1].values).toEqual([30, 35]);
+      expect(result.length).toBe(2);
+    });
+
+    it.skip('should ignore filters on non-string fields', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'age', operator: '=', value: '25' }]);
+
+      // Should return all rows since age field is not string
+      expect(result.fields[0].values).toEqual(['John', 'Jane', 'Bob']);
+      expect(result.fields[1].values).toEqual([25, 30, 35]);
+      expect(result.length).toBe(3);
+    });
+
+    it('should handle empty data frames', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: [] },
+        { name: 'age', type: FieldType.number, values: [] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'name', operator: '=', value: 'John' }]);
+
+      expect(result.fields[0].values).toEqual([]);
+      expect(result.fields[1].values).toEqual([]);
+      expect(result.length).toBe(0);
+    });
+
+    it.skip('should handle remaining operators', () => {
+      // Not yet implemented, so we explicitly don't specify any behaviour for this
+    });
+
+    it('should handle filters on missing fields with = operator', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'missing_field', operator: '=', value: 'test' }]);
+
+      // Should return empty result since field doesn't exist
+      expect(result.fields[0].values).toEqual([]);
+      expect(result.fields[1].values).toEqual([]);
+      expect(result.length).toBe(0);
+    });
+
+    it('should handle filters on missing fields with != operator', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'missing_field', operator: '!=', value: 'test' }]);
+
+      // Should return all rows since field doesn't exist (all rows are "not equal")
+      expect(result.fields[0].values).toEqual(['John', 'Jane', 'Bob']);
+      expect(result.fields[1].values).toEqual([25, 30, 35]);
+      expect(result.length).toBe(3);
+    });
+
+    it('should handle complex filtering scenario', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Admin', 'Bob'] },
+        { name: 'status', type: FieldType.string, values: ['active', 'inactive', 'active', 'active'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 35, 40] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [
+        { key: 'status', operator: '=', value: 'active' },
+        { key: 'name', operator: '!=', value: 'Admin' },
+        { key: 'missing_field', operator: '!=', value: 'ignored' }, // Should be ignored
+      ]);
+
+      // Should match: status=active AND name!=Admin
+      // John: active + !Admin ✓
+      // Jane: inactive + !Admin ✗
+      // Admin: active + Admin ✗
+      // Bob: active + !Admin ✓
+      expect(result.fields[0].values).toEqual(['John', 'Bob']);
+      expect(result.fields[1].values).toEqual(['active', 'active']);
+      expect(result.fields[2].values).toEqual([25, 40]);
+      expect(result.length).toBe(2);
+    });
   });
 });
 
