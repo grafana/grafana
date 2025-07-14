@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { HTMLAttributes } from 'react';
 
 import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
+import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { TestingStatus, config, usePluginLinks } from '@grafana/runtime';
@@ -9,7 +10,6 @@ import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
 import { trackCreateDashboardClicked } from '../tracking';
-import { sanitizeUrl } from '@grafana/data/internal';
 
 export type Props = {
   testingStatus?: TestingStatus;
