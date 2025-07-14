@@ -910,4 +910,8 @@ const (
 	// FlagFoldersAppPlatformAPI
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
+
+	// FlagDashboardDropAndPaste
+	// Enables the drop and paste handlers on dashboards
+	FlagDashboardDropAndPaste = "dashboardDropAndPaste"
 )
