@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -339,6 +340,66 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		assert.Contains(t, encMgrV2.providerConfig, encryption.ProviderID("secret_key.v1"))
 		assert.Contains(t, encMgrV2.providerConfig, encryption.ProviderID("secret_key.v2"))
 		assert.Equal(t, 2, len(encMgrV2.providerConfig.AvailableProviders))
+	})
+
+	t.Run("encrypting with v1 then removing the v1 config should cause decryption to fail", func(t *testing.T) {
+		tracer := noop.NewTracerProvider().Tracer("test")
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		require.NoError(t, err)
+
+		usageStats := &usagestats.UsageStatsMock{T: t}
+		enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+		require.NoError(t, err)
+
+		cfgV1 := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				CurrentEncryptionProvider: "secret_key.v1",
+				ConfiguredKMSProviders: map[string]map[string]string{
+					"secret_key.v1": {"secret_key": uuid.New().String()},
+				},
+			},
+		}
+
+		ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfgV1, enc)
+		require.NoError(t, err)
+
+		svcV1, err := ProvideEncryptionManager(
+			tracer,
+			encryptionStore,
+			usageStats,
+			enc,
+			ossProviders,
+		)
+		require.NoError(t, err)
+
+		rsp, err := svcV1.Encrypt(ctx, namespace, []byte("test"))
+		require.NoError(t, err)
+
+		cfgV2 := &setting.Cfg{
+			SecretsManagement: setting.SecretsManagerSettings{
+				CurrentEncryptionProvider: "secret_key.v2",
+				ConfiguredKMSProviders: map[string]map[string]string{
+					"secret_key.v2": {"secret_key": uuid.New().String()},
+				},
+			},
+		}
+
+		ossProvidersV2, err := osskmsproviders.ProvideOSSKMSProviders(cfgV2, enc)
+		require.NoError(t, err)
+
+		svcV2, err := ProvideEncryptionManager(
+			tracer,
+			encryptionStore,
+			usageStats,
+			enc,
+			ossProvidersV2,
+		)
+		require.NoError(t, err)
+
+		_, err = svcV2.Decrypt(ctx, namespace, rsp)
+		require.Error(t, err)
 	})
 }
 
