@@ -5837,10 +5837,13 @@
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
+      "label-static-options-sort": "Static options sort",
       "label-target-data-source": "Target data source",
+      "label-use-static-options": "Use static options",
       "name-regex": "Regex",
       "query-options": "Query options",
-      "selection-options": "Selection options"
+      "selection-options": "Selection options",
+      "static-options-legend": "Static options"
     },
     "resource-export": {
       "label": {
@@ -13157,6 +13160,16 @@
           "numerical-desc": "Numerical (desc)"
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "Add option",
+      "description": "Add custom options in addition to query results",
+      "label-placeholder": "display label",
+      "remove-option-button-label": "Remove option",
+      "value-placeholder": "value, default empty string"
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": "How to sort static options with query results"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",
