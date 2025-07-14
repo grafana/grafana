@@ -25,9 +25,9 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
   const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
     : t(
-      'alerting.alertform.labels.alerting',
-      'Add labels to your rule for searching, silencing, or routing to a notification policy.'
-    );
+        'alerting.alertform.labels.alerting',
+        'Add labels to your rule for searching, silencing, or routing to a notification policy.'
+      );
 
   const hasLabels = Object.keys(labels).length > 0 && labels.some((label) => label.key || label.value);
 
