@@ -266,6 +266,7 @@ func (d *dualWriter) Create(ctx context.Context, in runtime.Object, createValida
 	}
 	return createdFromLegacy, nil
 }
+
 func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	log := logging.FromContext(ctx).With("method", "Delete")
 
@@ -298,7 +299,7 @@ func (d *dualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
 	objFromLegacy, asyncLegacy, err := d.legacy.Delete(ctx, name, deleteValidation, options)
-	if err != nil && !apierrors.IsNotFound(err) {
+	if err != nil {
 		return nil, false, err
 	}
 
@@ -388,22 +389,39 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 func (d *dualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	log := logging.FromContext(ctx).With("method", "DeleteCollection", "resourceVersion", listOptions.ResourceVersion)
 
+	// If unified is the primary read source, delete there first.
+	if d.readUnified {
+		// 1. Delete from the unified store, making it the source of truth.
+		deletedUnified, err := d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
+		if err != nil {
+			// If the primary (unified) delete fails, we fail fast.
+			return nil, err
+		}
+
+		// 2. Sync the delete to the legacy store.
+		_, err = d.legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+		if err != nil && !apierrors.IsNotFound(err) {
+			// If the secondary (legacy) delete fails, we log a critical error but do not fail the operation.
+			// The primary store remains the source of truth, and the objects are gone from the user's perspective.
+			log.Error("CRITICAL: failed to delete collection from secondary (legacy) storage after unified delete", "err", err)
+		}
+
+		// Success, return the authoritative result from the unified store.
+		return deletedUnified, nil
+	}
+
 	// delete from legacy first, and anything that is successful can be deleted in unistore too.
 	//
 	// we want to delete from legacy first, otherwise if the delete from unistore was successful,
 	// but legacy failed, the user would get a failure, but not be able to retry the delete
 	// as they would not be able to see the object in unistore anymore.
-
 	deletedLegacy, err := d.legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
 		log.With("deleted", deletedLegacy).Error("failed to delete collection successfully from legacy storage", "err", err)
 		return nil, err
 	}
 
-	// If unified is the primary store, we can just delete it there and return.
-	if d.readUnified {
-		return d.unified.DeleteCollection(ctx, deleteValidation, options, listOptions)
-	} else if d.errorIsOK {
+	if d.errorIsOK {
 		// If unified storage is not the primary store and errors are okay, we can just run it in the background.
 		go func(ctxBg context.Context, cancel context.CancelFunc) {
 			defer cancel()

@@ -29,32 +29,30 @@ func TestMode3_Create(t *testing.T) {
 			{
 				name:  "should succeed when creating an object in both the LegacyStorage and Storage",
 				input: exampleObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
-				},
-				setupStorageFn: func(m *mock.Mock, _ runtime.Object) {
-					// We don't use the input here, as the input is transformed before being passed to unified storage.
+				setupLegacyFn: func(m *mock.Mock, _ runtime.Object) {
 					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
+				},
+				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
+					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
 				},
 			},
 			{
 				name:  "should return an error when creating an object in the legacy store fails",
 				input: failingObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
+				setupLegacyFn: func(m *mock.Mock, _ runtime.Object) {
+					m.On("Create", mock.Anything, failingObjNoRV, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
+				},
+				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
+					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(failingObj, nil).Once()
+					m.On("Delete", mock.Anything, failingObj.GetName(), mock.Anything, mock.Anything).Return(failingObj, false, nil).Once()
 				},
 				wantErr: true,
 			},
 			{
-				name:  "should return an error when creating an object in the unified store fails and delete from LegacyStorage",
+				name:  "should return an error when creating an object in the unified store fails",
 				input: exampleObj,
-				setupLegacyFn: func(m *mock.Mock, input runtime.Object) {
-					m.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, true, nil).Once()
-					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, nil).Once()
-				},
-				setupStorageFn: func(m *mock.Mock, _ runtime.Object) {
-					// We don't use the input here, as the input is transformed before being passed to unified storage.
-					m.On("Create", mock.Anything, exampleObjNoRV, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
+				setupStorageFn: func(m *mock.Mock, input runtime.Object) {
+					m.On("Create", mock.Anything, input, mock.Anything, mock.Anything).Return(nil, errors.New("error")).Once()
 				},
 				wantErr: true,
 			},

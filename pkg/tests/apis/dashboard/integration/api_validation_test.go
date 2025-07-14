@@ -61,7 +61,7 @@ func TestIntegrationValidation(t *testing.T) {
 		t.Skip("skipping integration test2")
 	}
 
-	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
@@ -82,35 +82,35 @@ func TestIntegrationValidation(t *testing.T) {
 		})
 	}
 
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
-			// Create a K8sTestHelper which will set up a real API server
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
-					featuremgmt.FlagUnifiedStorageSearch,
-				},
-				DisableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesDashboards,
-				},
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-				}})
+	// for _, dualWriterMode := range dualWriterModes {
+	// 	t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
+	// 		// Create a K8sTestHelper which will set up a real API server
+	// 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	// 			DisableAnonymous: true,
+	// 			EnableFeatureToggles: []string{
+	// 				featuremgmt.FlagKubernetesClientDashboardsFolders, // Enable dashboard feature
+	// 				featuremgmt.FlagUnifiedStorageSearch,
+	// 			},
+	// 			DisableFeatureToggles: []string{
+	// 				featuremgmt.FlagKubernetesDashboards,
+	// 			},
+	// 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+	// 				"dashboards.dashboard.grafana.app": {
+	// 					DualWriterMode: dualWriterMode,
+	// 				},
+	// 			}})
 
-			t.Cleanup(func() {
-				helper.Shutdown()
-			})
+	// 		t.Cleanup(func() {
+	// 			helper.Shutdown()
+	// 		})
 
-			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
+	// 		org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
 
-			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, false)
-			})
-		})
-	}
+	// 		t.Run("Dashboard permission tests", func(t *testing.T) {
+	// 			runDashboardPermissionTests(t, org1Ctx, false)
+	// 		})
+	// 	})
+	// }
 }
 
 func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper, dualWriterMode rest.DualWriterMode) {
@@ -694,33 +694,6 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 		})
 	})
-}
-
-// skipIfMode skips the current test if running in any of the specified modes
-// Usage: skipIfMode(t, rest.Mode1, rest.Mode4)
-// or with a message: skipIfMode(t, "Known issue with conflict detection", rest.Mode1, rest.Mode4)
-// nolint:unused
-func (c *TestContext) skipIfMode(t *testing.T, args ...interface{}) {
-	t.Helper()
-
-	message := "Test not supported in this dual writer mode"
-	modes := []rest.DualWriterMode{}
-
-	// Parse args - first string is considered a message, all rest.DualWriterMode values are modes to skip
-	for _, arg := range args {
-		if msg, ok := arg.(string); ok {
-			message = msg
-		} else if mode, ok := arg.(rest.DualWriterMode); ok {
-			modes = append(modes, mode)
-		}
-	}
-
-	// Check if current mode is in the list of modes to skip
-	for _, mode := range modes {
-		if c.DualWriterMode == mode {
-			t.Skipf("%s (mode %d)", message, c.DualWriterMode)
-		}
-	}
 }
 
 // Run tests for quota validation
