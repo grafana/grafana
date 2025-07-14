@@ -133,7 +133,7 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
         <ListHeader />
 
         <div className={styles.triageButtonContainer}>
-          <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
+          <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} />
         </div>
       </div>
       <ul>
@@ -506,10 +506,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     triageButtonContainer: css({
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
-    }),
-    triageButton: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
+    })
   };
 };
 

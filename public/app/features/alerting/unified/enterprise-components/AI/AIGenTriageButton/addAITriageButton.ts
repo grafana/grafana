@@ -5,7 +5,6 @@ import { TimeRange } from '@grafana/data';
 import { LogRecord } from '../../../components/rules/state-history/common';
 
 export interface GenAITriageButtonProps {
-  className?: string;
   logRecords: LogRecord[];
   timeRange: TimeRange;
 }
