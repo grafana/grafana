@@ -38,7 +38,9 @@ func TestingTokenExchangeMiddleware(tokenExchangeClient authlib.TokenExchanger) 
 func ProvideTokenExchangeMiddleware(cfg *setting.Cfg) (*TokenExchangeMiddleware, error) {
 	clientCfg, err := readSignerSettings(cfg)
 	if err != nil {
-		return nil, err
+		return &TokenExchangeMiddleware{
+			tokenExchangeClient: authlib.NewStaticTokenExchanger("unused-token-exchanger"),
+		}, nil
 	}
 
 	tokenExchangeClient, err := authlib.NewTokenExchangeClient(authlib.TokenExchangeConfig{
@@ -90,6 +92,10 @@ func (m tokenExchangeMiddlewareImpl) RoundTrip(req *http.Request) (res *http.Res
 	return m.next.RoundTrip(req)
 }
 
+// we exercise the below code path in OSS but would rather have it fail
+// instead of documenting these non-pertinent settings and requiring mock values for them.
+// hence, the error return is handled above as non-critical and a mock
+// exchange client is returned.
 func readSignerSettings(cfg *setting.Cfg) (*signerSettings, error) {
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 
