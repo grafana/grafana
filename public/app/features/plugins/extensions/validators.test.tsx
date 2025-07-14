@@ -365,6 +365,21 @@ describe('Plugin Extension Validators', () => {
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });
+
+    it('should return FALSE with links with the same title but different targets', () => {
+      const log = createLogMock();
+      config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
+      const extensionConfig2 = {
+        ...extensionConfig,
+        targets: [PluginExtensionPoints.ExploreToolbarAction],
+      };
+      config.apps[pluginId].extensions.addedLinks.push(extensionConfig2);
+
+      const returnValue = isAddedLinkMetaInfoMissing(pluginId, extensionConfig2, log);
+
+      expect(returnValue).toBe(false);
+      expect(log.error).toHaveBeenCalledTimes(0);
+    });
   });
 
   describe('isAddedComponentMetaInfoMissing()', () => {
@@ -481,6 +496,21 @@ describe('Plugin Extension Validators', () => {
       expect(returnValue).toBe(false);
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
+    });
+
+    it('should return FALSE with components with the same title but different targets', () => {
+      const log = createLogMock();
+      config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
+      const extensionConfig2 = {
+        ...extensionConfig,
+        targets: [PluginExtensionPoints.ExploreToolbarAction],
+      };
+      config.apps[pluginId].extensions.addedComponents.push(extensionConfig2);
+
+      const returnValue = isAddedComponentMetaInfoMissing(pluginId, extensionConfig2, log);
+
+      expect(returnValue).toBe(false);
+      expect(log.error).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -599,6 +629,21 @@ describe('Plugin Extension Validators', () => {
       expect(returnValue).toBe(false);
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
+    });
+
+    it('should return FALSE with components with the same title but different targets', () => {
+      const log = createLogMock();
+      config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
+      const exposedComponentConfig2 = {
+        ...exposedComponentConfig,
+        targets: [PluginExtensionPoints.ExploreToolbarAction],
+      };
+      config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig2);
+
+      const returnValue = isExposedComponentMetaInfoMissing(pluginId, exposedComponentConfig2, log);
+
+      expect(returnValue).toBe(false);
+      expect(log.error).toHaveBeenCalledTimes(0);
     });
   });
 
