@@ -18,6 +18,9 @@ jobs:
   check:
     name: Go Workspace Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # clone the repository
+      id-token: write # required for Vault access
 
     steps:
     - name: Checkout repository
@@ -31,6 +34,12 @@ jobs:
         cache: false
         go-version-file: go.mod
 
+    - name: Setup Grafana Enterprise
+      if: github.event.pull_request.head.repo.fork == false
+      uses: ./.github/actions/setup-enterprise
+      with:
+        github-app-name: 'grafana-ci-bot'
+
     - name: Update workspace
       run: make update-workspace
 
@@ -40,6 +49,7 @@ jobs:
           echo "Changes detected:"
           git diff
           echo "Please run 'make update-workspace' and commit the changes."
+          echo "If there are wire changes, please link Enterprise before running the command."
           echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
           exit 1
         fi
