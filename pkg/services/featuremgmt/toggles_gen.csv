@@ -225,3 +225,4 @@ tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
 newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
 enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 foldersAppPlatformAPI,experimental,@grafana/grafana-search-navigate-organise,false,false,true
+dashboardDsAdHocFiltering,experimental,@grafana/datapro,false,false,true

@@ -707,6 +707,19 @@
     },
     {
       "metadata": {
+        "name": "dashboardDsAdHocFiltering",
+        "resourceVersion": "1752487974435",
+        "creationTimestamp": "2025-07-14T10:12:54Z"
+      },
+      "spec": {
+        "description": "Enables adhoc filtering support for the dashboard datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-10-23T08:55:45Z"
