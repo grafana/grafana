@@ -13,7 +13,7 @@ const (
 	grafanaAlertmanagerStatePath = "/api/v1/grafana/state"
 )
 
-// UserState is used both for Grafana state and Mimir full state.
+// UserState is used for both Grafana state and Mimir full state.
 type UserState struct {
 	State string `json:"state"`
 }

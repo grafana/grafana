@@ -516,6 +516,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Edytuj YAML",
@@ -1517,15 +1520,12 @@
     "group-details": {
       "ds-features-error": "Błąd podczas ładowania szczegółów źródła danych",
       "edit": "Edytuj",
-      "evaluations-to-fire": "Cykle oceny do uruchomienia",
       "export": "Eksport",
       "folder": "Folder",
       "group-loading-error": "Błąd podczas ładowania grupy",
       "interval": "Interwał",
       "namespace": "Przestrzeń nazw",
-      "pending-period": "Okres oczekiwania",
-      "recording": "Nagrywanie",
-      "rule-name": "Nazwa reguły"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Błąd podczas ładowania szczegółów źródła danych",
@@ -2255,6 +2255,9 @@
         "label-export-all": "Eksportuj wszystkie"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Nie udało się załadować edytora zapytań. Powód: {{errorMessage}}"
     },
@@ -2676,6 +2679,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Nie możesz znaleźć odpowiedniego źródła danych? Niektóre źródła danych nie są obsługiwane w przypadku alertów. Aby dowiedzieć się więcej, kliknij ikonę."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Dodaj nowego menedżera alertów",
       "builtin-alertmanager": "Wbudowany menedżer alertów",
@@ -2910,6 +2918,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} temu)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3155,6 +3168,16 @@
       "info-box-content": "<0>Komentarze umożliwiają integrację danych zdarzeń z wykresami. Są one wizualizowane jako pionowe linie i ikony na wszystkich panelach wykresów. Po najechaniu kursorem na ikonę komentarza możesz odczytać tekst związany ze zdarzeniem i poznać jego znaczniki. Zdarzenia komentarzy można dodawać bezpośrednio w usłudze Grafana, przytrzymując klawisz CTRL lub CMD i klikając wykres (lub przeciągając region). Zostaną one zapisane w bazie komentarzy Grafana.</0>",
       "info-box-content-2": "Więcej informacji można znaleźć w <2>dokumentacji komentarzy</2>.",
       "title": "Brak dodanych niestandardowych zapytań do komentarzy"
+    },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "",
+        "results-split-on-comma": ""
+      },
+      "placeholder": {
+        "text-or-the-first-field": "",
+        "time-or-the-first-field": ""
+      }
     },
     "standard-annotation-query-editor": {
       "events-found": "Liczba zdarzeń: {{numEvents}} (z {{numFields}} pól)",
@@ -3573,11 +3596,11 @@
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
-      "error-invalid-folder-name": "Nieprawidłowa nazwa folderu",
       "error-required": "Wymagana jest nazwa folderu",
       "folder-name-input-placeholder-enter-folder-name": "Podaj nazwę folderu",
       "label-folder-name": "Nazwa folderu",
       "text-pull-request-created": "Utworzono żądanie pull ze zmianami w tym folderze:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Utworzono żądanie pull",
       "title-this-repository-is-read-only": "To repozytorium jest tylko do odczytu"
     },
@@ -4699,6 +4722,18 @@
         "transform-data": "Transformacja danych"
       }
     },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5262,7 +5297,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Szukaj transformacji",
       "show-images": "Pokaż obrazki",
-      "title-add-another-transformation": "Dodaj inną transformację"
+      "title-add-another-transformation": "Dodaj inną transformację",
+      "view-all": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": ""
@@ -5606,6 +5642,40 @@
         "row-height-options": "Opcje wysokości wiersza"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "",
+        "dynamically-switch-source-multiple-panels": "",
+        "group": "",
+        "hidden-constant-variable": "",
+        "users-enter-arbitrary-strings-textbox": "",
+        "values-are-static-and-defined-manually": "",
+        "values-fetched-source-query": "",
+        "values-timespans": ""
+      },
+      "name": {
+        "ad-hoc-filters": "",
+        "constant": "",
+        "custom": "",
+        "data-source": "",
+        "group-by": "",
+        "interval": "",
+        "query": "",
+        "textbox": ""
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5695,6 +5765,20 @@
       "usage-count_few": "Używane na {{count}} pulpitach",
       "usage-count_many": "Używane na {{count}} pulpitach",
       "usage-count_other": "Używane na {{count}} pulpitach"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "W wybranym folderze istnieje już pulpit o tej samej nazwie. Czy nadal chcesz zapisać ten pulpit?",
@@ -5827,7 +5911,8 @@
       "label-folder": "Folder",
       "render-footer": {
         "title-failed-to-save-dashboard": "Nie udało się zapisać pulpitu"
-      }
+      },
+      "required": ""
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -8026,6 +8111,9 @@
       "filter-popup-match-case": "Dopasuj wielkość liter",
       "inspect-drawer-title": "Sprawdź wartość",
       "inspect-menu-label": "Sprawdź wartość",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Brak wartości",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} z {{numRows}} wierszy"
     },
@@ -8034,6 +8122,7 @@
     },
     "tags-input": {
       "add": "Dodaj",
+      "placeholder-new-tag": "",
       "remove": "Usuń znacznik: {{name}}"
     },
     "time-sync-button": {
@@ -8770,6 +8859,7 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
@@ -8782,6 +8872,7 @@
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8884,6 +8975,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -8989,6 +9085,12 @@
       "text": {
         "import-dashboard": "Importuj pulpit"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "",
+      "message-reserved-name": "",
+      "message-same-name": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -9142,6 +9244,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Pulpit jest już skonfigurowany w usłudze Grafana i zarządzany z jej poziomu w instancji w chmurze. Zalecamy korzystanie z pulpitu skonfigurowanego. Jeśli nadal chcesz skopiować pulpit do instancji w chmurze, zmień identyfikator pulpitu w jego pliku JSON, zapisz nową migawkę i prześlij ponownie.",
         "datasource-already-managed": "Źródło danych jest już skonfigurowane w usłudze Grafana i zarządzane z jej poziomu w instancji w chmurze. Jeśli jest to inny zasób, ustaw inny UID i spróbuj ponownie.",
         "datasource-invalid-url": "Istnieje źródło danych, które ma nieprawidłowy adres URL. Podaj prawidłowy adres URL i spróbuj ponownie.",
@@ -10377,10 +10481,8 @@
       "open-pull-request-in-git-hub": "",
       "view-pull-request-in-git-hub": ""
     },
-    "title-dashboard-loaded-branch-git-hub": "",
-    "title-dashboard-loaded-pull-request-git-hub": "",
-    "title-folder-created-branch-git-hub": "",
-    "title-folder-created-pull-request-git-hub": ""
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12207,6 +12309,18 @@
       "placeholder-fields-or-number": "Pola lub liczby"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "",
+          "reduce-row": "",
+          "row-index": "",
+          "unary-operation": ""
+        }
+      },
+      "label": {
+        "cumulative-functions": "",
+        "window-functions": ""
+      },
       "label-alias": "Alias",
       "label-mode": "Tryb",
       "label-replace-all-fields": "Zastąp wszystkie pola"
@@ -12221,6 +12335,13 @@
     "concatenate-transformer-editor": {
       "label-label": "Etykieta",
       "label-name": "Nazwa",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "",
+          "ignore-the-frame-name": "",
+          "label-frame": ""
+        }
+      },
       "placeholder-frame": "Ramka"
     },
     "config-from-query-transformer-editor": {
@@ -12232,6 +12353,9 @@
       "aria-label-add-a-convert-field-type-transformer": "Dodaj transformator typu Konwersja pól",
       "aria-label-remove-convert-field-type-transformer": "Usuń transformator typu Konwersja pól",
       "convert-field-type": "",
+      "description": {
+        "convert-to-specified-field-type": ""
+      },
       "label": {
         "browser": "Przeglądarka",
         "utc": "UTC"
@@ -12242,7 +12366,13 @@
       "label-input-format": "Format danych wejściowych",
       "label-join-with": "Połącz za pomocą",
       "label-set-timezone": "Ustaw strefę czasową",
+      "name": {
+        "convert-field-type": ""
+      },
       "placeholder-type": "Typ",
+      "tags": {
+        "format-field": ""
+      },
       "tooltip-explicit-separator-joining-array-values": "Podczas łączenia wartości tablic należy używać jawnego separatora",
       "tooltip-input-format": "Określ format pola wejściowego, aby usługa Grafana mogła poprawnie przetwarzać ciąg daty.",
       "tooltip-specify-the-output-format": "Określ format danych wyjściowych.",
@@ -12264,6 +12394,19 @@
       "desc": "",
       "off": "Wył."
     },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": ""
+        },
+        "name": {
+          "concatenate-fields": ""
+        },
+        "tags": {
+          "combine": ""
+        }
+      }
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Dodaj wartość enum",
       "generate-enum-values-from-data": "Wygeneruj wartości enum z danych"
@@ -12274,6 +12417,9 @@
       "remove-enum-row-tooltip-delete": "Usuń"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": ""
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": ""
@@ -12284,6 +12430,9 @@
       "label-keep-time": "Rejestruj czas",
       "label-replace-all-fields": "Zastąp wszystkie pola",
       "label-source": "Źródło",
+      "name": {
+        "extract-fields": ""
+      },
       "placeholder-auto": "Automatycznie",
       "placeholder-select-delimiter": "Wybierz znak rozdzielający…",
       "tooltip-regexp": "Przykład: {{regexExample}}"
@@ -12292,6 +12441,9 @@
       "aria-label-threshold-color": "Kolor progu"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": ""
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": ""
@@ -12301,7 +12453,10 @@
         }
       },
       "label-field": "Pole",
-      "label-lookup": "Wyszukiwanie"
+      "label-lookup": "Wyszukiwanie",
+      "name": {
+        "lookup-fields-from-resource": ""
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "Ustawienia dodatkowe",
@@ -12310,11 +12465,25 @@
       "use-as": "Użyj jako"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": ""
+      },
       "label-from-variable": "Ze zmiennej",
       "label-identifier": "Identyfikator",
       "label-use-variable": "Użyj zmiennej",
       "label-variable": "Zmienna",
+      "name": {
+        "filter-fields-by-name": ""
+      },
       "placeholder-regular-expression-pattern": "Wzorzec wyrażenia regularnego"
+    },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": ""
+      },
+      "name": {
+        "filter-data-by-query": ""
+      }
     },
     "filter-by-value-filter-editor": {
       "label-field": "Pole",
@@ -12325,6 +12494,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Dodaj warunek",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": ""
+      },
       "filter-match": {
         "label": {
           "match-all": "",
@@ -12338,7 +12510,10 @@
         }
       },
       "label-conditions": "Warunki",
-      "label-filter-type": "Typ filtra"
+      "label-filter-type": "Typ filtra",
+      "name": {
+        "filter-data-by-values": ""
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12353,12 +12528,84 @@
       "label-format": "Format",
       "label-substring-range": "Zakres ciągu podrzędnego"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": ""
+      },
+      "name": {
+        "format-string": ""
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "Format",
       "label-set-timezone": "Ustaw strefę czasową",
       "label-time-field": "Pole czasu",
       "tooltip-format": "Format wyjściowy pola określonego jako <2>Ciąg formatowania Moment.js</2>.",
       "tooltip-timezone-manually": "Ręcznie ustaw strefę czasową daty"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": ""
+      },
+      "name": {
+        "format-time": ""
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": ""
+      },
+      "name": {
+        "add-field-from-calculation": ""
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": ""
+      },
+      "name": {
+        "config-from-query-results": ""
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": ""
+      },
+      "name": {
+        "create-heatmap": ""
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": ""
+      },
+      "name": {
+        "join-by-labels": ""
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": ""
+      },
+      "name": {
+        "partition-by-values": ""
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": ""
+      },
+      "name": {
+        "rows-to-fields": ""
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": ""
+      },
+      "name": {
+        "spatial-operations": ""
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12387,22 +12634,46 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "",
+          "group-by": ""
+        }
+      },
       "placeholder-ignored": "Ignorowane",
       "placeholder-select-stats": "Wybierz statystyki"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": ""
+      },
+      "name": {
+        "group-by": ""
+      },
       "title-calc-alert": "Obliczenia nie będą miały żadnego wpływu, jeśli nie zostaną pogrupowane żadne pola"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": ""
+      },
       "description-show-field-names": "Jeśli ta opcja jest włączona, w tabelach zagnieżdżonych nazwy pól będą wyświetlać się jako nagłówki tabeli",
       "label-show-field-names-in-nested-tables": "Pokaż nazwy pól w tabelach zagnieżdżonych",
+      "name": {
+        "group-to-nested-tables": ""
+      },
       "title-calc-alert": "Obliczenia nie będą miały żadnego wpływu, jeśli nie zostaną pogrupowane żadne pola."
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": ""
+      },
       "label-cell-value": "Wartość komórki",
       "label-column": "Kolumna",
       "label-empty-value": "Pusta wartość",
       "label-row": "Wiersz",
+      "name": {
+        "grouping-to-matrix": ""
+      },
       "special-value-options": {
         "description": {
           "boolean-false-value": "Wartość logiczna Fałsz",
@@ -12421,6 +12692,12 @@
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": ""
+      },
+      "name": {
+        "histogram": ""
+      },
       "placeholder-auto": "Automatycznie",
       "placeholder-default": "Domyślnie: 30",
       "placeholder-none": "Brak"
@@ -12429,7 +12706,16 @@
       "label-as-percentile": "Jako percentyl",
       "tooltip-transform-index-percentile": "Przekształć indeks wiersza jako percentyl."
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": ""
+      },
+      "name": {
+        "join-by-field": ""
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "",
       "info": {
         "input-contain-labels": "Dane wejściowe nie zawierają żadnych etykiet",
         "no-input-or-labels-found": "Nie znaleziono danych wejściowych (lub etykiet)",
@@ -12451,10 +12737,30 @@
       "label-labels": "Etykiety",
       "label-mode": "Tryb",
       "label-value-field-name": "Nazwa pola wartości",
+      "modes": {
+        "label": {
+          "columns": "",
+          "rows": ""
+        }
+      },
       "placeholder-optional-select-label": "(Opcjonalnie) Wybierz etykietę",
       "tooltip-replace-value-field-label": "Zastąp nazwę pola wartości etykietą"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": ""
+      },
+      "name": {
+        "labels-to-fields": ""
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": ""
+      },
+      "name": {
+        "limit": ""
+      },
       "placeholder-value-or-variable": "Wartość lub zmienna"
     },
     "long-info": {
@@ -12465,7 +12771,13 @@
       "string-values-separate": "Wartości typu ciąg znaków są reprezentowane jako osobne pola, a nie jako etykiety"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "Scalanie nie ma żadnych skutków po zastosowaniu do pojedynczej ramki."
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "merge-effect-applied-single-frame": "Scalanie nie ma żadnych skutków po zastosowaniu do pojedynczej ramki.",
+      "name": {
+        "merge": ""
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "Wszystkie wartości są liczbowe",
@@ -12475,10 +12787,16 @@
       "time-in-ascending-order": "Czas w porządku rosnącym"
     },
     "organize-fields-transformer-editor": {
+      "description": {
+        "reorder-hide-or-rename-fields": ""
+      },
       "field-order": "",
       "field-order-auto": "Automatycznie",
       "field-order-manual": "",
-      "first-frame-warning": "Organizowanie pól działa tylko w przypadku pojedynczej ramki. Rozważ najpierw zastosowanie transformacji połączenia lub odfiltrowanie danych wejściowych."
+      "first-frame-warning": "Organizowanie pól działa tylko w przypadku pojedynczej ramki. Rozważ najpierw zastosowanie transformacji połączenia lub odfiltrowanie danych wejściowych.",
+      "name": {
+        "organize-fields": ""
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "Ustawia sposób wyświetlania nazw wybranych pól. Nazwa ramki jest zwykle lepsza w przypadku danych tabelarycznych"
@@ -12503,9 +12821,41 @@
       "partition-values-works-single-frame": "Podział według wartości działa tylko w przypadku pojedynczej ramki.",
       "tooltip-keeps-partition-fields-frames": "Zachowuje pola podziału w ramkach"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": ""
+      },
+      "name": {
+        "prepare-time-series": ""
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "Format",
-      "label-info": "Informacje"
+      "label-info": "Informacje",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": ""
+        },
+        "label": {
+          "long-time-series": ""
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": ""
+        },
+        "label": {
+          "multiframe-time-series": ""
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": ""
+        },
+        "label": {
+          "wide-time-series": ""
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "oraz",
@@ -12517,6 +12867,9 @@
       "label-operation": "Operacja"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": ""
+      },
       "label-calculations": "Obliczenia",
       "label-include-time": "Uwzględnij czas",
       "label-labels-to-fields": "Etykiety do pól",
@@ -12531,11 +12884,22 @@
           "series-to-rows": "Szeregi do wierszy"
         }
       },
+      "name": {
+        "reduce": ""
+      },
       "placeholder-choose-stat": "Wybierz statystyki"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "Wartość lub zmienna",
       "variable-regex-documentation": "Formatuje zmienną wielowartościową do postaci ciągu wyrażenia regularnego"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": ""
+      },
+      "name": {
+        "regression-analysis": ""
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12558,6 +12922,14 @@
       "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Liczba punktów X,Y do prognozowania"
     },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": ""
+      },
+      "name": {
+        "rename-fields-by-regex": ""
+      }
+    },
     "rename-by-regex-transformer-editor": {
       "label-match": "Dopasowanie",
       "label-replace": "Zastąp",
@@ -12566,11 +12938,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Pole",
-      "label-mode": "Tryb"
+      "label-mode": "Tryb",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "",
+          "join-on-a-field": "",
+          "keep-all-rows": ""
+        },
+        "label": {
+          "inner": "",
+          "outer-tabular": "",
+          "outer-time-series": ""
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "name": {
+        "series-to-rows": ""
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": ""
+      },
       "label-field": "Pole",
       "label-reverse": "Odwróć",
+      "name": {
+        "sort-by": ""
+      },
       "placeholder-select-field": "Wybierz pole"
     },
     "supplier": {
@@ -12590,6 +12988,17 @@
         "transform": "Przekształć"
       }
     },
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": ""
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": ""
+      },
+      "name": {
+        "time-series-to-table": ""
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "Statystyka",
       "label-time-field": "Pole czasu",
@@ -12603,9 +13012,33 @@
       "placeholder-value": "Wartość",
       "tooltip-name-for-value-fields": "Nazwa pól wartości"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": ""
+      },
+      "name": {
+        "transpose": ""
+      },
+      "tags": {
+        "pivot": "",
+        "transform": "",
+        "translate": ""
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "Operacja",
       "placeholder-field": "Pole"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "",
+        "combine": "",
+        "create-new-visualization": "",
+        "filter": "",
+        "perform-spatial-operations": "",
+        "reformat": "",
+        "reorder-and-rename": ""
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "Wiele pól wartości dowolnego typu",

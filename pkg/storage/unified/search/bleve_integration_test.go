@@ -13,10 +13,6 @@ import (
 )
 
 func TestBleveSearchBackend(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
 	// Run the search backend test suite
 	unitest.RunSearchBackendTest(t, func(ctx context.Context) resource.SearchBackend {
 		tempDir := t.TempDir()
