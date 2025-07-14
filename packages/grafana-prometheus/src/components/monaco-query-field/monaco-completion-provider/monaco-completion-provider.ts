@@ -71,7 +71,6 @@ export function getCompletionProvider(
       const hasDeletion = e.changes.some((change) => change.text === '' && change.rangeLength > 0);
 
       if (hasDeletion) {
-        console.log('Deletion detected, resetting completion state');
         // Reset completion tracking on deletion
         state.lastTriggeredWordLength = 0;
         state.lastTriggeredWord = '';
