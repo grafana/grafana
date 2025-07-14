@@ -144,7 +144,6 @@ func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) e
 			name = r.GetName() + "-webhook-secret"
 		}
 
-		// TODO: update
 		_, err := e.secrets.Encrypt(ctx, r.GetNamespace(), name, r.Status.Webhook.Secret)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt webhook secret: %w", err)

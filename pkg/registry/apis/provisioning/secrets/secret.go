@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -51,6 +53,21 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 			Value:       &val,
 			Decrypters:  []string{svcName},
 		},
+	}
+
+	existing, err := s.secretsSvc.Read(ctx, xkube.Namespace(namespace), name)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return "", err
+	}
+
+	if existing != nil {
+		existing.Spec.Value = &val
+		existing, _, err = s.secretsSvc.Update(ctx, existing, user.GetUID())
+		if err != nil {
+			return "", err
+		}
+
+		return existing.GetName(), nil
 	}
 
 	finalSecret, err := s.secretsSvc.Create(ctx, secret, user.GetUID())
