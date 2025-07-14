@@ -77,7 +77,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 	tracer := noop.NewTracerProvider().Tracer("test")
 	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		tracer := noop.NewTracerProvider().Tracer("test")
 		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
@@ -479,8 +479,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 			tracer := noop.NewTracerProvider().Tracer("test")
-
-			features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+			features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 
 			cfg := &setting.Cfg{
 				SecretsManagement: setting.SecretsManagerSettings{
