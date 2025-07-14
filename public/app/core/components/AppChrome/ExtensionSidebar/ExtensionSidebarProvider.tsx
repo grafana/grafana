@@ -1,14 +1,13 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState, useMemo } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { store, type ExtensionInfo } from '@grafana/data';
+import { PluginExtensionPoints, store, type ExtensionInfo } from '@grafana/data';
 import { config, getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 
-export const EXTENSION_SIDEBAR_EXTENSION_POINT_ID = 'grafana/extension-sidebar/v0-alpha';
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 export const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
@@ -94,7 +93,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   // `grafana/extension-sidebar/v0-alpha` and the link's `configure` method would control
   // whether the component is rendered or not
   const { links, isLoading } = usePluginLinks({
-    extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
+    extensionPointId: PluginExtensionPoints.ExtensionSidebar,
     context: {
       path: currentPath,
     },
@@ -107,7 +106,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     () =>
       isEnabled
         ? new Map(
-            Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(
+            Array.from(getExtensionPointPluginMeta(PluginExtensionPoints.ExtensionSidebar).entries()).filter(
               ([pluginId, pluginMeta]) =>
                 PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
                 links.some(
