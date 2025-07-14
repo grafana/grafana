@@ -117,3 +117,33 @@ func TestFrontendService_Routes(t *testing.T) {
 		assert.Contains(t, recorder.Body.String(), "\nshrimp_count 1\n")
 	})
 }
+
+func TestFrontendService_Middleware(t *testing.T) {
+	publicDir := setupTestWebAssets(t)
+	cfg := &setting.Cfg{
+		HTTPPort:       "3000",
+		StaticRootPath: publicDir,
+	}
+	service := createTestService(t, cfg)
+
+	// Create a test mux to verify route registration
+	mux := web.New()
+	service.addMiddlewares(mux)
+	service.registerRoutes(mux)
+	t.Run("should register route prom metrics", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/dashboards", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		req = httptest.NewRequest("GET", "/public/build/app.js", nil)
+		mux.ServeHTTP(recorder, req)
+
+		req = httptest.NewRequest("GET", "/metrics", nil)
+		mux.ServeHTTP(recorder, req)
+
+		metricsBody := recorder.Body.String()
+		assert.Contains(t, metricsBody, "# TYPE grafana_http_request_duration_seconds histogram")
+		assert.Contains(t, metricsBody, "grafana_http_request_duration_seconds_bucket{handler=\"public-assets\"") // assets 404
+		assert.Contains(t, metricsBody, "grafana_http_request_duration_seconds_bucket{handler=\"/*\"")            // index route
+	})
+}
