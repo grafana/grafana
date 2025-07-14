@@ -1,7 +1,11 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { getBackendSrv } from '@grafana/runtime';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useSelector } from 'app/types/store';
 
 import { findItem } from '../../state/utils';
@@ -13,77 +17,112 @@ export function useSelectionProvisioningStatus(
 ) {
   const browseState = useSelector((state) => state.browseDashboards);
   const isProvisionedInstance = useIsProvisionedInstance();
+  const [, stateManager] = useSearchStateManager();
+  const isSearching = stateManager.hasSearchFilters();
 
-  return useMemo(() => {
-    if (isProvisionedInstance || isParentProvisioned) {
-      // If the instance is provisioned, all resources should be considered provisioned
-      return {
-        hasProvisioned: true,
-        hasNonProvisioned: false,
-      };
-    }
+  const [status, setStatus] = useState({ hasProvisioned: false, hasNonProvisioned: false });
 
-    let hasProvisioned = false,
-      hasNonProvisioned = false;
+  const [folderCache, setFolderCache] = useState<Record<string, boolean>>({});
+  const [dashboardCache, setDashboardCache] = useState<Record<string, boolean>>({});
 
-    const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-    const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+  const findItemInState = useCallback(
+    (uid: string) => {
+      const item = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, uid);
+      return item ? { parentUID: item.parentUID, managedBy: item.managedBy } : undefined;
+    },
+    [browseState]
+  );
 
-    // find item in Redux state
-    const findItemInState = (uid: string): { parentUID?: string; managedBy?: ManagerKind } | undefined => {
-      // First check browse state
-      const browseItem = findItem(browseState.rootItems?.items || [], browseState.childrenByParentUID, uid);
-      if (browseItem) {
-        return {
-          parentUID: browseItem.parentUID,
-          managedBy: browseItem.managedBy,
-        };
+  const getFolderMeta = useCallback(
+    async (uid: string) => {
+      if (folderCache[uid] !== undefined) {
+        return folderCache[uid];
       }
-      return undefined;
-    };
+      try {
+        const { managedBy } = await getBackendSrv().get(`/api/folders/${uid}`);
+        const result = managedBy === ManagerKind.Repo;
+        setFolderCache((prev) => ({ ...prev, [uid]: result }));
+        return result;
+      } catch {
+        return false;
+      }
+    },
+    [folderCache]
+  );
 
-    // Check selected folders
-    for (const folderUID of selectedFolders) {
-      const item = findItemInState(folderUID);
-      if (item?.managedBy === ManagerKind.Repo) {
-        hasProvisioned = true;
-      } else {
-        hasNonProvisioned = true;
+  const getDashboardMeta = useCallback(
+    async (uid: string) => {
+      if (dashboardCache[uid] !== undefined) {
+        return dashboardCache[uid];
+      }
+      try {
+        const dto = await getDashboardAPI().getDashboardDTO(uid);
+        const result = isProvisionedDashboardFromMeta(dto);
+        setDashboardCache((prev) => ({ ...prev, [uid]: result }));
+        return result;
+      } catch {
+        return false;
+      }
+    },
+    [dashboardCache]
+  );
+
+  const checkItemProvisioning = useCallback(
+    async (uid: string, isFolder: boolean): Promise<boolean> => {
+      if (isSearching) {
+        // If searching, we need provisioning status with fetching metadata
+        return isFolder ? await getFolderMeta(uid) : await getDashboardMeta(uid);
       }
 
-      // Early exit if we found both types
-      if (hasProvisioned && hasNonProvisioned) {
-        break;
+      const item = findItemInState(uid);
+      if (isFolder) {
+        return item?.managedBy === ManagerKind.Repo;
       }
-    }
 
-    // Check selected dashboards
-    for (const dashboardUID of selectedDashboards) {
-      const dashboardItem = findItemInState(dashboardUID);
-      let parentFolderUID = dashboardItem?.parentUID;
+      // Check parent folder first
+      const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
+      if (parent?.managedBy === ManagerKind.Repo) {
+        return true;
+      }
 
-      // If dashboard has a parent folder → check if parent is provisioned
-      // If dashboard has no parent (not found OR in root) → it's non-provisioned
-      if (parentFolderUID) {
-        const parentFolder = findItemInState(parentFolderUID);
-        if (parentFolder?.managedBy === ManagerKind.Repo) {
-          hasProvisioned = true;
-        } else {
-          hasNonProvisioned = true;
+      return item?.managedBy === ManagerKind.Repo;
+    },
+    [isSearching, getFolderMeta, getDashboardMeta, findItemInState]
+  );
+
+  useEffect(() => {
+    const checkProvisioningStatus = async () => {
+      // If the instance is provisioned or the parent folder is provisioned, we can skip checking individual items
+      if (isProvisionedInstance || isParentProvisioned) {
+        setStatus({ hasProvisioned: true, hasNonProvisioned: false });
+        return;
+      }
+
+      const folders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+      const dashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+
+      let hasProvisioned = false;
+      let hasNonProvisioned = false;
+
+      const allItems = [
+        ...folders.map((uid) => ({ uid, isFolder: true })),
+        ...dashboards.map((uid) => ({ uid, isFolder: false })),
+      ];
+
+      for (const { uid, isFolder } of allItems) {
+        const isProvisioned = await checkItemProvisioning(uid, isFolder);
+        isProvisioned ? (hasProvisioned = true) : (hasNonProvisioned = true);
+        if (hasProvisioned && hasNonProvisioned) {
+          // If we have both provisioned and non-provisioned items, we can stop checking
+          break;
         }
-      } else {
-        hasNonProvisioned = true;
       }
 
-      // Early exit if we found both types
-      if (hasProvisioned && hasNonProvisioned) {
-        break;
-      }
-    }
-
-    return {
-      hasProvisioned,
-      hasNonProvisioned,
+      setStatus({ hasProvisioned, hasNonProvisioned });
     };
-  }, [selectedItems, browseState, isProvisionedInstance, isParentProvisioned]);
+
+    checkProvisioningStatus();
+  }, [selectedItems, isProvisionedInstance, isParentProvisioned, isSearching, findItemInState, checkItemProvisioning]);
+
+  return status;
 }

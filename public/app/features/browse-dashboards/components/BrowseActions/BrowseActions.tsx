@@ -32,7 +32,12 @@ export function BrowseActions({ folderDTO }: Props) {
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
-  const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(selectedItems, folderDTO?.managedBy === ManagerKind.Repo);
+  const provisioningEnabled = config.featureToggles.provisioning;
+
+  const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
+    selectedItems,
+    folderDTO?.managedBy === ManagerKind.Repo
+  );
 
   // Folders can only be moved if nested folders is enabled
   const moveIsInvalid = useMemo(
@@ -76,7 +81,6 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showDeleteModal = () => {
-    const { hasProvisioned, hasNonProvisioned } = provisioningStatus;
     if (hasProvisioned && hasNonProvisioned) {
       // Mixed selection
       appEvents.publish(
@@ -85,7 +89,7 @@ export function BrowseActions({ folderDTO }: Props) {
           props: {},
         })
       );
-    } else if (hasProvisioned) {
+    } else if (hasProvisioned && provisioningEnabled) {
       // Only provisioned items
       setShowBulkDeleteProvisionedResource(true);
     } else {
