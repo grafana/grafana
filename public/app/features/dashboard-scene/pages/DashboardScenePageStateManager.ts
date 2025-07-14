@@ -362,6 +362,10 @@ abstract class DashboardScenePageStateManagerBase<T>
     this.cache[cacheKey] = scene;
   }
 
+  public removeSceneCache(cacheKey: string) {
+    delete this.cache[cacheKey];
+  }
+
   public clearSceneCache() {
     this.cache = {};
   }
@@ -821,6 +825,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public setSceneCache(cacheKey: string, scene: DashboardScene): void {
     this.activeManager.setSceneCache(cacheKey, scene);
+  }
+
+  public removeSceneCache(cacheKey: string): void {
+    this.v1Manager.removeSceneCache(cacheKey);
+    this.v2Manager.removeSceneCache(cacheKey);
   }
 
   public getCache() {
