@@ -159,7 +159,7 @@ export const LogsPanel = ({
     onNewLogsReceived,
     fontSize,
     syntaxHighlighting,
-    detailsModeProp,
+    detailsMode: detailsModeProp,
     ...options
   },
   id,
