@@ -308,9 +308,7 @@ export const LogLineDetailsField = ({
             />
           </div>
         )}
-        <div className={styles.label}>
-          {singleKey ? keys[0] : <MultipleValue values={keys} />}
-        </div>
+        <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
