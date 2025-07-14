@@ -266,6 +266,47 @@ describe('DashboardDatasource', () => {
       expect(result.length).toBe(1);
     });
 
+    it('should handle floating point numbers correctly', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['Alice', 'Bob', 'Charlie', 'Diana'] },
+        { name: 'score', type: FieldType.number, values: [95.5, 87.25, 95.5, 92.0] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'score', operator: '=', value: '95.5' }]);
+
+      expect(result.fields[0].values).toEqual(['Alice', 'Charlie']);
+      expect(result.fields[1].values).toEqual([95.5, 95.5]);
+      expect(result.length).toBe(2);
+    });
+
+    it('should handle floating point numbers with != operator', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['Alice', 'Bob', 'Charlie'] },
+        { name: 'temperature', type: FieldType.number, values: [98.6, 99.1, 98.6] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'temperature', operator: '!=', value: '98.6' }]);
+
+      expect(result.fields[0].values).toEqual(['Bob']);
+      expect(result.fields[1].values).toEqual([99.1]);
+      expect(result.length).toBe(1);
+    });
+
+    it('should handle precision edge cases with floats', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['Test1', 'Test2', 'Test3'] },
+        { name: 'value', type: FieldType.number, values: [0.1 + 0.2, 0.3, 1.0000001] },
+      ]);
+
+      // Note: 0.1 + 0.2 !== 0.3 in JavaScript due to floating point precision
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'value', operator: '=', value: '0.3' }]);
+
+      // Should only match the exact 0.3, not the computed 0.1 + 0.2
+      expect(result.fields[0].values).toEqual(['Test2']);
+      expect(result.fields[1].values).toEqual([0.3]);
+      expect(result.length).toBe(1);
+    });
+
     it('should handle empty data frames', () => {
       const frame = createTestFrame([
         { name: 'name', type: FieldType.string, values: [] },
