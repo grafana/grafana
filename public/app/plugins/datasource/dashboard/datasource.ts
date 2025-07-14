@@ -16,6 +16,7 @@ import {
   AdHocVariableFilter,
   MetricFindValue,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
   activateSceneObjectAndParentTree,
@@ -123,8 +124,10 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             ...field,
             config: {
               ...field.config,
-              // Enable AdHoc filtering for string and numeric fields
-              filterable: field.type === FieldType.string || field.type === FieldType.number,
+              // Enable AdHoc filtering for string and numeric fields only when feature toggle is enabled
+              filterable: config.featureToggles.dashboardDsAdHocFiltering
+                ? field.type === FieldType.string || field.type === FieldType.number
+                : field.config.filterable,
             },
             state: {
               ...field.state,
