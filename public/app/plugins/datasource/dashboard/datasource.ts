@@ -184,22 +184,14 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       const rowMatches = filterFieldIndices.every(({ filter, fieldIndex }) => {
         // Handle case where field doesn't exist (fieldIndex === -1)
         if (fieldIndex === -1) {
-          return this.handleNonStringFieldFilter(filter);
+          return this.compareUnsupportedValues(null, filter);
         }
 
         const field = frame.fields[fieldIndex];
+        const fieldValue = field.values[rowIndex];
 
-        // Handle string and numeric fields
-        if (field.type === FieldType.string) {
-          const fieldValue = field.values[rowIndex];
-          return this.evaluateStringFilter(fieldValue, filter);
-        } else if (field.type === FieldType.number) {
-          const fieldValue = field.values[rowIndex];
-          return this.evaluateNumericFilter(fieldValue, filter);
-        } else {
-          // Skip if field isn't a supported type
-          return this.handleNonStringFieldFilter(filter);
-        }
+        // Use unified evaluation method that dispatches based on field type
+        return this.evaluateFilter(fieldValue, filter, field.type);
       });
 
       if (rowMatches) {
@@ -211,35 +203,42 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   /**
-   * Handle filtering behavior for non-string fields
-   * Consistent with Prometheus DS behavior
+   * Evaluate a filter against a field value - unified method that dispatches based on field type
    */
-  private handleNonStringFieldFilter(filter: AdHocVariableFilter): boolean {
-    // Be consistent with Prometheus DS behavior:
-    // - reject when operator is '=' (field must exist and match)
-    // - allow when operator is '!=' (field doesn't exist, so it's "not equal")
-    switch (filter.operator) {
-      case '=':
-        return false; // Field doesn't exist or isn't string, so can't match
-      case '!=':
-        return true; // Field doesn't exist or isn't string, so it's "not equal"
-      default:
-        return true; // Unknown operator, skip this filter
-    }
-  }
-
-  /**
-   * Evaluate a filter against a string field value
-   */
-  private evaluateStringFilter(fieldValue: any, filter: AdHocVariableFilter): boolean {
-    // Handle null/undefined values
+  private evaluateFilter(fieldValue: any, filter: AdHocVariableFilter, fieldType: FieldType): boolean {
+    // Handle null/undefined values consistently across all types
     if (fieldValue == null) {
       return filter.operator === '!=' && filter.value !== '';
     }
 
+    // Dispatch to type-specific comparison logic
+    const compareFn = this.getComparisonFunction(fieldType);
+    return compareFn(fieldValue, filter);
+  }
+
+  /**
+   * Get the appropriate comparison function based on field type
+   */
+  private getComparisonFunction(fieldType: FieldType) {
+    switch (fieldType) {
+      case FieldType.string:
+        return this.compareStringValues;
+      case FieldType.number:
+        return this.compareNumericValues;
+      // Easy to extend for future types:
+      // case FieldType.time:
+      //   return this.compareDateValues;
+      default:
+        return this.compareUnsupportedValues; // Skip unknown types
+    }
+  }
+
+  /**
+   * Compare string field values
+   */
+  private compareStringValues = (fieldValue: any, filter: AdHocVariableFilter): boolean => {
     const filterValue = filter.value;
 
-    // Apply the filter based on operator
     switch (filter.operator) {
       case '=':
         return fieldValue === filterValue;
@@ -249,17 +248,12 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         // Unknown operator, skip this filter
         return true;
     }
-  }
+  };
 
   /**
-   * Evaluate a filter against a numeric field value
+   * Compare numeric field values (integers and floats)
    */
-  private evaluateNumericFilter(fieldValue: any, filter: AdHocVariableFilter): boolean {
-    // Handle null/undefined values
-    if (fieldValue == null) {
-      return filter.operator === '!=' && filter.value !== '';
-    }
-
+  private compareNumericValues = (fieldValue: any, filter: AdHocVariableFilter): boolean => {
     // Parse filter value as a number
     const filterValue = parseFloat(filter.value);
 
@@ -276,17 +270,36 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return true;
     }
 
-    // Apply the filter based on operator
     switch (filter.operator) {
       case '=':
         return numericFieldValue === filterValue;
       case '!=':
         return numericFieldValue !== filterValue;
+      // Easy to add more operators:
+      // case '>':
+      //   return numericFieldValue > filterValue;
+      // case '<':
+      //   return numericFieldValue < filterValue;
       default:
         // Unknown operator, skip this filter
         return true;
     }
-  }
+  };
+
+  /**
+   * Handle unsupported field types
+   */
+  private compareUnsupportedValues = (fieldValue: any, filter: AdHocVariableFilter): boolean => {
+    // Use the same logic as handleNonStringFieldFilter for consistency
+    switch (filter.operator) {
+      case '=':
+        return false; // Field type not supported, so can't match
+      case '!=':
+        return true; // Field type not supported, so it's "not equal"
+      default:
+        return true; // Unknown operator, skip this filter
+    }
+  };
 
   /**
    * Reconstruct DataFrame with only matching rows
