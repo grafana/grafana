@@ -101,7 +101,6 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	encryptionManager, err := manager.ProvideEncryptionManager(
 		tracer,
 		store,
-		cfg,
 		usageStats,
 		enc,
 		ossProviders,

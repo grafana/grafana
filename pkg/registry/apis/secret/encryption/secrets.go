@@ -9,6 +9,11 @@ import (
 
 const UsageInsightsPrefix = "secrets_manager"
 
+type ProviderConfig struct {
+	CurrentProvider    ProviderID
+	AvailableProviders ProviderMap
+}
+
 type ProviderMap map[ProviderID]Provider
 
 // Provider is a fully configured key encryption key provider used for to encrypt and decrypt data keys for envelope encryption

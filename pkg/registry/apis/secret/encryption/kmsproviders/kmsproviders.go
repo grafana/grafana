@@ -16,22 +16,25 @@ const (
 	SecretKeyKey = "secret_key"
 )
 
-// ProvideOSSKMSProviders provides ProviderMap expected by the encryption manager in the OSS wire configuration.
+// ProvideOSSKMSProviders provides the ProviderConfig expected by the encryption manager in the OSS wire configuration.
 // It looks for all configured 'secret_key' sections and creates a separate provider for each, each with its own secret key, allowing users to upgrade their secret key without breaking existing secrets.
-func ProvideOSSKMSProviders(cfg *setting.Cfg, cipher cipher.Cipher) (encryption.ProviderMap, error) {
-	providerMap := make(encryption.ProviderMap)
+func ProvideOSSKMSProviders(cfg *setting.Cfg, cipher cipher.Cipher) (encryption.ProviderConfig, error) {
+	pCfg := encryption.ProviderConfig{
+		CurrentProvider:    encryption.ProviderID(cfg.SecretsManagement.CurrentEncryptionProvider),
+		AvailableProviders: make(encryption.ProviderMap),
+	}
 
 	// Look through the available secret_key providers and add them to the map
 	for providerName, properties := range cfg.SecretsManagement.ConfiguredKMSProviders {
 		if strings.HasPrefix(providerName, OSSProviderType) {
 			secretKey := properties[SecretKeyKey]
 			if secretKey != "" {
-				providerMap[encryption.ProviderID(providerName)] = newSecretKeyProvider(secretKey, cipher)
+				pCfg.AvailableProviders[encryption.ProviderID(providerName)] = newSecretKeyProvider(secretKey, cipher)
 			} else {
-				return nil, fmt.Errorf("missing secret_key for provider %s", providerName)
+				return pCfg, fmt.Errorf("missing secret_key for provider %s", providerName)
 			}
 		}
 	}
 
-	return providerMap, nil
+	return pCfg, nil
 }

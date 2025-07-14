@@ -163,7 +163,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		svc := setupTestService(t)
-		assert.Equal(t, encryption.ProviderID("secret_key.v1"), svc.currentProviderID)
+		assert.Equal(t, encryption.ProviderID("secret_key.v1"), svc.providerConfig.CurrentProvider)
 	})
 
 	t.Run("Should use encrypt/decrypt methods of the current encryption provider", func(t *testing.T) {
@@ -198,7 +198,6 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		encMgr, err := ProvideEncryptionManager(
 			tracer,
 			encryptionStore,
-			cfg,
 			usageStats,
 			enc,
 			ossProviders,
@@ -209,8 +208,10 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		//override default provider with fake, and register the fake separately
 		fake := &fakeProvider{}
-		encryptionManager.kmsProviders[encryption.ProviderID("fakeProvider.v1")] = fake
-		encryptionManager.currentProviderID = "fakeProvider.v1"
+		encryptionManager.providerConfig.AvailableProviders = encryption.ProviderMap{
+			encryption.ProviderID("fakeProvider.v1"): fake,
+		}
+		encryptionManager.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
 		namespace := "test-namespace"
 		encrypted, _ := encryptionManager.Encrypt(context.Background(), namespace, []byte{})
@@ -222,7 +223,6 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		svcDecryptMgr, err := ProvideEncryptionManager(
 			tracer,
 			encryptionStore,
-			cfg,
 			usageStats,
 			enc,
 			ossProviders,
@@ -230,8 +230,10 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		require.NoError(t, err)
 
 		svcDecrypt := svcDecryptMgr.(*EncryptionManager)
-		svcDecrypt.kmsProviders[encryption.ProviderID("fakeProvider.v1")] = fake
-		svcDecrypt.currentProviderID = "fakeProvider.v1"
+		svcDecrypt.providerConfig.AvailableProviders = encryption.ProviderMap{
+			encryption.ProviderID("fakeProvider.v1"): fake,
+		}
+		svcDecrypt.providerConfig.CurrentProvider = encryption.ProviderID("fakeProvider.v1")
 
 		_, _ = svcDecrypt.Decrypt(context.Background(), namespace, encrypted)
 		assert.True(t, fake.decryptCalled, "fake provider's decrypt should be called")
@@ -271,7 +273,6 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		svcV1, err := ProvideEncryptionManager(
 			tracer,
 			encryptionStore,
-			cfgV1,
 			usageStats,
 			enc,
 			ossProviders,
@@ -290,7 +291,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 
 		// Verify current provider is v1
 		encMgrV1 := svcV1.(*EncryptionManager)
-		assert.Equal(t, encryption.ProviderID("secret_key.v1"), encMgrV1.currentProviderID)
+		assert.Equal(t, encryption.ProviderID("secret_key.v1"), encMgrV1.providerConfig.CurrentProvider)
 
 		// Step 3: Create new configuration with v2 as current provider
 		cfgV2 := &setting.Cfg{
@@ -310,7 +311,6 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		svcV2, err := ProvideEncryptionManager(
 			tracer,
 			encryptionStore,
-			cfgV2,
 			usageStats,
 			enc,
 			ossProvidersV2,
@@ -328,7 +328,7 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 
 		// Verify current provider is v2
 		encMgrV2 := svcV2.(*EncryptionManager)
-		assert.Equal(t, encryption.ProviderID("secret_key.v2"), encMgrV2.currentProviderID)
+		assert.Equal(t, encryption.ProviderID("secret_key.v2"), encMgrV2.providerConfig.CurrentProvider)
 
 		// Step 5: Ensure we can decrypt the old value encrypted with v1
 		decryptedOldWithV2, err := svcV2.Decrypt(ctx, namespace, encryptedV1)
@@ -336,9 +336,9 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		assert.Equal(t, plaintext, decryptedOldWithV2)
 
 		// Verify both providers are available
-		assert.Contains(t, encMgrV2.kmsProviders, encryption.ProviderID("secret_key.v1"))
-		assert.Contains(t, encMgrV2.kmsProviders, encryption.ProviderID("secret_key.v2"))
-		assert.Equal(t, 2, len(encMgrV2.kmsProviders))
+		assert.Contains(t, encMgrV2.providerConfig, encryption.ProviderID("secret_key.v1"))
+		assert.Contains(t, encMgrV2.providerConfig, encryption.ProviderID("secret_key.v2"))
+		assert.Equal(t, 2, len(encMgrV2.providerConfig.AvailableProviders))
 	})
 }
 
@@ -501,7 +501,6 @@ func TestIntegration_SecretsService(t *testing.T) {
 			svc, err := ProvideEncryptionManager(
 				tracer,
 				store,
-				cfg,
 				usageStats,
 				enc,
 				ossProviders,
@@ -536,13 +535,6 @@ func TestIntegration_SecretsService(t *testing.T) {
 }
 
 func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
-	cfg := &setting.Cfg{
-		SecretsManagement: setting.SecretsManagerSettings{
-			CurrentEncryptionProvider: "fakeProvider.v1",
-			ConfiguredKMSProviders:    map[string]map[string]string{"fakeProvider.v1": {}},
-		},
-	}
-
 	tracer := noop.NewTracerProvider().Tracer("test")
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
@@ -550,18 +542,20 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	require.NoError(t, err)
 
 	svc, err := ProvideEncryptionManager(
+		tracer,
 		nil,
-		nil,
-		cfg,
 		usageStats,
 		enc,
-		encryption.ProviderMap{
-			"fakeProvider.v1": &fakeProvider{},
+		encryption.ProviderConfig{
+			CurrentProvider: encryption.ProviderID("fakeProvider.v1"),
+			AvailableProviders: encryption.ProviderMap{
+				encryption.ProviderID("fakeProvider.v1"): &fakeProvider{},
+			},
 		},
 	)
 	require.NoError(t, err)
 
 	encMgr := svc.(*EncryptionManager)
-	require.Len(t, encMgr.kmsProviders, 1)
-	require.Contains(t, encMgr.kmsProviders, encryption.ProviderID("fakeProvider.v1"))
+	require.Len(t, encMgr.providerConfig, 1)
+	require.Contains(t, encMgr.providerConfig, encryption.ProviderID("fakeProvider.v1"))
 }

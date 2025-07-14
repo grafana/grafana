@@ -46,7 +46,6 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	encMgr, err := ProvideEncryptionManager(
 		tracer,
 		store,
-		cfg,
 		usageStats,
 		enc,
 		ossProviders,
