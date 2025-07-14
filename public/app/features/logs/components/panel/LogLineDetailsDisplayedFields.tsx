@@ -8,8 +8,8 @@ import { Card, IconButton, useStyles2 } from '@grafana/ui';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 
-import { useLogListContext } from './LogListContext';
 import { LogLineDetailsMode } from './LogLineDetails';
+import { useLogListContext } from './LogListContext';
 
 export const LogLineDetailsDisplayedFields = () => {
   const { displayedFields, setDisplayedFields } = useLogListContext();
@@ -115,7 +115,6 @@ const DraggableDisplayedField = ({ field, index, moveField }: DraggableDisplayed
 
 const getStyles = (theme: GrafanaTheme2, detailsMode: LogLineDetailsMode) => ({
   fieldCard: css({
-    cursor: 'move',
     display: 'block',
     padding: theme.spacing(1),
     marginBottom: theme.spacing(1),
@@ -124,6 +123,7 @@ const getStyles = (theme: GrafanaTheme2, detailsMode: LogLineDetailsMode) => ({
     wordBreak: 'break-word',
   }),
   fieldWrapper: css({
+    cursor: 'move',
     display: 'flex',
     gap: theme.spacing(0.5),
     justifyContent: 'space-evenly',
