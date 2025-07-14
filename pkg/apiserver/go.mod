@@ -5,16 +5,16 @@ go 1.24.4
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
-	github.com/grafana/grafana-app-sdk/logging v0.38.2
+	github.com/grafana/grafana-app-sdk/logging v0.39.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/prometheus/client_golang v1.22.0
 	github.com/stretchr/testify v1.10.0
-	go.opentelemetry.io/contrib/propagators/jaeger v1.35.0
+	go.opentelemetry.io/contrib/propagators/jaeger v1.36.0
 	go.opentelemetry.io/otel v1.36.0
 	go.opentelemetry.io/otel/trace v1.36.0
-	k8s.io/apimachinery v0.33.1
-	k8s.io/apiserver v0.33.1
-	k8s.io/component-base v0.33.1
+	k8s.io/apimachinery v0.33.2
+	k8s.io/apiserver v0.33.2
+	k8s.io/component-base v0.33.2
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0
@@ -73,7 +73,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.21 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.36.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.36.0 // indirect
 	go.opentelemetry.io/otel/metric v1.36.0 // indirect
@@ -98,8 +98,8 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.33.1 // indirect
-	k8s.io/client-go v0.33.1 // indirect
+	k8s.io/api v0.33.2 // indirect
+	k8s.io/client-go v0.33.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.2 // indirect
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect

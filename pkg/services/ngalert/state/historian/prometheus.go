@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"math"
 	"strings"
 	"time"
@@ -12,9 +11,11 @@ import (
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	promValue "github.com/prometheus/prometheus/model/value"
+	"github.com/prometheus/prometheus/util/strutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -89,15 +90,17 @@ type RemotePrometheusBackend struct {
 	cfg        PrometheusConfig
 	promWriter seriesWriter
 	logger     log.Logger
+	metrics    *metrics.Historian
 }
 
-func NewRemotePrometheusBackend(cfg PrometheusConfig, promWriter seriesWriter, logger log.Logger) *RemotePrometheusBackend {
+func NewRemotePrometheusBackend(cfg PrometheusConfig, promWriter seriesWriter, logger log.Logger, metrics *metrics.Historian) *RemotePrometheusBackend {
 	logger.Info("Initializing remote Prometheus backend", "datasourceUID", cfg.DatasourceUID)
 
 	return &RemotePrometheusBackend{
 		cfg:        cfg,
 		promWriter: promWriter,
 		logger:     logger,
+		metrics:    metrics,
 	}
 }
 
@@ -141,9 +144,16 @@ func (b *RemotePrometheusBackend) Record(ctx context.Context, rule history_model
 			close(errCh)
 		}()
 
+		logger.Debug("Saving state history batch", "samples", len(frames))
+		org := fmt.Sprint(st.OrgID)
+		b.metrics.WritesTotal.WithLabelValues(org, "prometheus").Inc()
+		b.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(frames)))
+
 		var sendErr error
 		if err := b.promWriter.WriteDatasource(ctx, b.cfg.DatasourceUID, b.cfg.MetricName, st.LastEvaluationTime, frames, st.OrgID, nil); err != nil {
 			logger.Error("Failed to write alert state metrics batch", "error", err)
+			b.metrics.WritesFailed.WithLabelValues(org, "prometheus").Inc()
+			b.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(frames)))
 			sendErr = err
 		}
 		errCh <- sendErr
@@ -180,7 +190,10 @@ func (b *RemotePrometheusBackend) framesFor(ctx context.Context, rule history_mo
 
 	for i, sample := range samples {
 		labels := make(data.Labels, len(baseLabels)+2)
-		maps.Copy(labels, baseLabels)
+		for k, v := range baseLabels {
+			sanitizedKey := strutil.SanitizeFullLabelName(k)
+			labels[sanitizedKey] = v
+		}
 		labels[alertStateLabel] = sample.promState
 		labels[grafanaAlertStateLabel] = sample.grafanaState
 

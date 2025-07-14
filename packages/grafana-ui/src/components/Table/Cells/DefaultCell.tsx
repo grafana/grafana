@@ -15,6 +15,7 @@ import {
   getCellColors,
   getCellOptions,
   getDataLinksActionsTooltipUtils,
+  tooltipOnClickHandler,
 } from '../utils';
 
 export const DefaultCell = (props: TableCellProps) => {
@@ -88,9 +89,7 @@ export const DefaultCell = (props: TableCellProps) => {
       {...rest}
       className={cellStyle}
       style={{ ...cellProps.style, cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
-      onClick={({ clientX, clientY }) => {
-        setTooltipCoords({ clientX, clientY });
-      }}
+      onClick={tooltipOnClickHandler(setTooltipCoords)}
     >
       {shouldShowLink ? (
         renderSingleLink(links[0], value, getLinkStyle(tableStyles, cellOptions))

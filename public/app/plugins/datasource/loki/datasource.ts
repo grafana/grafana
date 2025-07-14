@@ -46,7 +46,6 @@ import {
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
@@ -148,7 +147,6 @@ export class LokiDatasource
   private logContextProvider: LogContextProvider;
   languageProvider: LanguageProvider;
   maxLines: number;
-  predefinedOperations: string;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -159,7 +157,6 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
-    this.predefinedOperations = settingsData.predefinedOperations ?? '';
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
@@ -295,30 +292,6 @@ export class LokiDatasource
     return { ...logsSampleRequest, targets };
   }
 
-  private getQueryHeaders(request: DataQueryRequest<LokiQuery>): Record<string, string> {
-    const headers: Record<string, string> = {};
-    // only add headers if we are in the context of a dashboard
-    if (
-      [CoreApp.Dashboard.toString(), CoreApp.PanelEditor.toString(), CoreApp.PanelViewer.toString()].includes(
-        request.app
-      ) === false
-    ) {
-      return headers;
-    }
-
-    const dashboard = getDashboardSrv().getCurrent();
-    const dashboardTitle = dashboard?.title;
-    const panelTitle = dashboard?.panels.find((p) => p.id === request?.panelId)?.title;
-    if (dashboardTitle) {
-      headers['X-Dashboard-Title'] = dashboardTitle;
-    }
-    if (panelTitle) {
-      headers['X-Panel-Title'] = panelTitle;
-    }
-
-    return headers;
-  }
-
   /**
    * Required by DataSourceApi. It executes queries based on the provided DataQueryRequest.
    * @returns An Observable of DataQueryResponse containing the query results.
@@ -326,14 +299,19 @@ export class LokiDatasource
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const queries = request.targets
       .map(getNormalizedLokiQuery) // used to "fix" the deprecated `.queryType` prop
-      .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
+      .map((q) => ({
+        ...q,
+        maxLines: q.maxLines ?? this.maxLines,
+        scopes:
+          config.featureToggles.scopeFilters && config.featureToggles.logQLScope
+            ? request.scopes?.flatMap((scope) => scope.spec.filters)
+            : undefined,
+      }));
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
       targets: queries,
     };
-
-    fixedRequest.headers = this.getQueryHeaders(request);
 
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
     if (
@@ -369,11 +347,7 @@ export class LokiDatasource
     }
 
     const startTime = new Date();
-    return this.runQuery(fixedRequest).pipe(
-      tap((response) =>
-        trackQuery(response, fixedRequest, startTime, { predefinedOperations: this.predefinedOperations })
-      )
-    );
+    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
   }
 
   /**

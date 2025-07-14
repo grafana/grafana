@@ -18,7 +18,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 
 import { buildCacheHeaders, getDaysToCacheMetadata, getDefaultCacheHeaders } from './caching';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { DEFAULT_SERIES_LIMIT, MATCH_ALL_LABELS_STR, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
+import { DEFAULT_SERIES_LIMIT, EMPTY_SELECTOR, REMOVE_SERIES_LIMIT } from './constants';
 import { PrometheusDatasource } from './datasource';
 import {
   extractLabelMatchers,
@@ -522,7 +522,7 @@ export interface PrometheusLanguageProviderInterface
   retrieveMetrics: () => string[];
   retrieveLabelKeys: () => string[];
 
-  queryMetricsMetadata: () => Promise<PromMetricsMetadata>;
+  queryMetricsMetadata: (limit?: number) => Promise<PromMetricsMetadata>;
   queryLabelKeys: (timeRange: TimeRange, match?: string, limit?: number) => Promise<string[]>;
   queryLabelValues: (timeRange: TimeRange, labelKey: string, match?: string, limit?: number) => Promise<string[]>;
 }
@@ -577,7 +577,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     if (this.datasource.lookupsDisabled) {
       return [];
     }
-    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata(this.datasource.seriesLimit)]);
     return this._backwardCompatibleStart();
   };
 
@@ -599,12 +599,12 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves when metadata has been fetched
    */
-  private _queryMetadata = async () => {
+  private _queryMetadata = async (limit?: number): Promise<PromMetricsMetadata> => {
     const secondsInDay = 86400;
     const headers = buildCacheHeaders(getDaysToCacheMetadata(this.datasource.cacheLevel) * secondsInDay);
     const metadata = await this.request(
       API_V1.METADATA,
-      {},
+      { limit: limit ?? this.datasource.seriesLimit },
       {
         showErrorAlert: false,
         ...headers,
@@ -660,9 +660,9 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    *
    * @returns {Promise<PromMetricsMetadata>} Promise that resolves to the fetched metadata
    */
-  public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
+  public queryMetricsMetadata = async (limit?: number): Promise<PromMetricsMetadata> => {
     try {
-      this._metricsMetadata = (await this._queryMetadata()) ?? {};
+      this._metricsMetadata = (await this._queryMetadata(limit)) ?? {};
     } catch (error) {
       this._metricsMetadata = {};
     }
@@ -682,7 +682,8 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
    * @returns {Promise<string[]>} Array of matching label key names, sorted alphabetically
    */
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: number): Promise<string[]> => {
-    return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
+    const interpolatedMatch = match ? this.datasource.interpolateString(match) : match;
+    return await this.resourceClient.queryLabelKeys(timeRange, interpolatedMatch, limit);
   };
 
   /**
@@ -716,7 +717,13 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: number
   ): Promise<string[]> => {
-    return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
+    const interpolatedMatch = match ? this.datasource.interpolateString(match) : match;
+    return await this.resourceClient.queryLabelValues(
+      timeRange,
+      this.datasource.interpolateString(labelKey),
+      interpolatedMatch,
+      limit
+    );
   };
 }
 
@@ -789,11 +796,11 @@ function getNameLabelValue(promQuery: string, tokens: Array<string | Prism.Token
  * Handles UTF8 metrics by properly escaping them.
  *
  * @param {PromQuery[]} queries - Array of Prometheus queries
- * @returns {string} Metric names as a regex matcher
+ * @returns {string[]} Metric names as a regex matcher inside the array for easy handling
  */
-export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string => {
+export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string[] => {
   if (!queries) {
-    return MATCH_ALL_LABELS_STR;
+    return [];
   }
 
   const metrics = (queries ?? []).reduce<string[]>((params, query) => {
@@ -803,11 +810,13 @@ export const populateMatchParamsFromQueries = (queries?: PromQuery[]): string =>
     }
     if (visualQuery.query.binaryQueries) {
       visualQuery.query.binaryQueries.forEach((bq) => {
-        params.push(bq.query.metric);
+        if (bq.query.metric !== '') {
+          params.push(bq.query.metric);
+        }
       });
     }
     return params;
   }, []);
 
-  return metrics.length === 0 ? MATCH_ALL_LABELS_STR : `__name__=~"${metrics.join('|')}"`;
+  return metrics.length === 0 ? [] : [`__name__=~"${metrics.join('|')}"`];
 };

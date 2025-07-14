@@ -1,7 +1,7 @@
 import { createElement, PureComponent } from 'react';
 
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
-import { readOnlyCopy } from 'app/features/plugins/extensions/utils';
+import { writableProxy } from 'app/features/plugins/extensions/utils';
 
 import { GenericDataSourcePlugin } from '../types';
 
@@ -34,7 +34,7 @@ export class DataSourcePluginSettings extends PureComponent<Props> {
       <div>
         {plugin.components.ConfigEditor &&
           createElement(plugin.components.ConfigEditor, {
-            options: readOnlyCopy(dataSource),
+            options: writableProxy(dataSource, { source: 'datasource', pluginId: plugin.meta?.id }),
             onOptionsChange: this.onModelChanged,
           })}
       </div>

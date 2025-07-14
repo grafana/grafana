@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestDashboardSnapshotsService(t *testing.T) {
+func TestIntegrationDashboardSnapshotsService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
@@ -97,7 +97,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	})
 }
 
-func TestValidateDashboardExists(t *testing.T) {
+func TestIntegrationValidateDashboardExists(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
