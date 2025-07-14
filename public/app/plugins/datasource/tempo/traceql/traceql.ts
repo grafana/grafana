@@ -172,30 +172,11 @@ const language: languages.IMonarchLanguage = {
     ],
 
     withClause: [
-      // whitespace
-      [/\s+/, ''],
-      // parameter names like 'most_recent'
-      [/[a-zA-Z_][a-zA-Z0-9_]*/, {
-        cases: {
-          '@withParameters': 'variable',
-          '@default': 'identifier'
-        }
-      }],
-      // assignment operator
-      [/=/, 'delimiter'],
-      // boolean values
-      [/\b(true|false)\b/, 'type'],
-      // strings
-      [/"([^"\\]|\\.)*"/, 'string'],
-      [/'([^'\\]|\\.)*'/, 'string'],
-      // numbers
-      [/\d+(\.\d+)?/, 'number'],
-      // comma separator for multiple parameters
-      [/,/, 'delimiter'],
-      // closing parenthesis - return to root
-      [/\)/, { token: 'delimiter.bracket', next: '@pop' }],
-      // anything else
-      [/./, '']
+      [/\s+/, ''], // whitespace
+      [/most_recent/, 'variable'], // parameter names like 'most_recent'
+      [/=/, 'delimiter'], // assignment operator
+      [/\b(true|false)\b/, 'type'], // boolean values
+      [/\)/, { token: 'delimiter.bracket', next: '@pop' }], // closing parenthesis - return to root
     ],
 
     string_double: [
