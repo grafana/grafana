@@ -171,7 +171,7 @@ export function shouldTextOverflow(field: Field): boolean {
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensure we don't apply overflow hover states for type image
     type !== TableCellDisplayMode.Image &&
-    type !== TableCellDisplayMode.Pill &&
+    // type !== TableCellDisplayMode.Pill &&
     !shouldTextWrap(field) &&
     !isCellInspectEnabled(field)
   );

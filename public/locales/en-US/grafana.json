@@ -11872,7 +11872,7 @@
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
     "pill-cell-options-editor": {
-      "description-wrap-text": "Allow pills to wrap to new lines when they exceed the cell width. When disabled, pills will be truncated.",
+      "description-wrap-text": "If selected, pills will be wrapped onto multiple lines",
       "label-wrap-text": "Wrap text"
     },
     "placeholder-column-width": "auto",

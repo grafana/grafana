@@ -18,7 +18,7 @@ export const PillCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditor
         label={t('table.pill-cell-options-editor.label-wrap-text', 'Wrap text')}
         description={t(
           'table.pill-cell-options-editor.description-wrap-text',
-          'Allow pills to wrap to new lines when they exceed the cell width. When disabled, pills will be truncated.'
+          'If selected, pills will be wrapped onto multiple lines'
         )}
       >
         <Switch value={wrapText} onChange={onWrapTextChange} />

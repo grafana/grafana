@@ -884,6 +884,7 @@ const getCellStyles = (
           height: 'fit-content',
           minWidth: 'fit-content',
           paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
+          boxShadow: theme.shadows.z3,
         }),
       },
     }),

@@ -10,8 +10,8 @@ import { AutoCellOptionsEditor } from './cells/AutoCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { ImageCellOptionsEditor } from './cells/ImageCellOptionsEditor';
-import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 import { PillCellOptionsEditor } from './cells/PillCellOptionsEditor';
+import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
