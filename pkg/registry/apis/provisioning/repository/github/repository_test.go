@@ -921,6 +921,40 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.AssertExpectations(t)
 	})
 
+	t.Run("ListRefs delegates to git repo but adds ref URL", func(t *testing.T) {
+		mockGitRepo := git.NewMockGitRepository(t)
+		// The git repo returns refs without RefURL
+		gitRepoRefs := []provisioning.RefItem{
+			{Name: "main", Hash: "abc123def456"},
+			{Name: "feature", Hash: "def456ghi789"},
+		}
+		mockGitRepo.On("ListRefs", ctx).Return(gitRepoRefs, nil)
+
+		repo := &githubRepository{
+			config:  config,
+			gitRepo: mockGitRepo,
+		}
+
+		result, err := repo.ListRefs(ctx)
+		require.NoError(t, err)
+
+		// The returned refs should have RefURL set
+		expectedRefs := []provisioning.RefItem{
+			{
+				Name:   "main",
+				Hash:   "abc123def456",
+				RefURL: "https://github.com/grafana/grafana/tree/main",
+			},
+			{
+				Name:   "feature",
+				Hash:   "def456ghi789",
+				RefURL: "https://github.com/grafana/grafana/tree/feature",
+			},
+		}
+		assert.Equal(t, expectedRefs, result)
+		mockGitRepo.AssertExpectations(t)
+	})
+
 	t.Run("CompareFiles delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
 		expectedChanges := []repository.VersionedFileChange{

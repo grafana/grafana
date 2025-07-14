@@ -200,6 +200,20 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	return ret, nil
 }
 
+// ListRefs list refs from the git repository and add the ref URL to the ref item
+func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem, error) {
+	refs, err := r.gitRepo.ListRefs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list refs: %w", err)
+	}
+
+	for i := range refs {
+		refs[i].RefURL = fmt.Sprintf("%s/tree/%s", r.config.Spec.GitHub.URL, refs[i].Name)
+	}
+
+	return refs, nil
+}
+
 func (r *githubRepository) LatestRef(ctx context.Context) (string, error) {
 	return r.gitRepo.LatestRef(ctx)
 }

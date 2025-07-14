@@ -3143,6 +3143,16 @@
       "info-box-content-2": "Checkout the <2>Annotations documentation</2> for more information.",
       "title": "There are no custom annotation queries added yet"
     },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "When this field is defined, the annotation will be treated as a range",
+        "results-split-on-comma": "The results will be split on comma (,)"
+      },
+      "placeholder": {
+        "text-or-the-first-field": "{{defaultField}}, or the first text field",
+        "time-or-the-first-field": "{{defaultField}}, or the first time field"
+      }
+    },
     "standard-annotation-query-editor": {
       "events-found": "{{numEvents}} events (from {{numFields}} fields)",
       "no-events-found": "No events found",
@@ -4676,6 +4686,18 @@
         "transform-data": "Transform data"
       }
     },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Do not send annotation data to the following panels",
+        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
+        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
+      },
+      "label": {
+        "all-panels": "All panels",
+        "all-panels-except": "All panels except",
+        "selected-panels": "Selected panels"
+      }
+    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5237,7 +5259,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Search for transformation",
       "show-images": "Show images",
-      "title-add-another-transformation": "Add another transformation"
+      "title-add-another-transformation": "Add another transformation",
+      "view-all": "View all"
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
@@ -5581,6 +5604,40 @@
         "row-height-options": "Row height options"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "Add key/value filters on the fly",
+        "dynamically-switch-source-multiple-panels": "Dynamically switch the data source for multiple panels",
+        "group": "Add keys to group by on the fly",
+        "hidden-constant-variable": "A hidden constant variable, useful for metric prefixes in dashboards you want to share",
+        "users-enter-arbitrary-strings-textbox": "Users can enter any arbitrary strings in a textbox",
+        "values-are-static-and-defined-manually": "Values are static and defined manually",
+        "values-fetched-source-query": "Values are fetched from a data source query",
+        "values-timespans": "Values are timespans, ex 1m, 1h, 1d"
+      },
+      "name": {
+        "ad-hoc-filters": "Ad hoc filters",
+        "constant": "Constant",
+        "custom": "Custom",
+        "data-source": "Data source",
+        "group-by": "Group by",
+        "interval": "Interval",
+        "query": "Query",
+        "textbox": "Textbox"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "Do not send annotation data to the following panels",
+        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
+        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
+      },
+      "label": {
+        "all-panels": "All panels",
+        "all-panels-except": "All panels except",
+        "selected-panels": "Selected panels"
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5780,10 +5837,13 @@
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
       "description-optional": "Optional, if you want to extract part of a series name or metric node segment.",
       "label-data-source": "Data source",
+      "label-static-options-sort": "Static options sort",
       "label-target-data-source": "Target data source",
+      "label-use-static-options": "Use static options",
       "name-regex": "Regex",
       "query-options": "Query options",
-      "selection-options": "Selection options"
+      "selection-options": "Selection options",
+      "static-options-legend": "Static options"
     },
     "resource-export": {
       "label": {
@@ -5814,7 +5874,8 @@
       "label-folder": "Folder",
       "render-footer": {
         "title-failed-to-save-dashboard": "Failed to save dashboard"
-      }
+      },
+      "required": "Required"
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -8022,6 +8083,7 @@
     },
     "tags-input": {
       "add": "Add",
+      "placeholder-new-tag": "New tag (enter key to add)",
       "remove": "Remove tag: {{name}}"
     },
     "time-sync-button": {
@@ -8968,6 +9030,12 @@
       "text": {
         "import-dashboard": "Import dashboard"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "Name is required",
+      "message-reserved-name": "This is a reserved name and cannot be used for a folder.",
+      "message-same-name": "A dashboard or a folder with the same name already exists",
+      "message-same-name-general": "A folder or dashboard in the general folder with the same name already exists"
     }
   },
   "metric-select": {
@@ -11806,14 +11874,6 @@
     "name-show-table-footer": "Show table footer",
     "name-show-table-header": "Show table header",
     "name-wrap-header-text": "Wrap header text",
-    "pill-cell-options-editor": {
-      "description-color-mode": "Choose how colors are assigned to pills",
-      "description-fixed-color": "All pills in this column will use this color",
-      "description-value-mappings-info": "For Value Mappings either use the global table Value Mappings or the Field overrides Value Mappings. The default will fall back to the Color Scheme. ",
-      "label-color-mode": "Color Mode",
-      "label-fixed-color": "Fixed Color",
-      "label-value-mappings-info": "Value Mappings"
-    },
     "placeholder-column-width": "auto",
     "placeholder-fields": "All Numeric Fields"
   },
@@ -12166,6 +12226,18 @@
       "placeholder-fields-or-number": "Field(s) or number"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "Binary operation",
+          "reduce-row": "Reduce row",
+          "row-index": "Row index",
+          "unary-operation": "Unary operation"
+        }
+      },
+      "label": {
+        "cumulative-functions": "Cumulative functions",
+        "window-functions": "Window functions"
+      },
       "label-alias": "Alias",
       "label-mode": "Mode",
       "label-replace-all-fields": "Replace all fields"
@@ -12180,6 +12252,13 @@
     "concatenate-transformer-editor": {
       "label-label": "Label",
       "label-name": "Name",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "Copy frame name to field name",
+          "ignore-the-frame-name": "Ignore the frame name",
+          "label-frame": "Add a label with the frame name"
+        }
+      },
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
@@ -12191,6 +12270,9 @@
       "aria-label-add-a-convert-field-type-transformer": "Add a convert field type transformer",
       "aria-label-remove-convert-field-type-transformer": "Remove convert field type transformer",
       "convert-field-type": "Convert field type",
+      "description": {
+        "convert-to-specified-field-type": "Convert a field to a specified field type."
+      },
       "label": {
         "browser": "Browser",
         "utc": "UTC"
@@ -12201,7 +12283,13 @@
       "label-input-format": "Input format",
       "label-join-with": "Join with",
       "label-set-timezone": "Set timezone",
+      "name": {
+        "convert-field-type": "Convert field type"
+      },
       "placeholder-type": "Type",
+      "tags": {
+        "format-field": "Format field"
+      },
       "tooltip-explicit-separator-joining-array-values": "Use an explicit separator when joining array values",
       "tooltip-input-format": "Specify the format of the input field so Grafana can parse the date string correctly.",
       "tooltip-specify-the-output-format": "Specify the output format.",
@@ -12223,6 +12311,19 @@
       "desc": "DESC",
       "off": "Off"
     },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": "Combine all fields into a single frame."
+        },
+        "name": {
+          "concatenate-fields": "Concatenate fields"
+        },
+        "tags": {
+          "combine": "Combine"
+        }
+      }
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Add enum value",
       "generate-enum-values-from-data": "Generate enum values from data"
@@ -12233,6 +12334,9 @@
       "remove-enum-row-tooltip-delete": "Delete"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": "Parse fields from content (JSON, labels, etc)."
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": "Select field"
@@ -12243,6 +12347,9 @@
       "label-keep-time": "Keep time",
       "label-replace-all-fields": "Replace all fields",
       "label-source": "Source",
+      "name": {
+        "extract-fields": "Extract fields"
+      },
       "placeholder-auto": "Auto",
       "placeholder-select-delimiter": "Select delimiter...",
       "tooltip-regexp": "Example: {{regexExample}}"
@@ -12251,6 +12358,9 @@
       "aria-label-threshold-color": "Threshold color"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": "Use a field value to lookup countries, states, or airports."
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": "No text fields found"
@@ -12260,7 +12370,10 @@
         }
       },
       "label-field": "Field",
-      "label-lookup": "Lookup"
+      "label-lookup": "Lookup",
+      "name": {
+        "lookup-fields-from-resource": "Lookup fields from resource"
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "Additional settings",
@@ -12269,11 +12382,25 @@
       "use-as": "Use as"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": "Remove parts of the query results using a regex pattern."
+      },
       "label-from-variable": "From variable",
       "label-identifier": "Identifier",
       "label-use-variable": "Use variable",
       "label-variable": "Variable",
+      "name": {
+        "filter-fields-by-name": "Filter fields by name"
+      },
       "placeholder-regular-expression-pattern": "Regular expression pattern"
+    },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": "Remove rows from the data based on origin query"
+      },
+      "name": {
+        "filter-data-by-query": "Filter data by query"
+      }
     },
     "filter-by-value-filter-editor": {
       "label-field": "Field",
@@ -12284,6 +12411,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Add condition",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": "Remove rows from the query results using user-defined filters."
+      },
       "filter-match": {
         "label": {
           "match-all": "Match all",
@@ -12297,7 +12427,10 @@
         }
       },
       "label-conditions": "Conditions",
-      "label-filter-type": "Filter type"
+      "label-filter-type": "Filter type",
+      "name": {
+        "filter-data-by-values": "Filter data by values"
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12312,12 +12445,84 @@
       "label-format": "Format",
       "label-substring-range": "Substring range"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": "Manipulate string fields formatting."
+      },
+      "name": {
+        "format-string": "Format string"
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "Format",
       "label-set-timezone": "Set timezone",
       "label-time-field": "Time field",
       "tooltip-format": "The output format for the field specified as a <2>Moment.js format string</2>.",
       "tooltip-timezone-manually": "Set the timezone of the date manually"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": "Set the output format of a time field"
+      },
+      "name": {
+        "format-time": "Format time"
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": "Use the row values to calculate a new field."
+      },
+      "name": {
+        "add-field-from-calculation": "Add field from calculation"
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": "Set unit, min, max and more."
+      },
+      "name": {
+        "config-from-query-results": "Config from query results"
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": "Generate heatmap data from source data."
+      },
+      "name": {
+        "create-heatmap": "Create heatmap"
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": "Flatten labeled results into a table joined by labels."
+      },
+      "name": {
+        "join-by-labels": "Join by labels"
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": "Split a one-frame dataset into multiple series."
+      },
+      "name": {
+        "partition-by-values": "Partition by values"
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": "Convert each row into a field with dynamic config."
+      },
+      "name": {
+        "rows-to-fields": "Rows to fields"
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": "Apply spatial operations to query results."
+      },
+      "name": {
+        "spatial-operations": "Spatial operations"
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12346,22 +12551,46 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "Calculate",
+          "group-by": "Group by"
+        }
+      },
       "placeholder-ignored": "Ignored",
       "placeholder-select-stats": "Select stats"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": "Group data by a field value and create aggregate data."
+      },
+      "name": {
+        "group-by": "Group by"
+      },
       "title-calc-alert": "Calculations will not have an effect if no fields are being grouped on"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": "Group data by a field value and create nested tables with the grouped data."
+      },
       "description-show-field-names": "If enabled nested tables will show field names as a table header",
       "label-show-field-names-in-nested-tables": "Show field names in nested tables",
+      "name": {
+        "group-to-nested-tables": "Group to nested tables"
+      },
       "title-calc-alert": "Calculations will not have an effect if no fields are being grouped on."
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": "Summarize and reorganize data based on three fields."
+      },
       "label-cell-value": "Cell value",
       "label-column": "Column",
       "label-empty-value": "Empty value",
       "label-row": "Row",
+      "name": {
+        "grouping-to-matrix": "Grouping to matrix"
+      },
       "special-value-options": {
         "description": {
           "boolean-false-value": "Boolean false value",
@@ -12380,6 +12609,12 @@
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": "Calculate a histogram from input data."
+      },
+      "name": {
+        "histogram": "Histogram"
+      },
       "placeholder-auto": "Auto",
       "placeholder-default": "Default: 30",
       "placeholder-none": "None"
@@ -12388,7 +12623,16 @@
       "label-as-percentile": "As percentile",
       "tooltip-transform-index-percentile": "Transform the row index as a percentile."
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": "Combine rows from 2+ tables, based on a related field."
+      },
+      "name": {
+        "join-by-field": "Join by field"
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "Required",
       "info": {
         "input-contain-labels": "The input does not contain any labels",
         "no-input-or-labels-found": "No input (or labels) found",
@@ -12410,10 +12654,30 @@
       "label-labels": "Labels",
       "label-mode": "Mode",
       "label-value-field-name": "Value field name",
+      "modes": {
+        "label": {
+          "columns": "Columns",
+          "rows": "Rows"
+        }
+      },
       "placeholder-optional-select-label": "(Optional) Select label",
       "tooltip-replace-value-field-label": "Replace the value field name with a label"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": "Group series by time and return labels or tags as fields."
+      },
+      "name": {
+        "labels-to-fields": "Labels to fields"
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": "Limit the number of items displayed."
+      },
+      "name": {
+        "limit": "Limit"
+      },
       "placeholder-value-or-variable": "Value or variable"
     },
     "long-info": {
@@ -12424,7 +12688,13 @@
       "string-values-separate": "String values are represented as separate fields rather than as labels"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "Merge has no effect when applied on a single frame."
+      "description": {
+        "merge-multiple-series": "Merge multiple series. Values will be combined into one row."
+      },
+      "merge-effect-applied-single-frame": "Merge has no effect when applied on a single frame.",
+      "name": {
+        "merge": "Merge series/tables"
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "All values are numeric",
@@ -12434,10 +12704,16 @@
       "time-in-ascending-order": "Time in ascending order"
     },
     "organize-fields-transformer-editor": {
+      "description": {
+        "reorder-hide-or-rename-fields": "Re-order, hide, or rename fields."
+      },
       "field-order": "Field order",
       "field-order-auto": "Auto",
       "field-order-manual": "Manual",
-      "first-frame-warning": "Organize fields only works with a single frame. Consider applying a join transformation or filtering the input first."
+      "first-frame-warning": "Organize fields only works with a single frame. Consider applying a join transformation or filtering the input first.",
+      "name": {
+        "organize-fields": "Organize fields by name"
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "Sets how the names of the selected fields are displayed. As frame name is usually better for tabular data"
@@ -12462,9 +12738,41 @@
       "partition-values-works-single-frame": "Partition by values only works with a single frame.",
       "tooltip-keeps-partition-fields-frames": "Keeps the partition fields in the frames"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": "Stretch data frames from the wide format into the long format."
+      },
+      "name": {
+        "prepare-time-series": "Prepare time series"
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "Format",
-      "label-info": "Info"
+      "label-info": "Info",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": "Convert each frame to long format"
+        },
+        "label": {
+          "long-time-series": "Long time series"
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": "Creates a new frame for each time/number pair"
+        },
+        "label": {
+          "multiframe-time-series": "Multi-frame time series"
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": "Creates a single frame joined by time"
+        },
+        "label": {
+          "wide-time-series": "Wide time series"
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "and",
@@ -12476,6 +12784,9 @@
       "label-operation": "Operation"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": "Reduce all rows or data points to a single value (ex. max, mean)."
+      },
       "label-calculations": "Calculations",
       "label-include-time": "Include time",
       "label-labels-to-fields": "Labels to fields",
@@ -12490,11 +12801,22 @@
           "series-to-rows": "Series to rows"
         }
       },
+      "name": {
+        "reduce": "Reduce"
+      },
       "placeholder-choose-stat": "Choose stat"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "Value or variable",
       "variable-regex-documentation": "Formats multi-value variable into a regex string"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": "Create a new data frame containing values predicted by a statistical model."
+      },
+      "name": {
+        "regression-analysis": "Regression analysis"
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12517,6 +12839,14 @@
       "regression": "regression",
       "tooltip-number-of-xy-points-to-predict": "Number of X,Y points to predict"
     },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": "Rename parts of the query results using a regular expression and replacement pattern."
+      },
+      "name": {
+        "rename-fields-by-regex": "Rename fields by regex"
+      }
+    },
     "rename-by-regex-transformer-editor": {
       "label-match": "Match",
       "label-replace": "Replace",
@@ -12525,11 +12855,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Field",
-      "label-mode": "Mode"
+      "label-mode": "Mode",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "Combine data from two tables whenever there are matching values in a fields common to both tables.",
+          "join-on-a-field": "Join on a field value with duplicated values. Non performant outer join best used for tabular(SQL like) data.",
+          "keep-all-rows": "Keep all rows from any table with a value. Join on distinct field values. Performant and best used for time series."
+        },
+        "label": {
+          "inner": "Inner",
+          "outer-tabular": "Outer (tabular)",
+          "outer-time-series": "Outer (time series)"
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": "Merge multiple series. Return time, metric and values as a row."
+      },
+      "name": {
+        "series-to-rows": "Series to rows"
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": "Sort fields in a frame."
+      },
       "label-field": "Field",
       "label-reverse": "Reverse",
+      "name": {
+        "sort-by": "Sort by"
+      },
       "placeholder-select-field": "Select field"
     },
     "supplier": {
@@ -12549,7 +12905,17 @@
         "transform": "Transform"
       }
     },
-    "tag": "{{ tag }}",
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": "Convert time series data to table rows so that they can be viewed in tabular or sparkline format."
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": "The Time series to table transformation requires at least one time series frame to function. You currently have none."
+      },
+      "name": {
+        "time-series-to-table": "Time series to table"
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Time field",
@@ -12563,9 +12929,33 @@
       "placeholder-value": "Value",
       "tooltip-name-for-value-fields": "Name for value fields"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": "Transpose the data frame."
+      },
+      "name": {
+        "transpose": "Transpose"
+      },
+      "tags": {
+        "pivot": "Pivot",
+        "transform": "Transform",
+        "translate": "Translate"
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "Operation",
       "placeholder-field": "Field"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "Calculate new fields",
+        "combine": "Combine",
+        "create-new-visualization": "Create new visualization",
+        "filter": "Filter",
+        "perform-spatial-operations": "Perform spatial operations",
+        "reformat": "Reformat",
+        "reorder-and-rename": "Reorder and rename"
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "Multiple value fields of any type",
@@ -12770,6 +13160,16 @@
           "numerical-desc": "Numerical (desc)"
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "Add option",
+      "description": "Add custom options in addition to query results",
+      "label-placeholder": "display label",
+      "remove-option-button-label": "Remove option",
+      "value-placeholder": "value, default empty string"
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": "How to sort static options with query results"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",
