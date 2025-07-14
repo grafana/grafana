@@ -47,48 +47,20 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   }
 }
 
-// Shared state for completion provider
-export interface CompletionProviderState {
-  isManualTriggerRequested: boolean;
-  lastTriggeredWordLength: number;
-  lastTriggeredWord: string;
-}
-
-// Create shared state for completion provider
-export function createCompletionProviderState(): CompletionProviderState {
-  return {
-    isManualTriggerRequested: false,
-    lastTriggeredWordLength: 0,
-    lastTriggeredWord: '',
-  };
-}
-
 export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider,
-  timeRange: TimeRange,
-  sharedState?: CompletionProviderState
-): monacoTypes.languages.CompletionItemProvider {
+  timeRange: TimeRange
+): { provider: monacoTypes.languages.CompletionItemProvider; state: { isManualTriggerRequested: boolean } } {
   // Debounce mechanism to delay completions after user stops typing
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   const DEBOUNCE_DELAY = 300; // 300ms delay after typing stops
 
-  // Use shared state or create local state
-  const state = sharedState || {
+  // Simple local state
+  const state = {
     isManualTriggerRequested: false,
     lastTriggeredWordLength: 0,
     lastTriggeredWord: '',
-  };
-
-  // Track completion trigger points for 3-character increments
-  // Use state directly instead of local variables to ensure synchronization
-  const getLastTriggeredWordLength = () => state.lastTriggeredWordLength;
-  const setLastTriggeredWordLength = (value: number) => {
-    state.lastTriggeredWordLength = value;
-  };
-  const getLastTriggeredWord = () => state.lastTriggeredWord;
-  const setLastTriggeredWord = (value: string) => {
-    state.lastTriggeredWord = value;
   };
 
   // Track deletion events to reset completion state
@@ -101,8 +73,8 @@ export function getCompletionProvider(
       if (hasDeletion) {
         console.log('Deletion detected, resetting completion state');
         // Reset completion tracking on deletion
-        setLastTriggeredWordLength(0);
-        setLastTriggeredWord('');
+        state.lastTriggeredWordLength = 0;
+        state.lastTriggeredWord = '';
 
         // Clear any pending completion timers
         if (debounceTimer) {
@@ -167,15 +139,15 @@ export function getCompletionProvider(
       const currentWordLength = currentWord.length;
 
       // Reset tracking if word changed (user moved cursor or started typing a different word)
-      if (getLastTriggeredWord() && !currentWord.startsWith(getLastTriggeredWord())) {
-        setLastTriggeredWordLength(0);
-        setLastTriggeredWord('');
+      if (state.lastTriggeredWord && !currentWord.startsWith(state.lastTriggeredWord)) {
+        state.lastTriggeredWordLength = 0;
+        state.lastTriggeredWord = '';
       }
 
       // Check if we should trigger completion based on 3-character increments
       const shouldTrigger =
-        (getLastTriggeredWordLength() === 0 && currentWordLength >= 3) || // First 3 characters
-        (getLastTriggeredWordLength() > 0 && currentWordLength >= getLastTriggeredWordLength() + 3); // Next 3 characters
+        (state.lastTriggeredWordLength === 0 && currentWordLength >= 3) || // First 3 characters
+        (state.lastTriggeredWordLength > 0 && currentWordLength >= state.lastTriggeredWordLength + 3); // Next 3 characters
 
       if (shouldTrigger) {
         if (debounceTimer) {
@@ -184,8 +156,8 @@ export function getCompletionProvider(
 
         return new Promise((resolve) => {
           debounceTimer = setTimeout(() => {
-            setLastTriggeredWordLength(currentWordLength);
-            setLastTriggeredWord(currentWord);
+            state.lastTriggeredWordLength = currentWordLength;
+            state.lastTriggeredWord = currentWord;
             executeCompletionLogic(model, position, range, dataProvider, timeRange, word?.word).then(resolve);
           }, DEBOUNCE_DELAY);
         });
@@ -253,7 +225,10 @@ export function getCompletionProvider(
   };
 
   return {
-    triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"'],
-    provideCompletionItems,
+    provider: {
+      triggerCharacters: ['{', ',', '[', '(', '=', '~', ' ', '"'],
+      provideCompletionItems,
+    },
+    state,
   };
 }

@@ -13,11 +13,7 @@ import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { DataProvider } from './monaco-completion-provider/data_provider';
-import {
-  createCompletionProviderState,
-  getCompletionProvider,
-  getSuggestOptions,
-} from './monaco-completion-provider/monaco-completion-provider';
+import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider/monaco-completion-provider';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 import { language, languageConfiguration } from './promql';
 
@@ -161,9 +157,12 @@ const MonacoQueryField = (props: Props) => {
             languageProvider: lpRef.current,
           });
 
-          // Create shared state for completion provider and Ctrl+Space detection
-          const completionState = createCompletionProviderState();
-          const completionProvider = getCompletionProvider(monaco, dataProvider, timeRange, completionState);
+          // Create completion provider with state for Ctrl+Space detection
+          const { provider: completionProvider, state: completionState } = getCompletionProvider(
+            monaco,
+            dataProvider,
+            timeRange
+          );
 
           // completion-providers in monaco are not registered directly to editor-instances,
           // they are registered to languages. this makes it hard for us to have
