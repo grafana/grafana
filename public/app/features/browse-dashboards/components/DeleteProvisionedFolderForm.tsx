@@ -68,8 +68,8 @@ function FormContent({
   // TODO: move to a hook if this useEffect shared mostly the same logic as in NewProvisionedFolderForm
   useEffect(() => {
     if (request.isSuccess && repository) {
-      if (workflow === 'branch') {
-        const prUrl = request.data?.urls?.newPullRequestURL;
+      const prUrl = request.data?.urls?.newPullRequestURL;
+      if (workflow === 'branch' && prUrl) {
         navigate(`/dashboards?new_pull_request_url=${prUrl}`);
         return;
       }
