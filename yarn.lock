@@ -3270,10 +3270,10 @@ __metadata:
 
 "@grafana/hackathon-13-registrar-private@file:../hack-13-registrar/generated/typescript/private::locator=grafana%40workspace%3A.":
   version: 0.0.16
-  resolution: "@grafana/hackathon-13-registrar-private@file:../hack-13-registrar/generated/typescript/private#../hack-13-registrar/generated/typescript/private::hash=54deee&locator=grafana%40workspace%3A."
+  resolution: "@grafana/hackathon-13-registrar-private@file:../hack-13-registrar/generated/typescript/private#../hack-13-registrar/generated/typescript/private::hash=b83fa1&locator=grafana%40workspace%3A."
   dependencies:
     openapi-fetch: "npm:^0.12.0"
-  checksum: 10/4617be5e2589780b2c009dc3abd899e9f4f251870cc39b7f55a52d5e1399dad3b3fd335a2922eb86710d743cc9d963c082701985d7b688c5356084c41d707731
+  checksum: 10/b65f3cff1b26dc345e554df6fa52229a84ec699788ab4f6b7aeae9f23f98e81725c18b6f0866db173950228ce104b96f79499ba8cca8445fde9114df17ec23ef
   languageName: node
   linkType: hard
 

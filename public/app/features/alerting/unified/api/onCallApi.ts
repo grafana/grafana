@@ -1,9 +1,6 @@
 import { FetchError, isFetchError } from '@grafana/runtime';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import {
-  grafanaOncallPrivateApiEndpoints,
-  AlertReceiveChannelPolymorphic,
-} from '@grafana/hackathon-13-registrar-private/rtk-query';
+import { grafanaOncallPrivateApiRTK } from '@grafana/hackathon-13-registrar-private/rtk-query';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
 import { getIrmIfPresentOrOnCallPluginId } from '../utils/config';
@@ -27,7 +24,7 @@ type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | string;
 
 type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
 
-export type OnCallIntegrationDTO = AlertReceiveChannelPolymorphic;
+export type OnCallIntegrationDTO = grafanaOncallPrivateApiRTK.AlertReceiveChannelPolymorphic;
 
 export interface CreateIntegrationDTO {
   integration: typeof GRAFANA_ONCALL_INTEGRATION_TYPE; // The only one supported right now
@@ -53,7 +50,7 @@ export const registrarOnCallBaseApi = createApi({
 
 export const onCallApiFromRegistrar = registrarOnCallBaseApi.injectEndpoints({
   endpoints: (build) => ({
-    ...grafanaOncallPrivateApiEndpoints(build),
+    ...grafanaOncallPrivateApiRTK.grafanaOncallPrivateApiEndpoints(build),
   }),
 });
 

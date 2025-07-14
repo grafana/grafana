@@ -15,7 +15,6 @@ import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { option } from '../../../../utils/notifier-types';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE, ReceiverTypes } from './onCall';
-import { FilterAlertReceiveChannelRead } from '@grafana/hackathon-13-registrar-private/rtk-query';
 
 export enum OnCallIntegrationType {
   NewIntegration = 'new_oncall_integration',
@@ -241,7 +240,7 @@ export function useOnCallIntegration() {
               required: true,
               showWhen: { field: 'integration_type', is: OnCallIntegrationType.ExistingIntegration },
               selectOptions: grafanaOnCallIntegrations?.results.map((i) => ({
-                label: (i as FilterAlertReceiveChannelRead).display_name ?? '',
+                label: 'display_name' in i ? i.display_name : '',
                 description: i.integration_url ?? undefined,
                 value: i.integration_url ?? undefined,
               })),

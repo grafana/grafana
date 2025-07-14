@@ -1,4 +1,4 @@
-import { FilterAlertReceiveChannelRead } from '@grafana/hackathon-13-registrar-private/rtk-query';
+import { grafanaOncallPrivateApiRTK } from '@grafana/hackathon-13-registrar-private/rtk-query';
 import { onCallApi, onCallApiFromRegistrar } from 'app/features/alerting/unified/api/onCallApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { getIrmIfPresentOrOnCallPluginId } from 'app/features/alerting/unified/utils/config';
@@ -28,7 +28,7 @@ export function useOnCallOptions() {
     }
   );
   return onCallIntegrations.data?.results.map((integration) => {
-    const integrationRead = integration as FilterAlertReceiveChannelRead;
+    const integrationRead = integration as grafanaOncallPrivateApiRTK.FilterAlertReceiveChannelRead;
     return {
       label: integrationRead.display_name,
       value: integrationRead.value,
