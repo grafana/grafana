@@ -129,16 +129,9 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref common.
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. This is deprecated in favor of TokenSecretName and will be removed in a future version.",
+							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
 							Type:        []string{"string"},
 							Format:      "byte",
-						},
-					},
-					"tokenSecretName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TokenSecretName is the name of the secret that contains the token for accessing the repository.",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 					"path": {
@@ -353,16 +346,9 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. This is deprecated in favor of TokenSecretName and will be removed in a future version.",
+							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
 							Type:        []string{"string"},
 							Format:      "byte",
-						},
-					},
-					"tokenSecretName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TokenSecretName is the name of the secret that contains the token for accessing the repository.",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 					"generateDashboardPreviews": {
@@ -421,16 +407,9 @@ func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.Ref
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. This is deprecated in favor of TokenSecretName and will be removed in a future version.",
+							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
 							Type:        []string{"string"},
 							Format:      "byte",
-						},
-					},
-					"tokenSecretName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TokenSecretName is the name of the secret that contains the token for accessing the repository.",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 					"path": {
@@ -482,16 +461,9 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted. This is deprecated in favor of TokenSecretName and will be removed in a future version.",
+							Description: "Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.",
 							Type:        []string{"string"},
 							Format:      "byte",
-						},
-					},
-					"tokenSecretName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TokenSecretName is the name of the secret that contains the token for accessing the repository.",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 					"path": {
@@ -2359,16 +2331,8 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 					},
 					"encryptedSecret": {
 						SchemaProps: spec.SchemaProps{
-							Description: "This is deprecated in favor of SecretName and will be removed in a future version.",
-							Type:        []string{"string"},
-							Format:      "byte",
-						},
-					},
-					"secretName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "SecretName is the name of the secret that contains the secret for accessing the repository.",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "byte",
 						},
 					},
 					"subscribedEvents": {

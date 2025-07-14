@@ -44,11 +44,8 @@ type GitHubRepositoryConfig struct {
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// This is deprecated in favor of TokenSecretName and will be removed in a future version.
 	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`
-	// TokenSecretName is the name of the secret that contains the token for accessing the repository.
-	TokenSecretName string `json:"tokenSecretName,omitempty"`
 
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
@@ -70,11 +67,8 @@ type GitRepositoryConfig struct {
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// This is deprecated in favor of TokenSecretName and will be removed in a future version.
 	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`
-	// TokenSecretName is the name of the secret that contains the token for accessing the repository.
-	TokenSecretName string `json:"tokenSecretName,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -91,11 +85,8 @@ type BitbucketRepositoryConfig struct {
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// This is deprecated in favor of TokenSecretName and will be removed in a future version.
 	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`
-	// TokenSecretName is the name of the secret that contains the token for accessing the repository.
-	TokenSecretName string `json:"tokenSecretName,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -112,11 +103,8 @@ type GitLabRepositoryConfig struct {
 	// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 	Token string `json:"token,omitempty"`
 	// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
-	// This is deprecated in favor of TokenSecretName and will be removed in a future version.
 	// +listType=atomic
 	EncryptedToken []byte `json:"encryptedToken,omitempty"`
-	// TokenSecretName is the name of the secret that contains the token for accessing the repository.
-	TokenSecretName string `json:"tokenSecretName,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -277,13 +265,10 @@ type SyncStatus struct {
 }
 
 type WebhookStatus struct {
-	ID     int64  `json:"id,omitempty"`
-	URL    string `json:"url,omitempty"`
-	Secret string `json:"secret,omitempty"`
-	// This is deprecated in favor of SecretName and will be removed in a future version.
-	EncryptedSecret []byte `json:"encryptedSecret,omitempty"`
-	// SecretName is the name of the secret that contains the secret for accessing the repository.
-	SecretName       string   `json:"secretName,omitempty"`
+	ID               int64    `json:"id,omitempty"`
+	URL              string   `json:"url,omitempty"`
+	Secret           string   `json:"secret,omitempty"`
+	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
 }

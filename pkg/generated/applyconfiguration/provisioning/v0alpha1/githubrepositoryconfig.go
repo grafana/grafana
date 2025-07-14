@@ -11,7 +11,6 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	Branch                    *string `json:"branch,omitempty"`
 	Token                     *string `json:"token,omitempty"`
 	EncryptedToken            []byte  `json:"encryptedToken,omitempty"`
-	TokenSecretName           *string `json:"tokenSecretName,omitempty"`
 	GenerateDashboardPreviews *bool   `json:"generateDashboardPreviews,omitempty"`
 	Path                      *string `json:"path,omitempty"`
 }
@@ -53,14 +52,6 @@ func (b *GitHubRepositoryConfigApplyConfiguration) WithEncryptedToken(values ...
 	for i := range values {
 		b.EncryptedToken = append(b.EncryptedToken, values[i])
 	}
-	return b
-}
-
-// WithTokenSecretName sets the TokenSecretName field in the declarative configuration to the given value
-// and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the TokenSecretName field is set to the value of the last call.
-func (b *GitHubRepositoryConfigApplyConfiguration) WithTokenSecretName(value string) *GitHubRepositoryConfigApplyConfiguration {
-	b.TokenSecretName = &value
 	return b
 }
 
