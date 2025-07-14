@@ -322,7 +322,7 @@ export const offsetExpression = ['array', ['get', 'offsetX'], ['get', 'offsetY']
 
 // Base style for regular shapes
 export const baseShapeStyle = {
-  'shape-radius': sizeExpression,
+  'shape-radius': ['/', sizeExpression, 2],
   'shape-fill-color': colorExpression,
   'shape-stroke-color': colorExpression,
   'shape-stroke-width': 1,
@@ -333,7 +333,7 @@ export const baseShapeStyle = {
 
 // Base style for circles
 export const baseCircleStyle = {
-  'circle-radius': sizeExpression,
+  'circle-radius': ['/', sizeExpression, 2],
   'circle-fill-color': colorExpression,
   'circle-stroke-color': colorExpression,
   'circle-stroke-width': 1,
