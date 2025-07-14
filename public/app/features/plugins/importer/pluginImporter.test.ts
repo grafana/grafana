@@ -334,7 +334,7 @@ describe('pluginImporter', () => {
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
-      expect(logSpy).toHaveBeenCalledWith(`Retreiving plugin from cache`, {
+      expect(logSpy).toHaveBeenCalledWith(`Retrieving plugin from cache`, {
         expectedHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         loadingStrategy: 'fetch',
         newPluginLoadingEnabled: 'false',
@@ -365,7 +365,7 @@ describe('pluginImporter', () => {
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
-      expect(logSpy).toHaveBeenCalledWith(`Retreiving plugin from inflight plugin load request`, {
+      expect(logSpy).toHaveBeenCalledWith(`Retrieving plugin from inflight plugin load request`, {
         expectedHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         loadingStrategy: 'fetch',
         newPluginLoadingEnabled: 'false',

@@ -44,25 +44,23 @@ const defaultPreImport: PreImportStrategy = (plugin) => {
 };
 
 const panelPluginPostImport: PostImportStrategy<PanelPlugin, PanelPluginMeta> = async (meta, module) => {
-  return module
-    .then((pluginExports) => {
-      if (pluginExports.plugin) {
-        return pluginExports.plugin;
-      }
+  try {
+    const pluginExports = await module;
 
-      throwIfAngular(pluginExports);
-      throw new Error('missing export: plugin');
-    })
-    .then((plugin: PanelPlugin) => {
+    if (pluginExports.plugin) {
+      const plugin: PanelPlugin = pluginExports.plugin;
       plugin.meta = meta;
       pluginsCache.set(meta.id, plugin);
       return plugin;
-    })
-    .catch((err) => {
-      // TODO, maybe a different error plugin
-      console.warn('Error loading panel plugin: ' + meta.id, err);
-      return getPanelPluginLoadError(meta, err);
-    });
+    }
+
+    throwIfAngular(pluginExports);
+    throw new Error('missing export: plugin');
+  } catch (error) {
+    // TODO, maybe a different error plugin
+    console.warn('Error loading panel plugin: ' + meta.id, error);
+    return getPanelPluginLoadError(meta, error);
+  }
 };
 
 const datasourcePluginPostImport: PostImportStrategy<GenericDataSourcePlugin, DataSourcePluginMeta> = async (
@@ -141,7 +139,7 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
 ): Promise<P> => {
   const cached = getPluginFromCache<P>(meta.id);
   if (cached) {
-    pluginsLogger.logDebug(`Retreiving plugin from cache`, {
+    pluginsLogger.logDebug(`Retrieving plugin from cache`, {
       path: meta.module,
       pluginId: meta.id,
       pluginVersion: meta.info?.version ?? '',
@@ -154,7 +152,7 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
   }
 
   if (promisesCache.has(meta.id)) {
-    pluginsLogger.logDebug(`Retreiving plugin from inflight plugin load request`, {
+    pluginsLogger.logDebug(`Retrieving plugin from inflight plugin load request`, {
       path: meta.module,
       pluginId: meta.id,
       pluginVersion: meta.info?.version ?? '',
