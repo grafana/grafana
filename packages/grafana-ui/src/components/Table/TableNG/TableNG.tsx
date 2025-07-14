@@ -865,7 +865,7 @@ const getCellStyles = (
       background: colors.bgColor ?? 'inherit',
       alignContent: 'center',
       justifyContent: getTextAlign(field),
-      paddingInline: TABLE.CELL_PADDING,
+      padding: TABLE.CELL_PADDING,
       height: '100%',
       minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
       ...(shouldWrap && { whiteSpace: 'pre-line' }),

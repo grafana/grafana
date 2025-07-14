@@ -72,6 +72,12 @@ export function shouldTextWrap(field: Field): boolean {
 
 // matches characters which CSS
 const spaceRegex = /[\s-]/;
+// 6px horizontal padding on each side
+const PILLS_SPACING = 12;
+// 4px gap between pills
+const PILLS_GAP = 4;
+// Pills are rendered at 12px font size
+const PILLS_TEXT_SIZE_RATIO = 12 / 14;
 
 export interface GetMaxWrapCellOptions {
   colWidths: number[];
@@ -115,13 +121,22 @@ export function getMaxWrapCell(
           // and how many lines we'll need. This is a rough estimation.
           const pillValues = inferPills(cellTextRaw);
           if (pillValues.length > 0) {
-            // Estimate pill width (including padding and gap)
-            const estimatedPillWidth = 80; // rough estimate for pill width
-            const pillsPerLine = Math.max(1, Math.floor(colWidths[i] / estimatedPillWidth));
-            const estimatedLines = Math.ceil(pillValues.length / pillsPerLine);
+            const adjustedCharWidth = avgCharWidth * PILLS_TEXT_SIZE_RATIO;
+            let localLines = 0;
+            let currentLineUse = colWidths[i];
 
-            if (estimatedLines > maxLines) {
-              maxLines = estimatedLines;
+            for (const pillValue of pillValues) {
+              const pillWidth = pillValue.length * adjustedCharWidth + PILLS_SPACING;
+              if (currentLineUse + pillWidth > colWidths[i]) {
+                localLines++;
+                currentLineUse = pillWidth;
+              } else {
+                currentLineUse += pillWidth + PILLS_GAP;
+              }
+            }
+
+            if (localLines > maxLines) {
+              maxLines = localLines;
               maxLinesIdx = i;
               maxLinesText = cellText;
             }
