@@ -45,10 +45,6 @@ First, you need to create a Google OAuth Client:
 
 ## Configure Google authentication client using the Grafana UI
 
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default.
-{{< /admonition >}}
-
 As a Grafana Admin, you can configure Google OAuth client from within Grafana using the Google UI. To do this, navigate to **Administration > Authentication > Google** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save**. If the save was successful, Grafana will apply the new configurations.
@@ -60,10 +56,6 @@ If you run Grafana in high availability mode, configuration changes may not get 
 {{< /admonition >}}
 
 ## Configure Google authentication client using the Terraform provider
-
-{{< admonition type="note" >}}
-Available behind the `ssoSettingsAPI` feature toggle, which is enabled by default. Supported in the Terraform provider since v2.12.0.
-{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "google_sso_settings" {
@@ -166,6 +158,10 @@ auto_login = true
 ```
 
 ### Configure team synchronization
+
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+{{< /admonition >}}
 
 With team sync, you can easily add users to teams by utilizing their Google groups. To set up team sync for Google OAuth, refer to the following example.
 

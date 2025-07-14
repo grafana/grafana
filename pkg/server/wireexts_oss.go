@@ -8,9 +8,11 @@ import (
 	"github.com/google/wire"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
+	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
@@ -127,6 +129,7 @@ var wireExtsBasicSet = wire.NewSet(
 	unified.ProvideUnifiedStorageClient,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
+	apisregistry.WireSetExts,
 )
 
 var wireExtsSet = wire.NewSet(
@@ -162,6 +165,10 @@ var wireExtsBaseCLISet = wire.NewSet(
 var wireExtsModuleServerSet = wire.NewSet(
 	NewModule,
 	wireExtsBaseCLISet,
+	// Tracing
+	tracing.ProvideTracingConfig,
+	tracing.ProvideService,
+	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

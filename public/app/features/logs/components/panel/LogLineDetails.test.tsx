@@ -40,6 +40,7 @@ const setup = (
 
   const props: Props = {
     containerElement: document.createElement('div'),
+    focusLogLine: jest.fn(),
     logs,
     onResize: jest.fn(),
     ...(propOverrides || {}),
@@ -198,8 +199,8 @@ describe('LogLineDetails', () => {
       setup(undefined, { entry: '' });
       expect(screen.queryByText('Fields')).not.toBeInTheDocument();
       expect(screen.queryByText('Links')).not.toBeInTheDocument();
-      expect(screen.queryByText('Indexed labels')).not.toBeInTheDocument();
-      expect(screen.queryByText('Parsed fields')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Indexed label/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Parsed field/)).not.toBeInTheDocument();
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
     });
   });
@@ -400,8 +401,8 @@ describe('LogLineDetails', () => {
       expect(screen.getByText('value2')).toBeInTheDocument();
       expect(screen.getByText('label3')).toBeInTheDocument();
       expect(screen.getByText('value3')).toBeInTheDocument();
-      expect(screen.getByText('Indexed labels')).toBeInTheDocument();
-      expect(screen.getByText('Parsed fields')).toBeInTheDocument();
+      expect(screen.getByText(/Indexed label/)).toBeInTheDocument();
+      expect(screen.getByText(/Parsed field/)).toBeInTheDocument();
       expect(screen.getByText('Structured metadata')).toBeInTheDocument();
     });
     test('should not show label types if they are unavailable or not supported', () => {
@@ -427,8 +428,8 @@ describe('LogLineDetails', () => {
       expect(screen.getByText('value3')).toBeInTheDocument();
 
       expect(screen.getByText('Fields')).toBeInTheDocument();
-      expect(screen.queryByText('Indexed labels')).not.toBeInTheDocument();
-      expect(screen.queryByText('Parsed fields')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Indexed label/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Parsed field/)).not.toBeInTheDocument();
       expect(screen.queryByText('Structured metadata')).not.toBeInTheDocument();
     });
 
@@ -455,6 +456,39 @@ describe('LogLineDetails', () => {
       await userEvent.type(input, 'something else');
 
       expect(screen.getAllByText('No results to display.')).toHaveLength(3);
+    });
+  });
+
+  describe('Label types', () => {
+    test('Does not show displayed fields controls if not present', () => {
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
+      expect(screen.queryByText('Displayed fields')).not.toBeInTheDocument();
+    });
+
+    test('Does not show displayed fields controls if required props are not present', () => {
+      setup(undefined, { labels: { key1: 'label1', key2: 'label2' } }, { displayedFields: ['key1', 'key2'] });
+      expect(screen.queryByText('Displayed fields')).not.toBeInTheDocument();
+    });
+
+    test('Shows displayed fields controls if required props are present', async () => {
+      const setDisplayedFields = jest.fn();
+      const onClickHideField = jest.fn();
+      setup(
+        undefined,
+        { labels: { key1: 'label1', key2: 'label2' } },
+        { displayedFields: ['key1', 'key2'], setDisplayedFields, onClickHideField }
+      );
+
+      expect(screen.getByText('Organize displayed fields')).toBeInTheDocument();
+      expect(screen.queryAllByLabelText('Remove field')).toHaveLength(0);
+
+      await userEvent.click(screen.getByText('Organize displayed fields'));
+
+      expect(screen.getAllByLabelText('Remove field')).toHaveLength(2);
+
+      await userEvent.click(screen.getAllByLabelText('Remove field')[0]);
+
+      expect(onClickHideField).toHaveBeenCalledWith('key1');
     });
   });
 });

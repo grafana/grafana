@@ -83,6 +83,14 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
+        apps-secret:  
+          list-mode: lax
+          files:
+            - ./apps/secret/*
+            - ./apps/secret/**/*
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apps/secret is not allowed to import grafana core
         coreplugins:
           files:
             - '**/pkg/tsdb/grafana-pyroscope-datasource/*'

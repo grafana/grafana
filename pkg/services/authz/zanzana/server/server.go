@@ -62,7 +62,7 @@ func NewServer(cfg setting.ZanzanaServerSettings, openfga OpenFGAServer, logger 
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
 		cfg:           cfg,
-		cache:         localcache.New(cfg.CheckQueryCacheTTL, cacheCleanInterval),
+		cache:         localcache.New(cfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
 		logger:        logger,
 		tracer:        tracer,
 	}

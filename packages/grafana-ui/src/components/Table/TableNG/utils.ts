@@ -128,11 +128,14 @@ export function getMaxWrapCell(
  * Returns true if text overflow handling should be applied to the cell.
  */
 export function shouldTextOverflow(field: Field): boolean {
+  let type = getCellOptions(field).type;
+
   return (
     field.type === FieldType.string &&
     // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
     // so we need to ensure we don't apply overflow hover states for type image
-    getCellOptions(field).type !== TableCellDisplayMode.Image &&
+    type !== TableCellDisplayMode.Image &&
+    type !== TableCellDisplayMode.Pill &&
     !shouldTextWrap(field) &&
     !isCellInspectEnabled(field)
   );
@@ -172,6 +175,7 @@ const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
 /**
  * @internal
  * Returns the cell options for a field, migrating from legacy displayMode if necessary.
+ * TODO: remove live migration in favor of doing it in dashboard or panel migrator
  */
 export function getCellOptions(field: Field): TableCellOptions {
   if (field.config.custom?.displayMode) {
@@ -612,4 +616,13 @@ export function getApplyToRowBgFn(fields: Field[], theme: GrafanaTheme2): ((rowI
       return (rowIndex: number) => getCellColors(theme, cellOptions, fieldDisplay(field.values[rowIndex]));
     }
   }
+}
+
+/** @internal */
+export function withDataLinksActionsTooltip(field: Field, cellType: TableCellDisplayMode) {
+  return (
+    cellType !== TableCellDisplayMode.DataLinks &&
+    cellType !== TableCellDisplayMode.Actions &&
+    (field.config.links?.length ?? 0) + (field.config.actions?.length ?? 0) > 1
+  );
 }

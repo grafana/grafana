@@ -36,7 +36,7 @@ const settingsMock: HttpSettingsProps['dataSourceConfig'] = {
 };
 
 const meta: Meta<typeof DataSourceHttpSettings> = {
-  title: 'Data Source/DataSourceHttpSettings',
+  title: 'Plugins/DataSourceHttpSettings',
   component: DataSourceHttpSettings,
   parameters: {
     controls: {

@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { CoreApp, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
