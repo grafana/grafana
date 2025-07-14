@@ -15,6 +15,9 @@ const dataProviderSettings = {
     queryLabelValues: jest.fn(),
     retrieveLabelKeys: jest.fn(),
     retrieveMetricsMetadata: jest.fn(),
+    datasource: {
+      uid: 'test-datasource-uid',
+    },
   },
   historyProvider: history.map((expr, idx) => ({ query: { expr, refId: 'some-ref' }, ts: idx })),
 } as unknown as DataProviderParams;
@@ -182,7 +185,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
   const timeRange = getMockTimeRange();
 
   it('should return completions for all metric names when the number of metric names is at or below the limit', async () => {
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.atLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(metrics.atLimit);
     const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.atLimit.length);
     const situation: Situation = {
       type: situationType,
@@ -204,7 +207,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
       type: situationType,
     };
     const expectedCompletionsCount = getSuggestionCountForSituation(situationType, metrics.beyondLimit.length);
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.beyondLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(metrics.beyondLimit);
 
     // Complex query
     dataProvider.monacoSettings.setInputInRange('metric name one two three four five');
@@ -223,19 +226,19 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     };
 
     // Do not cross the metrics names threshold
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.atLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValueOnce(metrics.atLimit);
     dataProvider.monacoSettings.setInputInRange('name_1');
     await getCompletions(situation, dataProvider, timeRange);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(false);
 
     // Cross the metric names threshold, without text input
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValueOnce(metrics.beyondLimit);
     dataProvider.monacoSettings.setInputInRange('');
     await getCompletions(situation, dataProvider, timeRange);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
 
     // Cross the metric names threshold, with text input
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValueOnce(metrics.beyondLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValueOnce(metrics.beyondLimit);
     dataProvider.monacoSettings.setInputInRange('name_1');
     await getCompletions(situation, dataProvider, timeRange);
     expect(dataProvider.monacoSettings.suggestionsIncomplete).toBe(true);
@@ -247,7 +250,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
     };
 
     const testMetrics = ['metric_name_1', 'metric_name_2', 'metric_name_1_with_extra_terms', 'unrelated_metric'];
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(testMetrics);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(testMetrics);
 
     // Test with a complex query (> 4 terms)
     dataProvider.monacoSettings.setInputInRange('metric name 1 with extra terms more');
@@ -262,7 +265,7 @@ describe.each(metricNameCompletionSituations)('metric name completions in situat
       type: situationType,
     };
 
-    jest.spyOn(dataProvider, 'getAllMetricNames').mockReturnValue(metrics.beyondLimit);
+    jest.spyOn(dataProvider, 'queryMetricNames').mockResolvedValue(metrics.beyondLimit);
 
     // Test with multiple terms
     dataProvider.monacoSettings.setInputInRange('metric name 1 2 3 4 5');
@@ -281,7 +284,13 @@ describe('Label value completions', () => {
       getAllMetricNames: jest.fn(),
       metricNamesToMetrics: jest.fn(),
       getHistory: jest.fn(),
-      getLabelValues: jest.fn().mockResolvedValue(['value1', 'value"2', 'value\\3', "value'4"]),
+      queryLabelValues: jest.fn().mockResolvedValue(['value1', 'value"2', 'value\\3', "value'4"]),
+      queryLabelKeys: jest.fn(),
+      languageProvider: {
+        datasource: {
+          uid: 'test-datasource-uid',
+        },
+      },
       monacoSettings: {
         setInputInRange: jest.fn(),
         inputInRange: '',
@@ -394,7 +403,7 @@ describe('Label value completions', () => {
     const timeRange = getMockTimeRange();
 
     it('should handle empty values', async () => {
-      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue(['']);
+      (dataProvider.queryLabelValues as jest.Mock).mockResolvedValue(['']);
 
       const situation: Situation = {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
@@ -409,7 +418,7 @@ describe('Label value completions', () => {
     });
 
     it('should handle values with multiple special characters', async () => {
-      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue(['test"\\value']);
+      (dataProvider.queryLabelValues as jest.Mock).mockResolvedValue(['test"\\value']);
 
       const situation: Situation = {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
@@ -424,7 +433,7 @@ describe('Label value completions', () => {
     });
 
     it('should handle non-string values', async () => {
-      jest.spyOn(dataProvider, 'getLabelValues').mockResolvedValue([123 as unknown as string]);
+      (dataProvider.queryLabelValues as jest.Mock).mockResolvedValue([123 as unknown as string]);
 
       const situation: Situation = {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',

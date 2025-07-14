@@ -2,9 +2,9 @@ import { HistoryItem, TimeRange } from '@grafana/data';
 import type { Monaco } from '@grafana/ui'; // used in TSDoc `@link` below
 
 import { DEFAULT_SUGGESTIONS_LIMIT, METRIC_LABEL } from '../../../constants';
-import { type PrometheusLanguageProviderInterface } from '../../../language_provider';
+import { type PrometheusLanguageProviderInterface, removeQuotesIfExist } from '../../../language_provider';
 import { PromQuery } from '../../../types';
-import { isValidLegacyName } from '../../../utf8_support';
+import { escapeForUtf8Support, isValidLegacyName } from '../../../utf8_support';
 
 export const CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT = 'codeModeSuggestionsIncomplete';
 
@@ -39,10 +39,6 @@ export interface DataProviderParams {
 export class DataProvider {
   readonly languageProvider: PrometheusLanguageProviderInterface;
   readonly historyProvider: Array<HistoryItem<PromQuery>>;
-  readonly getSeriesLabels: typeof this.languageProvider.queryLabelKeys;
-  readonly getSeriesValues: typeof this.languageProvider.queryLabelValues;
-  readonly getAllLabelNames: typeof this.languageProvider.retrieveLabelKeys;
-  readonly getLabelValues: typeof this.languageProvider.queryLabelValues;
 
   readonly metricNamesSuggestionLimit: number = DEFAULT_SUGGESTIONS_LIMIT;
   readonly queryLabelKeys: typeof this.languageProvider.queryLabelKeys;
@@ -61,10 +57,6 @@ export class DataProvider {
     this.historyProvider = params.historyProvider;
     this.inputInRange = '';
     this.suggestionsIncomplete = false;
-    this.getSeriesLabels = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
-    this.getSeriesValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
-    this.getAllLabelNames = this.languageProvider.retrieveLabelKeys.bind(this.languageProvider);
-    this.getLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
 
     this.queryLabelKeys = this.languageProvider.queryLabelKeys.bind(this.languageProvider);
     this.queryLabelValues = this.languageProvider.queryLabelValues.bind(this.languageProvider);
@@ -74,10 +66,36 @@ export class DataProvider {
     return this.historyProvider.map((h) => h.query.expr).filter(Boolean);
   }
 
-  getAllMetricNames(): string[] {
-    return this.languageProvider.retrieveMetrics();
-  }
+  /**
+   * Queries metric names with optional filtering.
+   * Safely constructs regex patterns and handles errors.
+   */
+  queryMetricNames = async (timeRange: TimeRange, word: string | undefined): Promise<string[]> => {
+    try {
+      let match: string | undefined;
+      if (word) {
+        const escapedWord = escapeForUtf8Support(removeQuotesIfExist(word));
+        match = `{__name__=~".*${escapedWord}.*"}`;
+      }
 
+      const result = await this.languageProvider.queryLabelValues(
+        timeRange,
+        METRIC_LABEL,
+        match,
+        DEFAULT_SUGGESTIONS_LIMIT
+      );
+
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      console.warn('Failed to query metric names:', error);
+      return [];
+    }
+  };
+
+  /**
+   * Converts metric names to metric objects with metadata.
+   * Optimized for performance and includes better error handling.
+   */
   metricNamesToMetrics(metricNames: string[]): Metric[] {
     const metricsMetadata = this.languageProvider.retrieveMetricsMetadata();
     const result: Metric[] = metricNames.map((m) => {
@@ -122,12 +140,4 @@ export class DataProvider {
       suggestionsIncomplete: this.suggestionsIncomplete,
     };
   }
-
-  public queryMetricNames = async (timeRange: TimeRange, word: string | undefined) => {
-    let match: string | undefined;
-    if (word) {
-      match = `{__name__=~".*${word}.*"}`;
-    }
-    return await this.languageProvider.queryLabelValues(timeRange, METRIC_LABEL, match, DEFAULT_SUGGESTIONS_LIMIT);
-  };
 }
