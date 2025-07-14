@@ -29,13 +29,7 @@ const GAUGE_RENDERER: TableCellRenderer = (props) => (
 );
 
 const AUTO_RENDERER: TableCellRenderer = (props) => (
-  <AutoCell
-    value={props.value}
-    field={props.field}
-    justifyContent={props.justifyContent}
-    rowIdx={props.rowIdx}
-    cellOptions={props.cellOptions}
-  />
+  <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} cellOptions={props.cellOptions} />
 );
 
 const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
@@ -51,7 +45,7 @@ const SPARKLINE_RENDERER: TableCellRenderer = (props) => (
 );
 
 const JSON_RENDERER: TableCellRenderer = (props) => (
-  <JSONCell justifyContent={props.justifyContent} value={props.value} field={props.field} rowIdx={props.rowIdx} />
+  <JSONCell value={props.value} field={props.field} rowIdx={props.rowIdx} />
 );
 
 const GEO_RENDERER: TableCellRenderer = (props) => (

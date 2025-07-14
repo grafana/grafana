@@ -71,6 +71,7 @@ import {
   isCellInspectEnabled,
   getCellLinks,
   withDataLinksActionsTooltip,
+  getJustifyContent,
 } from './utils';
 
 type CellRootRenderer = (key: React.Key, props: CellRendererProps<TableRow, TableSummaryRow>) => React.ReactNode;
@@ -301,7 +302,7 @@ export function TableNG(props: TableNGProps) {
           field.display = getDisplayProcessor({ field, theme });
         }
 
-        const justifyContent = getTextAlign(field);
+        const justifyContent = getJustifyContent(field);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
@@ -861,10 +862,11 @@ const getCellStyles = (
 ) => {
   return {
     cell: css({
-      textOverflow: 'initial',
+      textOverflow: 'ellipsis',
       background: colors.bgColor ?? 'inherit',
       alignContent: 'center',
-      justifyContent: getTextAlign(field),
+      textAlign: getTextAlign(field),
+      justifyContent: getJustifyContent(field),
       paddingInline: TABLE.CELL_PADDING,
       height: '100%',
       minHeight: rowHeight, // min height interacts with the fit-content property on the overflow container
@@ -873,8 +875,9 @@ const getCellStyles = (
       '&:last-child': {
         borderInlineEnd: 'none',
       },
-      '&:hover': {
+      '&:hover, &[aria-selected=true]': {
         background: colors.bgHoverColor,
+        boxShadow: theme.shadows.z3,
         '.table-cell-actions': {
           display: 'flex',
         },

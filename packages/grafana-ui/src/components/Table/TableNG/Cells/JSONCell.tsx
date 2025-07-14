@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -8,8 +7,8 @@ import { renderSingleLink } from '../../DataLinksActionsTooltip';
 import { useSingleLink } from '../hooks';
 import { JSONCellProps } from '../types';
 
-export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps) => {
-  const styles = useStyles2(getStyles, justifyContent);
+export const JSONCell = ({ value, field, rowIdx }: JSONCellProps) => {
+  const styles = useStyles2(getStyles);
 
   let displayValue = value;
 
@@ -33,14 +32,12 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx }: JSONCellProps
 
   const link = useSingleLink(field, rowIdx);
 
-  return <div className={styles.jsonText}>{link == null ? displayValue : renderSingleLink(link, displayValue)}</div>;
+  return <span className={styles.jsonText}>{link == null ? displayValue : renderSingleLink(link, displayValue)}</span>;
 };
 
-const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
+const getStyles = (_theme: GrafanaTheme2) => ({
   jsonText: css({
-    display: 'flex',
     cursor: 'pointer',
     fontFamily: 'monospace',
-    justifyContent: justifyContent,
   }),
 });

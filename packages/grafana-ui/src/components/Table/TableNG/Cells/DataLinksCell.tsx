@@ -1,47 +1,66 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { DataLinksCellProps } from '../types';
-import { getCellLinks } from '../utils';
+import { getCellLinks, shouldTextWrap } from '../utils';
 
 export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
-  const styles = useStyles2(getStyles);
-
+  const textWrap = shouldTextWrap(field);
+  const styles = useStyles2(getStyles, textWrap);
   const links = getCellLinks(field, rowIdx!);
 
   return (
-    <div>
+    <div className={styles.container}>
       {links &&
-        links.map((link, idx) => {
-          return !link.href && link.onClick == null ? (
-            <span key={idx} className={styles.cellLinkEmpty}>
+        links.map((link, idx) =>
+          !link.href && link.onClick == null ? (
+            <span key={idx} className={styles.linkCell}>
               {link.title}
             </span>
           ) : (
-            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-            <span key={idx} className={styles.linkCell} onClick={link.onClick}>
-              <a href={link.href} target={link.target}>
-                {link.title}
-              </a>
-            </span>
-          );
-        })}
+            <a
+              className={cx(styles.linkCell, styles.linkCellActive)}
+              key={idx}
+              onClick={link.onClick}
+              href={link.href}
+              target={link.target}
+            >
+              {link.title}
+            </a>
+          )
+        )}
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  linkCell: css({
-    cursor: 'pointer',
+const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
+  container: css({
+    display: 'inline',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    whiteSpace: textWrap ? 'pre-line' : 'nowrap',
+  }),
+  linkCell: css({
+    flexShrink: 0,
     userSelect: 'text',
-    whiteSpace: 'nowrap',
-    color: theme.colors.text.link,
     fontWeight: theme.typography.fontWeightMedium,
-    paddingRight: theme.spacing(1.5),
+    '&::after': {
+      display: 'inline-block',
+      color: theme.colors.text.primary,
+      content: '","',
+      textDecoration: 'none',
+      paddingInlineEnd: theme.spacing(0.5),
+    },
+    '&:last-child::after': {
+      content: 'none',
+      paddingInlineEnd: 0,
+    },
+  }),
+  linkCellActive: css({
+    cursor: 'pointer',
+    color: theme.colors.text.link,
     a: {
       color: theme.colors.text.link,
     },
@@ -49,13 +68,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
       textDecoration: 'underline',
       color: theme.colors.text.link,
     },
-  }),
-  cellLinkEmpty: css({
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    userSelect: 'text',
-    whiteSpace: 'nowrap',
-    fontWeight: theme.typography.fontWeightMedium,
-    paddingRight: theme.spacing(1.5),
   }),
 });
