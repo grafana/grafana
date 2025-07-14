@@ -56,13 +56,22 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
  */
 export function sanitize(unsanitizedString: string): string {
   try {
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+
     return DOMPurify.sanitize(unsanitizedString, {
       USE_PROFILES: { html: true },
       FORBID_TAGS: ['form', 'input'],
+      ADD_ATTR: ['target'],
     });
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);
     return escapeHtml(unsanitizedString);
+  } finally {
+    DOMPurify.removeHook('afterSanitizeAttributes');
   }
 }
 
@@ -151,7 +160,7 @@ export function validatePath<OriginalPath extends string>(path: OriginalPath): O
     originalDecoded = cleaned;
 
     // If the original string contains traversal attempts, block it
-    if (originalDecoded.includes('..') || originalDecoded.includes('/\\')) {
+    if (/\.\.|\/\\|[\t\n\r]/.test(originalDecoded)) {
       throw new PathValidationError();
     }
 

@@ -1,11 +1,12 @@
 import 'react-data-grid/lib/styles.css';
 import { css, cx } from '@emotion/css';
 import { Property } from 'csstype';
-import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import { Key, ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Cell,
   CellRendererProps,
   DataGrid,
+  DataGridHandle,
   DataGridProps,
   RenderCellProps,
   RenderRowProps,
@@ -13,9 +14,18 @@ import {
   SortColumn,
 } from 'react-data-grid';
 
-import { DataHoverClearEvent, DataHoverEvent, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
+import {
+  DataHoverClearEvent,
+  DataHoverEvent,
+  FALLBACK_COLOR,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  GrafanaTheme2,
+  ReducerID,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { TableCellHeight } from '@grafana/schema';
+import { FieldColorModeId, TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -39,6 +49,7 @@ import {
   useHeaderHeight,
   usePaginatedRows,
   useRowHeight,
+  useScrollbarWidth,
   useSortedRows,
   useTypographyCtx,
 } from './hooks';
@@ -151,9 +162,11 @@ export function TableNG(props: TableNGProps) {
 
   // vt scrollbar accounting for column auto-sizing
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const gridRef = useRef<DataGridHandle>(null);
+  const scrollbarWidth = useScrollbarWidth(gridRef, height, sortedRows);
   const availableWidth = useMemo(
-    () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width),
-    [width, hasNestedFrames]
+    () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
+    [width, hasNestedFrames, scrollbarWidth]
   );
   const typographyCtx = useTypographyCtx();
   const widths = useMemo(() => computeColWidths(visibleFields, availableWidth), [visibleFields, availableWidth]);
@@ -268,11 +281,30 @@ export function TableNG(props: TableNGProps) {
       let _rowHeight = 0;
 
       f.forEach((field, i) => {
+        const cellOptions = getCellOptions(field);
+        const cellType = cellOptions.type;
+
+        // make sure we use mappings exclusively if they exist, ignore default thresholds mode
+        // we hack this by using the single color mode calculator
+        if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
+          field = {
+            ...field,
+            config: {
+              ...field.config,
+              color: {
+                ...field.config.color,
+                mode: FieldColorModeId.Fixed,
+                fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
+              },
+            },
+          };
+          field.display = getDisplayProcessor({ field, theme });
+        }
+
         const justifyContent = getTextAlign(field);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
         const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
-        const cellOptions = getCellOptions(field);
         const renderFieldCell = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
@@ -289,7 +321,6 @@ export function TableNG(props: TableNGProps) {
             )
           : undefined;
 
-        const cellType = cellOptions.type;
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
@@ -549,6 +580,7 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid<TableRow, TableSummaryRow>
         {...commonDataGridProps}
+        ref={gridRef}
         className={styles.grid}
         columns={structureRevColumns}
         rows={paginatedRows}
