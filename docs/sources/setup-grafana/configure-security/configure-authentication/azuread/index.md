@@ -239,10 +239,6 @@ Ensure that you have followed the steps in [Create the Microsoft Entra ID applic
 
 ## Configure Azure AD authentication client using the Grafana UI
 
-{{< admonition type="note" >}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
-{{< /admonition >}}
-
 As a Grafana Admin, you can configure your Azure AD/Entra ID OAuth client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
@@ -254,10 +250,6 @@ If you run Grafana in high availability mode, configuration changes may not get 
 {{< /admonition >}}
 
 ## Configure Azure AD authentication client using the Terraform provider
-
-{{< admonition type="note" >}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
-{{< /admonition >}}
 
 ```terraform
 resource "grafana_sso_settings" "azuread_sso_settings" {
@@ -429,7 +421,7 @@ auto_login = true
 ### Team Sync
 
 {{< admonition type="note" >}}
-Only available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
 With Team Sync you can map your Entra ID groups to teams in Grafana so that your users will automatically be added to

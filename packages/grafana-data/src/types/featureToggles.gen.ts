@@ -210,10 +210,6 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Use experimental git library for provisioning
-  */
-  nanoGit?: boolean;
-  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -742,11 +738,6 @@ export interface FeatureToggles {
   */
   crashDetection?: boolean;
   /**
-  * Enables querying the Jaeger data source without the proxy
-  * @default true
-  */
-  jaegerBackendMigration?: boolean;
-  /**
   * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
   * @default true
   */
@@ -1003,7 +994,7 @@ export interface FeatureToggles {
   preferLibraryPanelTitle?: boolean;
   /**
   * Use fixed-width numbers globally in the UI
-  * @default true
+  * @default false
   */
   tabularNumbers?: boolean;
   /**

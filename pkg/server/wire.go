@@ -46,7 +46,6 @@ import (
 	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	secretworker "github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -327,8 +326,6 @@ var wireBasicSet = wire.NewSet(
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	featuremgmt.ProvideOpenFeatureService,
-	featuremgmt.ProvideStaticEvaluator,
 	dashboardservice.ProvideDashboardServiceImpl,
 	wire.Bind(new(dashboards.PermissionsRegistrationService), new(*dashboardservice.DashboardServiceImpl)),
 	dashboardservice.ProvideDashboardService,
@@ -431,15 +428,12 @@ var wireBasicSet = wire.NewSet(
 	secretdecrypt.ProvideDecryptAllowList,
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
-	secretmetadata.ProvideOutboxQueue,
 	secretsecurevalueservice.ProvideSecureValueService,
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
 	encryptionManager.ProvideEncryptionManager,
 	gsmEncryption.ProvideThirdPartyProviderMap,
-	secretworker.ProvideWorkerConfig,
-	secretworker.NewWorker,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

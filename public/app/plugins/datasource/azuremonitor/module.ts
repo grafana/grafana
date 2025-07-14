@@ -10,7 +10,11 @@ import { trackAzureMonitorDashboardLoaded } from './tracking';
 import { AzureMonitorQuery, AzureQueryType, ResultFormat } from './types/query';
 import { AzureMonitorDataSourceJsonData } from './types/types';
 
-initPluginTranslations(pluginJson.id);
+// don't load plugin translations in test environments
+// we don't use them anyway, and top-level await won't work currently in jest
+if (process.env.NODE_ENV !== 'test') {
+  await initPluginTranslations(pluginJson.id);
+}
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>(Datasource)
   .setConfigEditor(ConfigEditor)
