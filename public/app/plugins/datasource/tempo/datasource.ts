@@ -193,7 +193,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async labelNamesQuery(timeRangeForTags?: number, range?: TimeRange): Promise<Array<{ text: string }>> {
-    await this.languageProvider.fetchTags(timeRangeForTags, range);
+    await this.languageProvider.start(range, timeRangeForTags);
     const tags = this.languageProvider.getAutocompleteTags();
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag }));
   }
@@ -207,7 +207,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       return [];
     }
 
-    await this.languageProvider.fetchTags(timeRangeForTags, range);
+    await this.languageProvider.start(range, timeRangeForTags);
 
     let options;
     try {

@@ -25,6 +25,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
   tagsV1?: string[];
   tagsV2?: Scope[];
+  private previousRange?: TimeRange;
 
   constructor(datasource: TempoDatasource, initialValues?: any) {
     super();
@@ -39,7 +40,13 @@ export default class TempoLanguageProvider extends LanguageProvider {
   };
 
   start = async (range?: TimeRange, timeRangeForTags?: number) => {
-    if (!this.startTask) {
+    // Check if we need to refetch tags due to range changes (minute-level granularity)
+    const shouldRefetch = this.shouldRefreshLabels(range, this.previousRange);
+    
+    if (!this.startTask || shouldRefetch) {
+      // Store the current range for future comparison
+      this.previousRange = range;
+      
       this.startTask = this.fetchTags(timeRangeForTags, range).then(() => {
         return [];
       });
@@ -47,6 +54,25 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
     return this.startTask;
   };
+
+  roundMsToMin = (milliseconds: number) => {
+    return this.roundSecToMin(milliseconds / 1000);
+  }
+  
+  roundSecToMin = (seconds: number) => {
+    return Math.floor(seconds / 60);
+  }
+  
+  shouldRefreshLabels = (range?: TimeRange, prevRange?: TimeRange): boolean => {
+    if (range && prevRange) {
+      const sameMinuteFrom = this.roundMsToMin(range.from.valueOf()) === this.roundMsToMin(prevRange.from.valueOf());
+      const sameMinuteTo = this.roundMsToMin(range.to.valueOf()) === this.roundMsToMin(prevRange.to.valueOf());
+      // If both are same, don't need to refresh
+      return !(sameMinuteFrom && sameMinuteTo);
+    }
+    // If one is defined and the other is not, we should refresh
+    return prevRange !== range;
+  }
 
   getTagsLimit = () => {
     return this.datasource.instanceSettings.jsonData?.tagLimit || TAGS_LIMIT;
@@ -198,7 +224,6 @@ export default class TempoLanguageProvider extends LanguageProvider {
     // If timeRangeForTags is larger than the total range duration, it will use the entire available range
     const start = Math.max(range.from.unix(), range.to.unix() - timeRangeForTags);
     const end = range.to.unix();
-    console.log('timeRangeForTags', timeRangeForTags, range.to.unix() - range.from.unix(), range.to.unix(), range.from.unix());
     return { start, end };
   };
 

@@ -83,6 +83,8 @@ const SearchField = ({
     datasource.languageProvider,
     setError,
     query,
+    range,
+    timeRangeForTags,
   ]);
 
   // Add selected option if it doesn't exist in the current list of options

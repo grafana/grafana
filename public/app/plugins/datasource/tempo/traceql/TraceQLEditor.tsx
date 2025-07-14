@@ -221,6 +221,8 @@ function useAutocomplete(
     })
   );
 
+  const previousRangeRef = useRef<TimeRange | undefined>(range);
+
   useEffect(() => {
     const fetchTags = async () => {
       try {
@@ -234,6 +236,19 @@ function useAutocomplete(
     };
     fetchTags();
   }, [datasource, setAlertText, range, timeRangeForTags]);
+
+  useEffect(() => {
+    const rangeChanged = datasource.languageProvider.shouldRefreshLabels(range, previousRangeRef.current);
+
+    if (rangeChanged) {
+      providerRef.current.range = range;
+      previousRangeRef.current = range;
+    }
+  }, [range, datasource.languageProvider]);
+
+  useEffect(() => {
+    providerRef.current.timeRangeForTags = timeRangeForTags;
+  }, [timeRangeForTags]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {

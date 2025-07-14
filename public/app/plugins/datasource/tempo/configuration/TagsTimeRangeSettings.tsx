@@ -24,8 +24,8 @@ export function TagsTimeRangeSettings({ options, onOptionsChange }: Props) {
     <div className={styles.container}>
       <InlineFieldRow className={styles.row}>
         <InlineField
-          tooltip="Enable time range in tags and tag value queries"
-          label="Use time range in query"
+          tooltip="Time range in tags and tag value queries"
+          label="Time range in query"
           labelWidth={26}
         >
           <Combobox

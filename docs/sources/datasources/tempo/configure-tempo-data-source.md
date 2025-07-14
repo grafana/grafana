@@ -324,15 +324,17 @@ You can configure this setting as follows:
 ### Tags time range
 
 The **Tags time range** modifies how tags queries are run.
-When enabled, tags and tag values queries will include the time range.
-This setting is disabled by default.
-The start time is set to 15 minutes before end time to avoid searching over a long range of time while still allowing users to retrieve tags and tag values in the past.
+Specifies the time range to use for tags and tag value requests.
 
 You can configure this setting as follows:
 
-| Name                  | Description                                                           |
-| --------------------- | --------------------------------------------------------------------- |
-| **Enable time range** | Use a time range in tags and tag values queries. Default: `disabled`. |
+| Name              | Description                              |
+| ----------------- | ---------------------------------------- |
+| **Last 30 mins**  | Last 30 mins of selected range. `1800`   |
+| **Last 3 hours**  | Last 3 hours of selected range. `10800`  |
+| **Last 24 hours** | Last 24 hours of selected range. `86400` |
+| **Last 3 days**   | Last 3 days of selected range. `259200`  |
+| **Last 7 days**   | Last 7 days of selected range. `604800`  |
 
 ### Span bar
 
