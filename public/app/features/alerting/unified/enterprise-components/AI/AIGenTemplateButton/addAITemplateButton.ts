@@ -1,6 +1,5 @@
 import { ComponentType, createElement } from 'react';
 
-// Define the props interface locally to avoid import issues
 export interface GenAITemplateButtonProps {
   onTemplateGenerated: (template: string) => void;
   disabled?: boolean;

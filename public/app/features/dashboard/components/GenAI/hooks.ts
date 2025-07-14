@@ -80,7 +80,10 @@ export function useLLMStream({ model, temperature, onResponse }: Options = defau
     }
   }, [messages]);
 
-  const { error: enabledError, value: enabled } = useAsync(() => isLLMPluginEnabled());
+  const { error: enabledError, value: enabled } = useAsync(
+    async () => await isLLMPluginEnabled(),
+    [isLLMPluginEnabled]
+  );
 
   const { error: asyncError, value } = useAsync(async () => {
     if (!enabled || !messages.length) {
