@@ -481,7 +481,7 @@ export function enhanceTraceQlMetricsResponse(
         const newLinks = links.filter(
           (link) =>
             !existingLinks.some(
-              (existing) =>
+              (existing: DataLink) =>
                 existing.title === link.title &&
                 existing.internal?.datasourceUid === link.internal?.datasourceUid &&
                 isEqual(existing.internal?.query, link.internal?.query)
