@@ -123,8 +123,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             ...field,
             config: {
               ...field.config,
-              // Enable AdHoc filtering for string fields (similar to Loki/Prometheus pattern)
-              filterable: field.type === FieldType.string,
+              // Enable AdHoc filtering for string and numeric fields
+              filterable: field.type === FieldType.string || field.type === FieldType.number,
             },
             state: {
               ...field.state,
@@ -189,13 +189,17 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
         const field = frame.fields[fieldIndex];
 
-        // Skip if field isn't a string field
-        if (field.type !== FieldType.string) {
+        // Handle string and numeric fields
+        if (field.type === FieldType.string) {
+          const fieldValue = field.values[rowIndex];
+          return this.evaluateStringFilter(fieldValue, filter);
+        } else if (field.type === FieldType.number) {
+          const fieldValue = field.values[rowIndex];
+          return this.evaluateNumericFilter(fieldValue, filter);
+        } else {
+          // Skip if field isn't a supported type
           return this.handleNonStringFieldFilter(filter);
         }
-
-        const fieldValue = field.values[rowIndex];
-        return this.evaluateFilter(fieldValue, filter);
       });
 
       if (rowMatches) {
@@ -225,9 +229,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   /**
-   * Evaluate a filter against a field value
+   * Evaluate a filter against a string field value
    */
-  private evaluateFilter(fieldValue: any, filter: AdHocVariableFilter): boolean {
+  private evaluateStringFilter(fieldValue: any, filter: AdHocVariableFilter): boolean {
     // Handle null/undefined values
     if (fieldValue == null) {
       return filter.operator === '!=' && filter.value !== '';
@@ -241,6 +245,43 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         return fieldValue === filterValue;
       case '!=':
         return fieldValue !== filterValue;
+      default:
+        // Unknown operator, skip this filter
+        return true;
+    }
+  }
+
+  /**
+   * Evaluate a filter against a numeric field value
+   */
+  private evaluateNumericFilter(fieldValue: any, filter: AdHocVariableFilter): boolean {
+    // Handle null/undefined values
+    if (fieldValue == null) {
+      return filter.operator === '!=' && filter.value !== '';
+    }
+
+    // Parse filter value as a number
+    const filterValue = parseFloat(filter.value);
+
+    // If filter value is not a valid number, skip this filter
+    if (isNaN(filterValue)) {
+      return true;
+    }
+
+    // Ensure field value is a number
+    const numericFieldValue = typeof fieldValue === 'number' ? fieldValue : parseFloat(fieldValue);
+
+    // If field value is not a valid number, skip this filter
+    if (isNaN(numericFieldValue)) {
+      return true;
+    }
+
+    // Apply the filter based on operator
+    switch (filter.operator) {
+      case '=':
+        return numericFieldValue === filterValue;
+      case '!=':
+        return numericFieldValue !== filterValue;
       default:
         // Unknown operator, skip this filter
         return true;

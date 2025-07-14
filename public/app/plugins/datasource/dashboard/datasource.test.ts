@@ -206,18 +206,64 @@ describe('DashboardDatasource', () => {
       expect(result.length).toBe(2);
     });
 
-    it.skip('should ignore filters on non-string fields', () => {
+    it('should apply equality filter on numeric fields', () => {
       const frame = createTestFrame([
         { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
         { name: 'age', type: FieldType.number, values: [25, 30, 35] },
       ]);
 
-      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'age', operator: '=', value: '25' }]);
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'age', operator: '=', value: '30' }]);
 
-      // Should return all rows since age field is not string
-      expect(result.fields[0].values).toEqual(['John', 'Jane', 'Bob']);
-      expect(result.fields[1].values).toEqual([25, 30, 35]);
-      expect(result.length).toBe(3);
+      expect(result.fields[0].values).toEqual(['Jane']);
+      expect(result.fields[1].values).toEqual([30]);
+      expect(result.length).toBe(1);
+    });
+
+    it('should apply not-equal filter on numeric fields', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'age', operator: '!=', value: '30' }]);
+
+      expect(result.fields[0].values).toEqual(['John', 'Bob']);
+      expect(result.fields[1].values).toEqual([25, 35]);
+      expect(result.length).toBe(2);
+    });
+
+    it('should handle numeric fields with null values', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+        { name: 'age', type: FieldType.number, values: [25, null, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [{ key: 'age', operator: '!=', value: '25' }]);
+
+      expect(result.fields[0].values).toEqual(['Jane', 'Bob']);
+      expect(result.fields[1].values).toEqual([null, 35]);
+      expect(result.length).toBe(2);
+    });
+
+    it('should handle mixed string and numeric filtering', () => {
+      const frame = createTestFrame([
+        { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob', 'Alice'] },
+        { name: 'age', type: FieldType.number, values: [25, 30, 25, 35] },
+      ]);
+
+      const result = (ds as any).applyAdHocFilters(frame, [
+        { key: 'name', operator: '!=', value: 'Bob' },
+        { key: 'age', operator: '=', value: '25' },
+      ]);
+
+      // Should match: name != 'Bob' AND age = 25
+      // John: !Bob + 25 ✓
+      // Jane: !Bob + 30 ✗
+      // Bob: Bob + 25 ✗
+      // Alice: !Bob + 35 ✗
+      expect(result.fields[0].values).toEqual(['John']);
+      expect(result.fields[1].values).toEqual([25]);
+      expect(result.length).toBe(1);
     });
 
     it('should handle empty data frames', () => {
@@ -234,6 +280,10 @@ describe('DashboardDatasource', () => {
     });
 
     it.skip('should handle remaining operators', () => {
+      // Not yet implemented, so we explicitly don't specify any behaviour for this
+    });
+
+    it.skip('should handle remaining field types (eg. date)', () => {
       // Not yet implemented, so we explicitly don't specify any behaviour for this
     });
 
