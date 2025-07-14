@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
+import { parse, stringify } from 'lossless-json';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
@@ -148,6 +149,7 @@ export const LogLineDetailsField = ({
     onClickHideField,
     onPinLine,
     pinLineButtonTooltipTitle,
+    syntaxHighlighting,
   } = useLogListContext();
 
   const styles = useStyles2(getFieldStyles);
@@ -309,8 +311,11 @@ export const LogLineDetailsField = ({
         <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
-            {singleValue ? values[0] : <MultipleValue showCopy={true} values={values} />}
-            {singleValue && <ClipboardButtonWrapper value={values[0]} />}
+            {singleValue ? (
+              <SingleValue value={values[0]} syntaxHighlighting={syntaxHighlighting} />
+            ) : (
+              <MultipleValue showCopy={true} values={values} />
+            )}
           </div>
         </div>
       </div>
@@ -406,10 +411,11 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   }),
   valueContainer: css({
     display: 'flex',
-    alignItems: 'center',
     lineHeight: theme.typography.body.lineHeight,
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-all',
+    maxHeight: '50vh',
+    overflow: 'auto',
   }),
 });
 
@@ -469,6 +475,28 @@ const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: 
         })}
       </tbody>
     </table>
+  );
+};
+
+const SingleValue = ({ value: originalValue, syntaxHighlighting }: { value: string; syntaxHighlighting?: boolean }) => {
+  const value = useMemo(() => {
+    if (!syntaxHighlighting) {
+      return originalValue;
+    }
+    try {
+      const parsed = stringify(parse(originalValue), undefined, 2);
+      if (parsed) {
+        return parsed;
+      }
+    } catch (error) {}
+    return originalValue;
+  }, [originalValue, syntaxHighlighting]);
+
+  return (
+    <>
+      {value}
+      <ClipboardButtonWrapper value={value} />
+    </>
   );
 };
 
