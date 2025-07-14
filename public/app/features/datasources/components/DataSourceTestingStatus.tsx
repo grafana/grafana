@@ -186,7 +186,12 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
             <div className={styles.linksContainer}>
               {links.map((link) => {
                 return (
-                  <a key={link.id} href={link.path ? sanitizeUrl(link.path) : undefined} onClick={link.onClick} className={styles.pluginLink}>
+                  <a
+                    key={link.id}
+                    href={link.path ? sanitizeUrl(link.path) : undefined}
+                    onClick={link.onClick}
+                    className={styles.pluginLink}
+                  >
                     {link.title}
                   </a>
                 );
