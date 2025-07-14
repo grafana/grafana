@@ -3352,6 +3352,20 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageSearchDualReaderEnabled",
+        "resourceVersion": "1752500336818",
+        "creationTimestamp": "2025-07-14T13:38:56Z"
+      },
+      "spec": {
+        "description": "Enable dual reader for unified storage search",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageSearchPermissionFiltering",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2025-01-22T11:38:37Z"

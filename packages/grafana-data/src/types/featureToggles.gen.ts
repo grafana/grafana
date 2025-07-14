@@ -1037,6 +1037,7 @@ export interface FeatureToggles {
   */
   foldersAppPlatformAPI?: boolean;
   /**
+<<<<<<< HEAD
   * Set this to true to use the new PluginImporter functionality
   * @default false
   */
@@ -1055,4 +1056,9 @@ export interface FeatureToggles {
   * @default false
   */
   pluginAssetProvider?: boolean;
+  /**
+  * Enable dual reader for unified storage search
+  * @default false
+  */
+  unifiedStorageSearchDualReaderEnabled?: boolean;
 }
