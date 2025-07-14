@@ -70,17 +70,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 		migrateFunc: migrations.MigrateResourceStore,
 		tracer:      tracer,
 	}
-	// Try to use the grafana db connection, should only happen in tests.
-	if grafanaDB != nil {
-		if newConfGetter(cfg.SectionWithEnvOverrides("database"), "").Bool(grafanaDBInstrumentQueriesKey) {
-			return nil, errGrafanaDBInstrumentedNotSupported
-		}
-		p.engine = grafanaDB.GetEngine()
-		p.logQueries = cfg.SectionWithEnvOverrides("database").Key("log_queries").MustBool(false)
-		return p, nil
-	}
 
-	// If we don't provide a DB, lets build it from the config.
 	dbCfg, err := sqlstore.NewDatabaseConfig(cfg, nil)
 	if err != nil {
 		return nil, err
@@ -92,6 +82,14 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.
 		p.registerMetrics = true
 		p.engine, err = getEngine(dbCfg)
 		return p, err
+	case grafanaDB != nil:
+		// Try to use the grafana db connection, should only happen in tests.
+		if newConfGetter(cfg.SectionWithEnvOverrides("database"), "").Bool(grafanaDBInstrumentQueriesKey) {
+			return nil, errGrafanaDBInstrumentedNotSupported
+		}
+		p.engine = grafanaDB.GetEngine()
+		p.logQueries = cfg.SectionWithEnvOverrides("database").Key("log_queries").MustBool(false)
+		return p, nil
 	default:
 		return nil, fmt.Errorf("no database type specified")
 	}
