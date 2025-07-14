@@ -493,7 +493,7 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 		name := repo.Spec.GitHub.TokenSecretName
 		if name == "" {
 			name = repo.Name + "-github-token"
-			_, err = b.secrets.Encrypt(ctx, repo.Namespace, repo.Name+"-github-token", repo.Spec.GitHub.Token)
+			_, err = b.secrets.Encrypt(ctx, repo.Namespace, name, repo.Spec.GitHub.Token)
 			if err != nil {
 				return err
 			}
