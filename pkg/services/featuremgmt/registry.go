@@ -311,6 +311,7 @@ var (
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
 		},
 		{
