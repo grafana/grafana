@@ -11,6 +11,7 @@ type WebhookStatusApplyConfiguration struct {
 	URL              *string  `json:"url,omitempty"`
 	Secret           *string  `json:"secret,omitempty"`
 	EncryptedSecret  []byte   `json:"encryptedSecret,omitempty"`
+	SecretName       *string  `json:"secretName,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        *int64   `json:"lastEvent,omitempty"`
 }
@@ -52,6 +53,14 @@ func (b *WebhookStatusApplyConfiguration) WithEncryptedSecret(values ...byte) *W
 	for i := range values {
 		b.EncryptedSecret = append(b.EncryptedSecret, values[i])
 	}
+	return b
+}
+
+// WithSecretName sets the SecretName field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SecretName field is set to the value of the last call.
+func (b *WebhookStatusApplyConfiguration) WithSecretName(value string) *WebhookStatusApplyConfiguration {
+	b.SecretName = &value
 	return b
 }
 

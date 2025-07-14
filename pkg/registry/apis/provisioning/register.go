@@ -490,10 +490,19 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 	var err error
 	if repo.Spec.GitHub != nil &&
 		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, repo.Namespace, repo.Name+"-github-token", repo.Spec.GitHub.Token)
-		if err != nil {
-			return err
+
+		name := repo.Spec.GitHub.TokenSecretName
+		if name == "" {
+			name = repo.Name + "-github-token"
+			_, err = b.secrets.Encrypt(ctx, repo.Namespace, repo.Name+"-github-token", repo.Spec.GitHub.Token)
+			if err != nil {
+				return err
+			}
+			repo.Spec.GitHub.TokenSecretName = name
+		} else {
+			// TODO: update
 		}
+
 		repo.Spec.GitHub.Token = ""
 	}
 
@@ -501,14 +510,23 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 }
 
 // TODO: move this to a more appropriate place
+// TODO: make this one more generic
 func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
 	var err error
 	if repo.Spec.Git != nil &&
 		repo.Spec.Git.Token != "" {
-		repo.Spec.Git.EncryptedToken, err = b.secrets.Encrypt(ctx, repo.Namespace, repo.Name+"-git-token", repo.Spec.Git.Token)
-		if err != nil {
-			return err
+		name := repo.Spec.Git.TokenSecretName
+		if name == "" {
+			name = repo.Name + "-git-token"
+			_, err = b.secrets.Encrypt(ctx, repo.Namespace, repo.Name+"-git-token", repo.Spec.Git.Token)
+			if err != nil {
+				return err
+			}
+			repo.Spec.Git.TokenSecretName = name
+		} else {
+			// TODO: update
 		}
+
 		repo.Spec.Git.Token = ""
 	}
 
