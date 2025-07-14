@@ -199,6 +199,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       if (field.type === FieldType.nestedFrames) {
         for (const nestedFrames of field.values) {
           for (let nfIndex = 0; nfIndex < nestedFrames.length; nfIndex++) {
+            // TODO: should we apply fieldOverrides to nested frames?
+
             for (const valueField of nestedFrames[nfIndex].fields) {
               // Get display processor for nested fields
               valueField.display = getDisplayProcessor({
@@ -231,6 +233,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
             }
           }
         }
+      }
+
+      if (field.type === FieldType.frame) {
+        field.values = applyFieldOverrides({
+          ...options,
+          data: field.values,
+        });
       }
     }
 

@@ -889,6 +889,7 @@ export type TimeZoneBrowser = 'browser';
  */
 export enum VariableFormatID {
   CSV = 'csv',
+  CustomQueryParam = 'customqueryparam',
   Date = 'date',
   Distributed = 'distributed',
   DoubleQuote = 'doublequote',

@@ -64,7 +64,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	database := database.ProvideDatabase(testDB, tracer)
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 
 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, features, nil)
 	require.NoError(t, err)
