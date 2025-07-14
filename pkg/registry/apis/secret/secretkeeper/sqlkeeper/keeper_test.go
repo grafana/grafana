@@ -156,7 +156,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	tracer := noop.NewTracerProvider().Tracer("test")
 	database := database.ProvideDatabase(testDB, tracer)
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 
 	// Initialize the encryption manager
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
