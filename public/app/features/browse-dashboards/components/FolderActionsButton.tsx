@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { Permissions } from 'app/core/components/AccessControl';
-import { appEvents } from 'app/core/core';
 import { ShowModalReactEvent } from 'app/types/events';
 import { FolderDTO } from 'app/types/folders';
 

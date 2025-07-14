@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { OrgRole, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { LdapPayload } from 'app/types/ldap';
 
 const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map((key) => {

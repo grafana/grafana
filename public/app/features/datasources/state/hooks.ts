@@ -4,7 +4,7 @@ import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { useDispatch, useSelector } from 'app/types/store';

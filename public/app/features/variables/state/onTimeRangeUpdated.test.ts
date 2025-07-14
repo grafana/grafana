@@ -1,11 +1,11 @@
 import { dateTime, TimeRange, VariableRefresh } from '@grafana/data';
 import { config, DataSourceSrv } from '@grafana/runtime';
 import * as runtime from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { DashboardState } from 'app/types/dashboard';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { appEvents } from '../../../core/core';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';

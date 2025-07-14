@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceJsonData } from '@grafana/schema/dist/esm/index';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { AlertQuery } from 'app/types/unified-alerting-dto';

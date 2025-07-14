@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { PluginSignatureStatus } from '@grafana/data';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { usePluginConfig } from '../../hooks/usePluginConfig';
 import { CatalogPlugin } from '../../types';

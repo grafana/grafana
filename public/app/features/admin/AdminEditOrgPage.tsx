@@ -7,7 +7,7 @@ import { NavModelItem, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { OrgUser } from 'app/types/user';
 

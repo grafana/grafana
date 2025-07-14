@@ -11,7 +11,7 @@ import {
 } from '@grafana/scenes';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { ungroupRulesByFileName } from 'app/features/alerting/unified/api/prometheus';

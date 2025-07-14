@@ -61,8 +61,8 @@ global.TransformStream = TransformStream;
 // add scrollTo interface since it's not implemented in jsdom
 Element.prototype.scrollTo = () => {};
 
-jest.mock('../app/core/core', () => ({
-  ...jest.requireActual('../app/core/core'),
+jest.mock('../app/core/app_events', () => ({
+  ...jest.requireActual('../app/core/app_events'),
   appEvents: testAppEvents,
 }));
 

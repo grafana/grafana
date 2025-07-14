@@ -4,8 +4,8 @@ import { SetupServer, setupServer } from 'msw/node';
 import { useParams } from 'react-router-dom-v5-compat';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import BrowseFolderLibraryPanelsPage from './BrowseFolderLibraryPanelsPage';
 import { getLibraryElementsResponse } from './fixtures/libraryElements.fixture';

@@ -3,9 +3,9 @@ import { ThemeChangedEvent } from '@grafana/runtime';
 
 import appEvents from '../app_events';
 import { config } from '../config';
-import { contextSrv } from '../core';
 
 import { PreferencesService } from './PreferencesService';
+import { contextSrv } from './context_srv';
 
 export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
   const oldTheme = config.theme2;

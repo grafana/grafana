@@ -948,16 +948,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`Settings\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`config\`)", "1"]
     ],
-    "public/app/core/core.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`JsonExplorer\`)", "0"],
-      [0, 0, 0, "Do not re-export imported variable (\`TimeSeries\`)", "1"],
-      [0, 0, 0, "Do not re-export imported variable (\`appEvents\`)", "2"],
-      [0, 0, 0, "Do not re-export imported variable (\`assignModelProperties\`)", "3"],
-      [0, 0, 0, "Do not re-export imported variable (\`colors\`)", "4"],
-      [0, 0, 0, "Do not re-export imported variable (\`contextSrv\`)", "5"],
-      [0, 0, 0, "Do not re-export imported variable (\`profiler\`)", "6"],
-      [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "7"]
-    ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
