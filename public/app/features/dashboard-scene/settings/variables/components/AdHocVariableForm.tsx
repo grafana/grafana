@@ -4,6 +4,7 @@ import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -66,7 +67,7 @@ export function AdHocVariableForm({
             onChange={onDataSourceChange}
             width={30}
             variables={true}
-            dashboard={true}
+            dashboard={config.featureToggles.dashboardDsAdHocFiltering}
             noDefault
           />
         </EditorField>
