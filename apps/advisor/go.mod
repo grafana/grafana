@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/advisor
 go 1.24.4
 
 require (
-	github.com/grafana/grafana-app-sdk v0.38.3-0.20250709183049-aef07c9d3145
+	github.com/grafana/grafana-app-sdk v0.40.0
 	k8s.io/apimachinery v0.33.2
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
@@ -33,7 +33,7 @@ require (
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/authlib v0.0.0-20250515162837-2f4a8263eabb // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.39.2 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.39.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -67,7 +67,7 @@ require (
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
