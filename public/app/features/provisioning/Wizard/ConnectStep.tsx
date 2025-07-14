@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { t } from '@grafana/i18n';
 import { Field, Input, SecretInput, Stack } from '@grafana/ui';
 
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 
+import { getProviderFields } from './fields';
 import { WizardFormData } from './types';
 
 export function ConnectStep() {
@@ -20,118 +20,88 @@ export function ConnectStep() {
   const [tokenConfigured, setTokenConfigured] = useState(false);
 
   const type = getValues('repository.type');
-  const isGithub = type === 'github';
+  const isGitBased = type !== 'local';
+  const getFieldConfig = getProviderFields(type);
+
+  // Get all field configs at once
+  const { tokenConfig, urlConfig, branchConfig, pathConfig } = getFieldConfig(['token', 'url', 'branch', 'path']);
 
   return (
     <Stack direction="column">
-      {isGithub && (
-        <>
-          <TokenPermissionsInfo />
-          <Field
-            noMargin
-            label={t('provisioning.connect-step.label-access-token', 'GitHub access token')}
-            required
-            description={t(
-              'provisioning.connect-step.description-paste-your-git-hub-personal-access-token',
-              'Paste your GitHub personal access token'
-            )}
-            error={errors.repository?.token?.message}
-            invalid={!!errors.repository?.token}
-          >
-            <Controller
-              name={'repository.token'}
-              control={control}
-              rules={{ required: t('provisioning.connect-step.error-field-required', 'This field is required.') }}
-              render={({ field: { ref, ...field } }) => {
-                return (
-                  <SecretInput
-                    {...field}
-                    id={'token'}
-                    placeholder={t(
-                      'provisioning.connect-step.placeholder-github-token',
-                      'github_pat_yourTokenHere1234567890abcdEFGHijklMNOP'
-                    )}
-                    isConfigured={tokenConfigured}
-                    onReset={() => {
-                      setValue('repository.token', '');
-                      setTokenConfigured(false);
-                    }}
-                  />
-                );
-              }}
-            />
-          </Field>
+      {type === 'github' && <TokenPermissionsInfo />}
 
-          <Field
-            noMargin
-            label={t('provisioning.connect-step.label-repository-url', 'GitHub repository URL')}
-            error={errors.repository?.url?.message}
-            invalid={!!errors.repository?.url}
-            description={t(
-              'provisioning.connect-step.description-repository-url',
-              'Paste the URL of your GitHub repository'
-            )}
-            required
-          >
-            <Input
-              {...register('repository.url', {
-                required: t('provisioning.connect-step.error-field-required', 'This field is required.'),
-                pattern: {
-                  // TODO: The regex is not correct when we support GHES.
-                  value: /^(?:https:\/\/github\.com\/)?[^/]+\/[^/]+$/,
-                  message: t(
-                    'provisioning.connect-step.error-invalid-github-url',
-                    'Please enter a valid GitHub repository URL'
-                  ),
-                },
-              })}
-              id={'repository-url'}
-              placeholder={t('provisioning.connect-step.placeholder-github-url', 'https://github.com/username/repo')}
-            />
-          </Field>
-
-          <Field
-            noMargin
-            label={t('provisioning.connect-step.label-branch', 'Branch name')}
-            description={t('provisioning.connect-step.description-branch', 'Branch to use for the GitHub repository')}
-            error={errors.repository?.branch?.message}
-            invalid={!!errors.repository?.branch}
-          >
-            <Input
-              {...register('repository.branch')}
-              id={'repository-branch'}
-              placeholder={t('provisioning.connect-step.placeholder-branch', 'main')}
-            />
-          </Field>
-
-          <Field
-            noMargin
-            label={t('provisioning.connect-step.label-path', 'Path to subdirectory in repository')}
-            error={errors.repository?.path?.message}
-            invalid={!!errors.repository?.path}
-            description={t(
-              'provisioning.connect-step.description-github-path',
-              'This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from'
-            )}
-          >
-            <Input {...register('repository.path')} id="repository-path" />
-          </Field>
-        </>
-      )}
-
-      {type === 'local' && (
+      {isGitBased && tokenConfig && (
         <Field
           noMargin
-          label={t('provisioning.connect-step.label-local-path', 'Local path')}
-          error={errors.repository?.path?.message}
-          invalid={!!errors.repository?.path}
+          label={tokenConfig.label}
+          required={tokenConfig.required}
+          description={tokenConfig.description}
+          error={errors?.repository?.token?.message}
+          invalid={!!errors?.repository?.token?.message}
+        >
+          <Controller
+            name="repository.token"
+            control={control}
+            rules={tokenConfig.validation}
+            render={({ field: { ref, ...field } }) => (
+              <SecretInput
+                {...field}
+                id="token"
+                placeholder={tokenConfig.placeholder}
+                isConfigured={tokenConfigured}
+                onReset={() => {
+                  setValue('repository.token', '');
+                  setTokenConfigured(false);
+                }}
+              />
+            )}
+          />
+        </Field>
+      )}
+
+      {isGitBased && urlConfig && (
+        <Field
+          noMargin
+          label={urlConfig.label}
+          description={urlConfig.description}
+          error={errors?.repository?.url?.message}
+          invalid={!!errors?.repository?.url?.message}
+          required={urlConfig.required}
+        >
+          <Input {...register('repository.url', urlConfig.validation)} id="url" placeholder={urlConfig.placeholder} />
+        </Field>
+      )}
+
+      {isGitBased && branchConfig && (
+        <Field
+          noMargin
+          label={branchConfig.label}
+          description={branchConfig.description}
+          error={errors?.repository?.branch?.message}
+          invalid={!!errors?.repository?.branch?.message}
+          required={branchConfig.required}
         >
           <Input
-            {...register('repository.path', {
-              required: t('provisioning.connect-step.error-field-required', 'This field is required.'),
-            })}
-            id="repository-local-path"
-            placeholder={t('provisioning.connect-step.placeholder-local-path', '/path/to/repo')}
+            {...register('repository.branch', branchConfig.validation)}
+            id="branch"
+            placeholder={branchConfig.placeholder}
+          />
+        </Field>
+      )}
+
+      {pathConfig && (
+        <Field
+          noMargin
+          label={pathConfig.label}
+          description={pathConfig.description}
+          error={errors?.repository?.path?.message}
+          invalid={!!errors?.repository?.path?.message}
+          required={pathConfig.required}
+        >
+          <Input
+            {...register('repository.path', pathConfig.validation)}
+            id="path"
+            placeholder={pathConfig.placeholder}
           />
         </Field>
       )}

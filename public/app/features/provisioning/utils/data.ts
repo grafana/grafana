@@ -22,6 +22,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     title: data.title || '',
     workflows: getWorkflows(data),
   };
+
   switch (data.type) {
     case 'github':
       spec.github = {
@@ -30,6 +31,34 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         branch: data.branch,
         token: data.token,
         path: data.path,
+        encryptedToken: data.encryptedToken,
+      };
+      break;
+    case 'gitlab':
+      spec.gitlab = {
+        url: data.url || '',
+        branch: data.branch,
+        token: data.token,
+        path: data.path,
+        encryptedToken: data.encryptedToken,
+      };
+      break;
+    case 'bitbucket':
+      spec.bitbucket = {
+        url: data.url || '',
+        branch: data.branch,
+        token: data.token,
+        path: data.path,
+        encryptedToken: data.encryptedToken,
+      };
+      break;
+    case 'git':
+      spec.git = {
+        url: data.url || '',
+        branch: data.branch,
+        token: data.token,
+        path: data.path,
+        encryptedToken: data.encryptedToken,
       };
       break;
     case 'local':
@@ -47,10 +76,15 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   return structuredClone({
     ...spec,
+    // Spread the appropriate config based on type
     ...spec.github,
+    ...spec.gitlab,
+    ...spec.bitbucket,
+    ...spec.git,
     ...spec.local,
-    branch: spec.github?.branch || '',
-    url: spec.github?.url || '',
+    // Ensure common fields are always present
+    branch: spec.github?.branch || spec.gitlab?.branch || spec.bitbucket?.branch || spec.git?.branch || '',
+    url: spec.github?.url || spec.gitlab?.url || spec.bitbucket?.url || spec.git?.url || '',
     generateDashboardPreviews: spec.github?.generateDashboardPreviews || false,
     readOnly: !spec.workflows.length,
     prWorkflow: spec.workflows.includes('write'),

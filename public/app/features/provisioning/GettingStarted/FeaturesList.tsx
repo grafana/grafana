@@ -2,18 +2,16 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Stack, Text, Box, LinkButton, useStyles2 } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { Box, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
+import { RepositoryTypeCards } from '../Shared/RepositoryTypeCards';
 
 interface FeaturesListProps {
-  repos?: Repository[];
   hasRequiredFeatures: boolean;
   onSetupFeatures: () => void;
 }
 
-export const FeaturesList = ({ repos, hasRequiredFeatures, onSetupFeatures }: FeaturesListProps) => {
+export const FeaturesList = ({ hasRequiredFeatures, onSetupFeatures }: FeaturesListProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -45,7 +43,7 @@ export const FeaturesList = ({ repos, hasRequiredFeatures, onSetupFeatures }: Fe
         </Box>
       ) : (
         <Stack direction="row" alignItems="center" gap={2}>
-          <ConnectRepositoryButton items={repos} />
+          <RepositoryTypeCards />
         </Stack>
       )}
     </Stack>

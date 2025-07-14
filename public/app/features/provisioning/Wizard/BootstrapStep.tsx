@@ -50,6 +50,18 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
         const name = repository.url ?? 'github';
         setValue('repository.title', name.replace('https://github.com/', ''));
         break;
+      case 'gitlab':
+        const gitlabName = repository.url ?? 'gitlab';
+        setValue('repository.title', gitlabName.replace('https://gitlab.com/', ''));
+        break;
+      case 'bitbucket':
+        const bitbucketName = repository.url ?? 'bitbucket';
+        setValue('repository.title', bitbucketName.replace('https://bitbucket.org/', ''));
+        break;
+      case 'git':
+        const gitName = repository.url ?? 'git';
+        setValue('repository.title', gitName.replace(/^https?:\/\/[^\/]+\//, ''));
+        break;
       case 'local':
         setValue('repository.title', repository.path ?? 'local');
         break;

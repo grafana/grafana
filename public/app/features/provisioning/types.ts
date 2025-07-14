@@ -1,11 +1,62 @@
-import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec } from '../../api/clients/provisioning/v0alpha1';
+import { ReactNode } from 'react';
+import { Path, UseFormReturn } from 'react-hook-form';
 
-export type RepositoryFormData = Omit<RepositorySpec, 'github' | 'local' | 'workflows'> &
+import { SelectableValue } from '@grafana/data';
+
+import {
+  BitbucketRepositoryConfig,
+  GitHubRepositoryConfig,
+  GitLabRepositoryConfig,
+  GitRepositoryConfig,
+  LocalRepositoryConfig,
+  RepositorySpec,
+} from '../../api/clients/provisioning/v0alpha1';
+
+// Repository type definition - extracted from API client
+export type RepositoryType = RepositorySpec['type'];
+
+// Field configuration interface
+export interface RepositoryFieldData {
+  label: string;
+  type: 'text' | 'secret' | 'switch' | 'select' | 'checkbox' | 'custom' | 'component' | 'number';
+  description?: string | ReactNode;
+  placeholder?: string;
+  path?: Path<RepositoryFormData>; // Optional nested field path, e.g., 'sync.intervalSeconds'
+  validation?: {
+    required?: boolean | string;
+    message?: string;
+    validate?: (value: unknown) => boolean | string;
+  };
+  defaultValue?: SelectableValue<string> | string | boolean;
+  options?: Array<SelectableValue<string>>;
+  multi?: boolean;
+  allowCustomValue?: boolean;
+  hidden?: boolean;
+  content?: (setValue: UseFormReturn<RepositoryFormData>['setValue']) => ReactNode; // For custom fields
+}
+
+// Repository form data - flattened from RepositorySpec with all config types
+export type RepositoryFormData = Omit<RepositorySpec, 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local'> &
+  BitbucketRepositoryConfig &
+  GitRepositoryConfig &
   GitHubRepositoryConfig &
+  GitLabRepositoryConfig &
   LocalRepositoryConfig & {
+    // Derived fields from data transformations
     readOnly: boolean;
     prWorkflow: boolean;
   };
+
+// Field can be string or object with dependencies
+export type RepositorySettingsField = Path<RepositoryFormData>;
+
+// Section configuration
+export interface RepositorySection {
+  name: string;
+  id: string;
+  hidden?: boolean;
+  fields: RepositorySettingsField[];
+}
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {
@@ -38,6 +89,6 @@ export type FileDetails = {
 export type HistoryListResponse = {
   apiVersion?: string;
   kind?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   items?: HistoryItem[];
 };

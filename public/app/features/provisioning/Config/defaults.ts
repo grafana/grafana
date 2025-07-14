@@ -16,6 +16,7 @@ export function getDefaultValues(repository?: RepositorySpec): RepositoryFormDat
       readOnly: false,
       prWorkflow: true,
       path: 'grafana/',
+      workflows: [],
       sync: {
         enabled: false,
         target: 'instance',

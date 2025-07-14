@@ -4,15 +4,19 @@ import { useFormContext } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 
-import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
+import { checkImageRenderer, checkPublicAccess } from '../GettingStarted/features';
 
+import { getProviderFields } from './fields';
 import { WizardFormData } from './types';
 
 export function FinishStep() {
   const { register, watch, setValue } = useFormContext<WizardFormData>();
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
+  const getFieldConfig = getProviderFields(type);
+
   const isGithub = type === 'github';
+  const isGitBased = ['github', 'gitlab', 'bitbucket', 'git'].includes(type);
   const isPublic = checkPublicAccess();
   const hasImageRenderer = checkImageRenderer();
 
@@ -21,29 +25,30 @@ export function FinishStep() {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
 
+  // Get field config for interval seconds
+  const intervalConfig = getFieldConfig('sync.intervalSeconds');
+
   return (
     <Stack direction="column">
-      {isGithub && (
+      {isGitBased && intervalConfig && (
         <Field
-          label={t(
-            'provisioning.finish-step.label-update-instance-interval-seconds',
-            'Update instance interval (seconds)'
-          )}
-          description={t(
-            'provisioning.finish-step.description-often-shall-instance-updates-git-hub',
-            'How often shall the instance pull updates from GitHub?'
-          )}
-          required
+          noMargin
+          label={intervalConfig.label}
+          description={intervalConfig.description}
+          required={intervalConfig.required}
         >
           <Input
-            {...register('repository.sync.intervalSeconds', { valueAsNumber: true })}
+            {...register('repository.sync.intervalSeconds', {
+              valueAsNumber: true,
+              required: intervalConfig.validation?.required,
+            })}
             type="number"
-            placeholder={t('provisioning.finish-step.placeholder', '60')}
+            placeholder={intervalConfig.placeholder}
           />
         </Field>
       )}
 
-      <Field>
+      <Field noMargin>
         <Checkbox
           {...register('repository.readOnly', {
             onChange: (e) => {
@@ -60,63 +65,48 @@ export function FinishStep() {
         />
       </Field>
 
-      {isGithub && (
-        <>
-          <Field>
-            <Checkbox
-              {...register('repository.prWorkflow')}
-              disabled={readOnly}
-              label={t('provisioning.finish-step.label-pr-workflow', 'Enable pull request option when saving')}
-              description={
-                <Trans i18nKey="provisioning.finish-step.description-pr-enable-description">
-                  Allows users to choose whether to open a pull request when saving changes. If the repository does not
-                  allow direct changes to the main branch, a pull request may still be required.
-                </Trans>
-              }
-            />
-          </Field>
+      {isGitBased && !readOnly && (
+        <Field noMargin>
+          <Checkbox
+            {...register('repository.prWorkflow')}
+            label={t('provisioning.finish-step.label-enable-pull-requests', 'Enable pull request option when saving')}
+            description={t(
+              'provisioning.finish-step.description-enable-pull-requests',
+              'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
+            )}
+          />
+        </Field>
+      )}
 
-          <Stack direction="column" gap={2}>
-            <Stack direction="column" gap={0}>
-              <Text element="h4">
-                <Trans i18nKey="provisioning.finish-step.title-enhance-github">Enhance your GitHub experience</Trans>
-              </Text>
-              <Text color="secondary" variant="bodySmall">
-                <Trans i18nKey="provisioning.finish-step.text-setup-later">You can always set this up later</Trans>
-              </Text>
-            </Stack>
-            <Field>
-              <Checkbox
-                disabled={!hasImageRenderer || !isPublic}
-                label={t(
-                  'provisioning.finish-step.label-enable-previews',
-                  'Enable dashboard previews in pull requests'
-                )}
-                description={
+      {isGithub && !readOnly && (
+        <Field noMargin>
+          <Checkbox
+            {...register('repository.generateDashboardPreviews')}
+            label={t('provisioning.finish-step.label-generate-dashboard-previews', 'Generate Dashboard Previews')}
+            description={
+              <>
+                <Trans i18nKey="provisioning.finish-step.description-generate-dashboard-previews">
+                  Create preview links for pull requests
+                </Trans>
+                {(!isPublic || !hasImageRenderer) && (
                   <>
-                    <Trans i18nKey="provisioning.finish-step.description-enable-previews">
-                      Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards
-                      will be shared in your Git repository and visible to anyone with repository access.
-                    </Trans>{' '}
-                    <Text italic>
-                      <Trans i18nKey="provisioning.finish-step.description-image-rendering">
-                        Requires image rendering.{' '}
-                        <TextLink
-                          variant="bodySmall"
-                          external
-                          href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                        >
-                          Set up image rendering
-                        </TextLink>
+                    {' '}
+                    <Text color="secondary">
+                      <Trans i18nKey="provisioning.finish-step.description-preview-requirements">
+                        (requires{' '}
+                        <TextLink href="https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/">
+                          image rendering
+                        </TextLink>{' '}
+                        and public access enabled)
                       </Trans>
                     </Text>
                   </>
-                }
-                {...register('repository.generateDashboardPreviews')}
-              />
-            </Field>
-          </Stack>
-        </>
+                )}
+              </>
+            }
+            disabled={!isPublic || !hasImageRenderer}
+          />
+        </Field>
       )}
     </Stack>
   );
