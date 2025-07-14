@@ -310,7 +310,6 @@ export const LogLineDetailsField = ({
         )}
         <div className={styles.label}>
           {singleKey ? keys[0] : <MultipleValue values={keys} />}
-          {singleKey ? keys[0] : <MultipleValue values={keys} />}
         </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
