@@ -923,6 +923,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a mock secrets service
 			mockSecrets := secrets.NewMockService(t)
+			mockLegacySecrets := secrets.NewMockLegacyService(t)
 
 			// Set up the mock expectations
 			if tt.mockSetup != nil {
@@ -931,10 +932,11 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 			// Create a GitHub repository with the test config
 			repo := &githubWebhookRepository{
-				config:  tt.config,
-				owner:   "grafana",
-				repo:    "grafana",
-				secrets: mockSecrets,
+				config:        tt.config,
+				owner:         "grafana",
+				repo:          "grafana",
+				secrets:       mockSecrets,
+				legacySecrets: mockLegacySecrets,
 			}
 
 			// Call the Webhook method

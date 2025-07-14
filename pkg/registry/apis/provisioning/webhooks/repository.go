@@ -33,18 +33,20 @@ type GithubWebhookRepository interface {
 
 type githubWebhookRepository struct {
 	pgh.GithubRepository
-	config     *provisioning.Repository
-	owner      string
-	repo       string
-	secrets    secrets.Service
-	gh         pgh.Client
-	webhookURL string
+	config        *provisioning.Repository
+	owner         string
+	repo          string
+	secrets       secrets.Service
+	legacySecrets secrets.LegacyService
+	gh            pgh.Client
+	webhookURL    string
 }
 
 func NewGithubWebhookRepository(
 	basic pgh.GithubRepository,
 	webhookURL string,
 	secrets secrets.Service,
+	legacySecrets secrets.LegacyService,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository: basic,
@@ -54,6 +56,7 @@ func NewGithubWebhookRepository(
 		gh:               basic.Client(),
 		webhookURL:       webhookURL,
 		secrets:          secrets,
+		legacySecrets:    legacySecrets,
 	}
 }
 
@@ -63,7 +66,13 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	secret, err := r.secrets.Decrypt(ctx, r.config.Namespace, r.config.Status.Webhook.EncryptedSecret)
+	var secret []byte
+	var err error
+	if r.config.Status.Webhook.SecretName != "" {
+		secret, err = r.secrets.Decrypt(ctx, r.config.Namespace, r.config.Status.Webhook.SecretName)
+	} else {
+		secret, err = r.legacySecrets.Decrypt(ctx, r.config.Status.Webhook.EncryptedSecret)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt secret: %w", err)
 	}

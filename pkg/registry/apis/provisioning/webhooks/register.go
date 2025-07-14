@@ -73,7 +73,8 @@ func ProvideWebhooks(
 				render,
 				webhook,
 				urlProvider,
-				secrets.NewSecretsService(legacySecretsSvc, secretsSvc, decryptSvc),
+				secrets.NewSecretsService(secretsSvc, decryptSvc),
+				secrets.NewSingleTenant(legacySecretsSvc),
 				ghFactory,
 				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
@@ -86,15 +87,16 @@ func ProvideWebhooks(
 // WebhookExtra implements the Extra interface for webhooks
 // to wrap around
 type WebhookExtra struct {
-	features    featuremgmt.FeatureToggles
-	render      *renderConnector
-	webhook     *webhookConnector
-	urlProvider func(namespace string) string
-	secrets     secrets.Service
-	ghFactory   *github.Factory
-	clonedir    string
-	parsers     resources.ParserFactory
-	workers     []jobs.Worker
+	features      featuremgmt.FeatureToggles
+	render        *renderConnector
+	webhook       *webhookConnector
+	urlProvider   func(namespace string) string
+	secrets       secrets.Service
+	legacySecrets secrets.LegacyService
+	ghFactory     *github.Factory
+	clonedir      string
+	parsers       resources.ParserFactory
+	workers       []jobs.Worker
 }
 
 func NewWebhookExtra(
@@ -103,21 +105,23 @@ func NewWebhookExtra(
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
 	secrets secrets.Service,
+	legacySecrets secrets.LegacyService,
 	ghFactory *github.Factory,
 	clonedir string,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
 ) *WebhookExtra {
 	return &WebhookExtra{
-		features:    features,
-		render:      render,
-		webhook:     webhook,
-		urlProvider: urlProvider,
-		secrets:     secrets,
-		ghFactory:   ghFactory,
-		clonedir:    clonedir,
-		parsers:     parsers,
-		workers:     workers,
+		features:      features,
+		render:        render,
+		webhook:       webhook,
+		urlProvider:   urlProvider,
+		secrets:       secrets,
+		legacySecrets: legacySecrets,
+		ghFactory:     ghFactory,
+		clonedir:      clonedir,
+		parsers:       parsers,
+		workers:       workers,
 	}
 }
 
@@ -199,8 +203,14 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
-		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := e.secrets.Decrypt(ctx, r.GetNamespace(), ghCfg.EncryptedToken)
+		if ghToken == "" && ghCfg.TokenSecretName != "" {
+			decrypted, err := e.secrets.Decrypt(ctx, r.GetNamespace(), ghCfg.TokenSecretName)
+			if err != nil {
+				return nil, fmt.Errorf("decrypt github token: %w", err)
+			}
+			ghToken = string(decrypted)
+		} else if ghToken == "" && ghCfg.EncryptedToken != nil {
+			decrypted, err := e.legacySecrets.Decrypt(ctx, ghCfg.EncryptedToken)
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)
 			}
@@ -225,7 +235,7 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}
 
-		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets), nil
+		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets, e.legacySecrets), nil
 	}
 
 	return nil, nil
