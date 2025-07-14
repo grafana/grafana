@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import {
+  MultiValueVariable,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
@@ -13,7 +14,7 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneFor, getMultiVariableValues } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
@@ -22,6 +23,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
+import { createTabRepeats } from './TabItemRepeater';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
 interface TabsLayoutManagerState extends SceneObjectState {
@@ -61,6 +63,23 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       tabs: state.tabs ?? [new TabItem()],
       currentTabIndex: state.currentTabIndex ?? 0,
     });
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    this.state.tabs.forEach((tab) => {
+      if (tab.state.repeatByVariable) {
+        const variable = sceneGraph.lookupVariable(tab.state.repeatByVariable, this);
+
+        if (variable instanceof MultiValueVariable) {
+          const { values, texts } = getMultiVariableValues(variable);
+
+          const clonedTabs = createTabRepeats({ values, texts, variable, tab });
+          tab.setState({ repeatedTabs: clonedTabs });
+        }
+      }
+    });
   }
 
   public duplicate(): DashboardLayoutManager {
@@ -89,8 +108,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     if (typeof values[key] === 'string') {
       // find tab with matching slug
       const matchIndex = this.getTabs().findIndex((tab) => {
-        // console.log('URL', tab.getSlug(), urlValue, tab.getSlug() === urlValue);
-        return tab.getSlug() === urlValue;
+        const slug = tab.getSlug();
+        return slug === urlValue;
       });
       if (matchIndex !== -1) {
         this.setState({ currentTabIndex: matchIndex });
@@ -103,17 +122,20 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public getCurrentTab(): TabItem {
-    return this.getTabs().length > this.state.currentTabIndex
-      ? this.getTabs()[this.state.currentTabIndex]
-      : this.getTabs()[0];
+    const val =
+      this.getTabs().length > this.state.currentTabIndex
+        ? this.getTabs()[this.state.currentTabIndex]
+        : this.getTabs()[0];
+    return val;
   }
 
   public getTabs(): TabItem[] {
-    return this.state.tabs.reduce<TabItem[]>((acc, tab) => {
+    const tabsWithRepeats = this.state.tabs.reduce<TabItem[]>((acc, tab) => {
       acc.push(tab, ...(tab.state.repeatedTabs ?? []));
 
       return acc;
     }, []);
+    return tabsWithRepeats;
   }
 
   public addPanel(vizPanel: VizPanel) {
