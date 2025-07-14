@@ -55,7 +55,8 @@ func (r createEncryptedValue) Validate() error {
 type readEncryptedValue struct {
 	sqltemplate.SQLTemplate
 	Namespace string
-	UID       string
+	Name      string
+	Version   int64
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -67,7 +68,8 @@ func (r readEncryptedValue) Validate() error {
 type updateEncryptedValue struct {
 	sqltemplate.SQLTemplate
 	Namespace     string
-	UID           string
+	Name          string
+	Version       int64
 	EncryptedData []byte
 	Updated       int64
 }
@@ -81,7 +83,8 @@ func (r updateEncryptedValue) Validate() error {
 type deleteEncryptedValue struct {
 	sqltemplate.SQLTemplate
 	Namespace string
-	UID       string
+	Name      string
+	Version   int64
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`

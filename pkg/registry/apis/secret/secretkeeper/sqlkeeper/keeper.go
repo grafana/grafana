@@ -36,8 +36,13 @@ func NewSQLKeeper(
 	}
 }
 
-func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, exposedValueOrRef string) (contracts.ExternalID, error) {
-	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store", trace.WithAttributes(attribute.String("namespace", namespace)))
+func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {
+	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store",
+		trace.WithAttributes(
+			attribute.String("namespace", namespace),
+			attribute.String("name", name),
+			attribute.Int64("version", version)),
+	)
 	defer span.End()
 
 	start := time.Now()
@@ -46,27 +51,28 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, n
 		return "", fmt.Errorf("unable to encrypt value: %w", err)
 	}
 
-	encryptedVal, err := s.store.Create(ctx, namespace, encryptedData)
+	_, err = s.store.Create(ctx, namespace, name, version, encryptedData)
 	if err != nil {
 		return "", fmt.Errorf("unable to store encrypted value: %w", err)
 	}
 
 	s.metrics.StoreDuration.WithLabelValues(string(cfg.Type())).Observe(time.Since(start).Seconds())
-	externalID := contracts.ExternalID(encryptedVal.UID)
-	span.SetAttributes(attribute.String("externalID", externalID.String()))
 
-	return externalID, nil
+	// An external id is not required to interact with the sql keeper.
+	// An empty string is returned just to comply with the Keeper interface.
+	return contracts.ExternalID(""), nil
 }
 
-func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID) (secretv1beta1.ExposedSecureValue, error) {
+func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Expose", trace.WithAttributes(
 		attribute.String("namespace", namespace),
-		attribute.String("externalID", externalID.String()),
+		attribute.String("name", name),
+		attribute.Int64("version", version),
 	))
 	defer span.End()
 
 	start := time.Now()
-	encryptedValue, err := s.store.Get(ctx, namespace, externalID.String())
+	encryptedValue, err := s.store.Get(ctx, namespace, name, version)
 	if err != nil {
 		return "", fmt.Errorf("unable to get encrypted value: %w", err)
 	}
@@ -82,15 +88,16 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	return exposedValue, nil
 }
 
-func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID) error {
+func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Delete", trace.WithAttributes(
 		attribute.String("namespace", namespace),
-		attribute.String("externalID", externalID.String()),
+		attribute.String("name", name),
+		attribute.Int64("version", version),
 	))
 	defer span.End()
 
 	start := time.Now()
-	err := s.store.Delete(ctx, namespace, externalID.String())
+	err := s.store.Delete(ctx, namespace, name, version)
 	if err != nil {
 		return fmt.Errorf("failed to delete encrypted value: %w", err)
 	}
@@ -100,10 +107,11 @@ func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 	return nil
 }
 
-func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace string, externalID contracts.ExternalID, exposedValueOrRef string) error {
+func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace, name string, version int64, exposedValueOrRef string) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Update", trace.WithAttributes(
 		attribute.String("namespace", namespace),
-		attribute.String("externalID", externalID.String()),
+		attribute.String("name", name),
+		attribute.Int64("version", version),
 	))
 	defer span.End()
 
@@ -113,7 +121,7 @@ func (s *SQLKeeper) Update(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 		return fmt.Errorf("unable to encrypt value: %w", err)
 	}
 
-	err = s.store.Update(ctx, namespace, externalID.String(), encryptedData)
+	err = s.store.Update(ctx, namespace, name, version, encryptedData)
 	if err != nil {
 		return fmt.Errorf("failed to update encrypted value: %w", err)
 	}
