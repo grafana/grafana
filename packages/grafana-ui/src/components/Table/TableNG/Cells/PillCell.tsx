@@ -13,6 +13,7 @@ import { FieldColorModeId } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
 import { PillCellProps, TableCellValue } from '../types';
+import { shouldTextWrap } from '../utils';
 
 interface Pill {
   value: string;
@@ -35,7 +36,8 @@ function createPills(pillValues: string[], field: Field, theme: GrafanaTheme2): 
 }
 
 export function PillCell({ rowIdx, field }: PillCellProps) {
-  const styles = useStyles2(getStyles);
+  const textWrap = shouldTextWrap(field);
+  const styles = useStyles2(getStyles, textWrap);
   const theme = useTheme2();
   const value = field.values[rowIdx];
 
@@ -103,15 +105,18 @@ function getPillColor(value: string, field: Field, theme: GrafanaTheme2): string
   return getColorByStringHash(classicColors, value);
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2, textWrap?: boolean) => ({
   wrapper: css({
-    marginBlockStart: theme.spacing(-0.25),
+    display: 'inline-flex',
+    gap: theme.spacing(0.5),
+    flexWrap: textWrap ? 'wrap' : 'nowrap',
+    '&:hover': {
+      flexWrap: 'wrap',
+    },
   }),
   pill: css({
-    display: 'inline-block',
+    display: 'flex',
     padding: theme.spacing(0.25, 0.75),
-    marginInlineEnd: theme.spacing(0.5),
-    marginBlock: theme.spacing(0.25),
     borderRadius: theme.shape.radius.default,
     fontSize: theme.typography.bodySmall.fontSize,
     lineHeight: theme.typography.bodySmall.lineHeight,
