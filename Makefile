@@ -184,8 +184,16 @@ gen-feature-toggles:
 		go test -v ./pkg/services/featuremgmt/...; \
 	fi
 
-.PHONY: gen-go
-gen-go:
+.PHONY: gen-go gen-enterprise-go
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+gen-enterprise-go:
+	@echo "skipping re-generating Wire graph for enterprise: not enabled"
+else
+gen-enterprise-go: ## Generate Wire graph (Enterprise)
+	@echo "re-generating Wire graph for enterprise"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
+endif
+gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
