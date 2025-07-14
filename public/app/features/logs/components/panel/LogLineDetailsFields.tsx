@@ -105,12 +105,12 @@ const getFieldsStyles = (theme: GrafanaTheme2) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} minmax(15%, 30%) 1fr`,
+    gridTemplateColumns: `${theme.spacing(11.5)} minmax(min-content, 20vw) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `minmax(15%, 30%) 1fr`,
+    gridTemplateColumns: `minmax(min-content, 20vw) 1fr`,
   }),
 });
 
@@ -308,7 +308,10 @@ export const LogLineDetailsField = ({
             />
           </div>
         )}
-        <div className={styles.label}>{singleKey ? keys[0] : <MultipleValue values={keys} />}</div>
+        <div className={styles.label}>
+          {singleKey ? keys[0] : <MultipleValue values={keys} />}
+          {singleKey ? keys[0] : <MultipleValue values={keys} />}
+        </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
