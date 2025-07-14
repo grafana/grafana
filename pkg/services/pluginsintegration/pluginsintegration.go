@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	pluginassets2 "github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -151,6 +152,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(provisionedplugins.Manager), new(*provisionedplugins.Noop)),
 	sources.ProvideService,
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
+	pluginassets2.ProvideService,
+	wire.Bind(new(pluginassets2.Provider), new(*pluginassets2.LocalProvider)),
 )
 
 func ProvideClientWithMiddlewares(
