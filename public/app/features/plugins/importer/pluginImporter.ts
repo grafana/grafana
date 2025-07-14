@@ -12,6 +12,7 @@ import {
   PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
@@ -21,6 +22,7 @@ import {
   addedLinksRegistry,
   exposedComponentsRegistry,
 } from '../extensions/registry/setup';
+import { pluginsLogger } from '../utils';
 
 import { importPluginModule } from './importPluginModule';
 import { PluginImporter, PostImportStrategy, PreImportStrategy } from './types';
@@ -137,13 +139,31 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
   postImportStrategy: PostImportStrategy<P, M>,
   preImportStrategy: PreImportStrategy<M> = defaultPreImport
 ): Promise<P> => {
-  if (promisesCache.has(meta.id)) {
-    return getPromiseFromCache(meta);
-  }
-
   const cached = getPluginFromCache<P>(meta.id);
   if (cached) {
+    pluginsLogger.logDebug(`Retreiving plugin from cache`, {
+      path: meta.module,
+      pluginId: meta.id,
+      pluginVersion: meta.info?.version ?? '',
+      expectedHash: meta.moduleHash ?? '',
+      loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
+      sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
+      newPluginLoadingEnabled: String(Boolean(config.featureToggles.newPluginLoading)),
+    });
     return Promise.resolve(cached);
+  }
+
+  if (promisesCache.has(meta.id)) {
+    pluginsLogger.logDebug(`Retreiving plugin from inflight plugin load request`, {
+      path: meta.module,
+      pluginId: meta.id,
+      pluginVersion: meta.info?.version ?? '',
+      expectedHash: meta.moduleHash ?? '',
+      loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
+      sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
+      newPluginLoadingEnabled: String(Boolean(config.featureToggles.newPluginLoading)),
+    });
+    return getPromiseFromCache(meta);
   }
 
   const args = preImportStrategy(meta);
@@ -159,4 +179,9 @@ export const pluginImporter: PluginImporter = {
   importDataSource: (meta: DataSourcePluginMeta) => importPlugin(meta, datasourcePluginPostImport),
   importApp: (meta: AppPluginMeta) => importPlugin(meta, appPluginPostImport),
   getPanel: (id: string) => getPluginFromCache<PanelPlugin>(id), // we need this sync because how the panel plugins are loaded in PanelRenderer
+};
+
+export const clearCaches = () => {
+  promisesCache.clear();
+  pluginsCache.clear();
 };
