@@ -2,6 +2,7 @@ package secrets
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -10,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -64,7 +64,7 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 	}
 
 	existing, err := s.secretsSvc.Read(ctx, xkube.Namespace(namespace), name)
-	if err != nil && !apierrors.IsNotFound(err) {
+	if err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
 		return "", err
 	}
 

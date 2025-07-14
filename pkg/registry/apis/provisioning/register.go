@@ -469,11 +469,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	}
 
 	if err := b.encryptGithubToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt secrets: %w", err)
+		return fmt.Errorf("failed to encrypt github secrets: %w", err)
 	}
 
 	if err := b.encryptGitToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt secrets: %w", err)
+		return fmt.Errorf("failed to encrypt git secrets: %w", err)
 	}
 
 	// Mutate the repository with any extra mutators
