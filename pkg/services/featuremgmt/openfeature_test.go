@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestProvideOpenFeatureManager(t *testing.T) {
+func TestCreateProvider(t *testing.T) {
 	u, err := url.Parse("http://localhost:1031")
 	require.NoError(t, err)
 
@@ -98,30 +98,30 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 			}
 
 			tokenExchangeMiddleware := middleware.TestingTokenExchangeMiddleware(tokenExchangeClient)
-			p, err := ProvideOpenFeatureService(cfg, httpClientProvider, tokenExchangeMiddleware)
+			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, httpClientProvider, tokenExchangeMiddleware)
 			require.NoError(t, err)
 
 			if tc.expectedProvider == setting.GOFFProviderType {
-				_, ok := p.provider.(*gofeatureflag.Provider)
+				_, ok := provider.(*gofeatureflag.Provider)
 				assert.True(t, ok, "expected provider to be of type goff.Provider")
 
-				testGoFFProvider(t, p, tc.failSigning)
+				testGoFFProvider(t, tc.failSigning)
 			} else {
-				_, ok := p.provider.(*inMemoryBulkProvider)
+				_, ok := provider.(*inMemoryBulkProvider)
 				assert.True(t, ok, "expected provider to be of type memprovider.InMemoryProvider")
 			}
 		})
 	}
 }
 
-func testGoFFProvider(t *testing.T, service *OpenFeatureService, failSigning bool) {
+func testGoFFProvider(t *testing.T, failSigning bool) {
 	// this tests with a fake identity with * namespace access, but in any case, it proves what the requester
 	// is scoped to is what is used to sign the token with
 	ctx, _ := identity.WithServiceIdentity(context.Background(), 1)
 
 	// Test that the flag evaluation can be attempted (though it will fail due to non-existent service)
 	// The important thing is that the authentication middleware is properly integrated
-	_, err := service.Client.BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
+	_, err := openfeature.GetApiInstance().GetClient().BooleanValueDetails(ctx, "test", false, openfeature.NewEvaluationContext("test", map[string]interface{}{"test": "test"}))
 
 	// Error related to the token exchange should be returned if signing fails
 	// otherwise, it should return a connection refused error since the goff URL is not set

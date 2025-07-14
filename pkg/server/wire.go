@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	clientauthmiddleware "github.com/grafana/grafana/pkg/clientauth/middleware"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -327,9 +326,6 @@ var wireBasicSet = wire.NewSet(
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	featuremgmt.ProvideOpenFeatureService,
-	featuremgmt.ProvideStaticEvaluator,
-	clientauthmiddleware.ProvideTokenExchangeMiddleware,
 	dashboardservice.ProvideDashboardServiceImpl,
 	wire.Bind(new(dashboards.PermissionsRegistrationService), new(*dashboardservice.DashboardServiceImpl)),
 	dashboardservice.ProvideDashboardService,
