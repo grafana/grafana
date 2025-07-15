@@ -15,9 +15,10 @@ import {
   applySort,
   getCellOptions,
   getColumnTypes,
-  GetMaxWrapCellOptions,
-  getMaxWrapCell,
+  GetRowHeightOptions,
   getCellLinks,
+  getRowHeight,
+  CellNumLinesCalculator,
 } from './utils';
 
 // Helper function to get displayed value
@@ -313,7 +314,7 @@ interface TypographyCtx {
   ctx: CanvasRenderingContext2D;
   font: string;
   avgCharWidth: number;
-  calcRowHeight: (text: string, cellWidth: number, defaultHeight: number) => number;
+  calcNumLines: CellNumLinesCalculator;
 }
 
 export function useTypographyCtx(): TypographyCtx {
@@ -333,17 +334,10 @@ export function useTypographyCtx(): TypographyCtx {
     const avgCharWidth = txtWidth / txt.length + letterSpacing;
     const { count } = varPreLine(ctx);
 
-    const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
-      if (text === '') {
-        return defaultHeight;
-      }
-      const numLines = count(text, cellWidth);
-      const totalHeight = numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING;
-      return Math.max(totalHeight, defaultHeight);
-    };
+    const calcNumLines = count;
 
     return {
-      calcRowHeight,
+      calcNumLines,
       ctx,
       font,
       avgCharWidth,
@@ -371,7 +365,7 @@ export function useHeaderHeight({
   columnWidths,
   defaultHeight,
   sortColumns,
-  typographyCtx: { calcRowHeight, avgCharWidth },
+  typographyCtx: { calcNumLines, avgCharWidth },
   showTypeIcons = false,
 }: UseHeaderHeightOptions): number {
   const perIconSpace = ICON_WIDTH + ICON_GAP;
@@ -410,13 +404,16 @@ export function useHeaderHeight({
     ];
   }, [fields]);
 
-  const maxWrapCellOptions = useMemo<GetMaxWrapCellOptions>(
+  const maxWrapCellOptions = useMemo<GetRowHeightOptions>(
     () => ({
       colWidths: columnAvailableWidths,
       avgCharWidth,
       wrappedColIdxs: wrappedColHeaderIdxs,
+      calcNumLines,
+      defaultHeight,
+      heightOffset: -TABLE.CELL_PADDING, // account for padding that is already in defaultHeight
     }),
-    [columnAvailableWidths, avgCharWidth, wrappedColHeaderIdxs]
+    [columnAvailableWidths, avgCharWidth, wrappedColHeaderIdxs, calcNumLines, defaultHeight]
   );
 
   // TODO: is there a less clunky way to subtract the top padding value?
@@ -427,10 +424,8 @@ export function useHeaderHeight({
     if (!hasWrappedColHeaders) {
       return defaultHeight - TABLE.CELL_PADDING;
     }
-
-    const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
-  }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
+    return getRowHeight(fields, -1, maxWrapCellOptions);
+  }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, defaultHeight]);
 
   return headerHeight;
 }
@@ -450,7 +445,7 @@ export function useRowHeight({
   hasNestedFrames,
   defaultHeight,
   expandedRows,
-  typographyCtx: { calcRowHeight, avgCharWidth },
+  typographyCtx: { calcNumLines, avgCharWidth },
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {
   const [wrappedColIdxs, hasWrappedCols] = useMemo(() => {
     let hasWrappedCols = false;
@@ -473,13 +468,15 @@ export function useRowHeight({
     [columnWidths]
   );
 
-  const maxWrapCellOptions = useMemo<GetMaxWrapCellOptions>(
+  const getRowHeightOptions = useMemo<GetRowHeightOptions>(
     () => ({
       colWidths,
       avgCharWidth,
       wrappedColIdxs,
+      calcNumLines,
+      defaultHeight,
     }),
-    [colWidths, avgCharWidth, wrappedColIdxs]
+    [colWidths, avgCharWidth, wrappedColIdxs, calcNumLines, defaultHeight]
   );
 
   const rowHeight = useMemo(() => {
@@ -506,26 +503,9 @@ export function useRowHeight({
       }
 
       // regular rows
-      const {
-        text: maxLinesText,
-        idx: maxLinesIdx,
-        numLines: maxNumLines,
-      } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
-      if (!maxLinesText) {
-        return Math.ceil(maxNumLines) * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
-      }
-      return calcRowHeight(maxLinesText, colWidths[maxLinesIdx], defaultHeight);
+      return getRowHeight(fields, row.__index, getRowHeightOptions);
     };
-  }, [
-    calcRowHeight,
-    defaultHeight,
-    expandedRows,
-    fields,
-    hasNestedFrames,
-    hasWrappedCols,
-    maxWrapCellOptions,
-    colWidths,
-  ]);
+  }, [hasNestedFrames, hasWrappedCols, defaultHeight, fields, getRowHeightOptions, expandedRows]);
 
   return rowHeight;
 }
