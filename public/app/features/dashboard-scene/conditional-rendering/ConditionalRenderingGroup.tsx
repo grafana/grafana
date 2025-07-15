@@ -13,6 +13,7 @@ import { ConditionalRenderingData } from './ConditionalRenderingData';
 import { ConditionalRenderingGroupAdd } from './ConditionalRenderingGroupAdd';
 import { ConditionalRenderingGroupCondition } from './ConditionalRenderingGroupCondition';
 import { ConditionalRenderingGroupVisibility } from './ConditionalRenderingGroupVisibility';
+import { ConditionalRenderingScopes } from './ConditionalRenderingScopes';
 import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRangeSize';
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { conditionalRenderingSerializerRegistry } from './serializers';
@@ -70,15 +71,20 @@ export class ConditionalRenderingGroup extends ConditionalRenderingBase<Conditio
     this.setStateAndNotify({ condition });
   }
 
-  public createItem(itemType: GroupConditionItemType) {
-    const item =
-      itemType === 'data'
-        ? ConditionalRenderingData.createEmpty()
-        : itemType === 'variable'
-          ? ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name)
-          : ConditionalRenderingTimeRangeSize.createEmpty();
+  public getItemByType(itemType: GroupConditionItemType): ConditionalRenderingConditions {
+    switch (itemType) {
+      case 'data':
+        return ConditionalRenderingData.createEmpty();
 
-    return item;
+      case 'scopes':
+        return ConditionalRenderingScopes.createEmpty();
+
+      case 'timeRangeSize':
+        return ConditionalRenderingTimeRangeSize.createEmpty();
+
+      case 'variable':
+        return ConditionalRenderingVariable.createEmpty(sceneGraph.getVariables(this).state.variables[0].state.name);
+    }
   }
 
   public addItem(item: ConditionalRenderingConditions) {
@@ -186,7 +192,7 @@ function ConditionalRenderingGroupRenderer({ model }: SceneComponentProps<Condit
         itemType={itemType}
         hasVariables={variables.length > 0}
         onAdd={({ value, label }) => {
-          const item = model.createItem(value!);
+          const item = model.getItemByType(value!);
           dashboardEditActions.edit({
             description: t('dashboard.edit-actions.add-conditional-rule', 'Add {{ruleDescription}} rule', {
               ruleDescription: lowerCase(label),

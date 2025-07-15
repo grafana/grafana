@@ -282,7 +282,7 @@ export interface FieldConfig {
 	description?: string;
 	// An explicit path to the field in the datasource.  When the frame meta includes a path,
 	// This will default to `${frame.meta.path}/${field.name}
-	// 
+	//
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
 	path?: string;
@@ -679,7 +679,7 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 export interface ConditionalRenderingGroupSpec {
 	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind | ConditionalRenderingScopesKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
@@ -700,7 +700,7 @@ export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingV
 
 export interface ConditionalRenderingVariableSpec {
 	variable: string;
-	operator: "equals" | "notEquals";
+	operator: "equals" | "notEquals" | "matches" | "notMatches";
 	value: string;
 }
 
@@ -743,6 +743,26 @@ export interface ConditionalRenderingTimeRangeSizeSpec {
 }
 
 export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
+	value: "",
+});
+
+export interface ConditionalRenderingScopesKind {
+	kind: "ConditionalRenderingScopes";
+	spec: ConditionalRenderingScopesSpec;
+}
+
+export const defaultConditionalRenderingScopesKind = (): ConditionalRenderingScopesKind => ({
+	kind: "ConditionalRenderingScopes",
+	spec: defaultConditionalRenderingScopesSpec(),
+});
+
+export interface ConditionalRenderingScopesSpec {
+	operator: "includes" | "notIncludes";
+	value: string;
+}
+
+export const defaultConditionalRenderingScopesSpec = (): ConditionalRenderingScopesSpec => ({
+	operator: "includes",
 	value: "",
 });
 
@@ -1401,4 +1421,3 @@ export const defaultSpec = (): Spec => ({
 	title: "",
 	variables: [],
 });
-

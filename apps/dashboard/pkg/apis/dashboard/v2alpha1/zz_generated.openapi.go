@@ -33,10 +33,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingDataSpec":                                                                                                                                        schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingDataSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupKind":                                                                                                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingGroupKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingGroupSpec":                                                                                                                                       schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingGroupSpec(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingScopesKind":                                                                                                                                      schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingScopesKind(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingScopesSpec":                                                                                                                                      schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingScopesSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingTimeRangeSizeKind":                                                                                                                               schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingTimeRangeSizeKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingTimeRangeSizeSpec":                                                                                                                               schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingTimeRangeSizeSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKind":                                                                                                                                    schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingVariableKind(ref),
-		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind":                                                               schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind(ref),
+		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind":                               schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableSpec":                                                                                                                                    schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingVariableSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConstantVariableKind":                                                                                                                                                schema_pkg_apis_dashboard_v2alpha1_DashboardConstantVariableKind(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConstantVariableSpec":                                                                                                                                                schema_pkg_apis_dashboard_v2alpha1_DashboardConstantVariableSpec(ref),
@@ -950,7 +952,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingGroupSpec(r
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind"),
+										Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind"),
 									},
 								},
 							},
@@ -961,7 +963,62 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingGroupSpec(r
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingScopesKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingScopesSpec"),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingScopesSpec"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingScopesSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"operator": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"operator", "value"},
+			},
+		},
 	}
 }
 
@@ -1041,7 +1098,7 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingVariableKin
 	}
 }
 
-func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKindOrConditionalRenderingScopesKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1062,11 +1119,16 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardConditionalRenderingVariableKin
 							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingTimeRangeSizeKind"),
 						},
 					},
+					"ConditionalRenderingScopesKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingScopesKind"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingDataKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingTimeRangeSizeKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKind"},
+			"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingDataKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingScopesKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingTimeRangeSizeKind", "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1.DashboardConditionalRenderingVariableKind"},
 	}
 }
 
