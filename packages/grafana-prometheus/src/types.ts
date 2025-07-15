@@ -157,7 +157,7 @@ export type RawRecordingRules = {
 
 // A single recording rule with its labels and the query it represents
 // In this object, there may be other fields but those are the ones we care for now
-type Rule = {
+export type Rule = {
   name: string;
   query: string;
   duration?: number;
@@ -167,7 +167,7 @@ type Rule = {
   type: 'alerting' | 'recording';
 };
 
-type AlertInfo = {
+export type AlertInfo = {
   labels: Record<string, string>;
   annotations: Record<string, string>;
   state: string;
