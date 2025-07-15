@@ -442,8 +442,11 @@ export const LogListContextProvider = ({
   );
 
   const closeDetails = useCallback(() => {
+    if (showDetails.length) {
+      removeDetailsScrollPosition(showDetails[0]);
+    }
     setShowDetails([]);
-  }, []);
+  }, [showDetails]);
 
   const toggleDetails = useCallback(
     (log: LogListModel) => {
@@ -584,4 +587,18 @@ function getDetailsWidth(
     return currentWidth ?? defaultWidth;
   }
   return detailsWidth;
+}
+
+const detailsScrollMap = new Map<string, number>();
+
+export function saveDetailsScrollPosition(log: LogListModel, position: number) {
+  detailsScrollMap.set(log.uid, position);
+}
+
+export function getDetailsScrollPosition(log: LogListModel) {
+  return detailsScrollMap.get(log.uid) ?? 0;
+}
+
+export function removeDetailsScrollPosition(log: LogListModel) {
+  detailsScrollMap.delete(log.uid);
 }
