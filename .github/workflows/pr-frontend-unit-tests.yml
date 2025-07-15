@@ -92,7 +92,7 @@ jobs:
 
   frontend-decoupled-plugin-tests:
     needs: detect-changes
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true'
+    if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-latest-8-cores
     name: "Decoupled plugin tests"
     steps:
