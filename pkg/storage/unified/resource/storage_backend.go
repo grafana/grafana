@@ -215,7 +215,6 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 
 	// Fetch the latest objects
 	keys := make([]MetaDataKey, 0, min(defaultListBufferSize, req.Limit+1))
-	idx := 0
 	for metaKey, err := range k.metaStore.ListResourceKeysAtRevision(ctx, MetaListRequestKey{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
@@ -225,17 +224,15 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		if err != nil {
 			return 0, err
 		}
-		// Skip the first offset items. This is not efficient, but it's a simple way to implement it for now.
-		if idx < int(offset) {
-			idx++
-			continue
-		}
 		keys = append(keys, metaKey)
-		// Only fetch the first limit items + 1 to get the next token.
-		if len(keys) >= int(req.Limit+1) {
-			break
-		}
 	}
+
+	sortMetaKeysByResourceVersion(keys, true) // sort ascending for sql parity
+
+	if offset > 0 && int64(len(keys)) > offset {
+		keys = keys[offset:]
+	}
+
 	iter := kvListIterator{
 		keys:         keys,
 		currentIndex: -1,
@@ -433,6 +430,19 @@ func sortByResourceVersion(filteredKeys []DataKey, sortAscending bool) {
 	}
 }
 
+// sortMetaKeysByResourceVersion sorts the metadata keys based on the sortAscending flag
+func sortMetaKeysByResourceVersion(keys []MetaDataKey, sortAscending bool) {
+	if sortAscending {
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i].ResourceVersion < keys[j].ResourceVersion
+		})
+	} else {
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i].ResourceVersion > keys[j].ResourceVersion
+		})
+	}
+}
+
 // applyPagination filters keys based on pagination parameters
 func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []DataKey {
 	if lastSeenRV == 0 {
@@ -440,6 +450,23 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	}
 
 	var pagedKeys []DataKey
+	for _, key := range keys {
+		if sortAscending && key.ResourceVersion > lastSeenRV {
+			pagedKeys = append(pagedKeys, key)
+		} else if !sortAscending && key.ResourceVersion < lastSeenRV {
+			pagedKeys = append(pagedKeys, key)
+		}
+	}
+	return pagedKeys
+}
+
+// applyMetaPagination filters meta keys based on pagination parameters
+func applyMetaPagination(keys []MetaDataKey, lastSeenRV int64, sortAscending bool) []MetaDataKey {
+	if lastSeenRV == 0 {
+		return keys
+	}
+
+	var pagedKeys []MetaDataKey
 	for _, key := range keys {
 		if sortAscending && key.ResourceVersion > lastSeenRV {
 			pagedKeys = append(pagedKeys, key)
