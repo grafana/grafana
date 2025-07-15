@@ -221,7 +221,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	}
 
 	cache := &MyCacheService{
-		legacy: b.parser.legacy,
+		legacy: b.legacyDatasourceLookup,
 	}
 
 	headers := ExtractKnownHeaders(httpreq.Header)
