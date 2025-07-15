@@ -679,7 +679,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       // Create a dashboard with an annotation that has options
       const dashboardWithAnnotationOptions: DashboardWithAccessInfo<DashboardV2Spec> = {
         kind: 'DashboardWithAccessInfo',
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2alpha2',
         metadata: {
           name: 'test-dashboard',
           namespace: 'default',

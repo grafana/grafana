@@ -175,7 +175,7 @@ describe('ShareExportTab', () => {
 
       // Should use V2 API version
       expect(result.json).toMatchObject({
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
+        apiVersion: 'dashboard.grafana.app/v2alpha2',
         kind: 'Dashboard',
         status: {},
       });
@@ -325,7 +325,7 @@ describe('ShareExportTab', () => {
 
     scene.serializer.getSaveModel = jest.fn(() => mockV2Dashboard);
     scene.serializer.makeExportableExternally = jest.fn(() => Promise.resolve(mockV2Dashboard));
-    scene.serializer.apiVersion = 'dashboard.grafana.app/v2alpha1';
+    scene.serializer.apiVersion = 'dashboard.grafana.app/v2alpha2';
     scene.getInitialSaveModel = jest.fn(() => mockV2Dashboard);
 
     return tab;

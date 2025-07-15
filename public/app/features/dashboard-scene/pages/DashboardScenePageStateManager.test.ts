@@ -64,7 +64,7 @@ const setupDashboardAPI = (
 const setupV1FailureV2Success = (
   v2Response: DashboardWithAccessInfo<DashboardV2Spec> = {
     access: {},
-    apiVersion: 'v2alpha1',
+    apiVersion: 'v2alpha2',
     kind: 'DashboardWithAccessInfo',
     metadata: {
       name: 'fake-dash',
@@ -75,7 +75,7 @@ const setupV1FailureV2Success = (
   }
 ) => {
   const getDashSpy = jest.fn();
-  setupLoadDashboardMockReject(new DashboardVersionError('v2alpha1'));
+  setupLoadDashboardMockReject(new DashboardVersionError('v2alpha2'));
   setupDashboardAPI(v2Response, getDashSpy);
   return getDashSpy;
 };
@@ -331,7 +331,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2alpha2',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -378,7 +378,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2alpha2',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -398,7 +398,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2alpha2',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash2',
@@ -421,7 +421,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2alpha2',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -446,7 +446,7 @@ describe('DashboardScenePageStateManager v2', () => {
       setupDashboardAPI(
         {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2alpha2',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -543,7 +543,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -577,7 +577,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
         loader.setDashboardCache('fake-dash', {
           access: {},
-          apiVersion: 'v2alpha1',
+          apiVersion: 'v2alpha2',
           kind: 'DashboardWithAccessInfo',
           metadata: {
             name: 'fake-dash',
@@ -600,7 +600,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -626,7 +626,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -661,7 +661,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -684,7 +684,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -709,7 +709,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -740,7 +740,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -761,7 +761,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -791,7 +791,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -825,7 +825,7 @@ describe('DashboardScenePageStateManager v2', () => {
         setupDashboardAPI(
           {
             access: {},
-            apiVersion: 'v2alpha1',
+            apiVersion: 'v2alpha2',
             kind: 'DashboardWithAccessInfo',
             metadata: {
               name: 'fake-dash',
@@ -842,7 +842,7 @@ describe('DashboardScenePageStateManager v2', () => {
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
         const mockLoader = {
-          loadDashboard: jest.fn().mockRejectedValue(new DashboardVersionError('v2alpha1')),
+          loadDashboard: jest.fn().mockRejectedValue(new DashboardVersionError('v2alpha2')),
         };
 
         loader['dashboardLoader'] = mockLoader as unknown as DashboardLoaderSrvV2;
@@ -915,7 +915,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       const originalFetchDashboard = v2Manager.fetchDashboard;
       v2Manager.fetchDashboard = jest.fn().mockResolvedValue({
         access: {},
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2alpha2',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           name: 'fake-dash',
@@ -951,7 +951,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       // V2 dashboard response
       const v2Response: DashboardWithAccessInfo<DashboardV2Spec> = {
         access: {},
-        apiVersion: 'v2alpha1',
+        apiVersion: 'v2alpha2',
         kind: 'DashboardWithAccessInfo',
         metadata: {
           name: 'v2-dash',
@@ -1557,7 +1557,7 @@ const v2ProvisionedDashboardResource = {
   resource: {
     type: {
       group: 'dashboard.grafana.app',
-      version: 'v2alpha1',
+      version: 'v2alpha2',
       kind: 'Dashboard',
       resource: 'dashboards',
     },
@@ -1565,7 +1565,7 @@ const v2ProvisionedDashboardResource = {
     existing: {},
     action: 'update',
     dryRun: {
-      apiVersion: 'dashboard.grafana.app/v2alpha1',
+      apiVersion: 'dashboard.grafana.app/v2alpha2',
       kind: 'Dashboard',
       metadata: {
         annotations: {

@@ -27,7 +27,7 @@ export class UnifiedDashboardAPI
     try {
       return await this.v1Client.getDashboardDTO(uid);
     } catch (error) {
-      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha1') {
+      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha2') {
         return await this.v2Client.getDashboardDTO(uid);
       }
       throw error;

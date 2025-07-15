@@ -204,7 +204,7 @@ abstract class DashboardScenePageStateManagerBase<T>
     dryRun: any,
     provisioningPreview: ProvisioningPreview
   ) {
-    if (dryRun.apiVersion.split('/')[1] === 'v2alpha1') {
+    if (dryRun.apiVersion.split('/')[1] === 'v2alpha2') {
       return {
         ...dryRun,
         kind: 'DashboardWithAccessInfo',
@@ -751,7 +751,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       return await operation(this.activeManager);
     } catch (error) {
       if (error instanceof DashboardVersionError) {
-        const manager = error.data.storedVersion === 'v2alpha1' ? this.v2Manager : this.v1Manager;
+        const manager = error.data.storedVersion === 'v2alpha2' ? this.v2Manager : this.v1Manager;
         this.activeManager = manager;
         return await operation(manager);
       } else {
@@ -797,7 +797,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     try {
       return await this.v1Manager.loadSnapshotScene(slug);
     } catch (error) {
-      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha1') {
+      if (error instanceof DashboardVersionError && error.data.storedVersion === 'v2alpha2') {
         return await this.v2Manager.loadSnapshotScene(slug);
       }
       throw new Error('Snapshot not found');
