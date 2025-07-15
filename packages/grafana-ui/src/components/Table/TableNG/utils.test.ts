@@ -188,7 +188,6 @@ describe('TableNG utils', () => {
       const colors = getCellColors(theme, field, displayValue);
       expect(colors.bgColor).toBe('rgb(255, 0, 0)');
       expect(colors.textColor).toBe('rgb(247, 248, 250)');
-      expect(colors.bgHoverColor).toBe('rgb(255, 36, 36)');
     });
 
     it('should handle color background gradient mode', () => {
@@ -206,7 +205,6 @@ describe('TableNG utils', () => {
       const colors = getCellColors(theme, field, displayValue);
       expect(colors.bgColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), #ff0000)');
       expect(colors.textColor).toBe('rgb(247, 248, 250)');
-      expect(colors.bgHoverColor).toBe('linear-gradient(120deg, rgb(255, 54, 36), rgb(255, 54, 54))');
     });
   });
 
