@@ -230,9 +230,9 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		UID:         "panel-uid",
 		FolderUID:   sql.NullString{String: "folder-uid", Valid: true},
 		Created:     time.Now(),
-		CreatedBy:   "creator",
+		CreatedBy:   sql.NullString{String: "creator", Valid: true},
 		Updated:     time.Now(),
-		UpdatedBy:   "updator",
+		UpdatedBy:   sql.NullString{String: "updator", Valid: true},
 		Version:     2,
 		Type:        "graph",
 		Description: "desc from db",
@@ -261,6 +261,8 @@ func TestParseLibraryPanelRow(t *testing.T) {
 	t.Run("metadata is set correctly", func(t *testing.T) {
 		p := basePanel
 		p.Name = "Test Panel"
+		// Ensure there's a time difference greater than 1 second to trigger updated metadata
+		p.Updated = p.Created.Add(2 * time.Second)
 		model := map[string]interface{}{
 			"title":       "Test Panel",
 			"type":        "graph",
@@ -278,8 +280,8 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		require.Equal(t, p.ID, meta.GetDeprecatedInternalID()) // nolint:staticcheck
 		require.Equal(t, p.Version, meta.GetGeneration())
 		require.Equal(t, p.FolderUID.String, meta.GetFolder())
-		require.Equal(t, p.CreatedBy, meta.GetCreatedBy())
-		require.Equal(t, p.UpdatedBy, meta.GetUpdatedBy())
+		require.Equal(t, "user:creator", meta.GetCreatedBy())
+		require.Equal(t, "user:updator", meta.GetUpdatedBy())
 	})
 
 	t.Run("panel title in dashboard vs library panel title is set correctly", func(t *testing.T) {
@@ -299,5 +301,67 @@ func TestParseLibraryPanelRow(t *testing.T) {
 
 		require.Equal(t, "Model Title", item.Spec.PanelTitle)
 		require.Equal(t, "Database Name", item.Spec.Title)
+	})
+
+	t.Run("handles NULL created_by and updated_by fields", func(t *testing.T) {
+		p := basePanel
+		p.Name = "Test Panel"
+		// Set CreatedBy and UpdatedBy to NULL (Invalid)
+		p.CreatedBy = sql.NullString{String: "", Valid: false}
+		p.UpdatedBy = sql.NullString{String: "", Valid: false}
+		model := map[string]interface{}{
+			"title":       "Test Panel",
+			"type":        "graph",
+			"description": "desc from db",
+		}
+		modelBytes, err := json.Marshal(model)
+		require.NoError(t, err)
+		p.Model = modelBytes
+
+		item, err := parseLibraryPanelRow(p)
+		require.NoError(t, err)
+
+		meta, err := utils.MetaAccessor(&item)
+		require.NoError(t, err)
+
+		// When CreatedBy is NULL, it should be set to empty string
+		require.Equal(t, "", meta.GetCreatedBy())
+
+		// When UpdatedBy is NULL and not valid, updated metadata should not be set
+		require.Equal(t, "", meta.GetUpdatedBy())
+		// The updated timestamp should not be set when UpdatedBy is invalid
+		updatedTimestamp, err := meta.GetUpdatedTimestamp()
+		require.NoError(t, err)
+		require.Nil(t, updatedTimestamp)
+	})
+
+	t.Run("handles valid created_by but NULL updated_by", func(t *testing.T) {
+		p := basePanel
+		p.Name = "Test Panel"
+		p.CreatedBy = sql.NullString{String: "creator", Valid: true}
+		p.UpdatedBy = sql.NullString{String: "", Valid: false}
+		// Make sure there's a time difference to trigger the update logic
+		p.Updated = p.Created.Add(10 * time.Second)
+		model := map[string]interface{}{
+			"title":       "Test Panel",
+			"type":        "graph",
+			"description": "desc from db",
+		}
+		modelBytes, err := json.Marshal(model)
+		require.NoError(t, err)
+		p.Model = modelBytes
+
+		item, err := parseLibraryPanelRow(p)
+		require.NoError(t, err)
+
+		meta, err := utils.MetaAccessor(&item)
+		require.NoError(t, err)
+
+		require.Equal(t, "user:creator", meta.GetCreatedBy())
+		// Even with time difference, if UpdatedBy is not valid, updated metadata should not be set
+		require.Equal(t, "", meta.GetUpdatedBy())
+		updatedTimestamp, err := meta.GetUpdatedTimestamp()
+		require.NoError(t, err)
+		require.Nil(t, updatedTimestamp)
 	})
 }

@@ -18,6 +18,7 @@ type Extra interface {
 	PostProcessOpenAPI(oas *spec3.OpenAPI) error
 	GetJobWorkers() []jobs.Worker
 	AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error)
+	RepositoryTypes() []provisioning.RepositoryType
 }
 
 type ExtraBuilder func(b *APIBuilder) Extra
