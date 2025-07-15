@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
@@ -40,14 +41,11 @@ func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataRespons
 
 func TestQueryAPI(t *testing.T) {
 	testCases := []struct {
-		name               string
-		queryJSON          string
-		headers            map[string]string
-		expectedRefIDs     []string
-		expectedStatus     int
-		expectedFrameCount map[string]int
-		expectedFieldNames map[string][]string
-		testdataFile       string
+		name           string
+		queryJSON      string
+		headers        map[string]string
+		expectedStatus int
+		testdataFile   string
 	}{
 		{
 			name: "single prometheus query",
@@ -67,44 +65,39 @@ func TestQueryAPI(t *testing.T) {
 				"from": "now-1h",
 				"to": "now"
 			}`,
-			expectedRefIDs:     []string{"A"},
-			expectedStatus:     http.StatusOK,
-			expectedFrameCount: map[string]int{"A": 1},
-			expectedFieldNames: map[string][]string{"A": {"Time", "Value"}},
-			testdataFile:       "single_prometheus_query.json",
+			expectedStatus: http.StatusOK,
+			testdataFile:   "single_prometheus_query.json",
 		},
 		{
 			name: "prometheus query with sql expression",
 			queryJSON: `{
-  "queries": [
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "demo-prom"
-      },
-      "expr": "1 + 2",
-      "range": false,
-      "instant": true,
-      "refId": "A"
-    },
-    {
-      "datasource": {
-        "uid": "__expr__",
-        "type": "__expr__"
-      },
-      "type": "sql",
-      "expression": "Select __value__ + 10 from A;",
-      "refId": "B"
-    }
-  ],
-  "from": "now-1h",
-  "to": "now"
-}`,
-			expectedRefIDs:     []string{"A", "B"},
-			expectedStatus:     http.StatusOK,
-			expectedFrameCount: map[string]int{"A": 1, "B": 1},
-			expectedFieldNames: map[string][]string{"A": {"Time", "Value"}, "B": {"Time", "Value"}},
-			testdataFile:       "prometheus_with_sql_expression.json",
+				"queries": [
+					{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "demo-prom"
+					},
+					"expr": "1 + 2",
+					"range": false,
+					"instant": true,
+					"refId": "A",
+					"hidden": true
+					},
+					{
+					"datasource": {
+						"uid": "__expr__",
+						"type": "__expr__"
+					},
+					"type": "sql",
+					"expression": "Select Value + 10 from A;",
+					"refId": "B"
+					}
+				],
+				"from": "now-1h",
+				"to": "now"
+			}`,
+			testdataFile:   "prometheus_with_sql_expression.json",
+			expectedStatus: http.StatusOK,
 		},
 	}
 
@@ -114,7 +107,7 @@ func TestQueryAPI(t *testing.T) {
 				parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
 					&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
 				converter: &expr.ResultConverter{
-					Features: featuremgmt.WithFeatures(),
+					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
 					Tracer:   tracing.InitializeTracerForTest(),
 				},
 				clientSupplier: mockClientSupplier{},
@@ -152,60 +145,32 @@ func TestQueryAPI(t *testing.T) {
 			if tc.testdataFile != "" {
 				expectedResponse := loadTestdataFrames(t, tc.testdataFile)
 
+				// get refids from expected response
+				expectedRefIds := make([]string, 0, len(expectedResponse.Responses))
+				for refID := range expectedResponse.Responses {
+					expectedRefIds = append(expectedRefIds, refID)
+				}
+
 				// Verify all expected refIDs are present
-				for _, refID := range tc.expectedRefIDs {
+				for _, refID := range expectedRefIds {
 					require.Contains(t, qdr.QueryDataResponse.Responses, refID, "Should contain response for refId %s", refID)
-					require.Contains(t, expectedResponse.Responses, refID, "Expected response should contain refId %s", refID)
 
 					actualResponse := qdr.QueryDataResponse.Responses[refID]
 					expectedFrameResponse := expectedResponse.Responses[refID]
-
-					require.Equal(t, backend.StatusOK, actualResponse.Status, "Query %s should have OK status", refID)
-
-					// Verify frame count
-					expectedCount := tc.expectedFrameCount[refID]
-					require.Len(t, actualResponse.Frames, expectedCount, "Query %s should have %d frame(s)", refID, expectedCount)
 
 					// Verify frame structure matches testdata
 					require.Len(t, actualResponse.Frames, len(expectedFrameResponse.Frames), "Frame count should match testdata for refId %s", refID)
 
 					for i, actualFrame := range actualResponse.Frames {
 						expectedFrame := expectedFrameResponse.Frames[i]
-
-						// Compare field names and types
-						require.Len(t, actualFrame.Fields, len(expectedFrame.Fields), "Field count should match for frame %d of refId %s", i, refID)
-
-						for j, actualField := range actualFrame.Fields {
-							expectedField := expectedFrame.Fields[j]
-							require.Equal(t, expectedField.Name, actualField.Name, "Field %d name should match for frame %d of refId %s", j, i, refID)
-							require.Equal(t, expectedField.Type(), actualField.Type(), "Field %d type should match for frame %d of refId %s", j, i, refID)
+						if diff := cmp.Diff(expectedFrame, actualFrame, data.FrameTestCompareOptions()...); diff != "" {
+							require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
 						}
+
 					}
 				}
 			} else {
-				// Fallback to original verification logic for tests without testdata
-				for _, refID := range tc.expectedRefIDs {
-					require.Contains(t, qdr.QueryDataResponse.Responses, refID, "Should contain response for refId %s", refID)
-
-					response := qdr.QueryDataResponse.Responses[refID]
-					require.Equal(t, backend.StatusOK, response.Status, "Query %s should have OK status", refID)
-
-					// Verify frame count
-					expectedCount := tc.expectedFrameCount[refID]
-					require.Len(t, response.Frames, expectedCount, "Query %s should have %d frame(s)", refID, expectedCount)
-
-					// Verify frame structure
-					for i, frame := range response.Frames {
-						require.Equal(t, "test_frame", frame.Name, "Frame %d should have correct name", i)
-
-						expectedFields := tc.expectedFieldNames[refID]
-						require.Len(t, frame.Fields, len(expectedFields), "Frame %d should have %d fields", i, len(expectedFields))
-
-						for j, expectedFieldName := range expectedFields {
-							require.Equal(t, expectedFieldName, frame.Fields[j].Name, "Field %d should be named %s", j, expectedFieldName)
-						}
-					}
-				}
+				t.Fatalf("No testdata file provided for test case %s", tc.name)
 			}
 
 			t.Logf("Test case '%s' completed successfully", tc.name)
@@ -253,10 +218,11 @@ func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest)
 	responses := make(backend.Responses)
 	for i := range req.Queries {
 		refID := req.Queries[i].RefID
-		frame := data.NewFrame("test_frame",
-			data.NewField("Time", nil, []time.Time{time.Unix(1234567890, 0)}),
+		frame := data.NewFrame("",
+			data.NewField("Time", nil, []time.Time{time.Unix(1704067200, 0)}), // Jan 1, 2024 00:00:00 UTC
 			data.NewField("Value", nil, []float64{7.0}),
 		)
+		frame.RefID = refID
 		responses[refID] = backend.DataResponse{
 			Status: backend.StatusOK,
 			Frames: []*data.Frame{frame},

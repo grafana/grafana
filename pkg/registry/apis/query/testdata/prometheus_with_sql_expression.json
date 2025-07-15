@@ -1,96 +1,19 @@
 {
   "results": {
-    "A": {
-      "status": 200,
-      "frames": [
-        {
-          "schema": {
-            "refId": "A",
-            "meta": {
-              "type": "numeric-multi",
-              "typeVersion": [
-                0,
-                1
-              ],
-              "custom": {
-                "resultType": "scalar"
-              },
-              "executedQueryString": "Expr: 1 + 2\nStep: 1m0s"
-            },
-            "fields": [
-              {
-                "name": "Time",
-                "type": "time",
-                "typeInfo": {
-                  "frame": "time.Time"
-                },
-                "config": {
-                  "interval": 60000
-                }
-              },
-              {
-                "name": "Value",
-                "type": "number",
-                "typeInfo": {
-                  "frame": "float64"
-                },
-                "labels": {},
-                "config": {
-                  "displayNameFromDS": "1 + 2"
-                }
-              }
-            ]
-          },
-          "data": {
-            "values": [
-              [
-                -6795364578871
-              ],
-              [
-                3
-              ]
-            ]
-          }
-        }
-      ]
-    },
     "B": {
       "status": 200,
       "frames": [
         {
-          "schema": {
+         "schema": {
+            "name": "B",
             "refId": "B",
-            "meta": {
-              "type": "numeric-multi",
-              "typeVersion": [
-                0,
-                1
-              ],
-              "custom": {
-                "resultType": "scalar"
-              },
-              "executedQueryString": "Select __value__ + 10 from A;"
-            },
             "fields": [
               {
-                "name": "Time",
-                "type": "time",
-                "typeInfo": {
-                  "frame": "time.Time"
-                },
-                "config": {
-                  "interval": 60000
-                }
-              },
-              {
-                "name": "Value",
+                "name": "Value + 10",
                 "type": "number",
                 "typeInfo": {
-                  "frame": "float64"
-                },
-                "labels": {},
-                "config": {
-                  "displayNameFromDS": "SQL expression result"
+                  "frame": "float64",
+                  "nullable": false
                 }
               }
             ]
@@ -98,10 +21,7 @@
           "data": {
             "values": [
               [
-                -6795364578871
-              ],
-              [
-                13
+                17
               ]
             ]
           }

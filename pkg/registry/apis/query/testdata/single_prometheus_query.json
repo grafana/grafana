@@ -6,26 +6,12 @@
         {
           "schema": {
             "refId": "A",
-            "meta": {
-              "type": "numeric-multi",
-              "typeVersion": [
-                0,
-                1
-              ],
-              "custom": {
-                "resultType": "scalar"
-              },
-              "executedQueryString": "Expr: 1 + 6\nStep: 1m0s"
-            },
             "fields": [
               {
                 "name": "Time",
                 "type": "time",
                 "typeInfo": {
                   "frame": "time.Time"
-                },
-                "config": {
-                  "interval": 60000
                 }
               },
               {
@@ -34,17 +20,14 @@
                 "typeInfo": {
                   "frame": "float64"
                 },
-                "labels": {},
-                "config": {
-                  "displayNameFromDS": "1 + 6"
-                }
+                "labels": {}
               }
             ]
           },
           "data": {
             "values": [
               [
-                -6795364578871
+                1704067200000
               ],
               [
                 7
