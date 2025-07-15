@@ -31,8 +31,9 @@ import { PublicDashboardBadgeLegacy } from 'app/features/dashboard-scene/scene/n
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { KioskMode, StoreState } from 'app/types';
+import { KioskMode } from 'app/types/dashboard';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { StoreState } from 'app/types/store';
 
 import {
   DynamicDashNavButtonModel,
@@ -212,7 +213,9 @@ export const DashNav = memo<Props>((props) => {
       );
     }
 
-    buttons.push(<PublicDashboardBadgeLegacy key="public-dashboard-badge" uid={dashboard.uid} />);
+    if (dashboard.uid) {
+      buttons.push(<PublicDashboardBadgeLegacy key="public-dashboard-badge" uid={dashboard.uid} />);
+    }
 
     if (isDevEnv && config.featureToggles.dashboardScene) {
       buttons.push(
