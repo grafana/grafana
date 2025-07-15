@@ -152,6 +152,12 @@ The migration process uses the same [user identification mechanism](#how-scim-id
    - Enable `user_sync_enabled = true`
    - Configure the unique identifier field to match your IDP setup
 
+{{< admonition type="note" >}}
+When `user_sync_enabled = true`, non-provisioned users will be disallowed from logging in, except for `admin` and Grafana.com login.
+
+If you want to allow non-provisioned users to log in, enable the `[auth.scim][allow_non_provisioned_users]` option.
+{{< /admonition >}}
+
 3. **Test the matching mechanism:**
 
    - Use the SCIM API to verify that existing users can be found using the unique identifier:
