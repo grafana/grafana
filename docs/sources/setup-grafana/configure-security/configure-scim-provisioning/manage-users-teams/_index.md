@@ -56,18 +56,21 @@ For detailed configuration steps specific to the identity provider, see:
 
 SCIM uses a specific process to establish and maintain user identity between the identity provider and Grafana:
 
-1. Initial user lookup:
+1. **Initial user lookup:**
 
-   - The identity provider looks up users in Grafana using the user's login and the Unique identifier field (configurable at IdP)
+   - The administrator configures SCIM at the Identity Provider, defining the **Unique identifier field**
+   - The identity provider looks up each user in Grafana using this unique identifier field as a filter
    - The identity provider expects a single result from Grafana for each user
 
-2. Identity linking:
+2. **Identity linking based on lookup results:**
 
+   - **If there's a single matching result:** The identity provider retrieves the user's unique ID at Grafana, saves it, confirms it can fetch the user's information, and updates the user's information in Grafana
+   - **If there are no matching results:** The identity provider attempts to create the user in Grafana. If successful, it retrieves and saves the user's unique ID for future operations. If there's a conflict with an existing user, the identity provider flags the error and Grafana logs the error message
    - The identity provider learns the relationship between the found Grafana user and the Grafana internal ID
    - The identity provider updates Grafana with the External ID
    - Grafana updates the authentication validations to expect this External ID
 
-3. Matching the User During Login:
+3. **Matching the User During Login:**
    When a user logs in via SAML, Grafana needs to securely match them to the correct user account provisioned by SCIM. This requires using a consistent, unique identifier across both processes (for example, the user's `objectId` in Azure AD).
    - **Configure SAML Claims:** Set up your identity provider (e.g., Azure AD) to include this unique identifier in the information it sends during SAML login.
    - **Configure Grafana SAML:** In the Grafana SAML settings, use the `assertion_attribute_login` setting to specify which incoming SAML attribute contains this unique identifier.
