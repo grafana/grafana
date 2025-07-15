@@ -289,6 +289,7 @@ func (ng *AlertNG) init() error {
 						if err := sm.MergeSilences(rs.Silences); err != nil {
 							return nil, fmt.Errorf("failed to merge remote silences: %w", err)
 						}
+						moaLogger.Info("Successfully merged remote silences and nflog entries")
 					}
 
 					// Use both Alertmanager implementations in the forked Alertmanager.
