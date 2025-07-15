@@ -461,6 +461,14 @@ func TestService_getUserPermissions(t *testing.T) {
 			cacheHit:      false,
 			expectedPerms: map[string]bool{},
 		},
+		{
+			name: "should return uid based permissions",
+			permissions: []accesscontrol.Permission{
+				{Action: "teams:read", Scope: "teams:id:1"},
+			},
+			cacheHit:      false,
+			expectedPerms: map[string]bool{"teams:uid:t1": true},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -484,13 +492,20 @@ func TestService_getUserPermissions(t *testing.T) {
 			}
 			s.store = store
 			s.permissionStore = store
-			s.identityStore = &fakeIdentityStore{userTeams: []int64{1, 2}, disableNsCheck: true}
+			s.identityStore = &fakeIdentityStore{
+				userTeams: []int64{1, 2},
+				teams: []team.Team{
+					{ID: 1, UID: "t1", OrgID: 1},
+					{ID: 2, UID: "t2", OrgID: 1},
+				},
+				disableNsCheck: true,
+			}
 
 			perms, err := s.getIdentityPermissions(ctx, ns, types.TypeUser, userID.UID, action)
 			require.NoError(t, err)
 			require.Len(t, perms, len(tc.expectedPerms))
-			for _, perm := range tc.permissions {
-				_, ok := tc.expectedPerms[perm.Scope]
+			for scope := range perms {
+				_, ok := tc.expectedPerms[scope]
 				require.True(t, ok)
 			}
 			if tc.cacheHit {
@@ -873,6 +888,21 @@ func TestService_Check(t *testing.T) {
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:dash2"}},
 			expected:    false,
 		},
+		{
+			name: "should translate from id to uid based permissions",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "teams",
+				Verb:      "get",
+				Name:      "t1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "teams:read", Scope: "teams:id:1"},
+			},
+			expected: true,
+		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
@@ -886,17 +916,24 @@ func TestService_Check(t *testing.T) {
 				}
 				s.store = store
 				s.permissionStore = store
-				s.identityStore = &fakeIdentityStore{}
+				s.identityStore = &fakeIdentityStore{
+					teams: []team.Team{{ID: 1, UID: "t1", OrgID: 1}},
+				}
 
 				resp, err := s.Check(ctx, tc.req)
 				require.NoError(t, err)
-				assert.Equal(t, tc.expected, resp.Allowed)
+				require.Equal(t, tc.expected, resp.Allowed)
 
 				// Check cache
 				id, ok := s.idCache.Get(ctx, userIdentifierCacheKey("org-12", "test-uid"))
 				require.True(t, ok)
 				require.Equal(t, id.UID, "test-uid")
-				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", "dashboards:read"))
+
+				expAction := "dashboards:read"
+				if tc.req.Resource == "teams" {
+					expAction = "teams:read"
+				}
+				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", expAction))
 				require.True(t, ok)
 				require.Len(t, perms, 1)
 			})
