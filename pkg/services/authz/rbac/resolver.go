@@ -34,6 +34,7 @@ func (s *Service) fetchTeams(ctx context.Context, ns types.NamespaceInfo) (map[i
 	return teamIDs, nil
 }
 
+// Should return an error if we fail to build the resolver.
 func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInfo) ScopeResolverFunc {
 	teamIDs, cacheHit := s.teamIDCache.Get(ctx, teamIDsCacheKey(ns.Value))
 	if !cacheHit {
@@ -42,6 +43,7 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 		if err != nil {
 			s.logger.FromContext(ctx).Error("could not fetch teams", "error", err)
 			return func(scope string) (string, error) {
+				// Return a resolver that always returns an empty string and logs the error
 				return "", err
 			}
 		}
@@ -65,6 +67,7 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 
 		// Potential stale cache. Try to fetch the teams again.
 		if cacheHit {
+			// TODO: if multiple threads have the same stale cache, they are all going to refetch the teams.
 			cacheHit = false
 			teamIDs, err = s.fetchTeams(ctx, ns)
 			if err != nil {
@@ -97,6 +100,7 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, s
 		if prefix == "" {
 			if len(strings.Split(scope, ":")) < 3 {
 				// Skip scopes that don't have at least 3 parts (e.g., "*", "teams:*")
+				// This is because we expect scopes to be in the format "resource:attribute:value".
 				continue
 			}
 			if strings.HasPrefix(scope, "folders:uid:") {
@@ -120,7 +124,7 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, s
 		resolved, err := scopeResolver(scope)
 		if err != nil {
 			s.logger.FromContext(ctx).Warn("could not resolve scope name", "scope", scope, "error", err)
-			continue
+			continue // Still want to process other scopes even if one fails.
 		}
 		if resolved != "" {
 			scopeMap[resolved] = true
