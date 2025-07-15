@@ -26,7 +26,7 @@ func TestNewSecretsService(t *testing.T) {
 	assert.IsType(t, &secretsService{}, svc)
 }
 
-//nolint:cyclo // This test is complex but it's a good test for the SecretsService.
+//nolint:gocyclo // This test is complex but it's a good test for the SecretsService.
 func TestSecretsService_Encrypt(t *testing.T) {
 	tests := []struct {
 		name          string
