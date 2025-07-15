@@ -137,6 +137,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     cursor: 'cursor',
     width: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
     height: `calc(5px + 2 * ${ANCHOR_PADDING}px)`,
+    zIndex: 100,
   }),
   highlightElement: css({
     backgroundColor: '#00ff00',

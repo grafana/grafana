@@ -366,6 +366,7 @@ export class Scene {
 
     const sceneDiv = (
       <>
+        {this.connections.render()}
         {this.root.render()}
         {this.isEditingEnabled && (
           <Portal>
