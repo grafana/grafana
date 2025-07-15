@@ -14,13 +14,13 @@ import (
 
 func TestMutator(t *testing.T) {
 	tests := []struct {
-		name                    string
-		obj                     runtime.Object
-		token                   string
-		setupMocks              func(*secrets.MockRepositorySecrets)
-		expectedToken           string
-		expectedEncryptedToken  string
-		expectedError           string
+		name                   string
+		obj                    runtime.Object
+		token                  string
+		setupMocks             func(*secrets.MockRepositorySecrets)
+		expectedToken          string
+		expectedEncryptedToken string
+		expectedError          string
 	}{
 		{
 			name: "successful token encryption",
@@ -49,7 +49,7 @@ func TestMutator(t *testing.T) {
 							},
 						},
 					},
-					"test-repo"+GithubTokenSecretSuffix,
+					"test-repo"+githubTokenSecretSuffix,
 					"secret-token",
 				).Return([]byte("encrypted-token"), nil)
 			},
@@ -83,7 +83,7 @@ func TestMutator(t *testing.T) {
 							},
 						},
 					},
-					"test-repo"+GithubTokenSecretSuffix,
+					"test-repo"+githubTokenSecretSuffix,
 					"secret-token",
 				).Return(nil, errors.New("encryption failed"))
 			},

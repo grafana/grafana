@@ -22,7 +22,7 @@ func Mutator(secrets secrets.RepositorySecrets) controller.Mutator {
 		}
 
 		if repo.Spec.GitHub.Token != "" {
-			secretName := repo.Name + GithubTokenSecretSuffix
+			secretName := repo.Name + githubTokenSecretSuffix
 			nameOrValue, err := secrets.Encrypt(ctx, repo, secretName, repo.Spec.GitHub.Token)
 			if err != nil {
 				return err
