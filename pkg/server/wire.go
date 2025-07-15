@@ -427,6 +427,7 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideDecryptStorage,
 	secretdecrypt.ProvideDecryptAuthorizer,
 	secretdecrypt.ProvideDecryptAllowList,
+	secretdecrypt.ProvideDecryptService,
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	secretsecurevalueservice.ProvideSecureValueService,
@@ -502,7 +503,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	mock.TestingT
 	Cleanup(func())
-}, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
+}, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions,
+) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
 	return &TestEnv{Server: &Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
