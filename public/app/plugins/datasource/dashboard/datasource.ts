@@ -15,6 +15,9 @@ import {
   FieldType,
   AdHocVariableFilter,
   MetricFindValue,
+  getValueMatcher,
+  ValueMatcherID,
+  MatcherConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
@@ -146,27 +149,28 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   /**
    * Apply AdHoc filters to a DataFrame
-   * Optimized version with pre-computed field indices for better performance
+   * Optimized version with pre-computed field indices and value matchers for better performance
    */
   private applyAdHocFilters(frame: DataFrame, filters: AdHocVariableFilter[]): DataFrame {
     if (filters.length === 0 || frame.length === 0) {
       return frame;
     }
 
-    // Pre-compute field indices for better performance - O(m × f) instead of O(n × m × f)
+    // Pre-compute field indices and value matchers for better performance
     const filterFieldIndices = filters
       .map((filter) => {
         const fieldIndex = frame.fields.findIndex((f) => f.name === filter.key);
-        return { filter, fieldIndex };
+        return { filter, fieldIndex, matcher: this.createValueMatcher(filter, fieldIndex, frame) };
       })
-      .filter(({ filter, fieldIndex }) => {
+      .filter(({ filter, fieldIndex, matcher }) => {
         // If field is not present:
         // - Keep filters with '=' operator (will always be false - reject rows)
         // - Remove filters with '!=' operator (will always be true - no effect)
         if (fieldIndex === -1) {
           return filter.operator === '=';
         }
-        return true;
+        // Only keep filters with valid matchers
+        return matcher !== null;
       });
 
     // If no filters remain after optimization, return original frame
@@ -184,17 +188,16 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     // Check each row to see if it matches all filters (AND logic)
     for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-      const rowMatches = filterFieldIndices.every(({ filter, fieldIndex }) => {
+      const rowMatches = filterFieldIndices.every(({ matcher, fieldIndex }) => {
         // Handle case where field doesn't exist (fieldIndex === -1)
         if (fieldIndex === -1) {
-          return this.compareUnsupportedValues(null, filter);
+          return false; // Impossible filter case
         }
 
         const field = frame.fields[fieldIndex];
-        const fieldValue = field.values[rowIndex];
 
-        // Use unified evaluation method that dispatches based on field type
-        return this.evaluateFilter(fieldValue, filter, field.type);
+        // Use Grafana's value matcher system
+        return matcher!(rowIndex, field, frame, [frame]);
       });
 
       if (rowMatches) {
@@ -206,96 +209,57 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   }
 
   /**
-   * Evaluate a filter against a field value - unified method that dispatches based on field type
+   * Create a value matcher from an AdHoc filter
    */
-  private evaluateFilter(fieldValue: unknown, filter: AdHocVariableFilter, fieldType: FieldType): boolean {
-    // Handle null/undefined values consistently across all types
-    if (fieldValue == null) {
-      return filter.operator === '!=' && filter.value !== '';
+  private createValueMatcher(filter: AdHocVariableFilter, fieldIndex: number, frame: DataFrame) {
+    // Return null for missing fields - they are handled separately
+    if (fieldIndex === -1) {
+      return null;
     }
 
-    // Dispatch to type-specific comparison logic
-    const compareFn = this.getComparisonFunction(fieldType);
-    return compareFn(fieldValue, filter);
+    const field = frame.fields[fieldIndex];
+
+    // Only support string and numeric fields when feature toggle is enabled
+    if (config.featureToggles.dashboardDsAdHocFiltering) {
+      if (field.type !== FieldType.string && field.type !== FieldType.number) {
+        return null;
+      }
+    }
+
+    // Convert AdHoc filter to value matcher configuration
+    const matcherConfig = this.adHocFilterToMatcherConfig(filter);
+    if (!matcherConfig) {
+      return null;
+    }
+
+    try {
+      return getValueMatcher(matcherConfig);
+    } catch (error) {
+      console.warn('Failed to create value matcher for filter:', filter, error);
+      return null;
+    }
   }
 
   /**
-   * Get the appropriate comparison function based on field type
+   * Convert AdHocVariableFilter to MatcherConfig for value matchers
    */
-  private getComparisonFunction(fieldType: FieldType) {
-    switch (fieldType) {
-      case FieldType.string:
-        return this.compareStringValues;
-      case FieldType.number:
-        return this.compareNumericValues;
-      // Easy to extend for future types:
-      // case FieldType.time:
-      //   return this.compareDateValues;
+  private adHocFilterToMatcherConfig(filter: AdHocVariableFilter): MatcherConfig | null {
+    switch (filter.operator) {
+      case '=':
+        return {
+          id: ValueMatcherID.equal,
+          options: { value: filter.value },
+        };
+      case '!=':
+        return {
+          id: ValueMatcherID.notEqual,
+          options: { value: filter.value },
+        };
       default:
-        return this.compareUnsupportedValues; // Skip unknown types
+        // Unknown operator
+        return null;
     }
   }
-
-  /**
-   * Compare string field values
-   */
-  private compareStringValues = (fieldValue: unknown, filter: AdHocVariableFilter): boolean => {
-    const filterValue = filter.value;
-
-    switch (filter.operator) {
-      case '=':
-        return fieldValue === filterValue;
-      case '!=':
-        return fieldValue !== filterValue;
-      default:
-        // Unknown operator, reject all rows
-        return false;
-    }
-  };
-
-  /**
-   * Compare numeric field values (integers and floats)
-   */
-  private compareNumericValues = (fieldValue: unknown, filter: AdHocVariableFilter): boolean => {
-    // Parse filter value as a number
-    const filterValue = parseFloat(filter.value);
-
-    // If filter value is not a valid number, reject all rows
-    if (isNaN(filterValue)) {
-      return false;
-    }
-
-    // Ensure field value is a number
-    const numericFieldValue = typeof fieldValue === 'number' ? fieldValue : parseFloat(String(fieldValue));
-
-    // If field value is not a valid number, reject all rows
-    if (isNaN(numericFieldValue)) {
-      return false;
-    }
-
-    switch (filter.operator) {
-      case '=':
-        return numericFieldValue === filterValue;
-      case '!=':
-        return numericFieldValue !== filterValue;
-      // Easy to add more operators:
-      // case '>':
-      //   return numericFieldValue > filterValue;
-      // case '<':
-      //   return numericFieldValue < filterValue;
-      default:
-        // Unknown operator, reject all rows
-        return false;
-    }
-  };
-
-  /**
-   * Handle unsupported field types
-   */
-  private compareUnsupportedValues = (_fieldValue: unknown, _filter: AdHocVariableFilter): boolean => {
-    // unknown field type, reject all rows
-    return false;
-  };
 
   /**
    * Reconstruct DataFrame with only matching rows
