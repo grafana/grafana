@@ -13,12 +13,12 @@ import (
 )
 
 type testSetup struct {
-	rs            RepositorySecrets
-	mockFeatures  *featuremgmt.MockFeatureToggles
-	mockSecrets   *MockService
-	mockLegacy    *MockLegacyService
-	repo          *provisioning.Repository
-	ctx           context.Context
+	rs           RepositorySecrets
+	mockFeatures *featuremgmt.MockFeatureToggles
+	mockSecrets  *MockService
+	mockLegacy   *MockLegacyService
+	repo         *provisioning.Repository
+	ctx          context.Context
 }
 
 func setupTest(t *testing.T, namespace string) *testSetup {

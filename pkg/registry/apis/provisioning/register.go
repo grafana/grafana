@@ -509,9 +509,7 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 // TODO: move this to a more appropriate place
 // TODO: make this one more generic
 func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
-	if repo.Spec.Git != nil &&
-		repo.Spec.Git.Token != "" {
-
+	if repo.Spec.Git != nil && repo.Spec.Git.Token != "" {
 		secretName := repo.Spec.Git.EncryptedToken
 		if secretName == nil {
 			secretName = []byte(repo.Name + "-git-token")

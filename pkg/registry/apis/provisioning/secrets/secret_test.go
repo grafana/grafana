@@ -26,6 +26,7 @@ func TestNewSecretsService(t *testing.T) {
 	assert.IsType(t, &secretsService{}, svc)
 }
 
+//nolint:cyclo // This test is complex but it's a good test for the SecretsService.
 func TestSecretsService_Encrypt(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -51,7 +52,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 					xkube.Namespace("test-namespace"),
 					"test-secret",
 				).Return(nil, contracts.ErrSecureValueNotFound)
-				
+
 				// Assert Create call with detailed validation
 				mockSecretsSvc.EXPECT().Create(
 					mock.MatchedBy(func(ctx context.Context) bool {
@@ -103,7 +104,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 						Decrypters:  []string{svcName},
 					},
 				}
-				
+
 				// Assert Read call with context validation
 				mockSecretsSvc.EXPECT().Read(
 					mock.MatchedBy(func(ctx context.Context) bool {
@@ -113,7 +114,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 					xkube.Namespace("test-namespace"),
 					"existing-secret",
 				).Return(existingSecret, nil)
-				
+
 				// Assert Update call with detailed validation
 				mockSecretsSvc.EXPECT().Update(
 					mock.MatchedBy(func(ctx context.Context) bool {
@@ -174,7 +175,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 					xkube.Namespace("test-namespace"),
 					"test-secret",
 				).Return(nil, contracts.ErrSecureValueNotFound)
-				
+
 				mockSecretsSvc.EXPECT().Create(
 					mock.MatchedBy(func(ctx context.Context) bool {
 						requester, err := identity.GetRequester(ctx)
@@ -207,7 +208,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 						Decrypters:  []string{svcName},
 					},
 				}
-				
+
 				mockSecretsSvc.EXPECT().Read(
 					mock.MatchedBy(func(ctx context.Context) bool {
 						requester, err := identity.GetRequester(ctx)
@@ -216,7 +217,7 @@ func TestSecretsService_Encrypt(t *testing.T) {
 					xkube.Namespace("test-namespace"),
 					"existing-secret",
 				).Return(existingSecret, nil)
-				
+
 				mockSecretsSvc.EXPECT().Update(
 					mock.MatchedBy(func(ctx context.Context) bool {
 						requester, err := identity.GetRequester(ctx)
@@ -239,18 +240,18 @@ func TestSecretsService_Encrypt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockSecretsSvc := NewMockSecureValueService(t)
 			mockDecryptSvc := &mocks.MockDecryptService{}
-			
+
 			tt.setupMocks(mockSecretsSvc, mockDecryptSvc)
-			
+
 			svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
-			
+
 			ctx := context.Background()
 			ctx = identity.WithRequester(ctx, &identity.StaticRequester{
 				UserUID: "test-uid",
 			})
-			
+
 			result, err := svc.Encrypt(ctx, tt.namespace, tt.secretName, tt.data)
-			
+
 			if tt.expectedError != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
@@ -265,13 +266,13 @@ func TestSecretsService_Encrypt(t *testing.T) {
 func TestSecretsService_Encrypt_NoIdentity(t *testing.T) {
 	mockSecretsSvc := NewMockSecureValueService(t)
 	mockDecryptSvc := &mocks.MockDecryptService{}
-	
+
 	svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
-	
+
 	ctx := context.Background()
-	
+
 	result, err := svc.Encrypt(ctx, "test-namespace", "test-secret", "secret-data")
-	
+
 	assert.Error(t, err)
 	assert.Empty(t, result)
 }
@@ -292,7 +293,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
 				exposedValue := secretv1beta1.NewExposedSecureValue("decrypted-data")
 				mockResult := service.NewDecryptResultValue(&exposedValue)
-				
+
 				mockDecryptSvc.EXPECT().Decrypt(
 					mock.MatchedBy(func(ctx context.Context) bool {
 						// Verify that the context is not nil (the service creates a new StaticRequester)
@@ -342,7 +343,7 @@ func TestSecretsService_Decrypt(t *testing.T) {
 			secretName: "test-secret",
 			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
 				mockResult := service.NewDecryptResultErr(errors.New("decryption failed"))
-				
+
 				mockDecryptSvc.EXPECT().Decrypt(
 					mock.MatchedBy(func(ctx context.Context) bool {
 						return ctx != nil
@@ -361,15 +362,15 @@ func TestSecretsService_Decrypt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockSecretsSvc := NewMockSecureValueService(t)
 			mockDecryptSvc := &mocks.MockDecryptService{}
-			
+
 			tt.setupMocks(mockSecretsSvc, mockDecryptSvc)
-			
+
 			svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
-			
+
 			ctx := context.Background()
-			
+
 			result, err := svc.Decrypt(ctx, tt.namespace, tt.secretName)
-			
+
 			if tt.expectedError != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
@@ -385,10 +386,10 @@ func TestSecretsService_Decrypt(t *testing.T) {
 func TestSecretsService_Decrypt_StaticRequesterCreation(t *testing.T) {
 	mockSecretsSvc := NewMockSecureValueService(t)
 	mockDecryptSvc := &mocks.MockDecryptService{}
-	
+
 	exposedValue := secretv1beta1.NewExposedSecureValue("test-data")
 	mockResult := service.NewDecryptResultValue(&exposedValue)
-	
+
 	// Create a more detailed context matcher to verify the StaticRequester is created correctly
 	mockDecryptSvc.EXPECT().Decrypt(
 		mock.MatchedBy(func(ctx context.Context) bool {
@@ -400,13 +401,12 @@ func TestSecretsService_Decrypt_StaticRequesterCreation(t *testing.T) {
 	).Return(map[string]service.DecryptResult{
 		"test-secret": mockResult,
 	}, nil)
-	
+
 	svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
-	
+
 	ctx := context.Background()
 	result, err := svc.Decrypt(ctx, "test-namespace", "test-secret")
-	
+
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("test-data"), result)
 }
-
