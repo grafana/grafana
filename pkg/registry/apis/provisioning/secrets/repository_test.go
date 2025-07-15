@@ -235,3 +235,58 @@ func TestRepositorySecrets_Decrypt(t *testing.T) {
 		})
 	}
 }
+
+func TestRepositorySecrets_Delete(t *testing.T) {
+	tests := []struct {
+		name           string
+		namespace      string
+		featureEnabled bool
+		setupMocks     func(*testSetup)
+		expectedError  string
+	}{
+		{
+			name:           "new service delete success",
+			namespace:      "test-namespace",
+			featureEnabled: true,
+			setupMocks: func(s *testSetup) {
+				s.expectFeatureFlag(true)
+				s.mockSecrets.EXPECT().Delete(s.ctx, "test-namespace", "secret-to-delete").Return(nil)
+			},
+		},
+		{
+			name:           "new service delete error",
+			namespace:      "test-namespace",
+			featureEnabled: true,
+			setupMocks: func(s *testSetup) {
+				s.expectFeatureFlag(true)
+				s.mockSecrets.EXPECT().Delete(s.ctx, "test-namespace", "secret-to-delete").Return(errors.New("delete failed"))
+			},
+			expectedError: "delete failed",
+		},
+		{
+			name:           "nothing for legacy",
+			namespace:      "custom-namespace",
+			featureEnabled: true,
+			setupMocks: func(s *testSetup) {
+				s.expectFeatureFlag(false)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setup := setupTest(t, tt.namespace)
+			tt.setupMocks(setup)
+
+			err := setup.rs.Delete(setup.ctx, setup.repo, "secret-to-delete")
+			if tt.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			setup.mockSecrets.AssertExpectations(t)
+		})
+	}
+}

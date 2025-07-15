@@ -22,6 +22,7 @@ func ProvideRepositorySecrets(
 type RepositorySecrets interface {
 	Encrypt(ctx context.Context, r *provisioning.Repository, name string, data string) (nameOrValue []byte, err error)
 	Decrypt(ctx context.Context, r *provisioning.Repository, nameOrValue string) (data []byte, err error)
+	Delete(ctx context.Context, r *provisioning.Repository, nameOrValue string) error
 }
 
 // repositorySecrets provides a unified interface for encrypting and decrypting repository secrets,
@@ -95,4 +96,12 @@ func (s *repositorySecrets) Decrypt(ctx context.Context, r *provisioning.Reposit
 	}
 
 	return s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
+}
+
+func (s *repositorySecrets) Delete(ctx context.Context, r *provisioning.Repository, nameOrValue string) error {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
+		return s.secretsSvc.Delete(ctx, r.GetNamespace(), nameOrValue)
+	}
+
+	return nil
 }
