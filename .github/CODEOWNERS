@@ -70,7 +70,6 @@
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
 /hack/ @grafana/grafana-app-platform-squad
-/.air.toml @macabu
 
 /pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
 /public/app/features/provisioning @grafana/grafana-git-ui-sync-team
@@ -80,10 +79,8 @@
 /apps/dashboard/ @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
-/apps/secret/ @grafana/grafana-operator-experience-squad
 /apps/investigations/ @fcjack @matryer @svennergr
 /apps/advisor/ @grafana/plugins-platform-backend
-/apps/iam/ @grafana/access-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/query @grafana/grafana-datasources-core-services
@@ -145,7 +142,6 @@
 /pkg/services/dashboardversion/ @grafana/grafana-backend-group
 /pkg/services/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/services/folder/ @grafana/grafana-search-and-storage
-/pkg/services/frontend/ @grafana/grafana-frontend-platform
 /pkg/services/apiserver @grafana/grafana-app-platform-squad
 /pkg/services/hooks/ @grafana/grafana-backend-group
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
@@ -172,7 +168,6 @@
 /pkg/services/tag/ @grafana/grafana-search-and-storage
 /pkg/services/team/ @grafana/access-squad
 /pkg/services/temp_user/ @grafana/grafana-backend-group
-/pkg/services/updatemanager/ @grafana/grafana-backend-group
 /pkg/services/user/ @grafana/access-squad
 /pkg/services/validations/ @grafana/grafana-backend-group
 /pkg/setting/ @grafana/grafana-backend-services-squad
@@ -266,7 +261,6 @@
 /devenv/docker/blocks/influxdb/ @grafana/partner-datasources
 /devenv/docker/blocks/influxdb1/ @grafana/partner-datasources
 /devenv/docker/blocks/jaeger/ @grafana/oss-big-tent
-/devenv/docker/blocks/jaegeronly/ @grafana/grafana-operator-experience-squad
 /devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/oss-big-tent
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
@@ -401,10 +395,6 @@
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
-/e2e-playwright/ @grafana/grafana-frontend-platform
-/e2e-playwright/plugin-e2e/ @grafana/oss-big-tent @grafana/partner-datasources
-/e2e-playwright/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
-/e2e-playwright/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
 
 # Packages
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
@@ -445,9 +435,6 @@
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/grafana-frontend-platform
-/packages/grafana-alerting/ @grafana/alerting-frontend
-/packages/grafana-i18n/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
-/packages/grafana-test-utils @grafana/grafana-frontend-platform
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
@@ -475,12 +462,10 @@
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
-/lefthook.rc @grafana/frontend-ops
 /.husky/pre-commit @grafana/frontend-ops
 /cypress.config.js @grafana/grafana-frontend-platform
 /.levignore.js @grafana/plugins-platform-frontend
 playwright.config.ts @grafana/plugins-platform-frontend
-playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 # public folder
 /public/app/api/ @grafana/grafana-frontend-platform
@@ -492,7 +477,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
-/public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/features/admin/ @grafana/identity-access-team
@@ -613,7 +597,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
-/public/app/initApp.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
 
@@ -646,7 +629,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/levitate-parse-json-report.js @grafana/plugins-platform-frontend
 /scripts/levitate-show-affected-plugins.js @grafana/plugins-platform-frontend
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
-/scripts/rtk-client-generator/ @grafana/grafana-search-navigate-organise
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
@@ -714,7 +696,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /pkg/services/anonymous/ @grafana/identity-access-team
 /pkg/services/auth/ @grafana/identity-squad
 /pkg/services/authn/ @grafana/identity-squad
-/pkg/services/scimutil/ @grafana/identity-squad
 /pkg/services/authz/ @grafana/access-squad
 /pkg/services/signingkeys/ @grafana/identity-squad
 /pkg/services/dashboards/accesscontrol.go @grafana/access-squad
@@ -756,7 +737,6 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/registry/apps/advisor @grafana/plugins-platform-backend
-/pkg/registry/apps/alerting @grafana/alerting-backend
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
@@ -885,5 +865,4 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/sample/ @grafana/grafana-git-ui-sync-team
 
 # Security
-/relyance.yaml @grafana/security-team
 /.github/workflows/relyance-scan.yml @grafana/security-team
