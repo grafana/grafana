@@ -691,7 +691,7 @@ func configureHistorianBackend(
 		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
 	}
 	if backend == historian.BackendTypeLoki {
-		lcfg, err := historian.NewLokiConfig(cfg)
+		lcfg, err := lokiclient.NewLokiConfig(cfg.LokiSettings)
 		if err != nil {
 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
@@ -743,7 +743,7 @@ func configureNotificationHistorian(
 	}
 
 	met.Info.Set(1)
-	lcfg, err := notifier.NewLokiConfig(cfg)
+	lcfg, err := lokiclient.NewLokiConfig(cfg.LokiSettings)
 	if err != nil {
 		return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 	}

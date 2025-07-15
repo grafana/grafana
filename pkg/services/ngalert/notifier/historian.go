@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"strings"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
 	prometheusModel "github.com/prometheus/common/model"
@@ -103,46 +101,6 @@ func (h *NotificationHistorian) Record(ctx context.Context, alerts []*types.Aler
 		}
 	}(writeCtx)
 	return errCh
-}
-
-// NewLokiConfig is a copy of historian.NewLokiConfig
-func NewLokiConfig(cfg setting.UnifiedAlertingNotificationHistorySettings) (lokiclient.LokiConfig, error) {
-	read, write := cfg.LokiReadURL, cfg.LokiWriteURL
-	if read == "" {
-		read = cfg.LokiRemoteURL
-	}
-	if write == "" {
-		write = cfg.LokiRemoteURL
-	}
-
-	if read == "" {
-		return lokiclient.LokiConfig{}, fmt.Errorf("either read path URL or remote Loki URL must be provided")
-	}
-	if write == "" {
-		return lokiclient.LokiConfig{}, fmt.Errorf("either write path URL or remote Loki URL must be provided")
-	}
-
-	readURL, err := url.Parse(read)
-	if err != nil {
-		return lokiclient.LokiConfig{}, fmt.Errorf("failed to parse loki remote read URL: %w", err)
-	}
-	writeURL, err := url.Parse(write)
-	if err != nil {
-		return lokiclient.LokiConfig{}, fmt.Errorf("failed to parse loki remote write URL: %w", err)
-	}
-
-	return lokiclient.LokiConfig{
-		ReadPathURL:       readURL,
-		WritePathURL:      writeURL,
-		BasicAuthUser:     cfg.LokiBasicAuthUsername,
-		BasicAuthPassword: cfg.LokiBasicAuthPassword,
-		TenantID:          cfg.LokiTenantID,
-		ExternalLabels:    cfg.ExternalLabels,
-		MaxQueryLength:    cfg.LokiMaxQueryLength,
-		MaxQuerySize:      cfg.LokiMaxQuerySize,
-		// Snappy-compressed protobuf is the default, same goes for Promtail.
-		Encoder: lokiclient.SnappyProtoEncoder{},
-	}, nil
 }
 
 func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*types.Alert, notificationError error) (lokiclient.Stream, error) {

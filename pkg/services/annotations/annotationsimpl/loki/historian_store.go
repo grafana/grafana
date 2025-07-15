@@ -61,7 +61,7 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db d
 	if !useStore(cfg) {
 		return nil
 	}
-	lokiCfg, err := historian.NewLokiConfig(cfg)
+	lokiCfg, err := lokiclient.NewLokiConfig(cfg.LokiSettings)
 	if err != nil {
 		// this config error is already handled elsewhere
 		return nil

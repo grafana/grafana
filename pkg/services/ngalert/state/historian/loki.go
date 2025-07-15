@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -15,7 +14,6 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiclient"
-	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -540,43 +538,4 @@ func (h *RemoteLokiBackend) getFolderUIDsForFilter(ctx context.Context, query mo
 	}
 	sort.Strings(uids)
 	return uids, nil
-}
-
-func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (lokiclient.LokiConfig, error) {
-	read, write := cfg.LokiReadURL, cfg.LokiWriteURL
-	if read == "" {
-		read = cfg.LokiRemoteURL
-	}
-	if write == "" {
-		write = cfg.LokiRemoteURL
-	}
-
-	if read == "" {
-		return lokiclient.LokiConfig{}, fmt.Errorf("either read path URL or remote Loki URL must be provided")
-	}
-	if write == "" {
-		return lokiclient.LokiConfig{}, fmt.Errorf("either write path URL or remote Loki URL must be provided")
-	}
-
-	readURL, err := url.Parse(read)
-	if err != nil {
-		return lokiclient.LokiConfig{}, fmt.Errorf("failed to parse loki remote read URL: %w", err)
-	}
-	writeURL, err := url.Parse(write)
-	if err != nil {
-		return lokiclient.LokiConfig{}, fmt.Errorf("failed to parse loki remote write URL: %w", err)
-	}
-
-	return lokiclient.LokiConfig{
-		ReadPathURL:       readURL,
-		WritePathURL:      writeURL,
-		BasicAuthUser:     cfg.LokiBasicAuthUsername,
-		BasicAuthPassword: cfg.LokiBasicAuthPassword,
-		TenantID:          cfg.LokiTenantID,
-		ExternalLabels:    cfg.ExternalLabels,
-		MaxQueryLength:    cfg.LokiMaxQueryLength,
-		MaxQuerySize:      cfg.LokiMaxQuerySize,
-		// Snappy-compressed protobuf is the default, same goes for Promtail.
-		Encoder: lokiclient.SnappyProtoEncoder{},
-	}, nil
 }

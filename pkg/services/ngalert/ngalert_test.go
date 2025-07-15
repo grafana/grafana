@@ -137,9 +137,11 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "loki",
-			// Should never resolve at the DNS level: https://www.rfc-editor.org/rfc/rfc6761#section-6.4
-			LokiReadURL:  "http://gone.invalid",
-			LokiWriteURL: "http://gone.invalid",
+			LokiSettings: setting.UnifiedAlertingLokiSettings{
+				// Should never resolve at the DNS level: https://www.rfc-editor.org/rfc/rfc6761#section-6.4
+				LokiReadURL:  "http://gone.invalid",
+				LokiWriteURL: "http://gone.invalid",
+			},
 		}
 		ac := &acfakes.FakeRuleService{}
 
@@ -228,6 +230,57 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 grafana_alerting_state_history_info{backend="noop"} 0
 `)
 		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_state_history_info")
+		require.NoError(t, err)
+	})
+}
+
+func TestConfigureNotificationHistorian(t *testing.T) {
+	t.Run("do not fail initialization if pinging Loki fails", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		met := metrics.NewNotificationHistorianMetrics(reg)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingNotificationHistorySettings{
+			Enabled: true,
+			LokiSettings: setting.UnifiedAlertingLokiSettings{
+				// Should never resolve at the DNS level: https://www.rfc-editor.org/rfc/rfc6761#section-6.4
+				LokiRemoteURL: "http://gone.invalid",
+			},
+		}
+
+		h, err := configureNotificationHistorian(context.Background(), cfg, met, logger, tracer)
+		require.NotNil(t, h)
+		require.NoError(t, err)
+
+		// Verify that the metric value is set to 1, indicating that notification history is enabled.
+		exp := bytes.NewBufferString(`
+# HELP grafana_alerting_notification_history_info Information about the notification history store.
+# TYPE grafana_alerting_notification_history_info gauge
+grafana_alerting_notification_history_info 1
+`)
+		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_notification_history_info")
+		require.NoError(t, err)
+	})
+
+	t.Run("emit special zero metric if notification history disabled", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		met := metrics.NewNotificationHistorianMetrics(reg)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingNotificationHistorySettings{
+			Enabled: false,
+		}
+
+		h, err := configureNotificationHistorian(context.Background(), cfg, met, logger, tracer)
+		require.Nil(t, h)
+		require.NoError(t, err)
+
+		exp := bytes.NewBufferString(`
+# HELP grafana_alerting_notification_history_info Information about the notification history store.
+# TYPE grafana_alerting_notification_history_info gauge
+grafana_alerting_notification_history_info 0
+`)
+		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_notification_history_info")
 		require.NoError(t, err)
 	})
 }

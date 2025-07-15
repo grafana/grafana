@@ -42,7 +42,7 @@ func TestLokiConfig(t *testing.T) {
 	t.Run("test URL options", func(t *testing.T) {
 		type testCase struct {
 			name     string
-			in       setting.UnifiedAlertingStateHistorySettings
+			in       setting.UnifiedAlertingLokiSettings
 			expRead  string
 			expWrite string
 			expErr   string
@@ -51,7 +51,7 @@ func TestLokiConfig(t *testing.T) {
 		cases := []testCase{
 			{
 				name: "remote url only",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiRemoteURL: "http://url.com",
 				},
 				expRead:  "http://url.com",
@@ -59,7 +59,7 @@ func TestLokiConfig(t *testing.T) {
 			},
 			{
 				name: "separate urls",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiReadURL:  "http://read.url.com",
 					LokiWriteURL: "http://write.url.com",
 				},
@@ -68,7 +68,7 @@ func TestLokiConfig(t *testing.T) {
 			},
 			{
 				name: "single fallback",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiRemoteURL: "http://url.com",
 					LokiReadURL:   "http://read.url.com",
 				},
@@ -77,21 +77,21 @@ func TestLokiConfig(t *testing.T) {
 			},
 			{
 				name: "missing read",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiWriteURL: "http://url.com",
 				},
 				expErr: "either read path URL or remote",
 			},
 			{
 				name: "missing write",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiReadURL: "http://url.com",
 				},
 				expErr: "either write path URL or remote",
 			},
 			{
 				name: "invalid",
-				in: setting.UnifiedAlertingStateHistorySettings{
+				in: setting.UnifiedAlertingLokiSettings{
 					LokiRemoteURL: "://://",
 				},
 				expErr: "failed to parse",
@@ -100,7 +100,7 @@ func TestLokiConfig(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
-				res, err := NewLokiConfig(tc.in)
+				res, err := lokiclient.NewLokiConfig(tc.in)
 				if tc.expErr != "" {
 					require.ErrorContains(t, err, tc.expErr)
 				} else {
@@ -112,12 +112,12 @@ func TestLokiConfig(t *testing.T) {
 	})
 
 	t.Run("captures external labels", func(t *testing.T) {
-		set := setting.UnifiedAlertingStateHistorySettings{
+		set := setting.UnifiedAlertingLokiSettings{
 			LokiRemoteURL:  "http://url.com",
 			ExternalLabels: map[string]string{"a": "b"},
 		}
 
-		res, err := NewLokiConfig(set)
+		res, err := lokiclient.NewLokiConfig(set)
 
 		require.NoError(t, err)
 		require.Contains(t, res.ExternalLabels, "a")
@@ -454,7 +454,7 @@ func TestMerge(t *testing.T) {
 								"extra":     "label",
 							},
 							Values: []lokiclient.Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
 							},
 						},
 						{
@@ -465,7 +465,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2"}`},
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 					},
@@ -530,8 +530,8 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 						{
@@ -542,7 +542,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
 							},
 						},
 					},
@@ -595,8 +595,8 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-1",
 							},
 							Values: []lokiclient.Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 						{
@@ -607,7 +607,7 @@ func TestMerge(t *testing.T) {
 								"folderUID": "test-folder-2",
 							},
 							Values: []lokiclient.Sample{
-								{time.Unix(2, 0), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
+								{T: time.Unix(2, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": 2.5}, "ruleUID": "test-rule-3"}`},
 							},
 						},
 					},
@@ -649,8 +649,8 @@ func TestMerge(t *testing.T) {
 								"group": "test-group-1",
 							},
 							Values: []lokiclient.Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
-								{time.Unix(5, 0), `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(5, 0), V: `{"schemaVersion": 1, "previous": "pending", "current": "normal", "values":{"a": 0.5}, "ruleUID": "test-rule-2"}`},
 							},
 						},
 					},
@@ -673,7 +673,7 @@ func TestMerge(t *testing.T) {
 								"group": "test-group-1",
 							},
 							Values: []lokiclient.Sample{
-								{time.Unix(1, 0), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
+								{T: time.Unix(1, 0), V: `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": 1.5}, "ruleUID": "test-rule-1"}`},
 							},
 						},
 					},
