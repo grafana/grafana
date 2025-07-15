@@ -341,7 +341,6 @@ func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
 		return fmt.Errorf("on delete from basic github repository: %w", err)
 	}
 
-	// TODO: call Github Hook as well
 	return r.deleteWebhook(ctx)
 }
 
