@@ -296,7 +296,8 @@ var (
 		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -338,8 +339,8 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
-			Name:            "nanoGit",
-			Description:     "Use experimental git library for provisioning",
+			Name:            "provisioningSecretsService",
+			Description:     "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
@@ -1262,13 +1263,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "jaegerBackendMigration",
-			Description: "Enables querying the Jaeger data source without the proxy",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true",
-		},
-		{
 			Name:         "alertingUIOptimizeReducer",
 			Description:  "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1619,6 +1613,13 @@ var (
 		{
 			Name:         "metricsFromProfiles",
 			Description:  "Enables creating metrics from profiles and storing them as recording rules",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "tempoAlerting",
+			Description:  "Enables creating alerts from Tempo data source",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,

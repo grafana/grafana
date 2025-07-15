@@ -549,12 +549,13 @@ describe('dashboard exporter v2', () => {
               {
                 kind: 'PanelQuery',
                 spec: {
+                  datasource: {
+                    type: 'prometheus',
+                    uid: '${datasourceVar}',
+                  },
                   hidden: false,
                   query: {
-                    datasource: {
-                      name: '${datasourceVar}',
-                    },
-                    group: 'prometheus',
+                    kind: 'prometheus',
                     spec: {
                       editorMode: 'builder',
                       expr: 'go_goroutines{job="prometheus"}',
@@ -582,7 +583,7 @@ describe('dashboard exporter v2', () => {
   it('should replace datasource in a query variable', async () => {
     const { dashboard } = await setup();
     const variable = dashboard.variables[0] as QueryVariableKind;
-    expect(variable.spec.query.datasource?.name).toBeUndefined();
+    expect(variable.spec.datasource?.uid).toBeUndefined();
   });
 
   it('do not expose datasource name and id in datasource variable', async () => {
@@ -596,7 +597,7 @@ describe('dashboard exporter v2', () => {
     const { dashboard } = await setup();
     const annotationQuery = dashboard.annotations[0];
 
-    expect(annotationQuery.spec.query?.datasource?.name).toBeUndefined();
+    expect(annotationQuery.spec.datasource?.uid).toBeUndefined();
   });
 
   it('should remove library panels from layout', async () => {
@@ -615,8 +616,11 @@ describe('dashboard exporter v2', () => {
     if (panel.kind !== 'Panel') {
       throw new Error('Panel should be a Panel');
     }
-    expect(panel.spec.data.spec.queries[0].spec.query.datasource?.name).toBe('${datasourceVar}');
-    expect(panel.spec.data.spec.queries[0].spec.query.group).toBe('prometheus');
+
+    expect(panel.spec.data.spec.queries[0].spec.datasource).toEqual({
+      type: 'prometheus',
+      uid: '${datasourceVar}',
+    });
   });
 });
 

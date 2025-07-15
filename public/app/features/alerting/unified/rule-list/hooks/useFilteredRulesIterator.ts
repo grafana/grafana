@@ -15,7 +15,6 @@ import {
   PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import {
   getDataSourceByUid,
@@ -52,7 +51,6 @@ interface GetIteratorResult {
 }
 
 export function useFilteredRulesIteratorProvider() {
-  const { populateGroupResponseCache } = usePopulateGrafanaPrometheusApiCache();
   const allExternalRulesSources = getExternalRulesSources();
 
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
@@ -76,10 +74,7 @@ export function useFilteredRulesIteratorProvider() {
       concatMap((groups) =>
         groups
           .filter((group) => groupFilter(group, normalizedFilterState))
-          .flatMap((group) => {
-            populateGroupResponseCache(group);
-            return group.rules.map((rule) => [group, rule] as const);
-          })
+          .flatMap((group) => group.rules.map((rule) => [group, rule] as const))
           .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
           .map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),

@@ -29,8 +29,7 @@ func ProvideDataKeyStorage(
 	features featuremgmt.FeatureToggles,
 	registerer prometheus.Registerer,
 ) (contracts.DataKeyStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptionStoreImpl{}, nil
 	}
 
