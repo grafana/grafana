@@ -14,7 +14,7 @@ type OSSDecryptService struct {
 
 var _ service.DecryptService = &OSSDecryptService{}
 
-func ProvideDecryptService(decryptStore contracts.DecryptStorage) *OSSDecryptService {
+func ProvideDecryptService(decryptStore contracts.DecryptStorage) service.DecryptService {
 	return &OSSDecryptService{
 		decryptStore: decryptStore,
 	}
