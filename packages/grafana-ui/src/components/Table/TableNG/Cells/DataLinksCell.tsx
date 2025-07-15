@@ -1,4 +1,5 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -24,7 +25,7 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
       </span>
     ) : (
       <a
-        className={cx(styles.linkCell, styles.linkCellActive)}
+        className={clsx(styles.linkCell, styles.linkCellActive)}
         key={idx}
         onClick={link.onClick}
         href={link.href}

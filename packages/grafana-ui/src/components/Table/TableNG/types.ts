@@ -246,7 +246,6 @@ export interface AutoCellProps {
   field: Field;
   value: TableCellValue;
   rowIdx: number;
-  cellOptions: TableCellOptions;
 }
 
 export interface ActionCellProps {
