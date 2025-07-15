@@ -141,8 +141,8 @@ export function getRowHeight(
   }
 
   // go with the maximum of either the calculated number of lines from uPlot or from this pass over the data
-  // for non-text-driven heights like DataLinks or Pills.
-  const numLines = Math.max(calcNumLines(maxLinesText, colWidths[maxLinesIdx]), maxLines);
+  // for non-text-driven heights like DataLinks or Pills. Apply Math.ceil to ensure we round up to the next line.
+  const numLines = Math.ceil(Math.max(calcNumLines(maxLinesText, colWidths[maxLinesIdx]), maxLines));
 
   return Math.max(defaultHeight, numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING + (heightOffset ?? 0));
 }
