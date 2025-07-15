@@ -8811,6 +8811,8 @@
       "links-section": "Links",
       "log-line-field": "Log line",
       "log-line-section": "Log line",
+      "move-displayed-field-down": "Move down",
+      "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
