@@ -13,7 +13,7 @@ const newExportButtonSelector = e2eSelectors.pages.Dashboard.DashNav.NewExportBu
 
 export interface ExportDrawerMenuItem {
   shareId: string;
-  testId: string;
+  testId?: string;
   label: string;
   description?: string;
   icon: IconName;
@@ -50,6 +50,14 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       onClick: () => onMenuItemClick(shareDashboardType.export),
     });
 
+    menuItems.push({
+      shareId: shareDashboardType.image,
+      icon: 'camera',
+      label: t('share-dashboard.menu.export-image-title', 'Export as image'),
+      renderCondition: Boolean(config.featureToggles.sharingDashboardImage),
+      onClick: () => onMenuItemClick(shareDashboardType.image),
+    });
+
     return menuItems.filter((item) => item.renderCondition);
   }, []);
 
@@ -63,15 +71,18 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
   };
 
   return (
-    <Menu data-testid={newExportButtonSelector.container}>
+    <Menu
+      ariaLabel={t('dashboard.export.menu.label', 'Export dashboard menu')}
+      data-testid={newExportButtonSelector.container}
+    >
       {buildMenuItems().map((item) => (
         <Menu.Item
           key={item.label}
-          testId={item.testId}
           label={item.label}
           icon={item.icon}
           description={item.description}
           onClick={() => onClick(item)}
+          testId={item.testId}
         />
       ))}
     </Menu>

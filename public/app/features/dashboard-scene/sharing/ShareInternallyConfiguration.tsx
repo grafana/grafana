@@ -42,6 +42,7 @@ export default function ShareInternallyConfiguration({
                 'link.share.time-range-description',
                 'Change the current relative time range to an absolute time range'
               )}
+              id="time-range-description"
             >
               <Trans i18nKey="link.share.time-range-label">Lock time range</Trans>
             </Label>

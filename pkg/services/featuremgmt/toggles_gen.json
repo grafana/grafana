@@ -2817,6 +2817,20 @@
     },
     {
       "metadata": {
+        "name": "sharingDashboardImage",
+        "resourceVersion": "1747090555040",
+        "creationTimestamp": "2025-05-12T22:55:55Z"
+      },
+      "spec": {
+        "description": "Enables image sharing functionality for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "showDashboardValidationWarnings",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2022-10-14T13:51:05Z"

@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
 import { getPanelPlugin } from '@grafana/data/test';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
@@ -17,38 +16,45 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
-const selector = e2eSelectors.pages.ShareDashboardDrawer.ShareInternally.SharePanel;
-
 describe('SharePanelInternally', () => {
   it('should disable all image generation inputs when renderer is not available', async () => {
     config.rendererAvailable = false;
     buildAndRenderScenario();
 
-    expect(await screen.findByTestId(selector.preview)).toBeInTheDocument();
-    [
-      selector.widthInput,
-      selector.heightInput,
-      selector.scaleFactorInput,
-      selector.generateImageButton,
-      selector.downloadImageButton,
-    ].forEach((selector) => {
-      expect(screen.getByTestId(selector)).toBeDisabled();
-    });
+    // Check that the panel preview is rendered
+    expect(await screen.findByText('Panel preview')).toBeInTheDocument();
+
+    // All inputs should be disabled - use placeholder text to find inputs
+    expect(screen.getByPlaceholderText('1000')).toBeDisabled(); // Width input
+    expect(screen.getByPlaceholderText('500')).toBeDisabled(); // Height input
+    expect(screen.getByPlaceholderText('1')).toBeDisabled(); // Scale factor input
+    expect(screen.getByRole('button', { name: /generate image/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /download image/i })).toBeDisabled();
   });
 
   it('should enable all image generation inputs when renderer is available', async () => {
     config.rendererAvailable = true;
     buildAndRenderScenario();
 
-    expect(await screen.findByTestId(selector.preview)).toBeInTheDocument();
-    [selector.widthInput, selector.heightInput, selector.scaleFactorInput].forEach((selector) => {
-      expect(screen.getByTestId(selector)).toBeEnabled();
-    });
+    // Check that the panel preview is rendered
+    expect(await screen.findByText('Panel preview')).toBeInTheDocument();
 
-    await userEvent.type(screen.getByTestId(selector.widthInput), '1000');
-    await userEvent.type(screen.getByTestId(selector.widthInput), '2000');
-    expect(screen.getByTestId(selector.generateImageButton)).toBeEnabled();
-    expect(screen.getByTestId(selector.downloadImageButton)).toBeDisabled();
+    // Form inputs should be enabled
+    expect(screen.getByPlaceholderText('1000')).toBeEnabled(); // Width input
+    expect(screen.getByPlaceholderText('500')).toBeEnabled(); // Height input
+    expect(screen.getByPlaceholderText('1')).toBeEnabled(); // Scale factor input
+
+    // Test form interaction
+    const widthInput = screen.getByPlaceholderText('1000');
+    const heightInput = screen.getByPlaceholderText('500');
+
+    await userEvent.clear(widthInput);
+    await userEvent.type(widthInput, '1000');
+    await userEvent.clear(heightInput);
+    await userEvent.type(heightInput, '2000');
+
+    expect(screen.getByRole('button', { name: /generate image/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /download image/i })).toBeDisabled();
   });
 });
 

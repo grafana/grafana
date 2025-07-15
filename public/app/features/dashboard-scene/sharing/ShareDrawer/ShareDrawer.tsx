@@ -6,6 +6,7 @@ import { shareDashboardType } from '../../../dashboard/components/ShareModal/uti
 import { DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ExportAsCode } from '../ExportButton/ExportAsCode';
+import { ExportAsImage } from '../ExportButton/ExportAsImage';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
 import { ShareInternally } from '../ShareButton/share-internally/ShareInternally';
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
@@ -93,6 +94,8 @@ function getShareView(
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
     case shareDashboardType.export:
       return new ExportAsCode({ onDismiss });
+    case shareDashboardType.image:
+      return new ExportAsImage({ onDismiss });
     default:
       return new ShareInternally({ onDismiss });
   }
