@@ -46,6 +46,7 @@ import (
 	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -429,6 +430,8 @@ var wireBasicSet = wire.NewSet(
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	secretsecurevalueservice.ProvideSecureValueService,
+	secretvalidator.ProvideKeeperValidator,
+	secretvalidator.ProvideSecureValueValidator,
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
