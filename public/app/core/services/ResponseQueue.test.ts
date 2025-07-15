@@ -5,7 +5,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 
 import { FetchQueue, FetchQueueUpdate } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
-import { subscribeTester } from './__mocks__/subscribeTester';
+import { subscribeTester } from './mocks/subscribeTester';
 
 const getTestContext = () => {
   const id = 'id';

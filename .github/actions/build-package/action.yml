@@ -30,7 +30,7 @@ inputs:
   build-id:
     type: string
     description: an identifier number which can be traced back to the workflow run.
-    default: ${{github.run_number}}
+    default: ${{github.run_id}}
     required: false
   patches-repo:
     type: string

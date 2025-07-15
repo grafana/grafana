@@ -15,7 +15,7 @@ import {
 import mdx from './BigValue.mdx';
 
 const meta: Meta = {
-  title: 'Visualizations/BigValue',
+  title: 'Plugins/BigValue',
   component: BigValue,
   parameters: {
     docs: {

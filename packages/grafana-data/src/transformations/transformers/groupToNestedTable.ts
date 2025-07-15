@@ -124,7 +124,7 @@ export const groupToNestedTable: DataTransformerInfo<GroupToNestedTableTransform
 
           fields.push({
             config: {},
-            name: 'Nested frames',
+            name: '__nestedFrames',
             type: FieldType.nestedFrames,
             values: subFrames,
           });

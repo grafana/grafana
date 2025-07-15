@@ -15,7 +15,7 @@ import {
   GrafanaManagedReceiverConfig,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { useDispatch } from 'app/types/store';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction } from '../../../state/actions';

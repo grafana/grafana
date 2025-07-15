@@ -28,9 +28,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
-import { SpanLinkType } from './components/types/links';
-import { TraceSpanReference } from './components/types/trace';
+import { SpanLinkDef, SpanLinkFunc, SpanLinkType } from './components/types/links';
+import { Trace, TraceSpan, TraceSpanReference } from './components/types/trace';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -197,6 +196,13 @@ function legacyCreateSpanLinkFactory(
         case 'googlecloud-logging-datasource':
           tags = getFormattedTags(span, tagsToUse, { joinBy: ' AND ' });
           query = getQueryForGoogleCloudLogging(span, traceToLogsOptions, tags, customQuery);
+          break;
+        case 'victoriametrics-logs-datasource':
+          // Build tag selector using strict equality (":=") required by LogsQL
+          // See https://docs.victoriametrics.com/victorialogs/logsql/#exact-filter
+          tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':=', joinBy: ' AND ' });
+          query = getQueryForVictoriaLogs(span, traceToLogsOptions, tags, customQuery);
+          break;
       }
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -565,6 +571,45 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
 
   return {
     lsql,
+    refId: '',
+  };
+}
+
+/**
+ * Builds a LogsQL expression for victoria‑metrics‑logs‑datasource.
+ * Uses := for exact‑match filters and joins parts with AND.
+ * See https://docs.victoriametrics.com/victorialogs/logsql/#exact-filter
+ */
+function getQueryForVictoriaLogs(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+  const { filterByTraceID, filterBySpanID } = options;
+
+  // Custom user query has priority
+  if (customQuery) {
+    return {
+      expr: customQuery,
+      refId: '',
+    };
+  }
+
+  const parts: string[] = [];
+
+  if (filterBySpanID && span.spanID) {
+    parts.push('span_id:="${__span.spanId}"');
+  }
+  if (filterByTraceID && span.traceID) {
+    parts.push('trace_id:="${__span.traceId}"');
+  }
+  if (tags) {
+    parts.push('${__tags}');
+  }
+
+  // Nothing to match against – do not create the link
+  if (!parts.length) {
+    return undefined;
+  }
+
+  return {
+    expr: parts.join(' AND '),
     refId: '',
   };
 }

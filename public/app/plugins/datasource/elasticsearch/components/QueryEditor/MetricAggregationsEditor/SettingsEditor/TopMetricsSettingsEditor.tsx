@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 
 import { SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, InlineField, SegmentAsync, Select } from '@grafana/ui';
+import { TopMetrics } from 'app/plugins/datasource/elasticsearch/dataquery.gen';
 
 import { useFields } from '../../../../hooks/useFields';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { TopMetrics } from '../../../../types';
 import { orderOptions } from '../../BucketAggregationsEditor/utils';
 import { changeMetricSetting } from '../state/actions';
 

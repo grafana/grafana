@@ -74,8 +74,6 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
 
   const dismiss = useDismiss(context);
 
-  const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
-
   const { getFloatingProps, getReferenceProps } = useInteractions([dismiss]);
 
   if (links.length === 0 && !Boolean(actions?.length)) {
@@ -84,23 +82,22 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
 
   return (
     <>
+      {/* TODO: we can remove `value` from this component when tableNextGen is fully rolled out */}
       {value}
-      {hasMultipleLinksOrActions && (
-        <Portal>
-          <div
-            ref={refCallback}
-            {...getReferenceProps({ onClick: (e) => e.stopPropagation() })}
-            {...getFloatingProps()}
-            style={floatingStyles}
-            className={styles.tooltipWrapper}
-            data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
-          >
-            <VizTooltipWrapper>
-              <VizTooltipFooter dataLinks={links} actions={actions} />
-            </VizTooltipWrapper>
-          </div>
-        </Portal>
-      )}
+      <Portal>
+        <div
+          ref={refCallback}
+          {...getReferenceProps()}
+          {...getFloatingProps()}
+          style={floatingStyles}
+          className={styles.tooltipWrapper}
+          data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
+        >
+          <VizTooltipWrapper>
+            <VizTooltipFooter dataLinks={links} actions={actions} />
+          </VizTooltipWrapper>
+        </div>
+      </Portal>
     </>
   );
 };

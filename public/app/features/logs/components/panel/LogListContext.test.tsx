@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
 
-import { createLogLine } from '../__mocks__/logRow';
+import { createLogLine } from '../mocks/logRow';
 
 import {
   useLogListContextData,

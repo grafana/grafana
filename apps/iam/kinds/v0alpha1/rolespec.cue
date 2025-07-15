@@ -10,6 +10,7 @@ RoleSpec: {
 	
 	// Display name of the role
 	title: string
+	description: string
 	
 	version: int
 	group: string
@@ -20,4 +21,3 @@ RoleSpec: {
 	// created?
 	// updated?
 }
-

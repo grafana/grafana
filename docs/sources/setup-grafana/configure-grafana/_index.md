@@ -1547,7 +1547,7 @@ Use spaces to separate multiple modes, for example, `console file`.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is `info`.
+Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`. Default is `info`.
 
 #### `filters`
 
@@ -1576,7 +1576,7 @@ Only applicable when `console` is used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1590,7 +1590,7 @@ Only applicable when `file` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -1625,7 +1625,7 @@ Only applicable when `syslog` used in `[log]` mode.
 
 #### `level`
 
-Options are `debug`, `info`, `warn`, `error`, and `critical`. Default is inherited from `[log]` level.
+See [`[log] level`](#level) for values. Default is inherited from `[log]` level.
 
 #### `format`
 
@@ -2838,22 +2838,14 @@ For example:
 
 ```ini
 [time_picker]
-quick_ranges = [
-  {
-    "display": "Last 5 minutes",
-    "from": "now-5m",
-    "to": "now",
-  },
-  {
-    "display": "Yesterday",
-    "from": "now-1d/d",
-  },
-  {
-    "display": "Today so far",
-    "from": "now/d",
-    "to": "now",
-  }
-]
+quick_ranges = """[
+{"from":"now-6s","to":"now","display":"Last 6 seconds"},
+{"from":"now-10m","to":"now","display":"Last 10 minutes"},
+{"from":"now-25h","to":"now","display":"Last 24 hours"},
+{"from":"now/w","to":"now/w","display":"This week"},
+{"from":"now-1w/w","to":"now-1w/w","display":"Last week"},
+{"from":"now-10d","to":"now","display":"Last 10 days"}
+]"""
 ```
 
 ### `[expressions]`
@@ -2866,7 +2858,7 @@ Set this to `false` to disable expressions and hide them in the Grafana UI. Defa
 
 Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
 
-#### `sql_expression_cell_output_limit`
+#### `sql_expression_output_cell_limit`
 
 Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
 

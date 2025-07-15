@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/middleware"
+	"github.com/grafana/dskit/services"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 type Options struct {
@@ -49,16 +51,19 @@ type clientMetrics struct {
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.StorageMetrics, indexMetrics *resource.BleveIndexMetrics) (resource.ResourceClient, error) {
+func ProvideUnifiedStorageClient(opts *Options,
+	storageMetrics *resource.StorageMetrics,
+	indexMetrics *resource.BleveIndexMetrics,
+) (resource.ResourceClient, error) {
 	// See: apiserver.applyAPIServerConfig(cfg, features, o)
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	client, err := newClient(options.StorageOptions{
-		StorageType:        options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
-		DataPath:           apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
-		Address:            apiserverCfg.Key("address").MustString(""),
-		IndexServerAddress: apiserverCfg.Key("index_server_address").MustString(""),
-		BlobStoreURL:       apiserverCfg.Key("blob_url").MustString(""),
-		BlobThresholdBytes: apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
+		StorageType:         options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
+		DataPath:            apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
+		Address:             apiserverCfg.Key("address").MustString(""),
+		SearchServerAddress: apiserverCfg.Key("search_server_address").MustString(""),
+		BlobStoreURL:        apiserverCfg.Key("blob_url").MustString(""),
+		BlobThresholdBytes:  apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
 	if err == nil {
 		// Used to get the folder stats
@@ -83,6 +88,7 @@ func newClient(opts options.StorageOptions,
 	indexMetrics *resource.BleveIndexMetrics,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
+
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		if opts.DataPath == "" {
@@ -129,8 +135,8 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		if opts.IndexServerAddress != "" {
-			indexConn, err = newGrpcConn(opts.IndexServerAddress, metrics, features)
+		if opts.SearchServerAddress != "" {
+			indexConn, err = newGrpcConn(opts.SearchServerAddress, metrics, features)
 
 			if err != nil {
 				return nil, err
@@ -146,13 +152,50 @@ func newClient(opts options.StorageOptions,
 		}
 		return client, nil
 
-	// Use the local SQL
 	default:
 		searchOptions, err := search.NewSearchOptions(features, cfg, tracer, docs, indexMetrics)
 		if err != nil {
 			return nil, err
 		}
-		server, err := sql.NewResourceServer(db, cfg, tracer, reg, authzc, searchOptions, storageMetrics, indexMetrics, features)
+
+		serverOptions := sql.ServerOptions{
+			DB:             db,
+			Cfg:            cfg,
+			Tracer:         tracer,
+			Reg:            reg,
+			AccessClient:   authzc,
+			SearchOptions:  searchOptions,
+			StorageMetrics: storageMetrics,
+			IndexMetrics:   indexMetrics,
+			Features:       features,
+		}
+
+		if cfg.QOSEnabled {
+			qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
+			queue := scheduler.NewQueue(&scheduler.QueueOptions{
+				MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
+				Registerer:       qosReg,
+				Logger:           cfg.Logger,
+			})
+			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
+				return nil, fmt.Errorf("failed to start queue: %w", err)
+			}
+			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
+				NumWorkers: cfg.QOSNumberWorker,
+				Logger:     cfg.Logger,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to create scheduler: %w", err)
+			}
+
+			err = services.StartAndAwaitRunning(ctx, scheduler)
+			if err != nil {
+				return nil, fmt.Errorf("failed to start scheduler: %w", err)
+			}
+			serverOptions.QOSQueue = queue
+		}
+
+		server, err := sql.NewResourceServer(serverOptions)
 		if err != nil {
 			return nil, err
 		}
