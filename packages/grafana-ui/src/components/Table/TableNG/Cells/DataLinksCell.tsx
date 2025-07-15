@@ -42,13 +42,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.link,
     fontWeight: theme.typography.fontWeightMedium,
     paddingRight: theme.spacing(1.5),
-    a: {
-      color: theme.colors.text.link,
-    },
-    '&:hover': {
-      textDecoration: 'underline',
-      color: theme.colors.text.link,
-    },
   }),
   cellLinkEmpty: css({
     overflow: 'hidden',

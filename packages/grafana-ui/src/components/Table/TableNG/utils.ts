@@ -230,7 +230,6 @@ export function getAlignmentFactor(
 
 /* ------------------------- Cell color calculation ------------------------- */
 const CELL_COLOR_DARKENING_MULTIPLIER = 10;
-const CELL_GRADIENT_DARKENING_MULTIPLIER = 15;
 const CELL_GRADIENT_HUE_ROTATION_DEGREES = 5;
 
 /**

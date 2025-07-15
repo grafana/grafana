@@ -38,7 +38,6 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 import { TableCellDisplayMode } from '../types';
 import { DataLinksActionsTooltipState } from '../utils';
 
-import { getSingleLinkClass } from './Cells/AutoCell';
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellActions } from './Cells/TableCellActions';
@@ -311,7 +310,7 @@ export function TableNG(props: TableNGProps) {
         const justifyContent = getTextAlign(field);
         const footerStyles = getFooterStyles(justifyContent);
         const displayName = getDisplayName(field);
-        const headerCellClass = getHeaderCellStyles(theme, justifyContent).headerCell;
+        const headerCellClass = getHeaderCellStyles(theme, justifyContent);
         const renderFieldCell = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
@@ -331,33 +330,33 @@ export function TableNG(props: TableNGProps) {
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
+        const hasBackgroundColor = cellType === TableCellDisplayMode.ColorBackground;
+        const canBeColorized =
+          cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
 
         result.colsWithTooltip[displayName] = withTooltip;
 
         // get static cell class based on col props
 
         let cellClass = '';
-        let singleLinkClass: string | undefined;
 
         switch (cellType) {
           case TableCellDisplayMode.Auto:
           case TableCellDisplayMode.ColorBackground:
           case TableCellDisplayMode.ColorText:
+          case TableCellDisplayMode.DataLinks:
             cellClass = getCellStyles(
               theme,
+              hasBackgroundColor,
               justifyContent,
               shouldWrap,
               shouldOverflow,
-              // cellType === TableCellDisplayMode.Auto,
               withTooltip
-            ).cell;
-            singleLinkClass = getSingleLinkClass(theme, cellType);
+            );
             break;
         }
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
-        const canBeColorized =
-          cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
 
         // this fires first
         const renderCellRoot = (key: Key, props: CellRendererProps<TableRow, TableSummaryRow>): ReactNode => {
@@ -421,7 +420,6 @@ export function TableNG(props: TableNGProps) {
                 cellInspect,
                 showFilters,
                 getActions: getCellActions,
-                singleLinkClass,
               })}
               {showActions && (
                 <TableCellActions
@@ -874,8 +872,8 @@ const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
   }),
 });
 
-const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) => ({
-  headerCell: css({
+const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
+  css({
     display: 'flex',
     gap: theme.spacing(0.5),
     zIndex: theme.zIndex.tooltip - 1,
@@ -885,54 +883,50 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
     '&:last-child': {
       borderInlineEnd: 'none',
     },
-  }),
-});
+  });
 
 const getCellStyles = (
   theme: GrafanaTheme2,
+  hasBackgroundColor: boolean,
   justifyContent: Property.JustifyContent,
-  // field: Field,
-  // rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  // inheritLinkColor: boolean,
   hasTooltip: boolean
-  // colors: CellColors
-) => {
-  return {
-    cell: css({
-      display: 'flex',
-      // textOverflow: 'initial',
-      // background: colors.bgColor ?? 'inherit',
-      backgroundClip: 'padding-box !important', // only do this for bg color cells?
-      alignItems: 'center',
-      justifyContent,
-      paddingInline: TABLE.CELL_PADDING,
-      minHeight: '100%',
-      ...(shouldWrap && { whiteSpace: 'pre-line' }),
-      ...(hasTooltip && { cursor: 'pointer' }),
-      '&:last-child': {
-        borderInlineEnd: 'none',
-      },
-      // should omit if no cell actions, and no shouldOverflow
-      '&:hover': {
-        // background: colors.bgHoverColor,
-        '.table-cell-actions': {
-          display: 'flex',
-        },
-        ...(shouldOverflow && {
-          zIndex: theme.zIndex.tooltip - 2,
-          whiteSpace: 'pre-line',
-          height: 'fit-content',
-          minWidth: 'fit-content',
-          // paddingBlock: (rowHeight - TABLE.LINE_HEIGHT) / 2 - 1,
-        }),
-      },
+) =>
+  css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent,
+    paddingInline: TABLE.CELL_PADDING,
+    minHeight: '100%',
+    ...(shouldWrap && { whiteSpace: 'pre-line' }),
+    ...(hasTooltip && { cursor: 'pointer' }),
+    ...(hasBackgroundColor && {
+      backgroundClip: 'padding-box !important',
     }),
-    // ...(inheritLinkColor && {
-    //   a: {
-    //     color: 'inherit',
-    //   },
-    // }),
-  };
-};
+
+    '&:last-child': {
+      borderInlineEnd: 'none',
+    },
+
+    // should omit if no cell actions, and no shouldOverflow
+    '&:hover': {
+      '.table-cell-actions': {
+        display: 'flex',
+      },
+      ...(shouldOverflow && {
+        zIndex: theme.zIndex.tooltip - 2,
+        whiteSpace: 'pre-line',
+        height: 'fit-content',
+        minWidth: 'fit-content',
+      }),
+    },
+    a: {
+      cursor: 'pointer',
+      color: hasBackgroundColor ? 'inherit' : theme.colors.text.link,
+      textDecoration: hasBackgroundColor ? 'underline' : 'none',
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    },
+  });
