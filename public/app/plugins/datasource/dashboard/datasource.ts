@@ -15,6 +15,8 @@ import {
   FieldType,
   AdHocVariableFilter,
   MetricFindValue,
+  getValueMatcher,
+  ValueMatcherID,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
@@ -76,7 +78,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     }
 
     // Extract AdHoc filters from the request
-    const adhocFilters = options.filters || [];
+    const adHocFilters = options.filters || [];
 
     return defer(() => {
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
@@ -89,7 +91,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         debounceTime(50),
         map((result) => {
           return {
-            data: this.getDataFramesForQueryTopic(result.data, query, adhocFilters),
+            data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
@@ -146,27 +148,28 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   /**
    * Apply AdHoc filters to a DataFrame
-   * Optimized version with pre-computed field indices for better performance
+   * Optimized version with pre-computed field indices and value matchers for better performance
    */
   private applyAdHocFilters(frame: DataFrame, filters: AdHocVariableFilter[]): DataFrame {
     if (filters.length === 0 || frame.length === 0) {
       return frame;
     }
 
-    // Pre-compute field indices for better performance - O(m × f) instead of O(n × m × f)
+    // Pre-compute field indices and value matchers for better performance
     const filterFieldIndices = filters
       .map((filter) => {
         const fieldIndex = frame.fields.findIndex((f) => f.name === filter.key);
-        return { filter, fieldIndex };
+        return { filter, fieldIndex, matcher: this.createValueMatcher(filter, fieldIndex, frame) };
       })
-      .filter(({ filter, fieldIndex }) => {
+      .filter(({ filter, fieldIndex, matcher }) => {
         // If field is not present:
         // - Keep filters with '=' operator (will always be false - reject rows)
         // - Remove filters with '!=' operator (will always be true - no effect)
         if (fieldIndex === -1) {
           return filter.operator === '=';
         }
-        return true;
+        // Only keep filters with valid matchers
+        return matcher !== null;
       });
 
     // If no filters remain after optimization, return original frame
@@ -184,17 +187,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     // Check each row to see if it matches all filters (AND logic)
     for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-      const rowMatches = filterFieldIndices.every(({ filter, fieldIndex }) => {
-        // Handle case where field doesn't exist (fieldIndex === -1)
-        if (fieldIndex === -1) {
-          return this.compareUnsupportedValues(null, filter);
-        }
-
+      const rowMatches = filterFieldIndices.every(({ matcher, fieldIndex }) => {
         const field = frame.fields[fieldIndex];
-        const fieldValue = field.values[rowIndex];
 
-        // Use unified evaluation method that dispatches based on field type
-        return this.evaluateFilter(fieldValue, filter, field.type);
+        // Use Grafana's value matcher system
+        return matcher?.(rowIndex, field, frame, [frame]) ?? false;
       });
 
       if (rowMatches) {
@@ -202,100 +199,55 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       }
     }
 
+    // Early return if no filtering occurred
+    if (matchingRows.size === frame.length) {
+      return frame;
+    }
+
     return this.reconstructDataFrame(frame, matchingRows);
   }
 
   /**
-   * Evaluate a filter against a field value - unified method that dispatches based on field type
+   * Create a value matcher from an AdHoc filter
    */
-  private evaluateFilter(fieldValue: unknown, filter: AdHocVariableFilter, fieldType: FieldType): boolean {
-    // Handle null/undefined values consistently across all types
-    if (fieldValue == null) {
-      return filter.operator === '!=' && filter.value !== '';
+  private createValueMatcher(filter: AdHocVariableFilter, fieldIndex: number, frame: DataFrame) {
+    // Return null for missing fields - they are handled separately
+    if (fieldIndex === -1) {
+      return null;
     }
 
-    // Dispatch to type-specific comparison logic
-    const compareFn = this.getComparisonFunction(fieldType);
-    return compareFn(fieldValue, filter);
-  }
+    const field = frame.fields[fieldIndex];
 
-  /**
-   * Get the appropriate comparison function based on field type
-   */
-  private getComparisonFunction(fieldType: FieldType) {
-    switch (fieldType) {
-      case FieldType.string:
-        return this.compareStringValues;
-      case FieldType.number:
-        return this.compareNumericValues;
-      // Easy to extend for future types:
-      // case FieldType.time:
-      //   return this.compareDateValues;
-      default:
-        return this.compareUnsupportedValues; // Skip unknown types
+    // Only support string and numeric fields when feature toggle is enabled
+    if (config.featureToggles.dashboardDsAdHocFiltering) {
+      if (field.type !== FieldType.string && field.type !== FieldType.number) {
+        return null;
+      }
     }
-  }
 
-  /**
-   * Compare string field values
-   */
-  private compareStringValues = (fieldValue: unknown, filter: AdHocVariableFilter): boolean => {
-    const filterValue = filter.value;
-
+    // Map operator to matcher ID
+    let matcherId: ValueMatcherID;
     switch (filter.operator) {
       case '=':
-        return fieldValue === filterValue;
+        matcherId = ValueMatcherID.equal;
+        break;
       case '!=':
-        return fieldValue !== filterValue;
+        matcherId = ValueMatcherID.notEqual;
+        break;
       default:
-        // Unknown operator, reject all rows
-        return false;
-    }
-  };
-
-  /**
-   * Compare numeric field values (integers and floats)
-   */
-  private compareNumericValues = (fieldValue: unknown, filter: AdHocVariableFilter): boolean => {
-    // Parse filter value as a number
-    const filterValue = parseFloat(filter.value);
-
-    // If filter value is not a valid number, reject all rows
-    if (isNaN(filterValue)) {
-      return false;
+        return null; // Unknown operator
     }
 
-    // Ensure field value is a number
-    const numericFieldValue = typeof fieldValue === 'number' ? fieldValue : parseFloat(String(fieldValue));
-
-    // If field value is not a valid number, reject all rows
-    if (isNaN(numericFieldValue)) {
-      return false;
+    try {
+      return getValueMatcher({
+        id: matcherId,
+        options: { value: filter.value },
+      });
+    } catch (error) {
+      console.warn('Failed to create value matcher for filter:', filter, error);
+      return null;
     }
-
-    switch (filter.operator) {
-      case '=':
-        return numericFieldValue === filterValue;
-      case '!=':
-        return numericFieldValue !== filterValue;
-      // Easy to add more operators:
-      // case '>':
-      //   return numericFieldValue > filterValue;
-      // case '<':
-      //   return numericFieldValue < filterValue;
-      default:
-        // Unknown operator, reject all rows
-        return false;
-    }
-  };
-
-  /**
-   * Handle unsupported field types
-   */
-  private compareUnsupportedValues = (_fieldValue: unknown, _filter: AdHocVariableFilter): boolean => {
-    // unknown field type, reject all rows
-    return false;
-  };
+  }
 
   /**
    * Reconstruct DataFrame with only matching rows
@@ -303,7 +255,12 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
    */
   private reconstructDataFrame(frame: DataFrame, matchingRows: Set<number>): DataFrame {
     const fields: Field[] = frame.fields.map((field) => {
-      const newValues = Array.from(matchingRows, (rowIndex) => field.values[rowIndex]);
+      // Pre-allocate array and use direct assignment for better performance with large datasets
+      const newValues = new Array(matchingRows.size);
+      let i = 0;
+      for (const rowIndex of matchingRows) {
+        newValues[i++] = field.values[rowIndex];
+      }
 
       return {
         ...field,
