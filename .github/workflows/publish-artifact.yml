@@ -66,3 +66,4 @@ jobs:
           path: out
           bucket_path: ${{ inputs.bucket-path }}
           service_account: ${{ inputs.service-account }}
+          gzip: false
