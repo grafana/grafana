@@ -197,6 +197,14 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
+func useAppPlatformSecrets(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles,
+		featuremgmt.FlagProvisioningSecretsService,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+		featuremgmt.FlagSecretsManagementAppPlatform,
+	)
+}
+
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
