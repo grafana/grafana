@@ -52,7 +52,7 @@ export function LabelsFieldInForm({ onEditClick }: LabelsFieldInFormProps) {
               title={t('alerting.labels-field-in-form.title-labels', 'Labels')}
             />
           </Stack>
-          {isGrafanaManaged && AIImproveLabelsButtonComponent && <AIImproveLabelsButtonComponent />}
+          {isGrafanaManaged && <AIImproveLabelsButtonComponent />}
         </Stack>
       </Stack>
       <Stack direction="row" gap={1} alignItems="center">

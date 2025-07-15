@@ -210,9 +210,9 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Use experimental git library for provisioning
+  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
   */
-  nanoGit?: boolean;
+  provisioningSecretsService?: boolean;
   /**
   * Start an additional https handler and write kubectl options
   */
@@ -738,11 +738,6 @@ export interface FeatureToggles {
   */
   crashDetection?: boolean;
   /**
-  * Enables querying the Jaeger data source without the proxy
-  * @default true
-  */
-  jaegerBackendMigration?: boolean;
-  /**
   * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
   * @default true
   */
@@ -966,6 +961,10 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables creating alerts from Tempo data source
+  */
+  tempoAlerting?: boolean;
   /**
   * Enables auto-updating of users installed plugins
   */

@@ -1,7 +1,17 @@
-import { ComponentType } from 'react';
+import { ComponentType, createElement } from 'react';
 
-export let AIAlertRuleButtonComponent: ComponentType<{}> | null = null;
+export interface GenAIAlertRuleButtonProps {}
 
-export function addAIAlertRuleButton(component: ComponentType<{}> | null) {
-  AIAlertRuleButtonComponent = component;
+// Internal variable to store the actual component
+let InternalAIAlertRuleButtonComponent: ComponentType<GenAIAlertRuleButtonProps> | null = null;
+
+export const AIAlertRuleButtonComponent: ComponentType<GenAIAlertRuleButtonProps> = (props) => {
+  if (!InternalAIAlertRuleButtonComponent) {
+    return null;
+  }
+  return createElement(InternalAIAlertRuleButtonComponent, props);
+};
+
+export function addAIAlertRuleButton(component: ComponentType<GenAIAlertRuleButtonProps> | null) {
+  InternalAIAlertRuleButtonComponent = component;
 }

@@ -131,11 +131,10 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
     <Stack direction="column" gap={0}>
       <div className={styles.headerContainer}>
         <ListHeader />
-        {AITriageButtonComponent && (
-          <div className={styles.triageButtonContainer}>
-            <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} className={styles.triageButton} />
-          </div>
-        )}
+
+        <div className={styles.triageButtonContainer}>
+          <AITriageButtonComponent logRecords={logRecords} timeRange={timeRange} />
+        </div>
       </div>
       <ul>
         {pageItems.map((record) => {
@@ -158,28 +157,26 @@ function HistoryLogEvents({ logRecords, addFilter, timeRange }: HistoryLogEvents
 function ListHeader() {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.headerWrapper}>
-      <div className={styles.mainHeader}>
-        <div className={styles.timeCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.timestamp">Timestamp</Trans>
-          </Text>
-        </div>
-        <div className={styles.transitionCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.state">State</Trans>
-          </Text>
-        </div>
-        <div className={styles.alertNameCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.alert-rule">Alert rule</Trans>
-          </Text>
-        </div>
-        <div className={styles.labelsCol}>
-          <Text variant="body">
-            <Trans i18nKey="alerting.central-alert-history.details.header.instance">Instance</Trans>
-          </Text>
-        </div>
+    <div className={styles.mainHeader}>
+      <div className={styles.timeCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.timestamp">Timestamp</Trans>
+        </Text>
+      </div>
+      <div className={styles.transitionCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.state">State</Trans>
+        </Text>
+      </div>
+      <div className={styles.alertNameCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.alert-rule">Alert rule</Trans>
+        </Text>
+      </div>
+      <div className={styles.labelsCol}>
+        <Text variant="body">
+          <Trans i18nKey="alerting.central-alert-history.details.header.instance">Instance</Trans>
+        </Text>
       </div>
     </div>
   );
@@ -492,9 +489,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         cursor: 'pointer',
       },
     }),
-    headerWrapper: css({
-      // Remove border since it's now on headerContainer
-    }),
     mainHeader: css({
       display: 'flex',
       flexDirection: 'row',
@@ -512,9 +506,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     triageButtonContainer: css({
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
-    }),
-    triageButton: css({
-      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 };

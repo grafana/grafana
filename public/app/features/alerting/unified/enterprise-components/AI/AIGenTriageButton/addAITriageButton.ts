@@ -1,17 +1,23 @@
-import { ComponentType } from 'react';
+import { ComponentType, createElement } from 'react';
 
 import { TimeRange } from '@grafana/data';
 
 import { LogRecord } from '../../../components/rules/state-history/common';
 
 export interface GenAITriageButtonProps {
-  className?: string;
   logRecords: LogRecord[];
   timeRange: TimeRange;
 }
 
-export let AITriageButtonComponent: ComponentType<GenAITriageButtonProps> | null = null;
+export let InternalAITriageButtonComponent: ComponentType<GenAITriageButtonProps> | null = null;
+
+export const AITriageButtonComponent: ComponentType<GenAITriageButtonProps> = (props) => {
+  if (!InternalAITriageButtonComponent) {
+    return null;
+  }
+  return createElement(InternalAITriageButtonComponent, props);
+};
 
 export function addAITriageButton(component: ComponentType<GenAITriageButtonProps> | null) {
-  AITriageButtonComponent = component;
+  InternalAITriageButtonComponent = component;
 }

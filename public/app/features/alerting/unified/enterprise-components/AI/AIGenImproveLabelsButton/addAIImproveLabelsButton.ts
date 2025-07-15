@@ -1,7 +1,17 @@
-import { ComponentType } from 'react';
+import { ComponentType, createElement } from 'react';
 
-export let AIImproveLabelsButtonComponent: ComponentType<{}> | null = null;
+export interface GenAIImproveLabelsButtonProps {}
 
-export function addAIImproveLabelsButton(component: ComponentType<{}> | null) {
-  AIImproveLabelsButtonComponent = component;
+// Internal variable to store the actual component
+let InternalAIImproveLabelsButtonComponent: ComponentType<GenAIImproveLabelsButtonProps> | null = null;
+
+export const AIImproveLabelsButtonComponent: ComponentType<GenAIImproveLabelsButtonProps> = (props) => {
+  if (!InternalAIImproveLabelsButtonComponent) {
+    return null;
+  }
+  return createElement(InternalAIImproveLabelsButtonComponent, props);
+};
+
+export function addAIImproveLabelsButton(component: ComponentType<GenAIImproveLabelsButtonProps> | null) {
+  InternalAIImproveLabelsButtonComponent = component;
 }
