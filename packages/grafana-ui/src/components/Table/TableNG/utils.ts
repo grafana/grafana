@@ -152,34 +152,36 @@ export function shouldTextOverflow(field: Field): boolean {
   return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
 }
 
+// we only want to infer justifyContent and textAlign for these cellTypes
+const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
+  TableCellDisplayMode.Auto,
+  TableCellDisplayMode.ColorText,
+  TableCellDisplayMode.ColorBackground,
+]);
+
 /**
  * @internal
- * Returns the text-align value for a inline-displayedd field based on its type and configuration.
+ * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
  */
 export function getTextAlign(field?: Field): Property.TextAlign {
   if (!field) {
     return 'inherit';
   }
 
-  if (field.config.custom) {
-    const custom: TableFieldOptionsType = field.config.custom;
-
-    switch (custom.align) {
-      case 'right':
-        return 'right';
-      case 'left':
-        return 'left';
-      case 'center':
-        return 'center';
-    }
+  const custom: TableFieldOptionsType = field.config.custom;
+  if (custom.align && custom.align !== 'auto') {
+    return (
+      (
+        {
+          right: 'right',
+          left: 'left',
+          center: 'center',
+        } as const
+      )[custom.align] ?? 'inherit'
+    );
   }
 
-  // Data links cells should use default alignment
-  if (getCellOptions(field).type === TableCellDisplayMode.DataLinks) {
-    return 'inherit';
-  }
-
-  if (field.type === FieldType.number) {
+  if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
     return 'right';
   }
 
@@ -195,25 +197,20 @@ export function getJustifyContent(field?: Field): Property.JustifyContent {
     return 'flex-start';
   }
 
-  if (field.config.custom) {
-    const custom: TableFieldOptionsType = field.config.custom;
-
-    switch (custom.align) {
-      case 'right':
-        return 'flex-end';
-      case 'left':
-        return 'flex-start';
-      case 'center':
-        return 'center';
-    }
+  const custom: TableFieldOptionsType = field.config.custom;
+  if (custom.align && custom.align !== 'auto') {
+    return (
+      (
+        {
+          right: 'flex-end',
+          left: 'flex-start',
+          center: 'center',
+        } as const
+      )[custom.align] ?? 'flex-start'
+    );
   }
 
-  // Data links cells should use default justification
-  if (getCellOptions(field).type === TableCellDisplayMode.DataLinks) {
-    return 'flex-start';
-  }
-
-  if (field.type === FieldType.number) {
+  if (TEXT_CELL_TYPES.has(getCellOptions(field).type) && field.type === FieldType.number) {
     return 'flex-end';
   }
 
