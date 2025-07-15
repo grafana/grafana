@@ -5,7 +5,7 @@ import { DataSourceApi, getDefaultTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/plugin-ui';
 
-import promqlGrammar from '../../../promql';
+import { promqlGrammar } from '../../../promql';
 import { getInitHints } from '../../../query_hints';
 import { buildVisualQueryFromString } from '../../parsing';
 import { OperationExplainedBox } from '../../shared/OperationExplainedBox';
