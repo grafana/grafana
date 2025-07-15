@@ -16,11 +16,11 @@ import {
   PluginExtensionPoints,
   ExtensionInfo,
 } from '@grafana/data';
-import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
+import { reportInteraction, config, AppPluginConfig, openExtensionSidebar } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import { ExtensionsLog, log as baseLog } from './logs/log';
@@ -533,13 +533,7 @@ export function getLinkExtensionOnClick(
         context,
         openModal: createOpenModalFunction(config),
         openSidebar: (componentTitle, context) => {
-          appEvents.publish(
-            new OpenExtensionSidebarEvent({
-              props: context,
-              pluginId,
-              componentTitle,
-            })
-          );
+          openExtensionSidebar(pluginId, componentTitle, context);
         },
       };
 

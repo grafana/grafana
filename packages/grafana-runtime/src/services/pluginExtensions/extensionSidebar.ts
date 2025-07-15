@@ -26,7 +26,7 @@ export class OpenExtensionSidebarEvent extends BusEventWithPayload<OpenExtension
  * @param componentTitle - The title of the component to open the sidebar for.
  * @param props - The props to pass to the component.
  */
-export function openExtensionSidebar(pluginId: string, componentTitle: string, props: Record<string, unknown>) {
+export function openExtensionSidebar(pluginId: string, componentTitle: string, props?: Record<string, unknown>) {
   const event = new OpenExtensionSidebarEvent({
     pluginId,
     componentTitle,
