@@ -31,7 +31,7 @@ export const GenAISuggestionsDrawer = ({
       size="lg"
       title={<Trans i18nKey="sql-expressions.sql-suggestion-history">SQL Suggestion History</Trans>}
     >
-      <div className={styles.content}>
+      <div className={styles.content} data-testid="suggestions-drawer">
         <Stack direction="column" gap={3}>
           <div className={styles.suggestionsList}>
             {suggestions.map((suggestion, index) => {

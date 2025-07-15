@@ -14,7 +14,7 @@ export const SuggestionsBadge = ({ suggestions, handleOpenDrawer, hasUnseenSugge
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.buttonWrapper}>
+    <div className={styles.buttonWrapper} data-testid="suggestions-badge">
       <Button variant="secondary" fill="outline" size="sm" onClick={handleOpenDrawer} icon="list-ol">
         <Stack direction="row" gap={1} alignItems="center">
           <Trans i18nKey="sql-expressions.suggestions">Suggestions</Trans>
@@ -25,7 +25,7 @@ export const SuggestionsBadge = ({ suggestions, handleOpenDrawer, hasUnseenSugge
           </span>
         </Stack>
       </Button>
-      {hasUnseenSuggestions && <span className={styles.newDot} />}
+      {hasUnseenSuggestions && <span className={styles.newDot} data-testid="suggestions-badge-dot" />}
     </div>
   );
 };

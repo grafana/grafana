@@ -86,7 +86,7 @@ const EDITOR_LANGUAGE_DEFINITION: LanguageDefinition = {
   // formatter: to format the SQL query and dashboard variables
 };
 
-interface Props {
+export interface SqlExprProps {
   refIds: Array<SelectableValue<string>>;
   query: SqlExpressionQuery;
   onChange: (query: SqlExpressionQuery) => void;
@@ -95,7 +95,7 @@ interface Props {
   panelId?: string;
 }
 
-export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: Props) => {
+export const SqlExpr = ({ onChange, refIds, query, alerting = false, panelId }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
   const initialQuery = `SELECT *
   FROM ${vars[0]}

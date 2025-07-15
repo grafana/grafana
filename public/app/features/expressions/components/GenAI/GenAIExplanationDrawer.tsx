@@ -23,7 +23,7 @@ export const GenAIExplanationDrawer = ({ isOpen, onClose, explanation }: AIExpla
       size="md"
       title={<Trans i18nKey="sql-expressions.explanation-modal-title">SQL Query Explanation</Trans>}
     >
-      <div className={styles.content}>
+      <div className={styles.content} data-testid="explanation-drawer">
         <Stack direction="column" gap={3}>
           <div className={styles.explanationContainer}>
             <Card noMargin>
