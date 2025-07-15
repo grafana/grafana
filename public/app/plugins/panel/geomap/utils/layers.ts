@@ -138,7 +138,7 @@ export async function initLayer(
     // UID, // unique name when added to the map (it may change and will need special handling)
     isBasemap,
     options,
-    layer: layer,
+    layer,
     handler,
     mouseEvents: new Subject<FeatureLike | undefined>(),
 

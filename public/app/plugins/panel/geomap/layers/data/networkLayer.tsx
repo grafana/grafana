@@ -89,7 +89,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorImage({
-      source: source,
+      source
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 
