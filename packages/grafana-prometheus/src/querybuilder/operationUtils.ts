@@ -243,7 +243,7 @@ export function createAggregationOperationWithParam(
   return operations;
 }
 
-export function getAggregationByRenderer(aggregation: string) {
+function getAggregationByRenderer(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     return `${aggregation} by(${model.params.join(', ')}) (${innerExpr})`;
   };
@@ -258,7 +258,7 @@ function getAggregationWithoutRenderer(aggregation: string) {
 /**
  * Very simple poc implementation, needs to be modified to support all aggregation operators
  */
-export function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
+function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without' | '') {
   return function aggregationExplainer(model: QueryBuilderOperation) {
     const labels = model.params.map((label) => `\`${label}\``).join(' and ');
     const labelWord = pluralize('label', model.params.length);
@@ -289,7 +289,7 @@ function getAggregationByRendererWithParameter(aggregation: string) {
 /**
  * This function will transform operations without labels to their plan aggregation operation
  */
-export function getLastLabelRemovedHandler(changeToOperationId: string) {
+function getLastLabelRemovedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
     // If definition has more params then is defined there are no optional rest params anymore.
     // We then transform this operation into a different one
@@ -304,7 +304,7 @@ export function getLastLabelRemovedHandler(changeToOperationId: string) {
   };
 }
 
-export function getOnLabelAddedHandler(changeToOperationId: string) {
+function getOnLabelAddedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
     // Check if we actually have the label param. As it's optional the aggregation can have one less, which is the
     // case of just simple aggregation without label. When user adds the label it now has the same number of params
