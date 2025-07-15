@@ -16,7 +16,6 @@ use (
 	./apps/shorturl
 	./pkg/aggregator
 	./pkg/apimachinery
-	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
 	./pkg/apiserver
 	./pkg/build
 	./pkg/build/wire // skip:golangci-lint
