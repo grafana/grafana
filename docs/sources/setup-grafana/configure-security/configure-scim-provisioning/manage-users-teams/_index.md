@@ -120,6 +120,95 @@ For users who don't yet exist in Grafana:
 
 SCIM handles user synchronization but not role assignments. Role management is handled through [Role Sync](../../configure-authentication/saml#configure-role-sync), and any role changes take effect during user authentication.
 
+## Migrating existing users to SCIM provisioning
+
+If you have an existing Grafana instance with manually created users and want to migrate to IDP-based SCIM provisioning, you can leverage the SCIM identification mechanism to seamlessly link existing users with their IDP identities.
+
+### Migration overview
+
+The migration process uses the same [user identification mechanism](#how-scim-identifies-users) described earlier, but focuses on linking existing Grafana users with their corresponding IDP identities rather than creating new users.
+
+**Key benefits of this approach:**
+
+- Preserves all existing user settings, dashboards, and permissions
+- No disruption to user access during migration
+- Gradual migration possible (users can be migrated in batches)
+- Maintains audit trails and historical data
+
+### Migration steps
+
+1. **Prepare the identity provider:**
+
+   - Ensure all existing Grafana users have corresponding accounts in your IDP
+   - Verify that the unique identifier field (e.g., email, username, or object ID) matches between systems
+   - Configure SCIM application in your IDP but don't assign users yet
+
+2. **Configure SCIM in Grafana:**
+
+   - Set up SCIM endpoint and authentication as described in [Configure SCIM in Grafana](../../configure-scim-provisioning#configure-scim-in-grafana)
+   - Enable `user_sync_enabled = true`
+   - Configure the unique identifier field to match your IDP setup
+
+3. **Test the matching mechanism:**
+
+   - Use the SCIM API to verify that existing users can be found using the unique identifier:
+
+   ```bash
+   curl --location 'https://{$GRAFANA_URL}/apis/scim.grafana.app/v0alpha1/namespaces/{$STACK_ID}/Users?filter=userName eq "existing.user@company.com"' \
+   --header 'Authorization: Bearer glsa_xxxxxxxxxxxxxxxxxxxxxxxx'
+   ```
+
+   - This should return exactly one user record for each existing user
+
+4. **Assign users in the IDP:**
+
+   - Begin assigning existing users to the Grafana application in your IDP
+   - The SCIM identification process will automatically link existing Grafana users with their IDP identities
+   - Monitor the process for any conflicts or errors
+
+5. **Verify the migration:**
+   - Check that users can still access Grafana with their existing permissions
+   - Verify that SAML/SSO login works correctly for migrated users
+   - Ensure External ID is properly set for each migrated user
+
+### Migration considerations
+
+**Before migration:**
+
+- **Backup your Grafana database** - Always have a recovery plan
+- **Audit existing users** - Document current user accounts and their access levels
+- **Plan for exceptions** - Some users might need manual intervention if unique identifiers don't match
+
+**During migration:**
+
+- **Monitor logs** - Watch for SCIM errors or conflicts during the linking process
+- **Batch processing** - Consider migrating users in small batches to identify issues early
+- **Communication** - Inform users about the migration timeline and any required actions
+
+**After migration:**
+
+- **Disable manual provisioning** - Prevent new users from being created outside of SCIM
+- **Update documentation** - Ensure team procedures reflect the new IDP-based workflow
+- **Regular audits** - Periodically verify that IDP and Grafana users remain in sync
+
+### Troubleshooting migration issues
+
+**Multiple users found for unique identifier:**
+
+- Review your unique identifier field configuration
+- Check for duplicate accounts in Grafana or the IDP
+- Consider using a more specific identifier (e.g., object ID instead of email)
+
+**User not found during lookup:**
+
+- Verify the unique identifier value matches exactly between systems
+- Check that the user exists in both Grafana and the IDP
+
+**Authentication failures after migration:**
+
+- Confirm the SAML assertion `assertion_attribute_external_uid` includes the correct unique identifier
+- Verify that your SAML configuration uses the same unique identifier for both SCIM and SAML authentication
+
 ## Team provisioning with SCIM
 
 SCIM provides automated team management capabilities that go beyond what Team Sync offers. While Team Sync only maps identity provider groups to existing Grafana teams, SCIM can automatically create and delete teams based on group changes in the identity provider.
