@@ -46,6 +46,7 @@ func TestQueryAPI(t *testing.T) {
 		headers        map[string]string
 		expectedStatus int
 		testdataFile   string
+		stubbedFrame   *data.Frame
 	}{
 		{
 			name: "single prometheus query",
@@ -67,30 +68,70 @@ func TestQueryAPI(t *testing.T) {
 			}`,
 			expectedStatus: http.StatusOK,
 			testdataFile:   "single_prometheus_query.json",
+			stubbedFrame: data.NewFrame("",
+				data.NewField("Time", nil, []time.Time{time.Unix(1704067200, 0)}),
+				data.NewField("Value", nil, []float64{7.0}),
+			),
 		},
+
 		{
-			name: "prometheus query with sql expression",
+			name: "prometheus query with server side expression",
 			queryJSON: `{
 				"queries": [
 					{
-					"datasource": {
-						"type": "prometheus",
-						"uid": "demo-prom"
-					},
-					"expr": "1 + 2",
-					"range": false,
-					"instant": true,
-					"refId": "A",
-					"hidden": true
+				      	"refId": "A",
+						"datasource": {
+							"type": "prometheus",
+							"uid": "demo-prom"
+						},
+						"expr": "7",
+						"range": false,
+						"instant": true,
+						"hide": true
 					},
 					{
-					"datasource": {
-						"uid": "__expr__",
-						"type": "__expr__"
+						"refId": "B",
+						"datasource": {
+							"uid": "__expr__",
+							"type": "__expr__"
+						},
+						"type": "math",
+						"expression": "$A * 3"
+					}
+				],
+				"from": "now-1h",
+				"to": "now"
+			}`,
+			testdataFile:   "prometheus_with_sse.json",
+			expectedStatus: http.StatusOK,
+			stubbedFrame: data.NewFrame("",
+				data.NewField("Value", nil, []float64{7.0}),
+			),
+		},
+
+		{
+			name: "prometheus query with sql expression and hidden prom query",
+			queryJSON: `{
+				"queries": [
+					{
+						"datasource": {
+							"type": "prometheus",
+							"uid": "demo-prom"
+						},
+						"expr": "1 + 2",
+						"range": false,
+						"instant": true,
+						"refId": "A",
+						"hidden": true
 					},
-					"type": "sql",
-					"expression": "Select Value + 10 from A;",
-					"refId": "B"
+					{
+						"datasource": {
+							"uid": "__expr__",
+							"type": "__expr__"
+						},
+						"type": "sql",
+						"expression": "Select Value + 10 from A;",
+						"refId": "B"
 					}
 				],
 				"from": "now-1h",
@@ -98,6 +139,10 @@ func TestQueryAPI(t *testing.T) {
 			}`,
 			testdataFile:   "prometheus_with_sql_expression.json",
 			expectedStatus: http.StatusOK,
+			stubbedFrame: data.NewFrame("",
+				data.NewField("Time", nil, []time.Time{time.Unix(1704067200, 0)}),
+				data.NewField("Value", nil, []float64{7.0}),
+			),
 		},
 	}
 
@@ -110,9 +155,11 @@ func TestQueryAPI(t *testing.T) {
 					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
 					Tracer:   tracing.InitializeTracerForTest(),
 				},
-				clientSupplier: mockClientSupplier{},
-				tracer:         tracing.InitializeTracerForTest(),
-				log:            log.New("test"),
+				clientSupplier: mockClientSupplier{
+					stubbedFrame: tc.stubbedFrame,
+				},
+				tracer: tracing.InitializeTracerForTest(),
+				log:    log.New("test"),
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/some-path", bytes.NewReader([]byte(tc.queryJSON)))
@@ -196,10 +243,13 @@ func (m *mockResponder) Error(err error) {
 }
 
 type mockClientSupplier struct {
+	stubbedFrame *data.Frame
 }
 
 func (m mockClientSupplier) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
-	mclient := mockClient{}
+	mclient := mockClient{
+		stubbedFrame: m.stubbedFrame,
+	}
 	return mclient, nil
 }
 
@@ -212,16 +262,14 @@ func (m mockClientSupplier) GetInstanceConfigurationSettings(ctx context.Context
 
 type mockClient struct {
 	lastCalledWithHeaders *map[string]string
+	stubbedFrame          *data.Frame
 }
 
 func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	responses := make(backend.Responses)
 	for i := range req.Queries {
 		refID := req.Queries[i].RefID
-		frame := data.NewFrame("",
-			data.NewField("Time", nil, []time.Time{time.Unix(1704067200, 0)}), // Jan 1, 2024 00:00:00 UTC
-			data.NewField("Value", nil, []float64{7.0}),
-		)
+		frame := m.stubbedFrame
 		frame.RefID = refID
 		responses[refID] = backend.DataResponse{
 			Status: backend.StatusOK,
