@@ -19,7 +19,7 @@ func TestService_resolveScopeMap(t *testing.T) {
 		want     map[string]bool
 	}{
 		{
-			name: "resolve team IDs to team UIDs",
+			name: "Should resolve team IDs to team UIDs",
 			ns:   types.NamespaceInfo{Value: "org-2", OrgID: 2},
 			scopeMap: map[string]bool{
 				"teams:id:1": true,
