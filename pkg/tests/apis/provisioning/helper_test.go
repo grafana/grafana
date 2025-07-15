@@ -2,10 +2,7 @@ package provisioning
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -13,7 +10,6 @@ import (
 	"text/template"
 	"time"
 
-	gh "github.com/google/go-github/v70/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -201,6 +197,13 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
 }
 
+func useAppPlatformSecrets(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles,
+		featuremgmt.FlagProvisioningSecretsService,
+		featuremgmt.FlagSecretsManagementAppPlatform,
+	)
+}
+
 func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper {
 	provisioningPath := t.TempDir()
 	opts := testinfra.GrafanaOpts{
@@ -224,20 +227,8 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	}
 	helper := apis.NewK8sTestHelper(t, opts)
 
-	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatchHandler(ghmock.GetUser, ghAlwaysWrite(t, &gh.User{})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, ghAlwaysWrite(t, []*gh.Hook{})),
-		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, ghAlwaysWrite(t, &gh.Hook{})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposByOwnerByRepo, ghAlwaysWrite(t, &gh.Repository{})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposBranchesByOwnerByRepoByBranch, ghAlwaysWrite(t, &gh.Branch{})),
-		ghmock.WithRequestMatchHandler(ghmock.GetReposGitTreesByOwnerByRepoByTreeSha, ghAlwaysWrite(t, &gh.Tree{})),
-		ghmock.WithRequestMatchHandler(
-			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			}),
-		),
-	)
+	// FIXME: keeping this line here to keep the dependency around until we have tests which use this again.
+	helper.GetEnv().GitHubFactory.Client = ghmock.NewMockedHTTPClient()
 
 	repositories := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -310,33 +301,6 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	}
 }
 
-func ghAlwaysWrite(t *testing.T, body any) http.HandlerFunc {
-	marshalled := ghmock.MustMarshal(body)
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, err := w.Write(marshalled)
-		require.NoError(t, err, "failed to write body in mock")
-	})
-}
-
-func ghHandleTree(t *testing.T, refs map[string][]*gh.TreeEntry) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sha := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
-		require.NotEmpty(t, sha, "sha path parameter was missing?")
-
-		entries := refs[sha]
-		require.NotNil(t, entries, "no entries for sha %s", sha)
-
-		tree := &gh.Tree{
-			SHA:       gh.Ptr(sha),
-			Truncated: gh.Ptr(false),
-			Entries:   entries,
-		}
-
-		_, err := w.Write(ghmock.MustMarshal(tree))
-		require.NoError(t, err, "failed to write body in mock")
-	})
-}
-
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
 	v, _, err := unstructured.NestedString(obj, fields...)
 	if err != nil {
@@ -350,15 +314,6 @@ func asJSON(obj any) []byte {
 	return jj
 }
 
-func treeEntryDir(dirName string, sha string) *gh.TreeEntry {
-	return &gh.TreeEntry{
-		SHA:  gh.Ptr(sha),
-		Path: gh.Ptr(dirName),
-		Type: gh.Ptr("tree"),
-		Mode: gh.Ptr("040000"),
-	}
-}
-
 func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *provisioning.Repository {
 	bytes, err := obj.MarshalJSON()
 	require.NoError(t, err)
@@ -368,34 +323,4 @@ func unstructuredToRepository(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return repo
-}
-
-func treeEntry(fpath string, content []byte) *gh.TreeEntry {
-	sha := sha256.Sum256(content)
-
-	return &gh.TreeEntry{
-		SHA:     gh.Ptr(hex.EncodeToString(sha[:])),
-		Path:    gh.Ptr(fpath),
-		Size:    gh.Ptr(len(content)),
-		Type:    gh.Ptr("blob"),
-		Mode:    gh.Ptr("100644"),
-		Content: gh.Ptr(string(content)),
-	}
-}
-
-func repoContent(fpath string, content []byte) *gh.RepositoryContent {
-	sha := sha256.Sum256(content)
-	typ := "blob"
-	if strings.HasSuffix(fpath, "/") {
-		typ = "tree"
-	}
-
-	return &gh.RepositoryContent{
-		SHA:     gh.Ptr(hex.EncodeToString(sha[:])),
-		Name:    gh.Ptr(path.Base(fpath)),
-		Path:    &fpath,
-		Size:    gh.Ptr(len(content)),
-		Type:    &typ,
-		Content: gh.Ptr(string(content)),
-	}
 }

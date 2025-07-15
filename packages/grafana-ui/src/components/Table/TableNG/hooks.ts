@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { Column, DataGridProps, SortColumn } from 'react-data-grid';
+import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
+import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
 import { varPreLine } from 'uwrap';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
@@ -503,9 +503,13 @@ export function useRowHeight({
           return 0;
         }
 
-        // Ensure we have a minimum height (defaultHeight) for the nested table even if data is empty
         const rowCount = row.data?.length ?? 0;
-        return Math.max(defaultHeight, defaultHeight * rowCount + headerHeight);
+        if (rowCount === 0) {
+          return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
+        }
+
+        const nestedHeaderHeight = row.data?.meta?.custom?.noHeader ? 0 : defaultHeight;
+        return Math.max(defaultHeight, defaultHeight * rowCount + nestedHeaderHeight + TABLE.CELL_PADDING * 2);
       }
 
       // regular rows
@@ -519,7 +523,6 @@ export function useRowHeight({
     fields,
     hasNestedFrames,
     hasWrappedCols,
-    headerHeight,
     maxWrapCellOptions,
     colWidths,
   ]);
@@ -604,4 +607,18 @@ export function useSingleLink(field: Field, rowIdx: number): LinkModel | undefin
   const actionsCount = field.config.actions?.length ?? 0;
   const shouldShowLink = linksCount === 1 && actionsCount === 0;
   return useMemo(() => (shouldShowLink ? (getCellLinks(field, rowIdx) ?? []) : [])[0], [field, shouldShowLink, rowIdx]);
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle>, height: number, renderedRows: TableRow[]) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = ref.current?.element;
+
+    if (el) {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    }
+  }, [ref, height, renderedRows]);
+
+  return scrollbarWidth;
 }

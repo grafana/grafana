@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { camelCase, groupBy } from 'lodash';
-import { startTransition, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, startTransition, useCallback, useMemo, useRef, useState } from 'react';
 
 import { DataFrameType, GrafanaTheme2, store } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -13,17 +13,17 @@ import { createLogLineLinks } from '../logParser';
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsHeader } from './LogLineDetailsHeader';
+import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
   log: LogListModel;
-  logOptionsStorageKey?: string;
   logs: LogListModel[];
 }
 
-export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields, setDisplayedFields } = useLogListContext();
+export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsComponentProps) => {
+  const { displayedFields, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
@@ -103,7 +103,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
           isOpen={logLineOpen}
           onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
         >
-          <div className={styles.logLineWrapper}>{log.raw}</div>
+          <LogLineDetailsLog log={log} />
         </ControlledCollapse>
         {displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
@@ -123,7 +123,7 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
             isOpen={linksOpen}
             onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
           >
-            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks.links} search={search} />
+            <LogLineDetailsFields disableActions log={log} logs={logs} fields={fieldsWithLinks.links} search={search} />
             <LogLineDetailsFields
               disableActions
               log={log}
@@ -175,7 +175,8 @@ export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: Log
       </div>
     </>
   );
-};
+});
+LogLineDetailsComponent.displayName = 'LogLineDetailsComponent';
 
 function groupOptionName(group: string) {
   return `${camelCase(group)}Open`;
@@ -189,9 +190,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   componentWrapper: css({
     padding: theme.spacing(0, 1, 1, 1),
-  }),
-  logLineWrapper: css({
-    maxHeight: '50vh',
-    overflow: 'auto',
   }),
 });

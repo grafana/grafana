@@ -6,7 +6,8 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Organization } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { Organization } from 'app/types/organization';
 
 import { AdminOrgsTable } from './AdminOrgsTable';
 

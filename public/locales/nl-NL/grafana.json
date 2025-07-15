@@ -508,6 +508,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "YAML bewerken",
@@ -1505,15 +1508,12 @@
     "group-details": {
       "ds-features-error": "Er is een fout opgetreden bij het laden van de gegevensbrondetails",
       "edit": "Bewerken",
-      "evaluations-to-fire": "Evaluatiecycli tot activering",
       "export": "Exporteren",
       "folder": "Map",
       "group-loading-error": "Er is een fout opgetreden bij het laden van de groep",
       "interval": "Interval",
       "namespace": "Namespace",
-      "pending-period": "Wachttijd",
-      "recording": "Opnemen",
-      "rule-name": "Regelnaam"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Er is een fout opgetreden bij het laden van de gegevensbrondetails",
@@ -2237,6 +2237,9 @@
         "label-export-all": "Alles exporteren"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Kon querybewerker niet laden vanwege: {{errorMessage}}"
     },
@@ -2650,6 +2653,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Kun je de gewenste gegevensbron niet vinden? Sommige gegevensbronnen worden niet ondersteund voor waarschuwingen. Klik op het pictogram voor meer informatie."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Nieuwe Alertmanager toevoegen",
       "builtin-alertmanager": "Ingebouwde Alertmanager",
@@ -2884,6 +2892,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} geleden)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3129,6 +3142,16 @@
       "info-box-content": "<0>Annotaties bieden een manier om gebeurtenisgegevens in je grafieken te integreren. Ze worden gevisualiseerd als verticale lijnen en pictogrammen op alle grafiekpanelen. Wanneer je met de muis over een annotatiepictogram beweegt, kun je gebeurtenistekst en -tags voor de gebeurtenis krijgen. Je kunt annotatiegebeurtenissen rechtstreeks vanuit Grafana toevoegen door Ctrl of CMD ingedrukt te houden + op grafiek te klikken (of regio te slepen). Deze worden opgeslagen in de annotatiedatabase van Grafana.</0>",
       "info-box-content-2": "Bekijk de <2>Annotatiedocumentatie </2> voor meer informatie.",
       "title": "Er zijn nog geen aangepaste annotatiequery's toegevoegd"
+    },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "",
+        "results-split-on-comma": ""
+      },
+      "placeholder": {
+        "text-or-the-first-field": "",
+        "time-or-the-first-field": ""
+      }
     },
     "standard-annotation-query-editor": {
       "events-found": "{{numEvents}} gebeurtenissen (van {{numFields}} velden)",
@@ -3537,11 +3560,11 @@
       "button-create": "Aanmaken",
       "button-creating": "Aanmaken...",
       "cancel": "Annuleren",
-      "error-invalid-folder-name": "Ongeldige mapnaam",
       "error-required": "Mapnaam is vereist",
       "folder-name-input-placeholder-enter-folder-name": "Mapnaam invoeren",
       "label-folder-name": "Mapnaam",
       "text-pull-request-created": "Er is een pull request gemaakt met wijzigingen in deze map:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Pull request is aangemaakt",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
     },
@@ -4399,7 +4422,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Openbaar",
         "tooltip-view-as-scene": "Weergeven als scène"
       }
     },
@@ -4662,6 +4684,18 @@
         "alert": "Waarschuwing",
         "query": "Query",
         "transform-data": "Gegevens transformeren"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
       }
     },
     "get-panel-frame-category": {
@@ -5173,7 +5207,6 @@
       "playlist-next": "Naar het volgende dashboard",
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
-      "public-dashboard": "Openbaar",
       "refresh": "Dashboard vernieuwen",
       "save": "Dashboard opslaan",
       "save-dashboard": {
@@ -5226,7 +5259,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Transformatie zoeken",
       "show-images": "Afbeeldingen weergeven",
-      "title-add-another-transformation": "Nog een transformatie toevoegen"
+      "title-add-another-transformation": "Nog een transformatie toevoegen",
+      "view-all": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": ""
@@ -5474,15 +5508,9 @@
       "type": "Type"
     },
     "dashboard-preview-banner": {
-      "not-saved": "De waarde is nog niet opgeslagen in de Grafana-database",
       "not-yet-saved": "De waarde is niet opgeslagen in de Grafana-database",
-      "open-pull-request-in-git-hub": "Pull-verzoek openen in GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Dit dashboard wordt geladen vanuit een filiaal in GitHub.",
       "title-dashboard-loaded-external-repository": "Dit dashboard wordt geladen vanuit een externe repository",
-      "title-dashboard-loaded-request-git-hub": "Dit dashboard wordt geladen vanuit een pull-verzoek in GitHub.",
-      "title-error-loading-dashboard": "Er is een fout opgetreden bij het laden van het dashboard",
-      "value-not-saved": "De waarde is nog niet opgeslagen in de Grafana-database",
-      "view-pull-request-in-git-hub": "Pull-verzoek bekijken in GitHub"
+      "title-error-loading-dashboard": "Er is een fout opgetreden bij het laden van het dashboard"
     },
     "dashboard-scene": {
       "text": {
@@ -5576,6 +5604,40 @@
         "row-height-options": "Opties voor rijhoogte"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "",
+        "dynamically-switch-source-multiple-panels": "",
+        "group": "",
+        "hidden-constant-variable": "",
+        "users-enter-arbitrary-strings-textbox": "",
+        "values-are-static-and-defined-manually": "",
+        "values-fetched-source-query": "",
+        "values-timespans": ""
+      },
+      "name": {
+        "ad-hoc-filters": "",
+        "constant": "",
+        "custom": "",
+        "data-source": "",
+        "group-by": "",
+        "interval": "",
+        "query": "",
+        "textbox": ""
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5663,6 +5725,20 @@
       "last-edited": "{{timeAgo}} door <person />",
       "usage-count_one": "Gebruikt op {{count}} dashboards",
       "usage-count_other": "Gebruikt op {{count}} dashboards"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Er bestaat al een dashboard met dezelfde naam in de geselecteerde map. Wil je dit dashboard nog steeds opslaan?",
@@ -5761,10 +5837,13 @@
       "description-examples": "Benoemde opnamegroepen kunnen worden gebruikt om de weergavetekst en -waarde te scheiden (<1>zie voorbeelden</1>).",
       "description-optional": "Optioneel, als je een deel van een serienaam of metrisch knooppuntsegment wilt extraheren.",
       "label-data-source": "Gegevensbron",
+      "label-static-options-sort": "",
       "label-target-data-source": "Doelgegevensbron",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Opties voor query's",
-      "selection-options": "Selectiemogelijkheden"
+      "selection-options": "Selectiemogelijkheden",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -5795,7 +5874,8 @@
       "label-folder": "Map",
       "render-footer": {
         "title-failed-to-save-dashboard": "Kan dashboard niet opslaan"
-      }
+      },
+      "required": ""
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -7217,6 +7297,7 @@
       "when": "WANNEER"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Werking"
     },
     "math": {
@@ -7991,6 +8072,9 @@
       "filter-popup-match-case": "Case matchen",
       "inspect-drawer-title": "Waarde inspecteren",
       "inspect-menu-label": "Waarde inspecteren",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen"
     },
@@ -7999,6 +8083,7 @@
     },
     "tags-input": {
       "add": "Toevoegen",
+      "placeholder-new-tag": "",
       "remove": "Label verwijderen: {{name}}"
     },
     "time-sync-button": {
@@ -8503,7 +8588,7 @@
       "usage-count_other": "Gebruikt op {{count}} dashboards"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Zoeken op naam of beschrijving"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Bibliotheekpaneel laden..."
@@ -8644,12 +8729,12 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8706,6 +8791,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8718,16 +8804,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8830,6 +8920,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -8935,6 +9030,12 @@
       "text": {
         "import-dashboard": "Dashboard importeren"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "",
+      "message-reserved-name": "",
+      "message-same-name": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -9088,6 +9189,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Dashboard is al provisioned en beheerd door Grafana in de cloudinstantie. We raden je aan om voortaan het provisioned dashboard te gebruiken. Als je het dashboard nog steeds naar de cloud-instantie wilt kopiëren, wijzig dan het dashboard-ID in het dashboard-JSON, sla een nieuw snapshot op en upload opnieuw.",
         "datasource-already-managed": "Dashboard is al provisioned en beheerd door Grafana in de cloudinstantie. Als dit een andere bron is, stel dan een andere UID in en probeer het opnieuw.",
         "datasource-invalid-url": "Er is een gegevensbron met een ongeldige URL. Geef een geldige URL op en probeer het opnieuw.",
@@ -10310,6 +10413,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12114,6 +12226,18 @@
       "placeholder-fields-or-number": "Veld(en) of nummer"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "",
+          "reduce-row": "",
+          "row-index": "",
+          "unary-operation": ""
+        }
+      },
+      "label": {
+        "cumulative-functions": "",
+        "window-functions": ""
+      },
       "label-alias": "Alias",
       "label-mode": "Modus",
       "label-replace-all-fields": "Alle velden vervangen"
@@ -12128,6 +12252,13 @@
     "concatenate-transformer-editor": {
       "label-label": "Label",
       "label-name": "Naam",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "",
+          "ignore-the-frame-name": "",
+          "label-frame": ""
+        }
+      },
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
@@ -12139,6 +12270,9 @@
       "aria-label-add-a-convert-field-type-transformer": "Transformator omgezet veldtype toevoegen",
       "aria-label-remove-convert-field-type-transformer": "Transformator omgezet veldtype verwijderen",
       "convert-field-type": "",
+      "description": {
+        "convert-to-specified-field-type": ""
+      },
       "label": {
         "browser": "Browser",
         "utc": "UTC"
@@ -12149,7 +12283,13 @@
       "label-input-format": "Invoerindeling",
       "label-join-with": "Meedoen met",
       "label-set-timezone": "Tijdzone instellen",
+      "name": {
+        "convert-field-type": ""
+      },
       "placeholder-type": "Type",
+      "tags": {
+        "format-field": ""
+      },
       "tooltip-explicit-separator-joining-array-values": "Gebruik een expliciet scheidingsteken bij het samenvoegen van reekswaarden",
       "tooltip-input-format": "Geef de indeling van het invoerveld op, zodat Grafana de datumreeks correct kan parseren.",
       "tooltip-specify-the-output-format": "Geef de uitvoerindeling op.",
@@ -12171,6 +12311,19 @@
       "desc": "",
       "off": "Uit"
     },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": ""
+        },
+        "name": {
+          "concatenate-fields": ""
+        },
+        "tags": {
+          "combine": ""
+        }
+      }
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Enum-waarde toevoegen",
       "generate-enum-values-from-data": "Enum-waarden genereren uit gegevens"
@@ -12181,6 +12334,9 @@
       "remove-enum-row-tooltip-delete": "Verwijderen"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": ""
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": ""
@@ -12191,6 +12347,9 @@
       "label-keep-time": "Tijd bijhouden",
       "label-replace-all-fields": "Alle velden vervangen",
       "label-source": "Bron",
+      "name": {
+        "extract-fields": ""
+      },
       "placeholder-auto": "Automatisch",
       "placeholder-select-delimiter": "Selecteer het scheidingsteken...",
       "tooltip-regexp": "Voorbeeld: {{regexExample}}"
@@ -12199,6 +12358,9 @@
       "aria-label-threshold-color": "Drempelkleur"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": ""
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": ""
@@ -12208,7 +12370,10 @@
         }
       },
       "label-field": "Veld",
-      "label-lookup": "Opzoeken"
+      "label-lookup": "Opzoeken",
+      "name": {
+        "lookup-fields-from-resource": ""
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "Aanvullende instellingen",
@@ -12217,11 +12382,25 @@
       "use-as": "Gebruiken als"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": ""
+      },
       "label-from-variable": "Van variabele",
       "label-identifier": "Identificatie",
       "label-use-variable": "Gebruik variabele",
       "label-variable": "Variabele",
+      "name": {
+        "filter-fields-by-name": ""
+      },
       "placeholder-regular-expression-pattern": "Regulier expressiepatroon"
+    },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": ""
+      },
+      "name": {
+        "filter-data-by-query": ""
+      }
     },
     "filter-by-value-filter-editor": {
       "label-field": "Veld",
@@ -12232,6 +12411,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Voorwaarde toevoegen",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": ""
+      },
       "filter-match": {
         "label": {
           "match-all": "",
@@ -12245,7 +12427,10 @@
         }
       },
       "label-conditions": "Voorwaarden",
-      "label-filter-type": "Type filteren"
+      "label-filter-type": "Type filteren",
+      "name": {
+        "filter-data-by-values": ""
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12260,12 +12445,84 @@
       "label-format": "Formaat",
       "label-substring-range": "Tekenreeksbereik"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": ""
+      },
+      "name": {
+        "format-string": ""
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "Formaat",
       "label-set-timezone": "Tijdzone instellen",
       "label-time-field": "Tijdveld",
       "tooltip-format": "De uitvoerindeling voor het veld dat is opgegeven als een <2>Moment.js-indelingsreeks</2>.",
       "tooltip-timezone-manually": "Stel de tijdzone van de datum handmatig in"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": ""
+      },
+      "name": {
+        "format-time": ""
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": ""
+      },
+      "name": {
+        "add-field-from-calculation": ""
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": ""
+      },
+      "name": {
+        "config-from-query-results": ""
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": ""
+      },
+      "name": {
+        "create-heatmap": ""
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": ""
+      },
+      "name": {
+        "join-by-labels": ""
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": ""
+      },
+      "name": {
+        "partition-by-values": ""
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": ""
+      },
+      "name": {
+        "rows-to-fields": ""
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": ""
+      },
+      "name": {
+        "spatial-operations": ""
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12294,22 +12551,46 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "",
+          "group-by": ""
+        }
+      },
       "placeholder-ignored": "Genegeerd",
       "placeholder-select-stats": "Selecteer statistieken"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": ""
+      },
+      "name": {
+        "group-by": ""
+      },
       "title-calc-alert": "Berekeningen hebben geen effect als er geen velden worden gegroepeerd"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": ""
+      },
       "description-show-field-names": "Indien ingeschakeld, geven geneste tabellen veldnamen weer als een tabelkoptekst",
       "label-show-field-names-in-nested-tables": "Veldnamen weergeven in geneste tabellen",
+      "name": {
+        "group-to-nested-tables": ""
+      },
       "title-calc-alert": "Berekeningen hebben geen effect als er geen velden worden gegroepeerd."
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": ""
+      },
       "label-cell-value": "Celwaarde",
       "label-column": "Kolom",
       "label-empty-value": "Lege waarde",
       "label-row": "Rij",
+      "name": {
+        "grouping-to-matrix": ""
+      },
       "special-value-options": {
         "description": {
           "boolean-false-value": "Booleaanse valse waarde",
@@ -12328,6 +12609,12 @@
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": ""
+      },
+      "name": {
+        "histogram": ""
+      },
       "placeholder-auto": "Automatisch",
       "placeholder-default": "Standaard: 30",
       "placeholder-none": "Geen"
@@ -12336,7 +12623,16 @@
       "label-as-percentile": "Als percentiel",
       "tooltip-transform-index-percentile": "Transformeer de rij-index als een percentiel."
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": ""
+      },
+      "name": {
+        "join-by-field": ""
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "",
       "info": {
         "input-contain-labels": "De invoer bevat geen labels",
         "no-input-or-labels-found": "Geen invoer (of labels) gevonden",
@@ -12358,10 +12654,30 @@
       "label-labels": "Labels",
       "label-mode": "Modus",
       "label-value-field-name": "Naam waardeveld",
+      "modes": {
+        "label": {
+          "columns": "",
+          "rows": ""
+        }
+      },
       "placeholder-optional-select-label": "(Optioneel) Label selecteren",
       "tooltip-replace-value-field-label": "Vervang de naam van het waardeveld door een label"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": ""
+      },
+      "name": {
+        "labels-to-fields": ""
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": ""
+      },
+      "name": {
+        "limit": ""
+      },
       "placeholder-value-or-variable": "Waarde of variabele"
     },
     "long-info": {
@@ -12372,7 +12688,13 @@
       "string-values-separate": "Tekenreekswaarden worden weergegeven als afzonderlijke velden in plaats van als labels"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "Samenvoegen heeft geen effect wanneer toegepast op een enkel frame."
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "merge-effect-applied-single-frame": "Samenvoegen heeft geen effect wanneer toegepast op een enkel frame.",
+      "name": {
+        "merge": ""
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "Alle waarden zijn numeriek",
@@ -12382,10 +12704,16 @@
       "time-in-ascending-order": "Tijd in oplopende volgorde"
     },
     "organize-fields-transformer-editor": {
+      "description": {
+        "reorder-hide-or-rename-fields": ""
+      },
       "field-order": "",
       "field-order-auto": "Automatisch",
       "field-order-manual": "",
-      "first-frame-warning": "Velden organiseren werkt alleen met een enkel frame. Overweeg om eerst een verbindingstransformatie toe te passen of de invoer te filteren."
+      "first-frame-warning": "Velden organiseren werkt alleen met een enkel frame. Overweeg om eerst een verbindingstransformatie toe te passen of de invoer te filteren.",
+      "name": {
+        "organize-fields": ""
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "Stelt in hoe de namen van de geselecteerde velden worden weergegeven. Omdat framenaam meestal beter is voor tabelgegevens"
@@ -12410,9 +12738,41 @@
       "partition-values-works-single-frame": "Scheiding op waarden werkt alleen met een enkel frame.",
       "tooltip-keeps-partition-fields-frames": "Houdt de scheidingsvelden in de frames"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": ""
+      },
+      "name": {
+        "prepare-time-series": ""
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "Formaat",
-      "label-info": "Info"
+      "label-info": "Info",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": ""
+        },
+        "label": {
+          "long-time-series": ""
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": ""
+        },
+        "label": {
+          "multiframe-time-series": ""
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": ""
+        },
+        "label": {
+          "wide-time-series": ""
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "en",
@@ -12424,6 +12784,9 @@
       "label-operation": "Werking"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": ""
+      },
       "label-calculations": "Berekeningen",
       "label-include-time": "Inclusief tijd",
       "label-labels-to-fields": "Labels naar velden",
@@ -12438,11 +12801,22 @@
           "series-to-rows": "Reeksen naar rijen"
         }
       },
+      "name": {
+        "reduce": ""
+      },
       "placeholder-choose-stat": "Statistieken kiezen"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "Waarde of variabele",
       "variable-regex-documentation": "Formatteert variabele met meerdere waarden in een regex-tekenreeks"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": ""
+      },
+      "name": {
+        "regression-analysis": ""
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12465,6 +12839,14 @@
       "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Aantal X-,Y-punten om te voorspellen"
     },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": ""
+      },
+      "name": {
+        "rename-fields-by-regex": ""
+      }
+    },
     "rename-by-regex-transformer-editor": {
       "label-match": "Match",
       "label-replace": "Vervangen",
@@ -12473,11 +12855,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Veld",
-      "label-mode": "Modus"
+      "label-mode": "Modus",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "",
+          "join-on-a-field": "",
+          "keep-all-rows": ""
+        },
+        "label": {
+          "inner": "",
+          "outer-tabular": "",
+          "outer-time-series": ""
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "name": {
+        "series-to-rows": ""
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": ""
+      },
       "label-field": "Veld",
       "label-reverse": "Omkeren",
+      "name": {
+        "sort-by": ""
+      },
       "placeholder-select-field": "Veld selecteren"
     },
     "supplier": {
@@ -12497,6 +12905,17 @@
         "transform": "Transformeren"
       }
     },
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": ""
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": ""
+      },
+      "name": {
+        "time-series-to-table": ""
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "Stat",
       "label-time-field": "Tijdveld",
@@ -12510,9 +12929,33 @@
       "placeholder-value": "Waarde",
       "tooltip-name-for-value-fields": "Naam voor waardevelden"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": ""
+      },
+      "name": {
+        "transpose": ""
+      },
+      "tags": {
+        "pivot": "",
+        "transform": "",
+        "translate": ""
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "Werking",
       "placeholder-field": "Veld"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "",
+        "combine": "",
+        "create-new-visualization": "",
+        "filter": "",
+        "perform-spatial-operations": "",
+        "reformat": "",
+        "reorder-and-rename": ""
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "Meerdere waardevelden van elk type",
@@ -12717,6 +13160,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

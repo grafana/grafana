@@ -38,6 +38,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginsDetailsRightPanel`             | Enables right panel for the plugins details page                                                                                                              | Yes                |
 | `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                                                    | Yes                |
 | `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                                                     | Yes                |
+| `awsDatasourcesTempCredentials`        | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
 | `transformationsRedesign`              | Enables the transformations redesign                                                                                                                          | Yes                |
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled                            | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                                                      | Yes                |
@@ -72,7 +73,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginsSriChecks`                     | Enables SRI checks for plugin assets                                                                                                                          |                    |
 | `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                              |                    |
 | `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                                           | Yes                |
-| `jaegerBackendMigration`               | Enables querying the Jaeger data source without the proxy                                                                                                     | Yes                |
 | `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                      | Yes                |
 | `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                                           | Yes                |
 | `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                                                     | Yes                |
@@ -82,7 +82,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMigrationUI`                  | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                 | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                       | Enables unified navbars                                                                                                                                       |                    |
-| `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    | Yes                |
+| `tabularNumbers`                       | Use fixed-width numbers globally in the UI                                                                                                                    |                    |
 
 ## Public preview feature toggles
 

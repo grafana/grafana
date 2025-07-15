@@ -516,6 +516,9 @@
         }
       }
     },
+    "alert-rule": {
+      "term": ""
+    },
     "alert-rule-form": {
       "action-buttons": {
         "edit-yaml": "Редактировать YAML",
@@ -1517,15 +1520,12 @@
     "group-details": {
       "ds-features-error": "Ошибка при загрузке сведений об источнике данных",
       "edit": "Редактировать",
-      "evaluations-to-fire": "Циклы оценки для отправки оповещений",
       "export": "Экспорт",
       "folder": "Папка",
       "group-loading-error": "Ошибка при загрузке группы",
       "interval": "Интервал",
       "namespace": "Пространство имен",
-      "pending-period": "Период ожидания",
-      "recording": "Запись",
-      "rule-name": "Имя правила"
+      "new": ""
     },
     "group-edit": {
       "ds-error": "Ошибка при загрузке сведений об источнике данных",
@@ -2255,6 +2255,9 @@
         "label-export-all": "Экспортировать всё"
       }
     },
+    "recording-rule": {
+      "term": ""
+    },
     "recording-rule-editor": {
       "error-no-query-editor": "Не удалось загрузить редактор запросов. Причина: {{errorMessage}}"
     },
@@ -2676,6 +2679,11 @@
     "selecting-data-source-tooltip": {
       "tooltip-content": "Не удается найти нужный источник данных? Некоторые источники данных не поддерживаются для функции оповещения. Нажмите значок для получения подробной информации."
     },
+    "settings": {
+      "tabs": {
+        "alert-managers": ""
+      }
+    },
     "settings-content": {
       "add-new-alertmanager": "Добавить новый обработчик оповещений Alertmanager",
       "builtin-alertmanager": "Встроенный обработчик оповещений Alertmanager",
@@ -2910,6 +2918,11 @@
     },
     "timestamp": {
       "time-ago": "({{time}} назад)"
+    },
+    "titles": {
+      "group-view": {
+        "subtitle": ""
+      }
     },
     "to-gma": {
       "confirm-modal": {
@@ -3155,6 +3168,16 @@
       "info-box-content": "<0>Аннотации позволяют интегрировать данные событий в графы. Они визуализируются в виде вертикальных линий и значков на всех панелях графов. При наведении курсора на значок аннотации отображаются текст и теги события. Можно добавлять события аннотаций непосредственно из Grafana, удерживая CTRL или CMD и нажав на граф (или перетащив область). Они будут храниться в базе данных аннотаций Grafana.</0>",
       "info-box-content-2": "Для получения дополнительной информации ознакомьтесь с <2>документацией по аннотациям</2>.",
       "title": "Пользовательские запросы аннотаций еще не добавлены"
+    },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "",
+        "results-split-on-comma": ""
+      },
+      "placeholder": {
+        "text-or-the-first-field": "",
+        "time-or-the-first-field": ""
+      }
     },
     "standard-annotation-query-editor": {
       "events-found": "Кол-во событий: {{numEvents}} (кол-во полей: {{numFields}})",
@@ -3573,11 +3596,11 @@
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
-      "error-invalid-folder-name": "Недопустимое имя папки",
       "error-required": "Требуется имя папки",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
       "label-folder-name": "Имя папки",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
+      "text-your-folder-will-be-created-as": "",
       "title-pull-request-created": "Создан запрос на включение изменений",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
@@ -4435,7 +4458,6 @@
         }
       },
       "render-left-actions": {
-        "text-public": "Общедоступный",
         "tooltip-view-as-scene": "Просмотр в виде сцены"
       }
     },
@@ -4698,6 +4720,18 @@
         "alert": "Оповещение",
         "query": "Запрос",
         "transform-data": "Преобразовать данные"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
       }
     },
     "get-panel-frame-category": {
@@ -5211,7 +5245,6 @@
       "playlist-next": "Перейти к следующему дашборду",
       "playlist-previous": "Перейти к предыдущему дашборду",
       "playlist-stop": "Остановить плейлист",
-      "public-dashboard": "Общедоступный",
       "refresh": "Обновить дашборд",
       "save": "Сохранить дашборд",
       "save-dashboard": {
@@ -5264,7 +5297,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "Поиск преобразования",
       "show-images": "Показать изображения",
-      "title-add-another-transformation": "Добавление другого преобразования"
+      "title-add-another-transformation": "Добавление другого преобразования",
+      "view-all": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": ""
@@ -5512,15 +5546,9 @@
       "type": "Тип"
     },
     "dashboard-preview-banner": {
-      "not-saved": "Значение еще не сохранено в базе данных Grafana",
       "not-yet-saved": "Значение не сохранено в базе данных Grafana",
-      "open-pull-request-in-git-hub": "Открыть запрос на включение изменений в GitHub",
-      "title-dashboard-loaded-branch-git-hub": "Дашборд загружается из ветви в GitHub.",
       "title-dashboard-loaded-external-repository": "Дашборд загружается из внешнего репозитория",
-      "title-dashboard-loaded-request-git-hub": "Дашборд загружается из запроса на включение изменений в GitHub.",
-      "title-error-loading-dashboard": "Ошибка при загрузке дашборда",
-      "value-not-saved": "Значение еще не сохранено в базе данных Grafana",
-      "view-pull-request-in-git-hub": "Просмотр запроса на включение изменений в GitHub"
+      "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
     },
     "dashboard-scene": {
       "text": {
@@ -5614,6 +5642,40 @@
         "row-height-options": "Параметры высоты строк"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "",
+        "dynamically-switch-source-multiple-panels": "",
+        "group": "",
+        "hidden-constant-variable": "",
+        "users-enter-arbitrary-strings-textbox": "",
+        "values-are-static-and-defined-manually": "",
+        "values-fetched-source-query": "",
+        "values-timespans": ""
+      },
+      "name": {
+        "ad-hoc-filters": "",
+        "constant": "",
+        "custom": "",
+        "data-source": "",
+        "group-by": "",
+        "interval": "",
+        "query": "",
+        "textbox": ""
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5703,6 +5765,20 @@
       "usage-count_few": "Используется на {{count}} дашбордах",
       "usage-count_many": "Используется на {{count}} дашбордах",
       "usage-count_other": "Используется на {{count}} дашбордах"
+    },
+    "move-provisioned-dashboard-form": {
+      "api-error": "",
+      "cancel-action": "",
+      "current-file-not-found": "",
+      "drawer-title": "",
+      "file-load-error": "",
+      "loading-file-data": "",
+      "move-action": "",
+      "move-read-only-message": "",
+      "moving": "",
+      "partial-failure-warning": "",
+      "target-path-label": "",
+      "title-this-repository-is-read-only": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "Дашборд с таким названием уже существует в выбранной папке. Все равно сохранить дашборд?",
@@ -5801,10 +5877,13 @@
       "description-examples": "Именованные группы записи можно использовать для разделения отображаемого текста и значения (<1>см. примеры</1>).",
       "description-optional": "Дополнительно, если вы хотите извлечь часть имени ряда или сегмента узла метрики.",
       "label-data-source": "Источник данных",
+      "label-static-options-sort": "",
       "label-target-data-source": "Целевой источник данных",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Параметры запросов",
-      "selection-options": "Параметры выбора"
+      "selection-options": "Параметры выбора",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -5835,7 +5914,8 @@
       "label-folder": "Папка",
       "render-footer": {
         "title-failed-to-save-dashboard": "Не удалось сохранить дашборд"
-      }
+      },
+      "required": ""
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -7259,6 +7339,7 @@
       "when": "КОГДА"
     },
     "expression-query-editor": {
+      "helper-text-sql": "",
       "label-operation": "Операция"
     },
     "math": {
@@ -8033,6 +8114,9 @@
       "filter-popup-match-case": "С учетом регистра",
       "inspect-drawer-title": "Проверить значение",
       "inspect-menu-label": "Проверить значение",
+      "nested-table": {
+        "no-data": ""
+      },
       "no-values-label": "Нет значений",
       "pagination-summary": "Строки: {{itemsRangeStart}} - {{displayedEnd}} из {{numRows}}"
     },
@@ -8041,6 +8125,7 @@
     },
     "tags-input": {
       "add": "Добавить",
+      "placeholder-new-tag": "",
       "remove": "Удалить тег: {{name}} "
     },
     "time-sync-button": {
@@ -8551,7 +8636,7 @@
       "usage-count_other": "Используется на {{count}} дашборда"
     },
     "library-panels-search": {
-      "placeholder-search-by-name-or-description": "Поиск по названию или описанию"
+      "placeholder-search-by-name-or-description": ""
     },
     "loading-indicator": {
       "loading-library-panel": "Загрузка панели библиотеки..."
@@ -8696,12 +8781,18 @@
     "fields": {
       "type": {
         "loki": {
-          "indexed-label": "",
-          "indexed-label-plural": "",
-          "parsed-label-plural": "",
-          "parsedl-label": "",
-          "structured-metadata": "",
-          "structured-metadata-plural": ""
+          "indexed-label_one": "",
+          "indexed-label_few": "",
+          "indexed-label_many": "",
+          "indexed-label_other": "",
+          "parsedl-label_one": "",
+          "parsedl-label_few": "",
+          "parsedl-label_many": "",
+          "parsedl-label_other": "",
+          "structured-metadata_one": "",
+          "structured-metadata_few": "",
+          "structured-metadata_many": "",
+          "structured-metadata_other": ""
         }
       }
     },
@@ -8758,6 +8849,7 @@
       "close": "",
       "copy-shortlink": "",
       "copy-to-clipboard": "",
+      "displayed-fields-section": "",
       "fields": {
         "adhoc-statistics": "",
         "copy-value-to-clipboard": "",
@@ -8770,16 +8862,20 @@
       },
       "fields-section": "",
       "hide-log-line": "",
+      "inline-mode": "",
       "links-section": "",
+      "log-line-field": "",
       "log-line-section": "",
       "no-details": "",
       "pin-line": "",
+      "remove-displayed-field": "",
       "search": {
         "no-results": ""
       },
       "search-placeholder": "",
       "show-context": "",
       "show-log-line": "",
+      "sidebar-mode": "",
       "unpin-line": ""
     },
     "log-line-menu": {
@@ -8882,6 +8978,11 @@
     },
     "name-common-labels": "",
     "name-deduplication": "",
+    "name-details-mode": "",
+    "name-details-options": {
+      "label-inline": "",
+      "label-sidebar": ""
+    },
     "name-enable-infinite-scrolling": "",
     "name-enable-log-details": "",
     "name-enable-syntax-highlighting": "",
@@ -8987,6 +9088,12 @@
       "text": {
         "import-dashboard": "Импорт дашборда"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "",
+      "message-reserved-name": "",
+      "message-same-name": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -9140,6 +9247,8 @@
     "resource-details": {
       "dismiss-button": "OK",
       "error-messages": {
+        "alert-rules-group-quota-reached": "",
+        "alert-rules-quota-reached": "",
         "dashboard-already-managed": "Дашборд уже подготовлен в облачном экземпляре и управляется Grafana. Рекомендуем в будущем использовать подготовленный дашборд. Если вы всё же хотите скопировать дашборд в облачный экземпляр, измените его идентификатор в JSON-файле, сохраните новый снимок и загрузите его снова.",
         "datasource-already-managed": "Источник данных уже подготовлен в облачном экземпляре и управляется Grafana. Если это другой ресурс, установите другой UID и повторите попытку.",
         "datasource-invalid-url": "Существует источник данных с недопустимым URL-адресом. Укажите действительный URL-адрес и повторите попытку.",
@@ -10368,6 +10477,15 @@
       "label-path": "",
       "label-workflow": ""
     }
+  },
+  "provisioned-resource-preview-banner": {
+    "preview-banner": {
+      "not-saved": "",
+      "open-pull-request-in-git-hub": "",
+      "view-pull-request-in-git-hub": ""
+    },
+    "title-created-branch-git-hub": "",
+    "title-loaded-pull-request-git-hub": ""
   },
   "provisioning": {
     "banner": {
@@ -12186,6 +12304,18 @@
       "placeholder-fields-or-number": "Поля или число"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "",
+          "reduce-row": "",
+          "row-index": "",
+          "unary-operation": ""
+        }
+      },
+      "label": {
+        "cumulative-functions": "",
+        "window-functions": ""
+      },
       "label-alias": "Псевдоним",
       "label-mode": "Режим",
       "label-replace-all-fields": "Заменить все поля"
@@ -12200,6 +12330,13 @@
     "concatenate-transformer-editor": {
       "label-label": "Метка",
       "label-name": "Имя",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "",
+          "ignore-the-frame-name": "",
+          "label-frame": ""
+        }
+      },
       "placeholder-frame": "Фрейм"
     },
     "config-from-query-transformer-editor": {
@@ -12211,6 +12348,9 @@
       "aria-label-add-a-convert-field-type-transformer": "Добавить преобразователь типа поля",
       "aria-label-remove-convert-field-type-transformer": "Удалить преобразователь типа поля",
       "convert-field-type": "",
+      "description": {
+        "convert-to-specified-field-type": ""
+      },
       "label": {
         "browser": "Браузер",
         "utc": "UTC"
@@ -12221,7 +12361,13 @@
       "label-input-format": "Формат ввода",
       "label-join-with": "Объединить с",
       "label-set-timezone": "Установить часовой пояс",
+      "name": {
+        "convert-field-type": ""
+      },
       "placeholder-type": "Тип",
+      "tags": {
+        "format-field": ""
+      },
       "tooltip-explicit-separator-joining-array-values": "Используйте явный разделитель при объединении значений массива",
       "tooltip-input-format": "Укажите формат поля ввода, чтобы дать Grafana возможность правильно проанализировать строку даты.",
       "tooltip-specify-the-output-format": "Укажите формат вывода.",
@@ -12243,6 +12389,19 @@
       "desc": "",
       "off": "Выкл."
     },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": ""
+        },
+        "name": {
+          "concatenate-fields": ""
+        },
+        "tags": {
+          "combine": ""
+        }
+      }
+    },
     "enum-mapping-editor": {
       "add-enum-value": "Добавить перечислимое значение",
       "generate-enum-values-from-data": "Создать перечислимые значения из данных"
@@ -12253,6 +12412,9 @@
       "remove-enum-row-tooltip-delete": "Удалить"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": ""
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": ""
@@ -12263,6 +12425,9 @@
       "label-keep-time": "Сохранить время",
       "label-replace-all-fields": "Заменить все поля",
       "label-source": "Источник",
+      "name": {
+        "extract-fields": ""
+      },
       "placeholder-auto": "Авто",
       "placeholder-select-delimiter": "Выбор разделителя...",
       "tooltip-regexp": "Пример: {{regexExample}}"
@@ -12271,6 +12436,9 @@
       "aria-label-threshold-color": "Пороговый цвет"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": ""
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": ""
@@ -12280,7 +12448,10 @@
         }
       },
       "label-field": "Поле",
-      "label-lookup": "Просмотр"
+      "label-lookup": "Просмотр",
+      "name": {
+        "lookup-fields-from-resource": ""
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "Дополнительные параметры",
@@ -12289,11 +12460,25 @@
       "use-as": "Использовать как"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": ""
+      },
       "label-from-variable": "Из переменной",
       "label-identifier": "Идентификатор",
       "label-use-variable": "Использовать переменную",
       "label-variable": "Переменная",
+      "name": {
+        "filter-fields-by-name": ""
+      },
       "placeholder-regular-expression-pattern": "Шаблон регулярного выражения"
+    },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": ""
+      },
+      "name": {
+        "filter-data-by-query": ""
+      }
     },
     "filter-by-value-filter-editor": {
       "label-field": "Поле",
@@ -12304,6 +12489,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "Добавить условие",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": ""
+      },
       "filter-match": {
         "label": {
           "match-all": "",
@@ -12317,7 +12505,10 @@
         }
       },
       "label-conditions": "Условия",
-      "label-filter-type": "Тип фильтра"
+      "label-filter-type": "Тип фильтра",
+      "name": {
+        "filter-data-by-values": ""
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12332,12 +12523,84 @@
       "label-format": "Формат",
       "label-substring-range": "Диапазон подстрок"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": ""
+      },
+      "name": {
+        "format-string": ""
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "Формат",
       "label-set-timezone": "Установить часовой пояс",
       "label-time-field": "Поле времени",
       "tooltip-format": "Формат вывода для поля, указанного в виде <2>строки в формате Moment.js</2>.",
       "tooltip-timezone-manually": "Установите часовой пояс вручную"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": ""
+      },
+      "name": {
+        "format-time": ""
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": ""
+      },
+      "name": {
+        "add-field-from-calculation": ""
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": ""
+      },
+      "name": {
+        "config-from-query-results": ""
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": ""
+      },
+      "name": {
+        "create-heatmap": ""
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": ""
+      },
+      "name": {
+        "join-by-labels": ""
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": ""
+      },
+      "name": {
+        "partition-by-values": ""
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": ""
+      },
+      "name": {
+        "rows-to-fields": ""
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": ""
+      },
+      "name": {
+        "spatial-operations": ""
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12366,22 +12629,46 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "",
+          "group-by": ""
+        }
+      },
       "placeholder-ignored": "Пропущено",
       "placeholder-select-stats": "Выбрать статистику"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": ""
+      },
+      "name": {
+        "group-by": ""
+      },
       "title-calc-alert": "Расчеты не дадут результата, если нет сгруппированных полей"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": ""
+      },
       "description-show-field-names": "Если параметр включен, вложенные таблицы будут отображать имена полей в качестве заголовка таблицы.",
       "label-show-field-names-in-nested-tables": "Показывать названия полей во вложенных таблицах",
+      "name": {
+        "group-to-nested-tables": ""
+      },
       "title-calc-alert": "Расчеты не дадут результата, если нет сгруппированных полей"
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": ""
+      },
       "label-cell-value": "Значение ячейки",
       "label-column": "Столбец",
       "label-empty-value": "Пустое значение",
       "label-row": "Строка",
+      "name": {
+        "grouping-to-matrix": ""
+      },
       "special-value-options": {
         "description": {
           "boolean-false-value": "Ложное логическое значение",
@@ -12400,6 +12687,12 @@
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": ""
+      },
+      "name": {
+        "histogram": ""
+      },
       "placeholder-auto": "Авто",
       "placeholder-default": "По умолчанию: 30",
       "placeholder-none": "Нет"
@@ -12408,7 +12701,16 @@
       "label-as-percentile": "В виде процентиля",
       "tooltip-transform-index-percentile": "Преобразовать индекс строки в процентиль."
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": ""
+      },
+      "name": {
+        "join-by-field": ""
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "",
       "info": {
         "input-contain-labels": "Ввод не содержит меток",
         "no-input-or-labels-found": "Не найден ввод (или метки)",
@@ -12430,10 +12732,30 @@
       "label-labels": "Метки",
       "label-mode": "Режим",
       "label-value-field-name": "Название поля значений",
+      "modes": {
+        "label": {
+          "columns": "",
+          "rows": ""
+        }
+      },
       "placeholder-optional-select-label": "Выбрать метку (необязательно)",
       "tooltip-replace-value-field-label": "Замените имя поля значений меткой"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": ""
+      },
+      "name": {
+        "labels-to-fields": ""
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": ""
+      },
+      "name": {
+        "limit": ""
+      },
       "placeholder-value-or-variable": "Значение или переменная"
     },
     "long-info": {
@@ -12444,7 +12766,13 @@
       "string-values-separate": "Строковые значения представлены в виде отдельных полей, а не меток"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "Слияние не дает результата, если применяется к одиночному фрейму."
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "merge-effect-applied-single-frame": "Слияние не дает результата, если применяется к одиночному фрейму.",
+      "name": {
+        "merge": ""
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "Все значения являются числовыми",
@@ -12454,10 +12782,16 @@
       "time-in-ascending-order": "Время в порядке возрастания"
     },
     "organize-fields-transformer-editor": {
+      "description": {
+        "reorder-hide-or-rename-fields": ""
+      },
       "field-order": "",
       "field-order-auto": "Авто",
       "field-order-manual": "",
-      "first-frame-warning": "Функция упорядочивания полей работает только с одиночным фреймом. Попробуйте сначала применить преобразование соединения или отфильтровать ввод."
+      "first-frame-warning": "Функция упорядочивания полей работает только с одиночным фреймом. Попробуйте сначала применить преобразование соединения или отфильтровать ввод.",
+      "name": {
+        "organize-fields": ""
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "Устанавливает способ отображения названий выбранных полей. Поскольку название фрейма обычно лучше подходит для табличных данных"
@@ -12482,9 +12816,41 @@
       "partition-values-works-single-frame": "Разделение по значениям работает только с одиночным фреймом.",
       "tooltip-keeps-partition-fields-frames": "Сохраняет поля разделов в фреймах"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": ""
+      },
+      "name": {
+        "prepare-time-series": ""
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "Формат",
-      "label-info": "Информация"
+      "label-info": "Информация",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": ""
+        },
+        "label": {
+          "long-time-series": ""
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": ""
+        },
+        "label": {
+          "multiframe-time-series": ""
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": ""
+        },
+        "label": {
+          "wide-time-series": ""
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "и",
@@ -12496,6 +12862,9 @@
       "label-operation": "Операция"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": ""
+      },
       "label-calculations": "Расчеты",
       "label-include-time": "Включить время",
       "label-labels-to-fields": "Метки к полям",
@@ -12510,11 +12879,22 @@
           "series-to-rows": "Ряды в строки"
         }
       },
+      "name": {
+        "reduce": ""
+      },
       "placeholder-choose-stat": "Выбрать статистику"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "Значение или переменная",
       "variable-regex-documentation": "Форматирует многозначную переменную в строку регулярного выражения"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": ""
+      },
+      "name": {
+        "regression-analysis": ""
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12537,6 +12917,14 @@
       "regression": "",
       "tooltip-number-of-xy-points-to-predict": "Количество точек X, Y для прогнозирования"
     },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": ""
+      },
+      "name": {
+        "rename-fields-by-regex": ""
+      }
+    },
     "rename-by-regex-transformer-editor": {
       "label-match": "Сопоставить",
       "label-replace": "Заменить",
@@ -12545,11 +12933,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Поле",
-      "label-mode": "Режим"
+      "label-mode": "Режим",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "",
+          "join-on-a-field": "",
+          "keep-all-rows": ""
+        },
+        "label": {
+          "inner": "",
+          "outer-tabular": "",
+          "outer-time-series": ""
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "name": {
+        "series-to-rows": ""
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": ""
+      },
       "label-field": "Поле",
       "label-reverse": "Изменить на обратное",
+      "name": {
+        "sort-by": ""
+      },
       "placeholder-select-field": "Выбрать поле"
     },
     "supplier": {
@@ -12569,6 +12983,17 @@
         "transform": "Преобразовать"
       }
     },
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": ""
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": ""
+      },
+      "name": {
+        "time-series-to-table": ""
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "Статистика",
       "label-time-field": "Поле времени",
@@ -12582,9 +13007,33 @@
       "placeholder-value": "Значение",
       "tooltip-name-for-value-fields": "Имя для полей значений"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": ""
+      },
+      "name": {
+        "transpose": ""
+      },
+      "tags": {
+        "pivot": "",
+        "transform": "",
+        "translate": ""
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "Операция",
       "placeholder-field": "Поле"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "",
+        "combine": "",
+        "create-new-visualization": "",
+        "filter": "",
+        "perform-spatial-operations": "",
+        "reformat": "",
+        "reorder-and-rename": ""
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "Несколько полей значений любого типа",
@@ -12789,6 +13238,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

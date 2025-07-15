@@ -5,7 +5,7 @@ import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@gra
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';

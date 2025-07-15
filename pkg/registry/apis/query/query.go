@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
@@ -179,6 +181,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
+		logEmptyRefids(raw.Queries, b.log)
+
 		for i := range req.Requests {
 			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
 		}
@@ -195,10 +199,16 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query (includes expressions)
 		rsp, err := b.execute(ctx, req, instanceConfig)
 		if err != nil {
-			b.log.Error("execute error", "http code", query.GetResponseCode(rsp), "err", err)
-			if rsp != nil { // if we have a response, we assume the err is set in the response
-				responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
-					QueryDataResponse: *rsp,
+			// we extract the QDR, but the response may be nil
+			var qdr *backend.QueryDataResponse
+			if rsp != nil {
+				qdr = rsp.QDR
+			}
+
+			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
+			if qdr != nil { // if we have a response, we assume the err is set in the response
+				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
+					QueryDataResponse: *qdr,
 				})
 				return
 			} else {
@@ -209,45 +219,80 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			}
 		}
 
-		responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
-			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
+		// response headers are communicated back using the context for some reason
+		reqCtx := contexthandler.FromContext(ctx)
+		if reqCtx != nil {
+			mergeHeaders(reqCtx.Resp.Header(), rsp.Headers, b.log)
+		}
+
+		responder.Object(query.GetResponseCode(rsp.QDR), &query.QueryDataResponse{
+			QueryDataResponse: *rsp.QDR, // wrap the backend response as a QueryDataResponse
 		})
 	}), nil
 }
 
-func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo, instanceConfig clientapi.InstanceConfigurationSettings) (qdr *backend.QueryDataResponse, err error) {
+func logEmptyRefids(queries []v0alpha1.DataQuery, logger log.Logger) {
+	emptyCount := 0
+
+	for _, q := range queries {
+		if q.RefID == "" {
+			emptyCount += 1
+		}
+	}
+
+	if emptyCount > 0 {
+		logger.Info("empty refid found", "empty_count", emptyCount, "query_count", len(queries))
+	}
+}
+
+func mergeHeaders(main http.Header, extra http.Header, l log.Logger) {
+	for headerName, extraValues := range extra {
+		mainValues := main.Values(headerName)
+		for _, extraV := range extraValues {
+			if !slices.Contains(mainValues, extraV) {
+				main.Add(headerName, extraV)
+			} else {
+				l.Warn("skipped duplicate response header", "header", headerName, "value", extraV)
+			}
+		}
+	}
+}
+
+func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo, instanceConfig clientapi.InstanceConfigurationSettings) (*clientapi.Response, error) {
+	var rsp *clientapi.Response
+	var err error
 	switch len(req.Requests) {
 	case 0:
 		b.log.Debug("executing empty query")
-		qdr = &backend.QueryDataResponse{}
+		rsp = &clientapi.Response{QDR: &backend.QueryDataResponse{}}
 	case 1:
 		b.log.Debug("executing single query")
-		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0], instanceConfig)
+		rsp, err = b.handleQuerySingleDatasource(ctx, req.Requests[0], instanceConfig)
 		if err != nil {
 			b.log.Debug("handleQuerySingleDatasource failed", err)
 		}
 		if err == nil && isSingleAlertQuery(req) {
 			b.log.Debug("handling alert query with single query")
-			qdr, err = b.convertQueryFromAlerting(ctx, req.Requests[0], qdr)
+			rsp.QDR, err = b.convertQueryFromAlerting(ctx, req.Requests[0], rsp.QDR)
 			if err != nil {
 				b.log.Debug("convertQueryFromAlerting failed", "err", err)
 			}
 		}
 	default:
 		b.log.Debug("executing concurrent queries")
-		qdr, err = b.executeConcurrentQueries(ctx, req.Requests, instanceConfig)
+		rsp, err = b.executeConcurrentQueries(ctx, req.Requests, instanceConfig)
 		if err != nil {
 			b.log.Debug("error in executeConcurrentQueries", "err", err)
 		}
 	}
 	if err != nil {
 		b.log.Debug("error in query phase, skipping expressions", "error", err)
-		return qdr, err //return early here to prevent expressions from being executed if we got an error during the query phase
+		return rsp, err //return early here to prevent expressions from being executed if we got an error during the query phase
 	}
 
 	if len(req.Expressions) > 0 {
 		b.log.Debug("executing expressions")
-		qdr, err = b.handleExpressions(ctx, req, qdr)
+		rsp.QDR, err = b.handleExpressions(ctx, req, rsp.QDR)
 		if err != nil {
 			b.log.Debug("handleExpressions failed", "err", err)
 		}
@@ -255,18 +300,18 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo, in
 
 	// Remove hidden results
 	for _, refId := range req.HideBeforeReturn {
-		r, ok := qdr.Responses[refId]
+		r, ok := rsp.QDR.Responses[refId]
 		if ok && r.Error == nil {
-			delete(qdr.Responses, refId)
+			delete(rsp.QDR.Responses, refId)
 		}
 	}
 
-	return qdr, err
+	return rsp, err
 }
 
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
-func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req datasourceRequest, instanceConfig clientapi.InstanceConfigurationSettings) (*backend.QueryDataResponse, error) {
+func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req datasourceRequest, instanceConfig clientapi.InstanceConfigurationSettings) (*clientapi.Response, error) {
 	ctx, span := b.tracer.Start(ctx, "Query.handleQuerySingleDatasource")
 	defer span.End()
 	span.SetAttributes(
@@ -282,7 +327,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		}
 	}
 	if allHidden {
-		return &backend.QueryDataResponse{}, nil
+		return &clientapi.Response{}, nil
 	}
 
 	client, err := b.clientSupplier.GetDataSourceClient(
@@ -305,14 +350,14 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 	if err == nil && rsp != nil {
 		for _, q := range req.Request.Queries {
 			if q.ResultAssertions != nil {
-				result, ok := rsp.Responses[q.RefID]
+				result, ok := rsp.QDR.Responses[q.RefID]
 				if ok && result.Error == nil {
 					err = q.ResultAssertions.Validate(result.Frames)
 					if err != nil {
 						b.log.Error("Validate failed", "err", err)
 						result.Error = err
 						result.ErrorSource = backend.ErrorSourceDownstream
-						rsp.Responses[q.RefID] = result
+						rsp.QDR.Responses[q.RefID] = result
 					}
 				}
 			}
@@ -328,24 +373,24 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
-func buildErrorResponse(err error, req datasourceRequest) *backend.QueryDataResponse {
+func buildErrorResponse(err error, req datasourceRequest) *clientapi.Response {
 	rsp := backend.NewQueryDataResponse()
 	for _, query := range req.Request.Queries {
 		rsp.Responses[query.RefID] = backend.DataResponse{
 			Error: err,
 		}
 	}
-	return rsp
+	return &clientapi.Response{QDR: rsp, Headers: nil}
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
-func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []datasourceRequest, instanceConfig clientapi.InstanceConfigurationSettings) (*backend.QueryDataResponse, error) {
+func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests []datasourceRequest, instanceConfig clientapi.InstanceConfigurationSettings) (*clientapi.Response, error) {
 	ctx, span := b.tracer.Start(ctx, "Query.executeConcurrentQueries")
 	defer span.End()
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(b.concurrentQueryLimit) // prevent too many concurrent requests
-	rchan := make(chan *backend.QueryDataResponse, len(requests))
+	rchan := make(chan *clientapi.Response, len(requests))
 
 	// Create panic recovery function for loop below
 	recoveryFn := func(req datasourceRequest) {
@@ -370,9 +415,9 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 		g.Go(func() error {
 			defer recoveryFn(req)
 
-			dqr, err := b.handleQuerySingleDatasource(ctx, req, instanceConfig)
+			rsp, err := b.handleQuerySingleDatasource(ctx, req, instanceConfig)
 			if err == nil {
-				rchan <- dqr
+				rchan <- rsp
 			} else {
 				rchan <- buildErrorResponse(err, req)
 			}
@@ -386,14 +431,19 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 	close(rchan)
 
 	// Merge the results from each response
-	resp := backend.NewQueryDataResponse()
+	rsp := &clientapi.Response{
+		QDR:     backend.NewQueryDataResponse(),
+		Headers: http.Header{},
+	}
 	for result := range rchan {
-		for refId, dataResponse := range result.Responses {
-			resp.Responses[refId] = dataResponse
+		for refId, dataResponse := range result.QDR.Responses {
+			rsp.QDR.Responses[refId] = dataResponse
 		}
+
+		mergeHeaders(rsp.Headers, result.Headers, b.log)
 	}
 
-	return resp, nil
+	return rsp, nil
 }
 
 // Unlike the implementation in expr/node.go, all datasource queries have been processed first

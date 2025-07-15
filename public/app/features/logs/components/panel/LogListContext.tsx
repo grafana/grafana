@@ -26,6 +26,7 @@ import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
 
+import { LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
@@ -34,6 +35,7 @@ import { LOG_LIST_MIN_WIDTH } from './virtualization';
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
   detailsDisplayed: (log: LogListModel) => boolean;
+  detailsMode: LogLineDetailsMode;
   detailsWidth: number;
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
@@ -43,6 +45,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   hasUnescapedContent?: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
+  setDetailsMode: (mode: LogLineDetailsMode) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
   setFontSize: (size: LogListFontSize) => void;
@@ -64,6 +67,7 @@ export const LogListContext = createContext<LogListContextData>({
   closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
   detailsDisplayed: () => false,
+  detailsMode: 'sidebar',
   detailsWidth: 0,
   displayedFields: [],
   downloadLogs: () => {},
@@ -72,6 +76,7 @@ export const LogListContext = createContext<LogListContextData>({
   fontSize: 'default',
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
+  setDetailsMode: () => {},
   setDetailsWidth: () => {},
   setFilterLevels: () => {},
   setFontSize: () => {},
@@ -132,6 +137,7 @@ export interface Props {
   children?: ReactNode;
   // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
   containerElement?: HTMLDivElement;
+  detailsMode?: LogLineDetailsMode;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   enableLogDetails: boolean;
@@ -176,6 +182,7 @@ export const LogListContextProvider = ({
   children,
   containerElement,
   enableLogDetails,
+  detailsMode: detailsModeProp,
   dedupStrategy,
   displayedFields,
   filterLevels,
@@ -230,6 +237,7 @@ export const LogListContextProvider = ({
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
+  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>(detailsModeProp ?? 'sidebar');
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -434,8 +442,11 @@ export const LogListContextProvider = ({
   );
 
   const closeDetails = useCallback(() => {
+    if (showDetails.length) {
+      removeDetailsScrollPosition(showDetails[0]);
+    }
     setShowDetails([]);
-  }, []);
+  }, [showDetails]);
 
   const toggleDetails = useCallback(
     (log: LogListModel) => {
@@ -480,6 +491,7 @@ export const LogListContextProvider = ({
         closeDetails,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
+        detailsMode,
         detailsWidth,
         displayedFields,
         downloadLogs,
@@ -511,6 +523,7 @@ export const LogListContextProvider = ({
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
+        setDetailsMode,
         setDetailsWidth,
         setDisplayedFields,
         setFilterLevels,
@@ -563,7 +576,9 @@ function getDetailsWidth(
   const defaultWidth = containerElement.clientWidth * 0.4;
   const detailsWidth =
     currentWidth ||
-    (logOptionsStorageKey ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10) : defaultWidth);
+    (logOptionsStorageKey
+      ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`) ?? defaultWidth, 10)
+      : defaultWidth);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
@@ -572,4 +587,18 @@ function getDetailsWidth(
     return currentWidth ?? defaultWidth;
   }
   return detailsWidth;
+}
+
+const detailsScrollMap = new Map<string, number>();
+
+export function saveDetailsScrollPosition(log: LogListModel, position: number) {
+  detailsScrollMap.set(log.uid, position);
+}
+
+export function getDetailsScrollPosition(log: LogListModel) {
+  return detailsScrollMap.get(log.uid) ?? 0;
+}
+
+export function removeDetailsScrollPosition(log: LogListModel) {
+  detailsScrollMap.delete(log.uid);
 }
