@@ -1542,6 +1542,7 @@
         "name": "jaegerBackendMigration",
         "resourceVersion": "1751465665226",
         "creationTimestamp": "2024-11-15T14:40:20Z",
+        "deletionTimestamp": "2025-07-07T14:12:35Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-07-02 14:14:25.226989 +0000 UTC"
         }
@@ -2048,7 +2049,8 @@
       "metadata": {
         "name": "nanoGit",
         "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-06-17T17:07:30Z"
+        "creationTimestamp": "2025-06-17T17:07:30Z",
+        "deletionTimestamp": "2025-07-09T11:53:17Z"
       },
       "spec": {
         "description": "Use experimental git library for provisioning",
@@ -2539,6 +2541,22 @@
     },
     {
       "metadata": {
+        "name": "provisioningSecretsService",
+        "resourceVersion": "1752501981893",
+        "creationTimestamp": "2025-07-14T14:05:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 14:06:21.89322 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboardsEmailSharing",
         "resourceVersion": "1750821734038",
         "creationTimestamp": "2023-01-03T19:45:15Z",
@@ -2976,17 +2994,17 @@
     {
       "metadata": {
         "name": "tabularNumbers",
-        "resourceVersion": "1750754828442",
+        "resourceVersion": "1752078306230",
         "creationTimestamp": "2025-06-24T11:52:03Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-06-24 08:47:08.442537461 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-07-09 16:25:06.230922635 +0000 UTC"
         }
       },
       "spec": {
         "description": "Use fixed-width numbers globally in the UI",
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
@@ -3025,6 +3043,19 @@
         "description": "Use new **Combobox** component for template variables",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "tempoAlerting",
+        "resourceVersion": "1750158458662",
+        "creationTimestamp": "2025-06-17T11:07:38Z"
+      },
+      "spec": {
+        "description": "Enables creating alerts from Tempo data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true
       }
     },

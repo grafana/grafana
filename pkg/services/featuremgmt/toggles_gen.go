@@ -183,9 +183,9 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
-	// FlagNanoGit
-	// Use experimental git library for provisioning
-	FlagNanoGit = "nanoGit"
+	// FlagProvisioningSecretsService
+	// Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+	FlagProvisioningSecretsService = "provisioningSecretsService"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -671,10 +671,6 @@ const (
 	// Enables browser crash detection reporting to Faro.
 	FlagCrashDetection = "crashDetection"
 
-	// FlagJaegerBackendMigration
-	// Enables querying the Jaeger data source without the proxy
-	FlagJaegerBackendMigration = "jaegerBackendMigration"
-
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
@@ -858,6 +854,10 @@ const (
 	// FlagMetricsFromProfiles
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
+
+	// FlagTempoAlerting
+	// Enables creating alerts from Tempo data source
+	FlagTempoAlerting = "tempoAlerting"
 
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins

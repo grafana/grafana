@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 
-export interface Props {
+interface Props {
   query: string;
   lang: {
     grammar: Grammar;

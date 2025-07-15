@@ -46,7 +46,7 @@ import (
 	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	secretworker "github.com/grafana/grafana/pkg/registry/apis/secret/worker"
+	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -327,8 +327,6 @@ var wireBasicSet = wire.NewSet(
 	expr.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	featuremgmt.ProvideOpenFeatureService,
-	featuremgmt.ProvideStaticEvaluator,
 	dashboardservice.ProvideDashboardServiceImpl,
 	wire.Bind(new(dashboards.PermissionsRegistrationService), new(*dashboardservice.DashboardServiceImpl)),
 	dashboardservice.ProvideDashboardService,
@@ -429,17 +427,17 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideDecryptStorage,
 	secretdecrypt.ProvideDecryptAuthorizer,
 	secretdecrypt.ProvideDecryptAllowList,
+	secretdecrypt.ProvideDecryptService,
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
-	secretmetadata.ProvideOutboxQueue,
 	secretsecurevalueservice.ProvideSecureValueService,
+	secretvalidator.ProvideKeeperValidator,
+	secretvalidator.ProvideSecureValueValidator,
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
 	encryptionManager.ProvideEncryptionManager,
 	gsmEncryption.ProvideThirdPartyProviderMap,
-	secretworker.ProvideWorkerConfig,
-	secretworker.NewWorker,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
@@ -505,7 +503,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	mock.TestingT
 	Cleanup(func())
-}, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
+}, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions,
+) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
 	return &TestEnv{Server: &Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
