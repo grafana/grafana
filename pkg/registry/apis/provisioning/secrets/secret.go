@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -87,17 +86,11 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 }
 
 func (s *secretsService) Decrypt(ctx context.Context, namespace string, name string) ([]byte, error) {
-	requester := &identity.StaticRequester{
-		Type:      types.TypeAccessPolicy,
-		Namespace: namespace,
-		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
-			Rest: authn.AccessTokenClaims{
-				Permissions:     []string{"secret.grafana.app/securevalues:decrypt"},
-				ServiceIdentity: svcName,
-			},
-		},
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return nil, err
 	}
-	ctx = types.WithAuthInfo(ctx, requester)
+	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID, identity.WithServiceIdentityName(svcName))
 
 	results, err := s.decryptSvc.Decrypt(ctx, namespace, name)
 	if err != nil {
