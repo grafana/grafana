@@ -83,9 +83,17 @@ interface ChangeCorrelationHelperData {
   exploreId: string;
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 }
+
 export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
   'explore/changeCorrelationHelperData'
 );
+
+export interface UpdateQueryRefPayload {
+  exploreId: string;
+  queryRef?: string;
+}
+
+export const updateQueryRefAction = createAction<UpdateQueryRefPayload>('explore/updateQueryRef');
 
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -98,6 +106,7 @@ interface InitializeExplorePayload {
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
   eventBridge: EventBusExtended;
+  queryRef?: string;
 }
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
@@ -129,6 +138,7 @@ export interface InitializeExploreOptions {
   correlationHelperData?: ExploreCorrelationHelperData;
   position?: number;
   eventBridge: EventBusExtended;
+  queryRef?: string;
 }
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -149,6 +159,7 @@ export const initializeExplore = createAsyncThunk(
       panelsState,
       correlationHelperData,
       eventBridge,
+      queryRef,
     }: InitializeExploreOptions,
     { dispatch, getState, fulfillWithValue }
   ) => {
@@ -170,6 +181,7 @@ export const initializeExplore = createAsyncThunk(
         datasourceInstance: instance,
         history,
         eventBridge,
+        queryRef,
       })
     );
     if (panelsState !== undefined) {
@@ -235,8 +247,15 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     };
   }
 
+  if (updateQueryRefAction.match(action)) {
+    return {
+      ...state,
+      queryRef: action.payload.queryRef,
+    };
+  }
+
   if (initializeExploreAction.match(action)) {
-    const { queries, range, datasourceInstance, history, eventBridge } = action.payload;
+    const { queries, range, datasourceInstance, history, eventBridge, queryRef } = action.payload;
 
     return {
       ...state,
@@ -250,6 +269,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queryResponse: createEmptyQueryResponse(),
       cache: [],
       correlations: [],
+      queryRef,
     };
   }
 

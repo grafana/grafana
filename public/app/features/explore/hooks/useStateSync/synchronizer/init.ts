@@ -33,7 +33,7 @@ export function initializeFromURL(
   dispatch(clearPanes());
 
   Promise.all(
-    Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState }]) => {
+    Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, queryRef }]) => {
       return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
         return Promise.resolve(
           // Given the Grafana datasource will always be present, this should always be defined.
@@ -64,13 +64,20 @@ export function initializeFromURL(
             ];
           }
 
-          return { exploreId, range, panelsState, queries: validQueries, datasource: paneDatasource };
+          return {
+            exploreId,
+            range,
+            panelsState,
+            queries: validQueries,
+            datasource: paneDatasource,
+            ...(queryRef && { queryRef }),
+          };
         });
       });
     })
   ).then(async (panes) => {
     const initializedPanes = await Promise.all(
-      panes.map(({ exploreId, range, panelsState, queries, datasource }) => {
+      panes.map(({ exploreId, range, panelsState, queries, datasource, queryRef }) => {
         return dispatch(
           initializeExplore({
             exploreId,
@@ -79,6 +86,7 @@ export function initializeFromURL(
             range: fromURLRange(range),
             panelsState,
             eventBridge: new EventBusSrv(),
+            queryRef,
           })
         ).unwrap();
       })
