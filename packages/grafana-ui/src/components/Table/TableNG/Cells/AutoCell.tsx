@@ -4,10 +4,10 @@ import { renderSingleLink } from '../../DataLinksActionsTooltip';
 import { useSingleLink } from '../hooks';
 import { AutoCellProps } from '../types';
 
-export default function AutoCell({ value, field, rowIdx, singleLinkClass }: AutoCellProps) {
+export default function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
   const link = useSingleLink(field, rowIdx);
 
-  return link == null ? formattedValue : renderSingleLink(link, formattedValue, singleLinkClass);
+  return link == null ? formattedValue : renderSingleLink(link, formattedValue);
 }
