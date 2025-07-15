@@ -26,8 +26,7 @@ func ProvideEncryptedValueStorage(
 	tracer trace.Tracer,
 	features featuremgmt.FeatureToggles,
 ) (contracts.EncryptedValueStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptedValStorage{}, nil
 	}
 

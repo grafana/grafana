@@ -210,6 +210,10 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+  */
+  provisioningSecretsService?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -957,6 +961,10 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables creating alerts from Tempo data source
+  */
+  tempoAlerting?: boolean;
   /**
   * Enables auto-updating of users installed plugins
   */
