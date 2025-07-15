@@ -17,6 +17,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 func TestNewGitHub(t *testing.T) {
@@ -80,6 +81,8 @@ func TestNewGitHub(t *testing.T) {
 
 			gitRepo := git.NewMockGitRepository(t)
 
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+
 			// Call the function under test
 			repo, err := NewGitHub(
 				context.Background(),
@@ -87,6 +90,7 @@ func TestNewGitHub(t *testing.T) {
 				gitRepo,
 				factory,
 				tt.token,
+				mockSecrets,
 			)
 
 			// Check results

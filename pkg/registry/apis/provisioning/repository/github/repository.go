@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
@@ -20,6 +21,7 @@ type githubRepository struct {
 	gitRepo git.GitRepository
 	config  *provisioning.Repository
 	gh      Client // assumes github.com base URL
+	secrets secrets.RepositorySecrets
 
 	owner string
 	repo  string
@@ -48,6 +50,7 @@ func NewGitHub(
 	gitRepo git.GitRepository,
 	factory *Factory,
 	token string,
+	secrets secrets.RepositorySecrets,
 ) (GithubRepository, error) {
 	owner, repo, err := ParseOwnerRepoGithub(config.Spec.GitHub.URL)
 	if err != nil {
@@ -60,6 +63,7 @@ func NewGitHub(
 		gh:      factory.New(ctx, token), // TODO, baseURL from config
 		owner:   owner,
 		repo:    repo,
+		secrets: secrets,
 	}, nil
 }
 

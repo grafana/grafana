@@ -14,6 +14,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
 	"github.com/grafana/nanogit/protocol"
@@ -290,9 +291,10 @@ func TestNewGit(t *testing.T) {
 		Path:   "configs",
 	}
 
+	mockSecrets := secrets.NewMockRepositorySecrets(t)
 	// This should succeed in creating the client but won't be able to connect
 	// We just test that the basic structure is created correctly
-	gitRepo, err := NewGitRepository(ctx, config, gitConfig)
+	gitRepo, err := NewGitRepository(ctx, config, gitConfig, mockSecrets)
 	require.NoError(t, err)
 	require.NotNil(t, gitRepo)
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
@@ -1860,7 +1862,8 @@ func TestNewGitRepository(t *testing.T) {
 				},
 			}
 
-			gitRepo, err := NewGitRepository(ctx, config, tt.gitConfig)
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+			gitRepo, err := NewGitRepository(ctx, config, tt.gitConfig, mockSecrets)
 
 			if tt.wantError {
 				require.Error(t, err)
@@ -2811,7 +2814,8 @@ func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
 		Path:   "configs",
 	}
 
-	gitRepo, err := NewGitRepository(ctx, config, gitConfig)
+	mockSecrets := secrets.NewMockRepositorySecrets(t)
+	gitRepo, err := NewGitRepository(ctx, config, gitConfig, mockSecrets)
 
 	// We expect this to fail during client creation
 	require.Error(t, err)
