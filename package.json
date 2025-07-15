@@ -460,7 +460,7 @@
     ]
   },
   "engines": {
-    "node": "22.16.0"
+    "node": ">= 22 <23"
   },
   "packageManager": "yarn@4.9.2",
   "dependenciesMeta": {
