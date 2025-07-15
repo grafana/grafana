@@ -4,7 +4,7 @@ import { EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { promqlGrammar } from '../../promql';
 import { RawQuery } from '../shared/RawQuery';
 
-export interface QueryPreviewProps {
+interface QueryPreviewProps {
   query: string;
 }
 

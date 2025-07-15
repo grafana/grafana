@@ -45,7 +45,7 @@ const API_V1 = {
   LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
 };
 
-export interface PrometheusBaseLanguageProvider {
+interface PrometheusBaseLanguageProvider {
   datasource: PrometheusDatasource;
 
   /**
@@ -70,7 +70,7 @@ export interface PrometheusBaseLanguageProvider {
 /**
  * @deprecated This interface is deprecated and will be removed.
  */
-export interface PrometheusLegacyLanguageProvider {
+interface PrometheusLegacyLanguageProvider {
   /**
    * @deprecated Use retrieveHistogramMetrics() method instead
    */
