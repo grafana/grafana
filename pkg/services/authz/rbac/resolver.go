@@ -14,32 +14,37 @@ import (
 type ScopeResolverFunc func(id string) (string, error)
 
 func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInfo) ScopeResolverFunc {
-	teamIDs, ok := s.teamIDCache.Get(ctx, teamIDsCacheKey(ns.Value))
-	if !ok {
-		// TODO singleflight?
-		teams, err := s.identityStore.ListTeams(ctx, ns, legacy.ListTeamQuery{})
+	key := teamIDsCacheKey(ns.Value)
+	teamIDs, cacheHit := s.teamIDCache.Get(ctx, key)
+	if !cacheHit {
+		res, err, _ := s.sf.Do(key, func() (interface{}, error) {
+			teams, err := s.identityStore.ListTeams(ctx, ns, legacy.ListTeamQuery{})
+			if err != nil {
+				return nil, fmt.Errorf("could not list teams: %w", err)
+			}
+			teamIDs = make(map[int64]string, len(teams.Teams))
+			for _, team := range teams.Teams {
+				teamIDs[team.ID] = team.UID
+			}
+			s.teamIDCache.Set(ctx, teamIDsCacheKey(ns.Value), teamIDs)
+			return teamIDs, nil
+		})
 		if err != nil {
-			return func(id string) (string, error) {
+			s.logger.FromContext(ctx).Error("could not list teams", "error", err)
+			return func(scope string) (string, error) {
 				return "", fmt.Errorf("could not list teams: %w", err)
 			}
 		}
-		teamIDs = make(map[int64]string, len(teams.Teams))
-		for _, team := range teams.Teams {
-			teamIDs[team.ID] = team.UID
-		}
-		s.teamIDCache.Set(ctx, teamIDsCacheKey(ns.Value), teamIDs)
+		teamIDs = res.(map[int64]string)
 	}
 
 	return func(scope string) (string, error) {
-		if !strings.HasPrefix(scope, "teams:id:") {
-			return "", fmt.Errorf("scope %s is not a team ID", scope)
-		}
 		id := strings.TrimPrefix(scope, "teams:id:")
 		if id == "" {
 			return "", fmt.Errorf("team ID is empty")
 		}
 		if id == "*" {
-			return "*", nil
+			return "teams:uid:*", nil
 		}
 		idInt, err := strconv.ParseInt(id, 10, 64)
 		if err != nil {
@@ -60,26 +65,35 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scop
 	return nil
 }
 
+// resolveScopeMap translates scopes like "teams:id:1" to "teams:uid:t1".
+// It assumes only one scope resolver is needed for a given scope map, based on the first valid scope encountered.
 func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, scopeMap map[string]bool) map[string]bool {
-	first := true
+	prefix := ""
 	var scopeResolver ScopeResolverFunc
 	for scope := range scopeMap {
-		if len(strings.Split(scope, ":")) < 3 {
-			// Skip scopes that don't have at least 3 parts (e.g., "teams:id:123")
-			continue
-		}
-		if strings.HasPrefix(scope, "folders:uid:") {
-			// Skip folder scopes, they are already uid based
-			continue
-		}
-		if first {
+		// Find the resolver based on the first scope with a valid prefix
+		if prefix == "" {
+			if len(strings.Split(scope, ":")) < 3 {
+				// Skip scopes that don't have at least 3 parts (e.g., "*", "teams:*")
+				continue
+			}
+			if strings.HasPrefix(scope, "folders:uid:") {
+				// Resources can be stored in folders
+				// but we don't want to resolve folder scopes
+				continue
+			}
+
 			// Initialize the scope resolver only once
-			first = false
-			prefix := accesscontrol.ScopePrefix(scope)
+			prefix = accesscontrol.ScopePrefix(scope)
 			scopeResolver = s.nameResolver(ctx, ns, prefix)
 			if scopeResolver == nil {
-				break // No resolver available, skip further resolution
+				break // No resolver found for this prefix
 			}
+		}
+
+		// Skip scopes that do not have the expected prefix
+		if !strings.HasPrefix(scope, prefix) {
+			continue
 		}
 		resolved, err := scopeResolver(scope)
 		if err != nil {
