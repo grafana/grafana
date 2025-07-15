@@ -14,7 +14,7 @@ import { PromQueryBuilder } from './PromQueryBuilder';
 import { QueryPreview } from './QueryPreview';
 import { getSettings, MetricsModalSettings } from './metrics-modal/state/state';
 
-export interface PromQueryBuilderContainerProps {
+interface PromQueryBuilderContainerProps {
   query: PromQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromQuery) => void;
@@ -23,7 +23,7 @@ export interface PromQueryBuilderContainerProps {
   showExplain: boolean;
 }
 
-export interface State {
+interface State {
   visQuery?: PromVisualQuery;
   expr: string;
 }

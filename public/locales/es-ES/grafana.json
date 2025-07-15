@@ -5837,10 +5837,13 @@
       "description-examples": "Los grupos de captura con nombre se pueden utilizar para separar el texto y el valor de la pantalla (<1>consulta los ejemplos</1>).",
       "description-optional": "Es opcional si quieres extraer parte del nombre de una serie o segmento de nodo métrico.",
       "label-data-source": "Fuente de datos",
+      "label-static-options-sort": "",
       "label-target-data-source": "Fuente de datos de destino",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Opciones de consulta",
-      "selection-options": "Opciones de selección"
+      "selection-options": "Opciones de selección",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13157,6 +13160,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

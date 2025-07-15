@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -177,6 +179,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 
 		if err != nil {
 			b.log.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
+			logEmptyRefids(raw.Queries, b.log)
 			if qdr != nil { // if we have a response, we assume the err is set in the response
 				responder.Object(query.GetResponseCode(qdr), &query.QueryDataResponse{
 					QueryDataResponse: *qdr,
@@ -201,9 +204,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 	for _, query := range raw.Queries {
 		jsonBytes, err := json.Marshal(query)
 		if err != nil {
-			if err != nil {
-				b.log.Error("error marshalling", err)
-			}
+			b.log.Error("error marshalling", err)
 		}
 
 		sjQuery, _ := simplejson.NewJson(jsonBytes)
@@ -291,4 +292,31 @@ func (r responderWrapper) Error(err error) {
 	}
 
 	r.wrapped.Error(err)
+}
+
+func logEmptyRefids(queries []v0alpha1.DataQuery, logger log.Logger) {
+	emptyCount := 0
+
+	for _, q := range queries {
+		if q.RefID == "" {
+			emptyCount += 1
+		}
+	}
+
+	if emptyCount > 0 {
+		logger.Info("empty refid found", "empty_count", emptyCount, "query_count", len(queries))
+	}
+}
+
+func mergeHeaders(main http.Header, extra http.Header, l log.Logger) {
+	for headerName, extraValues := range extra {
+		mainValues := main.Values(headerName)
+		for _, extraV := range extraValues {
+			if !slices.Contains(mainValues, extraV) {
+				main.Add(headerName, extraV)
+			} else {
+				l.Warn("skipped duplicate response header", "header", headerName, "value", extraV)
+			}
+		}
+	}
 }
