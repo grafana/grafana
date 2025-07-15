@@ -1,6 +1,5 @@
 import { t } from '@grafana/i18n';
 import {
-  MultiValueVariable,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
@@ -13,8 +12,16 @@ import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboa
 
 import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
-import { isClonedKey, joinCloneKeys } from '../../utils/clone';
-import { getDashboardSceneFor, getMultiVariableValues } from '../../utils/utils';
+import {
+  containsCloneKey,
+  getCloneKey,
+  getLastKeyFromClone,
+  getOriginalKey,
+  isClonedKey,
+  isClonedKeyOf,
+  joinCloneKeys,
+} from '../../utils/clone';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
@@ -23,7 +30,6 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
-import { createTabRepeats } from './TabItemRepeater';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
 interface TabsLayoutManagerState extends SceneObjectState {
@@ -64,23 +70,23 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       currentTabIndex: state.currentTabIndex ?? 0,
     });
 
-    this.addActivationHandler(() => this._activationHandler());
+    // this.addActivationHandler(() => this._activationHandler());
   }
 
-  private _activationHandler() {
-    this.state.tabs.forEach((tab) => {
-      if (tab.state.repeatByVariable) {
-        const variable = sceneGraph.lookupVariable(tab.state.repeatByVariable, this);
+  // private _activationHandler() {
+  //   this.state.tabs.forEach((tab) => {
+  //     if (tab.state.repeatByVariable) {
+  //       const variable = sceneGraph.lookupVariable(tab.state.repeatByVariable, this);
 
-        if (variable instanceof MultiValueVariable) {
-          const { values, texts } = getMultiVariableValues(variable);
+  //       if (variable instanceof MultiValueVariable) {
+  //         const { values, texts } = getMultiVariableValues(variable);
 
-          const clonedTabs = createTabRepeats({ values, texts, variable, tab });
-          tab.setState({ repeatedTabs: clonedTabs });
-        }
-      }
-    });
-  }
+  //         const clonedTabs = createTabRepeats({ values, texts, variable, tab });
+  //         tab.setState({ repeatedTabs: clonedTabs });
+  //       }
+  //     }
+  //   });
+  // }
 
   public duplicate(): DashboardLayoutManager {
     // Maybe not needed, depending on if we want nested tabs or tabs within rows
@@ -197,11 +203,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     dashboardEditActions.addElement({
       addedObject: newTab,
       source: this,
-      perform: () => this.setState({ tabs: [...this.getTabs(), newTab], currentTabIndex: this.getTabs().length }),
+      perform: () => this.setState({ tabs: [...this.state.tabs, newTab], currentTabIndex: this.getTabs().length }),
       undo: () => {
         const indexOfNewTab = this.getTabs().findIndex((t) => t === newTab);
         this.setState({
-          tabs: this.getTabs().filter((t) => t !== newTab),
+          tabs: this.state.tabs.filter((t) => t !== newTab),
           // if the new tab was the current tab, set the current tab to the previous tab
           currentTabIndex:
             this.state.currentTabIndex === indexOfNewTab
@@ -225,7 +231,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public shouldUngroup(): boolean {
-    return this.state.tabs.length === 1;
+    return this.getTabs().length === 1;
   }
 
   public removeTab(tabToRemove: TabItem) {
@@ -267,25 +273,48 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public moveTab(fromIndex: number, toIndex: number) {
-    const objectToMove = this.state.tabs[fromIndex];
+    // fromIndex and toIndex include repeated tab so we need to find original indexes
+    const allTabs = this.getTabs();
+    const objectToMove = allTabs[fromIndex];
+    let destinationTab = allTabs[toIndex];
+    let selectionIndex = toIndex;
+
+    if (containsCloneKey(getLastKeyFromClone(destinationTab.state.key!))) {
+      if (isClonedKeyOf(destinationTab.state.key!, objectToMove.state.key!)) {
+        // moving tab between its clones
+        return;
+      }
+      const originalTabKey = getCloneKey(getOriginalKey(destinationTab.state.key!), 0);
+      const originalTabIndex = allTabs.findIndex((tab) => tab.state.key === originalTabKey);
+
+      if (originalTabIndex !== -1) {
+        destinationTab = allTabs[originalTabIndex];
+
+        const isMovingLeft = toIndex < fromIndex;
+        selectionIndex = originalTabIndex + (isMovingLeft ? 0 : destinationTab.state.repeatedTabs?.length || 0);
+      }
+    }
+
+    const originalFromIndex = this.state.tabs.findIndex((tab) => tab === objectToMove);
+    const originalToIndex = this.state.tabs.findIndex((tab) => tab === destinationTab);
 
     dashboardEditActions.moveElement({
       source: this,
       movedObject: objectToMove,
       perform: () => {
-        this.rearrangeTabs(fromIndex, toIndex);
+        this.rearrangeTabs(originalFromIndex, originalToIndex, selectionIndex);
       },
       undo: () => {
-        this.rearrangeTabs(toIndex, fromIndex);
+        this.rearrangeTabs(originalToIndex, originalFromIndex, fromIndex);
       },
     });
   }
 
-  private rearrangeTabs(fromIndex: number, toIndex: number) {
+  private rearrangeTabs(fromIndex: number, toIndex: number, selectedTabIndex: number) {
     const tabs = [...this.state.tabs];
     const [removed] = tabs.splice(fromIndex, 1);
     tabs.splice(toIndex, 0, removed);
-    this.setState({ tabs, currentTabIndex: toIndex });
+    this.setState({ tabs, currentTabIndex: selectedTabIndex });
     this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
@@ -360,7 +389,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const titleCounts = new Map<string | undefined, number>();
     const duplicateTitles = new Set<string | undefined>();
 
-    this.state.tabs.forEach((tab) => {
+    this.getTabs().forEach((tab) => {
       const title = sceneGraph.interpolate(tab, tab.state.title);
       const count = (titleCounts.get(title) ?? 0) + 1;
       titleCounts.set(title, count);
