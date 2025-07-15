@@ -31,8 +31,8 @@ import {
 
 jest.mock('../api');
 jest.mock('app/core/services/backend_srv');
-jest.mock('app/core/core', () => ({
-  ...jest.requireActual('app/core/core'),
+jest.mock('app/core/app_events', () => ({
+  ...jest.requireActual('app/core/app_events'),
   appEvents: {
     publish: jest.fn(),
   },

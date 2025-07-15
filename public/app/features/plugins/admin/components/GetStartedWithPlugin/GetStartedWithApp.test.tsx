@@ -8,7 +8,7 @@ import { CatalogPlugin } from '../../types';
 
 import { GetStartedWithApp } from './GetStartedWithApp';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: jest.fn(),
   },

@@ -6,7 +6,7 @@ import { backendSrv } from '../../core/services/backend_srv';
 
 import { SignupInvitedPage } from './SignupInvited';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     user: { orgName: 'Invited to Org Name' },
   },

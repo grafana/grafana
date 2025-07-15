@@ -8,7 +8,7 @@ import { ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { ServiceAccountPageUnconnected, Props } from './ServiceAccountPage';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     licensedAccessControlEnabled: () => false,
     hasPermission: () => true,

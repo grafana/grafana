@@ -44,7 +44,7 @@ jest.mock('../hooks/usePluginConfig.tsx', () => ({
   })),
 }));
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: (action: string) => true,
     hasPermissionInMetadata: (action: string, object: WithAccessControlMetadata) => true,

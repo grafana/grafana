@@ -10,7 +10,7 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     licensedAccessControlEnabled: () => false,
     hasPermission: () => true,
