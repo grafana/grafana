@@ -3,17 +3,13 @@ package provisioning
 import (
 	"context"
 	"encoding/base64"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-type expectedField struct {
-	Path          []string
-	ExpectedValue string
-}
 
 func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 	if testing.Short() {
@@ -24,8 +20,13 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
-	secretsService := helper.GetEnv().SecretsService
+	type expectedField struct {
+		Path                   []string
+		ExpectedDecryptedValue string
+	}
 
+	secretsService := helper.GetEnv().SecretsService
+	// TODO: Add test of fallbacks
 	tests := []struct {
 		name           string
 		values         map[string]any
@@ -40,12 +41,12 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 			inputFile: "testdata/github-readonly.json.tmpl",
 			expectedFields: []expectedField{
 				{
-					Path:          []string{"spec", "github", "token"},
-					ExpectedValue: "",
+					Path:                   []string{"spec", "github", "token"},
+					ExpectedDecryptedValue: "",
 				},
 				{
-					Path:          []string{"spec", "github", "encryptedToken"},
-					ExpectedValue: "some-token",
+					Path:                   []string{"spec", "github", "encryptedToken"},
+					ExpectedDecryptedValue: "some-token",
 				},
 			},
 		},
@@ -57,12 +58,12 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 			inputFile: "testdata/git-readonly.json.tmpl",
 			expectedFields: []expectedField{
 				{
-					Path:          []string{"spec", "git", "token"},
-					ExpectedValue: "",
+					Path:                   []string{"spec", "git", "token"},
+					ExpectedDecryptedValue: "",
 				},
 				{
-					Path:          []string{"spec", "git", "encryptedToken"},
-					ExpectedValue: "some-token",
+					Path:                   []string{"spec", "git", "encryptedToken"},
+					ExpectedDecryptedValue: "some-token",
 				},
 			},
 		},
@@ -82,15 +83,16 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 			for _, expectedField := range test.expectedFields {
 				value, found, err := unstructured.NestedFieldNoCopy(output.Object, expectedField.Path...)
 				require.NoError(t, err, "failed to get value")
-				if expectedField.ExpectedValue != "" {
+				if expectedField.ExpectedDecryptedValue != "" {
 					require.True(t, found, "value not found")
 					valueStr, ok := value.(string)
 					require.True(t, ok, "value is not a string")
 					decodedValue, err := base64.StdEncoding.DecodeString(valueStr)
 					require.NoError(t, err, "failed to decode base64 valueStr")
+					require.False(t, strings.HasPrefix(string(decodedValue), name), "not prefixed with the repository name")
 					decrypted, err := secretsService.Decrypt(ctx, nil, string(decodedValue))
 					require.NoError(t, err, "failed to decrypt value")
-					require.Equal(t, expectedField.ExpectedValue, string(decrypted))
+					require.Equal(t, expectedField.ExpectedDecryptedValue, string(decrypted))
 				} else {
 					require.False(t, found, "value should not be found")
 				}
@@ -110,6 +112,12 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 
 	secretsService := helper.GetEnv().SecretsService
 
+	type expectedField struct {
+		Path                   []string
+		ExpectedValue          string
+		ExpectedDecryptedValue string
+	}
+	// TODO: Add test of fallbacks
 	tests := []struct {
 		name           string
 		values         map[string]any
@@ -124,12 +132,13 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 			inputFile: "testdata/github-readonly.json.tmpl",
 			expectedFields: []expectedField{
 				{
-					Path:          []string{"spec", "github", "token"},
-					ExpectedValue: "",
+					Path:                   []string{"spec", "github", "token"},
+					ExpectedDecryptedValue: "",
 				},
 				{
-					Path:          []string{"spec", "github", "encryptedToken"},
-					ExpectedValue: "some-token",
+					Path:                   []string{"spec", "github", "encryptedToken"},
+					ExpectedValue:          "github-token",
+					ExpectedDecryptedValue: "some-token",
 				},
 			},
 		},
@@ -141,12 +150,13 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 			inputFile: "testdata/git-readonly.json.tmpl",
 			expectedFields: []expectedField{
 				{
-					Path:          []string{"spec", "git", "token"},
-					ExpectedValue: "",
+					Path:                   []string{"spec", "git", "token"},
+					ExpectedDecryptedValue: "",
 				},
 				{
-					Path:          []string{"spec", "git", "encryptedToken"},
-					ExpectedValue: "some-token",
+					Path:                   []string{"spec", "git", "encryptedToken"},
+					ExpectedValue:          "git-token",
+					ExpectedDecryptedValue: "some-token",
 				},
 			},
 		},
@@ -167,15 +177,17 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 			for _, expectedField := range test.expectedFields {
 				value, found, err := unstructured.NestedFieldNoCopy(output.Object, expectedField.Path...)
 				require.NoError(t, err, "failed to get value")
-				if expectedField.ExpectedValue != "" {
+				if expectedField.ExpectedDecryptedValue != "" {
 					require.True(t, found, "value not found")
 					valueStr, ok := value.(string)
 					require.True(t, ok, "value is not a string")
 					decodedValue, err := base64.StdEncoding.DecodeString(valueStr)
 					require.NoError(t, err, "failed to decode base64 valueStr")
+					require.Equal(t, name+"-"+expectedField.ExpectedValue, string(decodedValue))
+
 					decrypted, err := secretsService.Decrypt(ctx, repo, string(decodedValue))
 					require.NoError(t, err, "failed to decrypt value")
-					require.Equal(t, expectedField.ExpectedValue, string(decrypted))
+					require.Equal(t, expectedField.ExpectedDecryptedValue, string(decrypted))
 				} else {
 					require.False(t, found, "value should not be found")
 				}
@@ -183,3 +195,5 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 		})
 	}
 }
+
+// TODO: Update test overrides
