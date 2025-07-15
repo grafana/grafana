@@ -39,7 +39,14 @@ type dualWriter struct {
 func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	// If we read from unified, we can just do that and return.
 	if d.readUnified {
-		return d.unified.Get(ctx, name, options)
+		unifiedGet, err := d.unified.Get(ctx, name, options)
+		if err == nil {
+			return unifiedGet, err
+		}
+		// If there's an error reading from unified, fallback to legacy.
+		// This fixes cases in where records (stored in multiple tables, including permissions)
+		// are inserted first in legacy and then on Unified.
+		return d.legacy.Get(ctx, name, options)
 	}
 	// If legacy is still our main store, lets first read from it.
 	legacyGet, err := d.legacy.Get(ctx, name, options)
