@@ -44,6 +44,7 @@ export function ImagePreview({ imageBlob, isLoading, error, title }: ImagePrevie
       className={styles.previewContainer}
       ref={ref}
       aria-label={t('share-modal.image.preview-region', 'Image preview')}
+      role="region"
     >
       {isLoading && (
         <div
