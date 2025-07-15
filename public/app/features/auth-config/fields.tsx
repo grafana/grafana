@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/core';
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue, isSelectableValueArray } from './utils/guards';
-import { isUrlValid } from './utils/url';
+import { isUrlValid, isValidDomain } from './utils/url';
 
 type Section = Record<
   SSOProvider['provider'],
@@ -774,7 +774,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           }
 
           if (typeof value === 'string' && value.length) {
-            result = isUrlValid(value);
+            result = isUrlValid(value, false);
           }
           return result;
         },
@@ -880,6 +880,15 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.'
       ),
       type: 'text',
+      validation: {
+        validate: (value) => {
+          if (typeof value === 'string' && value.length) {
+            return isValidDomain(value);
+          }
+          return true;
+        },
+        message: t('auth-config.fields.domain-hint-valid-domain', 'This field must be a valid domain.'),
+      },
     },
   };
 }

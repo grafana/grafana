@@ -292,7 +292,8 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 		validateAllowedGroups,
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
-		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"),
+		validation.DomainValidator(info.Extra[domainHintKey], "Domain Hint"))
 }
 
 func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
