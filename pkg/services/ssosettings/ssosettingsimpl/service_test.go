@@ -1916,9 +1916,6 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies, sam
 	licensing.On("FeatureEnabled", "saml").Return(isLicensingEnabled)
 
 	features := make([]any, 0)
-	if samlEnabled {
-		features = append(features, featuremgmt.FlagSsoSettingsSAML)
-	}
 	if ldapEnabled {
 		features = append(features, featuremgmt.FlagSsoSettingsLDAP)
 	}
