@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -16,7 +17,7 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
       {links &&
         links.map((link, idx) => {
           return !link.href && link.onClick == null ? (
-            <span key={idx} className={styles.cellLinkEmpty}>
+            <span key={idx} className={clsx('linklike', styles.linkCell)}>
               {link.title}
             </span>
           ) : (
@@ -34,18 +35,6 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   linkCell: css({
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    userSelect: 'text',
-    whiteSpace: 'nowrap',
-    color: theme.colors.text.link,
-    fontWeight: theme.typography.fontWeightMedium,
-    paddingRight: theme.spacing(1.5),
-  }),
-  cellLinkEmpty: css({
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
     userSelect: 'text',
     whiteSpace: 'nowrap',
     fontWeight: theme.typography.fontWeightMedium,

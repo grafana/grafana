@@ -9,5 +9,17 @@ export default function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   const formattedValue = formattedValueToString(displayValue);
   const link = useSingleLink(field, rowIdx);
 
-  return link == null ? formattedValue : renderSingleLink(link, formattedValue);
+  if (link != null) {
+    return renderSingleLink(link, formattedValue);
+  }
+
+  const linksCount = field.config.links?.length ?? 0;
+  const actionsCount = field.config.actions?.length ?? 0;
+  const isMultilink = linksCount + actionsCount > 1;
+
+  if (isMultilink) {
+    return <span className="linklike">{formattedValue}</span>;
+  }
+
+  return formattedValue;
 }
