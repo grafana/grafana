@@ -29,13 +29,7 @@ const GAUGE_RENDERER: TableCellRenderer = (props) => (
 );
 
 const AUTO_RENDERER: TableCellRenderer = (props) => (
-  <AutoCell
-    value={props.value}
-    field={props.field}
-    rowIdx={props.rowIdx}
-
-    singleLinkClass={props.singleLinkClass}
-  />
+  <AutoCell value={props.value} field={props.field} rowIdx={props.rowIdx} singleLinkClass={props.singleLinkClass} />
 );
 
 const SPARKLINE_RENDERER: TableCellRenderer = (props) => (

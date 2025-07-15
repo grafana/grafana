@@ -347,11 +347,12 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.DataLinks:
             cellClass = getCellStyles(
               theme,
-              hasBackgroundColor,
               justifyContent,
               shouldWrap,
               shouldOverflow,
-              withTooltip
+              withTooltip,
+              canBeColorized,
+              hasBackgroundColor
             );
             break;
         }
@@ -887,11 +888,12 @@ const getHeaderCellStyles = (theme: GrafanaTheme2, justifyContent: Property.Just
 
 const getCellStyles = (
   theme: GrafanaTheme2,
-  hasBackgroundColor: boolean,
   justifyContent: Property.JustifyContent,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  hasTooltip: boolean
+  hasTooltip: boolean,
+  isColorized: boolean,
+  hasBackgroundColor: boolean
 ) =>
   css({
     display: 'flex',
@@ -923,10 +925,17 @@ const getCellStyles = (
     },
     a: {
       cursor: 'pointer',
-      color: hasBackgroundColor ? 'inherit' : theme.colors.text.link,
-      textDecoration: hasBackgroundColor ? 'underline' : 'none',
-      '&:hover': {
-        textDecoration: 'underline',
-      },
+      ...(isColorized
+        ? {
+            color: 'inherit',
+            textDecoration: 'underline',
+          }
+        : {
+            color: theme.colors.text.link,
+            textDecoration: 'none',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          }),
     },
   });
