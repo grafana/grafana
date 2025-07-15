@@ -328,13 +328,13 @@ Specifies the time range to use for tags and tag value requests.
 
 You can configure this setting as follows:
 
-| Name              | Description                              |
-| ----------------- | ---------------------------------------- |
-| **Last 30 mins**  | Last 30 mins of selected range. `1800`   |
-| **Last 3 hours**  | Last 3 hours of selected range. `10800`  |
-| **Last 24 hours** | Last 24 hours of selected range. `86400` |
-| **Last 3 days**   | Last 3 days of selected range. `259200`  |
-| **Last 7 days**   | Last 7 days of selected range. `604800`  |
+| Name                 | Description                               |
+| -------------------- | ----------------------------------------- |
+| **Last 30 minutes**  | Last 30 minutes of selected range. `1800` |
+| **Last 3 hours**     | Last 3 hours of selected range. `10800`   |
+| **Last 24 hours**    | Last 24 hours of selected range. `86400`  |
+| **Last 3 days**      | Last 3 days of selected range. `259200`   |
+| **Last 7 days**      | Last 7 days of selected range. `604800`   |
 
 ### Span bar
 
