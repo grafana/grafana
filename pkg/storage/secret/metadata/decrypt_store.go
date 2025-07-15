@@ -30,8 +30,7 @@ func ProvideDecryptStorage(
 	decryptAuthorizer contracts.DecryptAuthorizer,
 	reg prometheus.Registerer,
 ) (contracts.DecryptStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &decryptStorage{}, nil
 	}
 

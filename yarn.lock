@@ -3549,7 +3549,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:^6.27.1":
+"@grafana/scenes-react@npm:^6.27.2":
   version: 6.27.2
   resolution: "@grafana/scenes-react@npm:6.27.2"
   dependencies:
@@ -3569,7 +3569,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:6.27.2, @grafana/scenes@npm:^6.27.1":
+"@grafana/scenes@npm:6.27.2, @grafana/scenes@npm:^6.27.2":
   version: 6.27.2
   resolution: "@grafana/scenes@npm:6.27.2"
   dependencies:
@@ -18160,8 +18160,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:0.10.7"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^6.27.1"
-    "@grafana/scenes-react": "npm:^6.27.1"
+    "@grafana/scenes": "npm:^6.27.2"
+    "@grafana/scenes-react": "npm:^6.27.2"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -27342,7 +27342,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:*, react-virtualized-auto-sizer@npm:1.0.26, react-virtualized-auto-sizer@npm:^1.0.6":
+"react-virtualized-auto-sizer@npm:*, react-virtualized-auto-sizer@npm:1.0.26":
   version: 1.0.26
   resolution: "react-virtualized-auto-sizer@npm:1.0.26"
   peerDependencies:
@@ -27359,6 +27359,16 @@ __metadata:
     react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
     react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0
   checksum: 10/02101a340bdbe3e40c49dbc52e524eb7ca18832690e91f045a25675600d7adc0a63e800a4ace6a014132adcdcce0e12a8137971de408427a5a3112d7c87c9f3e
+  languageName: node
+  linkType: hard
+
+"react-virtualized-auto-sizer@npm:^1.0.6":
+  version: 1.0.25
+  resolution: "react-virtualized-auto-sizer@npm:1.0.25"
+  peerDependencies:
+    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10/43678a904019f0413a3c649b5b64ea51263283120c991b285077b5075cf2ea564571f6d48b3a396b588d500d45820d1c98989cb7091e2a009e73e4faa7da9d20
   languageName: node
   linkType: hard
 
