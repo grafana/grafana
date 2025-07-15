@@ -969,6 +969,6 @@ ConditionalRenderingScopesKind: {
 }
 
 ConditionalRenderingScopesSpec: {
-	operator: "includes" | "notIncludes"
+	operator: "includes" | "notIncludes" | "includesMatch" | "notIncludesMatch"
 	value:    string
 }
