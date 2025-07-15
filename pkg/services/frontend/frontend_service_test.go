@@ -125,9 +125,9 @@ func TestFrontendService_Middleware(t *testing.T) {
 		HTTPPort:       "3000",
 		StaticRootPath: publicDir,
 	}
-	service := createTestService(t, cfg)
 
 	t.Run("should register route prom metrics", func(t *testing.T) {
+		service := createTestService(t, cfg)
 		mux := web.New()
 		service.addMiddlewares(mux)
 		service.registerRoutes(mux)
@@ -149,6 +149,7 @@ func TestFrontendService_Middleware(t *testing.T) {
 	})
 
 	t.Run("should add context middleware", func(t *testing.T) {
+		service := createTestService(t, cfg)
 		mux := web.New()
 		service.addMiddlewares(mux)
 
