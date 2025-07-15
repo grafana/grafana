@@ -919,7 +919,7 @@ const (
 	// Enables use of app platform API for folders
 	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
 
-	// FlagNewPluginLoading
-	// Set this to true to use the new plugin loading functionality
-	FlagNewPluginLoading = "newPluginLoading"
+	// FlagEnablePluginImporter
+	// Set this to true to use the new PluginImporter functionality
+	FlagEnablePluginImporter = "enablePluginImporter"
 )

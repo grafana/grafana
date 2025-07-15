@@ -76,7 +76,7 @@ export async function importPluginModule({
       expectedHash: moduleHash ?? '',
       loadingStrategy: loadingStrategy.toString(),
       sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-      newPluginLoadingEnabled: String(Boolean(config.featureToggles.newPluginLoading)),
+      newPluginLoadingEnabled: String(Boolean(config.featureToggles.enablePluginImporter)),
     });
     throw error;
   });

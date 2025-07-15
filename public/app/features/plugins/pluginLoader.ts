@@ -75,7 +75,7 @@ systemJSPrototype.resolve = decorateSystemJSResolve.bind(systemJSPrototype, syst
 systemJSPrototype.onload = decorateSystemJsOnload;
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  if (config.featureToggles.newPluginLoading) {
+  if (config.featureToggles.enablePluginImporter) {
     return pluginImporter.importDataSource(meta);
   }
 
@@ -114,7 +114,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
 const importPromises: Record<string, Promise<AppPlugin>> = {};
 
 export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
-  if (config.featureToggles.newPluginLoading) {
+  if (config.featureToggles.enablePluginImporter) {
     return pluginImporter.importApp(meta);
   }
 

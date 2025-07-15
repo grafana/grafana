@@ -51,7 +51,7 @@ export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelP
 }
 
 export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
-  if (config.featureToggles.newPluginLoading) {
+  if (config.featureToggles.enablePluginImporter) {
     return pluginImporter.getPanel(id);
   }
 
@@ -59,7 +59,7 @@ export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
 }
 
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
-  if (config.featureToggles.newPluginLoading) {
+  if (config.featureToggles.enablePluginImporter) {
     return pluginImporter.importPanel(meta);
   }
 

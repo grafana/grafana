@@ -1747,8 +1747,8 @@ var (
 			Expression:        "false",
 		},
 		{
-			Name:              "newPluginLoading",
-			Description:       "Set this to true to use the new plugin loading functionality",
+			Name:              "enablePluginImporter",
+			Description:       "Set this to true to use the new PluginImporter functionality",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaPluginsPlatformSquad,
 			HideFromAdminPage: true,
