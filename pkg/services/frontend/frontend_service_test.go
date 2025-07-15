@@ -26,8 +26,7 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 	license := &licensing.OSSLicensingService{}
 	tracer := tracing.InitializeTracerForTest()
 
-	var promRegister prometheus.Registerer
-	promRegister = prometheus.NewRegistry()
+	var promRegister prometheus.Registerer = prometheus.NewRegistry()
 	promGatherer := promRegister.(*prometheus.Registry)
 
 	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license, tracer)

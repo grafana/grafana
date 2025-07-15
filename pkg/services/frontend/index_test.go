@@ -18,11 +18,11 @@ func setupTestWebAssets(tb testing.TB) string {
 	tb.Helper()
 
 	publicDir := tb.TempDir()
-	tb.Cleanup(func() { os.RemoveAll(publicDir) })
+	tb.Cleanup(func() { _ = os.RemoveAll(publicDir) })
 
 	// Create build directory
 	buildDir := filepath.Join(publicDir, "build")
-	err := os.MkdirAll(buildDir, 0755)
+	err := os.MkdirAll(buildDir, 0750)
 	require.NoError(tb, err)
 
 	// Create test assets manifest
