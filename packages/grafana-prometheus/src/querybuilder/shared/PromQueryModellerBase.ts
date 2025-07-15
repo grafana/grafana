@@ -4,21 +4,14 @@ import { Registry } from '@grafana/data';
 import { renderLabels } from './rendering/labels';
 import { hasBinaryOp, renderOperations } from './rendering/operations';
 import { renderQuery, renderBinaryQueries } from './rendering/query';
-import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
-
-export interface VisualQueryBinary<T> {
-  operator: string;
-  vectorMatchesType?: 'on' | 'ignoring';
-  vectorMatches?: string;
-  query: T;
-}
-
-export interface PrometheusVisualQuery {
-  metric?: string;
-  labels: QueryBuilderLabelFilter[];
-  operations: QueryBuilderOperation[];
-  binaryQueries?: Array<VisualQueryBinary<PrometheusVisualQuery>>;
-}
+import {
+  PrometheusVisualQuery,
+  QueryBuilderLabelFilter,
+  QueryBuilderOperation,
+  QueryBuilderOperationDef,
+  VisualQueryBinary,
+  VisualQueryModeller,
+} from './types';
 
 export abstract class PromQueryModellerBase implements VisualQueryModeller {
   protected operationsRegistry: Registry<QueryBuilderOperationDef>;

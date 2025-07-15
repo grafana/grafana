@@ -1,6 +1,5 @@
 import { isValidLegacyName } from '../../../utf8_support';
-import { PrometheusVisualQuery, VisualQueryBinary } from '../PromQueryModellerBase';
-import { QueryBuilderOperationDef } from '../types';
+import { PrometheusVisualQuery, QueryBuilderOperationDef, VisualQueryBinary } from '../types';
 
 import { renderLabels } from './labels';
 import { hasBinaryOp, renderOperations } from './operations';
