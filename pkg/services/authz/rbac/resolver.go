@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-type ScopeResolverFunc func(id string) (string, error)
+type ScopeResolverFunc func(scope string) (string, error)
 
 func (s *Service) fetchTeams(ctx context.Context, ns types.NamespaceInfo) (map[int64]string, error) {
 	key := teamIDsCacheKey(ns.Value)
@@ -48,18 +48,18 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 	}
 
 	return func(scope string) (string, error) {
-		id := strings.TrimPrefix(scope, "teams:id:")
-		if id == "" {
+		teamIDStr := strings.TrimPrefix(scope, "teams:id:")
+		if teamIDStr == "" {
 			return "", fmt.Errorf("team ID is empty")
 		}
-		if id == "*" {
+		if teamIDStr == "*" {
 			return "teams:uid:*", nil
 		}
-		idInt, err := strconv.ParseInt(id, 10, 64)
+		teamID, err := strconv.ParseInt(teamIDStr, 10, 64)
 		if err != nil {
-			return "", fmt.Errorf("invalid team ID %s: %w", id, err)
+			return "", fmt.Errorf("invalid team ID %s: %w", teamIDStr, err)
 		}
-		if teamName, ok := teamIDs[idInt]; ok {
+		if teamName, ok := teamIDs[teamID]; ok {
 			return "teams:uid:" + teamName, nil
 		}
 
@@ -71,12 +71,12 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 				s.logger.FromContext(ctx).Error("could not fetch teams", "error", err)
 				return "", err
 			}
-			if teamName, ok := teamIDs[idInt]; ok {
+			if teamName, ok := teamIDs[teamID]; ok {
 				return "teams:uid:" + teamName, nil
 			}
 		}
 
-		return "", fmt.Errorf("team ID %s not found", id)
+		return "", fmt.Errorf("team ID %s not found", teamIDStr)
 	}
 }
 
