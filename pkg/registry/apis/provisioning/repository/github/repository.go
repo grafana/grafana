@@ -36,6 +36,7 @@ type GithubRepository interface {
 	repository.Reader
 	repository.RepositoryWithURLs
 	repository.StageableRepository
+	repository.Hooks
 	Owner() string
 	Repo() string
 	Client() Client
@@ -253,4 +254,14 @@ func (r *githubRepository) Stage(ctx context.Context, opts repository.StageOptio
 	return r.gitRepo.Stage(ctx, opts)
 }
 
-// TODO: Add hooks
+func (r *githubRepository) OnCreate(_ context.Context) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (r *githubRepository) OnUpdate(_ context.Context) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (r *githubRepository) OnDelete(_ context.Context) error {
+	return nil
+}

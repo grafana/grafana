@@ -336,7 +336,11 @@ func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
 		return nil
 	}
 	ctx, _ = r.logger(ctx, "")
-	// TODO: Delete secret
+
+	if err := r.GithubRepository.OnDelete(ctx); err != nil {
+		return fmt.Errorf("on delete from basic github repository: %w", err)
+	}
+
 	// TODO: call Github Hook as well
 	return r.deleteWebhook(ctx)
 }
