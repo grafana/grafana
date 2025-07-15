@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -126,11 +128,11 @@ func TestFrontendService_Middleware(t *testing.T) {
 	}
 	service := createTestService(t, cfg)
 
-	// Create a test mux to verify route registration
-	mux := web.New()
-	service.addMiddlewares(mux)
-	service.registerRoutes(mux)
 	t.Run("should register route prom metrics", func(t *testing.T) {
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
 		req := httptest.NewRequest("GET", "/dashboards", nil)
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
@@ -145,5 +147,25 @@ func TestFrontendService_Middleware(t *testing.T) {
 		assert.Contains(t, metricsBody, "# TYPE grafana_http_request_duration_seconds histogram")
 		assert.Contains(t, metricsBody, "grafana_http_request_duration_seconds_bucket{handler=\"public-assets\"") // assets 404
 		assert.Contains(t, metricsBody, "grafana_http_request_duration_seconds_bucket{handler=\"/*\"")            // index route
+	})
+
+	t.Run("should add context middleware", func(t *testing.T) {
+		mux := web.New()
+		service.addMiddlewares(mux)
+
+		mux.Get("/test-route", func(w http.ResponseWriter, r *http.Request) {
+			ctx := contexthandler.FromContext(r.Context())
+			assert.NotNil(t, ctx)
+			assert.NotNil(t, ctx.Context)
+			assert.NotNil(t, ctx.Logger)
+
+			w.WriteHeader(200)
+			_, err := w.Write([]byte("ok"))
+			require.NoError(t, err)
+		})
+
+		req := httptest.NewRequest("GET", "/test-route", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
 	})
 }
