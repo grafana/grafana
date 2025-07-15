@@ -912,9 +912,8 @@ const getCellStyles = (
       }),
     },
 
-    'a, .linklike': {
+    [hasTooltip ? '&' : 'a']: {
       cursor: 'pointer',
-      flex: 1, // bad idea or no?
       ...(isColorized
         ? {
             color: 'inherit',

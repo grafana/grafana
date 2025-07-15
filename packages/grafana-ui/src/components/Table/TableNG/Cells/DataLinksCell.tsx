@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { clsx } from 'clsx';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -17,7 +16,7 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
       {links &&
         links.map((link, idx) => {
           return !link.href && link.onClick == null ? (
-            <span key={idx} className={clsx('linklike', styles.linkCell)}>
+            <span key={idx} className={styles.linkCell}>
               {link.title}
             </span>
           ) : (
