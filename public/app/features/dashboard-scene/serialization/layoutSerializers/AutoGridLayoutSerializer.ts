@@ -2,7 +2,7 @@ import {
   Spec as DashboardV2Spec,
   defaultAutoGridLayoutSpec,
   AutoGridLayoutItemKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';

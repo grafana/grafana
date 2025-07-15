@@ -19,7 +19,7 @@ import {
   PanelQueryKind,
   QueryVariableKind,
   TabsLayoutTabKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
@@ -60,10 +60,10 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
-    pluginId: panel.spec.vizConfig.kind,
+    pluginId: panel.spec.vizConfig.group,
     options: panel.spec.vizConfig.spec.options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
-    pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
+    pluginVersion: panel.spec.vizConfig.version,
     displayMode: panel.spec.transparent ? 'transparent' : 'default',
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,

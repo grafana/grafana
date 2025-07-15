@@ -14,7 +14,7 @@ import {
   defaultTimeSettingsSpec,
   GridLayoutKind,
   PanelSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -854,14 +854,15 @@ describe('DashboardSceneSerializer', () => {
                 id: 1,
                 title: 'Panel 1',
                 vizConfig: {
-                  kind: 'graph',
+                  kind: 'VizConfig',
+                  group: 'graph',
+                  version: '1.0.0',
                   spec: {
                     fieldConfig: {
                       defaults: { custom: { lineWidth: 2 } },
                       overrides: [],
                     },
                     options: { legend: { show: true } },
-                    pluginVersion: '1.0.0',
                   },
                 },
               },
@@ -997,9 +998,10 @@ describe('DashboardSceneSerializer', () => {
                 description: '',
                 links: [],
                 vizConfig: {
-                  kind: 'timeseries',
+                  kind: 'VizConfig',
+                  group: 'timeseries',
+                  version: '1.0.0',
                   spec: {
-                    pluginVersion: '1.0.0',
                     options: {},
                     fieldConfig: { defaults: {}, overrides: [] },
                   },
@@ -1041,9 +1043,10 @@ describe('DashboardSceneSerializer', () => {
                 description: '',
                 links: [],
                 vizConfig: {
-                  kind: 'timeseries',
+                  kind: 'VizConfig',
+                  group: 'timeseries',
+                  version: '1.0.0',
                   spec: {
-                    pluginVersion: '1.0.0',
                     options: {},
                     fieldConfig: { defaults: {}, overrides: [] },
                   },

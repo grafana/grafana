@@ -1,4 +1,4 @@
-import { PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 
 import { getRuntimePanelDataSource } from './utils';
 

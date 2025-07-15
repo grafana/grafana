@@ -8,7 +8,7 @@ import {
   RowsLayoutKind,
   RowsLayoutRowKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -1036,7 +1036,7 @@ describe('ResponseTransformers', () => {
     expect(v1.description).toBe(v2Spec.description);
     expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
     expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
-    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.spec.pluginVersion);
+    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.version);
     expect(v1.links).toEqual(v2Spec.links);
     expect(v1.targets).toEqual(
       v2Spec.data.spec.queries.map((q) => {

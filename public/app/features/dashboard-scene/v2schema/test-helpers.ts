@@ -10,7 +10,7 @@ import {
   SceneVariableState,
   VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -66,8 +66,8 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
   if (panel.kind === 'Panel') {
     expect(vizPanel.state.title).toBe(panel.spec.title);
     expect(vizPanel.state.description).toBe(panel.spec.description);
-    expect(vizPanel.state.pluginId).toBe(panel.spec.vizConfig.kind);
-    expect(vizPanel.state.pluginVersion).toBe(panel.spec.vizConfig.spec.pluginVersion);
+    expect(vizPanel.state.pluginId).toBe(panel.spec.vizConfig.group);
+    expect(vizPanel.state.pluginVersion).toBe(panel.spec.vizConfig.version);
     expect(vizPanel.state.options).toEqual(panel.spec.vizConfig.spec.options);
     expect(vizPanel.state.fieldConfig).toEqual(panel.spec.vizConfig.spec.fieldConfig);
     expect(getPanelIdForVizPanel(vizPanel)).toBe(panel.spec.id);

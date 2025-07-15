@@ -1,7 +1,7 @@
 import { config, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha1/types.status.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
+import { Status } from '@grafana/schema/src/schema/dashboard/v2alpha2/types.status.gen';
 import { Resource } from 'app/features/apiserver/types';
 import { DashboardDataDTO, DashboardDTO } from 'app/types/dashboard';
 

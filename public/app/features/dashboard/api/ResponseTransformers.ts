@@ -40,7 +40,7 @@ import {
   GridLayoutItemKind,
   RowsLayoutRowKind,
   GridLayoutKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
@@ -437,11 +437,12 @@ function buildElement(p: Panel): [PanelKind | LibraryPanelKind, string] {
         title: p.title || '',
         description: p.description || '',
         vizConfig: {
-          kind: p.type,
+          kind: 'VizConfig',
+          group: p.type,
+          version: p.pluginVersion!,
           spec: {
             fieldConfig: (p.fieldConfig as any) || defaultFieldConfigSource(),
             options: p.options as any,
-            pluginVersion: p.pluginVersion!,
           },
         },
         links:
@@ -938,7 +939,7 @@ function transformV2PanelToV1Panel(
       description: panel.description,
       fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
       options: panel.vizConfig.spec.options,
-      pluginVersion: panel.vizConfig.spec.pluginVersion,
+      pluginVersion: panel.vizConfig.version,
       links:
         // @ts-expect-error - Panel link is wrongly typed as DashboardLink
         panel.links?.map<DashboardLink>((l) => ({

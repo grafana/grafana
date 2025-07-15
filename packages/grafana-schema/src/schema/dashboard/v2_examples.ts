@@ -1,4 +1,4 @@
-import { Spec } from './v2alpha1/types.spec.gen';
+import { Spec } from './v2alpha2/types.spec.gen';
 
 export const handyTestingSchema: Spec = {
   title: 'Default Dashboard',
@@ -179,14 +179,15 @@ export const handyTestingSchema: Spec = {
         title: 'Test Panel',
         id: 1,
         vizConfig: {
-          kind: 'timeseries',
+          kind: 'VizConfig',
+          group: 'timeseries',
+          version: '7.0.0',
           spec: {
             fieldConfig: {
               defaults: {},
               overrides: [],
             },
             options: {},
-            pluginVersion: '7.0.0',
           },
         },
       },
