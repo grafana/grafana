@@ -73,11 +73,14 @@ describe('tooltip utils', () => {
 
     // Create mock objects
     panel = new GeomapPanel({} as PanelProps<Options>);
+
+    // Create a proper MouseEvent instance to pass the instanceof check
+    const mouseEvent = new MouseEvent('pointermove');
+    Object.defineProperty(mouseEvent, 'pageX', { value: 100 });
+    Object.defineProperty(mouseEvent, 'pageY', { value: 100 });
+
     mockEvent = {
-      originalEvent: {
-        pageX: 100,
-        pageY: 100,
-      },
+      originalEvent: mouseEvent,
     } as MapBrowserEvent<PointerEvent>;
 
     // Create features for testing
