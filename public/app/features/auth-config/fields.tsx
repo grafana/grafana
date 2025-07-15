@@ -774,7 +774,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           }
 
           if (typeof value === 'string' && value.length) {
-            result = isUrlValid(value, false);
+            result = isUrlValid(value);
           }
           return result;
         },
