@@ -30,6 +30,8 @@ const esModules = [
   'react-data-grid',
   '@grafana/llm',
   'pkce-challenge',
+  'quickselect',
+  'rbush',
 ].join('|');
 
 module.exports = {
