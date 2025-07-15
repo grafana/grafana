@@ -43,7 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
-	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
@@ -439,7 +439,7 @@ var wireBasicSet = wire.NewSet(
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
 	encryptionManager.ProvideEncryptionManager,
-	gsmEncryption.ProvideThirdPartyProviderMap,
+	cipher.ProvideAESGCMCipherService,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

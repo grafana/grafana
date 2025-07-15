@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/usagestatssvcs"
@@ -130,6 +131,7 @@ var wireExtsBasicSet = wire.NewSet(
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,
+	gsmKMSProviders.ProvideOSSKMSProviders,
 )
 
 var wireExtsSet = wire.NewSet(
