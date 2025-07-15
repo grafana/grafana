@@ -18,7 +18,7 @@ func (s *Service) fetchTeams(ctx context.Context, ns types.NamespaceInfo) (map[i
 	res, err, _ := s.sf.Do(key, func() (any, error) {
 		teams, err := s.identityStore.ListTeams(ctx, ns, legacy.ListTeamQuery{})
 		if err != nil {
-			return nil, fmt.Errorf("could not list teams: %w", err)
+			return nil, fmt.Errorf("could not fetch teams: %w", err)
 		}
 		teamIDs := make(map[int64]string, len(teams.Teams))
 		for _, team := range teams.Teams {
@@ -40,9 +40,9 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 		var err error
 		teamIDs, err = s.fetchTeams(ctx, ns)
 		if err != nil {
-			s.logger.FromContext(ctx).Error("could not list teams", "error", err)
+			s.logger.FromContext(ctx).Error("could not fetch teams", "error", err)
 			return func(scope string) (string, error) {
-				return "", fmt.Errorf("could not list teams: %w", err)
+				return "", err
 			}
 		}
 	}
@@ -68,7 +68,8 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 			cacheHit = false
 			teamIDs, err = s.fetchTeams(ctx, ns)
 			if err != nil {
-				return "", fmt.Errorf("could not fetch teams: %w", err)
+				s.logger.FromContext(ctx).Error("could not fetch teams", "error", err)
+				return "", err
 			}
 			if teamName, ok := teamIDs[idInt]; ok {
 				return "teams:uid:" + teamName, nil
