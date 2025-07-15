@@ -198,7 +198,7 @@ export function getCompletionProvider(
     const completionsPromise =
       situation != null ? getCompletions(situation, dataProvider, timeRange, wordText) : Promise.resolve([]);
 
-    return await completionsPromise.then((items) => {
+    return completionsPromise.then((items) => {
       // monaco by-default alphabetically orders the items.
       // to stop it, we use a number-as-string sortkey,
       // so that monaco keeps the order we use

@@ -48,7 +48,6 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   suggest: getSuggestOptions(),
   suggestFontSize: 12,
   wordWrap: 'on',
-  // quickSuggestionsDelay: 300,
 };
 
 // this number was chosen by testing various values. it might be necessary
