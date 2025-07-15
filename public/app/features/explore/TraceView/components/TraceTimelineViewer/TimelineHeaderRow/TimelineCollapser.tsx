@@ -54,6 +54,7 @@ export function TimelineCollapser(props: CollapserProps) {
       <div className={styles.buttonsContainer}>
         <div className={styles.buttonContainer}>
           <Button
+            aria-label={t('explore.timeline-collapser.tooltip-expand', 'Expand +1')}
             tooltip={t('explore.timeline-collapser.tooltip-expand', 'Expand +1')}
             size="sm"
             tooltipPlacement="top"
@@ -63,6 +64,7 @@ export function TimelineCollapser(props: CollapserProps) {
             variant="secondary"
           />
           <Button
+            aria-label={t('explore.timeline-collapser.tooltip-collapse', 'Collapse +1')}
             tooltip={t('explore.timeline-collapser.tooltip-collapse', 'Collapse +1')}
             size="sm"
             tooltipPlacement="top"
@@ -74,6 +76,7 @@ export function TimelineCollapser(props: CollapserProps) {
         </div>
         <div className={styles.buttonContainer}>
           <Button
+            aria-label={t('explore.timeline-collapser.tooltip-expand-all', 'Expand all')}
             tooltip={t('explore.timeline-collapser.tooltip-expand-all', 'Expand all')}
             size="sm"
             tooltipPlacement="top"
@@ -83,6 +86,7 @@ export function TimelineCollapser(props: CollapserProps) {
             variant="secondary"
           />
           <Button
+            aria-label={t('explore.timeline-collapser.tooltip-collapse-all', 'Collapse all')}
             tooltip={t('explore.timeline-collapser.tooltip-collapse-all', 'Collapse all')}
             size="sm"
             tooltipPlacement="top"
