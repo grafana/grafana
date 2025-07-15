@@ -97,8 +97,7 @@ export class TabItem
   }
 
   public getSlug(): string {
-    const interpolated = sceneGraph.interpolate(this, this.state.title ?? 'Tab');
-    return kbn.slugifyForUrl(interpolated);
+    return kbn.slugifyForUrl(sceneGraph.interpolate(this, this.state.title ?? 'Tab'));
   }
 
   public switchLayout(layout: DashboardLayoutManager) {

@@ -69,24 +69,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
       tabs: state.tabs ?? [new TabItem()],
       currentTabIndex: state.currentTabIndex ?? 0,
     });
-
-    // this.addActivationHandler(() => this._activationHandler());
   }
-
-  // private _activationHandler() {
-  //   this.state.tabs.forEach((tab) => {
-  //     if (tab.state.repeatByVariable) {
-  //       const variable = sceneGraph.lookupVariable(tab.state.repeatByVariable, this);
-
-  //       if (variable instanceof MultiValueVariable) {
-  //         const { values, texts } = getMultiVariableValues(variable);
-
-  //         const clonedTabs = createTabRepeats({ values, texts, variable, tab });
-  //         tab.setState({ repeatedTabs: clonedTabs });
-  //       }
-  //     }
-  //   });
-  // }
 
   public duplicate(): DashboardLayoutManager {
     // Maybe not needed, depending on if we want nested tabs or tabs within rows
@@ -113,10 +96,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
     if (typeof values[key] === 'string') {
       // find tab with matching slug
-      const matchIndex = this.getTabs().findIndex((tab) => {
-        const slug = tab.getSlug();
-        return slug === urlValue;
-      });
+      const matchIndex = this.getTabs().findIndex((tab) => tab.getSlug() === urlValue);
       if (matchIndex !== -1) {
         this.setState({ currentTabIndex: matchIndex });
       }
@@ -128,11 +108,9 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public getCurrentTab(): TabItem {
-    const val =
-      this.getTabs().length > this.state.currentTabIndex
-        ? this.getTabs()[this.state.currentTabIndex]
-        : this.getTabs()[0];
-    return val;
+    return this.getTabs().length > this.state.currentTabIndex
+      ? this.getTabs()[this.state.currentTabIndex]
+      : this.getTabs()[0];
   }
 
   public getTabs(): TabItem[] {
