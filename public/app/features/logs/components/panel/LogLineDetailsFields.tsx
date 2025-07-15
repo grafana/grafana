@@ -439,6 +439,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   button: css({
     '& > button': {
       color: theme.colors.text.secondary,
+      gap: 0,
       padding: 0,
       justifyContent: 'center',
       borderRadius: theme.shape.radius.circle,
