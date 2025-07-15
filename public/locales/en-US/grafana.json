@@ -4496,7 +4496,9 @@
           "label": "Scopes",
           "operator": {
             "includes": "Includes",
-            "not-includes": "Not includes"
+            "includes-match": "Includes match",
+            "not-includes": "Not includes",
+            "not-includes-match": "Not includes match"
           },
           "value": "Scope name"
         },

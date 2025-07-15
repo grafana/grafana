@@ -957,11 +957,11 @@ ConditionalRenderingTimeRangeSizeSpec: {
 }
 
 ConditionalRenderingScopesKind: {
-	kind: "ConditionalRenderingScopes"
-	spec: ConditionalRenderingScopesSpec
+  kind: "ConditionalRenderingScopes"
+  spec: ConditionalRenderingScopesSpec
 }
 
 ConditionalRenderingScopesSpec: {
-	operator: "includes" | "notIncludes" | "includesMatch" | "notIncludesMatch"
-	value:    string
+  operator: "includes" | "notIncludes" | "includesMatch" | "notIncludesMatch"
+  value:    string
 }
