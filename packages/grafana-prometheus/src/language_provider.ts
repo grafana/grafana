@@ -27,7 +27,7 @@ import {
   processLabels,
   toPromLikeQuery,
 } from './language_utils';
-import PromqlSyntax from './promql';
+import { promqlGrammar } from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
 import { PromMetricsMetadata, PromQuery } from './types';
@@ -736,7 +736,7 @@ export const exportToAbstractQuery = (query: PromQuery): AbstractQuery => {
   if (!promQuery || promQuery.length === 0) {
     return { refId: query.refId, labelMatchers: [] };
   }
-  const tokens = Prism.tokenize(promQuery, PromqlSyntax);
+  const tokens = Prism.tokenize(promQuery, promqlGrammar);
   const labelMatchers: AbstractLabelMatcher[] = extractLabelMatchers(tokens);
   const nameLabelValue = getNameLabelValue(promQuery, tokens);
   if (nameLabelValue && nameLabelValue.length > 0) {

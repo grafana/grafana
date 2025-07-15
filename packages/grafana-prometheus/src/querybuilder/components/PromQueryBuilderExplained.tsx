@@ -3,7 +3,7 @@ import { memo } from 'react';
 
 import { Stack } from '@grafana/ui';
 
-import promqlGrammar from '../../promql';
+import { promqlGrammar } from '../../promql';
 import { buildVisualQueryFromString } from '../parsing';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { OperationListExplained } from '../shared/OperationListExplained';
