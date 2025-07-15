@@ -4,6 +4,8 @@ import "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 
 type TestDataSourceProvider struct{}
 
+type TestPanelProvider struct{}
+
 func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceInfo {
 	return []schemaversion.DataSourceInfo{
 		{
@@ -57,7 +59,26 @@ func (m *TestDataSourceProvider) GetDataSourceInfo() []schemaversion.DataSourceI
 	}
 }
 
-// GetTestProvider returns a singleton instance of the test provider
-func GetTestProvider() *TestDataSourceProvider {
+func (m *TestPanelProvider) GetPanels() []schemaversion.PanelPluginInfo {
+	return []schemaversion.PanelPluginInfo{
+		{
+			ID: "barchart",
+		},
+		{
+			ID: "candlestick",
+		},
+		{
+			ID: "grafana-singlestat-panel",
+		},
+	}
+}
+
+// GetTestDataSourceProvider returns a singleton instance of the test provider
+func GetTestDataSourceProvider() *TestDataSourceProvider {
 	return &TestDataSourceProvider{}
+}
+
+// GetTestPanelProvider returns a singleton instance of the test panel provider
+func GetTestPanelProvider() *TestPanelProvider {
+	return &TestPanelProvider{}
 }

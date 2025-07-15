@@ -23,7 +23,7 @@ func TestMigrate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Use the same datasource provider as the frontend test to ensure consistency
-	migration.Initialize(testutil.GetTestProvider())
+	migration.Initialize(testutil.GetTestDataSourceProvider(), testutil.GetTestPanelProvider())
 
 	t.Run("minimum version check", func(t *testing.T) {
 		err := migration.Migrate(map[string]interface{}{

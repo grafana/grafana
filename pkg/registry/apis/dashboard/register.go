@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -100,6 +101,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
 	provisioningDashboardService dashboards.DashboardProvisioningService,
+	pluginStore pluginstore.Store,
 	datasourceService datasources.DataSourceService,
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	accessControl accesscontrol.AccessControl,
@@ -149,6 +151,8 @@ func RegisterAPIService(
 	}
 	migration.Initialize(&datasourceInfoProvider{
 		datasourceService: datasourceService,
+	}, &PluginStorePanelProvider{
+		pluginStore: pluginStore,
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
