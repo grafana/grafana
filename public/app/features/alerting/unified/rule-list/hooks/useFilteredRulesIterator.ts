@@ -1,6 +1,6 @@
 import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
-import { catchError, concatMap, tap, withAbort } from 'ix/asynciterable/operators';
+import { catchError, concatMap, withAbort } from 'ix/asynciterable/operators';
 import { isEmpty } from 'lodash';
 
 import {
@@ -15,7 +15,6 @@ import {
   PromRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import {
   getDataSourceByUid,
@@ -52,7 +51,6 @@ interface GetIteratorResult {
 }
 
 export function useFilteredRulesIteratorProvider() {
-  const { populateGroupsResponseCache } = usePopulateGrafanaPrometheusApiCache();
   const allExternalRulesSources = getExternalRulesSources();
 
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
@@ -73,7 +71,6 @@ export function useFilteredRulesIteratorProvider() {
       })
     ).pipe(
       withAbort(abortController.signal),
-      tap(populateGroupsResponseCache),
       concatMap((groups) =>
         groups
           .filter((group) => groupFilter(group, normalizedFilterState))

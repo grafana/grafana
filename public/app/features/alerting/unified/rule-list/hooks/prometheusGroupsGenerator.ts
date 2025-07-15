@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 
-import { useDispatch } from 'app/types/store';
 import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
