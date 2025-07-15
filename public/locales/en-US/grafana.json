@@ -8642,7 +8642,6 @@
       "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
       "copy-link-button": "Copy link",
       "copy-to-clipboard": "Link copied to clipboard",
-      "generating-url": "Generating share link",
       "short-url-label": "Shorten link",
       "time-range-description": "Change the current relative time range to an absolute time range",
       "time-range-label": "Lock time range"
