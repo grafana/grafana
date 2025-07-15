@@ -472,13 +472,17 @@
     {
       "metadata": {
         "name": "awsDatasourcesTempCredentials",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2023-07-06T15:06:11Z"
+        "resourceVersion": "1752523189825",
+        "creationTimestamp": "2023-07-06T15:06:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 19:59:49.825959 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
-        "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources"
+        "stage": "GA",
+        "codeowner": "@grafana/aws-datasources",
+        "expression": "true"
       }
     },
     {
@@ -2022,8 +2026,11 @@
     {
       "metadata": {
         "name": "multiTenantTempCredentials",
-        "resourceVersion": "1750434297879",
-        "creationTimestamp": "2025-04-02T20:25:50Z"
+        "resourceVersion": "1752523189825",
+        "creationTimestamp": "2025-04-02T20:25:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 19:59:49.825959 +0000 UTC"
+        }
       },
       "spec": {
         "description": "use multi-tenant path for awsTempCredentials",
