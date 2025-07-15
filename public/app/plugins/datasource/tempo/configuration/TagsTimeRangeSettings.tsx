@@ -23,17 +23,17 @@ export function TagsTimeRangeSettings({ options, onOptionsChange }: Props) {
   return (
     <div className={styles.container}>
       <InlineFieldRow className={styles.row}>
-        <InlineField
-          tooltip="Time range in tags and tag value queries"
-          label="Time range in query"
-          labelWidth={26}
-        >
+        <InlineField tooltip="Time range in tags and tag value queries" label="Time range in query" labelWidth={26}>
           <Combobox
             id="time-range-for-tags-select"
             options={selectOptions}
             value={options.jsonData?.timeRangeForTags || DEFAULT_TIME_RANGE_FOR_TAGS}
             onChange={(v) => {
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'timeRangeForTags', v?.value ?? DEFAULT_TIME_RANGE_FOR_TAGS);
+              updateDatasourcePluginJsonDataOption(
+                { onOptionsChange, options },
+                'timeRangeForTags',
+                v?.value ?? DEFAULT_TIME_RANGE_FOR_TAGS
+              );
             }}
             placeholder="Time range for tags"
             width={40}

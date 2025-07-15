@@ -42,11 +42,11 @@ export default class TempoLanguageProvider extends LanguageProvider {
   start = async (range?: TimeRange, timeRangeForTags?: number) => {
     // Check if we need to refetch tags due to range changes (minute-level granularity)
     const shouldRefetch = this.shouldRefreshLabels(range, this.previousRange);
-    
+
     if (!this.startTask || shouldRefetch) {
       // Store the current range for future comparison
       this.previousRange = range;
-      
+
       this.startTask = this.fetchTags(timeRangeForTags, range).then(() => {
         return [];
       });
@@ -57,12 +57,12 @@ export default class TempoLanguageProvider extends LanguageProvider {
 
   roundMsToMin = (milliseconds: number) => {
     return this.roundSecToMin(milliseconds / 1000);
-  }
-  
+  };
+
   roundSecToMin = (seconds: number) => {
     return Math.floor(seconds / 60);
-  }
-  
+  };
+
   shouldRefreshLabels = (range?: TimeRange, prevRange?: TimeRange): boolean => {
     if (range && prevRange) {
       const sameMinuteFrom = this.roundMsToMin(range.from.valueOf()) === this.roundMsToMin(prevRange.from.valueOf());
@@ -72,7 +72,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
     }
     // If one is defined and the other is not, we should refresh
     return prevRange !== range;
-  }
+  };
 
   getTagsLimit = () => {
     return this.datasource.instanceSettings.jsonData?.tagLimit || TAGS_LIMIT;

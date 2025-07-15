@@ -472,12 +472,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
-          tagValues = await this.getTagValues(
-            situation.tagName,
-            situation.query,
-            this.timeRangeForTags,
-            this.range
-          );
+          tagValues = await this.getTagValues(situation.tagName, situation.query, this.timeRangeForTags, this.range);
           setAlertText(undefined);
         } catch (error) {
           if (isFetchError(error)) {
