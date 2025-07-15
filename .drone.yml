@@ -246,9 +246,9 @@ steps:
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: golang:1.24.4-alpine
@@ -933,9 +933,9 @@ steps:
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-postgres
@@ -955,9 +955,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql80 -P 3306 -u
     root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-8.0
@@ -1527,9 +1527,9 @@ steps:
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: golang:1.24.4-alpine
@@ -2294,9 +2294,9 @@ steps:
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-postgres
@@ -2316,9 +2316,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql80 -P 3306 -u
     root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-8.0
@@ -2668,9 +2668,9 @@ steps:
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: golang:1.24.4-alpine
@@ -2851,9 +2851,9 @@ steps:
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-postgres
@@ -2873,9 +2873,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql80 -P 3306 -u
     root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-8.0
@@ -4027,9 +4027,9 @@ steps:
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   image: golang:1.24.4-alpine
@@ -4528,9 +4528,9 @@ steps:
   - apk add --update postgresql-client
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-postgres
@@ -4550,9 +4550,9 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h mysql80 -P 3306 -u
     root -prootpass --disable-ssl-verify-server-cert
   - go clean -testcache
-  - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
-    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
-    | grep -o '\(.*\)/' | sort -u)
+  - go test -tags=enterprise -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration'
+    $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}'
+    '+' | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
   - wait-for-mysql-8.0
@@ -5205,6 +5205,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 37d46a35770a3cca3dd643b4cd4afbc1edea3eb6c5afc0501c9376cfc0ef2ecf
+hmac: adfac95695eeef97bff421e96838f1632951afa1a654ca7469d5343958842e1e
 
 ...
