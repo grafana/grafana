@@ -102,11 +102,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
   );
 };
 
-export const renderSingleLink = (
-  link: LinkModel,
-  children: string | React.JSX.Element,
-  className?: string
-): React.JSX.Element => {
+export const renderSingleLink = (link: LinkModel, children: string | React.JSX.Element): React.JSX.Element => {
   return (
     <a
       href={link.href}
@@ -114,7 +110,6 @@ export const renderSingleLink = (
       target={link.target}
       title={link.title}
       data-testid={selectors.components.DataLinksContextMenu.singleLink}
-      className={className}
     >
       {children}
     </a>
