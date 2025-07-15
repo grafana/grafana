@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - release-*
+      - release-*.*.*
   pull_request:
     types:
       - opened
