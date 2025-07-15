@@ -200,7 +200,6 @@ func withLogs(opts *testinfra.GrafanaOpts) {
 func useAppPlatformSecrets(opts *testinfra.GrafanaOpts) {
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles,
 		featuremgmt.FlagProvisioningSecretsService,
-		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagSecretsManagementAppPlatform,
 	)
 }
