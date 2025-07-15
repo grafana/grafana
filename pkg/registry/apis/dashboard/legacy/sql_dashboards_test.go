@@ -128,6 +128,62 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "slo", manager.Identity)                                // the ID of the plugin
 		require.Equal(t, "", meta.GetAnnotations()[utils.AnnoKeySourceChecksum]) // hash is not used on plugins
 	})
+
+	t.Run("Should fallback to dashboard table data when using history table but no version entries exist", func(t *testing.T) {
+		// When using history table with COALESCE, if dashboard_version fields are NULL,
+		// the SQL query automatically returns dashboard table values instead.
+		// We simulate this by providing the dashboard table values in the result.
+
+		fallbackTimestamp := timestamp.Add(time.Hour) // Different timestamp for fallback
+		fallbackVersion := int64(3)
+		fallbackUpdatedUser := "fallback_updater"
+		fallbackMessage := "" // Empty message (COALESCE returns '' when dashboard_version.message is NULL)
+		fallbackData := []byte(`{"fallback": "data"}`)
+		fallbackAPIVersion := "v0alpha1"
+
+		// The SQL query's COALESCE functions would return dashboard table values
+		// when dashboard_version values are NULL, so we simulate that here
+		rows := sqlmock.NewRows(columns).AddRow(
+			1, id, title, folderUID, nil, "", // basic dashboard fields
+			"", "", "", 0, // origin fields
+			timestamp, createdUser, 0, // created fields
+			// These are the COALESCED values (dashboard table data when version data is NULL)
+			fallbackTimestamp, fallbackUpdatedUser, 0, fallbackVersion, fallbackMessage, fallbackData, fallbackAPIVersion,
+		)
+
+		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
+		resultRows, err := mockDB.Query("SELECT *")
+		require.NoError(t, err)
+		defer resultRows.Close() // nolint:errcheck
+		resultRows.Next()
+
+		// Test with history=true to verify it works with the COALESCED values
+		row, err := store.scanRow(resultRows, true)
+		require.NoError(t, err)
+		require.NotNil(t, row)
+
+		// Verify that the COALESCED dashboard table data was used correctly
+		require.Equal(t, title, row.Dash.Name)
+		require.Equal(t, fallbackVersion, row.RV) // Should use dashboard table version
+		require.Equal(t, common.Unstructured{
+			Object: map[string]interface{}{"fallback": "data"},
+		}, row.Dash.Spec) // Should use dashboard table data
+		require.Equal(t, "default", row.Dash.Namespace)
+
+		// Token should use the version when in history mode
+		require.Equal(t, &continueToken{orgId: int64(1), id: fallbackVersion}, row.token)
+
+		meta, err := utils.MetaAccessor(row.Dash)
+		require.NoError(t, err)
+		require.Equal(t, id, meta.GetDeprecatedInternalID())               // nolint:staticcheck
+		require.Equal(t, fallbackVersion, meta.GetGeneration())            // Should use dashboard table version
+		require.Equal(t, k8sTimestamp, meta.GetCreationTimestamp())        // Created timestamp stays the same
+		require.Equal(t, "user:"+createdUser, meta.GetCreatedBy())         // Created by stays the same
+		require.Equal(t, "user:"+fallbackUpdatedUser, meta.GetUpdatedBy()) // Should use dashboard table updated user
+		require.Equal(t, "", meta.GetMessage())                            // Message should be empty (COALESCE returns '')
+		require.Equal(t, folderUID, meta.GetFolder())
+		require.Equal(t, "dashboard.grafana.app/"+fallbackAPIVersion, row.Dash.APIVersion) // Should use dashboard table API version
+	})
 }
 
 func TestBuildSaveDashboardCommand(t *testing.T) {

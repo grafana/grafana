@@ -13,13 +13,23 @@ SELECT
   created_user.uid         as created_by,
   dashboard.created_by     as created_by_id,
   {{ if .Query.UseHistoryTable }}
-  dashboard_version.created,
+  {{ if .Query.GetHistory }}
+  dashboard_version.created as updated,
   updated_user.uid       as updated_by,
-  updated_user.id        as created_by_id,
+  dashboard_version.created_by as updated_by_id,
   dashboard_version.version,
   dashboard_version.message,
   dashboard_version.data,
   dashboard_version.api_version
+  {{ else }}
+  COALESCE(dashboard_version.created, dashboard.updated) as updated,
+  updated_user.uid       as updated_by,
+  COALESCE(dashboard_version.created_by, dashboard.updated_by) as updated_by_id,
+  COALESCE(dashboard_version.version, dashboard.version) as version,
+  COALESCE(dashboard_version.message, '') as message,
+  COALESCE(dashboard_version.data, dashboard.data) as data,
+  COALESCE(dashboard_version.api_version, dashboard.api_version) as api_version
+  {{ end }}
   {{ else }}
   dashboard.updated,
   updated_user.uid       as updated_by,
@@ -45,11 +55,23 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   {{ if .Query.Version }}
   AND dashboard_version.version = {{ .Arg .Query.Version }}
   {{ else if .Query.LastID }}
+  {{ if .Query.GetHistory }}
   AND dashboard_version.version < {{ .Arg .Query.LastID }}
+  {{ else }}
+  AND COALESCE(dashboard_version.version, dashboard.version) < {{ .Arg .Query.LastID }}
+  {{ end }}
+  {{ end }}
+  {{ if .Query.GetHistory }}
+  AND dashboard_version.id IS NOT NULL
   {{ end }}
   ORDER BY
+    {{ if .Query.GetHistory }}
     dashboard_version.created {{ .Query.Order }},
     dashboard_version.version {{ .Query.Order }},
+    {{ else }}
+    COALESCE(dashboard_version.created, dashboard.updated) {{ .Query.Order }},
+    COALESCE(dashboard_version.version, dashboard.version) {{ .Query.Order }},
+    {{ end }}
     dashboard.uid ASC
   {{ else }}
   {{ if .Query.UID }}

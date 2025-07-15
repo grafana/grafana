@@ -12,9 +12,9 @@ SELECT
   dashboard.created,
   created_user.uid         as created_by,
   dashboard.created_by     as created_by_id,
-  dashboard_version.created,
+  dashboard_version.created as updated,
   updated_user.uid       as updated_by,
-  updated_user.id        as created_by_id,
+  dashboard_version.created_by as updated_by_id,
   dashboard_version.version,
   dashboard_version.message,
   dashboard_version.data,
@@ -26,6 +26,7 @@ LEFT OUTER JOIN "grafana"."user" as created_user ON dashboard.created_by = creat
 LEFT OUTER JOIN "grafana"."user" as updated_user ON dashboard_version.created_by = updated_user.id
 WHERE dashboard.is_folder = FALSE
   AND dashboard.org_id = 1
+  AND dashboard_version.id IS NOT NULL
   ORDER BY
     dashboard_version.created ASC,
     dashboard_version.version ASC,
