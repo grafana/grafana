@@ -64,7 +64,7 @@ func TestService_resolveScopeMap(t *testing.T) {
 			},
 		},
 		{
-			name:     "Handles wildcard",
+			name:     "Should handle wildcard",
 			ns:       types.NamespaceInfo{Value: "org-2", OrgID: 2},
 			scopeMap: map[string]bool{"teams:id:*": true},
 			store:    []team.Team{{ID: 1, UID: "t1"}, {ID: 2, UID: "t2"}},
