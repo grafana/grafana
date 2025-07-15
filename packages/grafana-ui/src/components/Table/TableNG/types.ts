@@ -161,6 +161,8 @@ export interface TableCellRendererProps {
   showFilters: boolean;
   justifyContent: Property.JustifyContent;
   getActions?: GetActionsFunctionLocal;
+
+  singleLinkClass?: string;
 }
 
 export type ContextMenuProps = {
@@ -246,9 +248,9 @@ export interface CellColors {
 export interface AutoCellProps {
   field: Field;
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
-  cellOptions: TableCellOptions;
+
+  singleLinkClass?: string;
 }
 
 export interface ActionCellProps {

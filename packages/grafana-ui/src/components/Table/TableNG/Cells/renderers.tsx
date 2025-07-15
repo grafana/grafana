@@ -32,9 +32,9 @@ const AUTO_RENDERER: TableCellRenderer = (props) => (
   <AutoCell
     value={props.value}
     field={props.field}
-    justifyContent={props.justifyContent}
     rowIdx={props.rowIdx}
-    cellOptions={props.cellOptions}
+
+    singleLinkClass={props.singleLinkClass}
   />
 );
 

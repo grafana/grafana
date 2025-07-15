@@ -1,59 +1,43 @@
 import { css } from '@emotion/css';
+import { CSSProperties } from 'react';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 
 import { renderSingleLink } from '../../DataLinksActionsTooltip';
-import { TableCellOptions, TableCellDisplayMode } from '../../types';
+import { TableCellDisplayMode } from '../../types';
 import { useSingleLink } from '../hooks';
 import { AutoCellProps } from '../types';
 
-export default function AutoCell({ value, field, rowIdx, cellOptions }: AutoCellProps) {
-  // const styles = useStyles2(getStyles, justifyContent);
-
+export default function AutoCell({ value, field, rowIdx, singleLinkClass }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
   const link = useSingleLink(field, rowIdx);
 
-  return link == null ? formattedValue : renderSingleLink(link, formattedValue, getLinkStyle(styles, cellOptions));
+  return link == null ? formattedValue : renderSingleLink(link, formattedValue, singleLinkClass);
 }
 
-const getLinkStyle = (styles: ReturnType<typeof getStyles>, cellOptions: TableCellOptions) => {
-  if (cellOptions.type === TableCellDisplayMode.Auto) {
-    return styles.linkCell;
+export function getSingleLinkClass(theme: GrafanaTheme2, cellType: TableCellDisplayMode) {
+  const common: CSSProperties = {
+    cursor: 'pointer',
+    fontWeight: theme.typography.fontWeightMedium,
+  };
+
+  if (cellType === TableCellDisplayMode.Auto) {
+    return css({
+      ...common,
+      color: theme.colors.text.link,
+
+      '&:hover': {
+        textDecoration: 'underline',
+        // color: theme.colors.text.link,
+      },
+    });
   }
 
-  return styles.cellLinkForColoredCell;
-};
-
-export const getStyles = (theme: GrafanaTheme2) => ({
-  // cell: css({
-  //   display: 'flex',
-  //   justifyContent: justifyContent,
-  //   a: {
-  //     color: 'inherit',
-  //   },
-  // }),
-  cellLinkForColoredCell: css({
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    userSelect: 'text',
-    whiteSpace: 'nowrap',
-    fontWeight: theme.typography.fontWeightMedium,
+  // colored cells
+  return css({
+    ...common,
+    color: 'inherit',
     textDecoration: 'underline',
-  }),
-  linkCell: css({
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    userSelect: 'text',
-    whiteSpace: 'nowrap',
-    color: `${theme.colors.text.link} !important`,
-    fontWeight: theme.typography.fontWeightMedium,
-    paddingRight: theme.spacing(1.5),
-    '&:hover': {
-      textDecoration: 'underline',
-      color: theme.colors.text.link,
-    },
-  }),
-});
+  });
+}

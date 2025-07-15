@@ -35,10 +35,10 @@ import { Pagination } from '../../Pagination/Pagination';
 import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { CellColors, TableCellDisplayMode } from '../types';
+import { TableCellDisplayMode } from '../types';
 import { DataLinksActionsTooltipState } from '../utils';
 
-import { getStyles as getStylesAuto } from './Cells/AutoCell';
+import { getSingleLinkClass } from './Cells/AutoCell';
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellActions } from './Cells/TableCellActions';
@@ -337,6 +337,7 @@ export function TableNG(props: TableNGProps) {
         // get static cell class based on col props
 
         let cellClass = '';
+        let singleLinkClass: string | undefined;
 
         switch (cellType) {
           case TableCellDisplayMode.Auto:
@@ -347,11 +348,11 @@ export function TableNG(props: TableNGProps) {
               justifyContent,
               shouldWrap,
               shouldOverflow,
-              cellType === TableCellDisplayMode.Auto,
+              // cellType === TableCellDisplayMode.Auto,
               withTooltip
             ).cell;
+            singleLinkClass = getSingleLinkClass(theme, cellType);
             break;
-          default:
         }
 
         // TODO: in future extend this to ensure a non-classic color scheme is set with AutoCell
@@ -420,6 +421,7 @@ export function TableNG(props: TableNGProps) {
                 cellInspect,
                 showFilters,
                 getActions: getCellActions,
+                singleLinkClass,
               })}
               {showActions && (
                 <TableCellActions
@@ -893,7 +895,7 @@ const getCellStyles = (
   // rowHeight: number,
   shouldWrap: boolean,
   shouldOverflow: boolean,
-  inheritLinkColor: boolean,
+  // inheritLinkColor: boolean,
   hasTooltip: boolean
   // colors: CellColors
 ) => {
@@ -927,10 +929,10 @@ const getCellStyles = (
         }),
       },
     }),
-    ...(inheritLinkColor && {
-      a: {
-        color: 'inherit',
-      },
-    }),
+    // ...(inheritLinkColor && {
+    //   a: {
+    //     color: 'inherit',
+    //   },
+    // }),
   };
 };
