@@ -54,7 +54,6 @@ export class RootElement extends FrameState {
         {this.elements.map((v) => (
           <Fragment key={v.UID}>{v.render()}</Fragment>
         ))}
-        {this.scene.connections.render()}
       </div>
     );
   }
