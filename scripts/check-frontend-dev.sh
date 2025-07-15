@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 # Exit early if running in CI environment
-if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] || [ -n "$IGNORE_NODE_VERSION_CHECK" ]; then
   exit 0
 fi
 
