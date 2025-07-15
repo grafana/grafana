@@ -1,4 +1,4 @@
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderDTO } from 'app/types/folders';
 
 interface ReturnBag {

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 import { buildNavModel, getAlertingTabID } from 'app/features/folders/state/navModel';
 

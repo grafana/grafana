@@ -7,8 +7,8 @@ import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 
-import { useGetFolderQueryFacade } from '../../../api/clients/folder/v1beta1';
 import { LocalPlugin } from '../../plugins/admin/types';
 import { useGetDashboardByUidQuery, useGetLibraryElementByUidQuery } from '../api';
 
