@@ -10,38 +10,44 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const svcName = "provisioning"
 
+//go:generate mockery --name SecureValueService --structname MockSecureValueService --inpackage --filename secure_value_mock.go --with-expecter
+type SecureValueService interface {
+	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
+	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+}
+
 //go:generate mockery --name Service --structname MockService --inpackage --filename secret_mock.go --with-expecter
 type Service interface {
-	Encrypt(ctx context.Context, namespace, name string, data string) ([]byte, error)
-	Decrypt(ctx context.Context, namespace string, name []byte) ([]byte, error)
+	Encrypt(ctx context.Context, namespace, name string, data string) (string, error)
+	Decrypt(ctx context.Context, namespace string, name string) ([]byte, error)
 }
 
 var _ Service = (*secretsService)(nil)
 
+//go:generate mockery --name DecryptService --structname MockDecryptService --srcpkg=github.com/grafana/grafana/pkg/registry/apis/secret/service --filename decrypt_service_mock.go --with-expecter
 type secretsService struct {
-	legacySvc  secrets.Service
-	secretsSvc *grafanasecrets.SecureValueService
+	secretsSvc SecureValueService
 	decryptSvc grafanasecrets.DecryptService
 }
 
-func NewSecretsService(legacySvc secrets.Service, secretsSvc *grafanasecrets.SecureValueService, decryptSvc grafanasecrets.DecryptService) *secretsService {
+func NewSecretsService(secretsSvc SecureValueService, decryptSvc grafanasecrets.DecryptService) Service {
 	return &secretsService{
-		legacySvc:  legacySvc,
 		secretsSvc: secretsSvc,
 		decryptSvc: decryptSvc,
 	}
 }
 
-func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, data string) ([]byte, error) {
+func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, data string) (string, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	val := secretv1beta1.NewExposedSecureValue(data)
@@ -57,15 +63,30 @@ func (s *secretsService) Encrypt(ctx context.Context, namespace, name string, da
 		},
 	}
 
-	finalSecret, err := s.secretsSvc.Create(ctx, secret, user.GetUID())
-	if err != nil {
-		return nil, nil
+	existing, err := s.secretsSvc.Read(ctx, xkube.Namespace(namespace), name)
+	if err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
+		return "", err
 	}
 
-	return []byte(finalSecret.GetName()), nil
+	if existing != nil {
+		existing.Spec.Value = &val
+		existing, _, err = s.secretsSvc.Update(ctx, existing, user.GetUID())
+		if err != nil {
+			return "", err
+		}
+
+		return existing.GetName(), nil
+	}
+
+	finalSecret, err := s.secretsSvc.Create(ctx, secret, user.GetUID())
+	if err != nil {
+		return "", err
+	}
+
+	return finalSecret.GetName(), nil
 }
 
-func (s *secretsService) Decrypt(ctx context.Context, namespace string, name []byte) ([]byte, error) {
+func (s *secretsService) Decrypt(ctx context.Context, namespace string, name string) ([]byte, error) {
 	requester := &identity.StaticRequester{
 		Type:      types.TypeAccessPolicy,
 		Namespace: namespace,
@@ -78,29 +99,14 @@ func (s *secretsService) Decrypt(ctx context.Context, namespace string, name []b
 	}
 	ctx = types.WithAuthInfo(ctx, requester)
 
-	results, err := s.decryptSvc.Decrypt(ctx, namespace, string(name))
+	results, err := s.decryptSvc.Decrypt(ctx, namespace, name)
 	if err != nil {
 		return nil, err
 	}
 
-	if res, ok := results[string(name)]; ok {
+	if res, ok := results[name]; ok {
 		if res.Error() == nil {
 			return []byte(res.Value().DangerouslyExposeAndConsumeValue()), nil
-		}
-
-		// if the secret is not found in the new secrets service,
-		// fallback to the legacy store for backwards compatibility
-		//
-		// TODO: long term, we will want to migrate this data, but we should wait
-		// until it is in the secure values section of the k8s object and migrate both
-		// the location of the secret in the object and the data itself at the same time
-		if errors.Is(res.Error(), contracts.ErrDecryptNotFound) {
-			decrypted, err := s.legacySvc.Decrypt(ctx, name)
-			if err != nil {
-				return nil, err
-			}
-
-			return decrypted, nil
 		}
 
 		return nil, res.Error()

@@ -67,13 +67,13 @@ func ProvideWebhooks(
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
 			commenter := pullrequest.NewCommenter()
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+			repositorySecrets := secrets.NewRepositorySecrets(features, secrets.NewSecretsService(secretsSvc, decryptSvc), secrets.NewSingleTenant(legacySecretsSvc))
 
 			return NewWebhookExtra(
-				features,
 				render,
 				webhook,
 				urlProvider,
-				secrets.NewSecretsService(legacySecretsSvc, secretsSvc, decryptSvc),
+				repositorySecrets,
 				ghFactory,
 				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
@@ -86,11 +86,10 @@ func ProvideWebhooks(
 // WebhookExtra implements the Extra interface for webhooks
 // to wrap around
 type WebhookExtra struct {
-	features    featuremgmt.FeatureToggles
 	render      *renderConnector
 	webhook     *webhookConnector
 	urlProvider func(namespace string) string
-	secrets     secrets.Service
+	secrets     secrets.RepositorySecrets
 	ghFactory   *github.Factory
 	clonedir    string
 	parsers     resources.ParserFactory
@@ -98,18 +97,16 @@ type WebhookExtra struct {
 }
 
 func NewWebhookExtra(
-	features featuremgmt.FeatureToggles,
 	render *renderConnector,
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
-	secrets secrets.Service,
+	secrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
 	clonedir string,
 	parsers resources.ParserFactory,
 	workers []jobs.Worker,
 ) *WebhookExtra {
 	return &WebhookExtra{
-		features:    features,
 		render:      render,
 		webhook:     webhook,
 		urlProvider: urlProvider,
@@ -135,11 +132,17 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) error {
 	// Encrypt webhook secret if present
 	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
-		encryptedSecret, err := e.secrets.Encrypt(ctx, r.GetNamespace(), r.GetName()+"-webhook-secret", r.Status.Webhook.Secret)
+		name := r.Status.Webhook.EncryptedSecret
+		if name == nil {
+			name = []byte(r.GetName() + "-webhook-secret")
+		}
+
+		nameOrValue, err := e.secrets.Encrypt(ctx, r, string(name), r.Status.Webhook.Secret)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
 		}
-		r.Status.Webhook.EncryptedSecret = encryptedSecret
+
+		r.Status.Webhook.EncryptedSecret = nameOrValue
 		r.Status.Webhook.Secret = ""
 	}
 
@@ -192,7 +195,7 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
 		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := e.secrets.Decrypt(ctx, r.GetNamespace(), ghCfg.EncryptedToken)
+			decrypted, err := e.secrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)
 			}

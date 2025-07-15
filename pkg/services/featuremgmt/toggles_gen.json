@@ -2508,6 +2508,22 @@
     },
     {
       "metadata": {
+        "name": "provisioningSecretsService",
+        "resourceVersion": "1752501981893",
+        "creationTimestamp": "2025-07-14T14:05:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-07-14 14:06:21.89322 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Experimental feature to use the secrets service for provisioning instead of the legacy secrets",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboardsEmailSharing",
         "resourceVersion": "1750821734038",
         "creationTimestamp": "2023-01-03T19:45:15Z",
