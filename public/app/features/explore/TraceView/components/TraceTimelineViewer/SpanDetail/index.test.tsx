@@ -190,19 +190,19 @@ describe('<SpanDetail>', () => {
 
   it('lists the service name, duration, start time and kind', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-    expect(screen.getByText('Duration')).toBeInTheDocument();
-    expect(screen.getByText('Service')).toBeInTheDocument();
-    expect(screen.getByText('Start Time')).toBeInTheDocument();
-    expect(screen.getByText('Kind')).toBeInTheDocument();
+    expect(screen.getByText('Duration:')).toBeInTheDocument();
+    expect(screen.getByText('Service:')).toBeInTheDocument();
+    expect(screen.getByText('Start Time:')).toBeInTheDocument();
+    expect(screen.getByText('Kind:')).toBeInTheDocument();
     expect(screen.getByText('test-kind')).toBeInTheDocument();
-    expect(screen.getByText('Status')).toBeInTheDocument();
-    expect(screen.getByText('Status Message')).toBeInTheDocument();
+    expect(screen.getByText('Status:')).toBeInTheDocument();
+    expect(screen.getByText('Status Message:')).toBeInTheDocument();
     expect(screen.getByText('test-message')).toBeInTheDocument();
-    expect(screen.getByText('Library Name')).toBeInTheDocument();
+    expect(screen.getByText('Library Name:')).toBeInTheDocument();
     expect(screen.getByText('test-name')).toBeInTheDocument();
-    expect(screen.getByText('Library Version')).toBeInTheDocument();
+    expect(screen.getByText('Library Version:')).toBeInTheDocument();
     expect(screen.getByText('test-version')).toBeInTheDocument();
-    expect(screen.getByText('Trace State')).toBeInTheDocument();
+    expect(screen.getByText('Trace State:')).toBeInTheDocument();
     expect(screen.getByText('test-state')).toBeInTheDocument();
   });
 

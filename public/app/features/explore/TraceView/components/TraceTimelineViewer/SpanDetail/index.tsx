@@ -270,18 +270,18 @@ export default function SpanDetail(props: SpanDetailProps) {
   let overviewItems = [
     {
       key: 'svc',
-      label: t('explore.span-detail.overview-items.label.service', 'Service'),
+      label: t('explore.span-detail.overview-items.label.service', 'Service:'),
       value: process.serviceName,
     },
     {
       key: 'duration',
-      label: t('explore.span-detail.overview-items.label.duration', 'Duration'),
+      label: t('explore.span-detail.overview-items.label.duration', 'Duration:'),
       value: formatDuration(duration),
       icon: durationIcon,
     },
     {
       key: 'start',
-      label: t('explore.span-detail.overview-items.label.start-time', 'Start Time'),
+      label: t('explore.span-detail.overview-items.label.start-time', 'Start Time:'),
       value: formatDuration(relativeStartTime) + getAbsoluteTime(startTime, timeZone),
       icon: startIcon,
     },
@@ -289,7 +289,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       ? [
           {
             key: 'child_count',
-            label: t('explore.span-detail.overview-items.label.child-count', 'Child Count'),
+            label: t('explore.span-detail.overview-items.label.child-count', 'Child Count:'),
             value: span.childSpanCount,
           },
         ]
@@ -300,42 +300,42 @@ export default function SpanDetail(props: SpanDetailProps) {
   if (span.kind) {
     overviewItems.push({
       key: KIND,
-      label: t('explore.span-detail.label.kind', 'Kind'),
+      label: t('explore.span-detail.label.kind', 'Kind:'),
       value: span.kind,
     });
   }
   if (span.statusCode !== undefined) {
     overviewItems.push({
       key: STATUS,
-      label: t('explore.span-detail.label.status', 'Status'),
+      label: t('explore.span-detail.label.status', 'Status:'),
       value: SpanStatusCode[span.statusCode].toLowerCase(),
     });
   }
   if (span.statusMessage) {
     overviewItems.push({
       key: STATUS_MESSAGE,
-      label: t('explore.span-detail.label.status-message', 'Status Message'),
+      label: t('explore.span-detail.label.status-message', 'Status Message:'),
       value: span.statusMessage,
     });
   }
   if (span.instrumentationLibraryName) {
     overviewItems.push({
       key: LIBRARY_NAME,
-      label: t('explore.span-detail.label.library-name', 'Library Name'),
+      label: t('explore.span-detail.label.library-name', 'Library Name:'),
       value: span.instrumentationLibraryName,
     });
   }
   if (span.instrumentationLibraryVersion) {
     overviewItems.push({
       key: LIBRARY_VERSION,
-      label: t('explore.span-detail.label.library-version', 'Library Version'),
+      label: t('explore.span-detail.label.library-version', 'Library Version:'),
       value: span.instrumentationLibraryVersion,
     });
   }
   if (span.traceState) {
     overviewItems.push({
       key: TRACE_STATE,
-      label: t('explore.span-detail.label.trace-state', 'Trace State'),
+      label: t('explore.span-detail.label.trace-state', 'Trace State:'),
       value: span.traceState,
     });
   }
