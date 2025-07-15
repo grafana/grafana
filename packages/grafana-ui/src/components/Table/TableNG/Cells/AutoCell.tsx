@@ -19,7 +19,6 @@ export default function AutoCell({ value, field, rowIdx, singleLinkClass }: Auto
 export function getSingleLinkClass(theme: GrafanaTheme2, cellType: TableCellDisplayMode) {
   const common: CSSProperties = {
     cursor: 'pointer',
-    fontWeight: theme.typography.fontWeightMedium,
   };
 
   if (cellType === TableCellDisplayMode.Auto) {
@@ -29,7 +28,6 @@ export function getSingleLinkClass(theme: GrafanaTheme2, cellType: TableCellDisp
 
       '&:hover': {
         textDecoration: 'underline',
-        // color: theme.colors.text.link,
       },
     });
   }
