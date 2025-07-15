@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
@@ -128,21 +129,11 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 	return e.render.Authorize(ctx, a)
 }
 
-// Mutate delegates mutation to the webhook connector
-func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) error {
-	// Encrypt webhook secret if present
-	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
-		secretName := r.GetName() + "-webhook-secret"
-		nameOrValue, err := e.secrets.Encrypt(ctx, r, secretName, r.Status.Webhook.Secret)
-		if err != nil {
-			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
-		}
-
-		r.Status.Webhook.EncryptedSecret = nameOrValue
-		r.Status.Webhook.Secret = ""
+// Mutators returns the mutators for the webhook extra
+func (e *WebhookExtra) Mutators() []controller.Mutator {
+	return []controller.Mutator{
+		Mutator(e.secrets),
 	}
-
-	return nil
 }
 
 // UpdateStorage updates the storage with both render and webhook connectors

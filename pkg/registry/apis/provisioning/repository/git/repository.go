@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/nanogit/protocol/hash"
 )
 
+const GitTokenSecretSuffix = "-git-token"
+
 type RepositoryConfig struct {
 	URL            string
 	Branch         string
