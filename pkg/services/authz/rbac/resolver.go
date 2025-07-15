@@ -13,29 +13,38 @@ import (
 
 type ScopeResolverFunc func(id string) (string, error)
 
-func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInfo) ScopeResolverFunc {
+func (s *Service) fetchTeams(ctx context.Context, ns types.NamespaceInfo) (map[int64]string, error) {
 	key := teamIDsCacheKey(ns.Value)
-	teamIDs, cacheHit := s.teamIDCache.Get(ctx, key)
+	res, err, _ := s.sf.Do(key, func() (any, error) {
+		teams, err := s.identityStore.ListTeams(ctx, ns, legacy.ListTeamQuery{})
+		if err != nil {
+			return nil, fmt.Errorf("could not list teams: %w", err)
+		}
+		teamIDs := make(map[int64]string, len(teams.Teams))
+		for _, team := range teams.Teams {
+			teamIDs[team.ID] = team.UID
+		}
+		return teamIDs, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	teamIDs := res.(map[int64]string)
+	s.teamIDCache.Set(ctx, key, teamIDs)
+	return teamIDs, nil
+}
+
+func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInfo) ScopeResolverFunc {
+	teamIDs, cacheHit := s.teamIDCache.Get(ctx, teamIDsCacheKey(ns.Value))
 	if !cacheHit {
-		res, err, _ := s.sf.Do(key, func() (interface{}, error) {
-			teams, err := s.identityStore.ListTeams(ctx, ns, legacy.ListTeamQuery{})
-			if err != nil {
-				return nil, fmt.Errorf("could not list teams: %w", err)
-			}
-			teamIDs = make(map[int64]string, len(teams.Teams))
-			for _, team := range teams.Teams {
-				teamIDs[team.ID] = team.UID
-			}
-			s.teamIDCache.Set(ctx, teamIDsCacheKey(ns.Value), teamIDs)
-			return teamIDs, nil
-		})
+		var err error
+		teamIDs, err = s.fetchTeams(ctx, ns)
 		if err != nil {
 			s.logger.FromContext(ctx).Error("could not list teams", "error", err)
 			return func(scope string) (string, error) {
 				return "", fmt.Errorf("could not list teams: %w", err)
 			}
 		}
-		teamIDs = res.(map[int64]string)
 	}
 
 	return func(scope string) (string, error) {
@@ -53,7 +62,19 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 		if teamName, ok := teamIDs[idInt]; ok {
 			return "teams:uid:" + teamName, nil
 		}
-		// TODO: Fallback to fetching from the database if not found in cache?
+
+		// Potential stale cache. Try to fetch the teams again.
+		if cacheHit {
+			cacheHit = false
+			teamIDs, err = s.fetchTeams(ctx, ns)
+			if err != nil {
+				return "", fmt.Errorf("could not fetch teams: %w", err)
+			}
+			if teamName, ok := teamIDs[idInt]; ok {
+				return "teams:uid:" + teamName, nil
+			}
+		}
+
 		return "", fmt.Errorf("team ID %s not found", id)
 	}
 }

@@ -102,6 +102,41 @@ func TestService_resolveScopeMap(t *testing.T) {
 				"teams:uid:t1": true,
 			},
 		},
+		{
+			name: "Should recover from stale cache",
+			ns:   types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap: map[string]bool{
+				"teams:id:1": true,
+				"teams:id:2": true,
+				"teams:id:3": true,
+			},
+			cache: map[string]map[int64]string{
+				"org-2": {1: "t1"},
+			},
+			store: []team.Team{
+				{ID: 1, UID: "t1"},
+				{ID: 2, UID: "t2"},
+				{ID: 3, UID: "t3"},
+			},
+			want: map[string]bool{
+				"teams:uid:t1": true,
+				"teams:uid:t2": true,
+				"teams:uid:t3": true,
+			},
+		},
+		{
+			name: "Should skip unkown team IDs",
+			ns:   types.NamespaceInfo{Value: "org-2", OrgID: 2},
+			scopeMap: map[string]bool{
+				"teams:id:1": true,
+			},
+			store: []team.Team{
+				{ID: 2, UID: "t2"},
+			},
+			want: map[string]bool{
+				"teams:id:1": true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
