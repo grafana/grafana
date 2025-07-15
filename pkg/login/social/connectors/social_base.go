@@ -287,7 +287,7 @@ func validateLoginPrompt(info *social.OAuthInfo, requester identity.Requester) e
 	prompt := info.LoginPrompt
 
 	if prompt != "" && prompt != "login" && prompt != "consent" && prompt != "select_account" {
-		return ssosettings.ErrInvalidOAuthConfig("Invalid value for Auth prompt. Valid values are: login, consent, select_account.")
+		return ssosettings.ErrInvalidOAuthConfig("Invalid value for login_prompt. Valid values are: login, consent, select_account.")
 	}
 	return nil
 }

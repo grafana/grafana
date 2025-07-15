@@ -925,7 +925,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'select',
       description: t(
         'auth-config.fields.login-prompt-description',
-        'Indicates the type of user iteraction when the user logs in with the IdP.'
+        'Indicates the type of user interaction when the user logs in with the IdP.'
       ),
       multi: false,
       options: [

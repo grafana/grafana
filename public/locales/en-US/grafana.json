@@ -3248,7 +3248,7 @@
       "login-attribute-path-description": "JMESPath expression to use for user login lookup from the user ID token.",
       "login-attribute-path-label": "Login attribute path",
       "login-prompt-consent": "Consent",
-      "login-prompt-description": "Indicates the type of user iteraction when the user logs in with the IdP.",
+      "login-prompt-description": "Indicates the type of user interaction when the user logs in with the IdP.",
       "login-prompt-label": "Login prompt",
       "login-prompt-login": "Login",
       "login-prompt-select-account": "Select account",
