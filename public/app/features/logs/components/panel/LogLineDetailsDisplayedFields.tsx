@@ -127,8 +127,9 @@ const getStyles = (theme: GrafanaTheme2, detailsMode: LogLineDetailsMode) => ({
     display: 'block',
     padding: theme.spacing(1),
     marginBottom: theme.spacing(1),
-    maxWidth: detailsMode === 'inline' ? 'max-content' : undefined,
-    minWidth: detailsMode === 'inline' ? '20%' : undefined,
+    width: detailsMode === 'inline' ? '30vw' : undefined,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
     wordBreak: 'break-word',
   }),
   fieldWrapper: css({
