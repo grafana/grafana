@@ -6,14 +6,14 @@ import (
 	"net/http"
 )
 
-type fakeRequester struct {
+type FakeRequester struct {
 	LastRequest *http.Request
-	resp        *http.Response
+	Resp        *http.Response
 }
 
-func NewFakeRequester() *fakeRequester {
-	return &fakeRequester{
-		resp: &http.Response{
+func NewFakeRequester() *FakeRequester {
+	return &FakeRequester{
+		Resp: &http.Response{
 			Status:        "200 OK",
 			StatusCode:    200,
 			Body:          io.NopCloser(bytes.NewBufferString("")),
@@ -23,13 +23,23 @@ func NewFakeRequester() *fakeRequester {
 	}
 }
 
-func (f *fakeRequester) WithResponse(resp *http.Response) *fakeRequester {
-	f.resp = resp
+func (f *FakeRequester) WithResponse(resp *http.Response) *FakeRequester {
+	f.Resp = resp
 	return f
 }
 
-func (f *fakeRequester) Do(req *http.Request) (*http.Response, error) {
+func (f *FakeRequester) Do(req *http.Request) (*http.Response, error) {
 	f.LastRequest = req
-	f.resp.Request = req // Not concurrency-safe!
-	return f.resp, nil
+	f.Resp.Request = req // Not concurrency-safe!
+	return f.Resp, nil
+}
+
+func BadResponse() *http.Response {
+	return &http.Response{
+		Status:        "400 Bad Request",
+		StatusCode:    http.StatusBadRequest,
+		Body:          io.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Header:        make(http.Header, 0),
+	}
 }

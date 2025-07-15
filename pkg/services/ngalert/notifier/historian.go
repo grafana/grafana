@@ -31,7 +31,9 @@ type NotificationHistoryLokiEntry struct {
 	Status        string                              `json:"status"`
 	GroupLabels   map[string]string                   `json:"groupLabels"`
 	Alerts        []NotificationHistoryLokiEntryAlert `json:"alerts"`
+	Retry         bool                                `json:"retry"`
 	Error         string                              `json:"error,omitempty"`
+	Duration      int64                               `json:"duration"`
 }
 
 type NotificationHistoryLokiEntryAlert struct {
@@ -67,8 +69,8 @@ func (h *NotificationHistorian) TestConnection(ctx context.Context) error {
 	return h.client.Ping(ctx)
 }
 
-func (h *NotificationHistorian) Record(ctx context.Context, alerts []*types.Alert, notificationErr error) <-chan error {
-	stream, err := h.prepareStream(ctx, alerts, notificationErr)
+func (h *NotificationHistorian) Record(ctx context.Context, alerts []*types.Alert, retry bool, notificationErr error, duration time.Duration) <-chan error {
+	stream, err := h.prepareStream(ctx, alerts, retry, notificationErr, duration)
 	logger := h.log.FromContext(ctx)
 	errCh := make(chan error, 1)
 	if err != nil {
@@ -103,7 +105,7 @@ func (h *NotificationHistorian) Record(ctx context.Context, alerts []*types.Aler
 	return errCh
 }
 
-func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*types.Alert, notificationError error) (lokiclient.Stream, error) {
+func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*types.Alert, retry bool, notificationErr error, duration time.Duration) (lokiclient.Stream, error) {
 	receiverName, ok := notify.ReceiverName(ctx)
 	if !ok {
 		return lokiclient.Stream{}, fmt.Errorf("receiver name not found in context")
@@ -144,9 +146,9 @@ func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*typ
 		}
 	}
 
-	notificationErrorStr := ""
-	if notificationError != nil {
-		notificationErrorStr = notificationError.Error()
+	notificationErrStr := ""
+	if notificationErr != nil {
+		notificationErrStr = notificationErr.Error()
 	}
 
 	entry := NotificationHistoryLokiEntry{
@@ -156,7 +158,9 @@ func (h *NotificationHistorian) prepareStream(ctx context.Context, alerts []*typ
 		Status:        string(types.Alerts(alerts...).StatusAt(now)),
 		GroupLabels:   prepareLabels(groupLabels),
 		Alerts:        entryAlerts,
-		Error:         notificationErrorStr,
+		Retry:         retry,
+		Error:         notificationErrStr,
+		Duration:      duration.Milliseconds(),
 	}
 
 	entryJSON, err := json.Marshal(entry)

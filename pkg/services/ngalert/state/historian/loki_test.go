@@ -643,7 +643,7 @@ func TestRecordStates(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		loki := createTestLokiBackend(t, lokiclient.NewFakeRequester(), met)
-		errLoki := createTestLokiBackend(t, lokiclient.NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
+		errLoki := createTestLokiBackend(t, lokiclient.NewFakeRequester().WithResponse(lokiclient.BadResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -928,16 +928,6 @@ func requireEntry(t *testing.T, row lokiclient.Sample) LokiEntry {
 	err := json.Unmarshal([]byte(row.V), &entry)
 	require.NoError(t, err)
 	return entry
-}
-
-func badResponse() *http.Response {
-	return &http.Response{
-		Status:        "400 Bad Request",
-		StatusCode:    http.StatusBadRequest,
-		Body:          io.NopCloser(bytes.NewBufferString("")),
-		ContentLength: int64(0),
-		Header:        make(http.Header, 0),
-	}
 }
 
 func readBody(t *testing.T, req *http.Request) []byte {
