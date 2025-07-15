@@ -77,6 +77,12 @@ type Alertmanager interface {
 	Ready() bool
 }
 
+// StateMerger describes a type that is able to merge external state (nflog, silences) with its own.
+type StateMerger interface {
+	MergeNflog([]byte) error
+	MergeSilences([]byte) error
+}
+
 type MultiOrgAlertmanager struct {
 	Crypto    Crypto
 	ProvStore provisioningStore

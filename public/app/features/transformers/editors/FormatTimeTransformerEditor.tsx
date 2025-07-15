@@ -14,6 +14,8 @@ import { Trans, t } from '@grafana/i18n';
 import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
+import darkImage from '../images/dark/formatTime.svg';
+import lightImage from '../images/light/formatTime.svg';
 import { getTimezoneOptions } from '../utils';
 
 export function FormatTimeTransfomerEditor({
@@ -117,12 +119,18 @@ export function FormatTimeTransfomerEditor({
   );
 }
 
-export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTimeTransformerOptions> = {
-  id: DataTransformerID.formatTime,
-  editor: FormatTimeTransfomerEditor,
-  transformation: standardTransformers.formatTimeTransformer,
-  name: standardTransformers.formatTimeTransformer.name,
-  state: PluginState.alpha,
-  description: standardTransformers.formatTimeTransformer.description,
-  help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
-};
+export const getFormatTimeTransformerRegistryItem: () => TransformerRegistryItem<FormatTimeTransformerOptions> =
+  () => ({
+    id: DataTransformerID.formatTime,
+    editor: FormatTimeTransfomerEditor,
+    transformation: standardTransformers.formatTimeTransformer,
+    name: t('transformers.format-time-transformer-editor.name.format-time', 'Format time'),
+    state: PluginState.alpha,
+    description: t(
+      'transformers.format-time-transformer-editor.description.set-based-on-time',
+      'Set the output format of a time field'
+    ),
+    help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
+    imageDark: darkImage,
+    imageLight: lightImage,
+  });
