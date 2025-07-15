@@ -1085,7 +1085,6 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 	type settingFields struct {
 		forceUseGraphAPI     bool
 		allowedOrganizations []string
-		authPrompt           string
 	}
 	testCases := []struct {
 		name     string
@@ -1101,18 +1100,6 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 			},
 			want: settingFields{
 				forceUseGraphAPI:     true,
-				allowedOrganizations: []string{},
-			},
-		},
-		{
-			name: "authPrompt is set to select_account",
-			settings: &social.OAuthInfo{
-				Extra: map[string]string{
-					"auth_prompt": "select_account",
-				},
-			},
-			want: settingFields{
-				authPrompt:           "select_account",
 				allowedOrganizations: []string{},
 			},
 		},
@@ -1135,7 +1122,6 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 			s := NewAzureADProvider(tc.settings, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			require.Equal(t, tc.want.forceUseGraphAPI, s.forceUseGraphAPI)
-			require.Equal(t, tc.want.authPrompt, s.authPrompt)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
 		})
 	}
@@ -1291,7 +1277,7 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
-			name: "fails if auth prompt is invalid",
+			name: "fails if login prompt is invalid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
 					"client_authentication":      "client_secret_post",
@@ -1301,7 +1287,7 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 					"allow_assign_grafana_admin": "true",
 					"auth_url":                   "https://example.com/auth",
 					"token_url":                  "https://example.com/token",
-					"auth_prompt":                "invalid",
+					"login_prompt":               "invalid",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
@@ -1345,6 +1331,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 					"client_id":     "new-client-id",
 					"client_secret": "new-client-secret",
 					"auth_url":      "some-new-url",
+					"login_prompt":  "select_account",
 				},
 			},
 			expectError: false,
@@ -1352,6 +1339,7 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 				ClientId:     "new-client-id",
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
+				LoginPrompt:  "select_account",
 			},
 			expectedConfig: &oauth2.Config{
 				ClientID:     "new-client-id",
@@ -1414,7 +1402,6 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 		expectedInfo                 *social.OAuthInfo
 		expectedAllowedOrganizations []string
 		expectedForceUseGraphApi     bool
-		expectedAuthPrompt           string
 	}{
 		{
 			name: "successfully reloads the settings",
@@ -1424,14 +1411,12 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 				Extra: map[string]string{
 					"allowed_organizations": "previous",
 					"force_use_graph_api":   "true",
-					"auth_prompt":           "select_account",
 				},
 			},
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
 					"allowed_organizations": "uuid-1234,uuid-5678",
 					"force_use_graph_api":   "false",
-					"auth_prompt":           "select_account",
 				},
 			},
 			expectedInfo: &social.OAuthInfo{
@@ -1441,12 +1426,10 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 				Extra: map[string]string{
 					"allowed_organizations": "uuid-1234,uuid-5678",
 					"force_use_graph_api":   "false",
-					"auth_prompt":           "select_account",
 				},
 			},
 			expectedAllowedOrganizations: []string{"uuid-1234", "uuid-5678"},
 			expectedForceUseGraphApi:     false,
-			expectedAuthPrompt:           "select_account",
 		},
 	}
 
@@ -1459,7 +1442,6 @@ func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 
 			require.EqualValues(t, tc.expectedAllowedOrganizations, s.allowedOrganizations)
 			require.EqualValues(t, tc.expectedForceUseGraphApi, s.forceUseGraphAPI)
-			require.EqualValues(t, tc.expectedAuthPrompt, s.authPrompt)
 		})
 	}
 }

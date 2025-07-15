@@ -44,7 +44,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
-          'authPrompt',
+          'loginPrompt',
         ],
       },
       {
@@ -87,6 +87,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'loginPrompt',
         ],
       },
       {
@@ -132,7 +133,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -166,7 +176,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -199,7 +218,16 @@ export const getSectionFields = (): Section => {
       {
         name: generalSettingsLabel,
         id: 'general',
-        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+          'loginPrompt',
+        ],
       },
       {
         name: userMappingLabel,
@@ -242,6 +270,7 @@ export const getSectionFields = (): Section => {
           'allowSignUp',
           'autoLogin',
           'signoutRedirectUrl',
+          'loginPrompt',
         ],
       },
       {
@@ -873,19 +902,19 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'custom',
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
     },
-    authPrompt: {
-      label: t('auth-config.fields.auth-prompt-label', 'Login prompt'),
+    loginPrompt: {
+      label: t('auth-config.fields.login-prompt-label', 'Login prompt'),
       type: 'select',
       description: t(
-        'auth-config.fields.auth-prompt-description',
+        'auth-config.fields.login-prompt-description',
         'Indicates the type of user iteraction when the user logs in with the IdP.'
       ),
       multi: false,
       options: [
         { value: '', label: '' },
-        { value: 'login', label: t('auth-config.fields.auth-prompt-login', 'Login') },
-        { value: 'consent', label: t('auth-config.fields.auth-prompt-consent', 'Consent') },
-        { value: 'select_account', label: t('auth-config.fields.auth-prompt-select-account', 'Select account') },
+        { value: 'login', label: t('auth-config.fields.login-prompt-login', 'Login') },
+        { value: 'consent', label: t('auth-config.fields.login-prompt-consent', 'Consent') },
+        { value: 'select_account', label: t('auth-config.fields.login-prompt-select-account', 'Select account') },
       ],
       defaultValue: { value: '', label: '' },
     },

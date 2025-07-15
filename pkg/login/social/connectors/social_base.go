@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -84,6 +85,15 @@ func (s *SocialBase) GetOAuthInfo() *social.OAuthInfo {
 func (s *SocialBase) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
+
+	return s.getAuthCodeURL(state, opts...)
+}
+
+func (s *SocialBase) getAuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	if s.info.LoginPrompt != "" {
+		promptOpt := oauth2.SetAuthURLParam("prompt", s.info.LoginPrompt)
+		opts = append(opts, promptOpt)
+	}
 
 	return s.Config.AuthCodeURL(state, opts...)
 }
@@ -268,5 +278,16 @@ func validateInfo(info *social.OAuthInfo, oldInfo *social.OAuthInfo, requester i
 		validation.AllowAssignGrafanaAdminValidator(info, oldInfo, requester),
 		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator,
 		validation.OrgAttributePathValidator(info, oldInfo, requester),
-		validation.OrgMappingValidator(info, oldInfo, requester))
+		validation.OrgMappingValidator(info, oldInfo, requester),
+		validateLoginPrompt,
+	)
+}
+
+func validateLoginPrompt(info *social.OAuthInfo, requester identity.Requester) error {
+	prompt := info.LoginPrompt
+
+	if prompt != "" && prompt != "login" && prompt != "consent" && prompt != "select_account" {
+		return ssosettings.ErrInvalidOAuthConfig("Invalid value for Auth prompt. Valid values are: login, consent, select_account.")
+	}
+	return nil
 }

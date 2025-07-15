@@ -35,7 +35,6 @@ var (
 	ExtraAzureADSettingKeys = map[string]ExtraKeyInfo{
 		forceUseGraphAPIKey:     {Type: Bool, DefaultValue: false},
 		allowedOrganizationsKey: {Type: String},
-		authPromptKey:           {Type: String},
 	}
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
@@ -56,7 +55,6 @@ type SocialAzureAD struct {
 	cache                remotecache.CacheStorage
 	allowedOrganizations []string
 	forceUseGraphAPI     bool
-	authPrompt           string
 }
 
 type azureClaims struct {
@@ -102,7 +100,6 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 		cache:                cache,
 		allowedOrganizations: allowedOrganizations,
 		forceUseGraphAPI:     MustBool(info.Extra[forceUseGraphAPIKey], ExtraAzureADSettingKeys[forceUseGraphAPIKey].DefaultValue.(bool)),
-		authPrompt:           info.Extra[authPromptKey],
 	}
 
 	if info.UseRefreshToken {
@@ -214,18 +211,6 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 	return s.Config.Exchange(ctx, code, authOptions...)
 }
 
-func (s *SocialAzureAD) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	s.reloadMutex.RLock()
-	defer s.reloadMutex.RUnlock()
-
-	if s.authPrompt != "" {
-		promptOpt := oauth2.SetAuthURLParam("prompt", s.authPrompt)
-		opts = append(opts, promptOpt)
-	}
-
-	return s.Config.AuthCodeURL(state, opts...)
-}
-
 // ManagedIdentityCallback retrieves a token using the managed identity credential of the Azure service.
 func (s *SocialAzureAD) managedIdentityCallback(ctx context.Context) (string, error) {
 	// Validate required fields for Managed Identity authentication
@@ -277,7 +262,6 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 
 	s.allowedOrganizations = allowedOrganizations
 	s.forceUseGraphAPI = MustBool(newInfo.Extra[forceUseGraphAPIKey], false)
-	s.authPrompt = newInfo.Extra[authPromptKey]
 
 	return nil
 }
@@ -302,7 +286,6 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 		validateClientAuthentication,
 		validateFederatedCredentialAudience,
 		validateAllowedGroups,
-		validateAuthPrompt,
 		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"),
 		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
 		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
@@ -314,15 +297,6 @@ func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester)
 		if err != nil {
 			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
 		}
-	}
-	return nil
-}
-
-func validateAuthPrompt(info *social.OAuthInfo, requester identity.Requester) error {
-	authPrompt := info.Extra[authPromptKey]
-
-	if authPrompt != "" && authPrompt != "login" && authPrompt != "consent" && authPrompt != "select_account" {
-		return ssosettings.ErrInvalidOAuthConfig("Invalid value for Auth prompt. Valid values are: login, consent, select_account.")
 	}
 	return nil
 }
