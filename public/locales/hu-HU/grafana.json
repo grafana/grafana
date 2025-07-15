@@ -5837,10 +5837,13 @@
       "description-examples": "Az elnevezett rögzítési csoportok felhasználhatók a megjelenített szöveg és érték elválasztására (<1>lásd a példákat</1>).",
       "description-optional": "Opcionális, ha egy sorozatnév vagy metrikai csomópontszegmens egy részét szeretné kinyerni.",
       "label-data-source": "Adatforrás",
+      "label-static-options-sort": "",
       "label-target-data-source": "Céladatforrás",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Lekérdezési beállítások",
-      "selection-options": "Kijelölés beállításai"
+      "selection-options": "Kijelölés beállításai",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13157,6 +13160,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

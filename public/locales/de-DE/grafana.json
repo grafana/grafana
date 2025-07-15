@@ -5837,10 +5837,13 @@
       "description-examples": "Mithilfe von benannten Erfassungsgruppen können der Anzeigetext und der Wert getrennt werden (<1>siehe Beispiele</1>).",
       "description-optional": "Optional, wenn Sie einen Teil eines Reihennamens oder eines metrischen Knotensegments extrahieren möchten.",
       "label-data-source": "Datenquelle",
+      "label-static-options-sort": "",
       "label-target-data-source": "Zieldatenquelle",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Abfrageoptionen",
-      "selection-options": "Auswahloptionen"
+      "selection-options": "Auswahloptionen",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13157,6 +13160,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",
