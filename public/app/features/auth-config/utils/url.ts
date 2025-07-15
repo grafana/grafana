@@ -16,3 +16,13 @@ export const isUrlValid = (url: unknown): boolean => {
     return false;
   }
 };
+
+export const isValidDomain = (domain: string): boolean => {
+  if (typeof domain !== 'string' || !domain.length) {
+    return false;
+  }
+
+  const domainRegex =
+    /^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,6}$/;
+  return domainRegex.test(domain);
+};
