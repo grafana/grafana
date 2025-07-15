@@ -3,9 +3,12 @@ package provisioning
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"strings"
 	"testing"
 
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -26,7 +29,6 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 	}
 
 	secretsService := helper.GetEnv().SecretsService
-	// TODO: Add test of fallbacks
 	tests := []struct {
 		name           string
 		values         map[string]any
@@ -81,21 +83,9 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 
 			// Move encrypted token mutation
 			for _, expectedField := range test.expectedFields {
-				value, found, err := unstructured.NestedFieldNoCopy(output.Object, expectedField.Path...)
-				require.NoError(t, err, "failed to get value")
-				if expectedField.ExpectedDecryptedValue != "" {
-					require.True(t, found, "value not found")
-					valueStr, ok := value.(string)
-					require.True(t, ok, "value is not a string")
-					decodedValue, err := base64.StdEncoding.DecodeString(valueStr)
-					require.NoError(t, err, "failed to decode base64 valueStr")
-					require.False(t, strings.HasPrefix(string(decodedValue), name), "not prefixed with the repository name")
-					decrypted, err := secretsService.Decrypt(ctx, nil, string(decodedValue))
-					require.NoError(t, err, "failed to decrypt value")
-					require.Equal(t, expectedField.ExpectedDecryptedValue, string(decrypted))
-				} else {
-					require.False(t, found, "value should not be found")
-				}
+				value, decrypted := encryptedField(t, secretsService, nil, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
+				require.False(t, strings.HasPrefix(value, name), "value should not be prefixed with the repository name")
+				require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 			}
 		})
 	}
@@ -195,21 +185,9 @@ func TestIntegrationProvisioning_Secrets_LegacyUpdate(t *testing.T) {
 			require.NoError(t, err, "failed to read back resource after update")
 
 			for _, expectedField := range test.expectedFields {
-				value, found, err := unstructured.NestedFieldNoCopy(output.Object, expectedField.Path...)
-				require.NoError(t, err, "failed to get value")
-				if expectedField.ExpectedDecryptedValue != "" {
-					require.True(t, found, "value not found")
-					valueStr, ok := value.(string)
-					require.True(t, ok, "value is not a string")
-					decodedValue, err := base64.StdEncoding.DecodeString(valueStr)
-					require.NoError(t, err, "failed to decode base64 valueStr")
-					require.False(t, strings.HasPrefix(string(decodedValue), name), "not prefixed with the repository name")
-					decrypted, err := secretsService.Decrypt(ctx, nil, string(decodedValue))
-					require.NoError(t, err, "failed to decrypt value")
-					require.Equal(t, expectedField.ExpectedDecryptedValue, string(decrypted))
-				} else {
-					require.False(t, found, "value should not be found")
-				}
+				value, decrypted := encryptedField(t, secretsService, nil, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
+				require.False(t, strings.HasPrefix(value, name), "value should not be prefixed with the repository name")
+				require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 			}
 		})
 	}
@@ -289,21 +267,14 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 
 			// Move encrypted token mutation
 			for _, expectedField := range test.expectedFields {
-				value, found, err := unstructured.NestedFieldNoCopy(output.Object, expectedField.Path...)
-				require.NoError(t, err, "failed to get value")
-				if expectedField.ExpectedDecryptedValue != "" {
-					require.True(t, found, "value not found")
-					valueStr, ok := value.(string)
-					require.True(t, ok, "value is not a string")
-					decodedValue, err := base64.StdEncoding.DecodeString(valueStr)
-					require.NoError(t, err, "failed to decode base64 valueStr")
-					require.Equal(t, name+"-"+expectedField.ExpectedValue, string(decodedValue))
+				value, decrypted := encryptedField(t, secretsService, repo, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
 
-					decrypted, err := secretsService.Decrypt(ctx, repo, string(decodedValue))
-					require.NoError(t, err, "failed to decrypt value")
-					require.Equal(t, expectedField.ExpectedDecryptedValue, string(decrypted))
-				} else {
-					require.False(t, found, "value should not be found")
+				if expectedField.ExpectedValue != "" {
+					require.Equal(t, name+"-"+expectedField.ExpectedValue, value)
+				}
+
+				if expectedField.ExpectedDecryptedValue != "" {
+					require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 				}
 			}
 		})
@@ -407,27 +378,6 @@ func TestIntegrationProvisioning_Secrets_Update(t *testing.T) {
 			name := mustNestedString(input.Object, "metadata", "name")
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
-			repo := unstructuredToRepository(t, output)
-
-			// Check initial fields
-			for _, expectedField := range test.expectedFields {
-				value, found, err := unstructured.NestedFieldNoCopy(output.Object, expectedField.Path...)
-				require.NoError(t, err, "failed to get value")
-				if expectedField.ExpectedDecryptedValue != "" {
-					require.True(t, found, "value not found")
-					valueStr, ok := value.(string)
-					require.True(t, ok, "value is not a string")
-					decodedValue, err := base64.StdEncoding.DecodeString(valueStr)
-					require.NoError(t, err, "failed to decode base64 valueStr")
-					require.Equal(t, name+"-"+expectedField.ExpectedValue, string(decodedValue))
-
-					decrypted, err := secretsService.Decrypt(ctx, repo, string(decodedValue))
-					require.NoError(t, err, "failed to decrypt value")
-					require.Equal(t, expectedField.ExpectedDecryptedValue, string(decrypted))
-				} else {
-					require.False(t, found, "value should not be found")
-				}
-			}
 
 			// Update the resource
 			updatedInput := helper.RenderObject(t, test.inputFile, test.updateValues)
@@ -443,23 +393,55 @@ func TestIntegrationProvisioning_Secrets_Update(t *testing.T) {
 
 			// Check updated fields
 			for _, expectedField := range test.updatedFields {
-				value, found, err := unstructured.NestedFieldNoCopy(updatedOutput.Object, expectedField.Path...)
-				require.NoError(t, err, "failed to get value")
-				if expectedField.ExpectedDecryptedValue != "" {
-					require.True(t, found, "value not found")
-					valueStr, ok := value.(string)
-					require.True(t, ok, "value is not a string")
-					decodedValue, err := base64.StdEncoding.DecodeString(valueStr)
-					require.NoError(t, err, "failed to decode base64 valueStr")
-					require.Equal(t, name+"-"+expectedField.ExpectedValue, string(decodedValue))
+				value, decrypted := encryptedField(t, secretsService, updatedRepo, updatedOutput.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
 
-					decrypted, err := secretsService.Decrypt(ctx, updatedRepo, string(decodedValue))
-					require.NoError(t, err, "failed to decrypt value")
-					require.Equal(t, expectedField.ExpectedDecryptedValue, string(decrypted))
-				} else {
-					require.False(t, found, "value should not be found")
+				if expectedField.ExpectedValue != "" {
+					require.Equal(t, name+"-"+expectedField.ExpectedValue, value)
+				}
+
+				if expectedField.ExpectedDecryptedValue != "" {
+					require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 				}
 			}
 		})
 	}
+}
+
+func encryptedField(t *testing.T, secretsService secrets.RepositorySecrets, repo *provisioning.Repository, obj map[string]any, path []string, expectedValue bool) (string, string) {
+	value, found, err := base64DecodedField(obj, path)
+	if err != nil {
+		require.NoError(t, err, "failed to decode base64 value")
+	}
+
+	if expectedValue {
+		decrypted, err := secretsService.Decrypt(context.Background(), repo, value)
+		require.NoError(t, err, "failed to eecrypt value")
+		return value, string(decrypted)
+	} else {
+		require.False(t, found, "value should not be found")
+		return "", ""
+	}
+}
+
+func base64DecodedField(obj map[string]any, path []string) (string, bool, error) {
+	value, found, err := unstructured.NestedFieldNoCopy(obj, path...)
+	if err != nil {
+		return "", false, err
+	}
+
+	if !found {
+		return "", false, nil
+	}
+
+	valueStr, ok := value.(string)
+	if !ok {
+		return "", false, fmt.Errorf("value is not a string")
+	}
+
+	decodedValue, err := base64.StdEncoding.DecodeString(valueStr)
+	if err != nil {
+		return "", false, fmt.Errorf("failed to decode base64 valueStr: %w", err)
+	}
+
+	return string(decodedValue), true, nil
 }
