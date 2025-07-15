@@ -69,8 +69,8 @@ export function shouldTextWrap(field: Field): boolean {
   return Boolean(cellOptions?.wrapText);
 }
 
-// matches characters which CSS
-const spaceRegex = /[\s-]/;
+const spaceRegex = /[\s-]/; // matches characters which CSS breaks on in `word-break: break-word` mode
+const CHAR_WIDTH_PESSIMISM_FACTOR = 1.1; // account for variance in character widths
 
 export interface GetMaxWrapCellOptions {
   colWidths: number[];
@@ -107,8 +107,8 @@ export function getMaxWrapCell(
         const cellText = String(cellTextRaw);
 
         if (spaceRegex.test(cellText)) {
-          const charsPerLine = colWidths[i] / avgCharWidth;
-          const approxLines = cellText.length / charsPerLine;
+          const charsPerLine = colWidths[i] / (avgCharWidth * CHAR_WIDTH_PESSIMISM_FACTOR);
+          const approxLines = Math.ceil(cellText.length / charsPerLine); // ceil to round up to next line.
 
           if (approxLines > maxLines) {
             maxLines = approxLines;
