@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/nanogit/protocol/hash"
 )
 
+//nolint:gosec // This is a constant for a secret suffix
 const gitTokenSecretSuffix = "-git-token"
 
 type RepositoryConfig struct {

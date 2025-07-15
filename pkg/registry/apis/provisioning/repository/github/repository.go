@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
+//nolint:gosec // This is a constant for a secret suffix
 const githubTokenSecretSuffix = "-github-token"
 
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
