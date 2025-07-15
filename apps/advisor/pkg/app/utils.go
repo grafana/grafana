@@ -78,28 +78,21 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		return fmt.Errorf("error running steps: %w", err)
 	}
 
-	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
+	report := &advisorv0alpha1.CheckReport{
 		Failures: failures,
 		Count:    int64(len(items)),
+	}
+	c.Status.Report = *report
+	err = checks.SetStatus(ctx, client, obj, c.Status)
+	if err != nil {
+		return err
 	}
 	// Set the status annotation to processed and annotate the steps ignored
 	annotations := checks.AddAnnotations(ctx, obj, map[string]string{
 		checks.StatusAnnotation:          checks.StatusAnnotationProcessed,
 		checks.IgnoreStepsAnnotationList: checkType.GetAnnotations()[checks.IgnoreStepsAnnotationList],
 	})
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{
-			{
-				Operation: resource.PatchOpAdd,
-				Path:      "/status/report",
-				Value:     *report,
-			}, {
-				Operation: resource.PatchOpAdd,
-				Path:      "/metadata/annotations",
-				Value:     annotations,
-			},
-		},
-	}, resource.PatchOptions{}, obj)
+	return checks.SetAnnotations(ctx, client, obj, annotations)
 }
 
 func processCheckRetry(ctx context.Context, log logging.Logger, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
@@ -157,7 +150,7 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		}
 	}
 	// Pull failures from the report for the items to retry
-	c.CheckStatus.Report.Failures = slices.DeleteFunc(c.CheckStatus.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
+	c.Status.Report.Failures = slices.DeleteFunc(c.Status.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
 		if f.ItemID == itemToRetry {
 			for _, newFailure := range failures {
 				if newFailure.StepID == f.StepID {
@@ -171,19 +164,13 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		// Failure not in the list of items to retry, keep it
 		return false
 	})
+	err = checks.SetStatus(ctx, client, obj, c.Status)
+	if err != nil {
+		return err
+	}
 	// Delete the retry annotation to mark the check as processed
 	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/status/report",
-			Value:     c.CheckStatus.Report,
-		}, {
-			Operation: resource.PatchOpAdd,
-			Path:      "/metadata/annotations",
-			Value:     annotations,
-		}},
-	}, resource.PatchOptions{}, obj)
+	return checks.SetAnnotations(ctx, client, obj, annotations)
 }
 
 func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportFailure, error) {
