@@ -1610,6 +1610,13 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "tempoAlerting",
+			Description:  "Enables creating alerts from Tempo data source",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "pluginsAutoUpdate",
 			Description:  "Enables auto-updating of users installed plugins",
 			Stage:        FeatureStageExperimental,

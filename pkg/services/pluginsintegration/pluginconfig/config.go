@@ -35,6 +35,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 			SriChecksEnabled:            features.IsEnabledGlobally(featuremgmt.FlagPluginsSriChecks),
 			PluginsCDNSyncLoaderEnabled: features.IsEnabledGlobally(featuremgmt.FlagPluginsCDNSyncLoader),
 			LocalizationForPlugins:      features.IsEnabledGlobally(featuremgmt.FlagLocalizationForPlugins),
+			TempoAlertingEnabled:        features.IsEnabledGlobally(featuremgmt.FlagTempoAlerting),
 		},
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
