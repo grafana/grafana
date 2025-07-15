@@ -106,9 +106,7 @@ describe('AccordianLogs tests', () => {
         name: '15μs (foo event name) : message oh the next log message more stuff',
       })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('switch', { name: '5μs: message oh the log message something else' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: '5μs: message oh the log message something else' })).toBeInTheDocument();
   });
 
   it('renders event name and duration when events list is open', () => {

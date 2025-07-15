@@ -76,7 +76,7 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
 type LabeledListProps = {
   className?: string;
   divider?: boolean;
-  items: Array<{ key: string; label: React.ReactNode; value: React.ReactNode, icon?: IconName }>;
+  items: Array<{ key: string; label: React.ReactNode; value: React.ReactNode; icon?: IconName }>;
   color?: string;
 };
 
@@ -90,7 +90,9 @@ export default function LabeledList(props: LabeledListProps) {
         return (
           // If label is service, create small line on left with color
           <li className={styles.LabeledListItem} key={`${key}`}>
-            {label === 'Service:' && <div className={styles.LabeledListServiceLine} style={{ backgroundColor: color }} />}
+            {label === 'Service:' && (
+              <div className={styles.LabeledListServiceLine} style={{ backgroundColor: color }} />
+            )}
             {icon && <Icon name={icon} className={styles.LabeledListIcon} />}
             <span className={styles.LabeledListLabel}>{label}</span>
             <strong className={styles.LabeledListValue}>{value}</strong>

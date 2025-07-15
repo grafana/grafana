@@ -25,7 +25,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 'none',
     justifyContent: 'center',
     marginRight: '0.5rem',
-  }), 
+  }),
   buttonsContainer: css({
     display: 'flex',
     flexDirection: 'row',
@@ -95,7 +95,7 @@ export function TimelineCollapser(props: CollapserProps) {
             fill="solid"
             variant="secondary"
           />
-        </div>        
+        </div>
       </div>
     </div>
   );
