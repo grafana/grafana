@@ -20,7 +20,7 @@ import (
 )
 
 func TestCreateProvider(t *testing.T) {
-	u, err := url.Parse("http://localhost:1031")
+	u, err := url.Parse("http://localhost:10333")
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -100,6 +100,9 @@ func TestCreateProvider(t *testing.T) {
 			tokenExchangeMiddleware := middleware.TestingTokenExchangeMiddleware(tokenExchangeClient)
 			provider, err := createProvider(tc.cfg.ProviderType, tc.cfg.URL, nil, httpClientProvider, tokenExchangeMiddleware)
 			require.NoError(t, err)
+
+			err = openfeature.SetProviderAndWait(provider)
+			require.NoError(t, err, "failed to set provider")
 
 			if tc.expectedProvider == setting.GOFFProviderType {
 				_, ok := provider.(*gofeatureflag.Provider)
