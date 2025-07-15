@@ -486,12 +486,9 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
 	if repo.Spec.GitHub != nil &&
 		repo.Spec.GitHub.Token != "" {
-		secretName := repo.Spec.GitHub.EncryptedToken
-		if secretName == nil {
-			secretName = []byte(repo.Name + "-github-token")
-		}
+		secretName := repo.Name + "-github-token"
 
-		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, string(secretName), repo.Spec.GitHub.Token)
+		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, secretName, repo.Spec.GitHub.Token)
 		if err != nil {
 			return err
 		}
@@ -506,11 +503,8 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 // TODO: make this one more generic
 func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
 	if repo.Spec.Git != nil && repo.Spec.Git.Token != "" {
-		secretName := repo.Spec.Git.EncryptedToken
-		if secretName == nil {
-			secretName = []byte(repo.Name + "-git-token")
-		}
-		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, string(secretName), repo.Spec.Git.Token)
+		secretName := repo.Name + "-git-token"
+		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, secretName, repo.Spec.Git.Token)
 		if err != nil {
 			return err
 		}
