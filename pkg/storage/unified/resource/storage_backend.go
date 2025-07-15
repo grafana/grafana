@@ -460,23 +460,6 @@ func applyPagination(keys []DataKey, lastSeenRV int64, sortAscending bool) []Dat
 	return pagedKeys
 }
 
-// applyMetaPagination filters meta keys based on pagination parameters
-func applyMetaPagination(keys []MetaDataKey, lastSeenRV int64, sortAscending bool) []MetaDataKey {
-	if lastSeenRV == 0 {
-		return keys
-	}
-
-	var pagedKeys []MetaDataKey
-	for _, key := range keys {
-		if sortAscending && key.ResourceVersion > lastSeenRV {
-			pagedKeys = append(pagedKeys, key)
-		} else if !sortAscending && key.ResourceVersion < lastSeenRV {
-			pagedKeys = append(pagedKeys, key)
-		}
-	}
-	return pagedKeys
-}
-
 // ListHistory is like ListIterator, but it returns the history of a resource.
 func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, fn func(ListIterator) error) (int64, error) {
 	if err := validateListHistoryRequest(req); err != nil {
