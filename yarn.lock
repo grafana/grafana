@@ -3747,6 +3747,7 @@ __metadata:
     calculate-size: "npm:1.1.1"
     chance: "npm:^1.1.13"
     classnames: "npm:2.5.1"
+    clsx: "npm:^2.1.1"
     common-tags: "npm:1.8.2"
     core-js: "npm:3.40.0"
     css-loader: "npm:7.1.2"
