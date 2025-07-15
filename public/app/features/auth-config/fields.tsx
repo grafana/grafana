@@ -9,7 +9,7 @@ import { contextSrv } from 'app/core/core';
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue, isSelectableValueArray } from './utils/guards';
-import { isUrlValid } from './utils/url';
+import { isUrlValid, isValidDomain } from './utils/url';
 
 type Section = Record<
   SSOProvider['provider'],
@@ -60,6 +60,7 @@ export const getSectionFields = (): Section => {
           'allowedDomains',
           'allowedGroups',
           'forceUseGraphApi',
+          'domainHint',
           'usePkce',
           'useRefreshToken',
           'tlsSkipVerifyInsecure',
@@ -901,6 +902,23 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       type: 'custom',
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
+    },
+    domainHint: {
+      label: t('auth-config.fields.domain-hint-label', 'Domain hint'),
+      description: t(
+        'auth-config.fields.domain-hint-description',
+        'Parameter to indicate the realm of the user in the Azure AD/Entra ID tenant and streamline the login process.'
+      ),
+      type: 'text',
+      validation: {
+        validate: (value) => {
+          if (typeof value === 'string' && value.length) {
+            return isValidDomain(value);
+          }
+          return true;
+        },
+        message: t('auth-config.fields.domain-hint-valid-domain', 'This field must be a valid domain.'),
+      },
     },
     loginPrompt: {
       label: t('auth-config.fields.login-prompt-label', 'Login prompt'),
