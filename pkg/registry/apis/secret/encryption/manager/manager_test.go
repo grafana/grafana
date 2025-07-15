@@ -337,8 +337,8 @@ func TestEncryptionService_SecretKeyVersionUpgrade(t *testing.T) {
 		assert.Equal(t, plaintext, decryptedOldWithV2)
 
 		// Verify both providers are available
-		assert.Contains(t, encMgrV2.providerConfig, encryption.ProviderID("secret_key.v1"))
-		assert.Contains(t, encMgrV2.providerConfig, encryption.ProviderID("secret_key.v2"))
+		assert.Contains(t, encMgrV2.providerConfig.AvailableProviders, encryption.ProviderID("secret_key.v1"))
+		assert.Contains(t, encMgrV2.providerConfig.AvailableProviders, encryption.ProviderID("secret_key.v2"))
 		assert.Equal(t, 2, len(encMgrV2.providerConfig.AvailableProviders))
 	})
 
@@ -617,6 +617,6 @@ func TestEncryptionService_ThirdPartyProviders(t *testing.T) {
 	require.NoError(t, err)
 
 	encMgr := svc.(*EncryptionManager)
-	require.Len(t, encMgr.providerConfig, 1)
-	require.Contains(t, encMgr.providerConfig, encryption.ProviderID("fakeProvider.v1"))
+	require.Len(t, encMgr.providerConfig.AvailableProviders, 1)
+	require.Contains(t, encMgr.providerConfig.AvailableProviders, encryption.ProviderID("fakeProvider.v1"))
 }
