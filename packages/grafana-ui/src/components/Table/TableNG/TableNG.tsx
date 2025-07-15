@@ -345,6 +345,7 @@ export function TableNG(props: TableNGProps) {
           case TableCellDisplayMode.ColorBackground:
           case TableCellDisplayMode.ColorText:
           case TableCellDisplayMode.DataLinks:
+          case TableCellDisplayMode.JSONView:
             cellClass = getCellStyles(
               theme,
               textAlign,

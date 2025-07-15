@@ -181,8 +181,8 @@ export function getTextAlign(field?: Field): Property.TextAlign {
     return 'inherit';
   }
 
-  const custom: TableFieldOptionsType = field.config.custom;
-  if (custom.align && custom.align !== 'auto') {
+  const custom: TableFieldOptionsType | undefined = field.config.custom;
+  if (custom?.align && custom.align !== 'auto') {
     return (
       (
         {
@@ -210,8 +210,8 @@ export function getJustifyContent(field?: Field): Property.JustifyContent {
     return 'flex-start';
   }
 
-  const custom: TableFieldOptionsType = field.config.custom;
-  if (custom.align && custom.align !== 'auto') {
+  const custom: TableFieldOptionsType | undefined = field.config.custom;
+  if (custom?.align && custom.align !== 'auto') {
     return (
       (
         {
