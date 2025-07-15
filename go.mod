@@ -247,8 +247,6 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad
 )
 
-require github.com/grafana/grafana/pkg/build v0.0.0-20250715172704-2f8ec01c6cc6
-
 require (
 	cel.dev/expr v0.23.1 // indirect
 	cloud.google.com/go v0.121.1 // indirect
