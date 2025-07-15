@@ -2,31 +2,32 @@
 
 Thank you for your interest in contributing to Grafana! We welcome all people who want to contribute in a healthy and constructive manner within our community. To help us create a safe and positive community experience for all, we require all participants to adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-This document is a guide to help you through the process of making technical contributions to Grafana. 
+This document is a guide to help you through the process of making technical contributions to Grafana.
 
 Whether you're a new contributer or a seasoned veteran we hope these resources help you connect with the community:
 
 Interact and be heard:
+
 - Forums: Do you have a problem, question, or curiosity? Visit our [forums](https://gra.fan/fromgithubtoforums) for a reservoir of knowledge- submit your own questions and answers!
-- Meetups: Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](https://gra.fan/githubtomeetup)! 
-- Community Slack: Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://gra.fan/githubtoslack). 
-Learn:
-- YouTube: From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](https://gra.fan/githubtoyoutube) has what you need to get started! 
-- Meetups: Join a [group near you](https://gra.fan/githubtomeetup) to learn from local experts and ask questions in real time. 
-Share your story:
-- Meetups and blogs: We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](https://gra.fan/githubtocca) and we’ll connect with you on next steps if accepted. 
+- Meetups: Craving in-person connections without the long journeys? [Join your local Grafana & Friends meetup group](https://gra.fan/githubtomeetup)!
+- Community Slack: Eager for real-time connections with fellow users? Begin a conversation on [Slack](https://gra.fan/githubtoslack).
+  Learn:
+- YouTube: From getting started to exploring newer projects like Pyroscope and Beyla, the [Grafana YouTube channel](https://gra.fan/githubtoyoutube) has what you need to get started!
+- Meetups: Join a [group near you](https://gra.fan/githubtomeetup) to learn from local experts and ask questions in real time.
+  Share your story:
+- Meetups and blogs: We’d love to feature your OSS Grafana Labs use case or story at an upcoming Grafana & Friends meetup or on the Grafana blog! Submit your idea [here](https://gra.fan/githubtocca) and we’ll connect with you on next steps if accepted.
 
 ## Make technical contributions
 
 We welcome your technical contributions! Here are some examples:
 
-- Contribute to the Grafana codebase- check out these [help-wanted issues]((https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22))
-- Develop community [plugins](https://grafana.com/developers/plugin-tools) 
+- Contribute to the Grafana codebase- check out these [help-wanted issues](<(https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)>)
+- Develop community [plugins](https://grafana.com/developers/plugin-tools)
 - Report [bugs](https://github.com/grafana/grafana/issues/new?template=0-bug-report.yaml)
 - [Triage issues](https://github.com/grafana/grafana/blob/4414b92e93440cc9ed0f281989ee71dc16216a15/contribute/triage-issues.md)
 - Report [security vulnerabilities](https://github.com/grafana/grafana/security/policy)
 - Submit a [feature request](https://github.com/grafana/grafana/issues/new?template=1-feature_requests.md)
-- Write [technical documentation](https://github.com/grafana/grafana/blob/4414b92e93440cc9ed0f281989ee71dc16216a15/contribute/documentation/README.md) 
+- Write [technical documentation](https://github.com/grafana/grafana/blob/4414b92e93440cc9ed0f281989ee71dc16216a15/contribute/documentation/README.md)
 
 **Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
 
@@ -43,7 +44,7 @@ When you're ready to contribute, it's time to [create a pull request](/contribut
 
 ### Develop a plugin
 
-Developing a Grafana plugin is a fantastic way to share your unique ideas with the community, extend the platform’s capabilities, and make a real impact on how people visualize and understand their data. Check out our guide to creating [plugins](https://grafana.com/developers/plugin-tools) 
+Developing a Grafana plugin is a fantastic way to share your unique ideas with the community, extend the platform’s capabilities, and make a real impact on how people visualize and understand their data. Check out our guide to creating [plugins](https://grafana.com/developers/plugin-tools)
 
 ### Report bugs
 
