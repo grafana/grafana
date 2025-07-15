@@ -17,23 +17,28 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
     return null;
   }
 
-  // the container span is needed to make the ::after work correctly.
-  return links.map((link, idx) =>
-    !link.href && link.onClick == null ? (
-      <span key={idx} className={styles.linkCell}>
-        {link.title}
-      </span>
-    ) : (
-      <a
-        className={clsx(styles.linkCell, styles.linkCellActive)}
-        key={idx}
-        onClick={link.onClick}
-        href={link.href}
-        target={link.target}
-      >
-        {link.title}
-      </a>
-    )
+  // the container span is needed to make the first-child and last-child CSS selectors work
+  // without interacting with other elements, like the TableCellActions.
+  return (
+    <span>
+      {links.map((link, idx) =>
+        !link.href && link.onClick == null ? (
+          <span key={idx} className={styles.linkCell}>
+            {link.title}
+          </span>
+        ) : (
+          <a
+            className={clsx(styles.linkCell, styles.linkCellActive)}
+            key={idx}
+            onClick={link.onClick}
+            href={link.href}
+            target={link.target}
+          >
+            {link.title}
+          </a>
+        )
+      )}
+    </span>
   );
 };
 
@@ -46,8 +51,12 @@ const getStyles = (theme: GrafanaTheme2, textWrap?: boolean) => ({
     ...(!textWrap && {
       paddingInline: theme.spacing(1),
       borderRight: `2px solid ${theme.colors.border.medium}`,
+      '&:first-child': {
+        paddingInlineStart: 0,
+      },
       '&:last-child': {
         borderRight: 'none',
+        paddingInlineEnd: 0,
       },
     }),
   }),

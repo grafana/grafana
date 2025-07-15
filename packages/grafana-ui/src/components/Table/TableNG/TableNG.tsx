@@ -789,6 +789,14 @@ const getGridStyles = (
 
     border: 'none',
 
+    // add a box shadow on hover and selection for all cells
+    '.rdg-cell': {
+      '&:hover, &[aria-selected=true]': {
+        boxShadow: theme.shadows.z3,
+        zIndex: theme.zIndex.tooltip - 2,
+      },
+    },
+
     '.rdg-summary-row': {
       '.rdg-cell': {
         zIndex: theme.zIndex.tooltip - 1,
@@ -916,12 +924,11 @@ const getCellStyles = (
     },
 
     // should omit if no cell actions, and no shouldOverflow
-    '&:hover': {
+    '&:hover, &[aria-selected=true]': {
       '.table-cell-actions': {
         display: 'flex',
       },
       ...(shouldOverflow && {
-        zIndex: theme.zIndex.tooltip - 2,
         whiteSpace: 'pre-line',
         height: 'fit-content',
         minWidth: 'fit-content',
