@@ -11,7 +11,7 @@ import { Button, Select, useStyles2 } from '@grafana/ui';
 import { OperationInfoButton } from './OperationInfoButton';
 import { QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
 
-export interface Props {
+interface Props {
   operation: QueryBuilderOperation;
   def: QueryBuilderOperationDef;
   index: number;

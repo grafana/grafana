@@ -16,7 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
+	osskmsproviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -82,8 +83,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
-			SecretKey:          defaultKey,
-			EncryptionProvider: "secretKey.v1",
+			CurrentEncryptionProvider: "secret_key.v1",
+			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},
 		},
 	}
 	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
@@ -91,12 +92,18 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	usageStats := &usagestats.UsageStatsMock{T: t}
 
+	enc, err := cipher.ProvideAESGCMCipherService(tracer, usageStats)
+	require.NoError(t, err)
+
+	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+	require.NoError(t, err)
+
 	encryptionManager, err := manager.ProvideEncryptionManager(
 		tracer,
 		store,
-		cfg,
 		usageStats,
-		encryption.ProvideThirdPartyProviderMap(),
+		enc,
+		ossProviders,
 	)
 	require.NoError(t, err)
 

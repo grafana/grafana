@@ -19,12 +19,19 @@ export interface PromVisualQuery {
 
 export interface PromQueryModellerInterface {
   renderLabels(labels: QueryBuilderLabelFilter[]): string;
+
   renderQuery(query: PromVisualQuery, nested?: boolean): string;
+
   hasBinaryOp(query: PromVisualQuery): boolean;
+
   getQueryPatterns(): PromQueryPattern[];
+
   getOperationsForCategory(category: string): QueryBuilderOperationDef[];
+
   getOperationDef(id: string): QueryBuilderOperationDef | undefined;
+
   getAlternativeOperations(key: string): QueryBuilderOperationDef[];
+
   getCategories(): string[];
 }
 

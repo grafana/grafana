@@ -19,7 +19,7 @@ import {
   VisualQueryModeller,
 } from './types';
 
-export interface Props {
+interface Props {
   operation: QueryBuilderOperation;
   index: number;
   query: any;

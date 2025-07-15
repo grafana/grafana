@@ -183,6 +183,10 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
+	// FlagProvisioningSecretsService
+	// Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+	FlagProvisioningSecretsService = "provisioningSecretsService"
+
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
@@ -851,6 +855,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagTempoAlerting
+	// Enables creating alerts from Tempo data source
+	FlagTempoAlerting = "tempoAlerting"
+
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
@@ -890,6 +898,10 @@ const (
 	// FlagAlertingImportAlertmanagerAPI
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
+	// FlagSharingDashboardImage
+	// Enables image sharing functionality for dashboards
+	FlagSharingDashboardImage = "sharingDashboardImage"
 
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.

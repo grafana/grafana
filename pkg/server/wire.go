@@ -43,7 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
-	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
+	cipher "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	secretsecurevalueservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	secretvalidator "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
@@ -427,6 +427,7 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideDecryptStorage,
 	secretdecrypt.ProvideDecryptAuthorizer,
 	secretdecrypt.ProvideDecryptAllowList,
+	secretdecrypt.ProvideDecryptService,
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	secretsecurevalueservice.ProvideSecureValueService,
@@ -436,7 +437,7 @@ var wireBasicSet = wire.NewSet(
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
 	encryptionManager.ProvideEncryptionManager,
-	gsmEncryption.ProvideThirdPartyProviderMap,
+	cipher.ProvideAESGCMCipherService,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
@@ -502,7 +503,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	mock.TestingT
 	Cleanup(func())
-}, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
+}, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions,
+) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
 	return &TestEnv{Server: &Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }

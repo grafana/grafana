@@ -246,9 +246,7 @@ export interface CellColors {
 export interface AutoCellProps {
   field: Field;
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
-  cellOptions: TableCellOptions;
 }
 
 export interface ActionCellProps {
