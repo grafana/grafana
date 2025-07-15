@@ -252,3 +252,5 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 func (r *githubRepository) Stage(ctx context.Context, opts repository.StageOptions) (repository.StagedRepository, error) {
 	return r.gitRepo.Stage(ctx, opts)
 }
+
+// TODO: Add hooks

@@ -753,3 +753,5 @@ func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context
 
 	return ctx, logger
 }
+
+// TODO: Add hooks
