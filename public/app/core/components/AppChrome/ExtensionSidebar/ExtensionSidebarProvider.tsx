@@ -9,6 +9,7 @@ import {
   usePluginLinks,
   locationService,
   OpenExtensionSidebarEvent,
+  CloseExtensionSidebarEvent,
 } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
@@ -191,9 +192,15 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       }
     };
 
+    const closeSidebarHandler = (event: CloseExtensionSidebarEvent) => {
+      setDockedComponentId(undefined);
+    };
+
     const subscription = getAppEvents().subscribe(OpenExtensionSidebarEvent, openSidebarHandler);
+    const closeSubscription = getAppEvents().subscribe(CloseExtensionSidebarEvent, closeSidebarHandler);
     return () => {
       subscription.unsubscribe();
+      closeSubscription.unsubscribe();
     };
   }, [isEnabled, setDockedComponentWithProps, availableComponents]);
 
