@@ -3,7 +3,6 @@ package pluginassets
 import "github.com/grafana/grafana/pkg/plugins"
 
 type Provider interface {
-	Enabled() bool
 	Module(plugin PluginInfo) (string, error)
 	AssetPath(plugin PluginInfo, assetPath ...string) (string, error)
 }

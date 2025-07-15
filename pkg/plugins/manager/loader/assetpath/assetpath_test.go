@@ -45,7 +45,7 @@ func TestService(t *testing.T) {
 					"two": {},
 				},
 			}
-			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg), fakes.NewFakeAssetProvider(false))
+			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg), fakes.NewFakeAssetProvider())
 
 			tableOldFS := fakes.NewFakePluginFS("/grafana/public/app/plugins/panel/table-old")
 			jsonData := map[string]plugins.JSONData{
@@ -343,7 +343,7 @@ func TestService_ChildPlugins(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideService(tc.cfg, pluginscdn.ProvideService(tc.cfg), fakes.NewFakeAssetProvider(false))
+			svc := ProvideService(tc.cfg, pluginscdn.ProvideService(tc.cfg), fakes.NewFakeAssetProvider())
 
 			module, err := svc.Module(tc.pluginInfo())
 			require.NoError(t, err)
@@ -366,6 +366,7 @@ func TestService_AssetProviderPrecedence(t *testing.T) {
 		PluginSettings: map[string]map[string]string{
 			"test-plugin": {"cdn": "true"},
 		},
+		Features: config.Features{PluginAssetProvider: true},
 	}
 	cdn := pluginscdn.ProvideService(cfg)
 
@@ -376,8 +377,8 @@ func TestService_AssetProviderPrecedence(t *testing.T) {
 		nil,
 	)
 
-	t.Run("Asset provider enabled takes precedence", func(t *testing.T) {
-		assetProvider := fakes.NewFakeAssetProvider(true)
+	t.Run("Asset provider enabled takes precedence when feature enabled", func(t *testing.T) {
+		assetProvider := fakes.NewFakeAssetProvider()
 		assetProvider.AssetPathFunc = func(n pluginassets.PluginInfo, pathElems ...string) (string, error) {
 			return "from-asset-provider", nil
 		}
@@ -400,8 +401,8 @@ func TestService_AssetProviderPrecedence(t *testing.T) {
 		require.Equal(t, "from-asset-provider", relURL)
 	})
 
-	t.Run("GetTranslations uses asset provider when enabled", func(t *testing.T) {
-		assetProvider := fakes.NewFakeAssetProvider(true)
+	t.Run("GetTranslations uses asset provider when feature enabled", func(t *testing.T) {
+		assetProvider := fakes.NewFakeAssetProvider()
 		assetProvider.AssetPathFunc = func(n pluginassets.PluginInfo, pathElems ...string) (string, error) {
 			return path.Join("translation-path", path.Join(pathElems...)), nil
 		}

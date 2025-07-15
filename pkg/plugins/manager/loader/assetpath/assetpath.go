@@ -28,12 +28,12 @@ func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, as
 }
 
 func DefaultService(cfg *config.PluginManagementCfg) *Service {
-	return &Service{cfg: cfg, cdn: pluginscdn.ProvideService(cfg), assetProvider: fakes.NewFakeAssetProvider(false)}
+	return &Service{cfg: cfg, cdn: pluginscdn.ProvideService(cfg), assetProvider: fakes.NewFakeAssetProvider()}
 }
 
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(n pluginassets.PluginInfo) (string, error) {
-	if s.assetProvider.Enabled() {
+	if s.cfg.Features.PluginAssetProvider {
 		return s.assetProvider.AssetPath(n)
 	}
 
@@ -58,14 +58,12 @@ func (s *Service) Base(n pluginassets.PluginInfo) (string, error) {
 
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(n pluginassets.PluginInfo) (string, error) {
-	if s.assetProvider.Enabled() {
+	if s.cfg.Features.PluginAssetProvider {
 		return s.assetProvider.Module(n)
 	}
 
-	if n.Class == plugins.ClassCore {
-		if filepath.Base(n.FS.Base()) != "dist" {
-			return path.Join("core:plugin", filepath.Base(n.FS.Base())), nil
-		}
+	if n.Class == plugins.ClassCore && filepath.Base(n.FS.Base()) != "dist" {
+		return path.Join("core:plugin", filepath.Base(n.FS.Base())), nil
 	}
 
 	return s.RelativeURL(n, "module.js")
@@ -73,7 +71,7 @@ func (s *Service) Module(n pluginassets.PluginInfo) (string, error) {
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
 func (s *Service) RelativeURL(n pluginassets.PluginInfo, pathStr string) (string, error) {
-	if s.assetProvider.Enabled() {
+	if s.cfg.Features.PluginAssetProvider {
 		return s.assetProvider.AssetPath(n, pathStr)
 	}
 

@@ -7,32 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 )
-
-func TestProvideService(t *testing.T) {
-	t.Run("should create provider with enabled feature", func(t *testing.T) {
-		cfg := &config.PluginManagementCfg{
-			Features: config.Features{
-				PluginAssetProvider: true,
-			},
-		}
-		provider := ProvideService(cfg)
-		require.NotNil(t, provider)
-		assert.True(t, provider.Enabled())
-	})
-
-	t.Run("should create provider with disabled feature", func(t *testing.T) {
-		cfg := &config.PluginManagementCfg{
-			Features: config.Features{
-				PluginAssetProvider: false,
-			},
-		}
-		provider := ProvideService(cfg)
-		require.NotNil(t, provider)
-		assert.False(t, provider.Enabled())
-	})
-}
 
 func TestLocalProvider_Module(t *testing.T) {
 	tests := []struct {
@@ -80,7 +55,7 @@ func TestLocalProvider_Module(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &LocalProvider{enabled: true}
+			p := &LocalProvider{}
 			got, err := p.Module(tt.plugin)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, got)
@@ -148,7 +123,7 @@ func TestLocalProvider_AssetPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := &LocalProvider{enabled: true}
+			p := &LocalProvider{}
 			got, err := p.AssetPath(tt.plugin, tt.assetPath...)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, got)

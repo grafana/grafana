@@ -5,23 +5,14 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 var _ Provider = (*LocalProvider)(nil)
 
-type LocalProvider struct {
-	enabled bool
-}
+type LocalProvider struct{}
 
-func ProvideService(cfg *config.PluginManagementCfg) *LocalProvider {
-	return &LocalProvider{
-		enabled: cfg.Features.PluginAssetProvider,
-	}
-}
-
-func (s *LocalProvider) Enabled() bool {
-	return s.enabled
+func ProvideService() *LocalProvider {
+	return &LocalProvider{}
 }
 
 func (s *LocalProvider) Module(plugin PluginInfo) (string, error) {

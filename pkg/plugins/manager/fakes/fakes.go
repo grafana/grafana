@@ -671,17 +671,10 @@ func (p *FakeBackendPlugin) Target() backendplugin.Target {
 type AssetProvider struct {
 	ModuleFunc    func(plugin pluginassets.PluginInfo) (string, error)
 	AssetPathFunc func(plugin pluginassets.PluginInfo, assetPath ...string) (string, error)
-	enabled       bool
 }
 
-func NewFakeAssetProvider(enabled bool) *AssetProvider {
-	return &AssetProvider{
-		enabled: enabled,
-	}
-}
-
-func (p *AssetProvider) Enabled() bool {
-	return p.enabled
+func NewFakeAssetProvider() *AssetProvider {
+	return &AssetProvider{}
 }
 
 func (p *AssetProvider) Module(plugin pluginassets.PluginInfo) (string, error) {
