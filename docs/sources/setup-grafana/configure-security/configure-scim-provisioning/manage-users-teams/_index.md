@@ -270,3 +270,67 @@ Team membership maintenance:
 - Continuously syncs team memberships
 - Removes users from teams when removed from groups
 - Updates team memberships when groups change
+
+## Troubleshooting
+
+### User provisioning issues
+
+#### Error: "User already exists in Grafana"
+
+**Cause:** The unique identifier field is not working as expected, causing conflicts during user creation.
+
+**Solution:** Test the unique identifier field to ensure it returns a single, unique user:
+
+```bash
+curl --location 'https://{$GRAFANA_URL}/apis/scim.grafana.app/v0alpha1/namespaces/{$STACK_ID}/Users?filter=userName eq "username@email.com"' \
+--header 'Authorization: Bearer glsa_xxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+The response should return exactly one user. If not, configure a different unique identifier field in your identity provider.
+
+#### Error: "invalid namespace"
+
+**Cause:** The SCIM endpoint URL is incorrectly formatted.
+
+**Solution:** Verify your URL follows the correct format:
+
+```bash
+https://{$GRAFANA_URL}/apis/scim.grafana.app/v0alpha1/namespaces/{$STACK_ID}/Users
+```
+
+Where:
+
+- `{$GRAFANA_URL}` is your Grafana URL (subdomain format)
+- `{$STACK_ID}` is your Grafana stack ID:
+  - **Grafana Cloud:** Format like `stack-123` (found in your Grafana Cloud dashboard)
+  - **On-premises:** Use `default` or the name of the organization
+
+### Authentication issues
+
+#### Error: "HTTP 403 Forbidden"
+
+**Cause:** Either incorrect token or insufficient permissions.
+
+**Solution:**
+
+1. **Check token:** Generate a new token from the Service Account details page
+2. **Verify permissions:** Ensure the service account has `Editor` or `Admin` role in the Grafana instance
+
+#### Error: "HTTP 401 Unauthorized"
+
+**Cause:** Invalid or expired authentication token.
+
+**Solution:** Generate a new token from the Service Account details page in Grafana.
+
+### Login issues
+
+#### Error: "User sync failed"
+
+**Cause:** The user's unique identifier field is not correctly configured in SAML assertions.
+
+**Solution:** Add the required SAML assertion based on your identity provider:
+
+| SAML Assertion | Identity Provider | Value                            |
+| -------------- | ----------------- | -------------------------------- |
+| `userUID`      | Azure AD          | `objectId`                       |
+| `userUID`      | Okta              | `user.getInternalProperty("id")` |
