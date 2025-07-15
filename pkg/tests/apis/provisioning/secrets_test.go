@@ -28,7 +28,7 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 		ExpectedDecryptedValue string
 	}
 
-	secretsService := helper.GetEnv().SecretsService
+	secretsService := helper.GetEnv().RepositorySecrets
 	tests := []struct {
 		name           string
 		values         map[string]any
@@ -101,7 +101,7 @@ func TestIntegrationProvisioning_Secrets_LegacyUpdate(t *testing.T) {
 	updateOptions := metav1.UpdateOptions{}
 	ctx := context.Background()
 
-	secretsService := helper.GetEnv().SecretsService
+	secretsService := helper.GetEnv().RepositorySecrets
 
 	type expectedField struct {
 		Path                   []string
@@ -202,7 +202,7 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
-	secretsService := helper.GetEnv().SecretsService
+	secretsService := helper.GetEnv().RepositorySecrets
 
 	type expectedField struct {
 		Path                   []string
@@ -284,7 +284,7 @@ func TestIntegrationProvisioning_Secrets(t *testing.T) {
 func TestIntegrationProvisioning_Secrets_Update(t *testing.T) {
 	ctx := context.Background()
 	helper := runGrafana(t, useAppPlatformSecrets)
-	secretsService := helper.GetEnv().SecretsService
+	secretsService := helper.GetEnv().RepositorySecrets
 	createOptions := metav1.CreateOptions{}
 	updateOptions := metav1.UpdateOptions{}
 

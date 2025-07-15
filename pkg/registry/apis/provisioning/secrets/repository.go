@@ -4,8 +4,19 @@ import (
 	"context"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 )
+
+func ProvideRepositorySecrets(
+	features featuremgmt.FeatureToggles,
+	legacySecretsSvc grafanasecrets.Service,
+	secretsSvc *service.SecureValueService,
+	decryptSvc service.DecryptService,
+) RepositorySecrets {
+	return NewRepositorySecrets(features, NewSecretsService(secretsSvc, decryptSvc), NewSingleTenant(legacySecretsSvc))
+}
 
 //go:generate mockery --name RepositorySecrets --structname MockRepositorySecrets --inpackage --filename repository_secrets_mock.go --with-expecter
 type RepositorySecrets interface {
