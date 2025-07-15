@@ -176,7 +176,7 @@ jobs:
           retention-days: 1
   publish-artifacts:
     name: Upload artifacts
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@km/disable-gzip-encoding
     permissions:
       id-token: write
     needs:
