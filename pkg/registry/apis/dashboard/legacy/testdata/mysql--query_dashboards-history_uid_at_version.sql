@@ -12,13 +12,13 @@ SELECT
   dashboard.created,
   created_user.uid         as created_by,
   dashboard.created_by     as created_by_id,
-  dashboard_version.created,
+  COALESCE(dashboard_version.created, dashboard.updated) as updated,
   updated_user.uid       as updated_by,
-  updated_user.id        as created_by_id,
-  dashboard_version.version,
-  dashboard_version.message,
-  dashboard_version.data,
-  dashboard_version.api_version
+  COALESCE(dashboard_version.created_by, dashboard.updated_by) as updated_by_id,
+  COALESCE(dashboard_version.version, dashboard.version) as version,
+  COALESCE(dashboard_version.message, '') as message,
+  COALESCE(dashboard_version.data, dashboard.data) as data,
+  COALESCE(dashboard_version.api_version, dashboard.api_version) as api_version
 FROM `grafana`.`dashboard` as dashboard
 LEFT OUTER JOIN `grafana`.`dashboard_version` as dashboard_version ON dashboard.id = dashboard_version.dashboard_id
 LEFT OUTER JOIN `grafana`.`dashboard_provisioning` as provisioning ON dashboard.id = provisioning.dashboard_id
@@ -29,6 +29,6 @@ WHERE dashboard.is_folder = FALSE
   AND dashboard.uid = 'UUU'
   AND dashboard_version.version = 3
   ORDER BY
-    dashboard_version.created DESC,
-    dashboard_version.version DESC,
+    COALESCE(dashboard_version.created, dashboard.updated) DESC,
+    COALESCE(dashboard_version.version, dashboard.version) DESC,
     dashboard.uid ASC
