@@ -5817,10 +5817,13 @@
       "description-examples": "이름을 지정한 캡처 그룹을 사용하여 표시 텍스트와 값을 분리할 수 있습니다(<1>예시 참고</1>).",
       "description-optional": "선택 사항, 시리즈 이름 또는 메트릭 노드 세그먼트의 일부를 추출하려는 경우.",
       "label-data-source": "데이터 소스",
+      "label-static-options-sort": "",
       "label-target-data-source": "대상 데이터 소스",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "쿼리 옵션",
-      "selection-options": "선택 옵션"
+      "selection-options": "선택 옵션",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13118,6 +13121,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

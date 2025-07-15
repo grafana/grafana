@@ -5837,10 +5837,13 @@
       "description-examples": "I gruppi di acquisizione con nome possono essere utilizzati per separare il testo e il valore di visualizzazione (<1>vedi esempi</1>).",
       "description-optional": "Facoltativo, se desideri estrarre parte di un nome di serie o di un segmento di nodo della metrica.",
       "label-data-source": "Sorgente dati",
+      "label-static-options-sort": "",
       "label-target-data-source": "Origine dati di destinazione",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Opzioni query",
-      "selection-options": "Seleziona opzioni"
+      "selection-options": "Seleziona opzioni",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13157,6 +13160,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

@@ -5837,10 +5837,13 @@
       "description-examples": "Görüntü metnini ve değeri ayırmak için adlandırılmış yakalama grupları kullanılabilir (<1>örnekleri görün</1>).",
       "description-optional": "İsteğe bağlıdır, bir seri adının veya metrik düğüm parçasının bir kısmını çıkarmak istiyorsanız kullanılır.",
       "label-data-source": "Veri kaynağı",
+      "label-static-options-sort": "",
       "label-target-data-source": "Hedef veri kaynağı",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Sorgu seçenekleri",
-      "selection-options": "Seçim ayarları"
+      "selection-options": "Seçim ayarları",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13157,6 +13160,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

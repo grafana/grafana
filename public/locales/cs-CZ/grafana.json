@@ -5877,10 +5877,13 @@
       "description-examples": "Pojmenované skupiny zachycení lze použít k oddělení zobrazovaného textu a hodnoty (<1>viz příklady</1>).",
       "description-optional": "Volitelné, pokud chcete extrahovat část názvu řady nebo segmentu uzlu metriky.",
       "label-data-source": "Zdroj dat",
+      "label-static-options-sort": "",
       "label-target-data-source": "Cílový zdroj dat",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Možnosti dotazu",
-      "selection-options": "Možnosti výběru"
+      "selection-options": "Možnosti výběru",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13235,6 +13238,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",
