@@ -13,21 +13,18 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import classNames from 'classnames';
 import { PureComponent } from 'react';
 
 import { CoreApp, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
-import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
+import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import { SpanLinkFunc } from '../types/links';
 import { TraceSpan, TraceSpanReference } from '../types/trace';
 
 import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
-import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -64,8 +61,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     infoWrapper: css({
       label: 'infoWrapper',
-      border: `1px solid ${autoColor(theme, '#d3d3d3')}`,
-      borderTop: '3px solid',
       padding: '0.75rem',
     }),
   };
@@ -115,7 +110,6 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
   render() {
     const {
       color,
-      columnDivision,
       detailState,
       logItemToggle,
       logsToggle,
@@ -131,16 +125,12 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
       traceStartTime,
       traceDuration,
       traceName,
-      hoverIndentGuideIds,
-      addHoverIndentGuideId,
-      removeHoverIndentGuideId,
       theme,
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
       datasourceType,
       datasourceUid,
-      visibleSpanIds,
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
@@ -150,26 +140,10 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
     const styles = getStyles(theme);
     return (
       <TimelineRow>
-        <TimelineRow.Cell width={columnDivision} style={{ overflow: 'hidden' }}>
-          <SpanTreeOffset
-            span={span}
-            showChildrenIcon={false}
-            hoverIndentGuideIds={hoverIndentGuideIds}
-            addHoverIndentGuideId={addHoverIndentGuideId}
-            removeHoverIndentGuideId={removeHoverIndentGuideId}
-            visibleSpanIds={visibleSpanIds}
-          />
-          <Button
-            fill="text"
-            onClick={this._detailToggle}
-            className={classNames(styles.expandedAccent, clearButtonStyles(theme))}
-            style={{ borderColor: color }}
-            data-testid="detail-row-expanded-accent"
-          ></Button>
-        </TimelineRow.Cell>
-        <TimelineRow.Cell width={1 - columnDivision}>
+        <TimelineRow.Cell width={1}>
           <div className={styles.infoWrapper} style={{ borderTopColor: color }}>
             <SpanDetail
+              color={color}
               detailState={detailState}
               logItemToggle={logItemToggle}
               logsToggle={logsToggle}
