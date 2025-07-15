@@ -12,7 +12,7 @@ import {
 
 import { PromOptions, PromQuery } from '../../types';
 
-export const getMockDataSource = <T extends DataSourceJsonData>(
+const getMockDataSource = <T extends DataSourceJsonData>(
   overrides?: Partial<DataSourceSettings<T>>
 ): DataSourceSettings<T> =>
   merge(
@@ -96,82 +96,6 @@ export function createDefaultPromResponse() {
       },
     },
   };
-}
-
-export function createAnnotationResponse() {
-  const response = {
-    data: {
-      results: {
-        X: {
-          frames: [
-            {
-              schema: {
-                name: 'bar',
-                refId: 'X',
-                meta: {
-                  typeVersion: [0, 0],
-                  executedQueryString: 'Expr: ALERTS{}\nStep: 1m0s',
-                },
-                fields: [
-                  {
-                    name: 'Time',
-                    type: 'time',
-                    typeInfo: {
-                      frame: 'time.Time',
-                    },
-                  },
-                  {
-                    name: 'Value',
-                    type: 'number',
-                    typeInfo: {
-                      frame: 'float64',
-                    },
-                    labels: {
-                      __name__: 'ALERTS',
-                      alertname: 'InstanceDown',
-                      alertstate: 'firing',
-                      instance: 'testinstance',
-                      job: 'testjob',
-                    },
-                  },
-                ],
-              },
-              data: {
-                values: [[123], [456]],
-              },
-            },
-          ],
-        },
-      },
-    },
-  };
-
-  return { ...response };
-}
-
-export function createEmptyAnnotationResponse() {
-  const response = {
-    data: {
-      results: {
-        X: {
-          frames: [
-            {
-              schema: {
-                name: 'bar',
-                refId: 'X',
-                fields: [],
-              },
-              data: {
-                values: [],
-              },
-            },
-          ],
-        },
-      },
-    },
-  };
-
-  return { ...response };
 }
 
 export function getMockTimeRange(range = '6h'): TimeRange {

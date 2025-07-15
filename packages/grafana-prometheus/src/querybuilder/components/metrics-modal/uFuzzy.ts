@@ -10,7 +10,7 @@ const uf = new uFuzzy({
   intraDel: 1,
 });
 
-export function fuzzySearch(haystack: string[], query: string, dispatcher: (data: string[][]) => void) {
+function fuzzySearch(haystack: string[], query: string, dispatcher: (data: string[][]) => void) {
   const [idxs, info, order] = uf.search(haystack, query, 0, 1e5);
 
   let haystackOrder: string[] = [];

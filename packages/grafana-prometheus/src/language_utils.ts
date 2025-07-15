@@ -70,7 +70,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 // 4. comma:    if there is a comma it will give ,
 // 5. space:    if there is a space after comma it will give the whole space
 // comma and space is useful for addLabelsToExpression function
-export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")(,)?(\s*)?/g;
+const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")(,)?(\s*)?/g;
 
 export function expandRecordingRules(query: string, mapping: { [name: string]: RecordingRuleIdentifier }): string {
   const getRuleRegex = (ruleName: string) => new RegExp(`(\\s|\\(|^)(${ruleName})(\\s|$|\\(|\\[|\\{)`, 'ig');
@@ -267,21 +267,17 @@ export function roundMsToMin(milliseconds: number): number {
   return roundSecToMin(milliseconds / 1000);
 }
 
-export function roundSecToMin(seconds: number): number {
+function roundSecToMin(seconds: number): number {
   return Math.floor(seconds / 60);
 }
 
 // Returns number of minutes rounded up to the nearest nth minute
-export function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
+function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
   return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % secondsToRound);
 }
 
-export function limitSuggestions(items: string[]) {
+function limitSuggestions(items: string[]) {
   return items.slice(0, SUGGESTIONS_LIMIT);
-}
-
-export function addLimitInfo(items: unknown[] | undefined): string {
-  return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
 }
 
 const FromPromLikeMap: Record<string, AbstractLabelOperator> = {
@@ -296,7 +292,7 @@ const ToPromLikeMap: Record<AbstractLabelOperator, string> = invert(FromPromLike
   string
 >;
 
-export function toPromLikeExpr(labelBasedQuery: AbstractQuery): string {
+function toPromLikeExpr(labelBasedQuery: AbstractQuery): string {
   const expr = labelBasedQuery.labelMatchers
     .map((selector: AbstractLabelMatcher) => {
       const operator = ToPromLikeMap[selector.operator];
@@ -320,7 +316,7 @@ export function toPromLikeQuery(labelBasedQuery: AbstractQuery): PromLikeQuery {
   };
 }
 
-export interface PromLikeQuery extends DataQuery {
+interface PromLikeQuery extends DataQuery {
   expr: string;
   range: boolean;
 }

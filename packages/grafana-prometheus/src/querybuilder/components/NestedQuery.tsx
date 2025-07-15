@@ -13,7 +13,7 @@ import { PromVisualQueryBinary } from '../types';
 
 import { QueryBuilderContent } from './shared/QueryBuilderContent';
 
-export interface NestedQueryProps {
+interface NestedQueryProps {
   nestedQuery: PromVisualQueryBinary;
   datasource: PrometheusDatasource;
   index: number;

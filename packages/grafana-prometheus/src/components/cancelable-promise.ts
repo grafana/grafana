@@ -6,7 +6,7 @@ export interface CancelablePromise<T> {
   cancel: () => void;
 }
 
-export interface CancelablePromiseRejection {
+interface CancelablePromiseRejection {
   isCanceled: boolean;
 }
 

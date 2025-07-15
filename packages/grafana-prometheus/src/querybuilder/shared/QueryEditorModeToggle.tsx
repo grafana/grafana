@@ -4,7 +4,7 @@ import { RadioButtonGroup } from '@grafana/ui';
 
 import { QueryEditorMode } from './types';
 
-export interface Props {
+interface Props {
   mode: QueryEditorMode;
   onChange: (mode: QueryEditorMode) => void;
 }

@@ -7,7 +7,7 @@ import { isValidLegacyName } from '../../../utf8_support';
 
 export const CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT = 'codeModeSuggestionsIncomplete';
 
-export type SuggestionsIncompleteEvent = CustomEvent<{
+type SuggestionsIncompleteEvent = CustomEvent<{
   limit: number;
   datasourceUid: string;
 }>;

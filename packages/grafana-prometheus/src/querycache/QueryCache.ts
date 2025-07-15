@@ -48,7 +48,7 @@ export interface CacheRequestInfo<T extends SupportedQueryTypes> {
  * This is the string used to uniquely identify a field within a "target"
  * @param field
  */
-export const getFieldIdentity = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
+const getFieldIdentity = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
 /**
  * NOMENCLATURE

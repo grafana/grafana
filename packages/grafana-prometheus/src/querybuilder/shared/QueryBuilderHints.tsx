@@ -10,7 +10,7 @@ import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 import { PrometheusDatasource } from '../../datasource';
 import { PromQueryModellerInterface, PromVisualQuery } from '../types';
 
-export interface Props {
+interface Props {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   queryModeller: PromQueryModellerInterface;
