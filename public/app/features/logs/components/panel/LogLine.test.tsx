@@ -45,6 +45,7 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       displayedFields: [],
       index: 0,
       log,
+      logs: [log],
       onClick: jest.fn(),
       showTime: true,
       style: {},
