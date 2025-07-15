@@ -5837,10 +5837,13 @@
       "description-examples": "Namngivna fångstgrupper kan användas för att separera visningstexten och värdet (<1>se exempel</1>).",
       "description-optional": "Valfritt, om du vill extrahera en del av ett serienamn eller metriskt nodsegment.",
       "label-data-source": "Datakälla",
+      "label-static-options-sort": "",
       "label-target-data-source": "Måldatakälla",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Frågealternativ",
-      "selection-options": "Urvalsalternativ"
+      "selection-options": "Urvalsalternativ",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13157,6 +13160,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

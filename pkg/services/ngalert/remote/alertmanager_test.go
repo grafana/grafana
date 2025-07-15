@@ -25,6 +25,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
@@ -132,6 +133,125 @@ func TestNewAlertmanager(t *testing.T) {
 			require.Equal(tt, am.url, test.url)
 			require.Equal(tt, am.orgID, test.orgID)
 			require.NotNil(tt, am.amClient)
+		})
+	}
+}
+
+func TestGetRemoteState(t *testing.T) {
+	const tenantID = "test"
+	ctx := context.Background()
+	store := ngfakes.NewFakeKVStore(t)
+	fstore := notifier.NewFileStore(1, store)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+
+	// getOkHandler allows us to specify a full state the test server is going to respond with.
+	getOkHandler := func(state string) http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
+			require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
+
+			res := map[string]any{
+				"status": "success",
+				"data": map[string]any{
+					"state": state,
+				},
+			}
+			w.Header().Add("content-type", "application/json")
+			require.NoError(t, json.NewEncoder(w).Encode(res))
+		})
+	}
+
+	// errorHandler makes the test server return a 500 status code and a non-JSON response.
+	errorHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("content-type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	// Test full states:
+	// - One with unknown part keys
+	// - One with the expected part keys
+	badState := alertingClusterPB.FullState{
+		Parts: []alertingClusterPB.Part{
+			{Key: "unknown", Data: []byte("data")},
+		},
+	}
+	rawBadState, err := badState.Marshal()
+	require.NoError(t, err)
+
+	state := alertingClusterPB.FullState{
+		Parts: []alertingClusterPB.Part{
+			{Key: "nfl:test", Data: []byte("test-nflog")},
+			{Key: "sil:test", Data: []byte("test-silences")},
+		},
+	}
+	rawState, err := state.Marshal()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		handler     http.Handler
+		expNflog    []byte
+		expSilences []byte
+		expErr      string
+	}{
+		{
+			name:    "non base64-encoded state",
+			handler: getOkHandler("invalid state"),
+			expErr:  "failed to base64-decode remote state: illegal base64 data at input byte 7",
+		},
+		{
+			name:    "error from the Mimir API",
+			handler: errorHandler,
+			expErr:  "failed to pull remote state: Response content-type is not application/json: text/html; charset=utf-8",
+		},
+		{
+			name:    "invalid state, base64-encoded",
+			handler: getOkHandler(base64.StdEncoding.EncodeToString([]byte("invalid state"))),
+			expErr:  "failed to unmarshal remote state: proto: FullState: wiretype end group for non-group",
+		},
+		{
+			name:    "unknown part key",
+			handler: getOkHandler(base64.StdEncoding.EncodeToString(rawBadState)),
+			expErr:  "unknown part key \"unknown\"",
+		},
+		{
+			name:        "success",
+			handler:     getOkHandler(base64.StdEncoding.EncodeToString(rawState)),
+			expNflog:    []byte("test-nflog"),
+			expSilences: []byte("test-silences"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			server := httptest.NewServer(test.handler)
+			cfg := AlertmanagerConfig{
+				OrgID:         1,
+				TenantID:      tenantID,
+				URL:           server.URL,
+				DefaultConfig: defaultGrafanaConfig,
+			}
+			am, err := NewAlertmanager(ctx,
+				cfg,
+				fstore,
+				tc,
+				NoopAutogenFn,
+				m,
+				tracing.InitializeTracerForTest(),
+			)
+			require.NoError(t, err)
+
+			s, err := am.GetRemoteState(ctx)
+			if test.expErr != "" {
+				require.Error(t, err)
+				require.Equal(t, test.expErr, err.Error())
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, test.expNflog, s.Nflog)
+			require.Equal(t, test.expSilences, s.Silences)
 		})
 	}
 }

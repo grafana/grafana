@@ -60,6 +60,7 @@ export type SSOProviderSettingsBase = {
   tlsSkipVerifyInsecure?: boolean;
   // For Azure AD
   forceUseGraphApi?: boolean;
+  domainHint?: string;
   // For Google
   validateHd?: boolean;
 };

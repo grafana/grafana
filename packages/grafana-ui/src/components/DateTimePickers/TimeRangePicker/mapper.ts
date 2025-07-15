@@ -2,8 +2,9 @@ import { TimeOption, TimeRange, TimeZone, rangeUtil, dateTimeFormat } from '@gra
 import { formatDateRange } from '@grafana/i18n';
 
 import { getFeatureToggle } from '../../../utils/featureToggle';
+import { commonFormat } from '../commonFormat';
 export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): TimeRange => {
-  return rangeUtil.convertRawToRange({ from: option.from, to: option.to }, timeZone);
+  return rangeUtil.convertRawToRange({ from: option.from, to: option.to }, timeZone, undefined, commonFormat);
 };
 
 const rangeFormatShort: Intl.DateTimeFormatOptions = {
@@ -17,8 +18,8 @@ const rangeFormatFull: Intl.DateTimeFormatOptions = {
 };
 
 export const mapRangeToTimeOption = (range: TimeRange, timeZone?: TimeZone): TimeOption => {
-  const from = dateTimeFormat(range.from, { timeZone });
-  const to = dateTimeFormat(range.to, { timeZone });
+  const from = dateTimeFormat(range.from, { timeZone, format: commonFormat });
+  const to = dateTimeFormat(range.to, { timeZone, format: commonFormat });
 
   let display = `${from} to ${to}`;
 
