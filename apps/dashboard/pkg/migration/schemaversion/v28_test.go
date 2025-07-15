@@ -57,7 +57,7 @@ func TestV28(t *testing.T) {
 				"panels": []interface{}{
 					map[string]interface{}{
 						"id":    1,
-						"type":  "stat",
+						"type":  "grafana-singlestat-panel",
 						"title": "Singlestat to Stat",
 						"targets": []interface{}{
 							map[string]interface{}{"refId": "A", "expr": "up"},
@@ -65,7 +65,7 @@ func TestV28(t *testing.T) {
 					},
 					map[string]interface{}{
 						"id":    2,
-						"type":  "gauge",
+						"type":  "grafana-singlestat-panel",
 						"title": "Singlestat to Gauge",
 						"gauge": map[string]interface{}{"show": true},
 						"targets": []interface{}{
@@ -74,7 +74,7 @@ func TestV28(t *testing.T) {
 					},
 					map[string]interface{}{
 						"id":    3,
-						"type":  "stat",
+						"type":  "grafana-singlestat-panel",
 						"title": "Singlestat with Gauge Disabled",
 						"gauge": map[string]interface{}{"show": false},
 						"targets": []interface{}{
@@ -182,7 +182,7 @@ func TestV28(t *testing.T) {
 				"panels": []interface{}{
 					map[string]interface{}{
 						"id":    1,
-						"type":  "gauge",
+						"type":  "grafana-singlestat-panel",
 						"title": "Mixed Singlestat",
 						"gauge": map[string]interface{}{"show": true},
 						"targets": []interface{}{

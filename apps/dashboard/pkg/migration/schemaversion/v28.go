@@ -1,7 +1,5 @@
 package schemaversion
 
-import "fmt"
-
 // V28 migrates singlestat panels to stat/gauge panels and removes deprecated variable properties.
 //
 // The migration performs two main tasks:
@@ -37,10 +35,7 @@ import "fmt"
 //	  ]
 //	}
 func V28(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
-	fmt.Println("Running V28 migration")
-
-	// Get panel plugin info once
-	panelInfo := panelProvider.GetPanels()
+	panelPlugins := panelProvider.GetPanels()
 
 	return func(dashboard map[string]interface{}) error {
 		dashboard["schemaVersion"] = 28
@@ -50,7 +45,7 @@ func V28(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
 			for _, p := range panels {
 				if panel, ok := p.(map[string]interface{}); ok {
 					if panel["type"] == "singlestat" {
-						migrateSinglestatPanel(panel, panelInfo)
+						migrateSinglestatPanel(panel, panelPlugins)
 					}
 				}
 			}
@@ -72,9 +67,9 @@ func V28(panelProvider PanelPluginInfoProvider) SchemaVersionMigrationFunc {
 }
 
 // migrateSinglestatPanel migrates a singlestat panel to either stat or gauge panel
-func migrateSinglestatPanel(panel map[string]interface{}, panelInfo []PanelPluginInfo) {
+func migrateSinglestatPanel(panel map[string]interface{}, panels []PanelPluginInfo) {
 	// Check if grafana-singlestat-panel plugin exists
-	for _, info := range panelInfo {
+	for _, info := range panels {
 		if info.ID == "grafana-singlestat-panel" {
 			panel["type"] = "grafana-singlestat-panel"
 			return
