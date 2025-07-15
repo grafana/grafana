@@ -1,5 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/types.ts
-import { VisualQueryBinary } from './shared/LokiAndPromQueryModellerBase';
+import { VisualQueryBinary } from './shared/PromQueryModellerBase';
 import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationDef } from './shared/types';
 
 /**

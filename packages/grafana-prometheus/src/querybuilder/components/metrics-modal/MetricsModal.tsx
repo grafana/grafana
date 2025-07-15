@@ -27,6 +27,7 @@ import { formatPrometheusLabelFilters } from '../MetricCombobox';
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { ResultsTable } from './ResultsTable';
+import { metricsModaltestIds } from './shared/testIds';
 import { MetricsModalProps } from './shared/types';
 import {
   calculatePageList,
@@ -354,17 +355,4 @@ export const MetricsModal = (props: MetricsModalProps) => {
       </div>
     </Modal>
   );
-};
-
-export const metricsModaltestIds = {
-  metricModal: 'metric-modal',
-  searchMetric: 'search-metric',
-  searchWithMetadata: 'search-with-metadata',
-  selectType: 'select-type',
-  metricCard: 'metric-card',
-  useMetric: 'use-metric',
-  searchPage: 'search-page',
-  resultsPerPage: 'results-per-page',
-  setUseBackend: 'set-use-backend',
-  showAdditionalSettings: 'show-additional-settings',
 };

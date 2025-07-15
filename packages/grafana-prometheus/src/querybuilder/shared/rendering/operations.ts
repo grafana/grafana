@@ -1,5 +1,5 @@
 import { PromVisualQueryOperationCategory } from '../../types';
-import { PromLokiVisualQuery } from '../LokiAndPromQueryModellerBase';
+import { PrometheusVisualQuery } from '../PromQueryModellerBase';
 import { QueryBuilderOperation, QueryBuilderOperationDef } from '../types';
 
 /**
@@ -25,7 +25,7 @@ export function renderOperations(
  * Checks if query has binary operation
  */
 export function hasBinaryOp(
-  query: PromLokiVisualQuery,
+  query: PrometheusVisualQuery,
   operationsRegistry: Map<string, QueryBuilderOperationDef>
 ): boolean {
   return (
