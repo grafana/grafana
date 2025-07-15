@@ -186,6 +186,7 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
+  * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
