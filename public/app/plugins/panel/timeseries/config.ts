@@ -41,7 +41,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   axisGridShow: true,
   axisCenteredZero: false,
   axisBorderShow: false,
-  showValues: false,
+  showValues: VisibilityMode.Auto,
 };
 
 export type NullEditorSettings = { isTime: boolean };

@@ -57,6 +57,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -159,7 +160,12 @@
   ],
   "refresh": "",
   "schemaVersion": 38,
-  "tags": ["gdev", "panel-tests", "graph-ng", "trend"],
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng",
+    "trend"
+  ],
   "templating": {
     "list": []
   },
