@@ -37,7 +37,7 @@ pluginsDetailsRightPanel,GA,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/oss-big-tent,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
 logsExploreTableVisualisation,GA,@grafana/observability-logs,false,false,true
-awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false
+awsDatasourcesTempCredentials,GA,@grafana/aws-datasources,false,false,false
 transformationsRedesign,GA,@grafana/observability-metrics,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 datasourceAPIServers,experimental,@grafana/grafana-app-platform-squad,false,true,false
