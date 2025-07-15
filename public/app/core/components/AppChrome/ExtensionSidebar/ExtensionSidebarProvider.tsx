@@ -173,7 +173,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       if (
         event.payload.pluginId &&
         event.payload.componentTitle &&
-        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId)
+        PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(event.payload.pluginId) &&
+        availableComponents
+          .get(event.payload.pluginId)
+          ?.addedComponents.some((component) => component.title === event.payload.componentTitle)
       ) {
         setDockedComponentWithProps(
           JSON.stringify({ pluginId: event.payload.pluginId, componentTitle: event.payload.componentTitle }),
@@ -186,7 +189,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     return () => {
       subscription.unsubscribe();
     };
-  }, [isEnabled, setDockedComponentWithProps]);
+  }, [isEnabled, setDockedComponentWithProps, availableComponents]);
 
   // update the stored docked component id when it changes
   useEffect(() => {

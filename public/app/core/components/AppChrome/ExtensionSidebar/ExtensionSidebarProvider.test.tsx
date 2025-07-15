@@ -99,6 +99,17 @@ describe('ExtensionSidebarProvider', () => {
     (store.get as jest.Mock).mockReturnValue(undefined);
     (store.set as jest.Mock).mockImplementation(() => {});
     (store.delete as jest.Mock).mockImplementation(() => {});
+
+    // Reset usePluginLinks mock to default behavior
+    jest.requireMock('@grafana/runtime').usePluginLinks.mockImplementation(() => ({
+      links: [
+        {
+          pluginId: mockPluginMeta.pluginId,
+          title: mockComponent.title,
+        },
+      ],
+      isLoading: false,
+    }));
   });
 
   afterEach(() => {
@@ -271,7 +282,7 @@ describe('ExtensionSidebarProvider', () => {
     expect(subscribeSpy).not.toHaveBeenCalled();
   });
 
-  it('should set dockedComponentId and props when receiving a valid OpenExtensionSidebarEvent', () => {
+  it('should set dockedComponentId and props when receiving an OpenExtensionSidebarEvent for an available component', () => {
     const TestComponentWithProps = () => {
       const context = useExtensionSidebarContext();
       return (
@@ -334,6 +345,42 @@ describe('ExtensionSidebarProvider', () => {
         new OpenExtensionSidebarEvent({
           pluginId: 'non-permitted-plugin',
           componentTitle: 'Test Component',
+        })
+      );
+    });
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+  });
+
+  it('should not open sidebar when receiving an OpenExtensionSidebarEvent with a component not in availableComponents', () => {
+    // Mock usePluginLinks to return a link with a different component title
+    jest.requireMock('@grafana/runtime').usePluginLinks.mockImplementation(() => ({
+      links: [
+        {
+          pluginId: mockPluginMeta.pluginId,
+          title: 'Different Component',
+        },
+      ],
+      isLoading: false,
+    }));
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+
+    act(() => {
+      // Get the event subscriber function
+      const [[, subscriberFn]] = subscribeSpy.mock.calls;
+
+      // Call it directly with a component title that doesn't match any available component
+      subscriberFn(
+        new OpenExtensionSidebarEvent({
+          pluginId: mockPluginMeta.pluginId,
+          componentTitle: 'Non-existent Component',
         })
       );
     });
