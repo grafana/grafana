@@ -2,9 +2,15 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState,
 import { useLocalStorage } from 'react-use';
 
 import { PluginExtensionPoints, store, type ExtensionInfo } from '@grafana/data';
-import { config, getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
+import {
+  config,
+  getAppEvents,
+  reportInteraction,
+  usePluginLinks,
+  locationService,
+  OpenExtensionSidebarEvent,
+} from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar';
 

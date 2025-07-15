@@ -1,9 +1,8 @@
 import { render, screen, act } from '@testing-library/react';
 
 import { store, EventBusSrv, EventBus } from '@grafana/data';
-import { config, getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
+import { config, getAppEvents, setAppEvents, locationService, OpenExtensionSidebarEvent } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import {
   ExtensionSidebarContextProvider,
