@@ -48,7 +48,7 @@ jobs:
           path: ./artifact
       - name: Log in to GCS
         id: login-to-gcs
-        uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs/v0.2.1
+        uses: grafana/shared-workflows/actions/login-to-gcs@main
         with:
           environment: ${{ inputs.environment }}
           service_account: ${{ inputs.service-account }}
@@ -58,7 +58,7 @@ jobs:
           find ./artifact -mindepth 2 -maxdepth 2 -exec cp -r {} out/ \;
           ls -al out
       - name: Upload artifacts
-        uses: grafana/shared-workflows/actions/push-to-gcs@push-to-gcs-v0.2.0
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           bucket: ${{ inputs.bucket }}
           environment: ${{ inputs.environment }}
@@ -66,3 +66,4 @@ jobs:
           path: out
           bucket_path: ${{ inputs.bucket-path }}
           service_account: ${{ inputs.service-account }}
+          gzip: false
