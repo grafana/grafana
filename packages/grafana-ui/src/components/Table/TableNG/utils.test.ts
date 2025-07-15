@@ -1073,7 +1073,7 @@ describe('TableNG utils', () => {
       // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
       expect(result).toEqual({
         idx: 0,
-        numLines: 2,
+        numLines: 3,
         text: 'a bit longer text',
       });
     });
@@ -1108,7 +1108,7 @@ describe('TableNG utils', () => {
 
       // With a 50px width and 5px per character, we can fit 10 characters per line
       // "the longest text in this field" has 31 characters, so it should wrap to 4 lines
-      expect(result).toEqual({ idx: 0, numLines: 3, text: 'Field with a very long name' });
+      expect(result).toEqual({ idx: 0, numLines: 4, text: 'Field with a very long name' });
     });
 
     it.todo('should ignore columns which are not wrapped');

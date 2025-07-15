@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect, RefObject } from 'react';
 import { Column, DataGridHandle, DataGridProps, SortColumn } from 'react-data-grid';
-import { varPreLine } from 'uwrap';
 
 import { Field, fieldReducers, FieldType, formattedValueToString, LinkModel, reduceField } from '@grafana/data';
 
@@ -313,7 +312,6 @@ interface TypographyCtx {
   ctx: CanvasRenderingContext2D;
   font: string;
   avgCharWidth: number;
-  calcRowHeight: (text: string, cellWidth: number, defaultHeight: number) => number;
 }
 
 export function useTypographyCtx(): TypographyCtx {
@@ -328,22 +326,10 @@ export function useTypographyCtx(): TypographyCtx {
     ctx.letterSpacing = `${letterSpacing}px`;
     ctx.font = font;
     const txt =
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s";
+      "Lorem Ipsum is SIMPLY DUMMY TEXT of the printing and typesetting industry. Lorem Ipsum has been the industry's STANDARD DUMMY TEXT ever since the 1500s";
     const txtWidth = ctx.measureText(txt).width;
     const avgCharWidth = txtWidth / txt.length + letterSpacing;
-    const { count } = varPreLine(ctx);
-
-    const calcRowHeight = (text: string, cellWidth: number, defaultHeight: number) => {
-      if (text === '') {
-        return defaultHeight;
-      }
-      const numLines = count(text, cellWidth);
-      const totalHeight = numLines * TABLE.LINE_HEIGHT + 2 * TABLE.CELL_PADDING;
-      return Math.max(totalHeight, defaultHeight);
-    };
-
     return {
-      calcRowHeight,
       ctx,
       font,
       avgCharWidth,
@@ -371,7 +357,7 @@ export function useHeaderHeight({
   columnWidths,
   defaultHeight,
   sortColumns,
-  typographyCtx: { calcRowHeight, avgCharWidth },
+  typographyCtx: { avgCharWidth },
   showTypeIcons = false,
 }: UseHeaderHeightOptions): number {
   const perIconSpace = ICON_WIDTH + ICON_GAP;
@@ -428,9 +414,10 @@ export function useHeaderHeight({
       return defaultHeight - TABLE.CELL_PADDING;
     }
 
-    const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
-    return calcRowHeight(maxLinesText, columnAvailableWidths[maxLinesIdx], defaultHeight) - TABLE.CELL_PADDING;
-  }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, calcRowHeight, columnAvailableWidths, defaultHeight]);
+    const { numLines } = getMaxWrapCell(fields, -1, maxWrapCellOptions);
+    const totalHeight = numLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING;
+    return Math.max(totalHeight, defaultHeight);
+  }, [fields, enabled, hasWrappedColHeaders, maxWrapCellOptions, defaultHeight]);
 
   return headerHeight;
 }
@@ -440,7 +427,6 @@ interface UseRowHeightOptions {
   fields: Field[];
   hasNestedFrames: boolean;
   defaultHeight: number;
-  headerHeight: number;
   expandedRows: Record<string, boolean>;
   typographyCtx: TypographyCtx;
 }
@@ -450,9 +436,8 @@ export function useRowHeight({
   fields,
   hasNestedFrames,
   defaultHeight,
-  headerHeight,
   expandedRows,
-  typographyCtx: { calcRowHeight, avgCharWidth },
+  typographyCtx: { avgCharWidth },
 }: UseRowHeightOptions): number | ((row: TableRow) => number) {
   const [wrappedColIdxs, hasWrappedCols] = useMemo(() => {
     let hasWrappedCols = false;
@@ -513,19 +498,11 @@ export function useRowHeight({
       }
 
       // regular rows
-      const { text: maxLinesText, idx: maxLinesIdx } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
-      return calcRowHeight(maxLinesText, colWidths[maxLinesIdx], defaultHeight);
+      const { numLines } = getMaxWrapCell(fields, row.__index, maxWrapCellOptions);
+      const totalHeight = numLines * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      return Math.max(totalHeight, defaultHeight);
     };
-  }, [
-    calcRowHeight,
-    defaultHeight,
-    expandedRows,
-    fields,
-    hasNestedFrames,
-    hasWrappedCols,
-    maxWrapCellOptions,
-    colWidths,
-  ]);
+  }, [defaultHeight, expandedRows, fields, hasNestedFrames, hasWrappedCols, maxWrapCellOptions]);
 
   return rowHeight;
 }

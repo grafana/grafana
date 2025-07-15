@@ -70,7 +70,6 @@ export function shouldTextWrap(field: Field): boolean {
 }
 
 const spaceRegex = /[\s-]/; // matches characters which CSS breaks on in `word-break: break-word` mode
-const CHAR_WIDTH_PESSIMISM_FACTOR = 1.1; // account for variance in character widths
 
 export interface GetMaxWrapCellOptions {
   colWidths: number[];
@@ -104,11 +103,25 @@ export function getMaxWrapCell(
       const cellTextRaw = rowIdx === -1 ? getDisplayName(field) : field.values[rowIdx];
 
       if (cellTextRaw != null) {
-        const cellText = String(cellTextRaw);
+        const cellText = String(cellTextRaw).trim();
 
         if (spaceRegex.test(cellText)) {
-          const charsPerLine = colWidths[i] / (avgCharWidth * CHAR_WIDTH_PESSIMISM_FACTOR);
-          const approxLines = Math.ceil(cellText.length / charsPerLine); // ceil to round up to next line.
+          const charsPerLine = Math.floor(colWidths[i] / avgCharWidth);
+          let approxLines = 1;
+          let remainingLineChars = charsPerLine;
+          const splitStr = cellText.split(spaceRegex);
+          // skip the last word.
+          for (const word of splitStr) {
+            if (remainingLineChars - word.length > 0) {
+              remainingLineChars -= word.length + 1; // +1 for the space or hyphen we split on
+            } else {
+              approxLines++;
+              remainingLineChars = charsPerLine - word.length - 1;
+            }
+          }
+
+          // clamp approxLines to the number of words in the string
+          approxLines = Math.min(approxLines, splitStr.length);
 
           if (approxLines > maxLines) {
             maxLines = approxLines;

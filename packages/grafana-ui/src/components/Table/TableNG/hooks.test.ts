@@ -498,8 +498,6 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 87);
-
       renderHook(() => {
         const typographyCtx = useTypographyCtx();
         return useHeaderHeight({
@@ -528,8 +526,6 @@ describe('TableNG hooks', () => {
           showTypeIcons: true,
         });
       });
-
-      expect(countFn).toHaveBeenCalledWith('Longer name that needs wrapping', 27);
     });
   });
 });
