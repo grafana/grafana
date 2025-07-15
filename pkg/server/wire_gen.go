@@ -1347,7 +1347,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory)
+	testEnv, err := ProvideTestEnv(testingT, server, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, resourceClient, idimplService, factory, secretsService, secureValueService, decryptService)
 	if err != nil {
 		return nil, err
 	}
