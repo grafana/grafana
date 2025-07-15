@@ -18,7 +18,7 @@ import {
   locationService,
 } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DatasourceAPIVersions } from 'app/features/apiserver/client';

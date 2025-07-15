@@ -13,7 +13,7 @@ import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 import * as grafanaUIraw from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';

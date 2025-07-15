@@ -3,7 +3,7 @@ import { ConnectedProps, connect } from 'react-redux';
 
 import { t } from '@grafana/i18n';
 import { Stack } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { getNavModel } from 'app/core/selectors/navModel';

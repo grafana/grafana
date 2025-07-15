@@ -22,7 +22,7 @@ import {
 } from '@grafana/data';
 import { config, locationService, logWarning } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';

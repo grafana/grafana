@@ -1,7 +1,7 @@
 import { dateTime, TimeRange, VariableRefresh } from '@grafana/data';
 import { config, DataSourceSrv } from '@grafana/runtime';
 import * as runtime from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import { DashboardState } from 'app/types/dashboard';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
