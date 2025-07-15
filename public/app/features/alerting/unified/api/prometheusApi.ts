@@ -118,18 +118,42 @@ export const prometheusApi = alertingApi.injectEndpoints({
 export function usePopulateGrafanaPrometheusApiCache() {
   const dispatch = useDispatch();
 
-  const populateGroupResponseCache = useCallback(
-    (group: GrafanaPromRuleGroupDTO) => {
+  const populateGroupsResponseCache = useCallback(
+    (groups: GrafanaPromRuleGroupDTO[]) => {
       dispatch(
-        prometheusApi.util.upsertQueryData(
-          'getGrafanaGroups',
-          { folderUid: group.folderUid, groupName: group.name },
-          { data: { groups: [group] }, status: 'success' }
+        prometheusApi.util.upsertQueryEntries(
+          groups.map((group) => ({
+            endpointName: 'getGrafanaGroups',
+            arg: { folderUid: group.folderUid, groupName: group.name },
+            value: { data: { groups: [group] }, status: 'success' },
+          }))
         )
       );
     },
     [dispatch]
   );
 
-  return { populateGroupResponseCache };
+  return { populateGroupsResponseCache };
+}
+
+export function usePopulatePrometheusApiCache() {
+  const dispatch = useDispatch();
+
+  const populateGroupsResponseCache = useCallback(
+    (ruleSourceUid: string, groups: Array<PromRuleGroupDTO<PromRuleDTO>>) => {
+      // ⚠️ make sure to use `upsertQueryEntries` to batch insert, as otherwise it will have to run through the entire async thunk lifecycle for each group
+      dispatch(
+        prometheusApi.util.upsertQueryEntries(
+          groups.map((group) => ({
+            endpointName: 'getGroups',
+            arg: { ruleSource: { uid: ruleSourceUid }, namespace: group.file, groupName: group.name },
+            value: { data: { groups: [group] }, status: 'success' },
+          }))
+        )
+      );
+    },
+    [dispatch]
+  );
+
+  return { populateGroupsResponseCache };
 }

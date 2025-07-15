@@ -1,6 +1,6 @@
 import { AsyncIterableX, empty, from } from 'ix/asynciterable';
 import { merge } from 'ix/asynciterable/merge';
-import { catchError, concatMap, withAbort } from 'ix/asynciterable/operators';
+import { catchError, concatMap, tap, withAbort } from 'ix/asynciterable/operators';
 import { isEmpty } from 'lodash';
 
 import {
@@ -52,7 +52,7 @@ interface GetIteratorResult {
 }
 
 export function useFilteredRulesIteratorProvider() {
-  const { populateGroupResponseCache } = usePopulateGrafanaPrometheusApiCache();
+  const { populateGroupsResponseCache } = usePopulateGrafanaPrometheusApiCache();
   const allExternalRulesSources = getExternalRulesSources();
 
   const prometheusGroupsGenerator = usePrometheusGroupsGenerator();
@@ -73,13 +73,11 @@ export function useFilteredRulesIteratorProvider() {
       })
     ).pipe(
       withAbort(abortController.signal),
+      tap(populateGroupsResponseCache),
       concatMap((groups) =>
         groups
           .filter((group) => groupFilter(group, normalizedFilterState))
-          .flatMap((group) => {
-            populateGroupResponseCache(group);
-            return group.rules.map((rule) => [group, rule] as const);
-          })
+          .flatMap((group) => group.rules.map((rule) => [group, rule] as const))
           .filter(([, rule]) => ruleFilter(rule, normalizedFilterState))
           .map(([group, rule]) => mapGrafanaRuleToRuleWithOrigin(group, rule))
       ),
