@@ -32,6 +32,9 @@ const esModules = [
   'pkce-challenge',
   'quickselect',
   'rbush',
+  'earcut',
+  'pbf',
+  'geotiff',
 ].join('|');
 
 module.exports = {
