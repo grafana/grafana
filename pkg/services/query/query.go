@@ -286,11 +286,6 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 	}
 
 	mtDsClient, err := s.mtDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
-	//s.BuildClient
-	//s.QueryData
-	//s.client.QueryData()
-	//client := s.client(type, uid)
-	//client.QueryData
 	if err != nil { // single tenant flow
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 		if err != nil {
