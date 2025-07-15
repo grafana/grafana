@@ -123,7 +123,7 @@ export const LogLineDetailsComponent = memo(({ log, logs }: LogLineDetailsCompon
             isOpen={linksOpen}
             onToggle={(isOpen: boolean) => handleToggle('linksOpen', isOpen)}
           >
-            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithLinks.links} search={search} />
+            <LogLineDetailsFields disableActions log={log} logs={logs} fields={fieldsWithLinks.links} search={search} />
             <LogLineDetailsFields
               disableActions
               log={log}
