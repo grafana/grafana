@@ -34,7 +34,7 @@
         }
       ],
       "title": "Singlestat to Stat Panel",
-      "type": "stat"
+      "type": "grafana-singlestat-panel"
     },
     {
       "datasource": {
@@ -63,7 +63,7 @@
         }
       ],
       "title": "Singlestat to Gauge Panel",
-      "type": "gauge"
+      "type": "grafana-singlestat-panel"
     },
     {
       "datasource": {
@@ -83,7 +83,7 @@
         }
       ],
       "title": "Singlestat with Gauge Disabled",
-      "type": "stat"
+      "type": "grafana-singlestat-panel"
     },
     {
       "datasource": {
