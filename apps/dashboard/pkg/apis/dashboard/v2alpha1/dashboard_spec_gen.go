@@ -1894,8 +1894,10 @@ const (
 type DashboardConditionalRenderingScopesSpecOperator string
 
 const (
-	DashboardConditionalRenderingScopesSpecOperatorIncludes    DashboardConditionalRenderingScopesSpecOperator = "includes"
-	DashboardConditionalRenderingScopesSpecOperatorNotIncludes DashboardConditionalRenderingScopesSpecOperator = "notIncludes"
+	DashboardConditionalRenderingScopesSpecOperatorIncludes         DashboardConditionalRenderingScopesSpecOperator = "includes"
+	DashboardConditionalRenderingScopesSpecOperatorNotIncludes      DashboardConditionalRenderingScopesSpecOperator = "notIncludes"
+	DashboardConditionalRenderingScopesSpecOperatorIncludesMatch    DashboardConditionalRenderingScopesSpecOperator = "includesMatch"
+	DashboardConditionalRenderingScopesSpecOperatorNotIncludesMatch DashboardConditionalRenderingScopesSpecOperator = "notIncludesMatch"
 )
 
 // +k8s:openapi-gen=true

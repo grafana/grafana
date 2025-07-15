@@ -32,7 +32,7 @@ export type VariableConditionValue = {
   value: string;
 };
 
-export type ScopesConditionValueOperator = 'includes' | 'notIncludes';
+export type ScopesConditionValueOperator = 'includes' | 'notIncludes' | 'includesMatch' | 'notIncludesMatch';
 
 export type ScopesConditionValue = {
   operator: ScopesConditionValueOperator;

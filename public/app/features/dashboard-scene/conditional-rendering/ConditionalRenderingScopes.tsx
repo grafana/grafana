@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { ConditionalRenderingScopesKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Combobox, ComboboxOption, Input, Stack } from '@grafana/ui';
@@ -36,6 +37,10 @@ export class ConditionalRenderingScopes extends ConditionalRenderingBase<Conditi
   }
 
   public evaluate(): boolean {
+    if (!config.featureToggles.scopeFilters) {
+      return true;
+    }
+
     if (!this.state.value.value) {
       return true;
     }
@@ -46,9 +51,16 @@ export class ConditionalRenderingScopes extends ConditionalRenderingBase<Conditi
       return true;
     }
 
-    const hit = scopes.some((scope) => scope.metadata.name === this.state.value.value);
+    let hit: boolean;
 
-    return this.state.value.operator === 'notIncludes' ? !hit : hit;
+    if (this.state.value.operator === 'includes' || this.state.value.operator === 'notIncludes') {
+      hit = scopes.some((scope) => scope.metadata.name === this.state.value.value);
+    } else {
+      const regex = new RegExp(this.state.value.value);
+      hit = scopes.some((scope) => regex.test(scope.metadata.name));
+    }
+
+    return this.state.value.operator === 'notIncludes' || this.state.value.operator === 'notIncludesMatch' ? !hit : hit;
   }
 
   public serialize(): ConditionalRenderingScopesKind {
@@ -87,6 +99,17 @@ function ConditionalRenderingScopesRenderer({ model }: SceneComponentProps<Condi
       {
         value: 'notIncludes',
         description: t('dashboard.conditional-rendering.conditions.scopes.operator.not-includes', 'Not includes'),
+      },
+      {
+        value: 'includesMatch',
+        description: t('dashboard.conditional-rendering.conditions.scopes.operator.includes-match', 'Includes match'),
+      },
+      {
+        value: 'notIncludesMatch',
+        description: t(
+          'dashboard.conditional-rendering.conditions.scopes.operator.not-includes-match',
+          'Not includes match'
+        ),
       },
     ],
     []

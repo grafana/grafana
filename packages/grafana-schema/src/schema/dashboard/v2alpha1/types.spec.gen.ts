@@ -757,7 +757,7 @@ export const defaultConditionalRenderingScopesKind = (): ConditionalRenderingSco
 });
 
 export interface ConditionalRenderingScopesSpec {
-	operator: "includes" | "notIncludes";
+	operator: "includes" | "notIncludes" | "includesMatch" | "notIncludesMatch";
 	value: string;
 }
 
