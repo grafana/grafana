@@ -76,7 +76,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     }
 
     // Extract AdHoc filters from the request
-    const adhocFilters = options.filters || [];
+    const adHocFilters = options.filters || [];
 
     return defer(() => {
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
@@ -89,7 +89,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         debounceTime(50),
         map((result) => {
           return {
-            data: this.getDataFramesForQueryTopic(result.data, query, adhocFilters),
+            data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
