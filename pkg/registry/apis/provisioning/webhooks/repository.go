@@ -335,13 +335,13 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 }
 
 func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
-	if len(r.webhookURL) == 0 {
-		return nil
-	}
 	ctx, _ = r.logger(ctx, "")
-
 	if err := r.GithubRepository.OnDelete(ctx); err != nil {
 		return fmt.Errorf("on delete from basic github repository: %w", err)
+	}
+
+	if r.config.Status.Webhook == nil {
+		return nil
 	}
 
 	secretName := r.config.Name + webhookSecretSuffix

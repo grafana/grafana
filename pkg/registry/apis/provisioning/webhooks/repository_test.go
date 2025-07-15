@@ -1702,6 +1702,9 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 					Return(nil)
 			},
 			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
@@ -1719,21 +1722,32 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		},
 		{
 			name: "no webhook URL provided",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
-				// No mocks needed
+			setupMock: func(_ *github.MockClient, mockRepo *github.MockGithubRepository, _ *secrets.MockRepositorySecrets) {
+				mockRepo.On("OnDelete", mock.Anything).Return(nil)
 			},
-			config:        &provisioning.Repository{},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
 			webhookURL:    "",
 			expectedError: nil,
 		},
 		{
 			name: "webhook not found in status",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
+			setupMock: func(_ *github.MockClient, mockRepo *github.MockGithubRepository, _ *secrets.MockRepositorySecrets) {
 				mockRepo.On("OnDelete", mock.Anything).Return(nil)
-				mockSecrets.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				// No mocks needed
+				// No secrets deletion or webhook deletion mocks needed - method returns early when webhook is nil
 			},
 			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
@@ -1744,14 +1758,17 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 				},
 			},
 			webhookURL:    "https://example.com/webhook",
-			expectedError: fmt.Errorf("webhook not found"),
+			expectedError: nil, // No error expected - method returns early when webhook is nil
 		},
 		{
 			name: "error on delete from basic github repository",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
+			setupMock: func(_ *github.MockClient, mockRepo *github.MockGithubRepository, _ *secrets.MockRepositorySecrets) {
 				mockRepo.On("OnDelete", mock.Anything).Return(fmt.Errorf("failed to delete webhook"))
 			},
 			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
@@ -1777,6 +1794,9 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 					Return(fmt.Errorf("failed to delete webhook"))
 			},
 			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
@@ -1887,7 +1907,7 @@ func TestGitHubRepository_OnDelete_WithSecrets(t *testing.T) {
 		},
 		{
 			name: "secret deletion error",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
+			setupMock: func(_ *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
 				mockRepo.On("OnDelete", mock.Anything).Return(nil)
 				mockSecrets.EXPECT().Delete(
 					mock.Anything,
@@ -1933,13 +1953,18 @@ func TestGitHubRepository_OnDelete_WithSecrets(t *testing.T) {
 		},
 		{
 			name: "no webhook URL - no secrets deletion",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
-				// No mocks needed since method returns early
+			setupMock: func(_ *github.MockClient, mockRepo *github.MockGithubRepository, _ *secrets.MockRepositorySecrets) {
+				mockRepo.On("OnDelete", mock.Anything).Return(nil)
 			},
 			config: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-repo",
 					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
 				},
 			},
 			webhookURL: "",
