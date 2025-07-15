@@ -506,7 +506,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     triageButtonContainer: css({
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
-    })
+    }),
   };
 };
 
