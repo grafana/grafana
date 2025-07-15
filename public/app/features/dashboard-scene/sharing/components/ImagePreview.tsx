@@ -43,14 +43,12 @@ export function ImagePreview({ imageBlob, isLoading, error, title }: ImagePrevie
     <div
       className={styles.previewContainer}
       ref={ref}
-      role="region"
       aria-label={t('share-modal.image.preview-region', 'Image preview')}
     >
       {isLoading && (
         <div
           className={styles.loadingBarContainer}
           role="status"
-          aria-live="polite"
           aria-label={t('share-modal.image.generating', 'Generating image...')}
         >
           <LoadingBar width={measuredWidth} />

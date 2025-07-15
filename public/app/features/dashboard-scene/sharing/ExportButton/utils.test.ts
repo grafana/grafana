@@ -1,7 +1,6 @@
 import { of } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -12,16 +11,12 @@ import { generateDashboardImage } from './utils';
 jest.mock('@grafana/runtime', () => ({
   config: {
     rendererAvailable: true,
-    theme2: {
-      isDark: false,
-    },
     bootData: {
       user: {
         orgId: 1,
       },
     },
-    rendererDefaultImageScale: 1,
-  } as typeof config,
+  },
   getBackendSrv: jest.fn(),
 }));
 
@@ -39,33 +34,13 @@ jest.mock('app/features/dashboard-scene/utils/getDashboardUrl', () => ({
     }),
 }));
 
-// Mock location
-Object.defineProperty(window, 'location', {
-  value: {
-    search: '',
-  },
-  writable: true,
-});
-
 describe('Dashboard Export Image Utils', () => {
-  let consoleWarnSpy: jest.SpyInstance;
-
-  beforeEach(() => {
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    document.body.innerHTML = '';
-    jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    consoleWarnSpy.mockRestore();
-  });
-
   describe('generateDashboardImage', () => {
     it('should handle various error scenarios', async () => {
       const testCases = [
         {
           setup: () => {
-            (config as { rendererAvailable: boolean }).rendererAvailable = false;
+            config.rendererAvailable = false;
             // Reset the mock for this test case
             (getBackendSrv as jest.Mock).mockReset();
           },
@@ -73,7 +48,7 @@ describe('Dashboard Export Image Utils', () => {
         },
         {
           setup: () => {
-            (config as { rendererAvailable: boolean }).rendererAvailable = true;
+            config.rendererAvailable = true;
             (getBackendSrv as jest.Mock).mockReturnValue({
               fetch: jest.fn().mockReturnValue(of({ ok: false, status: 500, statusText: 'Server Error' })),
             });
@@ -82,7 +57,7 @@ describe('Dashboard Export Image Utils', () => {
         },
         {
           setup: () => {
-            (config as { rendererAvailable: boolean }).rendererAvailable = true;
+            config.rendererAvailable = true;
             (getBackendSrv as jest.Mock).mockReturnValue({
               fetch: jest.fn().mockReturnValue(of({ ok: true, data: 'invalid-data' })),
             });
@@ -91,7 +66,7 @@ describe('Dashboard Export Image Utils', () => {
         },
         {
           setup: () => {
-            (config as { rendererAvailable: boolean }).rendererAvailable = true;
+            config.rendererAvailable = true;
             (getBackendSrv as jest.Mock).mockReturnValue({
               fetch: jest.fn().mockReturnValue(of(Promise.reject(new Error('Network error')))),
             });
@@ -103,11 +78,8 @@ describe('Dashboard Export Image Utils', () => {
       const dashboard = {
         state: {
           uid: 'test-uid',
-          body: {
-            getVizPanels: () => [] as VizPanel[],
-          },
         },
-      } as unknown as DashboardScene;
+      } as DashboardScene;
 
       for (const testCase of testCases) {
         testCase.setup();
@@ -119,7 +91,7 @@ describe('Dashboard Export Image Utils', () => {
     });
 
     it('should generate image successfully with custom scale', async () => {
-      (config as { rendererAvailable: boolean }).rendererAvailable = true;
+      config.rendererAvailable = true;
       const mockBlob = new Blob(['test'], { type: 'image/png' });
       const fetchMock = jest.fn().mockReturnValue(of({ ok: true, data: mockBlob }));
       (getBackendSrv as jest.Mock).mockReturnValue({ fetch: fetchMock });
@@ -127,11 +99,8 @@ describe('Dashboard Export Image Utils', () => {
       const dashboard = {
         state: {
           uid: 'test-uid',
-          body: {
-            getVizPanels: () => [] as VizPanel[],
-          },
         },
-      } as unknown as DashboardScene;
+      } as DashboardScene;
 
       const result = await generateDashboardImage({ dashboard, scale: 2 });
 

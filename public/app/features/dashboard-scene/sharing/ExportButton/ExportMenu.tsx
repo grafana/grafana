@@ -72,8 +72,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
   return (
     <Menu
-      role="menu"
-      aria-label={t('dashboard.export.menu.label', 'Export dashboard menu')}
+      ariaLabel={t('dashboard.export.menu.label', 'Export dashboard menu')}
       data-testid={newExportButtonSelector.container}
     >
       {buildMenuItems().map((item) => (
@@ -83,7 +82,6 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
           icon={item.icon}
           description={item.description}
           onClick={() => onClick(item)}
-          role="menuitem"
           testId={item.testId}
         />
       ))}
