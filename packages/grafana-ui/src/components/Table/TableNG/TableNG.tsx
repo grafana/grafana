@@ -331,7 +331,6 @@ export function TableNG(props: TableNGProps) {
         const shouldOverflow = shouldTextOverflow(field);
         const shouldWrap = shouldTextWrap(field);
         const withTooltip = withDataLinksActionsTooltip(field, cellType);
-        const hasBackgroundColor = cellType === TableCellDisplayMode.ColorBackground;
         const canBeColorized =
           cellType === TableCellDisplayMode.ColorBackground || cellType === TableCellDisplayMode.ColorText;
 
@@ -353,8 +352,7 @@ export function TableNG(props: TableNGProps) {
               shouldWrap,
               shouldOverflow,
               withTooltip,
-              canBeColorized,
-              hasBackgroundColor
+              canBeColorized
             );
             break;
         }
@@ -903,8 +901,7 @@ const getCellStyles = (
   shouldWrap: boolean,
   shouldOverflow: boolean,
   hasTooltip: boolean,
-  isColorized: boolean,
-  hasBackgroundColor: boolean
+  isColorized: boolean
 ) =>
   css({
     display: 'flex',
@@ -913,11 +910,9 @@ const getCellStyles = (
     justifyContent,
     paddingInline: TABLE.CELL_PADDING,
     minHeight: '100%',
+    backgroundClip: 'padding-box !important', // helps when cells have a bg color
     ...(shouldWrap && { whiteSpace: 'pre-line' }),
     ...(hasTooltip && { cursor: 'pointer' }),
-    ...(hasBackgroundColor && {
-      backgroundClip: 'padding-box !important',
-    }),
 
     '&:last-child': {
       borderInlineEnd: 'none',
@@ -934,7 +929,8 @@ const getCellStyles = (
         minWidth: 'fit-content',
       }),
     },
-    a: {
+
+    [hasTooltip ? '&' : 'a']: {
       cursor: 'pointer',
       ...(isColorized
         ? {

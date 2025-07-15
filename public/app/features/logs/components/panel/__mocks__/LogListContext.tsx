@@ -191,3 +191,9 @@ export const LogListContextProvider = ({
     </LogListContext.Provider>
   );
 };
+
+export const saveDetailsScrollPosition = jest.fn();
+
+export const getDetailsScrollPosition = jest.fn();
+
+export const removeDetailsScrollPosition = jest.fn();

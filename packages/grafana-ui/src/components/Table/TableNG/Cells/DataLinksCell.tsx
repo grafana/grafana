@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { clsx } from 'clsx';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -17,9 +16,9 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
     return null;
   }
 
-  // the container span is needed to make the first-child and last-child CSS selectors work
-  // without interacting with other elements, like the TableCellActions.
   return (
+    // the container span is needed to make the first-child and last-child CSS selectors work
+    // without interacting with other elements, like the TableCellActions.
     <span>
       {links.map((link, idx) =>
         !link.href && link.onClick == null ? (
@@ -27,13 +26,7 @@ export const DataLinksCell = ({ field, rowIdx }: DataLinksCellProps) => {
             {link.title}
           </span>
         ) : (
-          <a
-            className={clsx(styles.linkCell, styles.linkCellActive)}
-            key={idx}
-            onClick={link.onClick}
-            href={link.href}
-            target={link.target}
-          >
+          <a key={idx} className={styles.linkCell} onClick={link.onClick} href={link.href} target={link.target}>
             {link.title}
           </a>
         )
@@ -59,16 +52,5 @@ const getStyles = (theme: GrafanaTheme2, textWrap?: boolean) => ({
         paddingInlineEnd: 0,
       },
     }),
-  }),
-  linkCellActive: css({
-    cursor: 'pointer',
-    color: theme.colors.text.link,
-    a: {
-      color: theme.colors.text.link,
-    },
-    '&:hover': {
-      textDecoration: 'underline',
-      color: theme.colors.text.link,
-    },
   }),
 });

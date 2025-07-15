@@ -83,6 +83,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
     }),
     copyButton: css({
       '& > button': {
+        gap: 0,
         color: theme.colors.text.secondary,
         padding: 0,
         justifyContent: 'center',

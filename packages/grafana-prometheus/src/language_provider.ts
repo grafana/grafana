@@ -27,7 +27,7 @@ import {
   processLabels,
   toPromLikeQuery,
 } from './language_utils';
-import PromqlSyntax from './promql';
+import { promqlGrammar } from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { LabelsApiClient, ResourceApiClient, SeriesApiClient } from './resource_clients';
 import { PromMetricsMetadata, PromQuery } from './types';
@@ -45,7 +45,7 @@ const API_V1 = {
   LABELS_VALUES: (labelKey: string) => `/api/v1/label/${labelKey}/values`,
 };
 
-export interface PrometheusBaseLanguageProvider {
+interface PrometheusBaseLanguageProvider {
   datasource: PrometheusDatasource;
 
   /**
@@ -70,7 +70,7 @@ export interface PrometheusBaseLanguageProvider {
 /**
  * @deprecated This interface is deprecated and will be removed.
  */
-export interface PrometheusLegacyLanguageProvider {
+interface PrometheusLegacyLanguageProvider {
   /**
    * @deprecated Use retrieveHistogramMetrics() method instead
    */
@@ -736,7 +736,7 @@ export const exportToAbstractQuery = (query: PromQuery): AbstractQuery => {
   if (!promQuery || promQuery.length === 0) {
     return { refId: query.refId, labelMatchers: [] };
   }
-  const tokens = Prism.tokenize(promQuery, PromqlSyntax);
+  const tokens = Prism.tokenize(promQuery, promqlGrammar);
   const labelMatchers: AbstractLabelMatcher[] = extractLabelMatchers(tokens);
   const nameLabelValue = getNameLabelValue(promQuery, tokens);
   if (nameLabelValue && nameLabelValue.length > 0) {

@@ -34,7 +34,7 @@ export function useSettingsPageNav() {
   };
 
   return {
-    navId: 'alerting',
+    navId: 'alerting-admin',
     pageNav,
   };
 }

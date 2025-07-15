@@ -2838,22 +2838,14 @@ For example:
 
 ```ini
 [time_picker]
-quick_ranges = [
-  {
-    "display": "Last 5 minutes",
-    "from": "now-5m",
-    "to": "now",
-  },
-  {
-    "display": "Yesterday",
-    "from": "now-1d/d",
-  },
-  {
-    "display": "Today so far",
-    "from": "now/d",
-    "to": "now",
-  }
-]
+quick_ranges = """[
+{"from":"now-6s","to":"now","display":"Last 6 seconds"},
+{"from":"now-10m","to":"now","display":"Last 10 minutes"},
+{"from":"now-25h","to":"now","display":"Last 24 hours"},
+{"from":"now/w","to":"now/w","display":"This week"},
+{"from":"now-1w/w","to":"now-1w/w","display":"Last week"},
+{"from":"now-10d","to":"now","display":"Last 10 days"}
+]"""
 ```
 
 ### `[expressions]`

@@ -123,7 +123,6 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
               },
             ],
           },
-          defaultValue: 'inline',
         });
     }
 

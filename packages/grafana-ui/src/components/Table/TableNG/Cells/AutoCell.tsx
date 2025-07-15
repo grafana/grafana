@@ -9,5 +9,5 @@ export default function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   const formattedValue = formattedValueToString(displayValue);
   const link = useSingleLink(field, rowIdx);
 
-  return link == null ? formattedValue : renderSingleLink(link, formattedValue);
+  return link != null ? renderSingleLink(link, formattedValue) : formattedValue;
 }
