@@ -5877,10 +5877,13 @@
       "description-examples": "Nazwane grupy rejestracji mogą być używane do oddzielania wyświetlanego tekstu i wartości (<1>patrz przykłady</1>).",
       "description-optional": "Opcjonalnie pozwalają wyodrębnić część nazwy serii lub segmentu węzła metryki.",
       "label-data-source": "Źródło danych",
+      "label-static-options-sort": "",
       "label-target-data-source": "Docelowe źródło danych",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "Opcje zapytania",
-      "selection-options": "Opcje wyboru"
+      "selection-options": "Opcje wyboru",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -13235,6 +13238,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

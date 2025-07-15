@@ -57,7 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -89,17 +88,17 @@ type APIBuilder struct {
 		jobs.Queue
 		jobs.Store
 	}
-	jobHistory       jobs.History
-	tester           *RepositoryTester
-	resourceLister   resources.ResourceLister
-	repositoryLister listers.RepositoryLister
-	legacyMigrator   legacy.LegacyMigrator
-	storageStatus    dualwrite.Service
-	unified          resource.ResourceClient
-	secrets          secrets.Service
-	client           client.ProvisioningV0alpha1Interface
-	access           authlib.AccessChecker
-	statusPatcher    *controller.RepositoryStatusPatcher
+	jobHistory        jobs.History
+	tester            *RepositoryTester
+	resourceLister    resources.ResourceLister
+	repositoryLister  listers.RepositoryLister
+	legacyMigrator    legacy.LegacyMigrator
+	storageStatus     dualwrite.Service
+	unified           resource.ResourceClient
+	repositorySecrets secrets.RepositorySecrets
+	client            client.ProvisioningV0alpha1Interface
+	access            authlib.AccessChecker
+	statusPatcher     *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
@@ -117,7 +116,7 @@ func NewAPIBuilder(
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
-	secrets secrets.Service,
+	repositorySecrets secrets.RepositorySecrets,
 	access authlib.AccessChecker,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
@@ -139,7 +138,7 @@ func NewAPIBuilder(
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
-		secrets:             secrets,
+		repositorySecrets:   repositorySecrets,
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
 		availableRepositoryTypes: map[provisioning.RepositoryType]bool{
@@ -177,8 +176,7 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStatsService usagestats.Service,
-	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
-	secretsSvc grafanasecrets.Service,
+	repositorySecrets secrets.RepositorySecrets,
 	tracer tracing.Tracer,
 	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
@@ -195,7 +193,8 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc), access,
+		repositorySecrets,
+		access,
 		tracer,
 		extraBuilders,
 	)
@@ -466,11 +465,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	}
 
 	if err := b.encryptGithubToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt secrets: %w", err)
+		return fmt.Errorf("failed to encrypt github secrets: %w", err)
 	}
 
 	if err := b.encryptGitToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt secrets: %w", err)
+		return fmt.Errorf("failed to encrypt git secrets: %w", err)
 	}
 
 	// Mutate the repository with any extra mutators
@@ -485,28 +484,32 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 // TODO: move this to a more appropriate place
 func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
-	var err error
 	if repo.Spec.GitHub != nil &&
 		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		secretName := repo.Name + "-github-token"
+
+		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, secretName, repo.Spec.GitHub.Token)
 		if err != nil {
 			return err
 		}
 		repo.Spec.GitHub.Token = ""
+		repo.Spec.GitHub.EncryptedToken = nameOrValue
 	}
 
 	return nil
 }
 
 // TODO: move this to a more appropriate place
+// TODO: make this one more generic
 func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
-	var err error
-	if repo.Spec.Git != nil &&
-		repo.Spec.Git.Token != "" {
-		repo.Spec.Git.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.Git.Token))
+	if repo.Spec.Git != nil && repo.Spec.Git.Token != "" {
+		secretName := repo.Name + "-git-token"
+		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, secretName, repo.Spec.Git.Token)
 		if err != nil {
 			return err
 		}
+
+		repo.Spec.Git.EncryptedToken = nameOrValue
 		repo.Spec.Git.Token = ""
 	}
 
@@ -701,7 +704,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.clients,
 				&repository.Tester{},
 				b.jobs,
-				b.secrets,
 				b.storageStatus,
 			)
 			if err != nil {
@@ -1215,8 +1217,8 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	case provisioning.GitRepositoryType:
 		// Decrypt token if needed
 		token := r.Spec.Git.Token
-		if token == "" {
-			decrypted, err := b.secrets.Decrypt(ctx, r.Spec.Git.EncryptedToken)
+		if token == "" && len(r.Spec.Git.EncryptedToken) > 0 {
+			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(r.Spec.Git.EncryptedToken))
 			if err != nil {
 				return nil, fmt.Errorf("decrypt git token: %w", err)
 			}
@@ -1242,7 +1244,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		// Decrypt GitHub token if needed
 		ghToken := ghCfg.Token
 		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
-			decrypted, err := b.secrets.Decrypt(ctx, ghCfg.EncryptedToken)
+			decrypted, err := b.repositorySecrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
 			if err != nil {
 				return nil, fmt.Errorf("decrypt github token: %w", err)
 			}

@@ -656,5 +656,3 @@ export const promqlGrammar: Grammar = {
   operator: new RegExp(`/[-+*/=%^~]|&&?|\\|?\\||!=?|<(?:=>?|<|>)?|>[>=]?|\\b(?:${OPERATORS.join('|')})\\b`, 'i'),
   punctuation: /[{};()`,.]/,
 };
-
-export default promqlGrammar;
