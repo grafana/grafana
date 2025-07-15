@@ -3,12 +3,7 @@ import { useCallback } from 'react';
 import { DataSourceRulesSourceIdentifier, RuleHealth } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import {
-  PromRulesResponse,
-  prometheusApi,
-  usePopulateGrafanaPrometheusApiCache,
-  usePopulatePrometheusApiCache,
-} from '../../api/prometheusApi';
+import { PromRulesResponse, prometheusApi, usePopulateGrafanaPrometheusApiCache } from '../../api/prometheusApi';
 
 const { useLazyGetGroupsQuery, useLazyGetGrafanaGroupsQuery } = prometheusApi;
 
@@ -26,8 +21,7 @@ interface FetchGroupsOptions {
   groupNextToken?: string;
 }
 
-export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOptions = {}) {
-  const { populateGroupsResponseCache } = usePopulatePrometheusApiCache();
+export function usePrometheusGroupsGenerator() {
   const [getGroups] = useLazyGetGroupsQuery();
 
   return useCallback(
@@ -39,16 +33,12 @@ export function usePrometheusGroupsGenerator(hookOptions: UseGeneratorHookOption
           ...fetchOptions,
         }).unwrap();
 
-        if (hookOptions.populateCache) {
-          populateGroupsResponseCache(ruleSource.uid, response.data.groups);
-        }
-
         return response;
       };
 
       yield* genericGroupsGenerator(getRuleSourceGroupsWithCache, groupLimit);
     },
-    [getGroups, hookOptions.populateCache, populateGroupsResponseCache]
+    [getGroups]
   );
 }
 
@@ -74,8 +64,6 @@ export function useGrafanaGroupsGenerator(hookOptions: UseGeneratorHookOptions =
         ...fetchOptions.filter,
       }).unwrap();
 
-      // This is not mandatory to preload ruler rules, but it improves the UX
-      // Because the user waits a bit longer for the initial load but doesn't need to wait for each group to be loaded
       if (hookOptions.populateCache) {
         populateGroupsResponseCache(response.data.groups);
       }
