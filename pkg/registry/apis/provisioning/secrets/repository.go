@@ -2,8 +2,10 @@ package secrets
 
 import (
 	"context"
+	"errors"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
@@ -100,7 +102,10 @@ func (s *repositorySecrets) Decrypt(ctx context.Context, r *provisioning.Reposit
 
 func (s *repositorySecrets) Delete(ctx context.Context, r *provisioning.Repository, nameOrValue string) error {
 	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
-		return s.secretsSvc.Delete(ctx, r.GetNamespace(), nameOrValue)
+		err := s.secretsSvc.Delete(ctx, r.GetNamespace(), nameOrValue)
+		if err != nil && !errors.Is(err, contracts.ErrSecureValueNotFound) {
+			return err
+		}
 	}
 
 	return nil

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -264,6 +265,15 @@ func TestRepositorySecrets_Delete(t *testing.T) {
 			expectedError: "delete failed",
 		},
 		{
+			name:           "new service secret not found - should succeed",
+			namespace:      "test-namespace",
+			featureEnabled: true,
+			setupMocks: func(s *testSetup) {
+				s.expectFeatureFlag(true)
+				s.mockSecrets.EXPECT().Delete(s.ctx, "test-namespace", "non-existent-secret").Return(contracts.ErrSecureValueNotFound)
+			},
+		},
+		{
 			name:           "nothing for legacy",
 			namespace:      "custom-namespace",
 			featureEnabled: true,
@@ -278,7 +288,11 @@ func TestRepositorySecrets_Delete(t *testing.T) {
 			setup := setupTest(t, tt.namespace)
 			tt.setupMocks(setup)
 
-			err := setup.rs.Delete(setup.ctx, setup.repo, "secret-to-delete")
+			secretName := "secret-to-delete"
+			if tt.name == "new service secret not found - should succeed" {
+				secretName = "non-existent-secret"
+			}
+			err := setup.rs.Delete(setup.ctx, setup.repo, secretName)
 			if tt.expectedError != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
