@@ -1,4 +1,4 @@
-import { BusEventWithPayload } from '@grafana/data';
+import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 
 import { getAppEvents } from '../appEvents';
 
@@ -19,6 +19,13 @@ export class OpenExtensionSidebarEvent extends BusEventWithPayload<OpenExtension
 }
 
 /**
+ * @internal This is an internal API and should not be used outside of the Grafana Labs plugins.
+ */
+export class CloseExtensionSidebarEvent extends BusEventBase {
+  static type = 'close-extension-sidebar';
+}
+
+/**
  * Open the extension sidebar for a given plugin and component.
  *
  * @internal This is an internal API and should not be used outside of the Grafana Labs plugins.
@@ -32,5 +39,10 @@ export function openExtensionSidebar(pluginId: string, componentTitle: string, p
     componentTitle,
     props,
   });
+  getAppEvents().publish(event);
+}
+
+export function closeExtensionSidebar() {
+  const event = new CloseExtensionSidebarEvent();
   getAppEvents().publish(event);
 }
