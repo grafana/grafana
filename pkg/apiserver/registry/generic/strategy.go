@@ -22,17 +22,22 @@ type genericStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	gv schema.GroupVersion
+	gv            schema.GroupVersion
+	clusterScoped bool
 }
 
 // NewStrategy creates and returns a genericStrategy instance.
 func NewStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion) *genericStrategy {
-	return &genericStrategy{typer, names.SimpleNameGenerator, gv}
+	return &genericStrategy{typer, names.SimpleNameGenerator, gv, false}
 }
 
-// NamespaceScoped returns true because all Generic resources must be within a namespace.
 func (g *genericStrategy) NamespaceScoped() bool {
-	return true
+	return !g.clusterScoped
+}
+
+func (g *genericStrategy) WithClusterScope() *genericStrategy {
+	g.clusterScoped = true
+	return g
 }
 
 func (g *genericStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {

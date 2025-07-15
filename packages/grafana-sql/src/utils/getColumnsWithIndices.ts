@@ -21,7 +21,7 @@ export function getColumnsWithIndices(query: SQLQuery, fields: SelectableValue[]
   return [
     {
       value: '',
-      label: t('utils.get-columns-width-indices.label-selected-columns', 'Selected columns'),
+      label: t('grafana-sql.utils.get-columns-width-indices.label-selected-columns', 'Selected columns'),
       options,
       expanded: true,
     },

@@ -6,16 +6,19 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,8 +37,10 @@ type WebhookExtraBuilder struct {
 
 func ProvideWebhooks(
 	cfg *setting.Cfg,
-	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
-	secretsSvc grafanasecrets.Service,
+	features featuremgmt.FeatureToggles,
+	legacySecretsSvc grafanasecrets.Service,
+	secretsSvc *service.SecureValueService,
+	decryptSvc service.DecryptService,
 	ghFactory *github.Factory,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
@@ -62,12 +67,13 @@ func ProvideWebhooks(
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urlProvider)
 			commenter := pullrequest.NewCommenter()
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+			repositorySecrets := secrets.NewRepositorySecrets(features, secrets.NewSecretsService(secretsSvc, decryptSvc), secrets.NewSingleTenant(legacySecretsSvc))
 
 			return NewWebhookExtra(
 				render,
 				webhook,
 				urlProvider,
-				secrets.NewSingleTenant(secretsSvc),
+				repositorySecrets,
 				ghFactory,
 				filepath.Join(cfg.DataPath, "clone"),
 				parsers,
@@ -83,7 +89,7 @@ type WebhookExtra struct {
 	render      *renderConnector
 	webhook     *webhookConnector
 	urlProvider func(namespace string) string
-	secrets     secrets.Service
+	secrets     secrets.RepositorySecrets
 	ghFactory   *github.Factory
 	clonedir    string
 	parsers     resources.ParserFactory
@@ -94,7 +100,7 @@ func NewWebhookExtra(
 	render *renderConnector,
 	webhook *webhookConnector,
 	urlProvider func(namespace string) string,
-	secrets secrets.Service,
+	secrets secrets.RepositorySecrets,
 	ghFactory *github.Factory,
 	clonedir string,
 	parsers resources.ParserFactory,
@@ -126,11 +132,13 @@ func (e *WebhookExtra) Authorize(ctx context.Context, a authorizer.Attributes) (
 func (e *WebhookExtra) Mutate(ctx context.Context, r *provisioning.Repository) error {
 	// Encrypt webhook secret if present
 	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
-		encryptedSecret, err := e.secrets.Encrypt(ctx, []byte(r.Status.Webhook.Secret))
+		secretName := r.GetName() + "-webhook-secret"
+		nameOrValue, err := e.secrets.Encrypt(ctx, r, secretName, r.Status.Webhook.Secret)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
 		}
-		r.Status.Webhook.EncryptedSecret = encryptedSecret
+
+		r.Status.Webhook.EncryptedSecret = nameOrValue
 		r.Status.Webhook.Secret = ""
 	}
 
@@ -172,17 +180,50 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			gvr.Resource,
 			r.GetName(),
 		)
-		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			return gogit.Clone(ctx, e.clonedir, r, opts, e.secrets)
+
+		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
+		logger.Info("Instantiating Github repository with webhooks")
+		ghCfg := r.Spec.GitHub
+		if ghCfg == nil {
+			return nil, fmt.Errorf("github configuration is required for nano git")
 		}
 
-		basicRepo, err := repository.NewGitHub(ctx, r, e.ghFactory, e.secrets, cloneFn)
+		// Decrypt GitHub token if needed
+		ghToken := ghCfg.Token
+		if ghToken == "" && len(ghCfg.EncryptedToken) > 0 {
+			decrypted, err := e.secrets.Decrypt(ctx, r, string(ghCfg.EncryptedToken))
+			if err != nil {
+				return nil, fmt.Errorf("decrypt github token: %w", err)
+			}
+			ghToken = string(decrypted)
+		}
+
+		gitCfg := git.RepositoryConfig{
+			URL:            ghCfg.URL,
+			Branch:         ghCfg.Branch,
+			Path:           ghCfg.Path,
+			Token:          ghToken,
+			EncryptedToken: ghCfg.EncryptedToken,
+		}
+
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error creating git repository: %w", err)
+		}
+
+		basicRepo, err := github.NewGitHub(ctx, r, gitRepo, e.ghFactory, ghToken)
+		if err != nil {
+			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}
 
 		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets), nil
 	}
 
 	return nil, nil
+}
+
+func (e *WebhookExtra) RepositoryTypes() []provisioning.RepositoryType {
+	return []provisioning.RepositoryType{
+		provisioning.GitHubRepositoryType,
+	}
 }

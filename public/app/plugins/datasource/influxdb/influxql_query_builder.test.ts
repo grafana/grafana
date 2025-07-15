@@ -1,5 +1,5 @@
-import { templateSrvStub as templateService } from './__mocks__/datasource';
 import { buildMetadataQuery } from './influxql_query_builder';
+import { templateSrvStub as templateService } from './mocks/datasource';
 import { DEFAULT_POLICY } from './types';
 
 describe('influxql-query-builder', () => {
@@ -119,6 +119,28 @@ describe('influxql-query-builder', () => {
       });
       expect(query).toBe(`SHOW TAG KEYS WHERE "app" == ''`);
     });
+
+    it('should have where condition in tag keys query with time filter', () => {
+      const query = buildMetadataQuery({
+        type: 'TAG_KEYS',
+        templateService,
+        measurement: '',
+        tags: [],
+        withTimeFilter: '3h',
+      });
+      expect(query).toBe('SHOW TAG KEYS WHERE time > now() - 3h');
+    });
+
+    it('should have and in  where condition in tag keys query with tags and time filter', () => {
+      const query = buildMetadataQuery({
+        type: 'TAG_KEYS',
+        templateService,
+        measurement: '',
+        tags: [{ key: 'host', value: 'se1' }],
+        withTimeFilter: '3h',
+      });
+      expect(query).toBe('SHOW TAG KEYS WHERE "host" = \'se1\' AND time > now() - 3h');
+    });
   });
 
   describe('TAG_VALUES', () => {
@@ -183,6 +205,37 @@ describe('influxql-query-builder', () => {
         tags: [{ key: 'host', value: '/server.*/' }],
       });
       expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host" =~ /server.*/');
+    });
+
+    it('should add time filter with and if with time filter', () => {
+      const query = buildMetadataQuery({
+        type: 'TAG_VALUES',
+        templateService,
+        withKey: 'app',
+        measurement: 'cpu',
+        retentionPolicy: 'one_week',
+        tags: [],
+        withTimeFilter: '2h',
+      });
+      expect(query).toBe('SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE time > now() - 2h');
+    });
+
+    it('should add time filter if with time filter and tags', () => {
+      const query = buildMetadataQuery({
+        type: 'TAG_VALUES',
+        templateService,
+        withKey: 'app',
+        measurement: 'cpu',
+        retentionPolicy: 'one_week',
+        tags: [
+          { key: 'app', value: 'email' },
+          { key: 'host', value: 'server1' },
+        ],
+        withTimeFilter: '2h',
+      });
+      expect(query).toBe(
+        'SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE "host" = \'server1\' AND time > now() - 2h'
+      );
     });
   });
 
@@ -268,6 +321,18 @@ describe('influxql-query-builder', () => {
         database: undefined,
         measurement: undefined,
         tags: [{ key: 'app', value: '', operator: '==' }],
+      });
+      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == '' LIMIT 100`);
+    });
+
+    it('should not add time filter when getting measurements', () => {
+      const query = buildMetadataQuery({
+        type: 'MEASUREMENTS',
+        templateService,
+        database: undefined,
+        measurement: undefined,
+        tags: [{ key: 'app', value: '', operator: '==' }],
+        withTimeFilter: '2h',
       });
       expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == '' LIMIT 100`);
     });

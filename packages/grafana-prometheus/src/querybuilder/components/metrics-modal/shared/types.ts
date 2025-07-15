@@ -1,7 +1,9 @@
+import { TimeRange } from '@grafana/data';
+
 import { PrometheusDatasource } from '../../../../datasource';
 import { PromVisualQuery } from '../../../types';
 
-export interface MetricsModalState {
+interface MetricsModalState {
   useBackend: boolean;
   disableTextWrap: boolean;
   includeNullMetadata: boolean;
@@ -16,6 +18,7 @@ export interface MetricsModalProps {
   onClose: () => void;
   onChange: (query: PromVisualQuery) => void;
   initialMetrics: string[] | (() => Promise<string[]>);
+  timeRange: TimeRange;
 }
 
 export interface AdditionalSettingsProps {

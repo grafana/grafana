@@ -118,7 +118,7 @@ If set to `true`, the Grafana server hides the running version number for unauth
 Example:
 
 ```toml
-[anonymous.auth]
+[auth.anonymous]
 # mask the Grafana version number for unauthenticated users
 hide_version = true
 ```

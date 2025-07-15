@@ -341,6 +341,9 @@ datasources:
         queries:
           - name: 'Metrics'
             query: 'sum(rate({$$__tags}[5m]))'
+      serviceMap:
+        datasourceUid: 'gdev-prometheus'
+        histogramType: 'both' # 'classic' or 'native' or 'both'
 
   - name: gdev-pyroscope
     type: grafana-pyroscope-datasource

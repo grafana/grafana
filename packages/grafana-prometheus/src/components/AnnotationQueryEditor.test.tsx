@@ -5,7 +5,7 @@ import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PrometheusDatasource } from '../datasource';
-import PromQlLanguageProvider from '../language_provider';
+import { PrometheusLanguageProviderInterface } from '../language_provider';
 import { EmptyLanguageProviderMock } from '../language_provider.mock';
 import { PromQuery } from '../types';
 
@@ -47,7 +47,7 @@ describe('AnnotationQueryEditor', () => {
   };
 
   function createMockDatasource() {
-    const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+    const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
     const mockDatasource = {
       languageProvider,
       lookupsDisabled: false,

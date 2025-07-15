@@ -14,13 +14,13 @@ weight: 300
 
 Custom branding enables you to replace the Grafana Labs brand and logo with your corporate brand and logo.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Available in [Grafana Enterprise](../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud). For Cloud Advanced and Enterprise customers, please provide custom elements and logos to our Support team. We will help you host your images and update your custom branding.
 
 This feature is not available for Grafana Free and Pro tiers.
 For more information on feature availability across plans, refer to our [feature comparison page](/docs/grafana-cloud/cost-management-and-billing/understand-grafana-cloud-features/)
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 The `grafana.ini` file includes Grafana Enterprise custom branding. As with all configuration options, you can use environment variables to set custom branding.
 
@@ -103,9 +103,9 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_TEXT=Custom Text
 GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 The following two links are always present in the footer:
-{{% /admonition %}}
+{{< /admonition >}}
 
 - Grafana edition
 - Grafana version with build number

@@ -90,9 +90,9 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
   | `=~`     | Select labels that regex-match the value.          |
   | `!~`     | Select labels that do not regex-match the value.   |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Label matching example**
 
@@ -138,13 +138,13 @@ If a matching policy is found, the system continues to evaluate its child polici
 
 By default, once a matching policy is found, the system does not continue to look for sibling policies. If you want sibling policies of one matching policy to handle the alert instance as well, then enable **Continue matching siblings** on the particular matching policy.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 
 The default notification policy matches all alert instances. It always handles alert instances if there are no child policies or if none of the child policies match the alert instance's labels—this prevents any alerts from being missed.
 
 If alerts use multiple labels, these labels must also be present in a notification policy to match and route notifications to a specific contact point.
 
-{{% /admonition %}}
+{{< /admonition >}}
 
 {{< collapse title="Routing example" >}}
 
@@ -156,9 +156,9 @@ The `team=security` policy is not a match and **Continue matching siblings** was
 
 **Disk Usage – 80%** has both a `team` and `severity` label, and matches a child policy of the operations team.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 When an alert matches both a parent policy and a child policy (like it does in this case), the routing follows the child policy (`severity`) as it provides a more specific match.
-{{% /admonition %}}
+{{< /admonition >}}
 
 **Unauthorized log entry** has a `team` label but does not match the first policy (`team=operations`) since the values are not the same, so it will continue searching and match the `team=security` policy. It does not have any child policies, so the additional `severity=high` label is ignored.
 

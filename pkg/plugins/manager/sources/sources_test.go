@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,7 +19,10 @@ func TestSources_List(t *testing.T) {
 
 		cfg := &setting.Cfg{
 			StaticRootPath: testdata,
-			PluginsPath:    filepath.Join(testdata, "pluginRootWithDist"),
+		}
+
+		pCfg := &config.PluginManagementCfg{
+			PluginsPath: filepath.Join(testdata, "pluginRootWithDist"),
 			PluginSettings: setting.PluginSettings{
 				"foo": map[string]string{
 					"path": filepath.Join(testdata, "test-app"),
@@ -29,7 +33,7 @@ func TestSources_List(t *testing.T) {
 			},
 		}
 
-		s := ProvideService(cfg)
+		s := ProvideService(cfg, pCfg)
 		srcs := s.List(context.Background())
 
 		ctx := context.Background()
@@ -37,10 +41,14 @@ func TestSources_List(t *testing.T) {
 		require.Len(t, srcs, 5)
 
 		require.Equal(t, srcs[0].PluginClass(ctx), plugins.ClassCore)
-		require.Equal(t, srcs[0].PluginURIs(ctx), []string{
-			filepath.Join(testdata, "app", "plugins", "datasource"),
-			filepath.Join(testdata, "app", "plugins", "panel"),
-		})
+		if localSrc, ok := srcs[0].(*LocalSource); ok {
+			require.Equal(t, localSrc.Paths(), []string{
+				filepath.Join(testdata, "app", "plugins", "datasource"),
+				filepath.Join(testdata, "app", "plugins", "panel"),
+			})
+		} else {
+			t.Fatalf("Expected LocalSource, got %T", srcs[0])
+		}
 		sig, exists := srcs[0].DefaultSignature(ctx, "")
 		require.True(t, exists)
 		require.Equal(t, plugins.SignatureStatusInternal, sig.Status)
@@ -48,25 +56,37 @@ func TestSources_List(t *testing.T) {
 		require.Equal(t, "", sig.SigningOrg)
 
 		require.Equal(t, srcs[1].PluginClass(ctx), plugins.ClassExternal)
-		require.Equal(t, srcs[1].PluginURIs(ctx), []string{
-			filepath.Join(testdata, "pluginRootWithDist", "datasource"),
-		})
+		if localSrc, ok := srcs[1].(*LocalSource); ok {
+			require.Equal(t, localSrc.Paths(), []string{
+				filepath.Join(testdata, "pluginRootWithDist", "datasource"),
+			})
+		} else {
+			t.Fatalf("Expected LocalSource, got %T", srcs[1])
+		}
 		sig, exists = srcs[1].DefaultSignature(ctx, "")
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
 
 		require.Equal(t, srcs[2].PluginClass(ctx), plugins.ClassExternal)
-		require.Equal(t, srcs[2].PluginURIs(ctx), []string{
-			filepath.Join(testdata, "pluginRootWithDist", "dist"),
-		})
+		if localSrc, ok := srcs[2].(*LocalSource); ok {
+			require.Equal(t, localSrc.Paths(), []string{
+				filepath.Join(testdata, "pluginRootWithDist", "dist"),
+			})
+		} else {
+			t.Fatalf("Expected LocalSource, got %T", srcs[2])
+		}
 		sig, exists = srcs[2].DefaultSignature(ctx, "")
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
 
 		require.Equal(t, srcs[3].PluginClass(ctx), plugins.ClassExternal)
-		require.Equal(t, srcs[3].PluginURIs(ctx), []string{
-			filepath.Join(testdata, "pluginRootWithDist", "panel"),
-		})
+		if localSrc, ok := srcs[3].(*LocalSource); ok {
+			require.Equal(t, localSrc.Paths(), []string{
+				filepath.Join(testdata, "pluginRootWithDist", "panel"),
+			})
+		} else {
+			t.Fatalf("Expected LocalSource, got %T", srcs[3])
+		}
 		sig, exists = srcs[3].DefaultSignature(ctx, "")
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
@@ -78,19 +98,25 @@ func TestSources_List(t *testing.T) {
 
 		cfg := &setting.Cfg{
 			StaticRootPath: testdata,
-			PluginsPath:    filepath.Join(testdata, "symbolic-plugin-dirs"),
 		}
-		s := ProvideService(cfg)
+
+		pCfg := &config.PluginManagementCfg{
+			PluginsPath: filepath.Join(testdata, "symbolic-plugin-dirs"),
+		}
+
+		s := ProvideService(cfg, pCfg)
 		ctx := context.Background()
 		srcs := s.List(ctx)
 		uris := map[plugins.Class]map[string]struct{}{}
-		for _, s := range srcs {
-			class := s.PluginClass(ctx)
+		for _, src := range srcs {
+			class := src.PluginClass(ctx)
 			if _, exists := uris[class]; !exists {
 				uris[class] = map[string]struct{}{}
 			}
-			for _, uri := range s.PluginURIs(ctx) {
-				uris[class][uri] = struct{}{}
+			if localSrc, ok := src.(*LocalSource); ok {
+				for _, path := range localSrc.Paths() {
+					uris[class][path] = struct{}{}
+				}
 			}
 		}
 

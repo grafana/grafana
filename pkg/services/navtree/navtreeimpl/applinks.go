@@ -232,7 +232,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			treeRoot.AddSection(&navtree.NavLink{
 				Text:       "Observability",
 				Id:         navtree.NavIDObservability,
-				SubTitle:   "Observability and infrastructure apps",
+				SubTitle:   "Opinionated observability across applications, services, and infrastructure",
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightObservability,
 				Children:   []*navtree.NavLink{appLink},
@@ -341,7 +341,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		s.navigationAppConfig["grafana-advisor-app"] = NavigationAppConfig{
 			SectionID: navtree.NavIDCfg,
 			Text:      "Advisor",
-			SubTitle:  "Keep Grafana running smoothly and securely",
+			SubTitle:  "Run checks and get suggestions to fix issues",
 			IsNew:     true,
 		}
 	}

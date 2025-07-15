@@ -6,8 +6,9 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
-import { ProvisionedResourceDeleteModal } from '../saving/provisioned/ProvisionedResourceDeleteModal';
 import { DashboardScene } from '../scene/DashboardScene';
+
+import { DeleteProvisionedDashboardDrawer } from './DeleteProvisionedDashboardDrawer';
 
 interface ButtonProps {
   dashboard: DashboardScene;
@@ -50,12 +51,14 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
     await dashboard.onDashboardDelete();
   }, [dashboard, toggleModal]);
 
-  if (dashboard.state.meta.provisioned && showModal) {
-    return <ProvisionedDeleteModal dashboardId={dashboard.state.meta.provisionedExternalId} onClose={toggleModal} />;
+  // Git managed dashboard
+  if (dashboard.isManagedRepository() && showModal) {
+    return <DeleteProvisionedDashboardDrawer dashboard={dashboard} onDismiss={toggleModal} />;
   }
 
-  if (dashboard.isManagedRepository() && showModal) {
-    return <ProvisionedResourceDeleteModal resource={dashboard} onDismiss={toggleModal} />;
+  // classic provisioning
+  if (dashboard.state.meta.provisioned && showModal) {
+    return <ProvisionedDeleteModal dashboardId={dashboard.state.meta.provisionedExternalId} onClose={toggleModal} />;
   }
 
   return (

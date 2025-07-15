@@ -6,39 +6,65 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var (
-	ErrEncryptedValueNotFound = errors.New("encrypted value not found")
+	ErrEncryptedValueNotFound         = errors.New("encrypted value not found")
+	ErrEncryptedValueAlreadyExists    = errors.New("encrypted value alredy exists")
+	ErrUnexpectedNumberOfRowsAffected = errors.New("unexpected number of rows modified by query")
 )
 
-func ProvideEncryptedValueStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+func ProvideEncryptedValueStorage(
+	db contracts.Database,
+	tracer trace.Tracer,
+	features featuremgmt.FeatureToggles,
+) (contracts.EncryptedValueStorage, error) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptedValStorage{}, nil
 	}
 
 	return &encryptedValStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
+		tracer:  tracer,
 	}, nil
 }
 
 type encryptedValStorage struct {
 	db      contracts.Database
 	dialect sqltemplate.Dialect
+	tracer  trace.Tracer
 }
 
-func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encryptedData []byte) (*contracts.EncryptedValue, error) {
+func (s *encryptedValStorage) Create(ctx context.Context, namespace, name string, version int64, encryptedData []byte) (ev *contracts.EncryptedValue, err error) {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Create", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+	))
+	defer span.End()
+
+	defer func() {
+		if ev != nil {
+			span.SetAttributes(
+				attribute.String("namespace", ev.Namespace),
+				attribute.String("name", ev.Name),
+				attribute.Int64("version", ev.Version),
+			)
+		}
+	}()
+
 	createdTime := time.Now().Unix()
+
 	encryptedValue := &EncryptedValue{
-		UID:           uuid.New().String(),
 		Namespace:     namespace,
+		Name:          name,
+		Version:       version,
 		EncryptedData: encryptedData,
 		Created:       createdTime,
 		Updated:       createdTime,
@@ -55,6 +81,9 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encr
 
 	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
+		if sql.IsRowAlreadyExistsError(err) {
+			return nil, ErrEncryptedValueAlreadyExists
+		}
 		return nil, fmt.Errorf("inserting row: %w", err)
 	}
 
@@ -65,19 +94,28 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encr
 	}
 
 	return &contracts.EncryptedValue{
-		UID:           encryptedValue.UID,
 		Namespace:     encryptedValue.Namespace,
+		Name:          encryptedValue.Name,
+		Version:       encryptedValue.Version,
 		EncryptedData: encryptedValue.EncryptedData,
 		Created:       encryptedValue.Created,
 		Updated:       encryptedValue.Updated,
 	}, nil
 }
 
-func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid string, encryptedData []byte) error {
+func (s *encryptedValStorage) Update(ctx context.Context, namespace, name string, version int64, encryptedData []byte) error {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Update", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("name", name),
+		attribute.Int64("version", version),
+	))
+	defer span.End()
+
 	req := updateEncryptedValue{
 		SQLTemplate:   sqltemplate.New(s.dialect),
 		Namespace:     namespace,
-		UID:           uid,
+		Name:          name,
+		Version:       version,
 		EncryptedData: encryptedData,
 		Updated:       time.Now().Unix(),
 	}
@@ -95,17 +133,25 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("getting rows affected: %w", err)
 	} else if rowsAffected != 1 {
-		return fmt.Errorf("expected 1 row affected, got %d on %s", rowsAffected, namespace)
+		return fmt.Errorf("expected 1 row affected, got %d on %s: %w", rowsAffected, namespace, ErrUnexpectedNumberOfRowsAffected)
 	}
 
 	return nil
 }
 
-func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid string) (*contracts.EncryptedValue, error) {
+func (s *encryptedValStorage) Get(ctx context.Context, namespace, name string, version int64) (*contracts.EncryptedValue, error) {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Get", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("name", name),
+		attribute.Int64("version", version),
+	))
+	defer span.End()
+
 	req := &readEncryptedValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
-		UID:         uid,
+		Name:        name,
+		Version:     version,
 	}
 	query, err := sqltemplate.Execute(sqlEncryptedValueRead, req)
 	if err != nil {
@@ -123,7 +169,7 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 	}
 
 	var encryptedValue EncryptedValue
-	err = rows.Scan(&encryptedValue.UID, &encryptedValue.Namespace, &encryptedValue.EncryptedData, &encryptedValue.Created, &encryptedValue.Updated)
+	err = rows.Scan(&encryptedValue.Namespace, &encryptedValue.Name, &encryptedValue.Version, &encryptedValue.EncryptedData, &encryptedValue.Created, &encryptedValue.Updated)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan encrypted value row: %w", err)
 	}
@@ -132,19 +178,28 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 	}
 
 	return &contracts.EncryptedValue{
-		UID:           encryptedValue.UID,
 		Namespace:     encryptedValue.Namespace,
+		Name:          encryptedValue.Name,
+		Version:       encryptedValue.Version,
 		EncryptedData: encryptedValue.EncryptedData,
 		Created:       encryptedValue.Created,
 		Updated:       encryptedValue.Updated,
 	}, nil
 }
 
-func (s *encryptedValStorage) Delete(ctx context.Context, namespace string, uid string) error {
+func (s *encryptedValStorage) Delete(ctx context.Context, namespace, name string, version int64) error {
+	ctx, span := s.tracer.Start(ctx, "EncryptedValueStorage.Delete", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("name", name),
+		attribute.Int64("version", version),
+	))
+	defer span.End()
+
 	req := deleteEncryptedValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
-		UID:         uid,
+		Name:        name,
+		Version:     version,
 	}
 	query, err := sqltemplate.Execute(sqlEncryptedValueDelete, req)
 	if err != nil {

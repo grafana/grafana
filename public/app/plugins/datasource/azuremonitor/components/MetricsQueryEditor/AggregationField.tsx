@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
-import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
+import { AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types/types';
 import { addValueToOptions } from '../../utils/common';
 import { Field } from '../shared/Field';
 

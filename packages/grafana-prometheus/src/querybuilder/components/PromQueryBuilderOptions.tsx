@@ -16,27 +16,12 @@ import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
-export interface UIOptions {
-  exemplars: boolean;
-  type: boolean;
-  format: boolean;
-  minStep: boolean;
-  legend: boolean;
-  resolution: boolean;
-}
-
-export interface PromQueryBuilderOptionsProps {
+interface PromQueryBuilderOptionsProps {
   query: PromQuery;
   app?: CoreApp;
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
 }
-
-const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
-  { label: 'Time series', value: 'time_series' },
-  { label: 'Table', value: 'table' },
-  { label: 'Heatmap', value: 'heatmap' },
-];
 
 const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
   value,
@@ -45,6 +30,24 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
 
 export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
   ({ query, app, onChange, onRunQuery }) => {
+    const FORMAT_OPTIONS: Array<SelectableValue<PromQueryFormat>> = [
+      {
+        label: t(
+          'grafana-prometheus.querybuilder.prom-query-builder-options.format-options.label-time-series',
+          'Time series'
+        ),
+        value: 'time_series',
+      },
+      {
+        label: t('grafana-prometheus.querybuilder.prom-query-builder-options.format-options.label-table', 'Table'),
+        value: 'table',
+      },
+      {
+        label: t('grafana-prometheus.querybuilder.prom-query-builder-options.format-options.label-heatmap', 'Heatmap'),
+        value: 'heatmap',
+      },
+    ];
+
     const onChangeFormat = (value: SelectableValue<PromQueryFormat>) => {
       onChange({ ...query, format: value.value });
       onRunQuery();
@@ -80,7 +83,7 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
       <EditorRow>
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options}>
           <QueryOptionGroup
-            title={t('querybuilder.prom-query-builder-options.title-options', 'Options')}
+            title={t('grafana-prometheus.querybuilder.prom-query-builder-options.title-options', 'Options')}
             collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel, app)}
           >
             <PromQueryLegendEditor
@@ -89,11 +92,11 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
               onRunQuery={onRunQuery}
             />
             <EditorField
-              label={t('querybuilder.prom-query-builder-options.label-min-step', 'Min step')}
+              label={t('grafana-prometheus.querybuilder.prom-query-builder-options.label-min-step', 'Min step')}
               tooltip={
                 <>
                   <Trans
-                    i18nKey="querybuilder.prom-query-builder-options.tooltip-min-step"
+                    i18nKey="grafana-prometheus.querybuilder.prom-query-builder-options.tooltip-min-step"
                     values={{
                       interval: '$__interval',
                       rateInterval: '$__rate_interval',
@@ -108,17 +111,17 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
               <AutoSizeInput
                 type="text"
                 aria-label={t(
-                  'querybuilder.prom-query-builder-options.aria-label-lower-limit-parameter',
+                  'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-lower-limit-parameter',
                   'Set lower limit for the step parameter'
                 )}
-                placeholder={t('querybuilder.prom-query-builder-options.placeholder-auto', 'auto')}
+                placeholder={t('grafana-prometheus.querybuilder.prom-query-builder-options.placeholder-auto', 'auto')}
                 minWidth={10}
                 onCommitChange={onChangeStep}
                 defaultValue={query.interval}
-                data-test-id="prometheus-step"
+                data-testid={selectors.components.DataSource.Prometheus.queryEditor.step}
               />
             </EditorField>
-            <EditorField label={t('querybuilder.prom-query-builder-options.label-format', 'Format')}>
+            <EditorField label={t('grafana-prometheus.querybuilder.prom-query-builder-options.label-format', 'Format')}>
               <Select
                 data-testid={selectors.components.DataSource.Prometheus.queryEditor.format}
                 value={formatOption}
@@ -128,13 +131,15 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
               />
             </EditorField>
             <EditorField
-              label={t('querybuilder.prom-query-builder-options.label-type', 'Type')}
+              label={t('grafana-prometheus.querybuilder.prom-query-builder-options.label-type', 'Type')}
               data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}
             >
               <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
             </EditorField>
             {shouldShowExemplarSwitch(query, app) && (
-              <EditorField label={t('querybuilder.prom-query-builder-options.label-exemplars', 'Exemplars')}>
+              <EditorField
+                label={t('grafana-prometheus.querybuilder.prom-query-builder-options.label-exemplars', 'Exemplars')}
+              >
                 <EditorSwitch
                   value={query.exemplar || false}
                   onChange={onExemplarChange}
@@ -143,10 +148,12 @@ export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(
               </EditorField>
             )}
             {query.intervalFactor && query.intervalFactor > 1 && (
-              <EditorField label={t('querybuilder.prom-query-builder-options.label-resolution', 'Resolution')}>
+              <EditorField
+                label={t('grafana-prometheus.querybuilder.prom-query-builder-options.label-resolution', 'Resolution')}
+              >
                 <Select
                   aria-label={t(
-                    'querybuilder.prom-query-builder-options.aria-label-select-resolution',
+                    'grafana-prometheus.querybuilder.prom-query-builder-options.aria-label-select-resolution',
                     'Select resolution'
                   )}
                   isSearchable={false}
@@ -178,17 +185,25 @@ function getQueryTypeValue(query: PromQuery) {
 function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: string, app?: CoreApp): string[] {
   const items: string[] = [];
 
-  items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
-  items.push(`Format: ${formatOption}`);
-  items.push(`Step: ${query.interval ?? 'auto'}`);
-  items.push(`Type: ${queryType}`);
+  items.push(
+    t('grafana-prometheus.querybuilder.get-collapsed-info.legend', 'Legend: {{value}}', {
+      value: getLegendModeLabel(query.legendFormat),
+    })
+  );
+  items.push(
+    t('grafana-prometheus.querybuilder.get-collapsed-info.format', 'Format: {{value}}', { value: formatOption })
+  );
+  items.push(
+    t('grafana-prometheus.querybuilder.get-collapsed-info.step', 'Step: {{value}}', { value: query.interval ?? 'auto' })
+  );
+  items.push(t('grafana-prometheus.querybuilder.get-collapsed-info.type', 'Type: {{value}}', { value: queryType }));
 
   if (shouldShowExemplarSwitch(query, app)) {
-    if (query.exemplar) {
-      items.push(`Exemplars: true`);
-    } else {
-      items.push(`Exemplars: false`);
-    }
+    items.push(
+      t('grafana-prometheus.querybuilder.get-collapsed-info.exemplars', 'Exemplars: {{value}}', {
+        value: query.exemplar ? 'true' : 'false',
+      })
+    );
   }
   return items;
 }

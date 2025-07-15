@@ -90,7 +90,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "unrecognized")
 	})
@@ -106,7 +106,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -124,7 +124,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -143,7 +143,42 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+
+		require.NotNil(t, h)
+		require.NoError(t, err)
+	})
+
+	t.Run("fail initialization if prometheus backend missing datasource UID", func(t *testing.T) {
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled: true,
+			Backend: "prometheus",
+			// Missing PrometheusTargetDatasourceUID
+		}
+		ac := &acfakes.FakeRuleService{}
+
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
+
+		require.Error(t, err)
+		require.ErrorContains(t, err, "datasource UID must not be empty")
+	})
+
+	t.Run("successful initialization of prometheus backend", func(t *testing.T) {
+		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingStateHistorySettings{
+			Enabled:                       true,
+			Backend:                       "prometheus",
+			PrometheusMetricName:          "test_metric",
+			PrometheusTargetDatasourceUID: "test-prometheus-uid",
+		}
+		ac := &acfakes.FakeRuleService{}
+
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -160,7 +195,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -183,7 +218,7 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		}
 		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac, nil, nil, nil, nil, nil)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)

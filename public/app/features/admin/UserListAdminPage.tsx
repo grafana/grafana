@@ -8,9 +8,11 @@ import { Trans, t } from '@grafana/i18n';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types/accessControl';
+import { StoreState } from 'app/types/store';
+import { UserFilter } from 'app/types/user';
 
-import { AccessControlAction, StoreState, UserFilter } from '../../types';
-
+import { EnterpriseAuthFeaturesCard } from './EnterpriseAuthFeaturesCard';
 import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
@@ -118,6 +120,7 @@ const UserListAdminPageUnConnected = ({
           fetchData={changeSort}
         />
       )}
+      <EnterpriseAuthFeaturesCard page="users" />
     </Page.Contents>
   );
 };

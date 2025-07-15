@@ -35,7 +35,7 @@ module.exports = [
       'data/',
       'deployment_tools_config.json',
       'devenv',
-      'e2e/test-plugins',
+      'e2e-playwright/test-plugins',
       'e2e/tmp',
       'packages/grafana-ui/src/components/Icon/iconBundle.ts',
       'pkg',
@@ -104,6 +104,7 @@ module.exports = [
       '**/__mocks__/**',
       '**/public/test/**',
       '**/mocks.{ts,tsx}',
+      '**/mocks/**/*.{ts,tsx}',
       '**/spec/**/*.{ts,tsx}',
     ],
     rules: {

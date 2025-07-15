@@ -107,10 +107,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * Give users the option to configure split durations for Loki queries
-  */
-  lokiQuerySplittingConfig?: boolean;
-  /**
   * Support overriding cookie preferences per user
   */
   individualCookiePreferences?: boolean;
@@ -166,10 +162,6 @@ export interface FeatureToggles {
   */
   extraThemes?: boolean;
   /**
-  * Adds predefined query operations to Loki query editor
-  */
-  lokiPredefinedOperations?: boolean;
-  /**
   * Enables the plugins frontend sandbox
   */
   pluginsFrontendSandbox?: boolean;
@@ -194,6 +186,7 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
+  * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
@@ -218,6 +211,10 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
+  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+  */
+  provisioningSecretsService?: boolean;
+  /**
   * Start an additional https handler and write kubectl options
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
@@ -239,11 +236,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Display Angular warnings in dashboards and panels
-  * @default true
-  */
-  angularDeprecationUI?: boolean;
-  /**
   * Enable AI powered features in dashboards
   * @default true
   */
@@ -260,10 +252,6 @@ export interface FeatureToggles {
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   */
   sseGroupByDatasource?: boolean;
-  /**
-  * Enables RBAC support for library panels
-  */
-  libraryPanelRBAC?: boolean;
   /**
   * Enables running Loki queries in parallel
   */
@@ -299,6 +287,10 @@ export interface FeatureToggles {
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
+  /**
+  * Routes library panel requests from /api to the /apis endpoint
+  */
+  kubernetesLibraryPanels?: boolean;
   /**
   * Use the kubernetes API in the frontend for dashboards
   */
@@ -344,11 +336,6 @@ export interface FeatureToggles {
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
-  /**
-  * Enables the loki data source to request structured metadata from the Loki server
-  * @default true
-  */
-  lokiStructuredMetadata?: boolean;
   /**
   * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
   */
@@ -407,11 +394,6 @@ export interface FeatureToggles {
   */
   pdfTables?: boolean;
   /**
-  * Enables the SSO settings API and the OAuth configuration UIs in Grafana
-  * @default true
-  */
-  ssoSettingsApi?: boolean;
-  /**
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
@@ -437,11 +419,6 @@ export interface FeatureToggles {
   * Enables regression analysis transformation
   */
   regressionTransformation?: boolean;
-  /**
-  * Enables query hints for Loki
-  * @default true
-  */
-  lokiQueryHints?: boolean;
   /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
@@ -611,11 +588,6 @@ export interface FeatureToggles {
   */
   ssoSettingsLDAP?: boolean;
   /**
-  * Throws an error if a data source has an invalid UIDs
-  * @default true
-  */
-  failWrongDSUID?: boolean;
-  /**
   * Use openFGA as authorization engine.
   */
   zanzana?: boolean;
@@ -656,10 +628,6 @@ export interface FeatureToggles {
   */
   tableNextGen?: boolean;
   /**
-  * Send dashboard and panel names to Loki when querying
-  */
-  lokiSendDashboardPanelNames?: boolean;
-  /**
   * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
   */
   alertingPrometheusRulesPrimary?: boolean;
@@ -690,6 +658,7 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
+  * @default true
   */
   improvedExternalSessionHandling?: boolean;
   /**
@@ -770,10 +739,6 @@ export interface FeatureToggles {
   */
   crashDetection?: boolean;
   /**
-  * Enables querying the Jaeger data source without the proxy
-  */
-  jaegerBackendMigration?: boolean;
-  /**
   * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
   * @default true
   */
@@ -826,6 +791,7 @@ export interface FeatureToggles {
   k8SFolderMove?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
+  * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
@@ -977,6 +943,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables creating alerts from Tempo data source
+  */
+  tempoAlerting?: boolean;
+  /**
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
@@ -999,9 +969,9 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
+  * Registers AuthZ /apis endpoint
   */
-  extensionsReadOnlyProxy?: boolean;
+  kubernetesAuthzApis?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1009,7 +979,7 @@ export interface FeatureToggles {
   restoreDashboards?: boolean;
   /**
   * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default false
+  * @default true
   */
   skipTokenRotationIfRecent?: boolean;
   /**
@@ -1027,4 +997,24 @@ export interface FeatureToggles {
   * @default false
   */
   preferLibraryPanelTitle?: boolean;
+  /**
+  * Use fixed-width numbers globally in the UI
+  * @default false
+  */
+  tabularNumbers?: boolean;
+  /**
+  * Enables new design for the InfluxDB data source configuration page
+  * @default false
+  */
+  newInfluxDSConfigPageDesign?: boolean;
+  /**
+  * Set this to true to enable all app chrome extensions registered by plugins.
+  * @default false
+  */
+  enableAppChromeExtensions?: boolean;
+  /**
+  * Enables use of app platform API for folders
+  * @default false
+  */
+  foldersAppPlatformAPI?: boolean;
 }

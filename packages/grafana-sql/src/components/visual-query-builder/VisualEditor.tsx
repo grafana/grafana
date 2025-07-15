@@ -33,7 +33,7 @@ export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, 
         {queryRowFilter.filter && (
           <EditorRow>
             <EditorField
-              label={t('components.visual-editor.label-filter-by-column-value', 'Filter by column value')}
+              label={t('grafana-sql.components.visual-editor.label-filter-by-column-value', 'Filter by column value')}
               optional
             >
               <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
@@ -42,7 +42,7 @@ export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, 
         )}
         {queryRowFilter.group && (
           <EditorRow>
-            <EditorField label={t('components.visual-editor.label-group-by-column', 'Group by column')}>
+            <EditorField label={t('grafana-sql.components.visual-editor.label-group-by-column', 'Group by column')}>
               <SQLGroupByRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
             </EditorField>
           </EditorRow>

@@ -195,6 +195,10 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
+func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
+}
+
 func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
 	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
 	if err != nil {

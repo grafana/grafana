@@ -5,9 +5,9 @@ import userEvent from '@testing-library/user-event';
 import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
-import PromQlLanguageProvider from '../../language_provider';
+import { PrometheusLanguageProviderInterface } from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
-import { getMockTimeRange } from '../../test/__mocks__/datasource';
+import { getMockTimeRange } from '../../test/mocks/datasource';
 import { PromOptions } from '../../types';
 import { addOperationInQueryBuilder } from '../testUtils';
 import { PromVisualQuery } from '../types';
@@ -65,7 +65,7 @@ describe('OperationList', () => {
 });
 
 function setup(query: PromVisualQuery = defaultQuery) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PrometheusLanguageProviderInterface;
   const props = {
     datasource: new PrometheusDatasource(
       {

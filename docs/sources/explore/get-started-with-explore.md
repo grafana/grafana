@@ -131,10 +131,10 @@ Select **Mixed** from the data source dropdown to run queries across multiple da
 
 When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Explore may generate long URLs, which some tools, like messaging or videoconferencing applications, might truncate due to fixed message lengths. In such cases, Explore displays a warning and loads a default state.
 If you encounter issues when sharing Explore links in these applications, you can generate shortened links. See [Share shortened link](#share-shortened-link) for more information.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Generate Explore URLs from external tools
 

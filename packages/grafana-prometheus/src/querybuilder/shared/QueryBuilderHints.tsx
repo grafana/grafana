@@ -10,7 +10,7 @@ import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 import { PrometheusDatasource } from '../../datasource';
 import { PromQueryModellerInterface, PromVisualQuery } from '../types';
 
-export interface Props {
+interface Props {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   queryModeller: PromQueryModellerInterface;
@@ -64,7 +64,7 @@ export const QueryBuilderHints = ({
                   className={styles.hint}
                 >
                   <Trans
-                    i18nKey="querybuilder.query-builder-hints.hint-details"
+                    i18nKey="grafana-prometheus.querybuilder.query-builder-hints.hint-details"
                     values={{ hintDetails: hint.fix?.title || hint.fix?.action?.type.toLowerCase().replace('_', ' ') }}
                   >
                     hint: {'{{hintDetails}}'}

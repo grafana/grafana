@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -16,6 +18,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
@@ -43,11 +46,11 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -178,6 +181,11 @@ func ProvideService(
 			}
 
 			if c.SignedInUser != nil {
+				// For unauthenticated requests, we set the namespace to the requested one
+				if !c.IsSignedIn {
+					useNamespaceFromPath(req.URL.Path, c.SignedInUser)
+				}
+
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				req = req.WithContext(ctx)
 			}
@@ -185,6 +193,7 @@ func ProvideService(
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
+		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
@@ -325,10 +334,13 @@ func (s *service) start(ctx context.Context) error {
 	// Install the API group+version
 	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.metrics,
+		request.GetNamespaceMapper(s.cfg),
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), // NOTE: will be removed and replaced with the dual writer utility
 		s.serverLockService,
 		s.storageStatus,
 		optsregister,
+		s.features,
 	)
 	if err != nil {
 		return err
@@ -528,4 +540,17 @@ func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID s
 	}
 
 	return p.contextProvider.PluginContextForDataSource(ctx, s)
+}
+
+func useNamespaceFromPath(path string, user *user.SignedInUser) {
+	if strings.HasPrefix(path, "/apis/") && len(path) > 6 {
+		parts := strings.Split(path[6:], "/")
+		if len(parts) >= 4 && parts[2] == "namespaces" {
+			ns, err := types.ParseNamespace(parts[3])
+			if err == nil {
+				user.Namespace = ns.Value
+				user.OrgID = ns.OrgID
+			}
+		}
+	}
 }

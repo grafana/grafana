@@ -11,7 +11,7 @@ import { Button, Cascader, CascaderOption, useStyles2, Stack } from '@grafana/ui
 import { OperationEditor } from './OperationEditor';
 import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from './types';
 
-export interface Props<T extends QueryWithOperations> {
+interface Props<T extends QueryWithOperations> {
   query: T;
   datasource: DataSourceApi;
   onChange: (query: T) => void;
@@ -127,16 +127,16 @@ export function OperationList<T extends QueryWithOperations>({
               autoFocus={true}
               alwaysOpen={true}
               hideActiveLevelLabel={true}
-              placeholder={t('querybuilder.operation-list.placeholder-search', 'Search')}
+              placeholder={t('grafana-prometheus.querybuilder.operation-list.placeholder-search', 'Search')}
             />
           ) : (
             <Button
               icon={'plus'}
               variant={'secondary'}
               onClick={() => setCascaderOpen(true)}
-              title={t('querybuilder.operation-list.title-add-operation', 'Add operation')}
+              title={t('grafana-prometheus.querybuilder.operation-list.title-add-operation', 'Add operation')}
             >
-              <Trans i18nKey="querybuilder.operation-list.operations">Operations</Trans>
+              <Trans i18nKey="grafana-prometheus.querybuilder.operation-list.operations">Operations</Trans>
             </Button>
           )}
         </div>

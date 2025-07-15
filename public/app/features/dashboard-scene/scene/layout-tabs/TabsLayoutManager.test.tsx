@@ -17,7 +17,12 @@ jest.mock('../../edit-pane/shared', () => ({
       perform();
       lastUndo = undo;
     }),
+    moveElement: jest.fn(({ perform, undo }) => {
+      perform();
+      lastUndo = undo;
+    }),
   },
+  ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
 }));
 
 describe('TabsLayoutManager', () => {
@@ -177,6 +182,68 @@ describe('TabsLayoutManager', () => {
       expect(manager.state.tabs).toContain(tab1);
       expect(manager.state.tabs).toContain(tab2);
       expect(manager.state.currentTabIndex).toBe(1); // tab2 should be current again
+    });
+  });
+
+  describe('moveTab', () => {
+    beforeEach(() => {
+      lastUndo = undefined;
+      jest.clearAllMocks();
+    });
+
+    it('should move a tab to a new position', () => {
+      const manager = new TabsLayoutManager({ tabs: [] });
+      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
+      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
+      const tab3 = manager.addNewTab(new TabItem({ title: 'Tab 3' }));
+
+      expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
+
+      manager.moveTab(0, 2);
+
+      expect(manager.state.tabs).toEqual([tab2, tab3, tab1]);
+      expect(dashboardEditActions.moveElement).toHaveBeenCalled();
+    });
+
+    it('should handle undo action correctly when moving a tab', () => {
+      const manager = new TabsLayoutManager({ tabs: [] });
+      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
+      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
+      const tab3 = manager.addNewTab(new TabItem({ title: 'Tab 3' }));
+
+      expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
+
+      manager.moveTab(0, 2);
+
+      expect(manager.state.tabs).toEqual([tab2, tab3, tab1]);
+
+      // Use the real undo function from the mock
+      expect(typeof lastUndo).toBe('function');
+      lastUndo && lastUndo();
+
+      expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
+    });
+
+    it('should update currentTabIndex when moving the current tab', () => {
+      const manager = new TabsLayoutManager({ tabs: [] });
+      const tab1 = manager.addNewTab(new TabItem({ title: 'Tab 1' }));
+      const tab2 = manager.addNewTab(new TabItem({ title: 'Tab 2' }));
+      const tab3 = manager.addNewTab(new TabItem({ title: 'Tab 3' }));
+
+      // Set tab2 as current
+      manager.setState({ currentTabIndex: 1 });
+      expect(manager.state.currentTabIndex).toBe(1);
+
+      manager.moveTab(1, 0);
+
+      expect(manager.state.tabs).toEqual([tab2, tab1, tab3]);
+      expect(manager.state.currentTabIndex).toBe(0);
+
+      // Undo should restore the original state
+      lastUndo && lastUndo();
+
+      expect(manager.state.tabs).toEqual([tab1, tab2, tab3]);
+      expect(manager.state.currentTabIndex).toBe(1);
     });
   });
 });

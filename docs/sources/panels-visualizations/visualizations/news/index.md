@@ -24,9 +24,9 @@ The news visualization displays an RSS feed. By default, it displays articles fr
 
 {{< figure src="/static/img/docs/news/news-visualization.png" max-width="1025px" alt="A news visualization showing the latest Grafana news feed" >}}
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 In version 8.5, we discontinued the "Use Proxy" option for Grafana news visualizations. As a result, RSS feeds that are not configured for request by Grafana's frontend (with the appropriate [CORS headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)) may not load.
-{{% /admonition %}}
+{{< /admonition >}}
 
 You can use the news visualization to provide regular news and updates to your users.
 
