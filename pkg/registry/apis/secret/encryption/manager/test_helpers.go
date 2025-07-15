@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -23,7 +22,6 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	tracer := noop.NewTracerProvider().Tracer("test")
 	database := database.ProvideDatabase(testDB, tracer)
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
@@ -31,7 +29,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 			EncryptionProvider: "secretKey.v1",
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, features, nil)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
 	require.NoError(tb, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: tb}

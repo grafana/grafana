@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -75,9 +74,8 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 	tracer := noop.NewTracerProvider().Tracer("test")
-	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -180,10 +178,9 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 			},
 		}
 
-		features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		tracer := noop.NewTracerProvider().Tracer("test")
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 		require.NoError(t, err)
 
 		encMgr, err := ProvideEncryptionManager(
@@ -365,7 +362,6 @@ func TestIntegration_SecretsService(t *testing.T) {
 			testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 			tracer := noop.NewTracerProvider().Tracer("test")
 
-			features := featuremgmt.WithFeatures(featuremgmt.FlagSecretsManagementAppPlatform)
 			defaultKey := "SdlklWklckeLS"
 
 			cfg := &setting.Cfg{
@@ -374,7 +370,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					EncryptionProvider: "secretKey.v1",
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, features, nil)
+			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB, tracer), tracer, nil)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
