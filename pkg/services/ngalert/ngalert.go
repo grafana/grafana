@@ -257,6 +257,12 @@ func (ng *AlertNG) init() error {
 			// This function will be used by the MOA to create new Alertmanagers.
 			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+					// Create internal Alertmanager.
+					internalAM, err := factoryFn(ctx, orgID)
+					if err != nil {
+						return nil, fmt.Errorf("failed to create internal Alertmanager: %w", err)
+					}
+
 					// Create remote Alertmanager.
 					cfg.OrgID = orgID
 					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, crypto, autogenFn, m, ng.tracer)
@@ -266,12 +272,6 @@ func (ng *AlertNG) init() error {
 							return nil, fmt.Errorf("failed to create remote Alertmanager: %w", err)
 						}
 						moaLogger.Warn("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
-					}
-
-					// Create internal Alertmanager.
-					internalAM, err := factoryFn(ctx, orgID)
-					if err != nil {
-						return nil, fmt.Errorf("failed to create internal Alertmanager: %w", err)
 					}
 
 					if remoteSecondaryWithRemoteState {
