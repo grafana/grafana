@@ -14,12 +14,12 @@ import (
 
 func TestMutator(t *testing.T) {
 	tests := []struct {
-		name                      string
-		obj                       runtime.Object
-		secret                    string
-		setupMocks                func(*secrets.MockRepositorySecrets)
-		expectedEncryptedSecret   string
-		expectedError             string
+		name                    string
+		obj                     runtime.Object
+		secret                  string
+		setupMocks              func(*secrets.MockRepositorySecrets)
+		expectedEncryptedSecret string
+		expectedError           string
 	}{
 		{
 			name: "successful secret encryption",

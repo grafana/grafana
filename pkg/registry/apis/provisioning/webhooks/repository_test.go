@@ -1850,7 +1850,6 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 	}
 }
 
-
 func TestGitHubRepository_OnDelete_WithSecrets(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -2003,4 +2002,3 @@ func TestGitHubRepository_OnDelete_WithSecrets(t *testing.T) {
 		})
 	}
 }
-
