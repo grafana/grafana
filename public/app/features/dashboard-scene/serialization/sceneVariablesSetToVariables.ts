@@ -86,6 +86,11 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allowCustomValue: variable.state.allowCustomValue,
         skipUrlSync: variable.state.skipUrlSync,
+        staticOptions: variable.state.staticOptions?.map((option) => ({
+          text: option.label,
+          value: String(option.value),
+        })),
+        staticOptionsOrder: variable.state.staticOptionsOrder,
       });
     } else if (sceneUtils.isCustomVariable(variable)) {
       variables.push({
@@ -324,6 +329,11 @@ export function sceneVariablesSetToSchemaV2Variables(
           multi: variable.state.isMulti || false,
           skipUrlSync: variable.state.skipUrlSync || false,
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          staticOptions: variable.state.staticOptions?.map((option) => ({
+            text: option.label,
+            value: String(option.value),
+          })),
+          staticOptionsOrder: variable.state.staticOptionsOrder,
         },
       };
       variables.push(queryVariable);

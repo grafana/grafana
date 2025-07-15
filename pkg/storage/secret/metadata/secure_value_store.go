@@ -25,8 +25,7 @@ func ProvideSecureValueMetadataStorage(
 	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 ) (contracts.SecureValueMetadataStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
 	}
 
@@ -197,6 +196,7 @@ func (s *secureValueMetadataStorage) getLatestVersion(ctx context.Context, names
 	return &version, nil
 }
 
+// TODO: can this method + queries be removed?
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.ReadForDecrypt", trace.WithAttributes(
