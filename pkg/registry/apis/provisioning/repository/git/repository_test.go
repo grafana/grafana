@@ -3736,3 +3736,79 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 		})
 	}
 }
+
+func TestGitRepository_OnDelete(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(*secrets.MockRepositorySecrets)
+		config        *provisioning.Repository
+		expectedError string
+	}{
+		{
+			name: "successful secret deletion",
+			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Delete(
+					context.Background(),
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+					},
+					"test-repo"+gitTokenSecretSuffix,
+				).Return(nil)
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+		},
+		{
+			name: "secret deletion error",
+			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Delete(
+					context.Background(),
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+					},
+					"test-repo"+gitTokenSecretSuffix,
+				).Return(errors.New("failed to delete secret"))
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+			expectedError: "delete git token secret: failed to delete secret",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+			tt.setupMock(mockSecrets)
+
+			gitRepo := &gitRepository{
+				config:  tt.config,
+				secrets: mockSecrets,
+			}
+
+			err := gitRepo.OnDelete(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			mockSecrets.AssertExpectations(t)
+		})
+	}
+}

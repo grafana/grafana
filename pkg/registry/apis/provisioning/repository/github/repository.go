@@ -269,6 +269,11 @@ func (r *githubRepository) OnUpdate(_ context.Context) ([]map[string]interface{}
 	return nil, nil
 }
 
-func (r *githubRepository) OnDelete(_ context.Context) error {
+func (r *githubRepository) OnDelete(ctx context.Context) error {
+	secretName := r.config.Name + githubTokenSecretSuffix
+	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
+		return fmt.Errorf("delete github token secret: %w", err)
+	}
+
 	return nil
 }

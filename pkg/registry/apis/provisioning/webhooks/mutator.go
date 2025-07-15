@@ -21,7 +21,7 @@ func Mutator(secrets secrets.RepositorySecrets) controller.Mutator {
 		}
 
 		if repo.Status.Webhook.Secret != "" {
-			secretName := repo.Name + "-webhook-secret"
+			secretName := repo.Name + webhookSecretSuffix
 			nameOrValue, err := secrets.Encrypt(ctx, repo, secretName, repo.Status.Webhook.Secret)
 			if err != nil {
 				return err

@@ -1687,15 +1687,16 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 func TestGitHubRepository_OnDelete(t *testing.T) {
 	tests := []struct {
 		name          string
-		setupMock     func(m *github.MockClient, mockRepo *github.MockGithubRepository)
+		setupMock     func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets)
 		config        *provisioning.Repository
 		webhookURL    string
 		expectedError error
 	}{
 		{
 			name: "successfully delete webhook",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository) {
+			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
 				mockRepo.On("OnDelete", mock.Anything).Return(nil)
+				mockSecrets.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				// Mock deleting the webhook
 				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
 					Return(nil)
@@ -1718,7 +1719,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		},
 		{
 			name: "no webhook URL provided",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository) {
+			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
 				// No mocks needed
 			},
 			config:        &provisioning.Repository{},
@@ -1727,8 +1728,9 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		},
 		{
 			name: "webhook not found in status",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository) {
+			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
 				mockRepo.On("OnDelete", mock.Anything).Return(nil)
+				mockSecrets.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				// No mocks needed
 			},
 			config: &provisioning.Repository{
@@ -1746,7 +1748,7 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		},
 		{
 			name: "error on delete from basic github repository",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository) {
+			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
 				mockRepo.On("OnDelete", mock.Anything).Return(fmt.Errorf("failed to delete webhook"))
 			},
 			config: &provisioning.Repository{
@@ -1767,8 +1769,9 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		},
 		{
 			name: "error deleting webhook",
-			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository) {
+			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
 				mockRepo.On("OnDelete", mock.Anything).Return(nil)
+				mockSecrets.EXPECT().Delete(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				// Mock webhook deletion failure
 				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
 					Return(fmt.Errorf("failed to delete webhook"))
@@ -1796,13 +1799,15 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 			// Setup mock GitHub client
 			mockGH := github.NewMockClient(t)
 			mockRepo := github.NewMockGithubRepository(t)
-			tt.setupMock(mockGH, mockRepo)
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+			tt.setupMock(mockGH, mockRepo, mockSecrets)
 
 			// Create repository with mock
 			repo := &githubWebhookRepository{
 				GithubRepository: mockRepo,
 				gh:               mockGH,
 				config:           tt.config,
+				secrets:          mockSecrets,
 				owner:            "grafana",
 				repo:             "grafana",
 				webhookURL:       tt.webhookURL,
@@ -1824,3 +1829,153 @@ func TestGitHubRepository_OnDelete(t *testing.T) {
 		})
 	}
 }
+
+
+func TestGitHubRepository_OnDelete_WithSecrets(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets)
+		config        *provisioning.Repository
+		webhookURL    string
+		expectedError string
+	}{
+		{
+			name: "successful deletion with secrets",
+			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
+				mockRepo.On("OnDelete", mock.Anything).Return(nil)
+				mockSecrets.EXPECT().Delete(
+					mock.Anything,
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+						Spec: provisioning.RepositorySpec{
+							GitHub: &provisioning.GitHubRepositoryConfig{
+								Branch: "main",
+							},
+						},
+						Status: provisioning.RepositoryStatus{
+							Webhook: &provisioning.WebhookStatus{
+								ID:  123,
+								URL: "https://example.com/webhook",
+							},
+						},
+					},
+					"test-repo"+webhookSecretSuffix,
+				).Return(nil)
+				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).Return(nil)
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+		},
+		{
+			name: "secret deletion error",
+			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
+				mockRepo.On("OnDelete", mock.Anything).Return(nil)
+				mockSecrets.EXPECT().Delete(
+					mock.Anything,
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+						Spec: provisioning.RepositorySpec{
+							GitHub: &provisioning.GitHubRepositoryConfig{
+								Branch: "main",
+							},
+						},
+						Status: provisioning.RepositoryStatus{
+							Webhook: &provisioning.WebhookStatus{
+								ID:  123,
+								URL: "https://example.com/webhook",
+							},
+						},
+					},
+					"test-repo"+webhookSecretSuffix,
+				).Return(errors.New("failed to delete webhook secret"))
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedError: "delete webhook secret: failed to delete webhook secret",
+		},
+		{
+			name: "no webhook URL - no secrets deletion",
+			setupMock: func(m *github.MockClient, mockRepo *github.MockGithubRepository, mockSecrets *secrets.MockRepositorySecrets) {
+				// No mocks needed since method returns early
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+			webhookURL: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := github.NewMockClient(t)
+			mockRepo := github.NewMockGithubRepository(t)
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+			tt.setupMock(mockClient, mockRepo, mockSecrets)
+
+			repo := &githubWebhookRepository{
+				GithubRepository: mockRepo,
+				gh:               mockClient,
+				config:           tt.config,
+				secrets:          mockSecrets,
+				owner:            "grafana",
+				repo:             "grafana",
+				webhookURL:       tt.webhookURL,
+			}
+
+			err := repo.OnDelete(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			mockClient.AssertExpectations(t)
+			mockRepo.AssertExpectations(t)
+			mockSecrets.AssertExpectations(t)
+		})
+	}
+}
+

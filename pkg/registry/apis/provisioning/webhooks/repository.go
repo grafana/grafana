@@ -20,6 +20,9 @@ import (
 
 var subscribedEvents = []string{"push", "pull_request"}
 
+//nolint:gosec // This is a constant for a secret suffix
+const webhookSecretSuffix = "-webhook-secret"
+
 type WebhookRepository interface {
 	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 }
@@ -339,6 +342,11 @@ func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
 
 	if err := r.GithubRepository.OnDelete(ctx); err != nil {
 		return fmt.Errorf("on delete from basic github repository: %w", err)
+	}
+
+	secretName := r.config.Name + webhookSecretSuffix
+	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
+		return fmt.Errorf("delete webhook secret: %w", err)
 	}
 
 	return r.deleteWebhook(ctx)
