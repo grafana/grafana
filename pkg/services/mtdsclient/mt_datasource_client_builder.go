@@ -54,11 +54,13 @@ func NewMtDatasourceClientBuilderWithClientSupplier(
 	ctx context.Context,
 	headers map[string]string,
 	instanceConfig clientapi.InstanceConfigurationSettings,
+	logger log.Logger,
 ) MTDatasourceClientBuilder {
 	return &MtDatasourceClientBuilderWithClientSupplier{
 		clientSupplier: clientSupplier,
 		ctx:            ctx,
 		headers:        headers,
 		instanceConfig: instanceConfig,
+		logger:         logger,
 	}
 }

@@ -238,6 +238,7 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 		ctx,
 		headers,
 		instanceConfig,
+		b.log,
 	)
 
 	exprService := expr.ProvideService(
