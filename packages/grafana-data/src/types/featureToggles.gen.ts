@@ -1026,9 +1026,4 @@ export interface FeatureToggles {
   * @default false
   */
   enablePluginImporter?: boolean;
-  /**
-  * Enables the notification history feature
-  * @default false
-  */
-  alertingNotificationHistory?: boolean;
 }

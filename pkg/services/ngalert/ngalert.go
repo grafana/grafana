@@ -288,7 +288,6 @@ func (ng *AlertNG) init() error {
 
 	notificationHistorian, err := configureNotificationHistorian(
 		initCtx,
-		ng.FeatureToggles,
 		ng.Cfg.UnifiedAlerting.NotificationHistory,
 		ng.Metrics.GetNotificationHistorianMetrics(),
 		ng.Log,
@@ -734,16 +733,11 @@ func configureHistorianBackend(
 
 func configureNotificationHistorian(
 	ctx context.Context,
-	featureToggles featuremgmt.FeatureToggles,
 	cfg setting.UnifiedAlertingNotificationHistorySettings,
 	met *metrics.NotificationHistorian,
 	l log.Logger,
 	tracer tracing.Tracer,
 ) (nfstatus.NotificationHistorian, error) {
-	if !featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingNotificationHistory) {
-		return nil, nil
-	}
-
 	if !cfg.Enabled {
 		met.Info.Set(0)
 		return nil, nil

@@ -926,8 +926,4 @@ const (
 	// FlagEnablePluginImporter
 	// Set this to true to use the new PluginImporter functionality
 	FlagEnablePluginImporter = "enablePluginImporter"
-
-	// FlagAlertingNotificationHistory
-	// Enables the notification history feature
-	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 )

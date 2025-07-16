@@ -240,7 +240,6 @@ func TestConfigureNotificationHistorian(t *testing.T) {
 		met := metrics.NewNotificationHistorianMetrics(reg)
 		logger := log.NewNopLogger()
 		tracer := tracing.InitializeTracerForTest()
-		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingNotificationHistory)
 		cfg := setting.UnifiedAlertingNotificationHistorySettings{
 			Enabled: true,
 			LokiSettings: setting.UnifiedAlertingLokiSettings{
@@ -249,7 +248,7 @@ func TestConfigureNotificationHistorian(t *testing.T) {
 			},
 		}
 
-		h, err := configureNotificationHistorian(context.Background(), ft, cfg, met, logger, tracer)
+		h, err := configureNotificationHistorian(context.Background(), cfg, met, logger, tracer)
 		require.NotNil(t, h)
 		require.NoError(t, err)
 
@@ -264,42 +263,25 @@ grafana_alerting_notification_history_info 1
 	})
 
 	t.Run("emit special zero metric if notification history disabled", func(t *testing.T) {
-		testCases := []struct {
-			name string
-			ft   featuremgmt.FeatureToggles
-			cfg  setting.UnifiedAlertingNotificationHistorySettings
-		}{
-			{
-				"disabled via config",
-				featuremgmt.WithFeatures(featuremgmt.FlagAlertingNotificationHistory),
-				setting.UnifiedAlertingNotificationHistorySettings{Enabled: false},
-			},
-			{
-				"disabled via feature toggle",
-				featuremgmt.WithFeatures(),
-				setting.UnifiedAlertingNotificationHistorySettings{Enabled: true},
-			},
+		reg := prometheus.NewRegistry()
+		met := metrics.NewNotificationHistorianMetrics(reg)
+		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
+		cfg := setting.UnifiedAlertingNotificationHistorySettings{
+			Enabled: false,
 		}
 
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				reg := prometheus.NewRegistry()
-				met := metrics.NewNotificationHistorianMetrics(reg)
-				logger := log.NewNopLogger()
-				tracer := tracing.InitializeTracerForTest()
-				h, err := configureNotificationHistorian(context.Background(), tc.ft, tc.cfg, met, logger, tracer)
-				require.Nil(t, h)
-				require.NoError(t, err)
+		h, err := configureNotificationHistorian(context.Background(), cfg, met, logger, tracer)
+		require.Nil(t, h)
+		require.NoError(t, err)
 
-				exp := bytes.NewBufferString(`
+		exp := bytes.NewBufferString(`
 # HELP grafana_alerting_notification_history_info Information about the notification history store.
 # TYPE grafana_alerting_notification_history_info gauge
 grafana_alerting_notification_history_info 0
 `)
-				err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_notification_history_info")
-				require.NoError(t, err)
-			})
-		}
+		err = testutil.GatherAndCompare(reg, exp, "grafana_alerting_notification_history_info")
+		require.NoError(t, err)
 	})
 }
 
