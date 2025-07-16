@@ -477,10 +477,15 @@ func TestIntegrationProvisioning_Secrets_Removal(t *testing.T) {
 				value, _ := encryptedField(t, secretsService, repo, output.Object, expectedField.Path, true)
 				require.NotEmpty(t, value)
 
+				var (
+					lastDecrypted []byte
+					lastError     error
+				)
+
 				require.Eventually(t, func() bool {
-					_, err := secretsService.Decrypt(ctx, repo, value)
-					return err != nil && errors.Is(err, contracts.ErrDecryptNotFound)
-				}, 10*time.Second, 500*time.Millisecond, "expected ErrDecryptNotFound error")
+					lastDecrypted, lastError = secretsService.Decrypt(ctx, repo, value)
+					return lastError != nil && errors.Is(lastError, contracts.ErrDecryptNotFound)
+				}, 10*time.Second, 500*time.Millisecond, "expected ErrDecryptNotFound error, encrypted value: '%v', err: '%v'", string(lastDecrypted), lastError)
 			}
 		})
 	}

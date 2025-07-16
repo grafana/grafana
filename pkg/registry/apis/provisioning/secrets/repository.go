@@ -83,21 +83,38 @@ func (s *repositorySecrets) Encrypt(ctx context.Context, r *provisioning.Reposit
 func (s *repositorySecrets) Decrypt(ctx context.Context, r *provisioning.Repository, nameOrValue string) ([]byte, error) {
 	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
 		data, err := s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
-		if err == nil {
+		if err == nil && len(data) > 0 {
 			return data, nil
 		}
 
-		// If the new service fails, fall back to legacy
-		return s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
+		// If the new service fails or returns empty bytes, fall back to legacy
+		fallbackData, fallbackErr := s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
+		if fallbackErr != nil || len(fallbackData) == 0 {
+			// Return original error if fallback fails or returns empty bytes
+			if err != nil {
+				return nil, err
+			}
+			return nil, errors.New("decryption returned empty data")
+		}
+		return fallbackData, nil
 	}
 
 	// If the new service is disabled, use the legacy service first
 	data, err := s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
-	if err == nil {
+	if err == nil && len(data) > 0 {
 		return data, nil
 	}
 
-	return s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
+	// If legacy service fails or returns empty bytes, fall back to new service
+	fallbackData, fallbackErr := s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
+	if fallbackErr != nil || len(fallbackData) == 0 {
+		// Return original error if fallback fails or returns empty bytes
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New("decryption returned empty data")
+	}
+	return fallbackData, nil
 }
 
 func (s *repositorySecrets) Delete(ctx context.Context, r *provisioning.Repository, nameOrValue string) error {
