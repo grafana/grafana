@@ -1030,4 +1030,9 @@ export interface FeatureToggles {
   * Applies OTel formatting templates to displayed logs
   */
   otelLogsFormatting?: boolean;
+  /**
+  * Enables the notification history feature
+  * @default false
+  */
+  alertingNotificationHistory?: boolean;
 }

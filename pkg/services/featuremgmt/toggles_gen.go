@@ -930,4 +930,8 @@ const (
 	// FlagOtelLogsFormatting
 	// Applies OTel formatting templates to displayed logs
 	FlagOtelLogsFormatting = "otelLogsFormatting"
+
+	// FlagAlertingNotificationHistory
+	// Enables the notification history feature
+	FlagAlertingNotificationHistory = "alertingNotificationHistory"
 )
