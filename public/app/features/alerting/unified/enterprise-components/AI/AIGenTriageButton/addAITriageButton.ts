@@ -18,14 +18,14 @@ export const AITriageButtonComponent: ComponentType<GenAITriageButtonProps> = (p
   if (!InternalAITriageButtonComponent) {
     return null;
   }
-  
+
   // Wrap the component with error boundary
   const WrappedComponent = withErrorBoundary(InternalAITriageButtonComponent, {
     title: t('alerting.ai.error-boundary.triage-button', 'AI Triage Button failed to load'),
     style: 'alertbox',
     errorLogger: logError,
   });
-  
+
   return createElement(WrappedComponent, props);
 };
 

@@ -24,13 +24,13 @@ const mockProps: GenAITriageButtonProps = {
       from: 'now-1s',
       to: 'now',
     },
-  }
+  },
 };
 
 describe('AITriageButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAITriageButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {

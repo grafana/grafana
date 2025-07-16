@@ -14,14 +14,14 @@ export const AIImproveAnnotationsButtonComponent: ComponentType<GenAIImproveAnno
   if (!InternalAIImproveAnnotationsButtonComponent) {
     return null;
   }
-  
+
   // Wrap the component with error boundary
   const WrappedComponent = withErrorBoundary(InternalAIImproveAnnotationsButtonComponent, {
     title: t('alerting.ai.error-boundary.improve-annotations-button', 'AI Improve Annotations Button failed to load'),
     style: 'alertbox',
     errorLogger: logError,
   });
-  
+
   return createElement(WrappedComponent, props);
 };
 

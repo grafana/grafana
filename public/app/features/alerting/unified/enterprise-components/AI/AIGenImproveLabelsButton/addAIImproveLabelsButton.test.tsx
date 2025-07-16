@@ -20,7 +20,7 @@ const WorkingComponent: ComponentType<GenAIImproveLabelsButtonProps> = () => {
 describe('AIImproveLabelsButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAIImproveLabelsButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {

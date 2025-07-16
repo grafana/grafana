@@ -16,7 +16,7 @@ const WorkingComponent: ComponentType<GenAIAlertRuleButtonProps> = () => {
 describe('AIAlertRuleButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAIAlertRuleButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {

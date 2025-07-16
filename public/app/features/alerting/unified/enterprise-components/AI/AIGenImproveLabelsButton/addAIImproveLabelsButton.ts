@@ -14,14 +14,14 @@ export const AIImproveLabelsButtonComponent: ComponentType<GenAIImproveLabelsBut
   if (!InternalAIImproveLabelsButtonComponent) {
     return null;
   }
-  
+
   // Wrap the component with error boundary
   const WrappedComponent = withErrorBoundary(InternalAIImproveLabelsButtonComponent, {
     title: t('alerting.ai.error-boundary.improve-labels-button', 'AI Improve Labels Button failed to load'),
     style: 'alertbox',
     errorLogger: logError,
   });
-  
+
   return createElement(WrappedComponent, props);
 };
 
