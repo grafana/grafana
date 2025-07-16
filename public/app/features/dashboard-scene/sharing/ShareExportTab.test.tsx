@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import * as ResponseTransformers from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { DashboardDataDTO } from 'app/types/dashboard';
@@ -175,7 +175,7 @@ describe('ShareExportTab', () => {
 
       // Should use V2 API version
       expect(result.json).toMatchObject({
-        apiVersion: 'dashboard.grafana.app/v2alpha1',
+        apiVersion: 'dashboard.grafana.app/v2alpha2',
         kind: 'Dashboard',
         status: {},
       });
@@ -325,7 +325,7 @@ describe('ShareExportTab', () => {
 
     scene.serializer.getSaveModel = jest.fn(() => mockV2Dashboard);
     scene.serializer.makeExportableExternally = jest.fn(() => Promise.resolve(mockV2Dashboard));
-    scene.serializer.apiVersion = 'dashboard.grafana.app/v2alpha1';
+    scene.serializer.apiVersion = 'dashboard.grafana.app/v2alpha2';
     scene.getInitialSaveModel = jest.fn(() => mockV2Dashboard);
 
     return tab;
