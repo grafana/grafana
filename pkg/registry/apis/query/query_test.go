@@ -218,7 +218,6 @@ func TestQueryAPI(t *testing.T) {
 						if diff := cmp.Diff(expectedFrame, actualFrame, data.FrameTestCompareOptions()...); diff != "" {
 							require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
 						}
-
 					}
 				}
 			} else {
