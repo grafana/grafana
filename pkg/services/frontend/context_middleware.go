@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -18,9 +16,8 @@ import (
 func (s *frontendService) contextMiddleware() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			// Don't modify context so that the middleware span doesn't get propagated as a parent elsewhere
-			_, span := tracer.Start(ctx, "Context middleware")
+			ctx, span := tracer.Start(r.Context(), "Context middleware")
+			defer span.End()
 
 			reqContext := &contextmodel.ReqContext{
 				Context: web.FromContext(ctx),
@@ -29,11 +26,11 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 
 			// inject ReqContext in the context
 			ctx = context.WithValue(ctx, ctxkey.Key{}, reqContext)
+
 			// Set the context for the http.Request.Context
 			// This modifies both r and reqContext.Req since they point to the same value
 			*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
-			ctx = trace.ContextWithSpan(reqContext.Req.Context(), span)
 			traceID := tracing.TraceIDFromContext(ctx, false)
 			if traceID != "" {
 				reqContext.Logger = reqContext.Logger.New("traceID", traceID)
@@ -41,8 +38,6 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 
 			span.AddEvent("request")
 
-			// End the span to make next handlers not wrapped within middleware span
-			span.End()
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
