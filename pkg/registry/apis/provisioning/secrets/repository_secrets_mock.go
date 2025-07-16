@@ -82,6 +82,54 @@ func (_c *MockRepositorySecrets_Decrypt_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// Delete provides a mock function with given fields: ctx, r, nameOrValue
+func (_m *MockRepositorySecrets) Delete(ctx context.Context, r *v0alpha1.Repository, nameOrValue string) error {
+	ret := _m.Called(ctx, r, nameOrValue)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Repository, string) error); ok {
+		r0 = rf(ctx, r, nameOrValue)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRepositorySecrets_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockRepositorySecrets_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - r *v0alpha1.Repository
+//   - nameOrValue string
+func (_e *MockRepositorySecrets_Expecter) Delete(ctx interface{}, r interface{}, nameOrValue interface{}) *MockRepositorySecrets_Delete_Call {
+	return &MockRepositorySecrets_Delete_Call{Call: _e.mock.On("Delete", ctx, r, nameOrValue)}
+}
+
+func (_c *MockRepositorySecrets_Delete_Call) Run(run func(ctx context.Context, r *v0alpha1.Repository, nameOrValue string)) *MockRepositorySecrets_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*v0alpha1.Repository), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockRepositorySecrets_Delete_Call) Return(_a0 error) *MockRepositorySecrets_Delete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRepositorySecrets_Delete_Call) RunAndReturn(run func(context.Context, *v0alpha1.Repository, string) error) *MockRepositorySecrets_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Encrypt provides a mock function with given fields: ctx, r, name, data
 func (_m *MockRepositorySecrets) Encrypt(ctx context.Context, r *v0alpha1.Repository, name string, data string) ([]byte, error) {
 	ret := _m.Called(ctx, r, name, data)

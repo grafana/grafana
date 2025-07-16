@@ -20,12 +20,14 @@ type SecureValueService interface {
 	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
 	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
 	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
 }
 
 //go:generate mockery --name Service --structname MockService --inpackage --filename secret_mock.go --with-expecter
 type Service interface {
 	Encrypt(ctx context.Context, namespace, name string, data string) (string, error)
 	Decrypt(ctx context.Context, namespace string, name string) ([]byte, error)
+	Delete(ctx context.Context, namespace string, name string) error
 }
 
 var _ Service = (*secretsService)(nil)
@@ -106,4 +108,18 @@ func (s *secretsService) Decrypt(ctx context.Context, namespace string, name str
 	}
 
 	return nil, contracts.ErrDecryptNotFound
+}
+
+func (s *secretsService) Delete(ctx context.Context, namespace string, name string) error {
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return err
+	}
+	ctx = identity.WithServiceIdentityContext(ctx, ns.OrgID, identity.WithServiceIdentityName(svcName))
+
+	if _, err := s.secretsSvc.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -98,6 +98,7 @@ type APIBuilder struct {
 	repositorySecrets secrets.RepositorySecrets
 	client            client.ProvisioningV0alpha1Interface
 	access            authlib.AccessChecker
+	mutators          []controller.Mutator
 	statusPatcher     *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
@@ -125,7 +126,13 @@ func NewAPIBuilder(
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
+	mutators := []controller.Mutator{
+		git.Mutator(repositorySecrets),
+		github.Mutator(repositorySecrets),
+	}
+
 	b := &APIBuilder{
+		mutators:            mutators,
 		tracer:              tracer,
 		localFileResolver:   local,
 		features:            features,
@@ -151,11 +158,13 @@ func NewAPIBuilder(
 		b.extras = append(b.extras, builder(b))
 	}
 
-	// Add the available repository types from the extras
+	// Add the available repository types and mutators from the extras
 	for _, extra := range b.extras {
 		for _, t := range extra.RepositoryTypes() {
 			b.availableRepositoryTypes[t] = true
 		}
+
+		b.mutators = append(b.mutators, extra.Mutators()...)
 	}
 
 	return b
@@ -464,53 +473,11 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
-	if err := b.encryptGithubToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt github secrets: %w", err)
-	}
-
-	if err := b.encryptGitToken(ctx, r); err != nil {
-		return fmt.Errorf("failed to encrypt git secrets: %w", err)
-	}
-
 	// Mutate the repository with any extra mutators
-	for _, extra := range b.extras {
-		if err := extra.Mutate(ctx, r); err != nil {
+	for _, mutator := range b.mutators {
+		if err := mutator(ctx, r); err != nil {
 			return fmt.Errorf("failed to mutate repository: %w", err)
 		}
-	}
-
-	return nil
-}
-
-// TODO: move this to a more appropriate place
-func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
-	if repo.Spec.GitHub != nil &&
-		repo.Spec.GitHub.Token != "" {
-		secretName := repo.Name + "-github-token"
-
-		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, secretName, repo.Spec.GitHub.Token)
-		if err != nil {
-			return err
-		}
-		repo.Spec.GitHub.Token = ""
-		repo.Spec.GitHub.EncryptedToken = nameOrValue
-	}
-
-	return nil
-}
-
-// TODO: move this to a more appropriate place
-// TODO: make this one more generic
-func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
-	if repo.Spec.Git != nil && repo.Spec.Git.Token != "" {
-		secretName := repo.Name + "-git-token"
-		nameOrValue, err := b.repositorySecrets.Encrypt(ctx, repo, secretName, repo.Spec.Git.Token)
-		if err != nil {
-			return err
-		}
-
-		repo.Spec.Git.EncryptedToken = nameOrValue
-		repo.Spec.Git.Token = ""
 	}
 
 	return nil
@@ -1225,13 +1192,15 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			token = string(decrypted)
 		}
 
-		return git.NewGitRepository(ctx, r, git.RepositoryConfig{
+		cfg := git.RepositoryConfig{
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
 			Path:           r.Spec.Git.Path,
 			Token:          token,
 			EncryptedToken: r.Spec.Git.EncryptedToken,
-		})
+		}
+
+		return git.NewGitRepository(ctx, r, cfg, b.repositorySecrets)
 	case provisioning.GitHubRepositoryType:
 		logger := logging.FromContext(ctx).With("url", r.Spec.GitHub.URL, "branch", r.Spec.GitHub.Branch, "path", r.Spec.GitHub.Path)
 		logger.Info("Instantiating Github repository")
@@ -1259,12 +1228,12 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg)
+		gitRepo, err := git.NewGitRepository(ctx, r, gitCfg, b.repositorySecrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating git repository: %w", err)
 		}
 
-		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken)
+		ghRepo, err := github.NewGitHub(ctx, r, gitRepo, b.ghFactory, ghToken, b.repositorySecrets)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github repository: %w", err)
 		}

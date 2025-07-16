@@ -410,3 +410,56 @@ func TestSecretsService_Decrypt_StaticRequesterCreation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("test-data"), result)
 }
+
+func TestSecretsService_Delete(t *testing.T) {
+	tests := []struct {
+		name          string
+		namespace     string
+		secretName    string
+		setupMocks    func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService)
+		expectedError string
+	}{
+		{
+			name:       "delete success",
+			namespace:  "test-namespace",
+			secretName: "test-secret",
+			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
+				mockSecretsSvc.EXPECT().
+					Delete(mock.Anything, xkube.Namespace("test-namespace"), "test-secret").
+					Return(&secretv1beta1.SecureValue{}, nil)
+			},
+		},
+		{
+			name:       "delete returns error",
+			namespace:  "test-namespace",
+			secretName: "test-secret",
+			setupMocks: func(mockSecretsSvc *MockSecureValueService, mockDecryptSvc *mocks.MockDecryptService) {
+				mockSecretsSvc.EXPECT().
+					Delete(mock.Anything, xkube.Namespace("test-namespace"), "test-secret").
+					Return(nil, errors.New("delete failed"))
+			},
+			expectedError: "delete failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockSecretsSvc := NewMockSecureValueService(t)
+			mockDecryptSvc := &mocks.MockDecryptService{}
+
+			tt.setupMocks(mockSecretsSvc, mockDecryptSvc)
+
+			svc := NewSecretsService(mockSecretsSvc, mockDecryptSvc)
+			ctx := context.Background()
+
+			err := svc.Delete(ctx, tt.namespace, tt.secretName)
+
+			if tt.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

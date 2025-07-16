@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -136,84 +137,100 @@ func TestRepositorySecrets_Decrypt(t *testing.T) {
 	tests := []struct {
 		name           string
 		namespace      string
-		featureEnabled bool
+		nameOrValue    string
 		setupMocks     func(*testSetup)
 		expectedResult []byte
 		expectedError  string
 	}{
 		{
-			name:           "new service success",
-			namespace:      "test-namespace",
-			featureEnabled: true,
+			name:        "new service success - name starts with repo name",
+			namespace:   "test-namespace",
+			nameOrValue: "test-repo-secret-name",
 			setupMocks: func(s *testSetup) {
-				s.expectFeatureFlag(true)
-				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "encrypted-value").Return([]byte("decrypted-data"), nil)
+				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "test-repo-secret-name").Return([]byte("decrypted-data"), nil)
 			},
 			expectedResult: []byte("decrypted-data"),
 		},
 		{
-			name:           "legacy service success",
-			namespace:      "test-namespace",
-			featureEnabled: false,
+			name:        "new service error - name starts with repo name",
+			namespace:   "test-namespace",
+			nameOrValue: "test-repo-secret-name",
 			setupMocks: func(s *testSetup) {
-				s.expectFeatureFlag(false)
-				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("encrypted-value")).Return([]byte("decrypted-legacy-data"), nil)
-			},
-			expectedResult: []byte("decrypted-legacy-data"),
-		},
-		{
-			name:           "new service fails, fallback to legacy succeeds",
-			namespace:      "test-namespace",
-			featureEnabled: true,
-			setupMocks: func(s *testSetup) {
-				s.expectFeatureFlag(true)
-				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "encrypted-value").Return(nil, errors.New("new service failed"))
-				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("encrypted-value")).Return([]byte("decrypted-fallback-data"), nil)
-			},
-			expectedResult: []byte("decrypted-fallback-data"),
-		},
-		{
-			name:           "legacy service fails, fallback to new succeeds",
-			namespace:      "test-namespace",
-			featureEnabled: false,
-			setupMocks: func(s *testSetup) {
-				s.expectFeatureFlag(false)
-				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("encrypted-value")).Return(nil, errors.New("legacy service failed"))
-				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "encrypted-value").Return([]byte("decrypted-new-data"), nil)
-			},
-			expectedResult: []byte("decrypted-new-data"),
-		},
-		{
-			name:           "both services fail (feature flag enabled)",
-			namespace:      "test-namespace",
-			featureEnabled: true,
-			setupMocks: func(s *testSetup) {
-				s.expectFeatureFlag(true)
-				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "encrypted-value").Return(nil, errors.New("new service failed"))
-				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("encrypted-value")).Return(nil, errors.New("legacy service failed"))
-			},
-			expectedError: "legacy service failed",
-		},
-		{
-			name:           "both services fail (feature flag disabled)",
-			namespace:      "test-namespace",
-			featureEnabled: false,
-			setupMocks: func(s *testSetup) {
-				s.expectFeatureFlag(false)
-				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("encrypted-value")).Return(nil, errors.New("legacy service failed"))
-				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "encrypted-value").Return(nil, errors.New("new service failed"))
+				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "test-repo-secret-name").Return(nil, errors.New("new service failed"))
 			},
 			expectedError: "new service failed",
 		},
 		{
-			name:           "custom namespace handling",
-			namespace:      "custom-namespace",
-			featureEnabled: true,
+			name:        "legacy service success - name does not start with repo name",
+			namespace:   "test-namespace",
+			nameOrValue: "legacy-encrypted-value",
 			setupMocks: func(s *testSetup) {
-				s.expectFeatureFlag(true)
-				s.mockSecrets.EXPECT().Decrypt(s.ctx, "custom-namespace", "encrypted-value").Return([]byte("test-data"), nil)
+				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("legacy-encrypted-value")).Return([]byte("decrypted-legacy-data"), nil)
+			},
+			expectedResult: []byte("decrypted-legacy-data"),
+		},
+		{
+			name:        "legacy service error - name does not start with repo name",
+			namespace:   "test-namespace",
+			nameOrValue: "legacy-encrypted-value",
+			setupMocks: func(s *testSetup) {
+				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("legacy-encrypted-value")).Return(nil, errors.New("legacy service failed"))
+			},
+			expectedError: "legacy service failed",
+		},
+		{
+			name:        "new service empty bytes - name starts with repo name",
+			namespace:   "test-namespace",
+			nameOrValue: "test-repo-secret-name",
+			setupMocks: func(s *testSetup) {
+				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "test-repo-secret-name").Return([]byte{}, nil)
+			},
+			expectedResult: []byte{},
+		},
+		{
+			name:        "legacy service empty bytes - name does not start with repo name",
+			namespace:   "test-namespace",
+			nameOrValue: "legacy-encrypted-value",
+			setupMocks: func(s *testSetup) {
+				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("legacy-encrypted-value")).Return([]byte{}, nil)
+			},
+			expectedResult: []byte{},
+		},
+		{
+			name:        "custom namespace handling - name starts with repo name",
+			namespace:   "custom-namespace",
+			nameOrValue: "test-repo-secret-name",
+			setupMocks: func(s *testSetup) {
+				s.mockSecrets.EXPECT().Decrypt(s.ctx, "custom-namespace", "test-repo-secret-name").Return([]byte("test-data"), nil)
 			},
 			expectedResult: []byte("test-data"),
+		},
+		{
+			name:        "exact repo name match - should use new service",
+			namespace:   "test-namespace",
+			nameOrValue: "test-repo",
+			setupMocks: func(s *testSetup) {
+				s.mockSecrets.EXPECT().Decrypt(s.ctx, "test-namespace", "test-repo").Return([]byte("exact-match-data"), nil)
+			},
+			expectedResult: []byte("exact-match-data"),
+		},
+		{
+			name:        "partial repo name match - should use legacy service",
+			namespace:   "test-namespace",
+			nameOrValue: "test-rep",
+			setupMocks: func(s *testSetup) {
+				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("test-rep")).Return([]byte("partial-match-data"), nil)
+			},
+			expectedResult: []byte("partial-match-data"),
+		},
+		{
+			name:        "empty name - should use legacy service",
+			namespace:   "test-namespace",
+			nameOrValue: "",
+			setupMocks: func(s *testSetup) {
+				s.mockLegacy.EXPECT().Decrypt(s.ctx, []byte("")).Return([]byte("empty-name-data"), nil)
+			},
+			expectedResult: []byte("empty-name-data"),
 		},
 	}
 
@@ -222,7 +239,7 @@ func TestRepositorySecrets_Decrypt(t *testing.T) {
 			setup := setupTest(t, tt.namespace)
 			tt.setupMocks(setup)
 
-			result, err := setup.rs.Decrypt(setup.ctx, setup.repo, "encrypted-value")
+			result, err := setup.rs.Decrypt(setup.ctx, setup.repo, tt.nameOrValue)
 
 			if tt.expectedError != "" {
 				assert.Error(t, err)
@@ -232,6 +249,74 @@ func TestRepositorySecrets_Decrypt(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedResult, result)
 			}
+		})
+	}
+}
+
+func TestRepositorySecrets_Delete(t *testing.T) {
+	tests := []struct {
+		name           string
+		namespace      string
+		featureEnabled bool
+		setupMocks     func(*testSetup)
+		expectedError  string
+	}{
+		{
+			name:           "new service delete success",
+			namespace:      "test-namespace",
+			featureEnabled: true,
+			setupMocks: func(s *testSetup) {
+				s.expectFeatureFlag(true)
+				s.mockSecrets.EXPECT().Delete(s.ctx, "test-namespace", "secret-to-delete").Return(nil)
+			},
+		},
+		{
+			name:           "new service delete error",
+			namespace:      "test-namespace",
+			featureEnabled: true,
+			setupMocks: func(s *testSetup) {
+				s.expectFeatureFlag(true)
+				s.mockSecrets.EXPECT().Delete(s.ctx, "test-namespace", "secret-to-delete").Return(errors.New("delete failed"))
+			},
+			expectedError: "delete failed",
+		},
+		{
+			name:           "new service secret not found - should succeed",
+			namespace:      "test-namespace",
+			featureEnabled: true,
+			setupMocks: func(s *testSetup) {
+				s.expectFeatureFlag(true)
+				s.mockSecrets.EXPECT().Delete(s.ctx, "test-namespace", "non-existent-secret").Return(contracts.ErrSecureValueNotFound)
+			},
+		},
+		{
+			name:           "nothing for legacy",
+			namespace:      "custom-namespace",
+			featureEnabled: true,
+			setupMocks: func(s *testSetup) {
+				s.expectFeatureFlag(false)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setup := setupTest(t, tt.namespace)
+			tt.setupMocks(setup)
+
+			secretName := "secret-to-delete"
+			if tt.name == "new service secret not found - should succeed" {
+				secretName = "non-existent-secret"
+			}
+			err := setup.rs.Delete(setup.ctx, setup.repo, secretName)
+			if tt.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			setup.mockSecrets.AssertExpectations(t)
 		})
 	}
 }

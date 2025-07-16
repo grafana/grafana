@@ -19,12 +19,16 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/log"
 	"github.com/grafana/nanogit/options"
 	"github.com/grafana/nanogit/protocol"
 	"github.com/grafana/nanogit/protocol/hash"
 )
+
+//nolint:gosec // This is a constant for a secret suffix
+const gitTokenSecretSuffix = "-git-token"
 
 type RepositoryConfig struct {
 	URL            string
@@ -39,12 +43,14 @@ type gitRepository struct {
 	config    *provisioning.Repository
 	gitConfig RepositoryConfig
 	client    nanogit.Client
+	secrets   secrets.RepositorySecrets
 }
 
 func NewGitRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitConfig RepositoryConfig,
+	secrets secrets.RepositorySecrets,
 ) (GitRepository, error) {
 	var opts []options.Option
 	if len(gitConfig.Token) > 0 {
@@ -60,6 +66,7 @@ func NewGitRepository(
 		config:    config,
 		gitConfig: gitConfig,
 		client:    client,
+		secrets:   secrets,
 	}, nil
 }
 
@@ -752,4 +759,24 @@ func (r *gitRepository) logger(ctx context.Context, ref string) (context.Context
 	ctx = log.ToContext(ctx, logger)
 
 	return ctx, logger
+}
+
+func (r *gitRepository) OnCreate(_ context.Context) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (r *gitRepository) OnUpdate(_ context.Context) ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+func (r *gitRepository) OnDelete(ctx context.Context) error {
+	logger := logging.FromContext(ctx)
+	secretName := r.config.Name + gitTokenSecretSuffix
+	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
+		return fmt.Errorf("delete git token secret: %w", err)
+	}
+
+	logger.Info("Deleted git token secret", "secretName", secretName)
+
+	return nil
 }
