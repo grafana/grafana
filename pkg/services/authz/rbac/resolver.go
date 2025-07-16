@@ -35,17 +35,13 @@ func (s *Service) fetchTeams(ctx context.Context, ns types.NamespaceInfo) (map[i
 }
 
 // Should return an error if we fail to build the resolver.
-func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInfo) ScopeResolverFunc {
+func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInfo) (ScopeResolverFunc, error) {
 	teamIDs, cacheHit := s.teamIDCache.Get(ctx, teamIDsCacheKey(ns.Value))
 	if !cacheHit {
 		var err error
 		teamIDs, err = s.fetchTeams(ctx, ns)
 		if err != nil {
-			s.logger.FromContext(ctx).Error("could not fetch teams", "error", err)
-			return func(scope string) (string, error) {
-				// Return a resolver that always returns an empty string and logs the error
-				return "", err
-			}
+			return nil, fmt.Errorf("could not build resolver: %w", err)
 		}
 	}
 
@@ -65,13 +61,15 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 			return "teams:uid:" + teamName, nil
 		}
 
-		// Potential stale cache. Try to fetch the teams again.
+		// Stale cache recovery: Try to fetch the teams again.
 		if cacheHit {
-			// TODO: if multiple threads have the same stale cache, they are all going to refetch the teams.
+			// Potential future improvement: if multiple threads have the same stale cache,
+			// they might refetch teams separately and asynchronously. We could use a more sophisticated
+			// approach to avoid this. Like checking if the cache has been updated meanwhile.
 			cacheHit = false
 			teamIDs, err = s.fetchTeams(ctx, ns)
 			if err != nil {
-				s.logger.FromContext(ctx).Error("could not fetch teams", "error", err)
+				// Other improvement: Stop the calling loop if we fail to fetch teams.
 				return "", err
 			}
 			if teamName, ok := teamIDs[teamID]; ok {
@@ -80,21 +78,25 @@ func (s *Service) newTeamNameResolver(ctx context.Context, ns types.NamespaceInf
 		}
 
 		return "", fmt.Errorf("team ID %s not found", teamIDStr)
-	}
+	}, nil
 }
 
-func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scopePrefix string) ScopeResolverFunc {
+func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scopePrefix string) (ScopeResolverFunc, error) {
 	if strings.HasPrefix(scopePrefix, "teams:id:") {
 		return s.newTeamNameResolver(ctx, ns)
 	}
-	return nil
+	// No resolver found for the given scope prefix.
+	return nil, nil
 }
 
 // resolveScopeMap translates scopes like "teams:id:1" to "teams:uid:t1".
 // It assumes only one scope resolver is needed for a given scope map, based on the first valid scope encountered.
-func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, scopeMap map[string]bool) map[string]bool {
-	prefix := ""
-	var scopeResolver ScopeResolverFunc
+func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, scopeMap map[string]bool) (map[string]bool, error) {
+	var (
+		prefix        string
+		scopeResolver ScopeResolverFunc
+		err           error
+	)
 	for scope := range scopeMap {
 		// Find the resolver based on the first scope with a valid prefix
 		if prefix == "" {
@@ -111,7 +113,11 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, s
 
 			// Initialize the scope resolver only once
 			prefix = accesscontrol.ScopePrefix(scope)
-			scopeResolver = s.nameResolver(ctx, ns, prefix)
+			scopeResolver, err = s.nameResolver(ctx, ns, prefix)
+			if err != nil {
+				s.logger.FromContext(ctx).Error("failed to create scope resolver", "prefix", prefix, "error", err)
+				return nil, err
+			}
 			if scopeResolver == nil {
 				break // No resolver found for this prefix
 			}
@@ -131,5 +137,5 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, s
 			delete(scopeMap, scope)
 		}
 	}
-	return scopeMap
+	return scopeMap, nil
 }
