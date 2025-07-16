@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { ComponentType } from 'react';
 
+import { dateTime } from '@grafana/data';
+
 import { AITriageButtonComponent, GenAITriageButtonProps, addAITriageButton } from './addAITriageButton';
 
 // Component that throws an error for testing
@@ -15,13 +17,20 @@ const WorkingComponent: ComponentType<GenAITriageButtonProps> = () => {
 
 const mockProps: GenAITriageButtonProps = {
   logRecords: [],
-  timeRange: {} as any, // Mock object for testing
+  timeRange: {
+    from: dateTime(1681300292392),
+    to: dateTime(1681300293392),
+    raw: {
+      from: 'now-1s',
+      to: 'now',
+    },
+  }
 };
 
 describe('AITriageButtonComponent Error Boundary', () => {
   beforeEach(() => {
     addAITriageButton(null);
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   afterEach(() => {
