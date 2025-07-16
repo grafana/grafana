@@ -42,6 +42,7 @@ export function getDisplayedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
   return getDisplayedFieldsForLanguages(logs, identifyOTelLanguages(logs));
 }
 
+// Languages not implemented.
 export function getDisplayFormatForLanguage(language: string) {
   return undefined;
 }
