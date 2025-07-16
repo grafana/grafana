@@ -83,10 +83,11 @@ func TestIntegrationProvisioning_LegacySecrets(t *testing.T) {
 			name := mustNestedString(input.Object, "metadata", "name")
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource")
+			repo := unstructuredToRepository(t, output)
 
 			// Move encrypted token mutation
 			for _, expectedField := range test.expectedFields {
-				value, decrypted := encryptedField(t, secretsService, nil, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
+				value, decrypted := encryptedField(t, secretsService, repo, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
 				require.False(t, strings.HasPrefix(value, name), "value should not be prefixed with the repository name")
 				require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 			}
@@ -185,9 +186,10 @@ func TestIntegrationProvisioning_Secrets_LegacyUpdate(t *testing.T) {
 
 			output, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
 			require.NoError(t, err, "failed to read back resource after update")
+			repo := unstructuredToRepository(t, output)
 
 			for _, expectedField := range test.expectedFields {
-				value, decrypted := encryptedField(t, secretsService, nil, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
+				value, decrypted := encryptedField(t, secretsService, repo, output.Object, expectedField.Path, expectedField.ExpectedDecryptedValue != "")
 				require.False(t, strings.HasPrefix(value, name), "value should not be prefixed with the repository name")
 				require.Equal(t, expectedField.ExpectedDecryptedValue, decrypted)
 			}
