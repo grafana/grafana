@@ -5,8 +5,7 @@ import { InterpolateFunction, TraceSearchProps } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { DEFAULT_SPAN_FILTERS, randomId } from '../state/constants';
-import { setSpanFilters } from '../state/main';
-import { getSpanFiltersSelector } from '../state/selectors';
+import { changePanelState } from '../state/explorePane';
 
 import { TraceSpan } from './components/types/trace';
 import { filterSpans } from './components/utils/filter-spans';
@@ -22,7 +21,8 @@ export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilter
   const dispatch = useDispatch();
 
   // Global state logic (for Explore)
-  const globalFilters = useSelector(getSpanFiltersSelector(exploreId ?? ''));
+  const panelState = useSelector((state) => state.explore.panes[exploreId ?? '']?.panelsState.trace);
+  const { spanFilters: globalFilters } = panelState || {};
 
   // Local state logic (for TracesPanel and other non-Explore usage)
   const [localSearch, setLocalSearch] = useState<TraceSearchProps>(() => {
@@ -52,9 +52,10 @@ export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilter
       if (!mergedFilters.tags || !Array.isArray(mergedFilters.tags)) {
         mergedFilters.tags = [{ id: randomId(), operator: '=' }];
       }
-      dispatch(setSpanFilters({ exploreId, spanFilters: mergedFilters }));
+
+      dispatch(changePanelState(exploreId, 'trace', { ...panelState, spanFilters: mergedFilters }));
     }
-  }, [exploreId, initialFilters, globalFilters, dispatch]);
+  }, [exploreId, initialFilters, globalFilters, dispatch, panelState]);
 
   // Local state updates (only when no exploreId)
   useEffect(() => {
@@ -74,12 +75,12 @@ export function useSearch(exploreId?: string, spans?: TraceSpan[], initialFilter
   const setSearch = useCallback(
     (newSearch: TraceSearchProps) => {
       if (exploreId) {
-        dispatch(setSpanFilters({ exploreId, spanFilters: newSearch }));
+        dispatch(changePanelState(exploreId, 'trace', { ...panelState, spanFilters: newSearch }));
       } else {
         setLocalSearch(newSearch);
       }
     },
-    [exploreId, dispatch]
+    [exploreId, dispatch, panelState]
   );
 
   const spanFilterMatches: Set<string> | undefined = useMemo(() => {
