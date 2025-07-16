@@ -285,8 +285,8 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		req.Queries = append(req.Queries, q.query)
 	}
 
-	mtDsClient, err := s.mtDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
-	if err != nil { // single tenant flow
+	mtDsClient, ok := s.mtDatasourceClientBuilder.BuildClient(ds.Type, ds.UID)
+	if !ok { // single tenant flow
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 		if err != nil {
 			return nil, err
@@ -299,7 +299,7 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		k8sReq := &data.QueryDataRequest{}
 		for _, q := range req.Queries {
 			var dataQuery data.DataQuery
-			err = json.Unmarshal(q.JSON, &dataQuery)
+			err := json.Unmarshal(q.JSON, &dataQuery)
 			if err != nil {
 				return nil, err
 			}

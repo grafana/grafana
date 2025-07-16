@@ -109,34 +109,6 @@ func getGrafanaDataSourceSettings(ctx context.Context) (*backend.DataSourceInsta
 	return adapters.ModelToInstanceSettings(ds, decryptFunc)
 }
 
-// TODO work with Gabor to figure out how to bring this back or if we can remove it
-// func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*clientapi.Response, error) {
-// 	// middlewares may set response-http-headers through context, so we need to do extra steps
-// 	// first we create an isolated context to be used by query-data
-// 	isolatedCtx := contexthandler.CopyWithReqContext(ctx)
-
-// 	qdr, err := d.innerQueryData(isolatedCtx, req)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	rsp := &clientapi.Response{
-// 		QDR:     qdr,
-// 		Headers: nil,
-// 	}
-
-// 	// we extract the response-headers from the isolated context, and return them explicitly
-// 	// in the clientapi.Response structure
-// 	reqCtx := contexthandler.FromContext(isolatedCtx)
-// 	if reqCtx != nil {
-// 		rsp.Headers = reqCtx.Resp.Header()
-// 	}
-
-// 	return rsp, nil
-// }
-
-// ExecuteQueryData implements QueryHelper.
 func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	queries, dsRef, err := data.ToDataSourceQueries(req)
 	if err != nil {

@@ -213,7 +213,7 @@ func (dn *DSNode) NeedsVars() []string {
 	return []string{}
 }
 
-func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
+func (s *Service) buildDSNode(_ *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	if rn.TimeRange == nil {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
@@ -395,9 +395,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}()
 
 	resp := &backend.QueryDataResponse{}
-	mtDSClient, err := s.mtDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
-
-	if err != nil { // use single tenant client
+	var err error
+	mtDSClient, ok := s.mtDatasourceClientBuilder.BuildClient(dn.datasource.Type, dn.datasource.UID)
+	if !ok { // use single tenant client
 		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
 		if err != nil {
 			return mathexp.Results{}, err
@@ -412,7 +412,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		k8sReq := &data.QueryDataRequest{}
 		for _, q := range req.Queries {
 			var dataQuery data.DataQuery
-			err = json.Unmarshal(q.JSON, &dataQuery)
+			err := json.Unmarshal(q.JSON, &dataQuery)
 			if err != nil {
 				return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 			}
