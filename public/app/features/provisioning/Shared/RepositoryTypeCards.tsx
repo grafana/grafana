@@ -27,8 +27,11 @@ export function RepositoryTypeCards() {
           <Card.Heading>
             <Stack alignItems="center" gap={2}>
               <Icon name={config.icon} size="xxl" />
-              <Trans i18nKey={`provisioning.repository-type-cards.configure-with-${config.type}`}>
-                Configure with {config.label}
+              <Trans
+                i18nKey="provisioning.repository-type-cards.configure-with-provider"
+                values={{ provider: config.label }}
+              >
+                Configure with {'{{ provider }}'}
               </Trans>
             </Stack>
           </Card.Heading>

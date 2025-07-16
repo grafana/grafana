@@ -32,8 +32,9 @@ export function ConnectRepositoryButton({ items, showDropdown = false }: Props) 
         <Trans
           i18nKey="provisioning.connect-repository-button.repository-limit-info-alert"
           values={{ count: state.repoCount }}
-          defaults={'Repository limit reached ({{count}})'}
-        />
+        >
+          Repository limit reached ({'{{count}}'})
+        </Trans>
       </Alert>
     );
   }
@@ -49,11 +50,12 @@ export function ConnectRepositoryButton({ items, showDropdown = false }: Props) 
               const config = getRepositoryTypeConfig(type);
               const icon = config?.icon || (type === 'local' ? 'file-alt' : 'code-branch');
               const label = config
-                ? t(`provisioning.repository-types.configure-with-${type}`, `Configure with ${config.label}`)
-                : t(
-                    `provisioning.connect-repository-button.configure-with-${type}`,
-                    `Configure with ${type.charAt(0).toUpperCase() + type.slice(1)}`
-                  );
+                ? t('provisioning.repository-types.configure-with-provider', 'Configure with {{provider}}', {
+                    provider: config.label,
+                  })
+                : t('provisioning.connect-repository-button.configure-with-provider', 'Configure with {{provider}}', {
+                    provider: type.charAt(0).toUpperCase() + type.slice(1),
+                  });
 
               return (
                 <Menu.Item key={type} icon={icon} label={label} onClick={() => navigate(`${CONNECT_URL}/${type}`)} />

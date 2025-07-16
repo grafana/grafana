@@ -10424,6 +10424,22 @@
     "banner": {
       "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
     },
+    "bitbucket": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "branch-required": "Branch is required",
+      "path-description": "Optional subdirectory path within the repository",
+      "path-label": "Path",
+      "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "pr-workflow-label": "Enable pull request option when saving",
+      "token-description": "Bitbucket App Password with repository permissions",
+      "token-label": "App Password",
+      "token-required": "Bitbucket token is required",
+      "url-description": "The Bitbucket repository URL",
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid Bitbucket repository URL",
+      "url-required": "Repository URL is required"
+    },
     "bootstrap-step": {
       "description-clear-repository-connection": "Add a clear name for this repository connection",
       "empty": "Empty",
@@ -10490,24 +10506,8 @@
       "configure": "Configure",
       "configure-file": "Configure file provisioning",
       "configure-git-sync": "Configure Git Sync",
+      "configure-with-provider": "Configure with {{provider}}",
       "repository-limit-info-alert": "Repository limit reached ({{count}})"
-    },
-    "connect-step": {
-      "description-branch": "Branch to use for the GitHub repository",
-      "description-github-path": "This is the path to a subdirectory in your GitHub repository where dashboards will be stored and provisioned from",
-      "description-paste-your-git-hub-personal-access-token": "Paste your GitHub personal access token",
-      "description-repository-url": "Paste the URL of your GitHub repository",
-      "error-field-required": "This field is required.",
-      "error-invalid-github-url": "Please enter a valid GitHub repository URL",
-      "label-access-token": "GitHub access token",
-      "label-branch": "Branch name",
-      "label-local-path": "Local path",
-      "label-path": "Path to subdirectory in repository",
-      "label-repository-url": "GitHub repository URL",
-      "placeholder-branch": "main",
-      "placeholder-github-token": "github_pat_yourTokenHere1234567890abcdEFGHijklMNOP",
-      "placeholder-github-url": "https://github.com/username/repo",
-      "placeholder-local-path": "/path/to/repo"
     },
     "delete-repository-button": {
       "button-delete": "Delete",
@@ -10571,18 +10571,17 @@
     },
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
+      "description-generate-dashboard-previews": "Create preview links for pull requests",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-often-shall-instance-updates-git-hub": "How often shall the instance pull updates from GitHub?",
-      "description-pr-enable-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "description-preview-requirements": "(requires <2>image rendering</2> and public access enabled)",
       "description-read-only": "Resources can't be modified through Grafana.",
+      "description-sync-interval": "How often to sync changes from the repository",
       "description-webhooks-enable": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
-      "label-pr-workflow": "Enable pull request option when saving",
+      "label-generate-dashboard-previews": "Generate Dashboard Previews",
       "label-read-only": "Read only",
-      "label-update-instance-interval-seconds": "Update instance interval (seconds)",
-      "placeholder": "60",
-      "text-setup-later": "You can always set this up later",
-      "title-enhance-github": "Enhance your GitHub experience"
+      "label-sync-interval": "Sync Interval (seconds)"
     },
     "folder-repository-list": {
       "no-results-matching-your-query": "No results matching your query",
@@ -10613,6 +10612,54 @@
       "header": "Provisioning",
       "subtitle-provisioning-feature": "View and manage your provisioning connections"
     },
+    "git": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "branch-required": "Branch is required",
+      "path-description": "Optional subdirectory path within the repository",
+      "path-label": "Path",
+      "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "pr-workflow-label": "Enable pull request option when saving",
+      "token-description": "Git repository access token or password",
+      "token-label": "Access Token",
+      "token-required": "Git token is required",
+      "url-description": "The Git repository URL",
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid Git repository URL",
+      "url-required": "Repository URL is required"
+    },
+    "github": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "branch-required": "Branch is required",
+      "path-description": "Optional subdirectory path within the repository",
+      "path-label": "Path",
+      "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
+      "pr-workflow-label": "Enable pull request option when saving",
+      "token-description": "GitHub Personal Access Token with repository permissions",
+      "token-label": "Personal Access Token",
+      "token-required": "GitHub token is required",
+      "url-description": "The GitHub repository URL",
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid GitHub repository URL",
+      "url-required": "Repository URL is required"
+    },
+    "gitlab": {
+      "branch-description": "The branch to use for provisioning",
+      "branch-label": "Branch",
+      "branch-required": "Branch is required",
+      "path-description": "Optional subdirectory path within the repository",
+      "path-label": "Path",
+      "pr-workflow-description": "Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.",
+      "pr-workflow-label": "Enable merge request option when saving",
+      "token-description": "GitLab Project Access Token with repository permissions",
+      "token-label": "Project Access Token",
+      "token-required": "GitLab token is required",
+      "url-description": "The GitLab repository URL",
+      "url-label": "Repository URL",
+      "url-pattern": "Must be a valid GitLab repository URL",
+      "url-required": "Repository URL is required"
+    },
     "history-view": {
       "not-found": "Not found"
     },
@@ -10642,6 +10689,11 @@
         "title-job-completed-successfully": "Job completed successfully"
       },
       "summary": "Summary"
+    },
+    "local": {
+      "path-description": "Local file system path to the repository",
+      "path-label": "Repository Path",
+      "path-required": "Repository path is required"
     },
     "mode-options": {
       "folder": {
@@ -10731,6 +10783,21 @@
       "title": "Repository Status",
       "title-legacy-storage": "Legacy Storage",
       "title-queued-for-deletion": "Queued for deletion"
+    },
+    "repository-type-cards": {
+      "configure-file": "Configure file provisioning",
+      "configure-with-provider": "Configure with {{ provider }}"
+    },
+    "repository-types": {
+      "bitbucket": "Bitbucket",
+      "bitbucket-description": "Connect to Bitbucket repositories",
+      "configure-with-provider": "Configure with {{provider}}",
+      "github": "GitHub",
+      "github-description": "Connect to GitHub repositories",
+      "gitlab": "GitLab",
+      "gitlab-description": "Connect to GitLab repositories",
+      "pure-git": "Pure Git",
+      "pure-git-description": "Connect to any Git repository"
     },
     "resource-view": {
       "base": "Base",
