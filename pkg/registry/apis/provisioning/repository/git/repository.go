@@ -770,10 +770,13 @@ func (r *gitRepository) OnUpdate(_ context.Context) ([]map[string]interface{}, e
 }
 
 func (r *gitRepository) OnDelete(ctx context.Context) error {
+	logger := logging.FromContext(ctx)
 	secretName := r.config.Name + gitTokenSecretSuffix
 	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
 		return fmt.Errorf("delete git token secret: %w", err)
 	}
+
+	logger.Info("Deleted git token secret", "secretName", secretName)
 
 	return nil
 }

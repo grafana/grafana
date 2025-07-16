@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -81,19 +82,27 @@ func (s *repositorySecrets) Encrypt(ctx context.Context, r *provisioning.Reposit
 //
 // This dual-path logic is intended to support migration between secret backends.
 func (s *repositorySecrets) Decrypt(ctx context.Context, r *provisioning.Repository, nameOrValue string) ([]byte, error) {
+	logger := logging.FromContext(ctx)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagProvisioningSecretsService) {
 		data, err := s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
 		if err == nil && len(data) > 0 {
 			return data, nil
 		}
 
+		logger.Info("Decryption failed with new secrets service, falling back to legacy", "error", err)
 		// If the new service fails or returns empty bytes, fall back to legacy
 		fallbackData, fallbackErr := s.legacySecrets.Decrypt(ctx, []byte(nameOrValue))
 		if fallbackErr != nil || len(fallbackData) == 0 {
+			logger.Debug("Fallback decryption failed with legacy secrets service", "error", fallbackErr)
 			// Return original error if fallback fails or returns empty bytes
 			if err != nil {
 				return nil, err
 			}
+
+			if fallbackErr != nil {
+				return nil, fallbackErr
+			}
+
 			return nil, errors.New("decryption returned empty data")
 		}
 		return fallbackData, nil
@@ -105,15 +114,24 @@ func (s *repositorySecrets) Decrypt(ctx context.Context, r *provisioning.Reposit
 		return data, nil
 	}
 
+	logger.Info("Decryption failed with legacy secrets service, falling back to new", "error", err)
+
 	// If legacy service fails or returns empty bytes, fall back to new service
 	fallbackData, fallbackErr := s.secretsSvc.Decrypt(ctx, r.GetNamespace(), nameOrValue)
 	if fallbackErr != nil || len(fallbackData) == 0 {
+		logger.Debug("Fallback decryption failed with new secrets service", "error", fallbackErr)
 		// Return original error if fallback fails or returns empty bytes
 		if err != nil {
 			return nil, err
 		}
+
+		if fallbackErr != nil {
+			return nil, fallbackErr
+		}
+
 		return nil, errors.New("decryption returned empty data")
 	}
+
 	return fallbackData, nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -270,10 +271,13 @@ func (r *githubRepository) OnUpdate(_ context.Context) ([]map[string]interface{}
 }
 
 func (r *githubRepository) OnDelete(ctx context.Context) error {
+	logger := logging.FromContext(ctx)
 	secretName := r.config.Name + githubTokenSecretSuffix
 	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
 		return fmt.Errorf("delete github token secret: %w", err)
 	}
+
+	logger.Info("Deleted github token secret", "secretName", secretName)
 
 	return nil
 }

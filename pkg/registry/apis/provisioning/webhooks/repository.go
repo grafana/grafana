@@ -272,6 +272,7 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (pgh.Webhoo
 }
 
 func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
+	logger := logging.FromContext(ctx)
 	if r.config.Status.Webhook == nil {
 		return fmt.Errorf("webhook not found")
 	}
@@ -282,7 +283,7 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
 
-	logging.FromContext(ctx).Info("webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
+	logger.Info("webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
 	return nil
 }
 
@@ -335,7 +336,7 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 }
 
 func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
-	ctx, _ = r.logger(ctx, "")
+	ctx, logger := r.logger(ctx, "")
 	if err := r.GithubRepository.OnDelete(ctx); err != nil {
 		return fmt.Errorf("on delete from basic github repository: %w", err)
 	}
@@ -348,6 +349,8 @@ func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
 	if err := r.secrets.Delete(ctx, r.config, secretName); err != nil {
 		return fmt.Errorf("delete webhook secret: %w", err)
 	}
+
+	logger.Info("Deleted webhook secret", "secretName", secretName)
 
 	return r.deleteWebhook(ctx)
 }
