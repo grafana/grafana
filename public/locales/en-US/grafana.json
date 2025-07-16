@@ -9671,7 +9671,7 @@
     "invite-user": {
       "invite-button": "Invite",
       "invite-new-member-button": "Invite new member",
-      "invite-tooltip": "Invite new member"
+      "invite-tooltip": "Invite user"
     },
     "item": {
       "add-bookmark": "Add to Bookmarks",
