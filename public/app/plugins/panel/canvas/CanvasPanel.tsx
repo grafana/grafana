@@ -4,11 +4,10 @@ import { ReplaySubject, Subscription } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { PanelContext, PanelContextRoot, TooltipDisplayMode } from '@grafana/ui';
+import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas/frame';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { SetBackground } from './components/SetBackground';
@@ -63,23 +62,9 @@ export class CanvasPanel extends Component<Props, State> {
       moveableAction: false,
     };
 
-    // TODO: Will need to update this approach for dashboard scenes
-    // migration (new dashboard edit experience)
-    const dashboard = getDashboardSrv().getCurrent();
-    const allowEditing = this.props.options.inlineEditing && dashboard?.editable;
-
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
-    this.scene = new Scene(
-      this.props.options.root,
-      allowEditing,
-      this.props.options.showAdvancedTypes,
-      this.props.options.panZoom,
-      this.props.options.infinitePan,
-      this.props.options.tooltip?.mode ?? TooltipDisplayMode.Single,
-      this.onUpdateScene,
-      this
-    );
+    this.scene = new Scene(this.props.options, this.onUpdateScene, this);
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
     this.scene.inlineEditingCallback = this.openInlineEdit;
@@ -255,14 +240,7 @@ export class CanvasPanel extends Component<Props, State> {
       }
 
       this.needsReload = false;
-      this.scene.load(
-        nextProps.options.root,
-        nextProps.options.inlineEditing,
-        nextProps.options.showAdvancedTypes,
-        nextProps.options.panZoom,
-        nextProps.options.infinitePan,
-        nextProps.options.tooltip?.mode
-      );
+      this.scene.load(nextProps.options, nextProps.options.inlineEditing);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;

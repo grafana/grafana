@@ -28,11 +28,13 @@ import {
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/components/CanvasContextMenu';
 import { CanvasTooltip } from 'app/plugins/panel/canvas/components/CanvasTooltip';
 import { Connections } from 'app/plugins/panel/canvas/components/connections/Connections';
+import { Options } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { AnchorPoint, CanvasTooltipPayload } from 'app/plugins/panel/canvas/types';
 import { getTransformInstance } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
+import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { CanvasFrameOptions } from '../frame';
 import { DEFAULT_CANVAS_ELEMENT_CONFIG } from '../registry';
 
@@ -108,16 +110,16 @@ export class Scene {
   transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
 
   constructor(
-    cfg: CanvasFrameOptions,
-    enableEditing: boolean,
-    showAdvancedTypes: boolean,
-    panZoom: boolean,
-    infinitePan: boolean,
-    tooltipMode: TooltipDisplayMode,
+    options: Options,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan, tooltipMode);
+    // TODO: Will need to update this approach for dashboard scenes
+    // migration (new dashboard edit experience)
+    const dashboard = getDashboardSrv().getCurrent();
+    const enableEditing = options.inlineEditing && dashboard?.editable;
+
+    this.root = this.load(options, enableEditing);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -129,7 +131,6 @@ export class Scene {
     this.panel = panel;
     this.connections = new Connections(this);
     this.transformComponentRef = createRef();
-    this.tooltipMode = tooltipMode;
   }
 
   getNextElementName = (isFrame = false) => {
@@ -151,16 +152,12 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(
-    cfg: CanvasFrameOptions,
-    enableEditing: boolean,
-    showAdvancedTypes: boolean,
-    panZoom: boolean,
-    infinitePan: boolean,
-    tooltipMode?: TooltipDisplayMode
-  ) {
+  load(options: Options, enableEditing: boolean) {
+    const { root, showAdvancedTypes, panZoom, infinitePan, tooltip } = options;
+    const tooltipMode = tooltip?.mode ?? TooltipDisplayMode.Single;
+
     this.root = new RootElement(
-      cfg ?? {
+      root ?? {
         type: 'frame',
         elements: [DEFAULT_CANVAS_ELEMENT_CONFIG],
       },
