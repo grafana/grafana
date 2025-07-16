@@ -159,7 +159,7 @@ func TestQueryAPI(t *testing.T) {
 					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
 					Tracer:   tracing.InitializeTracerForTest(),
 				},
-				clientSupplier: mockClientSupplier{
+				clientSupplier: mockClient{
 					stubbedFrame: tc.stubbedFrame,
 				},
 				tracer:                 tracing.InitializeTracerForTest(),
@@ -246,26 +246,15 @@ func (m *mockResponder) Error(err error) {
 	m.err = err
 }
 
-type mockClientSupplier struct {
+type mockClient struct {
 	stubbedFrame *data.Frame
 }
 
-func (m mockClientSupplier) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
+func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef, headers map[string]string, instanceConfig clientapi.InstanceConfigurationSettings) (clientapi.QueryDataClient, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
 	}
 	return mclient, nil
-}
-
-func (m mockClientSupplier) GetInstanceConfigurationSettings(ctx context.Context) (clientapi.InstanceConfigurationSettings, error) {
-	return clientapi.InstanceConfigurationSettings{
-		ExpressionsEnabled: true,
-		FeatureToggles:     featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
-	}, nil
-}
-
-type mockClient struct {
-	stubbedFrame *data.Frame
 }
 
 func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest) (*backend.QueryDataResponse, error) {
