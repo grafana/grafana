@@ -191,60 +191,6 @@ func (s *secureValueMetadataStorage) getLatestVersion(ctx context.Context, names
 	return &version, nil
 }
 
-// TODO: can this method + queries be removed?
-func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	start := time.Now()
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.ReadForDecrypt", trace.WithAttributes(
-		attribute.String("name", name),
-		attribute.String("namespace", namespace.String()),
-	))
-	defer span.End()
-
-	req := readSecureValueForDecrypt{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-	}
-
-	query, err := sqltemplate.Execute(sqlSecureValueReadForDecrypt, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueReadForDecrypt.Name(), err)
-	}
-
-	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("reading row: %w", err)
-	}
-	defer func() { _ = res.Close() }()
-
-	var row secureValueForDecrypt
-	if !res.Next() {
-		return nil, contracts.ErrSecureValueNotFound
-	}
-	if err := res.Scan(
-		&row.Keeper, &row.Decrypters,
-		&row.Ref, &row.ExternalID, &row.Active); err != nil {
-		return nil, fmt.Errorf("failed to scan secure value row: %w", err)
-	}
-
-	if err := res.Err(); err != nil {
-		return nil, fmt.Errorf("read rows error: %w", err)
-	}
-
-	if !row.Active {
-		return nil, fmt.Errorf("bug: read an inactive version: row=%+v", row)
-	}
-
-	secureValue, err := row.toDecrypt()
-	if err != nil {
-		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
-	}
-
-	s.metrics.SecureValueGetForDecryptDuration.Observe(time.Since(start).Seconds())
-
-	return secureValue, nil
-}
-
 func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
 	req := readSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
