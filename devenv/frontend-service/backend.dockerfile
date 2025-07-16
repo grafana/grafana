@@ -31,7 +31,6 @@ COPY apps/playlist/go.* apps/playlist/
 COPY apps/secret/go.* apps/secret/
 COPY pkg/aggregator/go.* pkg/aggregator/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
-COPY pkg/apis/secret/go.* pkg/apis/secret/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
