@@ -25,10 +25,8 @@ LEFT OUTER JOIN "grafana"."dashboard_provisioning" as provisioning ON dashboard.
 LEFT OUTER JOIN "grafana"."user" as created_user ON dashboard.created_by = created_user.id
 LEFT OUTER JOIN "grafana"."user" as updated_user ON COALESCE(dashboard_version.created_by, dashboard.updated_by) = updated_user.id
 WHERE dashboard.is_folder = FALSE
-  AND dashboard.org_id = 2
-  AND dashboard.uid = 'UUU'
-  AND dashboard_version.version = 3
+  AND dashboard.org_id = 1
   ORDER BY
-    COALESCE(dashboard_version.created, dashboard.updated) DESC,
-    COALESCE(dashboard_version.version, dashboard.version) DESC,
+    COALESCE(dashboard_version.created, dashboard.updated) ASC,
+    COALESCE(dashboard_version.version, dashboard.version) ASC,
     dashboard.uid ASC

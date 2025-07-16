@@ -13,7 +13,7 @@ SELECT
   created_user.uid         as created_by,
   dashboard.created_by     as created_by_id,
   {{ if .Query.UseHistoryTable }}
-  {{ if .Query.GetHistory }}
+  {{ if and .Query.GetHistory (not .Query.AllowFallback) }}
   dashboard_version.created as updated,
   updated_user.uid       as updated_by,
   dashboard_version.created_by as updated_by_id,
@@ -45,7 +45,7 @@ LEFT OUTER JOIN {{ .Ident .VersionTable }} as dashboard_version ON dashboard.id 
 {{ end }}
 LEFT OUTER JOIN {{ .Ident .ProvisioningTable }} as provisioning ON dashboard.id = provisioning.dashboard_id
 LEFT OUTER JOIN {{ .Ident .UserTable }} as created_user ON dashboard.created_by = created_user.id
-LEFT OUTER JOIN {{ .Ident .UserTable }} as updated_user ON {{ if .Query.UseHistoryTable }}dashboard_version.created_by = updated_user.id{{ else }}dashboard.updated_by = updated_user.id{{ end }}
+LEFT OUTER JOIN {{ .Ident .UserTable }} as updated_user ON {{ if .Query.UseHistoryTable }}{{ if and .Query.GetHistory (not .Query.AllowFallback) }}dashboard_version.created_by = updated_user.id{{ else }}COALESCE(dashboard_version.created_by, dashboard.updated_by) = updated_user.id{{ end }}{{ else }}dashboard.updated_by = updated_user.id{{ end }}
 WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   AND dashboard.org_id = {{ .Arg .Query.OrgID }}
   {{ if .Query.UseHistoryTable }}
@@ -55,17 +55,17 @@ WHERE dashboard.is_folder = {{ .Arg .Query.GetFolders }}
   {{ if .Query.Version }}
   AND dashboard_version.version = {{ .Arg .Query.Version }}
   {{ else if .Query.LastID }}
-  {{ if .Query.GetHistory }}
+  {{ if and .Query.GetHistory (not .Query.AllowFallback) }}
   AND dashboard_version.version < {{ .Arg .Query.LastID }}
   {{ else }}
   AND COALESCE(dashboard_version.version, dashboard.version) < {{ .Arg .Query.LastID }}
   {{ end }}
   {{ end }}
-  {{ if .Query.GetHistory }}
+  {{ if and .Query.GetHistory (not .Query.AllowFallback) }}
   AND dashboard_version.id IS NOT NULL
   {{ end }}
   ORDER BY
-    {{ if .Query.GetHistory }}
+    {{ if and .Query.GetHistory (not .Query.AllowFallback) }}
     dashboard_version.created {{ .Query.Order }},
     dashboard_version.version {{ .Query.Order }},
     {{ else }}

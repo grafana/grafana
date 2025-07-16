@@ -129,26 +129,26 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "", meta.GetAnnotations()[utils.AnnoKeySourceChecksum]) // hash is not used on plugins
 	})
 
-	t.Run("Should fallback to dashboard table data when using history table but no version entries exist", func(t *testing.T) {
-		// When using history table with COALESCE, if dashboard_version fields are NULL,
-		// the SQL query automatically returns dashboard table values instead.
-		// We simulate this by providing the dashboard table values in the result.
+	t.Run("Migration scenario should use COALESCE logic with AllowFallback=true", func(t *testing.T) {
+		// This specifically tests the migration use case where GetHistory=true but AllowFallback=true
+		// allows the query to use COALESCE logic to fall back to dashboard table data when
+		// dashboard_version entries are missing.
 
-		fallbackTimestamp := timestamp.Add(time.Hour) // Different timestamp for fallback
-		fallbackVersion := int64(3)
-		fallbackUpdatedUser := "fallback_updater"
-		fallbackMessage := "" // Empty message (COALESCE returns '' when dashboard_version.message is NULL)
-		fallbackData := []byte(`{"fallback": "data"}`)
-		fallbackAPIVersion := "v0alpha1"
+		migrationTimestamp := timestamp.Add(2 * time.Hour) // Migration scenario timestamp
+		migrationVersion := int64(5)
+		migrationUpdatedUser := "migration_updater"
+		migrationMessage := "" // Empty message for migration (COALESCE behavior)
+		migrationData := []byte(`{"migration": "data", "title": "Migrated Dashboard"}`)
+		migrationAPIVersion := "v0alpha1"
 
-		// The SQL query's COALESCE functions would return dashboard table values
-		// when dashboard_version values are NULL, so we simulate that here
+		// In migration scenario, COALESCE functions return dashboard table values
+		// when dashboard_version values are NULL, ensuring all dashboards are migrated
 		rows := sqlmock.NewRows(columns).AddRow(
 			1, id, title, folderUID, nil, "", // basic dashboard fields
 			"", "", "", 0, // origin fields
 			timestamp, createdUser, 0, // created fields
-			// These are the COALESCED values (dashboard table data when version data is NULL)
-			fallbackTimestamp, fallbackUpdatedUser, 0, fallbackVersion, fallbackMessage, fallbackData, fallbackAPIVersion,
+			// These represent COALESCED values from dashboard table (not version table)
+			migrationTimestamp, migrationUpdatedUser, 0, migrationVersion, migrationMessage, migrationData, migrationAPIVersion,
 		)
 
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
@@ -157,32 +157,35 @@ func TestScanRow(t *testing.T) {
 		defer resultRows.Close() // nolint:errcheck
 		resultRows.Next()
 
-		// Test with history=true to verify it works with the COALESCED values
+		// Test with history=true (migration scenario) - should work with COALESCED values
 		row, err := store.scanRow(resultRows, true)
 		require.NoError(t, err)
 		require.NotNil(t, row)
 
-		// Verify that the COALESCED dashboard table data was used correctly
+		// Verify migration scenario works correctly with fallback data
 		require.Equal(t, title, row.Dash.Name)
-		require.Equal(t, fallbackVersion, row.RV) // Should use dashboard table version
+		require.Equal(t, migrationVersion, row.RV) // Should use COALESCEd dashboard table version
 		require.Equal(t, common.Unstructured{
-			Object: map[string]interface{}{"fallback": "data"},
-		}, row.Dash.Spec) // Should use dashboard table data
+			Object: map[string]interface{}{
+				"migration": "data",
+				"title":     "Migrated Dashboard",
+			},
+		}, row.Dash.Spec) // Should use COALESCEd dashboard table data
 		require.Equal(t, "default", row.Dash.Namespace)
 
-		// Token should use the version when in history mode
-		require.Equal(t, &continueToken{orgId: int64(1), id: fallbackVersion}, row.token)
+		// Token should use the version in history mode (migration scenario)
+		require.Equal(t, &continueToken{orgId: int64(1), id: migrationVersion}, row.token)
 
 		meta, err := utils.MetaAccessor(row.Dash)
 		require.NoError(t, err)
-		require.Equal(t, id, meta.GetDeprecatedInternalID())               // nolint:staticcheck
-		require.Equal(t, fallbackVersion, meta.GetGeneration())            // Should use dashboard table version
-		require.Equal(t, k8sTimestamp, meta.GetCreationTimestamp())        // Created timestamp stays the same
-		require.Equal(t, "user:"+createdUser, meta.GetCreatedBy())         // Created by stays the same
-		require.Equal(t, "user:"+fallbackUpdatedUser, meta.GetUpdatedBy()) // Should use dashboard table updated user
-		require.Equal(t, "", meta.GetMessage())                            // Message should be empty (COALESCE returns '')
+		require.Equal(t, id, meta.GetDeprecatedInternalID())                // nolint:staticcheck
+		require.Equal(t, migrationVersion, meta.GetGeneration())            // Should use COALESCEd version
+		require.Equal(t, k8sTimestamp, meta.GetCreationTimestamp())         // Created timestamp unchanged
+		require.Equal(t, "user:"+createdUser, meta.GetCreatedBy())          // Original creator preserved
+		require.Equal(t, "user:"+migrationUpdatedUser, meta.GetUpdatedBy()) // COALESCEd updater
+		require.Equal(t, migrationMessage, meta.GetMessage())               // Empty message from COALESCE
 		require.Equal(t, folderUID, meta.GetFolder())
-		require.Equal(t, "dashboard.grafana.app/"+fallbackAPIVersion, row.Dash.APIVersion) // Should use dashboard table API version
+		require.Equal(t, "dashboard.grafana.app/"+migrationAPIVersion, row.Dash.APIVersion)
 	})
 }
 
