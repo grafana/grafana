@@ -162,7 +162,7 @@ export const language = {
   digits: /\d+(_+\d+)*/,
   octaldigits: /[0-7]+(_+[0-7]+)*/,
   binarydigits: /[0-1]+(_+[0-1]+)*/,
-  hexdigits: /[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
+  hexdigits: /[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
   integersuffix: /(ll|LL|u|U|l|L)?(ll|LL|u|U|l|L)?/,
   floatsuffix: /[fFlL]?/,
   // The main tokenizer for our languages
