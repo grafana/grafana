@@ -6,12 +6,15 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { DashboardModel } from '../../../../dashboard/state/DashboardModel';
+import { useIsLLMPluginEnabled } from '../../hooks/llmUtils';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
+import { GenAIImproveAnnotationsButton } from '../rules/AIGen/GenAIImproveAnnotationsButton';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
@@ -23,6 +26,10 @@ import { useDashboardQuery } from './useDashboardQuery';
 const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
+  const { value: canRenderGenAIImproveButton } = useIsLLMPluginEnabled();
+
+  // Combine LLM plugin check with feature toggle check
+  const canShowGenAIImproveButton = canRenderGenAIImproveButton && config.featureToggles.alertingAIImproveAlertRules;
 
   const {
     control,
@@ -173,6 +180,7 @@ const AnnotationsStep = () => {
                       className={cx(styles.flexRowItemMargin, styles.field)}
                       invalid={!!errors.annotations?.[index]?.value?.message}
                       error={errors.annotations?.[index]?.value?.message}
+                      noMargin
                     >
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
@@ -228,6 +236,7 @@ const AnnotationsStep = () => {
                 <Trans i18nKey="alerting.annotations-step.link-dashboard-and-panel">Link dashboard and panel</Trans>
               </Button>
             )}
+            {canShowGenAIImproveButton && <GenAIImproveAnnotationsButton />}
           </div>
         </Stack>
         {showPanelSelector && (
