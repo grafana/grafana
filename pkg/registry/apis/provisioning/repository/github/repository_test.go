@@ -17,6 +17,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 func TestNewGitHub(t *testing.T) {
@@ -80,6 +81,8 @@ func TestNewGitHub(t *testing.T) {
 
 			gitRepo := git.NewMockGitRepository(t)
 
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+
 			// Call the function under test
 			repo, err := NewGitHub(
 				context.Background(),
@@ -87,6 +90,7 @@ func TestNewGitHub(t *testing.T) {
 				gitRepo,
 				factory,
 				tt.token,
+				mockSecrets,
 			)
 
 			// Check results
@@ -921,6 +925,40 @@ func TestGitHubRepositoryDelegation(t *testing.T) {
 		mockGitRepo.AssertExpectations(t)
 	})
 
+	t.Run("ListRefs delegates to git repo but adds ref URL", func(t *testing.T) {
+		mockGitRepo := git.NewMockGitRepository(t)
+		// The git repo returns refs without RefURL
+		gitRepoRefs := []provisioning.RefItem{
+			{Name: "main", Hash: "abc123def456"},
+			{Name: "feature", Hash: "def456ghi789"},
+		}
+		mockGitRepo.On("ListRefs", ctx).Return(gitRepoRefs, nil)
+
+		repo := &githubRepository{
+			config:  config,
+			gitRepo: mockGitRepo,
+		}
+
+		result, err := repo.ListRefs(ctx)
+		require.NoError(t, err)
+
+		// The returned refs should have RefURL set
+		expectedRefs := []provisioning.RefItem{
+			{
+				Name:   "main",
+				Hash:   "abc123def456",
+				RefURL: "https://github.com/grafana/grafana/tree/main",
+			},
+			{
+				Name:   "feature",
+				Hash:   "def456ghi789",
+				RefURL: "https://github.com/grafana/grafana/tree/feature",
+			},
+		}
+		assert.Equal(t, expectedRefs, result)
+		mockGitRepo.AssertExpectations(t)
+	})
+
 	t.Run("CompareFiles delegates to git repo", func(t *testing.T) {
 		mockGitRepo := git.NewMockGitRepository(t)
 		expectedChanges := []repository.VersionedFileChange{
@@ -1011,4 +1049,80 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 		result := repo.Client()
 		assert.Equal(t, mockClient, result)
 	})
+}
+
+func TestGitHubRepository_OnDelete(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(*secrets.MockRepositorySecrets)
+		config        *provisioning.Repository
+		expectedError string
+	}{
+		{
+			name: "successful secret deletion",
+			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Delete(
+					context.Background(),
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+					},
+					"test-repo"+githubTokenSecretSuffix,
+				).Return(nil)
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+		},
+		{
+			name: "secret deletion error",
+			setupMock: func(mockSecrets *secrets.MockRepositorySecrets) {
+				mockSecrets.EXPECT().Delete(
+					context.Background(),
+					&provisioning.Repository{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "default",
+						},
+					},
+					"test-repo"+githubTokenSecretSuffix,
+				).Return(errors.New("failed to delete secret"))
+			},
+			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+			},
+			expectedError: "delete github token secret: failed to delete secret",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockSecrets := secrets.NewMockRepositorySecrets(t)
+			tt.setupMock(mockSecrets)
+
+			githubRepo := &githubRepository{
+				config:  tt.config,
+				secrets: mockSecrets,
+			}
+
+			err := githubRepo.OnDelete(context.Background())
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			mockSecrets.AssertExpectations(t)
+		})
+	}
 }

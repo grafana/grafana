@@ -110,7 +110,7 @@ export class LogListModel implements LogRowModel {
   get body(): string {
     if (this._body === undefined) {
       try {
-        const parsed = stringify(parse(this.raw), undefined, 2);
+        const parsed = stringify(parse(this.raw), undefined, this._wrapLogMessage ? 2 : 1);
         if (parsed) {
           this.raw = parsed;
         }

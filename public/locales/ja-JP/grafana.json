@@ -3130,6 +3130,16 @@
       "info-box-content-2": "詳細については、<2>注釈のドキュメント</2>をご覧ください。",
       "title": "カスタム注釈クエリがまだ追加されていません"
     },
+    "get-annotation-event-names": {
+      "help": {
+        "annotation-treated-as-range": "",
+        "results-split-on-comma": ""
+      },
+      "placeholder": {
+        "text-or-the-first-field": "",
+        "time-or-the-first-field": ""
+      }
+    },
     "standard-annotation-query-editor": {
       "events-found": "{{numEvents}}件のイベント（{{numFields}}フィールドから）",
       "no-events-found": "イベントが見つかりません",
@@ -3205,6 +3215,9 @@
       "define-allowed-teams-ids-label": "許可されたチームIDを定義する",
       "display-name-description": "ログインページに「...でサインイン」と表示されます。複数のIDプロバイダーまたはSSOプロトコルを使用する場合に役立ちます。",
       "display-name-label": "表示名",
+      "domain-hint-description": "",
+      "domain-hint-label": "",
+      "domain-hint-valid-domain": "",
       "email-attribute-name-description": "OAuth2 IDトークンの属性マップ内でユーザーメール検索に使用するキーの名前。",
       "email-attribute-name-label": "メール属性名",
       "email-attribute-path-description": "ユーザー情報からユーザーメールを検索する際に使用するJMESPath式。",
@@ -4586,6 +4599,14 @@
     "errors": {
       "failed-to-load": "ダッシュボードの読み込みに失敗しました"
     },
+    "export": {
+      "button": {
+        "label": ""
+      },
+      "menu": {
+        "label": ""
+      }
+    },
     "fetch-dashboard": {
       "message": {
         "failed-to-fetch-dashboard": "ダッシュボードの取得に失敗しました"
@@ -4656,6 +4677,18 @@
         "alert": "アラート",
         "query": "クエリ",
         "transform-data": "データを変換"
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
       }
     },
     "get-panel-frame-category": {
@@ -5218,7 +5251,8 @@
     "transformation-picker-ng": {
       "placeholder-search-for-transformation": "変換を検索",
       "show-images": "画像を表示",
-      "title-add-another-transformation": "別の変換を追加"
+      "title-add-another-transformation": "別の変換を追加",
+      "view-all": ""
     },
     "un-theme-transformations-editor": {
       "body-delete-all-transformations": ""
@@ -5562,6 +5596,40 @@
         "row-height-options": "行の高さオプション"
       }
     },
+    "get-editable-variables": {
+      "description": {
+        "add-keyvalue-filters-on-the-fly": "",
+        "dynamically-switch-source-multiple-panels": "",
+        "group": "",
+        "hidden-constant-variable": "",
+        "users-enter-arbitrary-strings-textbox": "",
+        "values-are-static-and-defined-manually": "",
+        "values-fetched-source-query": "",
+        "values-timespans": ""
+      },
+      "name": {
+        "ad-hoc-filters": "",
+        "constant": "",
+        "custom": "",
+        "data-source": "",
+        "group-by": "",
+        "interval": "",
+        "query": "",
+        "textbox": ""
+      }
+    },
+    "get-panel-filters": {
+      "description": {
+        "annotation-following-panels": "",
+        "annotation-panels-support-annotations": "",
+        "annotations-explicitly-listed-panels": ""
+      },
+      "label": {
+        "all-panels": "",
+        "all-panels-except": "",
+        "selected-panels": ""
+      }
+    },
     "get-panel-frame-options": {
       "descriptor": {
         "title": {
@@ -5760,10 +5828,13 @@
       "description-examples": "名前付きキャプチャグループを使用すると、表示テキストと値を分けることができます（<1>例を参照</1>）。",
       "description-optional": "シリーズ名やメトリックノードセグメントの一部を抽出したい場合の任意設定です。",
       "label-data-source": "データソース",
+      "label-static-options-sort": "",
       "label-target-data-source": "ターゲットデータソース",
+      "label-use-static-options": "",
       "name-regex": "",
       "query-options": "クエリオプション",
-      "selection-options": "選択オプション"
+      "selection-options": "選択オプション",
+      "static-options-legend": ""
     },
     "resource-export": {
       "label": {
@@ -5794,7 +5865,8 @@
       "label-folder": "フォルダ",
       "render-footer": {
         "title-failed-to-save-dashboard": "ダッシュボードを保存できませんでした"
-      }
+      },
+      "required": ""
     },
     "save-dashboard-drawer": {
       "tabs": {
@@ -8001,6 +8073,7 @@
     },
     "tags-input": {
       "add": "追加",
+      "placeholder-new-tag": "",
       "remove": "タグ、{{name}}を削除"
     },
     "time-sync-button": {
@@ -8550,9 +8623,7 @@
     "share-panel": {
       "config-description": "次のカスタマイズ設定を使用して、組織内でパネルを共有するためのパーソナライズされた直接リンクを作成します。",
       "download-image": "画像をダウンロード",
-      "render-image": "画像を生成する",
-      "render-image-error": "パネル画像のレンダリングに失敗しました",
-      "render-image-error-description": "画像の生成中にエラーが発生しました"
+      "render-image": "画像を生成する"
     }
   },
   "live": {
@@ -8717,6 +8788,8 @@
       "links-section": "",
       "log-line-field": "",
       "log-line-section": "",
+      "move-displayed-field-down": "",
+      "move-displayed-field-up": "",
       "no-details": "",
       "pin-line": "",
       "remove-displayed-field": "",
@@ -8939,6 +9012,12 @@
       "text": {
         "import-dashboard": "ダッシュボードをインポート"
       }
+    },
+    "validation-srv": {
+      "message-name-required": "",
+      "message-reserved-name": "",
+      "message-same-name": "",
+      "message-same-name-general": ""
     }
   },
   "metric-select": {
@@ -11295,6 +11374,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "",
       "export-json-title": "JSON形式でエクスポート",
       "share-externally-title": "外部と共有",
       "share-internally-title": "内部と共有",
@@ -11330,6 +11410,19 @@
       "view-button": "JSONを表示",
       "view-button-yaml": "YAMLを表示"
     },
+    "image": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generate-button": "",
+      "generating": "",
+      "info-text": "",
+      "preview": "",
+      "preview-aria": "",
+      "preview-region": "",
+      "title": ""
+    },
     "library": {
       "info": "ライブラリパネルを作成します。"
     },
@@ -11338,7 +11431,7 @@
       "info-text": "以下のオプションでカスタマイズした、このダッシュボードまたはパネルへの直接リンクを作成します。",
       "link-url": "URLをリンク",
       "render-alert": "画像レンダラープラグインがインストールされていません",
-      "render-instructions": "パネル画像をレンダリングするには、<2>Grafana画像レンダラープラグイン</2>をインストールする必要があります。プラグインをインストールするには、Grafana管理者にお問い合わせください。",
+      "render-instructions": "",
       "rendered-image": "レンダリングされた画像への直接リンク",
       "save-alert": "ダッシュボードは保存されていません",
       "save-dashboard": "パネル画像をレンダリングするには、最初にダッシュボードを保存する必要があります。",
@@ -11406,6 +11499,12 @@
     }
   },
   "share-panel-image": {
+    "disabled-help": "",
+    "download-disabled-help": "",
+    "error-title": "",
+    "form": {
+      "label": ""
+    },
     "preview": {
       "title": "パネルプレビュー"
     },
@@ -11767,14 +11866,6 @@
     "name-show-table-footer": "",
     "name-show-table-header": "",
     "name-wrap-header-text": "",
-    "pill-cell-options-editor": {
-      "description-color-mode": "",
-      "description-fixed-color": "",
-      "description-value-mappings-info": "",
-      "label-color-mode": "",
-      "label-fixed-color": "",
-      "label-value-mappings-info": ""
-    },
     "placeholder-column-width": "",
     "placeholder-fields": ""
   },
@@ -12127,6 +12218,18 @@
       "placeholder-fields-or-number": "フィールドまたは数値"
     },
     "calculate-field-transformer-editor": {
+      "calculation-modes": {
+        "label": {
+          "binary-operation": "",
+          "reduce-row": "",
+          "row-index": "",
+          "unary-operation": ""
+        }
+      },
+      "label": {
+        "cumulative-functions": "",
+        "window-functions": ""
+      },
       "label-alias": "エイリアス",
       "label-mode": "モード",
       "label-replace-all-fields": "すべてのフィールドを置き換え"
@@ -12141,6 +12244,13 @@
     "concatenate-transformer-editor": {
       "label-label": "ラベル",
       "label-name": "名前",
+      "name-modes": {
+        "label": {
+          "copy-frame-name-to-field": "",
+          "ignore-the-frame-name": "",
+          "label-frame": ""
+        }
+      },
       "placeholder-frame": "フレーム"
     },
     "config-from-query-transformer-editor": {
@@ -12152,6 +12262,9 @@
       "aria-label-add-a-convert-field-type-transformer": "フィールドタイプ変換機能を追加",
       "aria-label-remove-convert-field-type-transformer": "フィールドタイプ変換機能を削除",
       "convert-field-type": "",
+      "description": {
+        "convert-to-specified-field-type": ""
+      },
       "label": {
         "browser": "ブラウザ",
         "utc": "UTC"
@@ -12162,7 +12275,13 @@
       "label-input-format": "入力形式",
       "label-join-with": "結合先",
       "label-set-timezone": "タイムゾーンを設定",
+      "name": {
+        "convert-field-type": ""
+      },
       "placeholder-type": "タイプ",
+      "tags": {
+        "format-field": ""
+      },
       "tooltip-explicit-separator-joining-array-values": "配列値を結合する際に明示的な区切り文字を使用",
       "tooltip-input-format": "Grafanaが日付文字列を正しく解析できるよう、入力フィールドの形式を指定してください。",
       "tooltip-specify-the-output-format": "出力形式を指定してください。",
@@ -12184,6 +12303,19 @@
       "desc": "",
       "off": "オフ"
     },
+    "editors": {
+      "concatenate-transformer-editor": {
+        "description": {
+          "combine-all-fields": ""
+        },
+        "name": {
+          "concatenate-fields": ""
+        },
+        "tags": {
+          "combine": ""
+        }
+      }
+    },
     "enum-mapping-editor": {
       "add-enum-value": "列挙値を追加",
       "generate-enum-values-from-data": "データから列挙値を生成"
@@ -12194,6 +12326,9 @@
       "remove-enum-row-tooltip-delete": "削除"
     },
     "extract-fields-transformer-editor": {
+      "description": {
+        "parse-fields-from-content": ""
+      },
       "field-name-picker-settings": {
         "placeholderText": {
           "select-field": ""
@@ -12204,6 +12339,9 @@
       "label-keep-time": "時間を保持",
       "label-replace-all-fields": "すべてのフィールドを置き換え",
       "label-source": "送信元",
+      "name": {
+        "extract-fields": ""
+      },
       "placeholder-auto": "自動",
       "placeholder-select-delimiter": "区切り文字を選択...",
       "tooltip-regexp": "例：{{regexExample}}"
@@ -12212,6 +12350,9 @@
       "aria-label-threshold-color": "しきい値の色"
     },
     "field-lookup-transformer-editor": {
+      "description": {
+        "lookup-additional-fields-external-source": ""
+      },
       "field-name-picker-settings": {
         "noFieldsMessage": {
           "no-text-fields-found": ""
@@ -12221,7 +12362,10 @@
         }
       },
       "label-field": "フィールド",
-      "label-lookup": "検索"
+      "label-lookup": "検索",
+      "name": {
+        "lookup-fields-from-resource": ""
+      }
     },
     "field-to-config-mapping-editor": {
       "additional-settings": "追加設定",
@@ -12230,11 +12374,25 @@
       "use-as": "次として使用"
     },
     "filter-by-name-transformer-editor": {
+      "description": {
+        "remove-part-query-results-regex-pattern": ""
+      },
       "label-from-variable": "変数から",
       "label-identifier": "識別子",
       "label-use-variable": "変数を使用",
       "label-variable": "変数",
+      "name": {
+        "filter-fields-by-name": ""
+      },
       "placeholder-regular-expression-pattern": "正規表現パターン"
+    },
+    "filter-by-ref-id-transformer-editor": {
+      "description": {
+        "filter-data-by-query-useful-sharing-results": ""
+      },
+      "name": {
+        "filter-data-by-query": ""
+      }
     },
     "filter-by-value-filter-editor": {
       "label-field": "フィールド",
@@ -12245,6 +12403,9 @@
     },
     "filter-by-value-transformer-editor": {
       "add-condition": "条件を追加",
+      "description": {
+        "remove-rows-query-results-user-defined-filters": ""
+      },
       "filter-match": {
         "label": {
           "match-all": "",
@@ -12258,7 +12419,10 @@
         }
       },
       "label-conditions": "条件",
-      "label-filter-type": "フィルタータイプ"
+      "label-filter-type": "フィルタータイプ",
+      "name": {
+        "filter-data-by-values": ""
+      }
     },
     "format-string-transfomer-editor": {
       "field-name-picker-settings": {
@@ -12273,12 +12437,84 @@
       "label-format": "形式",
       "label-substring-range": "部分文字列の範囲"
     },
+    "format-string-transformer-editor": {
+      "description": {
+        "manipulate-string-fields-formatting": ""
+      },
+      "name": {
+        "format-string": ""
+      }
+    },
     "format-time-transfomer-editor": {
       "label-format": "形式",
       "label-set-timezone": "タイムゾーンを設定",
       "label-time-field": "時間フィールド",
       "tooltip-format": "<2>Moment.js形式文字列</2>として指定されたフィールドの出力形式。",
       "tooltip-timezone-manually": "日付のタイムゾーンを手動で設定"
+    },
+    "format-time-transformer-editor": {
+      "description": {
+        "set-based-on-time": ""
+      },
+      "name": {
+        "format-time": ""
+      }
+    },
+    "get-calculate-field-transform-registry-item": {
+      "description": {
+        "values-calculate-field": ""
+      },
+      "name": {
+        "add-field-from-calculation": ""
+      }
+    },
+    "get-config-from-data-transformer": {
+      "description": {
+        "set-unit-min-max-and-more": ""
+      },
+      "name": {
+        "config-from-query-results": ""
+      }
+    },
+    "get-heatmap-transformer": {
+      "description": {
+        "generate-heatmap-data-from-source": ""
+      },
+      "name": {
+        "create-heatmap": ""
+      }
+    },
+    "get-join-by-labels-transformer": {
+      "description": {
+        "flatten-labeled-results-table-joined-labels": ""
+      },
+      "name": {
+        "join-by-labels": ""
+      }
+    },
+    "get-partition-by-values-transformer": {
+      "description": {
+        "split-oneframe-dataset-multiple-series": ""
+      },
+      "name": {
+        "partition-by-values": ""
+      }
+    },
+    "get-rows-to-fields-transformer": {
+      "description": {
+        "convert-field-dynamic-config": ""
+      },
+      "name": {
+        "rows-to-fields": ""
+      }
+    },
+    "get-spatial-transformer": {
+      "description": {
+        "apply-spatial-operations-to-query-results": ""
+      },
+      "name": {
+        "spatial-operations": ""
+      }
     },
     "get-timezone-options": {
       "label": {
@@ -12307,22 +12543,46 @@
       }
     },
     "group-by-field-configuration": {
+      "options": {
+        "label": {
+          "calculate": "",
+          "group-by": ""
+        }
+      },
       "placeholder-ignored": "無視",
       "placeholder-select-stats": "統計を選択"
     },
     "group-by-transformer-editor": {
+      "description": {
+        "group-series-by-field-calculate-stats": ""
+      },
+      "name": {
+        "group-by": ""
+      },
       "title-calc-alert": "グループ化されているフィールドがない場合、計算は効果がありません"
     },
     "group-to-nested-table-transformer-editor": {
+      "description": {
+        "group-by-field-value": ""
+      },
       "description-show-field-names": "有効にすると、入れ子になったテーブルではフィールド名がテーブルヘッダーとして表示されます",
       "label-show-field-names-in-nested-tables": "ネストされたテーブルにフィールド名を表示",
+      "name": {
+        "group-to-nested-tables": ""
+      },
       "title-calc-alert": "グループ化されているフィールドがない場合、計算は効果がありません。"
     },
     "grouping-to-matrix-transformer-editor": {
+      "description": {
+        "summarize-and-reorganize-data": ""
+      },
       "label-cell-value": "セルの値：",
       "label-column": "列",
       "label-empty-value": "空の値",
       "label-row": "行",
+      "name": {
+        "grouping-to-matrix": ""
+      },
       "special-value-options": {
         "description": {
           "boolean-false-value": "ブール値のfalse値",
@@ -12341,6 +12601,12 @@
       }
     },
     "histogram-transformer-editor": {
+      "description": {
+        "calculate-histogram-from-input-data": ""
+      },
+      "name": {
+        "histogram": ""
+      },
       "placeholder-auto": "自動",
       "placeholder-default": "デフォルト：30",
       "placeholder-none": "なし"
@@ -12349,7 +12615,16 @@
       "label-as-percentile": "パーセンタイルとして",
       "tooltip-transform-index-percentile": "行インデックスをパーセンタイルに変換します。"
     },
+    "join-by-field-transformer-editor": {
+      "description": {
+        "combine-rows-from-2-tables": ""
+      },
+      "name": {
+        "join-by-field": ""
+      }
+    },
     "join-by-labels-transformer-editor": {
+      "error-required": "",
       "info": {
         "input-contain-labels": "入力にラベルが含まれていません",
         "no-input-or-labels-found": "入力（またはラベル）が見つかりません",
@@ -12371,10 +12646,30 @@
       "label-labels": "ラベル",
       "label-mode": "モード",
       "label-value-field-name": "値フィールド名",
+      "modes": {
+        "label": {
+          "columns": "",
+          "rows": ""
+        }
+      },
       "placeholder-optional-select-label": "（任意）ラベルを選択",
       "tooltip-replace-value-field-label": "値フィールド名をラベルに置き換える"
     },
+    "labels-to-fields-transformer-editor": {
+      "description": {
+        "groups-series-time-return-labels-tags-fields": ""
+      },
+      "name": {
+        "labels-to-fields": ""
+      }
+    },
     "limit-transformer-editor": {
+      "description": {
+        "limit-number-items-displayed": ""
+      },
+      "name": {
+        "limit": ""
+      },
       "placeholder-value-or-variable": "値または変数"
     },
     "long-info": {
@@ -12385,7 +12680,13 @@
       "string-values-separate": "文字列値はラベルではなく個別のフィールドとして表示されます"
     },
     "merge-transformer-editor": {
-      "merge-effect-applied-single-frame": "単一フレームに適用した場合、マージは効果がありません。"
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "merge-effect-applied-single-frame": "単一フレームに適用した場合、マージは効果がありません。",
+      "name": {
+        "merge": ""
+      }
     },
     "multi-info": {
       "all-values-are-numeric": "すべての値は数値です",
@@ -12395,10 +12696,16 @@
       "time-in-ascending-order": "時間は昇順です"
     },
     "organize-fields-transformer-editor": {
+      "description": {
+        "reorder-hide-or-rename-fields": ""
+      },
       "field-order": "",
       "field-order-auto": "自動",
       "field-order-manual": "",
-      "first-frame-warning": "フィールドの整理は単一フレームでのみ機能します。最初に変換の結合を適用するか、入力をフィルタリングすることを検討してください。"
+      "first-frame-warning": "フィールドの整理は単一フレームでのみ機能します。最初に変換の結合を適用するか、入力をフィルタリングすることを検討してください。",
+      "name": {
+        "organize-fields": ""
+      }
     },
     "partion-by-values-editor": {
       "tooltip-naming": "選択したフィールドの名前の表示方法を設定します。フレーム名は通常、表形式データに適しています"
@@ -12423,9 +12730,41 @@
       "partition-values-works-single-frame": "値によるパーティション分割は、単一フレームでのみ機能します。",
       "tooltip-keeps-partition-fields-frames": "フレーム内のパーティションフィールドを保持します"
     },
+    "prepare-time-series": {
+      "description": {
+        "stretch-data-frames": ""
+      },
+      "name": {
+        "prepare-time-series": ""
+      }
+    },
     "prepare-time-series-editor": {
       "label-format": "形式",
-      "label-info": "情報"
+      "label-info": "情報",
+      "long-info": {
+        "description": {
+          "convert-each-frame-to-long-format": ""
+        },
+        "label": {
+          "long-time-series": ""
+        }
+      },
+      "multi-info": {
+        "description": {
+          "creates-frame-timenumber": ""
+        },
+        "label": {
+          "multiframe-time-series": ""
+        }
+      },
+      "wide-info": {
+        "description": {
+          "creates-single-frame-joined": ""
+        },
+        "label": {
+          "wide-time-series": ""
+        }
+      }
     },
     "range-matcher-editor": {
       "and": "と",
@@ -12437,6 +12776,9 @@
       "label-operation": "操作"
     },
     "reduce-transformer-editor": {
+      "description": {
+        "reduce-to-single-value": ""
+      },
       "label-calculations": "計算",
       "label-include-time": "時間を含める",
       "label-labels-to-fields": "ラベルをフィールドに",
@@ -12451,11 +12793,22 @@
           "series-to-rows": "系列を行に変換"
         }
       },
+      "name": {
+        "reduce": ""
+      },
       "placeholder-choose-stat": "統計を選択"
     },
     "regex-matcher-editor": {
       "placeholder-value-or-variable": "値または変数",
       "variable-regex-documentation": "複数値変数を正規表現文字列にフォーマットします"
+    },
+    "regression": {
+      "description": {
+        "create-new-data-frame": ""
+      },
+      "name": {
+        "regression-analysis": ""
+      }
     },
     "regression-transformer-editor": {
       "label": {
@@ -12478,6 +12831,14 @@
       "regression": "",
       "tooltip-number-of-xy-points-to-predict": "予測するX、Yポイント数"
     },
+    "rename-by-regex-transformer": {
+      "description": {
+        "rename-parts-using-regex": ""
+      },
+      "name": {
+        "rename-fields-by-regex": ""
+      }
+    },
     "rename-by-regex-transformer-editor": {
       "label-match": "一致",
       "label-replace": "置換",
@@ -12486,11 +12847,37 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "フィールド",
-      "label-mode": "モード"
+      "label-mode": "モード",
+      "modes": {
+        "description": {
+          "combine-data-from-two-tables": "",
+          "join-on-a-field": "",
+          "keep-all-rows": ""
+        },
+        "label": {
+          "inner": "",
+          "outer-tabular": "",
+          "outer-time-series": ""
+        }
+      }
+    },
+    "series-to-rows-transformer-editor": {
+      "description": {
+        "merge-multiple-series": ""
+      },
+      "name": {
+        "series-to-rows": ""
+      }
     },
     "sort-by-transformer-editor": {
+      "description": {
+        "sort-fields": ""
+      },
       "label-field": "フィールド",
       "label-reverse": "反転",
+      "name": {
+        "sort-by": ""
+      },
       "placeholder-select-field": "フィールドを選択"
     },
     "supplier": {
@@ -12510,7 +12897,17 @@
         "transform": "変換"
       }
     },
-    "tag": "",
+    "time-series-table": {
+      "description": {
+        "convert-to-table-rows": ""
+      },
+      "is-applicable-description": {
+        "requires-time-series-frame": ""
+      },
+      "name": {
+        "time-series-to-table": ""
+      }
+    },
     "time-series-table-transform-editor": {
       "label-stat": "統計",
       "label-time-field": "時間フィールド",
@@ -12524,9 +12921,33 @@
       "placeholder-value": "値",
       "tooltip-name-for-value-fields": "値フィールドの名前"
     },
+    "transpose-transformer-editor": {
+      "description": {
+        "transpose-data-frame": ""
+      },
+      "name": {
+        "transpose": ""
+      },
+      "tags": {
+        "pivot": "",
+        "transform": "",
+        "translate": ""
+      }
+    },
     "unary-operation-editor": {
       "label-operation": "操作",
       "placeholder-field": "フィールド"
+    },
+    "utils": {
+      "get-categories-labels": {
+        "calculate-new-fields": "",
+        "combine": "",
+        "create-new-visualization": "",
+        "filter": "",
+        "perform-spatial-operations": "",
+        "reformat": "",
+        "reorder-and-rename": ""
+      }
     },
     "wide-info": {
       "multiple-value-fields-of-any-type": "任意のタイプの複数の値フィールド",
@@ -12731,6 +13152,16 @@
           "numerical-desc": ""
         }
       }
+    },
+    "query-variable-static-options": {
+      "add-option-button-label": "",
+      "description": "",
+      "label-placeholder": "",
+      "remove-option-button-label": "",
+      "value-placeholder": ""
+    },
+    "query-variable-static-options-sort-select": {
+      "description-values-variable": ""
     },
     "text-box-variable-editor": {
       "name-default-value": "",

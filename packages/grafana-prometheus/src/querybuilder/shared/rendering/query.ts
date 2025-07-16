@@ -23,7 +23,7 @@ export function renderBinaryQueries(
 /**
  * Renders a binary query
  */
-export function renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryBinary<PromLokiVisualQuery>): string {
+function renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryBinary<PromLokiVisualQuery>): string {
   let result = leftOperand + ` ${binaryQuery.operator} `;
 
   if (binaryQuery.vectorMatches) {
