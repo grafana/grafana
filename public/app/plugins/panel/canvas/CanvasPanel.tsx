@@ -1,10 +1,10 @@
-import { Component } from 'react';
 import * as React from 'react';
+import { Component } from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
 import { PanelProps } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { PanelContext, PanelContextRoot, TooltipDisplayMode } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas/frame';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -78,6 +78,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.options.showAdvancedTypes,
       this.props.options.panZoom,
       this.props.options.infinitePan,
+      this.props.options.tooltip?.mode ?? TooltipDisplayMode.Single,
       this.onUpdateScene,
       this
     );
@@ -241,12 +242,14 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
     const panZoomSwitched = this.props.options.panZoom !== nextProps.options.panZoom;
     const infinitePanSwitched = this.props.options.infinitePan !== nextProps.options.infinitePan;
+    const tooltipModeSwitched = this.props.options.tooltip?.mode !== nextProps.options.tooltip?.mode;
     if (
       this.needsReload ||
       inlineEditingSwitched ||
       shouldShowAdvancedTypesSwitched ||
       panZoomSwitched ||
-      infinitePanSwitched
+      infinitePanSwitched ||
+      tooltipModeSwitched
     ) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
@@ -259,7 +262,8 @@ export class CanvasPanel extends Component<Props, State> {
         nextProps.options.inlineEditing,
         nextProps.options.showAdvancedTypes,
         nextProps.options.panZoom,
-        nextProps.options.infinitePan
+        nextProps.options.infinitePan,
+        nextProps.options.tooltip?.mode
       );
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);

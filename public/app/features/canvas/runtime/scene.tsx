@@ -13,6 +13,7 @@ import {
   ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
+  TooltipDisplayMode,
 } from '@grafana/schema';
 import { Portal } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -71,6 +72,7 @@ export class Scene {
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
   shouldInfinitePan?: boolean;
+  tooltipMode?: TooltipDisplayMode;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
@@ -111,10 +113,11 @@ export class Scene {
     showAdvancedTypes: boolean,
     panZoom: boolean,
     infinitePan: boolean,
+    tooltipMode: TooltipDisplayMode,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan, tooltipMode);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -126,6 +129,7 @@ export class Scene {
     this.panel = panel;
     this.connections = new Connections(this);
     this.transformComponentRef = createRef();
+    this.tooltipMode = tooltipMode;
   }
 
   getNextElementName = (isFrame = false) => {
@@ -152,7 +156,8 @@ export class Scene {
     enableEditing: boolean,
     showAdvancedTypes: boolean,
     panZoom: boolean,
-    infinitePan: boolean
+    infinitePan: boolean,
+    tooltipMode?: TooltipDisplayMode
   ) {
     this.root = new RootElement(
       cfg ?? {
@@ -167,6 +172,7 @@ export class Scene {
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
     this.shouldInfinitePan = infinitePan;
+    this.tooltipMode = tooltipMode;
 
     setTimeout(() => {
       if (this.div) {
@@ -288,7 +294,8 @@ export class Scene {
       this.tooltipPayload?.element?.options.actions && this.tooltipPayload.element.options.actions.length > 0;
 
     const isTooltipValid = hasDataLinks || hasActions || this.tooltipPayload?.element?.data?.field;
-    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
+    const isTooltipEnabled = this.tooltipMode !== TooltipDisplayMode.None;
+    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid && isTooltipEnabled;
 
     const sceneDiv = (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>

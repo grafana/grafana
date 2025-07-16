@@ -12,6 +12,7 @@ import {
   ActionModel,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { TooltipDisplayMode } from '@grafana/schema';
 import { ConfirmModal } from '@grafana/ui';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
@@ -675,7 +676,7 @@ export class ElementState implements LayerElement {
 
   handleTooltip = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback) {
+    if (scene?.tooltipCallback && scene.tooltipMode !== TooltipDisplayMode.None) {
       const rect = this.div?.getBoundingClientRect();
       scene.tooltipCallback({
         anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },
