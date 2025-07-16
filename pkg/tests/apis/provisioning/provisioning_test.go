@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -127,10 +128,22 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 		err := rsp.Into(settings)
 		require.NoError(t, err)
 		require.Len(t, settings.Items, len(inputFiles))
-		require.ElementsMatch(t, []provisioning.RepositoryType{
-			provisioning.LocalRepositoryType,
-			provisioning.GitHubRepositoryType,
-		}, settings.AvailableRepositoryTypes)
+
+		// FIXME: this should be an enterprise integration test
+		if extensions.IsEnterprise {
+			require.ElementsMatch(t, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+				provisioning.GitRepositoryType,
+				provisioning.BitbucketRepositoryType,
+				provisioning.GitLabRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		} else {
+			require.ElementsMatch(t, []provisioning.RepositoryType{
+				provisioning.LocalRepositoryType,
+				provisioning.GitHubRepositoryType,
+			}, settings.AvailableRepositoryTypes)
+		}
 	})
 
 	t.Run("Repositories are reported in stats", func(t *testing.T) {
