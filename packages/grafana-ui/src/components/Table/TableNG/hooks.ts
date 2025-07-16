@@ -441,7 +441,7 @@ interface UseRowHeightOptions {
   hasNestedFrames: boolean;
   defaultHeight: number;
   headerHeight: number;
-  expandedRows: Record<string, boolean>;
+  expandedRows: Set<number>;
   typographyCtx: TypographyCtx;
 }
 
@@ -499,7 +499,7 @@ export function useRowHeight({
       // nested rows
       if (Number(row.__depth) > 0) {
         // if unexpanded, height === 0
-        if (!expandedRows[row.__index]) {
+        if (!expandedRows.has(row.__index)) {
           return 0;
         }
 
