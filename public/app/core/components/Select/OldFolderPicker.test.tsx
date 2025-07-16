@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/manage-dashboards/state/actions';
 
 import { DashboardSearchHit } from '../../../features/search/types';

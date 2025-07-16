@@ -9,8 +9,8 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import BrowseDashboardsPage from './BrowseDashboardsPage';
 import { wellFormedTree } from './fixtures/dashboardsTreeItem.fixture';

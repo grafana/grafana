@@ -1,11 +1,3 @@
-jest.mock('app/core/core', () => {
-  return {
-    coreModule: {
-      directive: jest.fn(),
-    },
-  };
-});
-
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
 
 // Loaded after the `unmock` above

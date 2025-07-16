@@ -9,12 +9,6 @@ import { TimeModel } from '../state/TimeModel';
 
 import { TimeSrv } from './TimeSrv';
 
-jest.mock('app/core/core', () => ({
-  appEvents: {
-    subscribe: () => {},
-  },
-}));
-
 describe('timeSrv', () => {
   let timeSrv: TimeSrv;
   let _dashboard: TimeModel;

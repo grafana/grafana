@@ -8,13 +8,14 @@ import { Team } from 'app/types/teams';
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './mocks/teamMocks';
 
-jest.mock('app/core/core', () => ({
+jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: (action: string) => true,
     licensedAccessControlEnabled: () => false,
     user: {
       helpFlags1: 0,
     },
+    hasPermissionInMetadata: jest.fn(),
   },
 }));
 

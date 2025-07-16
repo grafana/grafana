@@ -12,12 +12,6 @@ import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
 import { updateConfig } from '../../../../core/config';
 import { getDataFrameVars, LinkSrv } from '../link_srv';
 
-jest.mock('app/core/core', () => ({
-  appEvents: {
-    subscribe: () => {},
-  },
-}));
-
 describe('linkSrv', () => {
   let linkSrv: LinkSrv;
   let templateSrv: TemplateSrv;

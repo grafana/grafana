@@ -13,8 +13,8 @@ import {
 } from '@grafana/data';
 import { useStyles2, IconButton, ScrollContainer } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
+import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
 import { removeNavIndex } from 'app/core/reducers/navModel';

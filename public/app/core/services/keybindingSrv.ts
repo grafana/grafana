@@ -20,9 +20,9 @@ import {
 } from '../../types/events';
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
-import { contextSrv } from '../core';
 import { RouteDescriptor } from '../navigation/types';
 
+import { contextSrv } from './context_srv';
 import { mousetrap } from './mousetrap';
 import { toggleTheme } from './theme';
 

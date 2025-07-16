@@ -4,7 +4,7 @@ import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { KioskMode } from 'app/types/dashboard';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';

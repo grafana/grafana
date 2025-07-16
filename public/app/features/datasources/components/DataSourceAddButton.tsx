@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { ROUTES } from 'app/features/connections/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
