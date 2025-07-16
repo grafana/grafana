@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 // keeperMetadataStorage is the actual implementation of the keeper metadata storage.
@@ -30,13 +30,8 @@ var _ contracts.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
 func ProvideKeeperMetadataStorage(
 	db contracts.Database,
 	tracer trace.Tracer,
-	features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 ) (contracts.KeeperMetadataStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
-		return &keeperMetadataStorage{}, nil
-	}
-
 	return &keeperMetadataStorage{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),

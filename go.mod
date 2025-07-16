@@ -85,7 +85,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.2 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20250709204613-c5c6f9c1653d // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20250711181610-8eef376f49f8 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20250710201142-9542f2f28d43 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -230,7 +230,7 @@ require (
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0-20250627191313-2f1a6ae1712b // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250627191313-2f1a6ae1712b // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250716152245-2202c99d7030 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0-20250627191313-2f1a6ae1712b // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/iam v0.0.0-20250627191313-2f1a6ae1712b // @grafana/identity-access-team
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250627191313-2f1a6ae1712b // @fcjack @matryer
