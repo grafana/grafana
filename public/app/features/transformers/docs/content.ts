@@ -591,7 +591,7 @@ After choosing which field you want to group your data by, you can add various c
 | server 2  | 88.6                   |
 | server 3  | 59.6                   |
 
-If you had added the count stat to the group by, there would be an extra column showing that the count of each server from above was 3.
+If you had added the count stat to the group by transformation, there would be an extra column showing that the count of each server from above was 3.
 
 | Server ID | CPU Temperature (mean) | Server ID (count) |
 | --------- | ---------------------- | ----------------- |
