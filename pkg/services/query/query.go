@@ -293,7 +293,6 @@ func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user iden
 		}
 		req.PluginContext = pCtx
 		return s.pluginClient.QueryData(ctx, req)
-
 	} else { // multi tenant flow
 		// transform request from backend.QueryDataRequest to k8s request
 		k8sReq := &data.QueryDataRequest{}
