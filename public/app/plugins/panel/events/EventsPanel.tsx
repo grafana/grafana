@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import {
     DashboardCursorSync,
     DataFrame,
@@ -109,13 +111,31 @@ function mergeEventsData(theme: GrafanaTheme2, frames: DataFrame[], fieldConfig?
         });
     });
 
+    // Apply field configuration overrides FIRST to preserve user-resized column widths
+    if (fieldConfig && fieldConfig.overrides) {
+        fieldConfig.overrides.forEach((override: any) => {
+            if (override.matcher.id === FieldMatcherID.byName) {
+                const fieldName = override.matcher.options;
+                const field = mergedFrame.fields.find(f => f.name === fieldName);
+                if (field) {
+                    override.properties.forEach((prop: any) => {
+                        if (prop.id === 'custom.width') {
+                            field.config = field.config || {};
+                            field.config.custom = field.config.custom || {};
+                            field.config.custom.width = prop.value;
+                        }
+                    });
+                }
+            }
+        });
+    }
+
     // Add custom display functions
     mergedFrame.fields.forEach((field) => {
         if (field.name === 'Type') {
             field.display = (value: any): DisplayValue => {
                 const severity = (value || 'unknown').toLowerCase() as EventSeverity;
                 const color = getSeverityColor(severity, theme);
-                console.log(severity, color)
 
                 return {
                     text: '', // Empty text, we'll use custom styling
@@ -123,10 +143,12 @@ function mergeEventsData(theme: GrafanaTheme2, frames: DataFrame[], fieldConfig?
                     numeric: 0,
                 };
             };
-            // Set very small width for the Type column
+            // Set default width for the Type column (only if not already set by override)
             field.config = field.config || {};
             field.config.custom = field.config.custom || {};
-            field.config.custom.width = 30;
+            if (field.config.custom.width === undefined) {
+                field.config.custom.width = 50;
+            }
             field.config.custom.align = 'center';
             // Configure custom cell renderer
             field.config.custom.cellOptions = {
@@ -174,7 +196,10 @@ function mergeEventsData(theme: GrafanaTheme2, frames: DataFrame[], fieldConfig?
             };
             field.config = field.config || {};
             field.config.custom = field.config.custom || {};
-            field.config.custom.width = 210;
+            // Set default width for Time column (only if not already set by override)
+            if (field.config.custom.width === undefined) {
+                field.config.custom.width = 190;
+            }
         } else if (field.name === 'Tags') {
             field.display = (value: any): DisplayValue => {
                 if (!value || value === '') { return { text: '', numeric: 0 }; }
@@ -193,25 +218,6 @@ function mergeEventsData(theme: GrafanaTheme2, frames: DataFrame[], fieldConfig?
         }
     });
 
-    // Apply field configuration overrides to preserve column widths
-    if (fieldConfig && fieldConfig.overrides) {
-        fieldConfig.overrides.forEach((override: any) => {
-            if (override.matcher.id === FieldMatcherID.byName) {
-                const fieldName = override.matcher.options;
-                const field = mergedFrame.fields.find(f => f.name === fieldName);
-                if (field) {
-                    override.properties.forEach((prop: any) => {
-                        if (prop.id === 'custom.width') {
-                            field.config = field.config || {};
-                            field.config.custom = field.config.custom || {};
-                            field.config.custom.width = prop.value;
-                        }
-                    });
-                }
-            }
-        });
-    }
-
     return mergedFrame;
 }
 
@@ -228,12 +234,14 @@ export function EventsPanel(props: Props) {
 
     let tableHeight = height;
 
+    // Merge all data into a single events series with memoization
+    const mergedData = useMemo(() => {
+        return mergeEventsData(theme, frames, fieldConfig);
+    }, [theme, frames, fieldConfig]);
+
     if (!count || !hasFields) {
         return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
     }
-
-    // Merge all data into a single events series
-    const mergedData = mergeEventsData(theme, frames, fieldConfig);
 
     if (mergedData.length === 0) {
         return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
@@ -251,7 +259,6 @@ export function EventsPanel(props: Props) {
             resizable={true}
             initialSortBy={options.sortBy}
             onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-            onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
 
             onCellFilterAdded={panelContext.onAddAdHocFilter}
             footerOptions={options.footer}
@@ -268,36 +275,6 @@ export function EventsPanel(props: Props) {
 
 
 
-function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
-    const { fieldConfig } = props;
-    const { overrides } = fieldConfig;
-
-    const matcherId = FieldMatcherID.byName;
-    const propId = 'custom.width';
-
-    // look for existing override
-    const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
-
-    if (override) {
-        // look for existing property
-        const property = override.properties.find((prop) => prop.id === propId);
-        if (property) {
-            property.value = width;
-        } else {
-            override.properties.push({ id: propId, value: width });
-        }
-    } else {
-        overrides.push({
-            matcher: { id: matcherId, options: fieldDisplayName },
-            properties: [{ id: propId, value: width }],
-        });
-    }
-
-    props.onFieldConfigChange({
-        ...fieldConfig,
-        overrides,
-    });
-}
 
 function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
     const { onOptionsChange, options } = props;
@@ -306,3 +283,4 @@ function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
         sortBy,
     });
 }
+

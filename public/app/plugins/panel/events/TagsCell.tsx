@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+
+import { TagsPopup } from './TagsPopup';
 
 interface TagsCellProps {
     value: any;
@@ -13,6 +15,7 @@ interface TagsCellProps {
 export const TagsCell: React.FC<TagsCellProps> = ({ value }) => {
     const theme = useTheme2();
     const styles = useStyles2(getTagsStyles, { theme });
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
 
     if (!value || value === '') {
         return <span />;
@@ -30,30 +33,48 @@ export const TagsCell: React.FC<TagsCellProps> = ({ value }) => {
         prioritizedTags.unshift(hostTag);
     }
 
-    if (prioritizedTags.length <= 2) {
-        return (
-            <span>
-                {prioritizedTags.map((tag: string, index: number) => (
-                    <span key={index} className={styles.tag}>
-                        {tag}
-                    </span>
-                ))}
-            </span>
-        );
-    } else {
-        const firstTwoTags = prioritizedTags.slice(0, 2);
-        const remainingCount = prioritizedTags.length - 2;
-        return (
-            <span>
-                {firstTwoTags.map((tag: string, index: number) => (
-                    <span key={index} className={styles.tag}>
-                        {tag}
-                    </span>
-                ))}
-                <span className={styles.moreBadge}>+{remainingCount} more</span>
-            </span>
-        );
-    }
+    // Show max 2 tags, then "X more"
+    const maxVisibleTags = 2;
+    const visibleTags = prioritizedTags.slice(0, maxVisibleTags);
+    const remainingCount = prioritizedTags.length - maxVisibleTags;
+
+    const handleMoreClick = () => {
+        setIsPopupOpen(true);
+    };
+
+    const handlePopupDismiss = () => {
+        setIsPopupOpen(false);
+    };
+
+    return (
+        <span className={styles.container}>
+            {visibleTags.map((tag: string, index: number) => (
+                <span key={index} className={styles.tag}>
+                    {tag}
+                </span>
+            ))}
+            {remainingCount > 0 && (
+                <button
+                    type="button"
+                    className={styles.moreBadge}
+                    onClick={handleMoreClick}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleMoreClick();
+                        }
+                    }}
+                >
+                    +{remainingCount} more
+                </button>
+            )}
+            <TagsPopup
+                isOpen={isPopupOpen}
+                onDismiss={handlePopupDismiss}
+                tags={prioritizedTags}
+            />
+        </span>
+    );
 };
 
 interface TagsStylesProps {
@@ -62,6 +83,13 @@ interface TagsStylesProps {
 
 const getTagsStyles = (theme: GrafanaTheme2, props: TagsStylesProps) => {
     return {
+        container: css({
+            display: 'flex',
+            alignItems: 'center',
+            width: '100%',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+        }),
         tag: css({
             display: 'inline-block',
             background: theme.colors.background.secondary,
@@ -71,7 +99,11 @@ const getTagsStyles = (theme: GrafanaTheme2, props: TagsStylesProps) => {
             padding: theme.spacing(0.25, 0.5),
             fontSize: theme.typography.size.sm,
             marginRight: theme.spacing(0.5),
-            marginBottom: theme.spacing(0.25),
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '150px', // Shorter max width for truncation
+            flexShrink: 0, // Prevent tags from shrinking
         }),
         moreBadge: css({
             display: 'inline-block',
@@ -79,9 +111,22 @@ const getTagsStyles = (theme: GrafanaTheme2, props: TagsStylesProps) => {
             color: theme.colors.secondary.contrastText,
             border: `1px solid ${theme.colors.border.medium}`,
             borderRadius: theme.shape.radius.default,
-            padding: theme.spacing(0.25, 1),
+            padding: theme.spacing(0.25, 0.75),
             fontSize: theme.typography.size.sm,
-            marginLeft: theme.spacing(1),
+            marginLeft: theme.spacing(0.5),
+            // eslint-disable-next-line @grafana/no-unreduced-motion
+            transition: 'background-color 0.2s ease',
+            whiteSpace: 'nowrap',
+            flexShrink: 0, // Prevent badge from shrinking
+            cursor: 'pointer',
+            outline: 'none',
+            '&:hover': {
+                background: theme.colors.secondary.shade,
+            },
+            '&:focus': {
+                outline: `2px solid ${theme.colors.primary.main}`,
+                outlineOffset: '2px',
+            },
         }),
     };
 };
