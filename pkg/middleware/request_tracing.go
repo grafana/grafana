@@ -82,7 +82,7 @@ func TraceAllPaths(req *http.Request) bool {
 	return true
 }
 
-func RequestTracing(tracer tracing.Tracer, shouldTrace func(*http.Request) bool) web.Middleware {
+func RequestTracing(tracer trace.Tracer, shouldTrace func(*http.Request) bool) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			if !shouldTrace(req) {
