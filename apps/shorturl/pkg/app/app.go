@@ -45,6 +45,21 @@ func New(cfg app.Config) (app.App, error) {
 				Kind: shorturlv0alpha1.ShortURLKind(),
 				Mutator: &simple.Mutator{
 					MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
+						// Skip validation for non-CREATE operations as specified in the manifest
+						// TODO: Remove this after the SDK fixes this bug where validation is called for all mutating operations
+						// ignoring what the manifest says
+						if req.Action != resource.AdmissionActionCreate {
+							// For non-CREATE operations, return the object as-is
+							// Use OldObject if Object is nil (common in DELETE operations)
+							objectToReturn := req.Object
+							if objectToReturn == nil {
+								objectToReturn = req.OldObject
+							}
+							return &app.MutatingResponse{
+								UpdatedObject: objectToReturn,
+							}, nil
+						}
+
 						// Cast the incoming object to ShortURL
 						shortURL, ok := req.Object.(*shorturlv0alpha1.ShortURL)
 						if !ok {
@@ -66,6 +81,13 @@ func New(cfg app.Config) (app.App, error) {
 				},
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+						// Skip validation for non-CREATE operations as specified in the manifest
+						// TODO: Remove this after the SDK fixes this bug where validation is called for all mutating operations
+						// ignoring what the manifest says
+						if req.Action != resource.AdmissionActionCreate {
+							return nil
+						}
+
 						// Cast the incoming object to ShortURL for validation
 						shortURL, ok := req.Object.(*shorturlv0alpha1.ShortURL)
 						if !ok {
