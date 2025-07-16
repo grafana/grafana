@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	apisregistry "github.com/grafana/grafana/pkg/registry/apis"
-	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	gsmKMSProviders "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
@@ -66,7 +66,7 @@ import (
 
 var provisioningExtras = wire.NewSet(
 	webhooks.ProvideWebhooks,
-	provisioningapis.ProvideProvisioningOSSExtras,
+	extras.ProvideProvisioningOSSExtras,
 )
 
 var wireExtsBasicSet = wire.NewSet(
