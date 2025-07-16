@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 local_dst="dist/${DRONE_BUILD_EVENT}"
 set -e
 
@@ -7,7 +7,7 @@ docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-
 docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
 
 # Build all of the grafana.tar.gz packages.
-dagger run go run ./cmd \
+dagger run --silent go run ./pkg/build/cmd \
   artifacts \
   -a targz:enterprise:linux/amd64 \
   -a targz:enterprise:linux/arm64 \
@@ -42,11 +42,10 @@ dagger run go run ./cmd \
   --grafana-ref=${DRONE_TAG} \
   --grafana-repo=https://github.com/grafana/grafana-security-mirror.git \
   --github-token=${GITHUB_TOKEN} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" \
   --version=${DRONE_TAG} \
   --destination=${local_dst} > assets.txt
 
 # Move the tar.gz packages to their expected locations
-cat assets.txt | go run ./scripts/move_packages.go ./dist/prerelease
+cat assets.txt | go run ./pkg/build/daggerbuild/scripts/move_packages.go ./dist/prerelease

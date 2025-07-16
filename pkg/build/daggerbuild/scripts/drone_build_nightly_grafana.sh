@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 set -e
 local_dst="${DRONE_WORKSPACE}/dist"
 
@@ -6,7 +6,7 @@ docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --uninstall 'qemu-
 # This command enables qemu emulators for building Docker images for arm64/armv6/armv7/etc on the host.
 docker run --privileged --rm tonistiigi/binfmt:qemu-v7.0.0-28 --install all
 
-dagger run --silent go run ./cmd \
+dagger run --silent go run ./pkg/build/cmd \
   artifacts \
   -a targz:grafana:linux/amd64 \
   -a targz:grafana:linux/arm64 \
@@ -37,7 +37,6 @@ dagger run --silent go run ./cmd \
   --github-token=${GITHUB_TOKEN} \
   --destination=${local_dst} \
   --yarn-cache=${YARN_CACHE_FOLDER} \
-  --go-version=${GO_VERSION} \
   --ubuntu-base="${UBUNTU_BASE}" \
   --alpine-base="${ALPINE_BASE}" > assets.txt
 
