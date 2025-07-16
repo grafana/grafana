@@ -38,7 +38,7 @@ type Features struct {
 	// Needed only until Tempo Alerting / metrics TraceQL is stable
 	// https://github.com/grafana/grafana/issues/106888
 	TempoAlertingEnabled bool
-	PluginAssetProvider         bool
+	PluginAssetProvider  bool
 }
 
 // NewPluginManagementCfg returns a new PluginManagementCfg.
