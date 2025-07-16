@@ -9,7 +9,7 @@ import {
   defaultTimeSettingsSpec,
   GroupByVariableKind,
   Spec as DashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -109,7 +109,7 @@ export async function buildNewDashboardSaveModelV2(
   }
 
   const data: DashboardWithAccessInfo<DashboardV2Spec> = {
-    apiVersion: 'v2alpha1',
+    apiVersion: 'v2alpha2',
     kind: 'DashboardWithAccessInfo',
     spec: {
       ...defaultDashboardV2Spec(),

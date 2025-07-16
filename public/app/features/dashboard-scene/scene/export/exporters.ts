@@ -9,7 +9,7 @@ import {
   AnnotationQueryKind,
   QueryVariableKind,
   LibraryPanelRef,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel, GridPos } from 'app/features/dashboard/state/PanelModel';

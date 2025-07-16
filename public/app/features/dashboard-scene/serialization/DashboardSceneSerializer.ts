@@ -1,5 +1,5 @@
 import { Dashboard } from '@grafana/schema';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import { AnnoKeyDashboardSnapshotOriginalUrl, ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';

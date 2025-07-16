@@ -41,7 +41,7 @@ import {
   defaultDataQueryKind,
   RowsLayoutRowKind,
   GridLayoutKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
 import {
@@ -183,7 +183,7 @@ export function ensureV2Response(
   };
 
   return {
-    apiVersion: 'v2alpha1',
+    apiVersion: 'v2alpha2',
     kind: 'DashboardWithAccessInfo',
     metadata: {
       creationTimestamp: creationTimestamp || '', // TODO verify this empty string is valid

@@ -1,4 +1,4 @@
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha2/types.spec.gen';
 
 /**
  * Removes a panel reference from a layout.
