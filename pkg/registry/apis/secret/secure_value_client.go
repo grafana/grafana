@@ -19,9 +19,7 @@ import (
 )
 
 // SecureValueClient is a CRUD client for the secure value API.
-type SecureValueClient interface {
-	Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error)
-}
+type SecureValueClient = contracts.SecureValueClient
 
 type secureValueClient struct {
 	namespace string
